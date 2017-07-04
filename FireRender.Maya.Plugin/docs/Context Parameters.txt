@@ -1,0 +1,42 @@
+Radeon ProRender Context Information
+	Material Stack Size: 64
+
+	Context Parameters:
+		aacellsize; id 0x10A; type 0x8; // Numbers of cells for stratified sampling
+		aasamples; id 0x10B; type 0x8; // Numbers of samples per pixel
+		imagefilter.type; id 0x10C; type 0x8; // Image filter to use
+		imagefilter.box.radius; id 0x10D; type 0x1; // Image filter to use
+		imagefilter.gaussian.radius; id 0x10E; type 0x1; // Filter radius
+		imagefilter.triangle.radius; id 0x10F; type 0x1; // Filter radius
+		imagefilter.mitchell.radius; id 0x110; type 0x1; // Filter radius
+		imagefilter.lanczos.radius; id 0x111; type 0x1; // Filter radius
+		imagefilter.blackmanharris.radius; id 0x112; type 0x1; // Filter radius
+		tonemapping.type; id 0x113; type 0x8; // Tonemapping operator
+		tonemapping.linear.scale; id 0x114; type 0x1; // Linear scale
+		tonemapping.photolinear.sensitivity; id 0x115; type 0x1; // Linear sensitivity
+		tonemapping.photolinear.exposure; id 0x116; type 0x1; // Photolinear exposure
+		tonemapping.photolinear.fstop; id 0x117; type 0x1; // Photolinear fstop
+		tonemapping.reinhard02.prescale; id 0x118; type 0x1; // Reinhard prescale
+		tonemapping.reinhard02.postscale; id 0x119; type 0x1; // Reinhard postscale
+		tonemapping.reinhard02.burn; id 0x11A; type 0x1; // Reinhard burn
+		maxRecursion; id 0x11B; type 0x8; // Ray trace depth
+		raycastepsilon; id 0x11C; type 0x1; // Ray epsilon
+		radianceclamp; id 0x11D; type 0x1; // Max radiance value
+		xflip; id 0x11E; type 0x8; // Flip framebuffer output along X axis
+		yflip; id 0x11F; type 0x8; // Flip framebuffer output along Y axis
+		texturegamma; id 0x120; type 0x1; // Texture gamma
+		pdfThreshold; id 0x121; type 0x1; // pdf Threshold
+		stage; id 0x122; type 0x8; // render mode
+		roughnessCap; id 0x123; type 0x1; // roughness Cap
+		displaygamma; id 0x124; type 0x1; // Display gamma
+		stacksize; id 0x125; type 0x8; // Maximum number of nodes that a material graph can support. Constant value.
+		clippingplane; id 0x126; type 0x4; // Clipping Plane
+		gpu0name; id 0x127; type 0x6; // Name of the GPU index 0 in context. Constant value.
+		gpu1name; id 0x128; type 0x6; // Name of the GPU index 1 in context. Constant value.
+		gpu2name; id 0x129; type 0x6; // Name of the GPU index 2 in context. Constant value.
+		gpu3name; id 0x12A; type 0x6; // Name of the GPU index 3 in context. Constant value.
+		cpuname; id 0x12B; type 0x6; // Name of the CPU in context. Constant value.
+		gpu4name; id 0x12C; type 0x6; // Name of the GPU index 4 in context. Constant value.
+		gpu5name; id 0x12D; type 0x6; // Name of the GPU index 5 in context. Constant value.
+		gpu6name; id 0x12E; type 0x6; // Name of the GPU index 6 in context. Constant value.
+		gpu7name; id 0x12F; type 0x6; // Name of the GPU index 7 in context. Constant value.

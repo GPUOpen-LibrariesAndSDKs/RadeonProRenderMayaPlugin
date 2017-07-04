@@ -1,0 +1,851 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{2c38faaa-2446-4039-93ce-8bd50d9a383f}</UniqueIdentifier>
+      <Extensions>cpp</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{86007a42-a529-4b6a-9ba3-a17e3e63b253}</UniqueIdentifier>
+      <Extensions>h</Extensions>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{f6b23979-7f2a-4d04-8360-8c61ed6dfd40}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Scripts">
+      <UniqueIdentifier>{84560578-983a-477c-bb75-0a82429a4ac4}</UniqueIdentifier>
+      <Extensions>mel</Extensions>
+    </Filter>
+    <Filter Include="Resources\Python">
+      <UniqueIdentifier>{5143e4a5-aab0-43fc-9835-30fe53195cee}</UniqueIdentifier>
+      <Extensions>py</Extensions>
+    </Filter>
+    <Filter Include="Resources\Icons">
+      <UniqueIdentifier>{7503cf04-1022-43af-ae46-600fbc2388ee}</UniqueIdentifier>
+      <Extensions>png</Extensions>
+    </Filter>
+    <Filter Include="Materials">
+      <UniqueIdentifier>{25bd7f0f-4f53-4d26-a607-e8c964ac1af8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="docs">
+      <UniqueIdentifier>{0cb281da-088f-431c-aec0-1ea65cd8178c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shelfs">
+      <UniqueIdentifier>{1e4ead09-1cdf-46d4-ab42-d8698ac90d3f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Commands">
+      <UniqueIdentifier>{529e1b8a-1382-4531-8dab-093a8d195958}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="AOVs">
+      <UniqueIdentifier>{93ee02a9-5915-43b3-99f4-5815f56352b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RadeonProRender">
+      <UniqueIdentifier>{21e33a08-88c3-4f00-aac7-3ca69ebe86bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Viewport">
+      <UniqueIdentifier>{b2126bbb-8b08-4a1b-9b5b-8e7e8496e073}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Shaders">
+      <UniqueIdentifier>{fbe00327-5c17-425a-8290-a5e0d74f8817}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="IPR">
+      <UniqueIdentifier>{e751a07e-90b1-4938-8d1c-87a678185f5a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Icons\Shelf">
+      <UniqueIdentifier>{907232ca-1017-4443-8ee3-5a2aef9f3c2e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RadeonProRender\RPR API">
+      <UniqueIdentifier>{5270b028-4dd1-4a66-a0b5-b341ba9390d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="RadeonProRender\RPR API\Math">
+      <UniqueIdentifier>{b43dd465-0bd3-47a8-94d6-5f0ce0e2b7ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Environment">
+      <UniqueIdentifier>{ff5e5c44-e31f-4e1d-9a6a-a5d73852597b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{9fb31e8e-1db9-4a25-9173-7ca685986d5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Hosek">
+      <UniqueIdentifier>{5a9743b7-e730-4e37-bd0b-ed886596a93a}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="python\__init__.py">
+      <Filter>Resources\Python</Filter>
+    </None>
+    <None Include="python\fireRender\__init__.py">
+      <Filter>Resources\Python</Filter>
+    </None>
+    <None Include="python\fireRender\fireRenderMenu.py">
+      <Filter>Resources\Python</Filter>
+    </None>
+    <None Include="python\fireRender\fireRenderUtils.py">
+      <Filter>Resources\Python</Filter>
+    </None>
+    <None Include="python\fireRender\renderViewUtils.py">
+      <Filter>Resources\Python</Filter>
+    </None>
+    <None Include="python\fireRender\vrayUtils.py">
+      <Filter>Resources\Python</Filter>
+    </None>
+    <None Include="scripts\createFireRenderCommonGlobalsTab.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\createFireRenderGlobalsTab.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\fireRenderBatch.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\fireRenderIpr.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\fireRenderUpdateAE.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\setupFireRenderNodeClassification.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="icons\amd.xpm">
+      <Filter>Resources\Icons</Filter>
+    </None>
+    <None Include="Shelfs\shelf_Radeon_ProRender.mel">
+      <Filter>Resources\Shelfs</Filter>
+    </None>
+    <None Include="scripts\AERPRAddMaterialTemplate.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\AERPRBlendMaterialTemplate.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\AERPRGlobalsTemplate.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\AERPRIBLTemplate.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\AERPRMaterialTemplate.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\AERPRSkyTemplate.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="frMaya.module" />
+    <None Include="python\fireRender\rpr_material_browser.py">
+      <Filter>Resources\Python</Filter>
+    </None>
+    <None Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\Rebuild Wrappers.cmd">
+      <Filter>RadeonProRender</Filter>
+    </None>
+    <None Include="shaders\rprBlitColor.ogsfx">
+      <Filter>Resources\Shaders</Filter>
+    </None>
+    <None Include="shaders\rprBlitColorGL.cgfx">
+      <Filter>Resources\Shaders</Filter>
+    </None>
+    <None Include="scripts\AboutAndCopyright.html">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\AERPRVolumeMaterialTemplate.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\common.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\rprUnifiedRenderGlobalsWindow201600.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\rprUnifiedRenderGlobalsWindow201650.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\rprUnifiedRenderGlobalsWindow201700.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\AERPRUberMaterialTemplate.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="python\fireRender\rpr_location_selector.py">
+      <Filter>Resources\Python</Filter>
+    </None>
+    <None Include="scripts\fireRenderEnvironment.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\shelfCommands.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\rprUnifiedRenderGlobalsWindow201500.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\AERPRSubsurfaceMaterialTemplate.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pluginMain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderMaterialSwatchRender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireMaterialViewRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Translators.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderObjects.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ShadersManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderBlendMaterial.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderChecker.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderFresnel.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderMaterial.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderStandardMaterial.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireMaya.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderArithmetic.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderBlendValue.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderGradient.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderLookup.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderDot.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderTexture.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderFresnelSchlick.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderNoise.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderPassthrough.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderBump.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderNormal.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="MaterialLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderSurfaceOverride.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="frWrap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderBlendOverride.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderCmd.cpp">
+      <Filter>Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderExportCmd.cpp">
+      <Filter>Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderImportCmd.cpp">
+      <Filter>Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderViewportCmd.cpp">
+      <Filter>Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderImportExportXML.cpp">
+      <Filter>Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderProgressBars.cpp">
+      <Filter>Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderGlobals.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderAOV.cpp">
+      <Filter>AOVs</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderAOVs.cpp">
+      <Filter>AOVs</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.cpp">
+      <Filter>RadeonProRender</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.cpp">
+      <Filter>RadeonProRender</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderViewport.cpp">
+      <Filter>Viewport</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderOverride.cpp">
+      <Filter>Viewport</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderViewportManager.cpp">
+      <Filter>Viewport</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderViewportBlit.cpp">
+      <Filter>Viewport</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderTextureCache.cpp">
+      <Filter>Viewport</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderIpr.cpp">
+      <Filter>IPR</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderViewportUI.cpp">
+      <Filter>Viewport</Filter>
+    </ClCompile>
+    <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\half.cpp">
+      <Filter>RadeonProRender\RPR API\Math</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderVolumeMaterial.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderTransparentMaterial.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderIBL.cpp">
+      <Filter>Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderLocationCmd.cpp">
+      <Filter>Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderSkyLocator.cpp">
+      <Filter>Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="SkyAttributes.cpp">
+      <Filter>Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="SkyBuilder.cpp">
+      <Filter>Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="SkyGen.cpp">
+      <Filter>Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="SkyLocatorMesh.cpp">
+      <Filter>Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="SunPositionCalculator.cpp">
+      <Filter>Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderViewportOperation.cpp">
+      <Filter>Viewport</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderUtils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderError.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="DependencyNode.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="FileSystemUtils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderImageUtil.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderPortableUtils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="VRay.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderConvertVRayCmd.cpp">
+      <Filter>Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderIESLight.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IESLightLocatorMesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderCacheWarningDialog.cpp">
+      <Filter>Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderThread.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderDisplacement.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderStamp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderEnvironmentLight.cpp">
+      <Filter>Environment</Filter>
+    </ClCompile>
+    <ClCompile Include="SubsurfaceMaterial.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderImageComparing.cpp">
+      <Filter>Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderProduction.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Hosek\ArHosekSkyModel.cpp">
+      <Filter>Hosek</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="FireRenderMaterialSwatchRender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireMaterialViewRenderer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Translators.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderObjects.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ShadersManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="base_mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderBlendMaterial.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderChecker.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderFresnel.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderMaterial.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderStandardMaterial.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="frWrap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireMaya.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderArithmetic.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderBlendValue.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderGradient.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderLookup.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderDot.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderTexture.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderFresnelSchlick.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderNoise.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderPassthrough.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderBump.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderNormal.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="MaterialLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PluginContext.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PluginContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderSurfaceOverride.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderBlendOverride.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderCmd.h">
+      <Filter>Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderImportCmd.h">
+      <Filter>Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderExportCmd.h">
+      <Filter>Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderViewportCmd.h">
+      <Filter>Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderImportExportXML.h">
+      <Filter>Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderProgressBars.h">
+      <Filter>Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderGlobals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderAOV.h">
+      <Filter>AOVs</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderAOVs.h">
+      <Filter>AOVs</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderRegion.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.h">
+      <Filter>RadeonProRender</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedDefinitions.h">
+      <Filter>RadeonProRender</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedFunctions.h">
+      <Filter>RadeonProRender</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.h">
+      <Filter>RadeonProRender</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderOverride.h">
+      <Filter>Viewport</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderViewport.h">
+      <Filter>Viewport</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderViewportManager.h">
+      <Filter>Viewport</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderViewportBlit.h">
+      <Filter>Viewport</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderTextureCache.h">
+      <Filter>Viewport</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderIpr.h">
+      <Filter>IPR</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderViewportUI.h">
+      <Filter>Viewport</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\RadeonProRender_CL.h">
+      <Filter>RadeonProRender\RPR API</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\RadeonProRender_GL.h">
+      <Filter>RadeonProRender\RPR API</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\RprLoadStore.h">
+      <Filter>RadeonProRender\RPR API</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\RadeonProRender.h">
+      <Filter>RadeonProRender\RPR API</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\eLut.h">
+      <Filter>RadeonProRender\RPR API\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\float2.h">
+      <Filter>RadeonProRender\RPR API\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\float3.h">
+      <Filter>RadeonProRender\RPR API\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\half.h">
+      <Filter>RadeonProRender\RPR API\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\int2.h">
+      <Filter>RadeonProRender\RPR API\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\mathutils.h">
+      <Filter>RadeonProRender\RPR API\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\matrix.h">
+      <Filter>RadeonProRender\RPR API\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\quaternion.h">
+      <Filter>RadeonProRender\RPR API\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\toFloat.h">
+      <Filter>RadeonProRender\RPR API\Math</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderVolumeMaterial.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderTransparentMaterial.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderIBL.h">
+      <Filter>Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderLocationCmd.h">
+      <Filter>Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderSkyLocator.h">
+      <Filter>Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="SkyAttributes.h">
+      <Filter>Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="SkyBuilder.h">
+      <Filter>Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="SkyGen.h">
+      <Filter>Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="SkyLocatorMesh.h">
+      <Filter>Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="SunPositionCalculator.h">
+      <Filter>Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedDefinitions_GL.h">
+      <Filter>RadeonProRender</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedFunctions_GL.h">
+      <Filter>RadeonProRender</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderViewportOperation.h">
+      <Filter>Viewport</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderUtils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderError.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="DependencyNode.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="AutoLock.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="FileSystemUtils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Logger.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderImageUtil.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderPortableUtils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderMath.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="VRay.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderConvertVRayCmd.h">
+      <Filter>Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderIESLight.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IESLightLocatorMesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderCacheWarningDialog.h">
+      <Filter>Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderThread.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderDisplacement.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="RenderStamp.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderEnvironmentLight.h">
+      <Filter>Environment</Filter>
+    </ClInclude>
+    <ClInclude Include="SubsurfaceMaterial.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderImageComparing.h">
+      <Filter>Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderProduction.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Hosek\ArHosekSkyModel.h">
+      <Filter>Hosek</Filter>
+    </ClInclude>
+    <ClInclude Include="Hosek\ArHosekSkyModelData_CIEXYZ.h">
+      <Filter>Hosek</Filter>
+    </ClInclude>
+    <ClInclude Include="Hosek\ArHosekSkyModelData_RGB.h">
+      <Filter>Hosek</Filter>
+    </ClInclude>
+    <ClInclude Include="Hosek\ArHosekSkyModelData_Spectral.h">
+      <Filter>Hosek</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="scripts\registerFireRender.mel">
+      <Filter>Resources\Scripts</Filter>
+    </Text>
+    <Text Include="docs\Material Node Parameters.txt">
+      <Filter>docs</Filter>
+    </Text>
+    <Text Include="docs\Context Parameters.txt">
+      <Filter>docs</Filter>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="renderDesc\FireRenderRenderer.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icons\FireRenderAddMaterial.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\amd.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\FireRenderBlendMaterial.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\FireRenderFresnel.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\FireRenderIBL.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\FireRenderMaterial.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\FireRenderSky.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\FireRenderStandardMaterial.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\out_FireRenderAddMaterial.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\out_FireRenderBlendMaterial.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\out_FireRenderFresnel.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\out_FireRenderIBL.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\out_FireRenderMaterial.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\out_FireRenderSky.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\out_FireRenderStandardMaterial.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\render_FireRenderAddMaterial.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\render_FireRenderBlendMaterial.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\render_FireRenderFresnel.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\render_FireRenderIBL.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\render_FireRenderMaterial.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\render_FireRenderSky.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\render_FireRenderStandardMaterial.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\FireRenderDot.png">
+      <Filter>Resources\Icons</Filter>
+    </Image>
+    <Image Include="icons\shelf\RPRDocs.png">
+      <Filter>Resources\Icons\Shelf</Filter>
+    </Image>
+    <Image Include="icons\shelf\RPREmissive.png">
+      <Filter>Resources\Icons\Shelf</Filter>
+    </Image>
+    <Image Include="icons\shelf\RPRIBL.png">
+      <Filter>Resources\Icons\Shelf</Filter>
+    </Image>
+    <Image Include="icons\shelf\RPRInfo.png">
+      <Filter>Resources\Icons\Shelf</Filter>
+    </Image>
+    <Image Include="icons\shelf\RPRQuality.png">
+      <Filter>Resources\Icons\Shelf</Filter>
+    </Image>
+    <Image Include="icons\shelf\RPRSettings.png">
+      <Filter>Resources\Icons\Shelf</Filter>
+    </Image>
+    <Image Include="icons\shelf\RPRSky.png">
+      <Filter>Resources\Icons\Shelf</Filter>
+    </Image>
+    <Image Include="icons\shelf\RPRStart.png">
+      <Filter>Resources\Icons\Shelf</Filter>
+    </Image>
+    <Image Include="icons\shelf\RPRXMLImport.png">
+      <Filter>Resources\Icons\Shelf</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="fireRender.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shaders\rprBlitColor10.fx">
+      <Filter>Resources\Shaders</Filter>
+    </FxCompile>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,348 @@
+// Shared Procedures
+// -----------------------------------------------------------------------------
+
+global proc int hasNodeRPR(string $type)
+{
+	string $names[] = `ls -type $type`;
+	$size = size($names);
+	return $size > 0 ? 1 : 0;
+}
+
+global proc string getNodeRPR(string $type)
+{
+	string $names[] = `ls -type $type`;
+	return $names[0];
+}
+
+global proc updateEnvironmentInterfaceRPR()
+{
+	updateIBLInterfaceRPR();
+	updateSkyInterfaceRPR();
+}
+
+global proc cleanEnvironmentNodesRPR()
+{
+	// Disconnect IBL.
+	string $iblNode[] =
+		`listConnections "RadeonProRenderGlobals.imageBasedLighting"`;
+
+	if (size($iblNode))
+		disconnectAttr ($iblNode[0] + ".message") "RadeonProRenderGlobals.imageBasedLighting";
+
+	// Disconnect Sun / Sky.
+	string $skyNode[] =
+		`listConnections "RadeonProRenderGlobals.sky"`;
+
+	if (size($skyNode))
+		disconnectAttr ($skyNode[0] + ".message") "RadeonProRenderGlobals.sky";
+}
+
+
+// IBL Procedures
+// -----------------------------------------------------------------------------
+
+global proc int hasIBLNodeRPR()
+{
+	return hasNodeRPR("RPRIBL");
+}
+
+global proc string getIBLNodeRPR()
+{
+	return getNodeRPR("RPRIBL");
+}
+
+global proc createIBLNodeRPR()
+{
+	// Show the IBL editor UI if an IBL node already exists in the scene.
+	if (hasIBLNodeRPR())
+	{
+		showIBLEditorRPR();
+		return;
+	}
+
+	// Create, name and scale the IBL node.
+	string $iblNode = `createNode RPRIBL -n RPRIBLShape`;
+	string $parent[] = `listRelatives -p $iblNode`;
+	setAttr ($parent[0] + ".scaleX") 1001.25663706144; //pi*5/10 ... something unique (for hierarchy change tracking)
+	setAttr ($parent[0] + ".scaleY") 1001.25663706144;
+	setAttr ($parent[0] + ".scaleZ") 1001.25663706144;
+	rename $parent[0] RPRIBL;
+
+	// Update the UI.
+	updateIBLInterfaceRPR();
+
+	// Select the node.
+	showIBLEditorRPR();
+}
+
+global proc showIBLEditorRPR()
+{
+	if (!hasIBLNodeRPR())
+		return;
+
+	string $ibl = getIBLNodeRPR();
+	string $parent[] = `listRelatives -p $ibl`;
+
+	select -replace -add $parent[0];
+}
+
+global proc deleteIBLNodeRPR()
+{
+	if (!hasIBLNodeRPR())
+		return;
+
+	string $ibl = getIBLNodeRPR();
+	string $parent[] = `listRelatives -p $ibl`;
+
+	delete $parent;
+
+	updateIBLInterfaceRPR();
+}
+
+global proc updateIBLInterfaceRPR()
+{
+	int $ibl = hasIBLNodeRPR();
+
+	if (`control -exists frCreateIblButton`)
+	{
+		if ($ibl)
+		{
+			button -e -label "Delete"
+				-command deleteIBLNodeRPR
+				frCreateIblButton;
+		}
+		else
+		{
+			button -e
+				-label "Create"
+				-command createIBLNodeRPR
+				frCreateIblButton;
+		}
+	}
+
+	if (`control -exists frOpenIblButton`)
+		control -e -en $ibl frOpenIblButton;
+
+	refreshIBLPortalObjectsRPR();
+}
+
+global proc refreshIBLPortalObjectsRPR()
+{
+	int $ibl = hasIBLNodeRPR();
+	if (((`optionMenuGrp -q -exists "OptionMenuGroupObjectList_IBL"`) == false) || ($ibl == 0))
+		return;
+
+	// List all objects in the scene
+	string $existingItems[] = `optionMenuGrp -q -ill "OptionMenuGroupObjectList_IBL"`;
+	string $oldNode[] = `listConnections -shapes true "RPRIBLShape.portal"`;
+	string $selectedItem = $oldNode[0];
+
+	string $tempItem;
+	for ($tempItem in $existingItems){
+		deleteUI $tempItem;
+	}
+
+	string $allObjects[];
+	string $tempName;
+	$allObjects = `ls -g`;
+
+	menuItem -parent ("OptionMenuGroupObjectList_IBL" + "|OptionMenu") -label "NONE";
+	int $selectedExists = 0;
+	for ($tempName in $allObjects)
+	{
+		if ($tempName != "RPRIBLShape" && $tempName != "RPRSkyShape"){
+			menuItem -parent ("OptionMenuGroupObjectList_IBL" + "|OptionMenu") -label $tempName;
+		}
+		if ($tempName == $selectedItem){
+			$selectedExists = 1;
+		}
+	}
+	if ($selectedExists == 1){
+		optionMenuGrp -e -v $selectedItem "OptionMenuGroupObjectList_IBL";
+	}else{
+		optionMenuGrp -e -v "NONE" "OptionMenuGroupObjectList_IBL";
+	}
+}
+
+
+// Environment Light Procedures
+// -----------------------------------------------------------------------------
+
+global proc int hasEnvLightNodeRPR()
+{
+	return hasNodeRPR("RPREnvLight");
+}
+
+global proc string getEnvLightNodeRPR()
+{
+	return getNodeRPR("RPREnvLight");
+}
+
+global proc createEnvLightNodeRPR()
+{
+	// Show the EnvLight editor UI if an EnvLight node already exists in the scene.
+	if (hasEnvLightNodeRPR())
+	{
+		showEnvLightEditorRPR();
+		return;
+	}
+
+	// Create, name and scale the EnvLight node.
+	string $lNode = `createNode RPREnvLight -n RPREnvLightShape`;
+	string $parent[] = `listRelatives -p $lNode`;
+	setAttr ($parent[0] + ".scaleX") 1001.57079632679; //pi*5/10 ... something unique (for hierarchy change tracking)
+	setAttr ($parent[0] + ".scaleY") 1001.57079632679;
+	setAttr ($parent[0] + ".scaleZ") 1001.57079632679;
+	rename $parent[0] RPREnvLight;
+
+	// Select the node.
+	showEnvLightEditorRPR();
+}
+
+global proc showEnvLightEditorRPR()
+{
+	if (!hasEnvLightNodeRPR())
+		return;
+
+	string $l = getEnvLightNodeRPR();
+	string $parent[] = `listRelatives -p $l`;
+
+	select -replace -add $parent[0];
+}
+
+global proc deleteEnvLightNodeRPR()
+{
+	if (!hasEnvLightNodeRPR())
+		return;
+
+	string $l = getEnvLightNodeRPR();
+	string $parent[] = `listRelatives -p $l`;
+
+	delete $parent;
+}
+
+// Sun / Sky Procedures
+// -----------------------------------------------------------------------------
+
+global proc int hasSkyNodeRPR()
+{
+	return hasNodeRPR("RPRSky");
+}
+
+global proc string getSkyNodeRPR()
+{
+	return getNodeRPR("RPRSky");
+}
+
+global proc createSkyNodeRPR()
+{
+	// Show the Sky editor UI if a Sky node already exists in the scene.
+	if (hasSkyNodeRPR())
+	{
+		showSkyEditorRPR();
+		return;
+	}
+
+	// Create and name the Sky node.
+	string $skyNode = `createNode RPRSky -n RPRSkyShape`;
+	string $parent[] = `listRelatives -p $skyNode`;
+	setAttr ($parent[0] + ".scaleX") 0.94247779607; //pi*3/10 ... something unique (for hierarchy change tracking)
+	setAttr ($parent[0] + ".scaleY") 0.94247779607; //pi*3/10
+	setAttr ($parent[0] + ".scaleZ") 0.94247779607; //pi*3/10
+	rename $parent[0] RPRSky;
+
+	// Update the UI.
+	updateSkyInterfaceRPR();
+
+	// Select the node.
+	showSkyEditorRPR();
+}
+
+global proc showSkyEditorRPR()
+{
+	if (!hasSkyNodeRPR())
+		return;
+
+	string $sky = getSkyNodeRPR();
+	string $parent[] = `listRelatives -p $sky`;
+
+	select -replace -add $parent[0];
+}
+
+global proc deleteSkyNodeRPR()
+{
+	if (!hasSkyNodeRPR())
+		return;
+
+	string $sky = getSkyNodeRPR();
+	string $parent[] = `listRelatives -p $sky`;
+
+	delete $parent;
+
+	updateSkyInterfaceRPR();
+}
+
+global proc updateSkyInterfaceRPR()
+{
+	int $sky = hasSkyNodeRPR();
+
+	if (`control -exists frCreateSkyButton`)
+	{
+		if ($sky)
+		{
+			button -e -label "Delete"
+				-command deleteSkyNodeRPR
+				frCreateSkyButton;
+		}
+		else
+		{
+			button -e
+				-label "Create"
+				-command createSkyNodeRPR
+				frCreateSkyButton;
+		}
+	}
+
+	if (`control -exists frOpenSkyButton`)
+		control -e -en $sky frOpenSkyButton;
+
+	refreshSkyPortalObjectsRPR();
+}
+
+global proc refreshSkyPortalObjectsRPR()
+{
+	int $sky = hasSkyNodeRPR();
+	if (((`optionMenuGrp -q -exists "OptionMenuGroupObjectList_Sky"`) == false) || ($sky == 0))
+		return;
+
+	// List all objects in the scene
+	string $existingItems[] = `optionMenuGrp -q -ill "OptionMenuGroupObjectList_Sky"`;
+	string $oldNode[] = `listConnections -shapes true "RPRSkyShape.portal"`;
+	string $selectedItem = $oldNode[0];
+
+	string $tempItem;
+	for ($tempItem in $existingItems){
+		deleteUI $tempItem;
+	}
+
+	string $allObjects[];
+	string $tempName;
+	$allObjects = `ls -g`;
+
+	menuItem -parent ("OptionMenuGroupObjectList_Sky" + "|OptionMenu") -label "NONE";
+	int $selectedExists = 0;
+	for ($tempName in $allObjects)
+	{
+		if ($tempName != "RPRIBLShape" && $tempName != "RPRSkyShape"){
+			menuItem -parent ("OptionMenuGroupObjectList_Sky" + "|OptionMenu") -label $tempName;
+		}
+		if ($tempName == $selectedItem){
+			$selectedExists = 1;
+		}
+	}
+	if ($selectedExists == 1){
+		optionMenuGrp -e -v $selectedItem "OptionMenuGroupObjectList_Sky";
+	}else{
+		optionMenuGrp -e -v "NONE" "OptionMenuGroupObjectList_Sky";
+	}
+}

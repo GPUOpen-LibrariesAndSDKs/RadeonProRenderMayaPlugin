@@ -1,0 +1,51 @@
+#include "Common.cgh"
+
+// Color texture.
+texture colorTexture : SourceTexture
+<
+	string UIName = "Color Texture";
+>;
+
+// Color texture sampler.
+sampler2D colorSampler = sampler_state
+{
+	Texture = <colorTexture>;
+	MinFilter = Point;
+	MagFilter = Point;
+	MipFilter = Point;
+};
+
+// Color pixel shader.
+struct PS_OUTPUT
+{
+	float4 color : COLOR0;
+};
+
+// Color pixel shader.
+PS_OUTPUT PS_BlitColor(VS_TO_PS_ScreenQuad In)
+{
+	PS_OUTPUT outputStruct;
+
+	// Read color.
+	float4 output = tex2D(colorSampler, In.UV);
+
+	// Divide by iterations.
+	output.r /= output.a;
+	output.g /= output.a;
+	output.b /= output.a;
+	output.a = 1;
+
+	outputStruct.color = output;
+
+	return outputStruct;
+}
+
+// The main technique
+technique Main
+{
+	pass p0
+	{
+		VertexProgram = compile glslv VS_ScreenQuad();
+		FragmentProgram  = compile glslf PS_BlitColor();
+	}
+}

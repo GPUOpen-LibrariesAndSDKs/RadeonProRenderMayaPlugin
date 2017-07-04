@@ -1,0 +1,3477 @@
+// ===========================================================================
+// Copyright 2016 Autodesk, Inc. All rights reserved.
+//
+// Use of this software is subject to the terms of the Autodesk license
+// agreement provided at the time of installation or download, or which
+// otherwise accompanies this software in either electronic or hard copy form.
+// ===========================================================================
+source "colorProfileProcedures";
+
+// Use global variables because MEL do not have a concept of enum or
+// constants. These values are used to define the action to take in
+// the renderable camera menus.
+global int $CAM_MENU_CAMERA     = 1;
+global int $CAM_MENU_STEREOPAIR = 2;
+global int $CAM_MENU_ADD		= 3;
+global int $CAM_MENU_IGNORE     = 4;
+
+
+// ----------------------------------------------------------------------------
+// Utility procedures used by other procedures in this file.
+// Must be used to account for multiple instances of the same tab.
+//
+global proc setParentToCommonTab()
+{
+	// First set the parent to the correct tab layout.
+	// Account for the special "all renderers" master layer layout
+	// when we are using render layers
+	global string $gMasterLayerRendererName;
+	string $renderer = isDisplayingAllRendererTabs() ? $gMasterLayerRendererName : `currentRenderer`;
+	string $tabLayout = rendererTabLayoutName($renderer);
+	if (`layout -exists $tabLayout`)
+	{
+		setParent $tabLayout;
+
+		// Now set the parent to the correct column layout
+		setParent commonTabColumn;
+	}
+}
+
+proc int mayaVersionMinimum(int $mayaVer)
+{
+	int $i = `about -version`;
+	if ($mayaVer <= $i)
+		return 1;
+	else
+		return 0;
+}
+
+
+// ----------------------------------------------------------------------------
+// Code to create and update the file name preview area
+//
+
+proc createTargetFilePreview()
+{
+	string $oldParent = `setParent -query`;
+
+	columnLayout
+		-adjustableColumn true
+		targetFilePreview;
+
+		text
+			-align "left"
+			-font "smallBoldLabelFont"
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPath"))
+			exampleText0;
+		text
+			-align "left"
+			-font "smallBoldLabelFont"
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kFileName"))
+			exampleText1;
+		text
+			-align "left"
+			-font "smallBoldLabelFont"
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kTo"))
+			exampleText2;
+		text
+			-align "left"
+			-font "smallBoldLabelFont"
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kImageSize"))
+			exampleText3;
+
+	setParent $oldParent;
+
+	// This target file preview is affected by a number of attributes.
+	// If any of those attributes change, this preview needs to be updated.
+	//
+	// Here we fill an array with the names of all of the current renderer's
+	// attributes which affect the naming of the target file.
+	//
+	string $attrArray[];
+
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.imageFilePrefix";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.outFormatControl";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.imageFormat";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.imfPluginKey";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.outFormatExt";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.animation";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.imageFormat";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.byFrameStep";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.extensionPadding";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.startFrame";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.endFrame";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.modifyExtension";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.startExtension";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.byExtension";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.periodInExt";
+	$attrArray[size($attrArray)] = "defaultResolution.fields";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.fieldExtControl";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.oddFieldExt";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.evenFieldExt";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.putFrameBeforeExt";
+	$attrArray[size($attrArray)] = "defaultResolution.width";
+	$attrArray[size($attrArray)] = "defaultResolution.height";
+	$attrArray[size($attrArray)] = "defaultResolution.dotsPerInch";
+	$attrArray[size($attrArray)] = "defaultResolution.imageSizeUnits";
+	$attrArray[size($attrArray)] = "defaultResolution.pixelDensityUnits";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.renderVersion";
+
+	// Now we establish scriptJobs to invoke the procedure which updates the
+	// target file preview when any of the above attributes change.
+	//
+	int $i;
+
+	for ($i = 0; $i < size($attrArray); $i++)
+	{
+		scriptJob
+			-attributeChange
+				$attrArray[$i]
+				"updateFireRenderTargetFilePreview"
+			-parent targetFilePreview;
+	}
+
+	scriptJob
+		-parent targetFilePreview
+		-event
+			workspaceChanged
+			"updateFireRenderTargetFilePreview";
+}
+
+global proc updateFireRenderTargetFilePreview()
+{
+	//
+	// Description:
+	//	This procedure is called any time an attribute change occurs which
+	// 	would affect the name(s) of the file(s) that would be created when the
+	// 	user performs a render.
+	//	This procedure updates the lines of text in the General tab that allow
+	//	the user to see what files are going to be created when they render.
+	//
+
+	string $oldParent = `setParent -query`;
+
+	global string $gMasterLayerRendererName;
+	string $renderer = isDisplayingAllRendererTabs() ? $gMasterLayerRendererName : `currentRenderer`;
+	string $tabLayout = rendererTabLayoutName($renderer);
+	if( `tabLayout -exists $tabLayout` )	setParent $tabLayout;
+
+	//
+	// Update the Path portion of the preview.
+	//
+
+	// get the project's image directory
+	//
+	string $imgDir = `workspace -q -fileRuleEntry "images"`;
+	string $fullPath = `workspace -expandName $imgDir`;
+	string $pathLabel = (uiRes("m_createMayaSoftwareCommonGlobalsTab.kNewPath"));
+	$path = `format -s $fullPath $pathLabel`;
+	text -edit -label $path exampleText0;
+
+	//
+	// Update the File Name portion of the preview.
+	//
+
+	string $title1 = (uiRes("m_createMayaSoftwareCommonGlobalsTab.kNewFileName"));
+	string $title2 = (uiRes("m_createMayaSoftwareCommonGlobalsTab.kNewTo"));
+	// TODO: DEFINE FIELDS FOR SW RENDER
+	string $images[] = `renderSettings -fin -lin -lut`;
+	text -edit -label `format -s $images[0] $title1` exampleText1;
+	if ($images[1] != "")
+		text -edit -label `format -s $images[1] $title2` exampleText2;
+	else
+		text -edit -label "" exampleText2;
+
+	//
+	// Update the Image Size portion of the preview.
+	//
+
+	// Get attributes
+	//
+	int $width = `getAttr defaultResolution.width`;
+	int $height = `getAttr defaultResolution.height`;
+	float $dpi = `getAttr defaultResolution.dotsPerInch`;
+	int $sizeUnits = `getAttr defaultResolution.imageSizeUnits`;
+	int $resUnits = `getAttr defaultResolution.pixelDensityUnits`;
+
+	// Default measurement units to inches if pixels selected
+	if( $sizeUnits == 0 ) $sizeUnits = 1;
+
+	global string $gMeasurementUnitsNames[];
+	global string $gResolutionUnitsNames[];
+
+	if (size($gResolutionUnitsNames) == 0)
+	{
+		eval("source resolutionFormats");
+	}
+
+	// Convert from pixels to the correct measurement units
+	float $docWidth = convertMeasurement(
+		convertPixelsToInches( $width, $dpi ),
+		"inches",
+		$gMeasurementUnitsNames[$sizeUnits]
+	);
+	float $docHeight = convertMeasurement(
+		convertPixelsToInches( $height, $dpi ),
+		"inches",
+		$gMeasurementUnitsNames[$sizeUnits]
+	);
+
+	// Convert from DPI to the correct resolution units
+	float $res = convertResolutionMeasurement(
+		$dpi,
+		"pixels/inch",
+		$gResolutionUnitsNames[$resUnits]
+	);
+
+	// Convert to strings, rounding applicable floats to 1 decimal place
+	string $imW = $width;
+	string $imH = $height;
+	string $docW = setDecimalPrecision( $docWidth, 1 );
+	string $docH = setDecimalPrecision( $docHeight, 1 );
+	string $units = resolutionFormats_melToUI($gMeasurementUnitsNames[$sizeUnits]);
+	string $resVal = setDecimalPrecision( $res, 1 );
+	string $resUnitsStr = resolutionFormats_melToUI($gResolutionUnitsNames[$resUnits]);
+
+	string $imageLabel = (uiRes("m_createMayaSoftwareCommonGlobalsTab.kNewImageSize"));
+	string $imageSizeString = ` format -s $imW -s $imH -s $docW -s $docH -s $units -s $resVal -s $resUnitsStr $imageLabel`;
+
+	text -edit -label $imageSizeString exampleText3;
+
+	setParent $oldParent;
+}
+
+global proc insertKeywordMenuCallback(string $token)
+{
+	setParentToCommonTab();
+
+	// if not yet set, then replace name with token
+	string $prefix = `textFieldGrp -query -text mayaSoftwareFileName`;
+	if ($prefix == (uiRes("m_createMayaSoftwareCommonGlobalsTab.kNotSetUsingFilename"))) {
+		textFieldGrp -e -text $token -forceChangeCommand mayaSoftwareFileName;
+	} else {
+		textFieldGrp -e -insertText $token -forceChangeCommand mayaSoftwareFileName;
+	}
+}
+
+global proc createInsertKeywordMenu(string $parent)
+{
+	popupMenu -edit -deleteAllItems $parent;
+
+	setParent -menu $parent;
+
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kFileNameKeywords")) -enable 0;
+	menuItem -divider true ;
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kKeywordScene"))
+		-command "insertKeywordMenuCallback \"<Scene>\"";
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kKeywordLayer"))
+		-command "insertKeywordMenuCallback \"<RenderLayer>\"";
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kKeywordCamera"))
+		-command "insertKeywordMenuCallback \"<Camera>\"";
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kKeywordRPFG"))
+		-command "insertKeywordMenuCallback \"<RenderPassFileGroup>\"";
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kKeywordRenderPass"))
+		-command "insertKeywordMenuCallback \"<RenderPass>\"";
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kKeywordRenderPassType"))
+		-command "insertKeywordMenuCallback \"<RenderPassType>\"";
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kKeywordExtension"))
+		-command "insertKeywordMenuCallback \"<Extension>\"";
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kKeywordVersion"))
+		-command "insertKeywordMenuCallback \"<Version>\"";
+	string $date = `date -format "YY_MM_DD"`;
+	menuItem -label ((uiRes("m_createMayaSoftwareCommonGlobalsTab.kKeywordDate")) + $date)
+		-command ("insertKeywordMenuCallback \""+$date+"\"");
+	string $time = `date -format "hh-mm-ss"`;
+	menuItem -label ((uiRes("m_createMayaSoftwareCommonGlobalsTab.kKeywordTime")) + $time)
+		-command ("insertKeywordMenuCallback \""+$time+"\"");
+}
+
+// ----------------------------------------------------------------------------
+// Code to create and update the Image File Output frame
+//
+proc createFileNamePrefixControl()
+{
+	// Create the control
+	//
+	textFieldGrp
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kFileNamePrefix"))
+		-changeCommand ("changeFireRenderFileNamePrefix")
+		-annotation (uiRes("m_createMayaSoftwareCommonGlobalsTab.kFileNamePrefixAnn"))
+		mayaSoftwareFileName;
+
+	string $popup = `popupMenu -parent mayaSoftwareFileName|field`;
+	popupMenu -edit -postMenuCommand ("createInsertKeywordMenu "+$popup) $popup;
+
+	// connect the label, so we can change its color
+	connectControl -index 1 mayaSoftwareFileName defaultRenderGlobals.imageFilePrefix;
+
+	// Create a scriptJob which will update the control when the value of the
+	// attribute it represents is changed.
+	//
+	scriptJob
+		-parent mayaSoftwareFileName
+		-attributeChange
+			"defaultRenderGlobals.imageFilePrefix"
+			"updateFireRenderFileNamePrefixControl";
+}
+
+global proc changeFireRenderFileNamePrefix()
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	string $prefix = `textFieldGrp -query -text mayaSoftwareFileName`;
+	string $prefixAttr = "defaultRenderGlobals.imageFilePrefix";
+
+	if (	$prefix != (uiRes("m_createMayaSoftwareCommonGlobalsTab.kNotSetUsingFilename"))
+		&& 	isValidFileNamePrefix($prefix))
+	{
+		// The user has set the prefix to something, and it is a valid name, so
+		// we will set the value of the corresponding attribute.
+		//
+		setAttr $prefixAttr -type "string" $prefix;
+	}
+	else
+	{
+		// The user has set the prefix to an invalid value. We will refresh the
+		// UI to show the current value, which has not been changed.
+		//
+		updateFireRenderFileNamePrefixControl();
+	}
+
+	setParent $oldParent;
+}
+
+global proc changeColorProfileEnabled()
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	int $enabled = `checkBoxGrp -query -value1 enableColorProfile`;
+
+	setAttr "defaultRenderGlobals.colorProfileEnabled" $enabled;
+
+	// update the other widgets accordingly
+	updateCommonColorProfile();
+
+	setParent $oldParent;
+}
+
+global proc updateCommonColorProfile()
+{
+	// get the node values
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	int $enabled = `getAttr defaultRenderGlobals.colorProfileEnabled`;
+	int $renderingColorProfile = `getAttr defaultRenderGlobals.renderingColorProfile`;
+	int $inputColorProfile = `getAttr defaultRenderGlobals.inputColorProfile`;
+	int $outputColorProfile = `getAttr defaultRenderGlobals.outputColorProfile`;
+
+	// update the widgets
+	// set the values for the option menus
+	string $inputColorProfileString = colorProfileSettingsMenuItemIntToString($inputColorProfile);
+	optionMenuGrp -e -value $inputColorProfileString inputColorProfile;
+	string $outputColorProfileString = colorProfileSettingsMenuItemIntToString($outputColorProfile);
+	optionMenuGrp -e -value $outputColorProfileString outputColorProfile;
+	// and set their dimmed state
+	optionMenuGrp -e -enable $enabled inputColorProfile;
+	optionMenuGrp -e -enable $enabled outputColorProfile;
+
+	// and update the check box
+	checkBoxGrp -e -value1 $enabled enableColorProfile;
+}
+
+global proc changeInputColorProfile()
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	string $valueString = `optionMenuGrp -query -value inputColorProfile`;
+	int $value = colorProfileSettingsMenuItemStringToInt($valueString);
+
+	setAttr "defaultRenderGlobals.inputColorProfile" $value;
+
+	// update the other widgets accordingly
+	updateCommonColorProfile();
+
+	setParent $oldParent;
+}
+
+global proc changeOutputColorProfile()
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	string $valueString = `optionMenuGrp -query -value outputColorProfile`;
+	int $value = colorProfileSettingsMenuItemStringToInt($valueString);
+
+	setAttr "defaultRenderGlobals.outputColorProfile" $value;
+
+	// update the other widgets accordingly
+	updateCommonColorProfile();
+
+	setParent $oldParent;
+}
+
+global proc updateFireRenderFileNamePrefixControl()
+//
+//  Procedure Name:
+//      changeFileName
+//
+//  Description:
+//		This procedure is called when the user changes the file
+//		prefix.  It sets the internal representation of the prefix
+//		and then updates the example to show the changes.
+//
+{
+	string $oldParent = `setParent -query`;
+
+	setParentToCommonTab();
+
+	string $prefixAttr = "defaultRenderGlobals.imageFilePrefix";
+
+	string $prefix = `getAttr $prefixAttr`;
+
+	if (size($prefix) > 0)
+	{
+		textFieldGrp -edit -text $prefix mayaSoftwareFileName;
+	}
+	else
+	{
+		textFieldGrp -edit
+			-text (uiRes("m_createMayaSoftwareCommonGlobalsTab.kNotSetUsingFilename"))
+			mayaSoftwareFileName;
+	}
+
+	setParent $oldParent;
+}
+
+proc createFileNameFormatControl()
+{
+	optionMenuGrp
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kFrameAnimationExt"))
+		-changeCommand ("changeFireRenderFileNameFormat")
+		extMenu;
+
+		menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt1"));
+		menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt2"));
+		menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt3")) mayaSoftwareNameDotFrameDotExtension;
+		menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt4")) mayaSoftwareNameDotExtensionDotFrame;
+		menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt5")) mayaSoftwareNameDotFrame;
+		menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt6")) mayaSoftwareFrameDotExtension;
+		menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt7")) mayaSoftwareNameUnderFrameDotExtension;
+		menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt8")) mayaSoftwareMultiFrame;
+		menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt9"))
+			mayaSoftwareMultiFrameDotExtension;
+
+	string $attrArray[];
+
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.outFormatControl";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.animation";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.periodInExt";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.putFrameBeforeExt";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.imageFormat";
+	$attrArray[size($attrArray)] = "defaultRenderGlobals.imfPluginKey";
+
+	// Now we establish scriptJobs to invoke the procedure which updates the
+	// file name format control when any of the above attributes change.
+	//
+	int $i;
+
+	for ($i = 0; $i < size($attrArray); $i++)
+	{
+		scriptJob
+			-attributeChange
+				$attrArray[$i]
+				"updateFireRenderFileNameFormatControl"
+			-parent extMenu;
+	}
+}
+
+global proc changeFireRenderFileNameFormat()
+//
+//  Procedure Name:
+//      changeExtension
+//
+//  Description:
+//		This procedure is called when the user changes the format
+//		of the file extension.  It sets the internal representation
+//		and then updates the example to show the changes.
+//
+//	Note:
+//		Although the user sees only one control to change the
+//		extension, it actually affects more than one value.
+//
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	int $item = `optionMenuGrp -q -sl extMenu`;
+
+	setMayaSoftwareFrameExt($item, 0);
+
+	// Update the batch render window if it exists
+	//
+	if (`exists updateBatchRenderWindowTitle`)
+	{
+		updateBatchRenderWindowTitle();
+	}
+
+	setParent $oldParent;
+}
+
+global proc updateFireRenderFileNameFormatControl()
+{
+	string $oldParent = `setParent -query`;
+
+	setParentToCommonTab();
+
+	int $frameBeforeExt	= `getAttr "defaultRenderGlobals.putFrameBeforeExt"`;
+	int $useAnim 		= `getAttr "defaultRenderGlobals.animation"`;
+	int $imageUse 		= `getAttr "defaultRenderGlobals.outFormatControl"`;
+	int $period 		= `getAttr "defaultRenderGlobals.periodInExt"`;
+
+	int $multiframe = multiframeFormat(getImfImageType());
+	int $psdFormat = 0;
+	if (`getAttr defaultRenderGlobals.imageFormat` == 31) // Check if PSD format
+	{
+		$multiframe = 0;
+		$psdFormat = 1;
+	}
+	if (`getAttr defaultRenderGlobals.imageFormat` == 36) // Check if PSD format
+	{
+		$multiframe = 0;
+		$psdFormat = 1;
+	}
+	int $activeMenuItem = 0;
+
+	// Update Frame/Animation Ext menuItems and enable only the relevant ones.
+	//
+	int $notMultiFrameOrPsd = !$multiframe || $psdFormat;
+
+	menuItem -edit -enable ($notMultiFrameOrPsd) mayaSoftwareNameDotFrameDotExtension;
+	menuItem -edit -enable ($notMultiFrameOrPsd) mayaSoftwareNameDotExtensionDotFrame;
+	menuItem -edit -enable ($notMultiFrameOrPsd) mayaSoftwareNameDotFrame;
+	menuItem -edit -enable ($notMultiFrameOrPsd) mayaSoftwareFrameDotExtension;
+	menuItem -edit -enable ($notMultiFrameOrPsd) mayaSoftwareNameUnderFrameDotExtension;
+	menuItem -edit -enable ($multiframe) mayaSoftwareMultiFrame;
+	menuItem -edit -enable ($multiframe) mayaSoftwareMultiFrameDotExtension;
+
+	if ($multiframe)
+	{
+		if ($useAnim)
+		{
+			if ($imageUse == 1)     // no extension
+			{
+				$activeMenuItem = 8;
+			}
+			else
+			{
+				$activeMenuItem = 9;
+			}
+		}
+		else
+		{
+			if ($imageUse == 1)     // no extension
+			{
+				$activeMenuItem = 1;
+			}
+			else
+			{
+				$activeMenuItem = 2;
+			}
+		}
+	}
+	else
+	{
+		if ($useAnim)
+		{
+			if ($imageUse == 1)
+			{
+				$activeMenuItem = 5;
+			}
+			else
+			{
+				if ($frameBeforeExt == 0)
+				{
+					$activeMenuItem = 4;
+				}
+				else
+				{
+					if ($period == 1) // period in extension
+					{
+						$activeMenuItem = 3;
+					}
+					else if ($period == 2) // underscore in extension
+					{
+						$activeMenuItem = 7;
+					}
+					else // $period == 0
+					{
+						$activeMenuItem = 6;
+					}
+				}
+			}
+		}
+		else
+		{
+			if ($imageUse == 1)
+			{
+				$activeMenuItem = 1;
+			}
+			else
+			{
+				$activeMenuItem = 2;
+			}
+		}
+	}
+
+	optionMenuGrp -edit -sl $activeMenuItem extMenu;
+
+	// Also update the frame number controls to enable/disable them according
+	// to whether or not they are being used.
+	//
+	updateFireRenderFrameNumberControls();
+
+	setParent $oldParent;
+}
+
+global proc updateMultiCamCustomToken()
+{
+
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	int $isMenuEnable = `attrEnumOptionMenuGrp -query -enable multiCamNamingMenu`;
+	int $isMenuCustom = `getAttr defaultRenderGlobals.multiCamNamingMode`;
+	if ($isMenuCustom == 0 || $isMenuEnable == 0)
+	{
+		attrControlGrp -edit -enable false multiCamCustomToken;
+	}
+	else
+	{
+	attrControlGrp -edit -enable true multiCamCustomToken;
+	}
+
+	setParent $oldParent;
+}
+
+global proc updateFireRenderMultiCameraBufferNamingMenu()
+{
+	if(`currentRenderer` == "vray")
+		return;
+
+
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	//If enable
+	int $enable = 0;
+	if (  currentRenderer() == "mentalRay" &&
+		  `getAttr defaultRenderGlobals.imageFormat` == 51 &&
+		  `getAttr defaultRenderGlobals.imfPluginKey` == "exr" )
+		{
+		//go on checking if there is any render pass connected to the active layer
+		string $currentLayer = `editRenderLayerGlobals -q -currentRenderLayer`;
+		int $connectedPassNum =
+			  size(`connectionInfo -destinationFromSource ($currentLayer + ".renderPass")`);
+
+		if($connectedPassNum > 0)
+			  $enable = 1 ;
+	}
+
+	attrEnumOptionMenuGrp -edit -enable $enable multiCamNamingMenu;
+
+	updateMultiCamCustomToken();
+
+	setParent $oldParent;
+
+
+}
+
+//When layers are added or deleted ,this callback will be called.
+//This function adds script jobs for layer.renderPass connectionChange
+//for all exists layers.
+global proc updateLayerChangeMultiCameraNamingScriptJob()
+{
+  if (!`objExists renderLayerManager`) {
+	return;
+  }
+
+  int $firstScriptJob = true;
+  string $allLayers[] = `listConnections renderLayerManager.renderLayerId`;
+
+  for($layer in $allLayers)
+  {
+	//when the relation between a renderpass and a layer changes,
+	//the callback will be invoked
+	//
+	if($firstScriptJob)
+	{
+	  scriptJob -replacePrevious -parent "multiCamNamingMenu"
+	-connectionChange ($layer + ".renderPass")
+	"updateFireRenderMultiCameraBufferNamingMenu";
+
+	  $firstScriptJob = false;
+	}
+	else
+	{
+	  scriptJob -parent "multiCamNamingMenu"
+	-connectionChange ($layer + ".renderPass")
+	"updateFireRenderMultiCameraBufferNamingMenu";
+	}
+  }
+}
+
+
+//Create Automatic/Custom Enum Menu control for Multiple camera buffer naming
+proc createMultiCameraNamingMenuControl()
+{
+	//If enable
+	int $enable = 0;
+	if (  currentRenderer() == "mentalRay" &&
+		  `getAttr defaultRenderGlobals.imageFormat` == 51 &&
+		  `getAttr defaultRenderGlobals.imfPluginKey` == "exr" )
+		{
+			$enable = 1 ;
+	}
+
+
+	string $parent = `setParent -query`;
+
+	// Delete the control if it already exists
+	//
+	string $fullPath = $parent + "|multiCamNamingMenu";
+	if (`layout -exists $fullPath`) {
+		deleteUI $fullPath;
+	}
+
+	attrEnumOptionMenuGrp -attribute "defaultRenderGlobals.multiCamNamingMode"
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kMultiCamNamingMenu"))
+		-annotation (uiRes("m_createMayaSoftwareCommonGlobalsTab.kMutiCamNamingMenuAnnotation"))
+		-enumeratedItem 0 (uiRes("m_createMayaSoftwareCommonGlobalsTab.kAutomaticMultiCamNaming"))
+				-enumeratedItem 1 (uiRes("m_createMayaSoftwareCommonGlobalsTab.kCustomMultiCamNaming"))
+		-enable $enable
+		multiCamNamingMenu;
+
+	//add callback for imageFormat changing
+	scriptJob
+		-parent $parent
+		-attributeChange "defaultRenderGlobals.imageFormat"
+		"updateFireRenderMultiCameraBufferNamingMenu";
+
+	//add callback for imfPlugKey changing
+	scriptJob
+		-parent $parent
+		-attributeChange "defaultRenderGlobals.imfPluginKey"
+		"updateFireRenderMultiCameraBufferNamingMenu";
+
+	//add callback for current render layer changing
+	scriptJob
+		-parent $parent
+		-event "renderLayerManagerChange"
+		"updateFireRenderMultiCameraBufferNamingMenu";
+
+	//add callback for layer's render pass connection changing
+	scriptJob
+		-parent $parent
+		-event "renderLayerChange"
+		"updateLayerChangeMultiCameraNamingScriptJob";
+
+	//This function should be called once first, because renderLayerchange event
+	//will not trigger unless we do some modify to layers(add or remove).
+	updateLayerChangeMultiCameraNamingScriptJob();
+}
+
+global proc setTokenKeywordMenuCallback(string $token)
+{
+
+	textFieldGrp -e -text $token -forceChangeCommand multiCamCustomToken;
+}
+
+global proc insertTokenKeywordMenuCallback(string $token)
+{
+
+	textFieldGrp -e -insertText $token -forceChangeCommand multiCamCustomToken;
+}
+
+
+global proc createInsertCustomTokenKeywordMenu(string $parent)
+{
+	popupMenu -edit -deleteAllItems $parent;
+
+	setParent -menu $parent;
+
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kTokenKeywordScene"))
+		-command "insertTokenKeywordMenuCallback \"<Scene>\"";
+
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kTokenKeywordRenderLayer"))
+		-command "insertTokenKeywordMenuCallback \"<RenderLayer>\"";
+
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kTokenKeywordRenderPass"))
+		-command "insertTokenKeywordMenuCallback \"<RenderPass>\"";
+
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kTokenKeywordCamera"))
+		-command "insertTokenKeywordMenuCallback \"<Camera>\"";
+
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kTokenKeywordRenderPassGroupName"))
+		-command "insertTokenKeywordMenuCallback \"<RenderPassFileGroup>\"";
+
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kTokenKeywordRenderPassType"))
+		-command "insertTokenKeywordMenuCallback \"<RenderPassType>\"";
+}
+
+//This function gives an early check for the current custom token, because some unsuitable
+//custom string construct will cause buffer name conflicts and the result is overwritting
+//each other.
+//Here we simplly check if <RenderPass> token exists, if not we issue a warning.
+global proc validMultiCamBufferNamingCustomToken()
+{
+	string $customToken = `getAttr defaultRenderGlobals.bufferName`;
+	if (`match ".*<RenderPass>.*" $customToken` == "" )
+	{
+		warning (uiRes("m_createMayaSoftwareCommonGlobalsTab.kBufferNameConflictsWarning"));
+	}
+
+	textFieldGrp -edit -text $customToken multiCamCustomToken;
+}
+
+global proc multiCamCustomTokenChanged()
+{
+	string $value = `textFieldGrp -q -text multiCamCustomToken`;
+	setAttr -type "string" defaultRenderGlobals.bufferName $value;
+}
+
+//Create Multiple Camera buffer naming string text field control
+proc createMultiCameraNamingCustomToken()
+{
+	string $parent = `setParent -query`;
+
+	// Delete the control if it already exists
+	//
+	string $fullPath = $parent + "|multiCamCustomToken";
+	if (`layout -exists $fullPath`) {
+		deleteUI $fullPath;
+	}
+
+	textFieldGrp
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kMultiCamCustomtoken"))
+		-annotation (uiRes("m_createMayaSoftwareCommonGlobalsTab.kMultiCamCustomtokenxAnn"))
+		-enable false
+		-changeCommand "multiCamCustomTokenChanged"
+		multiCamCustomToken;
+
+	// connect the label, so we can change its color
+	connectControl -index 1 multiCamCustomToken defaultRenderGlobals.bufferName;
+
+	validMultiCamBufferNamingCustomToken();
+
+	string $popup = `popupMenu -parent multiCamCustomToken`;
+	popupMenu -edit -postMenuCommand ("createInsertCustomTokenKeywordMenu "+$popup) $popup;
+
+	//add callback for Multiple camera buffer naming menu changing
+	scriptJob
+		-parent $parent
+		-attributeChange "defaultRenderGlobals.multiCamNamingMode"
+		"updateMultiCamCustomToken";
+
+	//add callback for new custom string setting
+	scriptJob
+		-parent $parent
+		-attributeChange "defaultRenderGlobals.bufferName"
+		"validMultiCamBufferNamingCustomToken";
+}
+
+
+proc createUseCustomExtensionControl()
+{
+	checkBoxGrp
+		-numberOfCheckBoxes 1
+		-label ""
+		-label1 (uiRes("m_createMayaSoftwareCommonGlobalsTab.kUseCustomExtension"))
+		-changeCommand "changeFireRenderUseCustomExtension"
+		useCustomExtensionCtrl;
+
+	scriptJob
+		-parent useCustomExtensionCtrl
+		-attributeChange "defaultRenderGlobals.outFormatControl"
+		"updateFireRenderUseCustomExtensionControl";
+}
+
+global proc updateFireRenderUseCustomExtensionControl()
+{
+	string $oldParent = `setParent -query`;
+
+	setParentToCommonTab();
+
+	int $useImage = (`getAttr "defaultRenderGlobals.outFormatControl"` != 1);
+
+	checkBoxGrp
+		-edit
+		-value1 (`getAttr "defaultRenderGlobals.outFormatControl"` == 2)
+		-enable $useImage
+		useCustomExtensionCtrl;
+
+	setParent $oldParent;
+}
+
+global proc changeFireRenderUseCustomExtension()
+{
+// TODO: Update docs
+//
+//  Procedure Name:
+//      changeCustomExtensionCheck
+//
+//  Description:
+//		This procedure is called when the user turns the custom
+//		extension on or off.  It sets the internal representation
+//		and then updates the example to show the changes.
+//
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	int $isOn = `checkBoxGrp -query -value1 useCustomExtensionCtrl`;
+
+	if ($isOn)
+	{
+		setAttr defaultRenderGlobals.outFormatControl 2;
+	}
+	else
+	{
+		// We have to figure out if there should be an extension
+		// at all or not.
+		//
+		int $item = `optionMenuGrp -query -select extMenu`;
+
+		if ($item == 1 || $item == 5)
+		{
+			setAttr defaultRenderGlobals.outFormatControl 1;
+		}
+		else
+		{
+			setAttr defaultRenderGlobals.outFormatControl 0;
+		}
+	}
+
+	setParent $oldParent;
+}
+
+proc createCustomExtensionControl()
+{
+	attrControlGrp
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExtension"))
+		-attribute defaultRenderGlobals.outFormatExt
+		userExt;
+
+	connectControl -index 1 userExt defaultRenderGlobals.outFormatExt;
+
+	scriptJob
+		-parent userExt
+		-attributeChange "defaultRenderGlobals.outFormatControl"
+		"updateFireRenderCustomExtensionControl";
+}
+
+global proc updateFireRenderCustomExtensionControl()
+{
+	string $oldParent = `setParent -query`;
+
+	setParentToCommonTab();
+
+	// TODO: Find a better name for value1
+	int $useImage = (`getAttr "defaultRenderGlobals.outFormatControl"` != 1);
+	int $value1 = (`getAttr "defaultRenderGlobals.outFormatControl"` == 2);
+	int $useExt = $useImage && $value1;
+
+	attrControlGrp
+		-edit
+		-enable $useExt
+		userExt;
+
+	setParent $oldParent;
+}
+
+global proc updateDefaultRenderGlobalsEncodingFromIndex()
+{
+	string $value = `optionMenuGrp -q -value renderGlobalsEncoding`;
+	setAttr defaultRenderGlobals.encoding -type "string" $value;
+}
+
+proc enableCompressorbutton(int $imgFmt)
+{
+	if(`about -mac`) {
+		// 22 is Quicktime (qt)
+		button -e -enable ($imgFmt == 22) renderGlobalsCompression;
+	}
+	else if (`about -windows`) {
+		// 23 is AVI
+		button -e -enable ($imgFmt == 23) renderGlobalsCompression;
+	}
+	if (mayaVersionMinimum(2016) && !`about -mac` ) {
+		// 22 is Quicktime (qt)
+		optionMenuGrp -e -enable ($imgFmt == 22) renderGlobalsEncoding;
+		intSliderGrp -e -enable ($imgFmt == 22) renderGlobalsQuality;
+		if ( $imgFmt == 22 ) {
+			if ( !`objExists defaultRenderGlobals.encoding` ) {
+				addAttr -sn encoding -ln encoding -dt "string" defaultRenderGlobals;
+			}
+			if ( !`objExists defaultRenderGlobals.encodingIndex` ) {
+				addAttr -sn encodingIndex -ln encodingIndex -at long defaultRenderGlobals;
+			}
+			if ( !`objExists defaultRenderGlobals.encodingQuality` ) {
+				addAttr -sn encodingQuality -ln encodingQuality -at long -min 0 -max 100 defaultRenderGlobals;
+			}
+			updateDefaultRenderGlobalsEncodingFromIndex();
+			string $parent = `setParent -query renderGlobalsEncoding`;
+			scriptJob
+				-parent $parent -replacePrevious
+				-attributeChange
+					"defaultRenderGlobals.encodingIndex"
+					"updateDefaultRenderGlobalsEncodingFromIndex";
+		}
+	}
+
+	// ADSK_CLR_MGT_BEGIN
+
+	if (mayaVersionMinimum(2016))
+	{
+		string $currentRenderer = currentRenderer();
+		// 40 is EXR
+		// hide the general compression button and
+		// show the exr option menus
+		int $showExr = ($imgFmt == 40 && $currentRenderer == "mayaHardware2");
+		rowLayout -e -visible (!$showExr) renderGlobalsCompressionLayout;
+		optionMenuGrp -e -visible $showExr EXRCompressionMenu;
+		optionMenuGrp -e -visible $showExr EXRPixelTypeMenu;
+	}
+
+	// ADSK_CLR_MGT_END
+}
+
+proc createCompressorControl(int $item)
+{
+	string $currentRenderer = currentRenderer();
+	if( $currentRenderer == "mentalRay" )
+		return;
+
+	string $cmd = "playblast -codecOptions";
+	if (`about -mac`) {
+		$cmd = "movieCompressor -softwareOptions";
+	}
+	rowLayout -nc 2 renderGlobalsCompressionLayout;
+	text -label "";
+	button -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kCompression")) -enable false -c $cmd renderGlobalsCompression;
+	setParent ..;
+
+	if (mayaVersionMinimum(2016) && !`about -mac` ) {
+		optionMenuGrp -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kEncoding")) renderGlobalsEncoding;
+		intSliderGrp -field true -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kQuality")) -min 0 -max 100 -step 10 renderGlobalsQuality;
+
+		connectControl -index 2 renderGlobalsEncoding defaultRenderGlobals.encodingIndex;
+		connectControl -index 2 renderGlobalsQuality defaultRenderGlobals.encodingQuality;
+		connectControl -index 3 renderGlobalsQuality defaultRenderGlobals.encodingQuality;
+
+		// only quicktime uses this menu currently so build the menu once
+		//
+		string $encodings[] = `playblast -format "qt" -q -compression`;
+		if ( size($encodings) == 0 ) {
+			$encodings[0] = "none";
+		}
+		int $num = size($encodings);
+		int $i;
+		for ( $i=0; $i<$num; $i++  ) {
+			menuItem -collection renderGlobalsEncoding -label $encodings[$i] -data $i;
+		}
+	}
+
+	// ADSK_CLR_MGT_BEGIN
+
+	// EXR compression options
+	if (mayaVersionMinimum(2016))
+	{
+		optionMenuGrp
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kEXRCompression"))
+			EXRCompressionMenu;
+
+		global string $imgEXRCompression[];
+		int $length = size($imgEXRCompression);
+		int $i = 0;
+		for ($i = 0; $i < $length; $i++)
+		{
+			menuItem -label $imgEXRCompression[$i] -data $i;
+		}
+
+		// connect the menu, so it will always match the attribute
+		connectControl -index 2 EXRCompressionMenu defaultRenderGlobals.exrCompression;
+
+		// EXR compression options
+		optionMenuGrp
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kEXRPixelType"))
+			EXRPixelTypeMenu;
+
+		global string $imgEXRPixelType[];
+		$length = size($imgEXRPixelType);
+		for ($i = 0; $i < $length; $i++)
+		{
+			menuItem -label $imgEXRPixelType[$i] -data $i;
+		}
+
+		// connect the menu, so it will always match the attribute
+		connectControl -index 2 EXRPixelTypeMenu defaultRenderGlobals.exrPixelType;
+	}
+	// ADSK_CLR_MGT_END
+
+	enableCompressorbutton(`getAttr defaultRenderGlobals.imageFormat`);
+}
+
+global proc buildFireRenderImageFormatsMenu(
+	int $wantVector,
+	int $wantMovie,
+	int $wantSixteen,
+	int $wantPSDLayered,
+	int $wantQuantel
+	)
+{
+	global string $imgExt[];
+	if (size( $imgExt ) == 0) {
+		// If the file format array has not been initialized yet, do so.
+		// This routine may be called in dynPaintMenus.mel during the
+		// file save for PFX canvas images.
+		createImageFormats();
+	}
+
+	if ($wantSixteen && `about -evalVersion`) {
+		$wantSixteen = false;
+	}
+
+	if($wantVector)
+	{
+		int $enable = true;
+		if (`about -evalVersion`) {
+			// Disable unsupported vector format menuItems in PLE.
+			//
+			$enable = false;
+		}
+
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kMacromediaSWF")) 			      -data 60 -enable $enable;
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kSwift3DImporter")) 		      -data 63 -enable $enable;
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kEncapsulatedPostscript")) -data 9  -enable $enable;
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kAdobeIllustrator"))        -data 61 -enable $enable;
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kSVG")) 						                  -data 62 -enable $enable;
+		menuItem -d true -data 999;
+	}
+
+	menuItem -label (uiRes("m_buildImageFormatsMenu.kAliasPIX")) 			          -data 6;
+	if ($wantMovie && `about -nt`) {
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kAVI")) 				              -data 23;
+	}
+	menuItem -label (uiRes("m_buildImageFormatsMenu.kCineon")) 				          -data 11;
+	menuItem -label (uiRes("m_buildImageFormatsMenu.kDDS")) 					              -data 35;
+	if (!$wantVector)
+	{
+		// It's already in the vector formats
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kEPS")) 				              -data 9;
+	}
+	menuItem -label (uiRes("m_buildImageFormatsMenu.kGIF")) 					              -data 0;
+	menuItem -label (uiRes("m_buildImageFormatsMenu.kJPEG")) 				              -data 8;
+	if (`about -mac`) {
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kMacPaint")) 		          -data 30;
+	}
+	menuItem -label (uiRes("m_buildImageFormatsMenu.kMayaIFF")) 			          -data 7;
+	if ($wantSixteen) {
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kMaya16IFF")) 	          -data 10;
+	}
+	menuItem -label (uiRes("m_buildImageFormatsMenu.kPSD")) 					              -data 31;
+	if ($wantPSDLayered) {
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kPSDLayered")) 	          -data 36;
+	}
+
+	menuItem -label (uiRes("m_buildImageFormatsMenu.kPNG")) 					              -data 32;
+
+	if ($wantQuantel) {
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kQuantel")) 			          -data 12;
+	}
+	if (`about -mac`) {
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kQuickDraw")) 		      -data 33;
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kQuicktimeImage"))    -data 34;
+	}
+	if ( $wantMovie ) {
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kQuicktimeMovie"))     -data 22;
+	}
+	menuItem -label (uiRes("m_buildImageFormatsMenu.kRLA")) 					              -data 2;
+	menuItem -label (uiRes("m_buildImageFormatsMenu.kSGI")) 					              -data 5;
+	if ($wantSixteen) {
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kSGI16")) 			              -data 13;
+	}
+	menuItem -label (uiRes("m_buildImageFormatsMenu.kSoftImage")) 			          -data 1;
+	menuItem -label (uiRes("m_buildImageFormatsMenu.kTarga")) 			 	              -data 19;
+	menuItem -label (uiRes("m_buildImageFormatsMenu.kTiff"))  				              -data 3;
+	if ($wantSixteen) {
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kTiff16"))  				      -data 4;
+	}
+	menuItem -label (uiRes("m_buildImageFormatsMenu.kWindowsBitmap"))  		  -data 20;
+
+	// ADSK_CLR_MGT_BEGIN
+	// 40 is EXR
+	string $currentRenderer = currentRenderer();
+	if(mayaVersionMinimum(2016) && (( $currentRenderer == "mayaHardware2" ) || ($currentRenderer == "FireRender"))) {
+		menuItem -label (uiRes("m_buildImageFormatsMenu.kEXR"))  		  			  -data 40;
+	}
+
+	// ADSK_CLR_MGT_END
+
+	// Add the IMF plug-in items
+	global string $imfPlugInKey[];  // This is the unique imf keyword
+	global string $imfPlugInExt[];  // File extension
+	int $size = size($imfPlugInKey);
+
+	if ($size == 0) return;
+
+	int $i;
+	$val = 1000;
+	menuItem -d true;
+	for ($i=0; $i<$size; $i++) {
+		string $imfPluginName = `imfPlugins -q -pn $imfPlugInKey[$i]`;
+		menuItem -label ($imfPluginName + " (" + $imfPlugInExt[$i] + ")") -data $val;
+		$val++;
+	}
+}
+
+global proc string createFireRenderImageFormatControl()
+{
+	string $currentRenderer = currentRenderer();
+	string $parent = `setParent -query`;
+
+	// Delete the control if it already exists
+	//
+	string $fullPath = $parent + "|imageMenuMayaSW";
+	if (`layout -exists $fullPath`) {
+		deleteUI $fullPath;
+	}
+
+	optionMenuGrp
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kImageFormatMenu"))
+		-changeCommand "changeFireRenderImageFormat"
+		imageMenuMayaSW;
+
+	int $isVector = 0;
+	if( $currentRenderer == "mayaVector" )
+		$isVector = 1;
+
+	buildFireRenderImageFormatsMenu($isVector, 0, 1, 1, 1);
+
+	// connect the label, so we can change its color
+	connectControl -index 1 imageMenuMayaSW defaultRenderGlobals.imageFormat;
+	// connect the menu, so it will always match the attribute
+	connectControl -index 2 imageMenuMayaSW defaultRenderGlobals.imageFormat;
+
+	scriptJob
+		-parent $parent
+		-attributeChange
+			"defaultRenderGlobals.imageFormat"
+			"updateFireRenderImageFormatControl";
+
+	return "imageMenuMayaSW";
+}
+
+global proc updateFireRenderImageFormatControl()
+{
+	string $oldParent = `setParent -query`;
+
+	setParentToCommonTab();
+
+	int $imageNum = `getAttr "defaultRenderGlobals.imageFormat"`;
+	string $key = `getAttr "defaultRenderGlobals.imfkey"`;
+	string $items[] = `optionMenuGrp -q -itemListShort imageMenuMayaSW`;
+	int $i = 0;
+
+	int $found = 0;
+
+	global string $imfPlugInKey[];
+	for ($i=0; $i < size($items); $i++) {
+		// Skip dividers, because there is not data associated
+		if (`menuItem -q -divider $items[$i]`) continue;
+
+		int $val = `menuItem -q -data $items[$i]`;
+		if (($imageNum == 50) && ($val>=1000) && ($key == $imfPlugInKey[$val-1000])) {
+			$found = 1;
+			break;
+		} else if ($val == $imageNum) {
+			$found = 1;
+			break;
+		}
+	}
+
+	// could not find the corresponding image format. fall back to iff.
+	if (!$found) {
+		$imageNum = 7;						// Iff
+		for ($i=0; $i < size($items); $i++) {
+			int $val = `menuItem -q -data $items[$i]`;
+			if ($val == 7) {
+				$found = 1;
+				break;
+			}
+		}
+		// If Iff is not supported, pick the first format available.
+		if (!$found) { $i = 0; $imageNum = `menuItem -q -data $items[$i]`; }
+
+		setAttr defaultRenderGlobals.imageFormat $imageNum;
+		updateFireRenderImageFormatControl();
+	}
+
+	// Workaround for bug 233144:
+	//		Somehow when the scriptJob executes this function on Mac,
+	//		the parent has been incorrectly set
+	//
+	if( `layout -exists $oldParent` )
+		setParent $oldParent;
+
+	optionMenuGrp -edit -sl ($i+1) imageMenuMayaSW;
+	enableCompressorbutton($imageNum);
+
+	//update the Multiple camera frame buffer naming control
+	updateFireRenderMultiCameraBufferNamingMenu();
+}
+
+global proc changeFireRenderImageFormat()
+{
+//
+//  Procedure Name:
+//      changeImageFormat
+//
+//  Description:
+//		This procedure is called when the user changes the type of
+//		image that will be written out.  It sets the internal
+//		representation and then updates the example to show the changes.
+//
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+	if (size(`optionMenuGrp -q -v imageMenuMayaSW`) == 0) {
+		// Divider is selected. Its label (or value) is null.
+		// Switch imageFormat to 7 (Maya IFF)
+		//
+		setAttr defaultRenderGlobals.imageFormat 7;
+		setAttr defaultRenderGlobals.imfkey -type "string" "";
+		updateFireRenderImageFormatControl();
+	}
+
+	int $item = `optionMenuGrp -q -sl imageMenuMayaSW` - 1;
+
+	setImageFormat();
+
+	enableCompressorbutton(`getAttr defaultRenderGlobals.imageFormat`);
+
+	// Check if the image format is IFF.
+	//
+	// Note: there are two IFF image types. One for 8 bit images
+	// and one for 16 bit images. They both have an imgExt of iff.
+
+	if (getImfImageType() != "iff")
+	{
+		int $useBlur = `getAttr defaultRenderGlobals.motionBlur`;
+		int $blur2d = (`getAttr defaultRenderGlobals.motionBlurType` == 0);
+		int $keepMotionVector = (`getAttr defaultRenderGlobals.keepMotionVector` == 1);
+		if ($useBlur && $blur2d && $keepMotionVector)
+		{
+			warning (uiRes("m_createMayaSoftwareCommonGlobalsTab.kNonIFFImageFormatNotSupported"));
+			// Set globals imageFormat to Maya IFF
+			setAttr defaultRenderGlobals.imageFormat 7;
+		}
+	}
+
+	int $multiframe = multiframeFormat(getImfImageType());
+	if ($multiframe)
+	{
+		setAttr defaultRenderGlobals.animation 1;
+	}
+
+	// Update the batch render window if it exists.
+	if (`exists updateBatchRenderWindowTitle`)
+	{
+		updateBatchRenderWindowTitle();
+	}
+
+	setParent $oldParent;
+}
+
+// Return the camera shape from this dag object
+proc string cameraShape(string $dag)
+{
+	if (`objectType -isa "transform" $dag`) {
+		string $shapes[] = `listRelatives -shapes -path -noIntermediate -type "camera" $dag`;
+		if (size($shapes) > 0)
+			return $shapes[0];
+	}
+	return $dag;
+}
+
+// Callback used when the user chnaged a renderable camera.
+// $camera is the previous camera
+// $cameraMode was its type
+// $menu is the menu item used for this change
+global proc FireRenderChangedCamera(string $camera,
+									  int $cameraMode,
+									  string $menu)
+{
+	global int $CAM_MENU_CAMERA;
+	global int $CAM_MENU_STEREOPAIR;
+	global int $CAM_MENU_ADD;
+	global int $CAM_MENU_IGNORE;
+
+	int $data = $CAM_MENU_CAMERA;
+
+	if ($menu != "") {
+		int $sel = `optionMenuGrp -q -select $menu` - 1;
+		string $items[] = `optionMenuGrp -q -itemListShort $menu`;
+		$data = `menuItem -query -data $items[$sel]`;
+	}
+
+	if ($data == $CAM_MENU_IGNORE) {
+		// Make sure to reselect the first entry, in case use clicked
+		// on the separator.
+		optionMenuGrp -edit -select 1 $menu;
+		return;
+	}
+
+	int $newCamNeedLayerAdj = 0;
+	string $currentLayer = `editRenderLayerGlobals -q -currentRenderLayer`;
+	int $isBaseLayer = `getAttr ($currentLayer + ".identification")` ? 0 : 1 ;
+	// If replacing a camera, start by making the selected camera
+	// non-renderable.
+	if (($data == $CAM_MENU_CAMERA) || ($data == $CAM_MENU_STEREOPAIR))
+	{
+		if ($cameraMode == $CAM_MENU_IGNORE)
+		{
+			// There was no previous renderable camera,
+			// always create adjustments if not on the master layer.
+			if (!$isBaseLayer)
+				$newCamNeedLayerAdj = 1;
+		} else {
+			string $cameras[];
+			if ($cameraMode == $CAM_MENU_CAMERA) {
+				$cameras[0] = $camera;
+			} else {
+				$cameras = getMultiCameraChildren($camera);
+			}
+
+			for ($cam in $cameras) {
+				string $camShape = cameraShape($cam);
+
+				// Create adjustments if we are not on the master layer
+				if (!$isBaseLayer) {
+					// If the source had an adjustment, create one on the
+					// new camera as well.
+					string $nodes[]=`listConnections -s 1 ($camShape + ".renderable")`;
+					for ($i = 0; $i < size($nodes); $i++) {
+						if ($nodes[$i] == $currentLayer) {
+							$newCamNeedLayerAdj = 1;
+							break;
+						}
+					}
+				}
+
+				setAttr ($camShape + ".renderable") 0;
+			}
+		}
+	} else if ($data == $CAM_MENU_ADD) {
+		// Create adjustments if not on the master layer.
+		if (!$isBaseLayer)
+			$newCamNeedLayerAdj = 1;
+	}
+
+	// Now process the new value
+	if ($menu != "") {
+		string $new = `optionMenuGrp -query -value $menu`;
+		string $cameras[];
+		if ($data == $CAM_MENU_CAMERA) {
+			$cameras[0] = $new;
+		} else if ($data == $CAM_MENU_STEREOPAIR) {
+			string $pairStr = uiRes("m_createMayaSoftwareCommonGlobalsTab.kStereoPair");
+			string $stereoCam = `substring $new 1 (size($new) - size($pairStr))`;
+			$cameras = getMultiCameraChildren($stereoCam);
+		} else if ($data == $CAM_MENU_ADD) {
+			// Mark renderable the first non renderable camera we can find
+			string $allCameraShapes[] = `ls -cameras`;
+			for ($i = 0; $i < size($allCameraShapes); $i++) {
+				if (!`getAttr ($allCameraShapes[$i] + ".renderable")`) {
+					$cameras[0] = $allCameraShapes[$i];
+					break;
+				}
+			}
+		}
+
+		// Now make the new cameras renderable
+		for ($cam in $cameras) {
+			string $camShape = cameraShape($cam);
+			if ($newCamNeedLayerAdj)
+				editRenderLayerAdjustment ($cam+".renderable");
+			setAttr ( $cam + ".renderable") 1;
+		}
+	}
+	// Finally force recomputing the UI
+	evalDeferred("updateFireRenderCameraControl");
+}
+
+
+// Store name of renderable camera list to allow customizations
+global string $gRenderableCameraListMenu;
+
+
+proc int isMonoCamera( string $camera )
+{
+	python("from maya.app.stereo import stereoCameraRig");
+	int $isMono = python("stereoCameraRig.rigRoot('"+$camera+"') == ''");
+	return $isMono;
+}
+
+proc setCheckboxFromAttr( string $camera, string $chkbox, string $attr )
+{
+	if ( isMonoCamera($camera) ) {
+		string $camShape = cameraShape($camera);
+		int $val = `getAttr ($camShape + "." + $attr)`;
+		checkBoxGrp -e 	-value1 $val $chkbox;
+	} else {
+		string $lCam = cameraShape(python("stereoCameraRig.leftCam('"+$camera+"')"));
+		int $val = `getAttr ($lCam + "." + $attr)`;
+		checkBoxGrp -e 	-value1 $val $chkbox;
+	}
+}
+global proc cameraMaskChange( string $ui, string $camera, string $mask_name )
+{
+	int $val = `checkBoxGrp -q -value1 $ui`;
+	if ( isMonoCamera($camera) ) {
+		string $camShape = cameraShape($camera);
+
+		// MAYA-16769: to avoid marking the scene dirty, only set when value has changed.
+		int $originalVal = `getAttr ($camShape + "." + $mask_name)`;
+		if($val != $originalVal )
+		{
+			setAttr ($camShape + "." + $mask_name) $val;
+		}
+		connectControl -index 1 $ui ($camShape + "." + $mask_name);
+	} else {
+		string $lCam = cameraShape(python("stereoCameraRig.leftCam('"+$camera+"')"));
+		string $rCam = cameraShape(python("stereoCameraRig.rightCam('"+$camera+"')"));
+		setAttr ($lCam + "." + $mask_name) $val;
+		setAttr ($rCam + "." + $mask_name) $val;
+		connectControl -index 1 $ui ($lCam + "." + $mask_name);
+		connectControl -index 1 $ui ($rCam + "." + $mask_name);
+	}
+}
+
+global proc updateFireRenderCameraControl()
+{
+	python("from maya.app.stereo import stereoCameraRig");
+
+	global string $gRenderableCameraListMenu;
+
+	string $oldParent = `setParent -query`;
+
+	setParentToCommonTab();
+	string $cameraLayout = `setParent mayaSoftwareCameraLayout`;
+
+	// Un-manage the layout while we edit it, it will update faster
+	columnLayout -edit -visible 0 $cameraLayout;
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	// Empty the layout first
+	string $children[] = `columnLayout -query -childArray $cameraLayout`;
+	for ($i = 0 ; $i<size($children) ; $i++) {
+		deleteUI $children[$i];
+	}
+
+	global int $CAM_MENU_CAMERA ;
+	global int $CAM_MENU_STEREOPAIR ;
+	global int $CAM_MENU_ADD ;
+	global int $CAM_MENU_IGNORE ;
+
+	// Populate all stereo cameras and mono camera
+	string $allPerspCameras[] = `listCameras -perspective`;
+	string $allOrthoCameras[] = `listCameras -orthographic`;
+
+	string $renderableCameras[];
+	string $nonRenderableCameras[];
+	int $numRenderable = 0;
+	int $numNonRenderable = 0;
+
+	// List all mono perspective cameras first
+	$nonRenderableCameras[$numNonRenderable++] = "-";
+	for( $camera in $allPerspCameras )
+	{
+		if( isMonoCamera($camera) )
+		{
+			// Ensure to use its shape node
+			string $camShape = cameraShape($camera);
+
+			if( `getAttr ($camShape  + ".renderable")` ) {
+				$renderableCameras[$numRenderable++] = $camera;
+			} else {
+				$nonRenderableCameras[$numNonRenderable++] = $camera;
+			}
+		}
+	}
+	// Remove the separator if nothing was added.
+	if ($nonRenderableCameras[$numNonRenderable-1] == "-")
+		$numNonRenderable--;
+
+	// list all stereo cameras rigs, and the mono cameras in the rig.
+	string $rig;
+	string $rigs[] = python("stereoCameraRig.listRigs(True)");
+	for( $rig in $rigs )
+	{
+		$nonRenderableCameras[$numNonRenderable++] = "-";
+		string $lCam = cameraShape(python("stereoCameraRig.leftCam('"+$rig+"')"));
+		string $rCam = cameraShape(python("stereoCameraRig.rightCam('"+$rig+"')"));
+		string $cameras[] = `listRelatives -type "camera" -allDescendents -path $rig`;
+		// Add an entry for the rig pair if at least one cam is not
+		// renderable. Use the + character to mark it.
+
+		int $skipLR = 0;
+		if (`getAttr ($lCam + ".renderable")` &&
+			`getAttr ($rCam + ".renderable")`) {
+			$renderableCameras[$numRenderable++] = "+"+$rig;
+			$skipLR = 1;
+		} else {
+			$nonRenderableCameras[$numNonRenderable++] = "+"+$rig;
+		}
+		for ($camShape in $cameras) {
+			string $camParentNodes[] = `listRelatives -path -parent $camShape`;
+			string $camera = $camParentNodes[0];
+			if( `getAttr ($camShape  + ".renderable")` ) {
+				if (!($skipLR && (($camShape == $lCam) || ($camShape == $rCam))))
+					$renderableCameras[$numRenderable++] = $camera;
+			} else {
+				$nonRenderableCameras[$numNonRenderable++] = $camera;
+			}
+		}
+		// Remove the separator if nothing was added.
+		if ($nonRenderableCameras[$numNonRenderable-1] == "-")
+			$numNonRenderable--;
+	}
+
+	// List all the ortho cameras
+	$nonRenderableCameras[$numNonRenderable++] = "-";
+	for ($camera in $allOrthoCameras)
+	{
+		// Ensure to use its shape node
+		string $camShape = cameraShape($camera);
+
+		if( `getAttr ($camShape  + ".renderable")` ) {
+			$renderableCameras[$numRenderable++] = $camera;
+		} else {
+			$nonRenderableCameras[$numNonRenderable++] = $camera;
+		}
+	}
+	// Remove the separator if nothing was added.
+	if ($nonRenderableCameras[$numNonRenderable-1] == "-")
+		$numNonRenderable--;
+
+	// If there is no renderable camera on this layer, add a fake
+	// entry so that users can switch to an existing one.
+	int $isFakeCam = 0;
+	if ($numRenderable == 0) {
+		$isFakeCam = 1;
+		$renderableCameras[$numRenderable++] =
+			(uiRes("m_createMayaSoftwareCommonGlobalsTab.kNoRenderableCamSelect"));
+	}
+
+	$camera = "";
+	columnLayout;
+	for ($s=0 ; $s<$numRenderable ; $s++)
+	{
+		if( $s%10 == 9)
+		{
+			setParent ..;
+			columnLayout;
+		}
+
+		columnLayout;
+
+		if ( $s>0 )
+			separator;
+
+		$camera = $renderableCameras[$s];
+		int $cameraMode = $CAM_MENU_CAMERA;
+		if ($isFakeCam)
+			$cameraMode = $CAM_MENU_IGNORE;
+		else if (startsWith($camera, "+")) {
+			int $end = size($camera);
+			$camera = `substring $camera 2 $end`;
+			$cameraMode = $CAM_MENU_STEREOPAIR;
+		}
+
+		rowLayout -nc 2 -cw2 340 30 -cl2 "left" "right";
+		$optMenu = `optionMenuGrp -cw 1 141 -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kRenderableCamera"))`;
+		optionMenuGrp -edit
+			-changeCommand ("FireRenderChangedCamera(\""+$camera+"\","+$cameraMode+",\""+$optMenu+"\")")
+			$optMenu;
+
+		// The first item is the current renderable camera
+		string $thisCamLabel = $camera;
+		if ($cameraMode == $CAM_MENU_STEREOPAIR)
+			$thisCamLabel = $thisCamLabel + uiRes("m_createMayaSoftwareCommonGlobalsTab.kStereoPair");
+		menuItem -label $thisCamLabel -data $CAM_MENU_IGNORE;
+
+		// Save this as a global variable for others to access
+		$gRenderableCameraListMenu = $optMenu;
+
+		// Insert cameras
+		for ($i=0 ; $i<$numNonRenderable ; $i++)
+		{
+			if ($nonRenderableCameras[$i] == "-") {
+				menuItem -divider 1 -data $CAM_MENU_IGNORE;
+			} else if (startsWith($nonRenderableCameras[$i], "+")) {
+				// Stereo rig
+				string $rig = $nonRenderableCameras[$i];
+				int $end = size($rig);
+				$rig = `substring $rig 2 $end`;
+				string $label = ($rig+(uiRes("m_createMayaSoftwareCommonGlobalsTab.kStereoPair")));
+				menuItem -label $label -data $CAM_MENU_STEREOPAIR;
+			} else {
+				// Mono camera.
+				menuItem -label $nonRenderableCameras[$i] -data $CAM_MENU_CAMERA;
+			}
+		}
+
+		// Insert add menuItem
+		if ((!$isFakeCam) && ($numNonRenderable>0))
+		{
+			menuItem -divider 1 -data $CAM_MENU_IGNORE;
+			menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kAddRenderCam")) -data $CAM_MENU_ADD;
+		}
+
+		string $camShape;
+		if (!$isFakeCam) {
+			// connect the label, so we can change its color
+			$camShape = cameraShape($camera);
+			connectControl -index 1 $optMenu ($camShape+".renderable");
+
+			if (size($renderableCameras) > 1)
+				iconTextButton -style "iconOnly" -image "removeRenderable.png"
+					-annotation (uiRes("m_createMayaSoftwareCommonGlobalsTab.kNonRendCam"))
+					-width 20 -height 20
+					-command ("FireRenderChangedCamera(\""+$camera+"\","+$cameraMode+",\"\")");
+		}
+
+		setParent ..;
+
+		if (!$isFakeCam) {
+			columnLayout;
+			$chkbox = `checkBoxGrp -numberOfCheckBoxes 1
+				-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kAlphaChannel"))`;
+			checkBoxGrp -e -cc ("cameraMaskChange(\""+$chkbox+"\", \""+$camera+"\", \"mask\")") $chkbox;
+			setCheckboxFromAttr( $camera, $chkbox, "mask" );
+			cameraMaskChange($chkbox, $camera, "mask");
+			string $parent = `setParent -query`;
+			string $maskCommand = "cameraMaskChange(\""+$chkbox+"\", \""+$camera+"\", \"mask\")";
+			scriptJob -parent $parent -attributeChange "renderLayerManager.currentRenderLayer" $maskCommand;
+
+			$chkbox = `checkBoxGrp -numberOfCheckBoxes 1
+				-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kDepthChannel"))`;
+			checkBoxGrp -e -cc ("cameraMaskChange(\""+$chkbox+"\", \""+$camera+"\", \"depth\")") $chkbox;
+			setCheckboxFromAttr( $camera, $chkbox, "depth" );
+			cameraMaskChange($chkbox, $camera, "depth");
+			string $depthCommand = "cameraMaskChange(\""+$chkbox+"\", \""+$camera+"\", \"depth\")";
+			scriptJob -parent $parent -attributeChange "renderLayerManager.currentRenderLayer" $depthCommand;
+
+			setParent ..;
+		}
+
+		setParent ..;
+	} //end for
+
+	setParent ..;
+
+	//
+	//  Invoke any user supplied code. This callback is published and
+	//  needs to remain consistent in future versions of Maya.
+	//
+	if (exists ("renderableCameraListUserCallback") )
+	{
+		// Use catchQuiet in case no callback is supplied, we don't
+		// want that to show an error.
+		catchQuiet( eval("source \"renderableCameraListUserCallback\"") );
+	}
+
+	setParent ..;
+
+	setUITemplate -popTemplate attributeEditorTemplate;
+	columnLayout -edit -visible 1 $cameraLayout;
+
+	setParent $oldParent;
+}
+
+global proc updateFireRenderFrameNumberControls()
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	int $useAnim 		= `getAttr "defaultRenderGlobals.animation"`;
+	int $useCustomExt	= `getAttr "defaultRenderGlobals.modifyExtension"`;
+	int $multiframe = multiframeFormat(getImfImageType());
+	attrControlGrp
+		-edit
+		-enable $useAnim
+		startFrameCtrl;
+	attrControlGrp
+		-edit
+		-enable $useAnim
+		endFrameCtrl;
+	attrControlGrp
+		-edit
+		-enable $useAnim
+		byFrameStepCtrl;
+	attrControlGrp
+		-edit
+		-enable ($useAnim && !$multiframe)
+		skipExistingFramesCtrl;
+	attrControlGrp
+		-edit
+		-enable ($useAnim && !$multiframe)
+		extensionPaddingCtrl;
+	attrControlGrp
+		-edit
+		-enable ($useAnim && !$multiframe)
+		modifyExtensionCtrl;
+	attrControlGrp
+		-edit
+		-enable ($useAnim && $useCustomExt && !$multiframe)
+		startExtensionCtrl;
+	attrControlGrp
+		-edit
+		-enable ($useAnim && $useCustomExt && !$multiframe)
+		byExtensionCtrl;
+
+	setParent $oldParent;
+}
+
+global proc createRenderVersionKeywordMenu(string $parent)
+{
+	popupMenu -edit -deleteAllItems $parent;
+
+	setParent -menu $parent;
+
+	menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kVersionTitle")) -enable 0;
+	menuItem -divider true ;
+
+	string $val = `textFieldGrp -q -text renderVersionCtrl`;
+	int $ival = 1;
+	int $ival2 = 2;
+	if (`match "^[0-9]+$" $val` != "") {
+		$ival = $val;
+		if ($ival>0) {
+			$ival2 = $ival+1;
+			$ival--;
+		} else {
+			$ival = 1;
+		}
+	}
+
+	string $callBack = "textFieldGrp -e -text \"^1s\" -forceChangeCommand renderVersionCtrl";
+
+	menuItem -label `format -stringArg $ival (uiRes("m_createMayaSoftwareCommonGlobalsTab.kVersionNumber"))`
+		-command `format -stringArg $ival $callBack`;
+
+	string $formatString = uiRes("m_createMayaSoftwareCommonGlobalsTab.kVersionNumber");
+	menuItem -label `format -stringArg $ival2 $formatString`
+		-command `format -stringArg $ival2 $callBack`;
+
+	string $date = `date -format "YY_MM_DD"`;
+	menuItem -label `format -stringArg $date (uiRes("m_createMayaSoftwareCommonGlobalsTab.kVersionDate"))`
+		-command `format -stringArg $date $callBack`;
+
+	string $time = `date -format "hh-mm-ss"`;
+	menuItem -label `format -stringArg $time (uiRes("m_createMayaSoftwareCommonGlobalsTab.kVersionTime"))`
+		-command `format -stringArg $time $callBack`;
+}
+
+global proc updateFireRenderRenderVersionControl()
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	string $version = `getAttr defaultRenderGlobals.renderVersion`;
+	textFieldGrp -edit -text $version renderVersionCtrl;
+
+	setParent $oldParent;
+}
+
+global proc changeFireRenderRenderVersion()
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	string $version = `textFieldGrp -query -text renderVersionCtrl`;
+	setAttr "defaultRenderGlobals.renderVersion" -type "string" $version;
+
+	setParent $oldParent;
+}
+
+global proc enableColorMgtWidgetsRenderSettings()
+{
+	string $cmControls[1] = {"rgColorProfileFrame"};
+
+	if (colorManagementPolicyLocked())
+	{
+		disableColorMgtControls($cmControls);
+	}
+	else
+	{
+		enableColorMgtControls($cmControls);
+	}
+}
+
+global proc onColorMgtEnabledChangedRenderSettings()
+{
+	enableColorMgtWidgetsRenderSettings();
+}
+
+proc createCommonColorMgt()
+//
+//  Description:
+//      Creates the UI in the "Color Management" expand/collapse section.
+//		This section is always created so is treated differently
+//		than the sections created when the tab is expanded.
+//
+{
+	string $menuName = "colorManagementOutputTransformOptionMenuRenderSettings";
+	string $checkBoxName = "colorManagementOutputEnableCheckBoxRenderSettings";
+
+	createOutputTransformUI($menuName, $checkBoxName, 0);
+
+	enableColorMgtWidgetsRenderSettings();
+
+	scriptJob -event "colorMgtEnabledChanged"
+		onColorMgtEnabledChangedRenderSettings;
+
+	// Must listen to config changes, as the list of output transforms may
+	// change.
+	string $outputChangedCb =
+		("onColorMgtOutputChanged " + $menuName + " " + $checkBoxName + " " + 0);
+	scriptJob -event "colorMgtConfigChanged" $outputChangedCb;
+}
+
+proc createCommonImageFile()
+//
+//  Procedure Name:
+//      createCommonImageFile
+//
+//  Description:
+//      Creates the UI in the "Image File Output" expand/collapse section.
+//		This section is always created so is treated differently
+//		then the sections created when the tab is expanded.
+//
+{
+	string $parent = `setParent -query`;
+
+	// Delete the control if it already exists
+	//
+	string $fullPath = $parent + "|imageFileOutputSW";
+	if (`layout -exists $fullPath`) {
+		deleteUI $fullPath;
+	}
+
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	global string $imgExt[];
+
+	if (size($imgExt) == 0)
+	{
+		// If the file format array has not been initialized yet, do so.
+		// This routine may be called in dynPaintMenus.mel during the
+		// file save for PFX canvas images.
+		//
+		createImageFormats();
+	}
+
+	columnLayout -adjustableColumn true imageFileOutputSW;
+
+		createFileNamePrefixControl();
+
+		string $imageFormatControl = createFireRenderImageFormatControl();
+		int $item = `optionMenuGrp -q -sl $imageFormatControl` - 1;
+		createCompressorControl($item);
+
+		createFileNameFormatControl();
+
+		attrControlGrp
+			-attribute defaultRenderGlobals.extensionPadding
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kFramePadding"))
+			-hideMapButton true
+			extensionPaddingCtrl;
+
+		separator;
+
+		createMultiCameraNamingMenuControl();
+		createMultiCameraNamingCustomToken();
+
+		separator;
+
+		createUseCustomExtensionControl();
+		createCustomExtensionControl();
+
+		textFieldGrp
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kVersionLabel"))
+			-changeCommand ("changeFireRenderRenderVersion")
+			-annotation (uiRes("m_createMayaSoftwareCommonGlobalsTab.kVersionLabelAnn"))
+			renderVersionCtrl;
+		// connect the label, so we can change its color
+		connectControl -index 1 renderVersionCtrl
+			defaultRenderGlobals.renderVersion;
+		// Create a scriptJob which will update the control when the value of the
+		// attribute it represents is changed.
+		scriptJob
+			-parent renderVersionCtrl
+			-attributeChange
+				"defaultRenderGlobals.renderVersion"
+				"updateFireRenderRenderVersionControl";
+		updateFireRenderRenderVersionControl();
+		string $popup = `popupMenu -parent renderVersionCtrl|field`;
+		popupMenu -edit -postMenuCommand ("createRenderVersionKeywordMenu "+$popup) $popup;
+
+	setParent $parent;
+	setUITemplate -popTemplate;
+
+	// Perform an initial update of the UI created above, so that controls
+	// which are not directly connected to attributes are properly initialized.
+	//
+	updateFireRenderFileNamePrefixControl();
+	updateFireRenderImageFormatControl();
+	updateFireRenderUseCustomExtensionControl();
+	updateFireRenderCustomExtensionControl();
+}
+
+proc createCommonFrameRange()
+//
+//  Procedure Name:
+//      createCommonFrameRange
+//
+//  Description:
+//      Creates the UI in the "Frame Range" expand/collapse section.
+//		This section is always created so is treated differently
+//		then the sections created when the tab is expanded.
+//
+{
+	string $parent = `setParent -query`;
+
+	// Delete the control if it already exists
+	//
+	string $fullPath = $parent + "|frameRangeSW";
+	if (`layout -exists $fullPath`) {
+		deleteUI $fullPath;
+	}
+
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	columnLayout -adjustableColumn true frameRangeSW;
+
+		attrControlGrp
+			-attribute defaultRenderGlobals.startFrame
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kStartFrame"))
+			-hideMapButton true
+			startFrameCtrl;
+		attrControlGrp
+			-attribute defaultRenderGlobals.endFrame
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kEndFrame"))
+			-hideMapButton true
+			endFrameCtrl;
+		attrControlGrp
+			-attribute defaultRenderGlobals.byFrameStep
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kByFrame"))
+			-hideMapButton true
+			byFrameStepCtrl;
+		attrControlGrp
+			-attribute defaultRenderGlobals.skipExistingFrames
+			-label(uiRes("m_createMayaSoftwareCommonGlobalsTab.kSkipExistingFrames"))
+			skipExistingFramesCtrl;
+
+		separator;
+
+		attrControlGrp
+			-attribute defaultRenderGlobals.modifyExtension
+			-changeCommand "updateFireRenderFrameNumberControls"
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kRenumberFramesUsing"))
+			modifyExtensionCtrl;
+		attrControlGrp
+			-attribute defaultRenderGlobals.startExtension
+			-enable (`getAttr defaultRenderGlobals.modifyExtension`)
+			-hideMapButton true
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kStartNumber"))
+			startExtensionCtrl;
+		attrControlGrp
+			-attribute defaultRenderGlobals.byExtension
+			-enable (`getAttr defaultRenderGlobals.modifyExtension`)
+			-hideMapButton true
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kRenumberByFrame"))
+			byExtensionCtrl;
+
+	setParent $parent;
+	setUITemplate -popTemplate;
+
+	// Perform an initial update of the UI created above, so that controls
+	// which are not directly connected to attributes are properly initialized.
+	//
+	updateFireRenderFileNameFormatControl();
+}
+
+global proc onCameraChanged()
+//
+//  Procedure Name:
+//      onCameraChanged
+//
+//  Description:
+//      Event handler when a camera is changed to keep the UI in sync
+//
+{
+	updateFireRenderCameraControl();
+}
+
+proc createCommonRenderCameras()
+//
+//  Procedure Name:
+//      createCommonRenderCameras
+//
+//  Description:
+//      Creates the UI in the "Renderable Cameras" expand/collapse section.
+//		This section is always created so is treated differently
+//		then the sections created when the tab is expanded.
+//
+{
+	string $parent = `setParent -query`;
+
+	// Delete the control if it already exists
+	//
+	string $fullPath = $parent + "|renderableCamerasSW";
+	if (`layout -exists $fullPath`) {
+		deleteUI $fullPath;
+	}
+
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	columnLayout -adjustableColumn true renderableCamerasSW;
+
+		// Cameras ------------------------------------------------
+		columnLayout mayaSoftwareCameraLayout;
+		updateFireRenderCameraControl();
+		setParent .. ;
+
+	// Install event handler for keeping the camera list
+	// in sync when cameras change
+	scriptJob -parent $fullPath -event "cameraChange" onCameraChanged;
+
+	setParent $parent;
+	setUITemplate -popTemplate;
+}
+
+// ----------------------------------------------------------------------------
+// Code to create and update the Resolution frame
+//
+
+global proc createCommonResolution()
+//
+//  Procedure Name:
+//      createCommonResolution
+//
+//  Description:
+//      Creates the UI in the "Resolution" expand/collapse section.
+//
+{
+	//
+	// Make sure the list of predefined resolutions has been read in.
+	//
+	global string   $gImageFormatData[];
+	global string   $gUserImageFormatData[];
+
+	// if (size($gImageFormatData) == 0)
+	// {
+	//	eval("source imageFormats");
+	// }
+
+	//if( !`exists imageFormats_melToUI` ) {
+	//    source "imageFormats.mel";
+	//}
+
+	global string	$gResolutionUnitsNames[];
+	global string	$gMeasurementUnitsNames[];
+
+	if (size($gResolutionUnitsNames) == 0)
+	{
+		eval("source resolutionFormats");
+	}
+
+	if (exists("userImageFormats.mel") && size($gUserImageFormatData) == 0)
+	{
+		// Yes, we need the eval here, to avoid doing the source
+		// until we know whether the file actually exists
+		eval("source userImageFormats");
+	}
+
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	string $parent = `setParent -q`;
+	// If the UI is created already then just update the attribute values.
+	if (`columnLayout -exists ($parent+"|rgResolutionLayout")`)
+	{
+		updateFireRenderResolution();
+		return;
+	}
+
+	columnLayout -adjustableColumn true rgResolutionLayout;
+		int		$resItem;
+		int		$numResolutionPresets = size($gImageFormatData);
+		int		$numUserResolutionPresets = size($gUserImageFormatData);
+		string  $allResNodes[] = `ls -type resolution`;
+		int		$numResolutionNodePresets = size($allResNodes) - 1;
+		int		$numTokens;
+		string	$tokens[];
+		string  $niceName;
+		global int	$gImageFormatDividerPosition;
+
+		optionMenuGrp
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPresets"))
+			-changeCommand "changeFireRenderResolution()"
+			resolutionMenu;
+
+			menuItem -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kCustom"));
+			for ($resItem = 0; $resItem < $numResolutionPresets; $resItem++)
+			{
+				if( $resItem == $gImageFormatDividerPosition ){
+					menuItem -label "---------------------" -enable false;
+				}else{
+					string $item = $gImageFormatData[$resItem];
+					$numTokens = tokenize($item, $tokens);
+
+					// Change any underscore into a space;
+					// some names may have up to 2 underscores in them,
+					// so we do this twice.
+					//
+					$niceName = `substitute "_" $tokens[0] " "`;
+					$niceName = `substitute "_" $niceName " "`;
+					string $uiName = imageFormats_melToUI ($niceName);
+					menuItem -label $uiName;
+				}
+			}
+			for ($resItem = 0; $resItem < $numUserResolutionPresets; $resItem++)
+			{
+				string $item = $gUserImageFormatData[$resItem];
+				$numTokens = tokenize($item, $tokens);
+
+				// Change any underscore into a space;
+				// some names may have up to 2 underscores in them,
+				// so we do this twice.
+				//
+				$niceName = `substitute "_" $tokens[0] " "`;
+				$niceName = `substitute "_" $niceName " "`;
+				menuItem -label $niceName;
+			}
+			for ($resItem = 0; $resItem < $numResolutionNodePresets; $resItem++)
+			{
+				menuItem -label $allResNodes[$resItem + 1];
+			}
+
+		separator;
+
+		checkBoxGrp -numberOfCheckBoxes 1
+			-label ""
+			-label1 (uiRes("m_createMayaSoftwareCommonGlobalsTab.kMaintainWidthHeightRatio"))
+			-changeCommand "setAttr defaultResolution.aspectLock #1"
+			aspectLockCheck;
+		connectControl -index 2 aspectLockCheck defaultResolution.aspectLock;
+
+		radioButtonGrp -numberOfRadioButtons 2
+			-vertical
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kMaintainRatio"))
+			-label1 (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPixelAspect"))
+			-label2 (uiRes("m_createMayaSoftwareCommonGlobalsTab.kDeviceAspect"))
+			-on1 "setAttr defaultResolution.lockDeviceAspectRatio 0"
+			-on2 "setAttr defaultResolution.lockDeviceAspectRatio 1"
+			-data1 0
+			-data2 1
+			ratioLockRadio;
+		connectControl -index 1 ratioLockRadio defaultResolution.lockDeviceAspectRatio;
+
+		floatFieldGrp -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kWidth"))
+			-changeCommand "changeFireRenderAspectLockWidth"
+			mayaSoftwareResWidth;
+		connectControl -index 1 mayaSoftwareResWidth defaultResolution.width;
+
+		floatFieldGrp -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kHeight"))
+			-changeCommand "changeFireRenderAspectLockHeight"
+			mayaSoftwareResHeight;
+		connectControl -index 1 mayaSoftwareResHeight defaultResolution.height;
+
+		optionMenuGrp
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kSizeUnits"))
+			-changeCommand "updateFireRenderResolution"
+			sizeUnitsMenu;
+
+		// Construct all menu items
+		int $sizeUnit;
+		for( $sizeUnit=0 ; $sizeUnit<size($gMeasurementUnitsNames) ; $sizeUnit++ ){
+			string $melUnit = $gMeasurementUnitsNames[$sizeUnit];
+			menuItem -label `resolutionFormats_melToUI($melUnit)` -data $sizeUnit;
+		}
+		// connect the label, so we can change its color
+		connectControl -index 1 sizeUnitsMenu defaultResolution.imageSizeUnits;
+		// connect the menu, so it will always match the attribute
+		connectControl -index 2 sizeUnitsMenu defaultResolution.imageSizeUnits;
+
+		separator -style none -h 5;
+
+		floatFieldGrp -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kResolution"))
+			-changeCommand "changeFireRenderRes"
+			mayaSoftwareRes;
+		connectControl -index 1 mayaSoftwareRes defaultResolution.dotsPerInch;
+
+		optionMenuGrp
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kResolutionUnits"))
+			-changeCommand "updateFireRenderResolution"
+			resUnitsMenu;
+
+		// Construct all menu items
+		int $resUnit;
+		for( $resUnit=0 ; $resUnit<size($gResolutionUnitsNames) ; $resUnit++ ){
+			string $melUnit = $gResolutionUnitsNames[$resUnit];
+			menuItem -label `resolutionFormats_melToUI($melUnit)` -data $resUnit;
+		}
+		// connect the label, so we can change its color
+		connectControl -index 1 resUnitsMenu defaultResolution.pixelDensityUnits;
+		// connect the menu, so it will always match the attribute
+		connectControl -index 2 resUnitsMenu defaultResolution.pixelDensityUnits;
+
+		separator;
+
+		floatFieldGrp -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kDeviceAspectRatio"))
+			-changeCommand "updateFireRenderDeviceAspectRatio"
+			resRatio;
+		// connect the label, so we can change its color
+		connectControl -index 1 resRatio defaultResolution.deviceAspectRatio;
+		// keep the field in sync
+		scriptJob
+			-parent resRatio
+			-attributeChange
+				"defaultResolution.deviceAspectRatio"
+				"mayaSoftwareDeviceAspectRatioChanged";
+
+		floatFieldGrp -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPixelAspectRatio"))
+			-changeCommand "updateFireRenderPixelAspectRatio"
+			pixRatio;
+		// connect the label, so we can change its color
+		connectControl -index 1 pixRatio defaultResolution.pixelAspect;
+		// keep the field in sync
+		scriptJob
+			-parent pixRatio
+			-attributeChange
+				"defaultResolution.pixelAspect"
+				"mayaSoftwarePixelAspectRatioChanged";
+
+
+	setParent ..;
+	setUITemplate -popTemplate;
+
+	// Make sure the values are right
+	updateFireRenderResolution();
+
+	// Set up script jobs for those attributes which require updating of
+	// multiple controls.
+	// This is especially important when a user changes render layers.
+	//
+	string $attrArray[];
+	$attrArray[size($attrArray)] = "defaultResolution.width";
+	$attrArray[size($attrArray)] = "defaultResolution.height";
+	$attrArray[size($attrArray)] = "defaultResolution.dotsPerInch";
+	$attrArray[size($attrArray)] = "defaultResolution.imageSizeUnits";
+	$attrArray[size($attrArray)] = "defaultResolution.pixelDensityUnits";
+
+	int $i;
+
+	for ($i = 0; $i < size($attrArray); $i++)
+	{
+		scriptJob
+			-attributeChange
+				$attrArray[$i]
+				updateFireRenderResolution
+			-parent `setParent -query`;
+	}
+}
+
+global proc changeFireRenderRes()
+//
+//	Description:
+//		Called when the resolution field is changed.
+//		Updates the corresponding attribute, converting to DPI.
+//
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	global string $gResolutionUnitsNames[];
+	float $oldDPI = `getAttr defaultResolution.dotsPerInch`;
+	float $value = `floatFieldGrp -q -v1 mayaSoftwareRes`;
+
+	// Convert from the current resolution units to DPI
+	int $resUnits = `getAttr defaultResolution.pixelDensityUnits`;
+	float $newDPI = convertResolutionMeasurement(
+		$value,
+		$gResolutionUnitsNames[$resUnits],
+		"pixels/inch"
+		);
+
+	// Check that value is within value range
+	if( $newDPI < 1.0 ){
+		warning (uiRes("m_createMayaSoftwareCommonGlobalsTab.kResolutionDPIWarn"));
+		$newDPI = 1.0;
+	}
+
+	int $oldWidth = `getAttr defaultResolution.width`;
+	int $newWidth = $oldWidth;
+	int $oldHeight = `getAttr defaultResolution.height`;
+	int $newHeight = $oldHeight;
+
+	// Change pixel width/height only if the image size units are not
+	// currently set as pixels
+	//
+	int $sizeUnits = `getAttr defaultResolution.imageSizeUnits`;
+	if( $sizeUnits != 0 ){ // 0 corresponds to pixels
+		$newWidth = `floor( $oldWidth * $newDPI/$oldDPI + 0.5 )`;
+		$newHeight = `floor( $oldHeight * $newDPI/$oldDPI + 0.5 )`;
+	}
+
+	// Account for version restrictions and bounds
+	//
+
+	if ($newWidth < 2)
+	{
+		warning (uiRes("m_createMayaSoftwareCommonGlobalsTab.kWidthWarning"));
+		$newWidth = 2;
+	}
+	if ($newHeight < 2)
+	{
+		warning (uiRes("m_createMayaSoftwareCommonGlobalsTab.kHeightWarning"));
+		$newHeight = 2;
+	}
+
+	// All attributes should now be correct
+	setAttr defaultResolution.dotsPerInch $newDPI;
+	setAttr defaultResolution.width $newWidth;
+	setAttr defaultResolution.height $newHeight;
+
+	// Update the values, will correct any invalid entries
+	updateFireRenderResolution();
+
+	setParent $oldParent;
+}
+
+global proc updateFireRenderResolution()
+//
+//  Procedure Name:
+//      updateFireRenderResolution
+//
+//  Description:
+//      Gets the real values from the nodes and sets the UI based
+//		on these values.  This procedure updates all of the resolution
+//		values.
+//
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	int $width = `getAttr defaultResolution.width`;
+	int $height = `getAttr defaultResolution.height`;
+	float $aspect = `getAttr defaultResolution.deviceAspectRatio`;
+	float $dpi = `getAttr defaultResolution.dotsPerInch`;
+	int $resItem;
+	int $whichRes = 1; // use "Custom" if no match is found
+	string $allResNodes[] = `ls -type resolution`;
+
+	global string   $gImageFormatData[];
+	global string   $gUserImageFormatData[];
+	global float $gDefaultDpi;
+	int		$numResolutionPresets = size($gImageFormatData);
+	int		$numUserResolutionPresets = size($gUserImageFormatData);
+	int		$numResolutionNodePresets = size($allResNodes) - 1;
+	int		$resWidth;
+	int		$resHeight;
+	float	$resAspect;
+	float	$resDpi;
+	int		$numTokens;
+	string	$tokens[];
+
+	for ($resItem = 0; $resItem < $numResolutionPresets; $resItem++)
+	{
+		string $item = $gImageFormatData[$resItem];
+		$numTokens = tokenize($item, $tokens);
+		if ($numTokens == 5)
+		{
+			$resWidth = $tokens[1];
+			$resHeight = $tokens[2];
+			$resAspect = $tokens[3];
+			$resDpi = $tokens[4];
+
+			// Check all values, including DPI. If the DPI in the array is 0
+			// (i.e. unspecified), then any dpi is considered a match.
+			if ($width == $resWidth && $height == $resHeight
+					&& abs($aspect - $resAspect) < 0.001
+					&& ($resDpi==0 || abs($dpi - $resDpi) < 0.001) )
+			{
+				// We add _2_ to $resItem below: 1 because we're
+				// skipping the first item (Custom) in the list, and 1
+				// because the optionMenu items are numbered starting at 1,
+				// but our list in $gImageFormatData is indexed starting at 0.
+				$whichRes = $resItem + 2;
+				break;
+			}
+		}
+		else
+		{
+			string $invalidImageFormat = (uiRes("m_createMayaSoftwareCommonGlobalsTab.kInvalidImageFormat"));
+			string $warnMsg = `format -s $item $invalidImageFormat`;
+			warning($warnMsg);
+		}
+	}
+
+	// If no match was found in the built-in resolutions,
+	// check out the user-defined ones
+	//
+	if ($whichRes == 1)
+	{
+		for ($resItem = 0; $resItem < $numUserResolutionPresets; $resItem++)
+		{
+			string $item = $gUserImageFormatData[$resItem];
+			$numTokens = tokenize($item, $tokens);
+
+			// User may or may not have specified a resolution.
+			// Ensure compatibility.
+			//
+			if ($numTokens == 4 || $numTokens == 5)
+			{
+				$resWidth = $tokens[1];
+				$resHeight = $tokens[2];
+				$resAspect = $tokens[3];
+				if( $numTokens == 5 ){
+					$resDpi = $tokens[4];
+				}else{
+					$resDpi = $gDefaultDpi;
+				}
+
+				if ($width == $resWidth && $height == $resHeight
+						&& abs($aspect - $resAspect) < 0.001
+						&& ($resDpi==0 || abs($dpi - $resDpi) < 0.001) )
+				{
+					$whichRes = $numResolutionPresets + $resItem + 2;
+					break;
+				}
+			}
+			else
+			{
+				string $invalidImageFormat = (uiRes("m_createMayaSoftwareCommonGlobalsTab.kInvalidUserImageFormat"));
+				string $warnMsg = `format -s $item $invalidImageFormat`;
+				warning($warnMsg);
+			}
+		}
+	}
+
+	// If no match was found in the user-defined resolutions,
+	// see if there are any 'extra' resolution nodes in the scene.
+	//
+	if ($whichRes == 1)
+	{
+		for ($resItem = 0; $resItem < $numResolutionNodePresets; $resItem++)
+		{
+			// We assume the 0th item in the list of resolution nodes is
+			// the default one, which is created implicitly...
+			//
+			string $resNodeName = $allResNodes[$resItem + 1];
+
+			$resWidth = `getAttr ($resNodeName + ".width")`;
+			$resHeight = `getAttr ($resNodeName + ".height")`;
+			$resAspect = `getAttr ($resNodeName + ".deviceAspectRatio")`;
+
+			if ($width == $resWidth && $height == $resHeight
+					&& abs($aspect - $resAspect) < 0.001)
+			{
+				// We add _2_ to $resItem below: 1 because we're
+				// skipping the first item (Custom) in the list, and 1
+				// because the optionMenu items are numbered starting at 1,
+				// but our list in $gImageFormatData is indexed starting at 0.
+				//
+				$whichRes = $numResolutionPresets
+							+ $numUserResolutionPresets + $resItem + 2;
+				break;
+			}
+		}
+	}
+	optionMenuGrp -edit -sl $whichRes resolutionMenu;
+
+	checkBoxGrp -edit -v1 `getAttr defaultResolution.aspectLock` aspectLockCheck;
+	floatFieldGrp -edit -v1 $aspect resRatio;
+	adjustFireRenderPixelAspect "defaultResolution";
+
+	// MAYA-16769: to avoid marking the scene dirty, only set when value has changed.
+	float $originalVal = `getAttr defaultResolution.pixelAspect`;
+	float $val = `floatFieldGrp -q -v1 pixRatio`;
+	if(abs($val - $originalVal) > 0.0001)
+	{
+		setAttr defaultResolution.pixelAspect $val;
+	}
+
+	radioButtonGrp -edit
+		-select (`getAttr defaultResolution.lockDeviceAspectRatio`+1)
+		ratioLockRadio;
+
+	//
+	// Update the UI controls for image size and resolution
+	//
+
+	global string $gMeasurementUnitsNames[];
+	global string $gResolutionUnitsNames[];
+	int $sizeUnits = `getAttr defaultResolution.imageSizeUnits`;
+	int $resUnits = `getAttr defaultResolution.pixelDensityUnits`;
+
+	// Update width and height fields
+	float $docWidth = (float) $width;
+	float $docHeight = (float) $height;
+	int $precision = 0; // To ensure pixel values are displayed without decimals
+	if( $sizeUnits != 0 ){
+		// Convert from pixels to the correct measurement units
+		$docWidth = convertMeasurement(
+			convertPixelsToInches( $width, $dpi ),
+			"inches",
+			$gMeasurementUnitsNames[$sizeUnits]
+			);
+		$docHeight = convertMeasurement(
+			convertPixelsToInches( $height, $dpi ),
+			"inches",
+			$gMeasurementUnitsNames[$sizeUnits]
+			);
+		$precision = 3;
+	}
+	floatFieldGrp -edit -precision $precision -v1 $docWidth mayaSoftwareResWidth;
+	floatFieldGrp -edit -precision $precision -v1 $docHeight mayaSoftwareResHeight;
+
+	// Update resolution field
+	// Convert from DPI to the correct resolution units
+	float $res = convertResolutionMeasurement(
+		$dpi,
+		"pixels/inch",
+		$gResolutionUnitsNames[$resUnits]
+		);
+	floatFieldGrp -edit -precision 3 -v1 $res mayaSoftwareRes;
+
+	// "Size Units" and "Resolution Units" fields automatically update
+	// because they are attached to a harness
+
+	setParent $oldParent;
+}
+
+global proc changeFireRenderResolution()
+//
+//  Procedure Name:
+//      changeResolution
+//
+//  Description:
+//		This procedure is called when the user selects a different
+//		resolution.  It sets the internal representation
+//		and then updates the example to show the changes.
+//
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	global string   $gImageFormatData[];
+	global string   $gUserImageFormatData[];
+	global float	$gDefaultDpi;
+
+	int		$numResolutionPresets = size($gImageFormatData);
+	int		$numUserResolutionPresets = size($gUserImageFormatData);
+	string $allResNodes[] = `ls -type resolution`;
+	int		$numResolutionNodePresets = size($allResNodes) - 1;
+	string	$tokens[];
+	int		$resItem = `optionMenuGrp -q -sl resolutionMenu`;
+	int		$resWidth;
+	int		$resHeight;
+	float	$resAspect;
+	float	$resDpi=0; // signals preset doesn't contain dpi info
+	string	$item;
+
+	// Item #1 is Custom, which doesn't change the fields
+	// We subtract _2_ from $resItem below: 1 because we're
+	// skipping the first item (Custom) in the list, and 1
+	// because the optionMenu items are numbered starting at 1,
+	// but our list in $gImageFormatData is indexed starting at 0.
+	//
+	if ($resItem > 1)
+	{
+		if ($resItem > ($numResolutionPresets + 1))
+		{
+			if ($resItem
+					> ($numResolutionPresets + $numUserResolutionPresets + 1))
+			{
+				// It's one of the user-defined resolution nodes' presets
+				string $resNodeName = $allResNodes[$resItem
+												- $numResolutionPresets
+												- $numUserResolutionPresets
+												- 1];
+				$resWidth = `getAttr ($resNodeName + ".width")`;
+				$resHeight = `getAttr ($resNodeName + ".height")`;
+				$resAspect = `getAttr ($resNodeName + ".deviceAspectRatio")`;
+			}
+			else
+			{
+				// It's one of the user-defined resolution presets
+				$item = $gUserImageFormatData[$resItem
+					- $numResolutionPresets - 2];
+				int		$numTokens = tokenize($item, $tokens);
+				$resWidth = $tokens[1];
+				$resHeight = $tokens[2];
+				$resAspect = $tokens[3];
+				if( $numTokens == 5 ){ // user has included the dpi field
+					$resDpi = $tokens[4];
+				}else{
+					$resDpi = $gDefaultDpi; // default dpi
+				}
+			}
+		}
+		else
+		{
+			// It's one of the built-in resolution presets
+			$item = $gImageFormatData[$resItem - 2];
+			int		$numTokens = tokenize($item, $tokens);
+			$resWidth = $tokens[1];
+			$resHeight = $tokens[2];
+			$resAspect = $tokens[3];
+			$resDpi = $tokens[4];
+		}
+		setAttr "defaultResolution.width" $resWidth;
+		setAttr "defaultResolution.height" $resHeight;
+		setAttr "defaultResolution.deviceAspectRatio" $resAspect;
+		setAttr "defaultResolution.lockDeviceAspectRatio" 0;
+		float $pixelAspect = ((float)$resHeight)/((float)$resWidth)*$resAspect;
+		setAttr "defaultResolution.pixelAspect" $pixelAspect;
+
+		// Set the dpi if it's non-zero
+		if( $resDpi != 0 ){
+			setAttr "defaultResolution.dotsPerInch" $resDpi;
+		}
+
+		// Set the proper field ordering if PAL or NTSC.
+		if (`getAttr defaultResolution.height` == 576) // PAL
+		{
+			setAttr "defaultResolution.oddFieldFirst" 0;
+			if (`columnLayout -exists rgFieldLayout`)
+			{
+				if (`exists updateFieldOptions`)
+				{
+					updateFieldOptions();
+				}
+			}
+		}
+		else if (`getAttr defaultResolution.height` == 486) // NTSC
+		{
+			setAttr "defaultResolution.oddFieldFirst" 1;
+			if (`columnLayout -exists rgFieldLayout`)
+			{
+				if (`exists updateFieldOptions`)
+				{
+					updateFieldOptions();
+				}
+			}
+		}
+	}
+
+	updateFireRenderResolution();
+
+	setParent $oldParent;
+}
+
+// This is called when the resolution changes. Update the pixel or the
+// device aspect ration as necessary.
+proc updatePixelDeviceRatios(string $nodeName)
+{
+	float $aspect = (float)`getAttr ($nodeName + ".width")` /
+		(float)`getAttr ($nodeName + ".height")`;
+
+	if (`getAttr ($nodeName + ".lockDeviceAspectRatio")` == 0)
+	{
+		$aspect = $aspect * `getAttr ($nodeName + ".pixelAspect")`;
+		setAttr ($nodeName + ".deviceAspectRatio") $aspect;
+	}
+	else
+	{
+		$aspect = `getAttr ($nodeName + ".deviceAspectRatio")` / $aspect;
+		setAttr ($nodeName + ".pixelAspect") $aspect;
+	}
+}
+
+global proc checkFireRenderAspectLockWidth(string $nodeName)
+{
+	float $deviceAspect;
+
+	if (`getAttr ($nodeName + ".aspectLock")`)
+	{
+		float $value = `getAttr ($nodeName + ".width")`;
+		float $aspect = `getAttr ($nodeName + ".pixelAspect")`;
+		$aspect /= `getAttr ($nodeName + ".deviceAspectRatio")`;
+
+		//fix for bug#269698, plus 0.5 to give round value
+		int $rez = ($aspect * $value) + 0.5;
+
+		setAttr ($nodeName + ".height") $rez;
+	}
+
+	updatePixelDeviceRatios($nodeName);
+}
+
+global proc checkFireRenderAspectLockHeight(string $nodeName)
+{
+	float $deviceAspect;
+
+	if (`getAttr ($nodeName + ".aspectLock")`)
+	{
+		float $value = `getAttr ($nodeName + ".height")`;
+		float $aspect = `getAttr ($nodeName + ".pixelAspect")`;
+		$aspect /= `getAttr ($nodeName + ".deviceAspectRatio")`;
+
+		//fix for bug#269698, plus 0.5 to give round value
+		int $rez = ($value/$aspect) + 0.5;
+
+		setAttr ($nodeName + ".width") $rez;
+	}
+
+	updatePixelDeviceRatios($nodeName);
+}
+
+global proc changeFireRenderAspectLockWidth()
+//
+//  Procedure Name:
+//      changeFireRenderAspectLockWidth
+//
+//  Description:
+//		This procedure is called when the user changes the
+//		resolution width.  It sets the internal representation
+//		then looks at the ratio lock etc and changes any other
+//		values that rely on it.
+//
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	float $widthValue = `floatFieldGrp -q -v1 mayaSoftwareResWidth`;
+	int $requestedWidth;
+
+	global string $gMeasurementUnitsNames[];
+	float $dpi = `getAttr defaultResolution.dotsPerInch`;
+	int $sizeUnits = `getAttr defaultResolution.imageSizeUnits`;
+
+	if( $sizeUnits != 0 ){
+		// Convert the obtained value to inches, then to pixels
+		$requestedWidth = convertInchesToPixels(
+			convertMeasurement( $widthValue, $gMeasurementUnitsNames[$sizeUnits], "inches" ),
+			$dpi
+			);
+	}else{ // the width value is in pixels, so no need to convert
+		$requestedWidth = $widthValue;
+	}
+
+	if ($requestedWidth < 2)
+	{
+		warning (uiRes("m_createMayaSoftwareCommonGlobalsTab.kWidthWarning"));
+		$requestedWidth = 2;
+	}
+
+	setAttr defaultResolution.width $requestedWidth;
+	optionMenuGrp -edit -sl 1 resolutionMenu;
+	checkFireRenderAspectLockWidth "defaultResolution";
+
+	// Update the values
+	updateFireRenderResolution();
+
+	setParent $oldParent;
+}
+
+global proc changeFireRenderAspectLockHeight()
+//
+//  Procedure Name:
+//      changeFireRenderAspectLockHeight
+//
+//  Description:
+//		This procedure is called when the user changes the
+//		resolution width.  It sets the internal representation
+//		then looks at the ratio lock etc and changes any other
+//		values that rely on it.
+//
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	float $heightValue = `floatFieldGrp -q -v1 mayaSoftwareResHeight`;
+	int $requestedHeight;
+	global string $gMeasurementUnitsNames[];
+	float $dpi = `getAttr defaultResolution.dotsPerInch`;
+	int $sizeUnits = `getAttr defaultResolution.imageSizeUnits`;
+
+	if( $sizeUnits != 0 ){
+		// Convert the obtained value to inches, then to pixels
+		$requestedHeight = convertInchesToPixels(
+			convertMeasurement( $heightValue, $gMeasurementUnitsNames[$sizeUnits], "inches" ),
+			$dpi
+			);
+	}else{ // the width value is in pixels, so no need to convert
+		$requestedHeight = $heightValue;
+	}
+
+	if ($requestedHeight < 2)
+	{
+		warning (uiRes("m_createMayaSoftwareCommonGlobalsTab.kHeightWarning"));
+		$requestedHeight = 2;
+	}
+
+	setAttr defaultResolution.height $requestedHeight;
+	optionMenuGrp -edit -sl 1 resolutionMenu;
+	checkFireRenderAspectLockHeight "defaultResolution";
+
+	// Set the proper field ordering if PAL or NTSC.
+	if (`getAttr defaultResolution.height` == 576) // PAL
+	{
+		setAttr "defaultResolution.oddFieldFirst" 0;
+		if (`columnLayout -exists rgFieldLayout`)
+		{
+			if (`exists updateFieldOptions`)
+			{
+				updateFieldOptions();
+			}
+		}
+	}
+	else if (`getAttr defaultResolution.height` == 486) // NTSC
+	{
+		setAttr "defaultResolution.oddFieldFirst" 1;
+		if (`columnLayout -exists rgFieldLayout`)
+		{
+			if (`exists updateFieldOptions`)
+			{
+				updateFieldOptions();
+			}
+		}
+	}
+
+	// Update the values
+	updateFireRenderResolution();
+
+	setParent $oldParent;
+}
+
+
+global proc adjustFireRenderPixelAspect(string $nodeName)
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	string $aspectAttr = $nodeName + ".deviceAspectRatio";
+	string $widthAttr = $nodeName + ".width";
+	string $heightAttr = $nodeName + ".height";
+	float  $pixelAspect = (float) `getAttr $widthAttr`
+						  / (float) `getAttr $heightAttr`;
+	$pixelAspect = `getAttr $aspectAttr` / $pixelAspect;
+	floatFieldGrp -e -v1 $pixelAspect pixRatio;
+
+	setParent $oldParent;
+}
+
+global proc adjustFireRenderDeviceAspect(string $nodeName)
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	string $devAspectAttr = $nodeName + ".deviceAspectRatio";
+	string $widthAttr = $nodeName + ".width";
+	string $heightAttr = $nodeName + ".height";
+
+	float $pixelAspect = `floatFieldGrp -q -v1 pixRatio`;
+	float $aspect = (float) `getAttr $widthAttr`
+					/ (float) `getAttr $heightAttr`;
+	$aspect = $pixelAspect * $aspect;
+
+	float $currentValue = `getAttr $devAspectAttr`;
+
+	// MAYA-51327: Update only if different to avoid dirtying the scene
+	if (abs($currentValue - $aspect) > 0.0001) {
+		setAttr $devAspectAttr $aspect;
+		floatFieldGrp -edit -v1 $aspect resRatio;
+	}
+
+	setParent $oldParent;
+}
+
+global proc mayaSoftwarePixelAspectRatioChanged()
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	float $ratio = `getAttr defaultResolution.pixelAspect`;
+	floatFieldGrp -e -v1 $ratio pixRatio;
+	adjustFireRenderDeviceAspect "defaultResolution";
+	updateFireRenderResolution();
+
+	setParent $oldParent;
+}
+
+global proc mayaSoftwareDeviceAspectRatioChanged()
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	float $ratio = `getAttr defaultResolution.deviceAspectRatio`;
+	floatFieldGrp -e -v1 $ratio resRatio;
+	adjustFireRenderPixelAspect "defaultResolution";
+	updateFireRenderResolution();
+
+	setParent $oldParent;
+}
+
+global proc updateFireRenderPixelAspectRatio()
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	setAttr defaultResolution.pixelAspect `floatFieldGrp -q -v1 pixRatio`;
+
+	setParent $oldParent;
+}
+
+global proc updateFireRenderDeviceAspectRatio()
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	setAttr defaultResolution.deviceAspectRatio `floatFieldGrp -q -v1 resRatio`;
+
+	setParent $oldParent;
+}
+
+// ----------------------------------------------------------------------------
+// Code to update pre/post layer/frame mel callbacks
+//
+
+global proc changeMayaMelCallbacks(string $control, string $attr)
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	string $val = `textFieldGrp -query -text $control`;
+	setAttr $attr -type "string" $val;
+
+	setParent $oldParent;
+}
+
+global proc updateFireRenderMelCallbacks()
+{
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	textFieldGrp -edit -text `getAttr defaultRenderGlobals.preRenderLayerMel` preRenderLayerMelSwGrp;
+	textFieldGrp -edit -text `getAttr defaultRenderGlobals.postRenderLayerMel` postRenderLayerMelSwGrp;
+	textFieldGrp -edit -text `getAttr defaultRenderGlobals.preRenderMel` preRenderMelSwGrp;
+	textFieldGrp -edit -text `getAttr defaultRenderGlobals.postRenderMel` postRenderMelSwGrp;
+
+	setParent $oldParent;
+}
+
+// ----------------------------------------------------------------------------
+// Code to create and update the Render Options frame
+//
+
+proc createCommonRenderOptions()
+{
+	string $parent = `setParent -query`;
+
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+
+	columnLayout -adjustableColumn true;
+
+		attrControlGrp
+			-attribute "defaultRenderGlobals.enableDefaultLight";
+
+		attrControlGrp
+			-attribute defaultRenderGlobals.preMel
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPreRenderMEL"))
+			-preventOverride true
+			preMelSwGrp;
+		attrControlGrp
+			-attribute defaultRenderGlobals.postMel
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPostRenderMEL"))
+			-preventOverride true
+			postMelSwGrp;
+
+		textFieldGrp
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPreRenderLayerMEL"))
+			-changeCommand ("changeMayaMelCallbacks(\"preRenderLayerMelSwGrp\", \"defaultRenderGlobals.preRenderLayerMel\")")
+			preRenderLayerMelSwGrp;
+
+		textFieldGrp
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPostRenderLayerMEL"))
+			-changeCommand ("changeMayaMelCallbacks(\"postRenderLayerMelSwGrp\", \"defaultRenderGlobals.postRenderLayerMel\")")
+			postRenderLayerMelSwGrp;
+
+		textFieldGrp
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPreRenderFrameMEL"))
+			-changeCommand ("changeMayaMelCallbacks(\"preRenderMelSwGrp\", \"defaultRenderGlobals.preRenderMel\")")
+			preRenderMelSwGrp;
+
+		textFieldGrp
+			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPostRenderFrameMEL"))
+			-changeCommand ("changeMayaMelCallbacks(\"postRenderMelSwGrp\", \"defaultRenderGlobals.postRenderMel\")")
+			postRenderMelSwGrp;
+
+		connectControl -index 1 preRenderLayerMelSwGrp defaultRenderGlobals.preRenderLayerMel;
+		connectControl -index 1 postRenderLayerMelSwGrp defaultRenderGlobals.postRenderLayerMel;
+		connectControl -index 1 preRenderMelSwGrp defaultRenderGlobals.preRenderMel;
+		connectControl -index 1 postRenderMelSwGrp defaultRenderGlobals.postRenderMel;
+
+		updateFireRenderMelCallbacks();
+
+		// Set up script jobs for those attributes which require updating of
+		// multiple controls.
+		// This is especially important when a user changes render layers.
+		//
+		string $attrArray[];	clear($attrArray);
+		$attrArray[size($attrArray)] = "defaultRenderGlobals.preRenderLayerMel";
+		$attrArray[size($attrArray)] = "defaultRenderGlobals.postRenderLayerMel";
+		$attrArray[size($attrArray)] = "defaultRenderGlobals.preRenderMel";
+		$attrArray[size($attrArray)] = "defaultRenderGlobals.postRenderMel";
+
+		for ($i = 0; $i < size($attrArray); $i++)
+		{
+			scriptJob
+				-attributeChange
+					$attrArray[$i]
+					updateFireRenderMelCallbacks
+				-parent `setParent -query`;
+		}
+
+	setParent $parent;
+	setUITemplate -popTemplate;
+}
+
+//------------------------------------------------------------------------------
+//
+proc sceneAssemblyPopulateSettingsUI(string $traversalSetLayout)
+{
+  string $oldParent = `setParent -query`;
+  setParent $traversalSetLayout;
+
+  // Get rid of existing layout content.
+  string $children[] = `layout -q -childArray $traversalSetLayout`;
+  string $child;
+  for ($child in $children) {
+	deleteUI $child;
+  }
+
+  // Call into the default traversal set for it to populate its UI.
+  // Catch to not break the UI in case the default traversal set is not registered
+  catch(`prepareRender -invokeSettingsUI`);
+
+  // Restore previous parent.
+  setParent $oldParent;
+}
+
+//------------------------------------------------------------------------------
+//
+global proc sceneAssemblyRenderRepChanged(
+   string $renderRep, string $traversalSetLayout
+)
+{
+  // Menu item entries in the render representation menu are prepareRender
+  // traversal set labels.  Do a linear search on the registered traversal sets
+  // to find the name of the selected traversal set.  Because
+  // there should be few traversal sets, the performance impact of
+  // this search is irrelevant.
+  string $traversalSets[] = `prepareRender -q -listTraversalSets`;
+  string $traversalSet;
+  for ($traversalSet in $traversalSets) {
+	$traversalSetLabel = `prepareRender -q -label -traversalSet $traversalSet`;
+	if ($traversalSetLabel == $renderRep) {
+	  prepareRender -edit -defaultTraversalSet $traversalSet;
+	}
+  }
+  sceneAssemblyPopulateSettingsUI($traversalSetLayout);
+}
+
+global proc updateDefaultTraversalSetMenu()
+{
+	string $currentRenderer = currentRenderer();
+
+	if (`currentRenderer` == "vray")
+		return;
+
+	string $oldParent = `setParent -query`;
+	setParentToCommonTab();
+
+	string $parent = `setParent -query`;
+	string $parentMenu = $parent + "|sceneAssemblyFrame|sceneAssemblyDefaultTraversalSet|renderRepMenu|OptionMenu";
+	// Pull-down menu for all registered prepareRender traversal sets.
+	// The selected traversal set is set as the default render traversal set,
+	// which is what implements the choice of render representation.
+	string $traversalSets[] = `prepareRender -q -listTraversalSets`;
+	string $defaultTraversalSet = `prepareRender -q -defaultTraversalSet`;
+
+	string $menuItems[] = `optionMenuGrp -query -itemListLong renderRepMenu`;
+
+	if (size($menuItems) > 0)
+	{
+		string $deleteCommand = "deleteUI";
+		for ($menuItem in $menuItems){
+			$deleteCommand += (" " + $menuItem);
+		}
+		eval($deleteCommand);
+	}
+
+	// Add the Active Representation as the first item
+	string $activeRepTraversalSet = `prepareRender -q -label -traversalSet "null"`;
+	menuItem -label $activeRepTraversalSet -parent $parentMenu;
+
+	string $traversalSet;
+	int $itemCnt = 2;
+	int $selectCnt = 1;
+	for ($traversalSet in $traversalSets) {
+		if ($traversalSet == "null"){
+			// already added
+			continue;
+		}
+
+		if($traversalSet == $defaultTraversalSet) {
+			$selectCnt = $itemCnt;
+		}
+
+		string $traversalSetLabel = `prepareRender -q -label -traversalSet $traversalSet`;
+		menuItem -label $traversalSetLabel -parent $parentMenu;
+		$itemCnt++;
+	}
+
+	optionMenuGrp -edit -select $selectCnt renderRepMenu;
+	// Create a layout for the render traversal set to use.  This layout
+	// will be populated by the traversal set to show its controls (if any).
+	sceneAssemblyPopulateSettingsUI("formLayoutRenderTraversalSet");
+
+	setParent $oldParent;
+}
+
+//------------------------------------------------------------------------------
+//
+proc createFireRenderCommonSceneAssembly()
+{
+  string $frameLayout = `setParent -query`;
+
+  // Create a layout to hold the prepareRender traversal set menu (a.k.a.
+  // "Render representation", and the traversal set's UI.
+  $sceneAssemblyLayout = `formLayout sceneAssemblyDefaultTraversalSet`;
+
+  string $renderRepMenu = `optionMenuGrp -annotation
+	(uiRes("m_createMayaSoftwareCommonGlobalsTab.kRenderRepAnnot"))
+	-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kRenderRepLabel")) renderRepMenu`;
+
+  // parent of the traversal set's UI.
+  $traversalSetLayout = `formLayout formLayoutRenderTraversalSet`;
+
+  optionMenuGrp -edit -changeCommand
+	("sceneAssemblyRenderRepChanged \"#1\" " + $traversalSetLayout)
+	$renderRepMenu;
+
+  updateDefaultTraversalSetMenu();
+
+  // Add the render representation option menu and the traversal set
+  // UI to the overall layout.
+  formLayout -edit
+	-attachForm    $renderRepMenu      "top"    10
+	-attachForm    $renderRepMenu      "left"   2
+	-attachForm    $renderRepMenu      "right"  20
+	-attachControl $traversalSetLayout "top"    10 $renderRepMenu
+	-attachForm    $traversalSetLayout "left"   0
+	-attachForm    $traversalSetLayout "right"  1
+	-attachForm    $traversalSetLayout "bottom" 10
+	$sceneAssemblyLayout;
+
+	//add callback for defaultTraversalSet attribute change.
+	scriptJob
+		-replacePrevious
+		-parent $frameLayout
+		-attributeChange "defaultRenderGlobals.defaultTraversalSet"
+		"updateDefaultTraversalSetMenu";
+
+  callbacks -addCallback updateDefaultTraversalSetMenu -hook prepareRenderChanged -owner prepareRenderCmd;
+
+  // Restore previous parent.
+  setParent $frameLayout;
+}
+
+//==================================================================
+// Common Tab
+//==================================================================
+
+global proc updateFireRenderCommonGlobalsTab()
+{
+	//
+	// Description:
+	//	This procedure is called when the current renderer changes to be the
+	//	Maya Software Renderer.
+	//	This procedure updates controls in the Common tab of the Maya Software
+	//	renderer to reflect values which may have been copied from the previous
+	//	current renderer.
+	//
+	updateFireRenderTargetFilePreview();
+	updateFireRenderFileNamePrefixControl();
+	updateFireRenderFileNameFormatControl();
+
+	// Must recreate the Image Format option menu because it is renderer specific.
+	// This is only required for the master layer layout.
+	//
+	if( isDisplayingAllRendererTabs()){
+
+		// Set the correct parent
+		setParentToCommonTab();
+		setParent rgImageFileFrame;
+
+		// Recreate the tab
+		createCommonImageFile();
+	}
+	updateFireRenderImageFormatControl();
+	updateFireRenderMultiCameraBufferNamingMenu();
+	updateFireRenderUseCustomExtensionControl();
+	updateFireRenderCustomExtensionControl();
+	updateFireRenderCameraControl();
+	updateFireRenderResolution();
+	updateFireRenderMelCallbacks();
+}
+
+global proc createFireRenderCommonGlobalsTab()
+{
+	//
+	// Description:
+	//	This procedure is called when building the render globals tabs for the
+	//	Maya Software renderer.
+	//	This procedure builds the "General" tab for the Maya Software renderer.
+	//
+	string $parentForm = `setParent -query`;
+
+		createTargetFilePreview();
+
+	setParent $parentForm;
+
+	scrollLayout
+		-horizontalScrollBarThickness 0
+		scrollLayout;
+
+		string $commonTabColumn = `columnLayout
+			-adjustableColumn true
+			commonTabColumn`;
+
+			// Image File Name
+			//
+			frameLayout
+				-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kImageFileOutput"))
+				-collapsable true
+				-collapse false
+				rgImageFileFrame;
+
+				createCommonImageFile();
+
+			setParent $commonTabColumn;
+
+			// Frame Range Output
+			//
+			frameLayout
+				-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kFrameRange"))
+				-collapsable true
+				-collapse false
+				rgFrameRangeFrame;
+
+				createCommonFrameRange();
+
+			setParent $commonTabColumn;
+
+			// Renderable Cameras
+			//
+			frameLayout
+				-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kRenderableCameras"))
+				-collapsable true
+				-collapse false
+				rgRenderableCamerasFrame;
+
+				createCommonRenderCameras();
+
+			setParent $commonTabColumn;
+
+			// Resolution ("Image Size") Section
+			//
+			frameLayout
+				-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kLayoutImageSize"))
+				-collapsable true
+				-collapse false
+				rgResolutionFrame;
+
+				createCommonResolution();
+
+			setParent $commonTabColumn;
+
+			// Scene Assembly Options
+			//
+			frameLayout
+				-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kSceneAssembly"))
+				-collapsable true
+				-collapse true
+				sceneAssemblyFrame;
+
+				createFireRenderCommonSceneAssembly();
+
+			setParent $commonTabColumn;
+
+			// Render Options
+			//
+			frameLayout
+				-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kRenderOptions"))
+				-collapsable true
+				-collapse true
+				mayaSoftwareOptionFrame;
+
+				createCommonRenderOptions();
+
+			setParent $commonTabColumn;
+
+	setParent $parentForm;
+
+	formLayout
+		-edit
+		-af targetFilePreview "top" 5
+		-an targetFilePreview "bottom"
+		-af targetFilePreview "left" 0
+		-af targetFilePreview "right" 0
+		-ac scrollLayout "top" 5 targetFilePreview
+		-af scrollLayout "bottom" 0
+		-af scrollLayout "left" 0
+		-af scrollLayout "right" 0
+		$parentForm;
+
+	// Update the target file preview.
+	//
+	updateFireRenderTargetFilePreview;
+}
+
+global proc setImageFormat()
+{
+	int $sel = `optionMenuGrp -q -sl imageMenuMayaSW` - 1;
+	string $items[] = `optionMenuGrp -q -itemListShort imageMenuMayaSW`;
+	int $val = `menuItem -q -data $items[$sel]`;
+
+	if ($val >= 1000) {
+		// Unknown IMF plugin, hence store its key in defaultRenderGlobals
+		// imfkey attribute
+		//
+		global string $imfPlugInKey[];  // This is the unique imf keyword
+		setAttr defaultRenderGlobals.imfkey -type "string" $imfPlugInKey[$val-1000];
+		setAttr defaultRenderGlobals.imageFormat 50;
+	}
+	else {
+		setAttr defaultRenderGlobals.imageFormat $val;
+		setAttr defaultRenderGlobals.imfkey -type "string" "";
+	}
+}

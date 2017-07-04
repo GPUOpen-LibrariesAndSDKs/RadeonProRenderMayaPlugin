@@ -1,0 +1,40 @@
+#include "Common.ogsfh"
+
+// Color texture.
+uniform texture2D colorTexture : SourceTexture
+<
+	string UIName = "Color Texture";
+>;
+
+// Color texture sampler.
+uniform sampler2D colorSampler = sampler_state
+{
+	Texture = <colorTexture>;
+};
+
+// Color pixel shader.
+GLSLShader PS_BlitColor
+{
+	void main()
+	{
+		// Read the color.
+		vec2 uv = VSUV;
+		colorOut = texture2D(colorSampler, uv);
+
+		// Divide by iterations.
+		colorOut.r /= colorOut.a;
+		colorOut.g /= colorOut.a;
+		colorOut.b /= colorOut.a;
+		colorOut.a = 1;
+	}
+}
+
+// The main technique.
+technique Main
+{
+	pass p0
+	{
+		VertexShader (in VS_INPUT_ScreenQuad, out VS_TO_PS_ScreenQuad) = VS_ScreenQuad;
+		PixelShader (in VS_TO_PS_ScreenQuad, out pixelOut) = PS_BlitColor;
+	}
+}

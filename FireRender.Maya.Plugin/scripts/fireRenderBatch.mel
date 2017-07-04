@@ -1,0 +1,46 @@
+global proc fireRenderBatchRender(string $option)
+{
+	if( ! `pluginInfo -q -l "RadeonProRender"` )
+	{
+		loadPlugin "RadeonProRender";
+	}
+
+	string $batchCmd = "fireRender -batch " + $option;
+
+	print($batchCmd + "\n");
+	eval $batchCmd;
+}
+
+global proc fireRenderCmdlineRender(string $option)
+{
+	fireRenderBatchRender($option);
+}
+
+global proc string fireRenderBatchRenderOptionsString()
+{
+	int $frCommandPort = 0;
+	int $i = 0;
+	for ($i = 9000; $i<9200; $i++)
+	{
+		if (`commandPort -q -n (":" + $i)` == 0)
+		{
+			commandPort -n (":" + $i);
+		}
+		if (`commandPort -q -n (":" + $i)` == 0)
+		{
+			continue;
+		}
+		else
+		{
+			$frCommandPort = $i;
+			break;
+		}
+	}
+	return " -r FireRender -port " + $frCommandPort;
+}
+
+global proc fireRenderShowLog()
+{
+
+}
+

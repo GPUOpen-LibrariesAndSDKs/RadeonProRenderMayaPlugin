@@ -1,0 +1,25 @@
+global proc AERPRSubsurfaceMaterialTemplate( string $nodeName )
+{
+	AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -beginLayout "Surface" -collapse 0;
+		editorTemplate -addControl "surfaceColor";
+		editorTemplate -addControl "surfaceIntensity";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Volume" -collapse 0;
+		editorTemplate -addControl "scatterColor";
+		editorTemplate -addControl "scatterAmount";
+		editorTemplate -addControl "subsurfaceColor";
+		editorTemplate -addControl "emissionColor";
+		editorTemplate -addControl "density";
+		editorTemplate -addControl "scatteringDirection";
+		editorTemplate -addControl "multiscatter";
+	editorTemplate -endLayout;
+
+	AEdependNodeTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

@@ -1,0 +1,303 @@
+// These procedures replace the default Maya implementations and
+// are required because Maya does not automatically create the
+// first render settings tab for a 3rd party renderer. The only
+// change is to the addOneTabToGlobalsWindow procedure, but it is
+// necessary to override addMasterLayerTabsToGlobalsWindow and
+// addRendererTabsToGlobalsWindow also, as addOneTabToGlobalsWindow
+// is potentially already overridden elsewhere for the same reason.
+// The implementation here should be compatible with other renderers.
+
+// This local procedure is required because
+// it is evaluated as part of tab creation.
+proc string renderSettingsTabLabel_melToUI (string $mel)
+{
+	// The arguments passed inside this procedure should not
+	// be localized. This procedure uses the first string
+	// argument that is passed with the "-addGlobalsTab"
+	// flag in the "renderer" command.
+	//
+	string $result = $mel;
+
+	if($mel == "Common"){
+		$result = (uiRes("m_unifiedRenderGlobalsWindow.kCommon"));
+	}
+	else if($mel == "Passes"){
+		$result = (uiRes("m_unifiedRenderGlobalsWindow.kPassesTab"));
+	}
+	else if($mel == "Maya Software"){
+		$result = (uiRes("m_unifiedRenderGlobalsWindow.kMayaSoftware"));
+	}
+	else if($mel == "Maya Hardware"){
+		$result = (uiRes("m_unifiedRenderGlobalsWindow.kMayaHardware"));
+	}
+	else if($mel == "Maya Vector"){
+		$result = (uiRes("m_unifiedRenderGlobalsWindow.kMayaVector"));
+	}
+	else if($mel == "Features"){
+		$result = (uiRes("m_unifiedRenderGlobalsWindow.kFeatures"));
+	}
+	else if($mel == "Quality"){
+		$result = (uiRes("m_unifiedRenderGlobalsWindow.kQuality"));
+	}
+	else if($mel == "Indirect Lighting"){
+		$result = (uiRes("m_unifiedRenderGlobalsWindow.kIndirectLighting"));
+	}
+	else if($mel == "Options"){
+		$result = (uiRes("m_unifiedRenderGlobalsWindow.kOptions"));
+	}
+	else{
+		uiToMelMsg( "renderSettingsTabLabel_melToUI", $mel, 0 );
+	}
+
+	return $result;
+}
+
+// Description: This procedure allows a renderer to add one tab
+//              to the unified render globals window
+//              and create the content in the tab using a procedure.
+//
+// Input:
+//              The "rendererName" is the name of the renderer.
+//              The "tabName" is the name of the tab.
+//              The "createProcName" is the name of the procedure
+//              used to create the content of the tab.
+//
+global proc addOneTabToGlobalsWindowRPR(
+	string $renderer, string $tabLabel, string $createProc)
+{
+	// Check to see if the unified render globals window existed.
+	// If it does not exist, then we don't need to add any tab yet.
+	//
+	if (!`window -exists unifiedRenderGlobalsWindow`)
+	{
+		catch(error (uiRes("m_unifiedRenderGlobalsWindow.kCannotAddTabs")));
+		return;
+	}
+
+	int $displayAllTabs = isDisplayingAllRendererTabs();
+	if( !$displayAllTabs )
+	{
+		// If the current renderer the renderer is not this
+		// renderer, then don't add the tab yet.
+		//
+		if( currentRenderer() != $renderer )
+		{
+			return;
+		}
+	}
+
+	setParent unifiedRenderGlobalsWindow;
+
+	// Hide the tabForm while updating.
+	//
+	int $tabFormManagedStatus = `formLayout -q -manage tabForm`;
+	formLayout -edit -manage false tabForm;
+	setParent tabForm;
+
+	// Set the correct tabLayout parent.
+	//
+	string $tabLayoutName;
+	if( $displayAllTabs ){
+		global string $gMasterLayerRendererName;
+		$tabLayoutName = getRendererTabLayout($gMasterLayerRendererName);
+	}else{
+		$tabLayoutName = getRendererTabLayout($renderer);
+	}
+	setParent $tabLayoutName;
+
+	// The tabName is the tabLabel with the white space removed
+	// and the word "Tab" added to the end.
+	// "masterLayer" will act as the renderer name if the tab
+	// is in the master layer.
+	//
+	string $tabName = rendererTabName($renderer, $tabLabel);
+
+	// if the tab-control does not exist, define it and add it
+	// to the tabLayout
+	//
+	if (!`layout -exists $tabName`)
+	{
+		setUITemplate -pushTemplate renderGlobalsTemplate;
+		setUITemplate -pushTemplate attributeEditorTemplate;
+
+		// Define the tab
+		//
+		formLayout $tabName;
+
+		// get the content of the tab from the createTabProc
+		//
+
+		// Most create procs are now deferred till the tab is selected
+		// These two are the default tabs, so we don't defer them
+		if (($createProc == "createMayaSoftwareCommonGlobalsTab")
+			|| ($createProc == "createMayaSoftwareGlobalsTab"))
+		{
+			eval($createProc);
+		}
+
+		// Radeon ProRender addition. Because Maya only creates the
+		// software common globals tab initially, it is necessary to
+		// override this behavior if a custom common globals tab is
+		// required. This will have the correct behavior for all
+		// renderers that follow the specified pattern, including
+		// Maya's built-in Arnold renderer.
+		else if (gmatch($createProc, "*reate*CommonGlobalsTab"))
+			eval($createProc);
+
+		// These end off the layouts of the information in the Tab
+		//
+		setParent ..;
+
+		setUITemplate -popTemplate;
+		setUITemplate -popTemplate;
+
+		// Add the tab to the tabLayout
+		//
+		tabLayout
+			-edit
+			-tabLabel $tabName `renderSettingsTabLabel_melToUI $tabLabel`
+			$tabLayoutName;
+	}
+
+	// Restore the old manage status for the tabForm.
+	//
+	formLayout -edit -manage $tabFormManagedStatus tabForm;
+}
+
+
+// Description:
+//		Create the renderer tabs for the master layer.
+//		This will contain the tabs for ALL available renderers.
+//
+global proc addMasterLayerTabsToGlobalsWindow()
+{
+
+	// Check to see if the unified render globals window existed.
+	// If it does not exist, then we don't need to add any tab yet.
+	//
+	if (!`window -exists unifiedRenderGlobalsWindow`)
+	{
+		catch(error (uiRes("m_unifiedRenderGlobalsWindow.kCannotAddTabs")) );
+		return;
+	}
+
+	setParent unifiedRenderGlobalsWindow;
+
+	// Hide the tabForm while updating.
+	//
+	int $tabFormManagedStatus = `formLayout -q -manage tabForm`;
+	formLayout -edit -manage false tabForm;
+	setParent tabForm;
+
+	// Get the tab layout name. Will create the layout if it doesn't
+	// already exist.
+	//
+	global string $gMasterLayerRendererName;
+	string $tabLayoutName = getRendererTabLayout($gMasterLayerRendererName);
+	setParent $tabLayoutName;
+
+	// For each renderer, recreate its tabs.
+	//
+	int $i, $j, $commonTabCreated=false;
+	string $renderers[] = `renderer -query -namesOfAvailableRenderers`;
+
+	for ($i = 0; $i < size($renderers); $i++){
+		// Get the tabLabels and createProcNames.
+		string $tabLabels[] = `renderer -query -globalsTabLabels $renderers[$i]`;
+		string $createProcNames[] = `renderer -query -globalsTabCreateProcNames $renderers[$i]`;
+
+		for ($j = 0; $j < size($tabLabels); $j++)
+		{
+			// Check if the tab already exists
+			//
+			if( ("createMayaSoftwareCommonGlobalsTab" == $createProcNames[$j]) ){
+				if( $commonTabCreated == false ){
+					$commonTabCreated = true;
+				}else{
+					// Common tab already exists. Don't create it.
+					continue;
+				}
+			}
+
+			addOneTabToGlobalsWindowRPR(
+				$renderers[$i],
+				$tabLabels[$j],
+				$createProcNames[$j]);
+		}
+	}
+
+	setParent ..;
+
+	// Restore the old manage status for the tabForm.
+	//
+	formLayout -edit -manage $tabFormManagedStatus tabForm;
+}
+
+
+// Description: This procedure lets the specified renderer to
+//              add all its tabs to the unified render globals window.
+//
+global proc addRendererTabsToGlobalsWindow(string $renderer)
+{
+	// Check to see if the unified render globals window existed.
+	// If it does not exist, then we don't need to add any tab yet.
+	//
+	if (!`window -exists unifiedRenderGlobalsWindow`)
+	{
+		catch(error (uiRes("m_unifiedRenderGlobalsWindow.kCannotAddTabs")) );
+		return;
+	}
+
+	int $displayAllTabs = isDisplayingAllRendererTabs();
+	if( !$displayAllTabs )
+	{
+		// If the current renderer the renderer is not this
+		// renderer, then don't add the tab yet.
+		//
+		if( currentRenderer() != $renderer )
+		{
+			return;
+		}
+	}
+
+	setParent unifiedRenderGlobalsWindow;
+
+	// Hide the tabForm while updating.
+	//
+	int $tabFormManagedStatus = `formLayout -q -manage tabForm`;
+	formLayout -edit -manage false tabForm;
+	setParent tabForm;
+
+	// Get the tab layout name. Will create the layout if it doesn't
+	// already exist.
+	//
+	string $tabLayoutName;
+	if( $displayAllTabs ){
+		global string $gMasterLayerRendererName;
+		$tabLayoutName = getRendererTabLayout($gMasterLayerRendererName);
+	}else{
+		$tabLayoutName = getRendererTabLayout($renderer);
+	}
+	setParent $tabLayoutName;
+
+	// Get the tabLabels and createProcNames.
+	//
+	string $tabLabels[] = `renderer -query -globalsTabLabels $renderer`;
+	string $createProcNames[] =
+		`renderer -query -globalsTabCreateProcNames $renderer`;
+
+	int $i;
+	for ($i = 0; $i < size($tabLabels); $i++)
+	{
+		addOneTabToGlobalsWindowRPR(
+			$renderer,
+			$tabLabels[$i],
+			$createProcNames[$i]);
+	}
+
+	setParent ..;
+
+	// Restore the old manage status for the tabForm.
+	//
+	formLayout -edit -manage $tabFormManagedStatus tabForm;
+}

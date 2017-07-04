@@ -1,0 +1,407 @@
+global proc shelf_Radeon_ProRender () {
+	global string $gBuffStr;
+	global string $gBuffStr0;
+	global string $gBuffStr1;
+
+
+	shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-annotation "Open the Radeon ProRender settings tab"
+		-enableBackground 0
+		-align "center"
+		// -label "Render Settings"
+		-labelOffset 0
+		-font "plainLabelFont"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0 0 0 0
+		-image "shelf/RPRSettings.png"
+		-image1 "shelf/RPRSettings.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command "source shelfCommands.mel; openSettingsTabRPR();"
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+	;
+	shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-annotation "Start a production render"
+		-enableBackground 0
+		-align "center"
+		// -label "Render Scene"
+		-labelOffset 0
+		-font "plainLabelFont"
+		// -imageOverlayLabel "Render"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0 0 0 0.2
+		-image "shelf/RPRStart.png"
+		-image1 "shelf/RPRStart.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command "source shelfCommands.mel; startProductionRenderRPR();"
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+	;
+	shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-annotation "Set the render quality (right click for presets)"
+		-enableBackground 0
+		-align "center"
+		// -label "Render Quality"
+		-labelOffset 0
+		-font "plainLabelFont"
+		// -imageOverlayLabel "Quality"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0.25188 0.25188 0.25188 0
+		-image "shelf/RPRQuality.png"
+		-image1 "shelf/RPRQuality.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command "source shelfCommands.mel; setRenderQualityRPR();"
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+		-mi "Production: Low" ( "source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresets\" 0;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepth\" 5;\n\tsetAttr \"RadeonProRenderGlobals.samples\" 1;\n\tsetAttr \"RadeonProRenderGlobals.cellSize\" 1;\n}" )
+		-mi "Production: Medium" ( "source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresets\" 1;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepth\" 15;\n\tsetAttr \"RadeonProRenderGlobals.samples\" 8;\n\tsetAttr \"RadeonProRenderGlobals.cellSize\" 4;\n}" )
+		-mi "Production: High" ( "source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresets\" 2;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepth\" 25;\n\tsetAttr \"RadeonProRenderGlobals.samples\" 16;\n\tsetAttr \"RadeonProRenderGlobals.cellSize\" 8;\n}" )
+		-mi "Viewport: Low" ( "source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresetsViewport\" 0;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepthViewport\" 5;\n\tsetAttr \"RadeonProRenderGlobals.samplesViewport\" 1;\n\tsetAttr \"RadeonProRenderGlobals.cellSizeViewport\" 1;\n}" )
+		-mi "Viewport: Medium" ( "source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresetsViewport\" 1;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepthViewport\" 15;\n\tsetAttr \"RadeonProRenderGlobals.samplesViewport\" 8;\n\tsetAttr \"RadeonProRenderGlobals.cellSizeViewport\" 4;\n}" )
+		-mi "Viewport: High" ( "source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresetsViewport\" 2;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepthViewport\" 25;\n\tsetAttr \"RadeonProRenderGlobals.samplesViewport\" 16;\n\tsetAttr \"RadeonProRenderGlobals.cellSizeViewport\" 8;\n}" )
+	;
+	separator
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-enableBackground 0
+		-horizontal 0
+	;
+	shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-annotation "Import XML materials"
+		-enableBackground 0
+		-align "center"
+		// -label "Import Materials"
+		-labelOffset 0
+		-font "plainLabelFont"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0 0 0 0
+		-image "shelf/ImportXML.png"
+		-image1 "shelf/ImportXML.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command "source shelfCommands.mel; importMaterialRPR();"
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+	;
+	shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-annotation "Export XML materials"
+		-enableBackground 0
+		-align "center"
+		// -label "Export Materials"
+		-labelOffset 0
+		-font "plainLabelFont"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0 0 0 0
+		-image "shelf/ExportXML.png"
+		-image1 "shelf/ExportXML.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command "source shelfCommands.mel; exportMaterialRPR();"
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+	;
+	shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 36
+		-height 36
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-annotation "Open the Radeon ProRender material library"
+		-enableBackground 0
+		-align "center"
+		// -label "Material Library"
+		-labelOffset 0
+		-font "plainLabelFont"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0 0 0 0
+		-image "shelf/BrowseMaterials.png"
+		-image1 "shelf/BrowseMaterials.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command "source shelfCommands.mel; openMaterialLibraryRPR();"
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+	;
+	separator
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-enableBackground 0
+		-horizontal 0
+	;
+	shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-annotation "Create or select a sky node"
+		-enableBackground 0
+		-align "center"
+		// -label "Create Sky"
+		-labelOffset 0
+		-font "plainLabelFont"
+		// -imageOverlayLabel "Sky"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0 0 0 0
+		-image "shelf/RPRSky.png"
+		-image1 "shelf/RPRSky.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command "source shelfCommands.mel; createSkyRPR();"
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+	;
+	shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-annotation "Create or select an IBL node"
+		-enableBackground 0
+		-align "center"
+		// -label "Create IBL"
+		-labelOffset 0
+		-font "plainLabelFont"
+		// -imageOverlayLabel "IBL"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0 0 0 0.5
+		-image "shelf/RPRIBL.png"
+		-image1 "shelf/RPRIBL.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command "source shelfCommands.mel; createIBLRPR();"
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+	;
+	shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-annotation "Create and assign an emissive material to the selected object"
+		-enableBackground 0
+		-align "center"
+		// -label "Create and Assign Emissive"
+		-labelOffset 0
+		-font "plainLabelFont"
+		// -imageOverlayLabel "Emissive"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0 0 0 0
+		-image "shelf/RPREmissive.png"
+		-image1 "shelf/RPREmissive.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command "source shelfCommands.mel; createAndAssignEmissiveRPR();"
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+	;
+	/*
+	shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 50
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-annotation "Creates IES Lighting"
+		-enableBackground 0
+		-align "center"
+		// -label "Create IES Lighting"
+		-labelOffset 0
+		-font "plainLabelFont"
+		// -imageOverlayLabel "IES Light"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0 0 0 0
+		-image "shelf/IESLight.png"
+		-image1 "shelf/IESLight.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command "source shelfCommands.mel; createIESLight();"
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+	;
+	*/
+		separator
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-enableBackground 0
+		-horizontal 0
+	;
+		shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-annotation "Convert selected VRay light or all VRay lights in the scene"
+		-enableBackground 0
+		-align "center"
+		// -label "Convert VRay Lights"
+		-labelOffset 0
+		-rotation 0
+		-flipX 0
+		-flipY 0
+		-useAlpha 1
+		-font "plainLabelFont"
+		// -imageOverlayLabel "VRay->RPR"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0 0 0 0
+		-image "shelf/RPRConvertVRay.png"
+		-image1 "shelf/RPRConvertVRay.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command "source shelfCommands.mel; convertVRayObjects();"
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+	;
+	separator
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-enableBackground 0
+		-horizontal 0
+	;
+	shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-annotation "Open Radeon ProRender plug-in info"
+		-enableBackground 0
+		-align "center"
+		// -label "Plug-in Info"
+		-labelOffset 0
+		-font "plainLabelFont"
+		// -imageOverlayLabel "Info"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0 0 0 0
+		-image "shelf/RPRInfo.png"
+		-image1 "shelf/RPRInfo.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command "source shelfCommands.mel; openPluginInfoRPR();"
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+	;
+	shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-annotation "Open online documentation"
+		-enableBackground 0
+		-align "center"
+		// -label "Web Docs"
+		-labelOffset 0
+		-font "plainLabelFont"
+		// -imageOverlayLabel "Docs"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0 0 0 0
+		-image "shelf/RPRDocs.png"
+		-image1 "shelf/RPRDocs.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command "launch -web \"https://radeon-prorender.github.io/maya/\";"
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+	;
+
+}

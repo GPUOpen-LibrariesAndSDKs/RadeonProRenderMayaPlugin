@@ -1,0 +1,9 @@
+bin/
+dist/
+x64/
+.suo
+.db
+*.user
+*.db
+
+

@@ -1,0 +1,269 @@
+source "fireRenderEnvironment.mel";
+
+// Shelf Commands
+// -----------------------------------------------------------------------------
+
+global proc int checkPluginLoadedRPR()
+{
+	if (!`pluginInfo -query -loaded RadeonProRender`)
+	{
+		error("Radeon ProRender is not loaded, please load it in Plug-in Manager");
+		return 0;
+	}
+
+	return 1;
+}
+
+global proc openSettingsTabRPR()
+{
+	if (!checkPluginLoadedRPR())
+		return;
+
+	// Open settings window, catch errors
+	if (catch(eval("unifiedRenderGlobalsWindow")))
+	{
+		// Didn't open, try to recover
+		print("Recovering RenderGlobalsWindow\n");
+		deleteUI unifiedRenderGlobalsWindow;
+		// And open again
+		unifiedRenderGlobalsWindow;
+	}
+	setCurrentRenderer "FireRender";
+	string $tabLayoutName = rendererTabLayoutName("FireRender");
+	addRendererTabsToGlobalsWindow("FireRender");
+	setCurrentTabInRenderGlobalsWindow("Radeon ProRender");
+	fillSelectedTabForCurrentRenderer();
+}
+
+global proc startProductionRenderRPR()
+{
+	if (!checkPluginLoadedRPR())
+		return;
+
+	string $panel = `getPanel -withFocus`;
+	string $cameraName = `modelPanel -q -cam $panel`;
+	setCurrentRenderer "FireRender";
+	RenderViewWindow;
+	showWindow renderViewWindow;
+	refresh;
+	renderWindowRenderCamera redoPreviousRender renderView $cameraName;
+}
+
+global proc setRenderQualityRPR()
+{
+	if (!checkPluginLoadedRPR())
+		return;
+
+	print("Right click for render quality presets.");
+}
+
+global proc importMaterialRPR()
+{
+	if (!checkPluginLoadedRPR())
+		return;
+
+
+	int $importImages = importImagesEnabledRPR();
+
+	if (`exists RPRAxfDLLDoesNotExist`)
+	{
+		string $filename[] = `fileDialog2 - fileMode 4 - okCaption "Import" -caption "Import Radeon ProRender Material" -fileFilter "XML Material Files (*.xml);;All Files (*.*)"`;
+		for ($i = 0; $i < `size($filename)`; $i++)
+		{
+			RPRXMLImport - file $filename[$i];
+		}
+	}
+	else
+	{
+		string $filenameWithAxf[] = `fileDialog2 - fileMode 4 - okCaption "Import" -caption "Import Radeon ProRender and Appearance eXchange Format Material" -fileFilter "XML Material Files (*.xml);;Appearance eXchange Format Material Files (*.axf);;All Files (*.*)"`;
+		for ($i = 0; $i < `size($filenameWithAxf)`; $i++)
+		{
+			RPRXMLImport - file $filenameWithAxf[$i];
+		}
+	}
+}
+
+global proc exportMaterialRPR()
+{
+	if (!checkPluginLoadedRPR())
+		return;
+
+	string $res = `confirmDialog -title "Export Materials" -message "Which materials should be exported to Radeon ProRender XML format?" -button "Selected Only" -button "All" -button "Cancel" -defaultButton "Selected Only" -cancelButton "Cancel" -dismissString "Cancel"`;
+
+	if ($res == "Cancel")
+		return;
+
+	string $filename[] = `fileDialog2 -fileMode 0 -caption "Export Radeon ProRender Material" -fileFilter "XML Material Files (*.xml);;All Files (*.*)"`;
+
+	for ($i = 0; $i < `size($filename)`; $i++)
+	{
+		if ($res == "All")
+			RPRXMLExport -file $filename[$i];
+		else
+			RPRXMLExport -s -file $filename[$i];
+	}
+}
+
+global proc openMaterialLibraryRPR()
+{
+	if (!checkPluginLoadedRPR())
+		return;
+
+	python("import fireRender.rpr_material_browser\nreload(fireRender.rpr_material_browser)\nfireRender.rpr_material_browser.show()");
+}
+
+global proc createSkyRPR()
+{
+	if (!checkPluginLoadedRPR())
+		return;
+
+	createSkyNodeRPR();
+}
+
+global proc createIBLRPR()
+{
+	if (!checkPluginLoadedRPR())
+		return;
+
+	createIBLNodeRPR();
+}
+
+global proc createAndAssignEmissiveRPR()
+{
+	if (!checkPluginLoadedRPR())
+		return;
+
+	// Get the selected object.
+	string $selection[] = `ls -selection`;
+
+	// Create the emissive material.
+	string $createdMaterialName = `shadingNode -asShader "RPRMaterial"`;
+	sets -renderable true -noSurfaceShader true -empty -name ($createdMaterialName + "SG");
+	connectAttr -f ($createdMaterialName + ".outColor") ($createdMaterialName + "SG.surfaceShader");
+	setAttr ($createdMaterialName + ".type") 6;
+
+	// Reset the selection.
+	int $numberOfItemsSelected = size($selection);
+
+	if ($numberOfItemsSelected > 0)
+		select -r $selection[0];
+
+	int $i;
+	for ($i = 1; $i < $numberOfItemsSelected;++$i)
+	{
+		string $item = $selection[$i];
+		select -add $selection[$i];
+	}
+
+	// Assign material to the selected object.
+	hyperShade -assign $createdMaterialName;
+}
+
+global proc createIESLight()
+{
+	if (!checkPluginLoadedRPR())
+		return;
+
+	string $IESNode = `createNode RPRIES -n RPRIESLight`;
+}
+
+global proc convertVRayObjects()
+{
+	if (!checkPluginLoadedRPR())
+		return;
+
+	string $sel[]  = `ls -sl`;
+	string $res = "";
+
+	if(size($sel)>0)
+		$res = `confirmDialog -title "Convert VRay to Radeon Pro Render" -message "This operation will convert selected VRay materials and/or lights to Radeon Pro Render equivalents. Any unused converted VRay materials will be deleted. Rendering this scene with VRay will no longer produce the same results.\nDo you want to continue?" -button "Yes" -button "No" -defaultButton "No" -cancelButton "No" -dismissString "No"`;
+	else
+		$res = `confirmDialog -title "Convert VRay to Radeon Pro Render" -message "This operation will convert all VRay materials and/or lights in this scene to Radeon Pro Render equivalents. Any unused converted VRay materials will be deleted. Rendering this scene with VRay will no longer produce the same results.\nDo you want to continue?" -button "Yes" -button "No" -defaultButton "No" -cancelButton "No" -dismissString "No"`;
+
+	if ($res == "No")
+		return;
+
+	$res = `fireRenderConvertVRay`;
+
+	// Clean-up unused shaders:
+	for ($material in `ls -materials`)
+	{
+		string $outputs[];
+		string $SG[] = {};
+		$outputs = stringArrayRemoveDuplicates(`listConnections -destination 1 $material`);
+		for ($out in $outputs)
+		{
+			string $type = nodeType($out);
+			if ($type == "shadingEngine") $SG[size($SG)] = $out;
+		}
+
+		if (size(`listConnections -source 1 ($SG[size($SG)-1] + ".dagSetMembers")`) == 0)
+		{
+			if($material!="lambert1" && $material!="particleCloud1" && $material!="shaderGlow1")
+			{
+				delete $material;
+			}
+		}
+	};
+
+	// Now clean-up shading engines:
+	string $shaderSG[] = `ls -type shadingEngine`;
+	for($SG in $shaderSG)
+	{
+		//Get Shader Name
+		string $sshader[] = `listConnections ($SG+".surfaceShader")`;
+		string $vshader[] = `listConnections ($SG+".volumeShader")`;
+		string $dshader[] = `listConnections ($SG+".displacementShader")`;
+		if(size($sshader)==0 && size($vshader)==0 && size($vshader)==0)
+		{
+			delete $SG;
+		}
+};
+
+	confirmDialog -message $res -title "Convert VRay to Radeon Pro Render" -button "OK" -defaultButton "OK" -cancelButton "OK" -dismissString "OK";
+}
+
+global proc openPluginInfoRPR()
+{
+	if (!checkPluginLoadedRPR())
+		return;
+
+	PluginManager;
+	pluginWin;
+	displayPluginInfo "RadeonProRender";
+}
+
+
+// Import File Dialog Procedures
+// -----------------------------------------------------------------------------
+
+global proc fileDialogUICreateRPR(string $parent)
+{
+	setParent $parent;
+	$parent = `scrollLayout -childResizable true`;
+
+	columnLayout -adj true;
+	checkBox -label "Import images to project" importImagesCheckBox;
+}
+
+global proc fileDialogUIInitializeRPR(string $parent, string $filterType)
+{
+	setParent $parent;
+
+	int $value = importImagesEnabledRPR();
+	checkBox -edit -value $value importImagesCheckBox;
+}
+
+global proc fileDialogUICommitRPR(string $parent)
+{
+	setParent $parent;
+	optionVar -intValue RPR_ImportMaterialImages `checkBox -q -value importImagesCheckBox`;
+}
+
+global proc int importImagesEnabledRPR()
+{
+	if (`optionVar -exists RPR_ImportMaterialImages`)
+		return `optionVar -q RPR_ImportMaterialImages`;
+
+	return 1;
+}

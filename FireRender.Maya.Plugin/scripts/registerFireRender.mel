@@ -1,0 +1,172 @@
+source "createMayaSoftwareCommonGlobalsTab.mel";
+source "createFireRenderCommonGlobalsTab.mel";
+source "fireRenderIpr.mel";
+source "fireRenderBatch.mel";
+source "fireRenderUpdateAE.mel";
+source "fireRenderEnvironment.mel";
+source "common.mel";
+
+// Override Maya's default implementation for setting up render
+// settings tabs. This is required because Maya does not automatically
+// create the first render settings tab for a 3rd party renderer.
+proc overrideUnifiedRenderGlobalsWindow()
+{
+	int $mayaVersion=`about -apiVersion`;
+
+	if ($mayaVersion >= 201700)
+		eval("source \"rprUnifiedRenderGlobalsWindow201700.mel\"");
+	else if($mayaVersion >= 201650)
+		eval("source \"rprUnifiedRenderGlobalsWindow201650.mel\"");
+	else if($mayaVersion >= 201600)
+		eval("source \"rprUnifiedRenderGlobalsWindow201600.mel\"");
+	else if($mayaVersion >= 201500)
+		eval("source \"rprUnifiedRenderGlobalsWindow201500.mel\"");
+}
+
+global proc registerFireRender()
+{
+	string $currentRendererName = getRPRPluginName();
+
+	renderer -rendererUIName $currentRendererName
+			-renderProcedure "fireRenderCmd"
+			-renderRegionProcedure		 "mayaRenderRegion"
+			-iprRenderProcedure         "fireRenderIprRender"
+			-iprOptionsProcedure         "fireRenderIprOptionsWindow"
+			-isRunningIprProcedure       "fireRenderIsRunningIpr"
+			-startIprRenderProcedure     "fireRenderStartIprRender"
+			-stopIprRenderProcedure      "fireRenderStopIprRender"
+			-refreshIprRenderProcedure   "fireRenderRefreshIpr"
+			-pauseIprRenderProcedure     "fireRenderPauseIprRender"
+			-changeIprRegionProcedure    "fireRenderChangeIprRegion"
+			-commandRenderProcedure      "fireRenderCmdlineRender"
+			-batchRenderProcedure        "fireRenderBatchRender"
+			-batchRenderOptionsStringProcedure        "fireRenderBatchRenderOptionsString"
+			-showBatchRenderLogProcedure "fireRenderShowLog"
+			-cancelBatchRenderProcedure  "batchRender"
+			-showBatchRenderProcedure    "batchRender -showImage true"
+			-logoImageName              "amd.xpm"
+			FireRender;
+
+	renderer -edit -addGlobalsNode "RadeonProRenderGlobals" FireRender;
+	renderer -edit -addGlobalsNode "defaultRenderGlobals" FireRender;
+	renderer -edit -addGlobalsNode "defaultResolution" FireRender;
+
+	renderer -edit -addGlobalsTab "Common" "createFireRenderCommonGlobalsTab" "updateFireRenderCommonGlobalsTab" FireRender;
+	renderer -edit -addGlobalsTab  $currentRendererName "createFireRenderGlobalsTab" "updateFireRenderGlobalsTab" FireRender;
+
+	// These will update Attribute Editor when the selection is changed.
+	scriptJob -event "SelectionChanged" "fireRenderUpdateAE";
+	scriptJob -event "constructionHistoryChanged" "fireRenderUpdateAE";
+
+	// Ensure any saved IBL and Sky nodes are not linked to
+	// RPR globals, as this means that the RPR globals node
+	// is deleted if the IBL or Sky node is deleted.
+	scriptJob -event "SceneOpened" cleanEnvironmentNodesRPR;
+
+	fireRenderUpdateAE();
+
+	overrideUnifiedRenderGlobalsWindow();
+}
+
+global proc string fireRenderCmd(int $resolution0, int $resolution1,
+								   int $doShadows, int $doGlowPass, string $camera, string $option)
+{
+	print(getRPRPluginName() + " command " + $resolution0 + " " + $resolution1 + " " + $doShadows + " "+ $doGlowPass + " "+ $camera+ " "+  $option+"\n");
+	string $cmd = "fireRender -w " + $resolution0 + " -h " + $resolution1 + " -cam " + $camera + " " + $option;
+	eval($cmd);
+	string $result = "";
+	return $result;
+}
+
+//////////////////////////////////////////////////
+global proc RPR_setAllowUncertified(int $allow){
+	int $exists = `checkBox -exists "ctrlAllowUncertified"`;
+	if ($exists){
+		//createFireRenderGlobalsTab.mel has been loaded
+		if ($allow){
+			checkBox
+				-e
+				-v 1
+				ctrlAllowUncertified;
+		}else{
+			checkBox
+				-e
+				-v 0
+				ctrlAllowUncertified;
+		}
+
+		deviceTypeChangedUI();
+	}else{
+		//createFireRenderGlobalsTab.mel has NOT been loaded yet.
+		optionVar -iv RPR_AllowUncertified $allow;
+	}
+}
+
+global proc RPR_setGLInteropEnabled(int $enabled){
+	int $exists = `checkBox -exists "checkBox_GLInterop"`;
+
+	int $deviceSelectedExists = `optionVar -ex "RPR_DevicesSelected"`;
+
+	if ($deviceSelectedExists == 0){
+		print("CPU selected!\nGLInterop setting is only active if Graphics Card is selected.\n");
+	}else{
+		int $devSelected[] = `optionVar -q "RPR_DevicesSelected"`;
+
+		if (size($devSelected) == 0 || $devSelected[0]==0){
+			print("CPU selected!\nGLInterop setting is only active if Graphics Card is selected.\n");
+		}
+	}
+
+	optionVar -iv RPR_GLInteropEnabled $enabled;
+
+	if ($exists){
+		deviceTypeChangedUI();
+	}
+}
+
+global proc RPR_setDeviceActive(int $device, int $activate){
+	string $ctrlName = "checkBox_Device" + ($device - 1);
+	if ($device == 0){
+		$ctrlName = "checkBox_ResourcesCPU";
+	}
+
+	int $exists = `checkBox -exists $ctrlName`;
+
+	int $deviceSelectedExists = `optionVar -ex "RPR_DevicesSelected"`;
+	int $currActive = 0;
+
+	if ($deviceSelectedExists){
+		int $devSelected[] = `optionVar -q "RPR_DevicesSelected"`;
+
+		for( $i=0; $i<size($devSelected); ++$i ){
+			if ($devSelected[$i] == $device){
+				$currActive = 1;
+			}
+		}
+	}
+
+	if ($exists){
+		checkBox
+			-e
+			-v $activate
+			$ctrlName
+			;
+
+		deviceTypeChangedUI();
+	}else{
+		if ($activate){
+			if ($currActive == 0){
+				optionVar -iva "RPR_DevicesSelected" $device;
+			}
+		}else{
+			if ($currActive == 1){
+				if ($currActive == 1){
+					//wanting to set CPU
+					optionVar -rm "RPR_DevicesSelected";
+				}else{
+					optionVar -removeFromArray "RPR_DevicesSelected" $device;
+				}
+			}
+		}
+	}
+}

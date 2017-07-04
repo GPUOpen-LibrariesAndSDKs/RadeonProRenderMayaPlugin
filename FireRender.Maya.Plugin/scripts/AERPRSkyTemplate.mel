@@ -1,0 +1,329 @@
+source "fireRenderEnvironment.mel";
+
+global proc AERefreshObjectListSetup_Sky()
+{
+	if ((`optionMenuGrp -q -exists "OptionMenuGroupObjectList_Sky"`) == false){
+		string $oldNode[] = `listConnections -shapes true "RPRSkyShape.portal"`;
+		string $selectedItem = $oldNode[0];
+
+		// List all objects in the scene
+		string $allObjects[];
+		string $tempName;
+		$allObjects = `ls -g`;
+		string $objectList = `optionMenuGrp -label "Object as Portal:" -cc AEObjectListChanged_Sky "OptionMenuGroupObjectList_Sky"`;
+		menuItem -label "NONE";
+
+		int $selectedExists = 0;
+		for ($tempName in $allObjects)
+		{
+			if ($tempName != "RPRIBLShape" && $tempName != "RPRSkyShape"){
+				menuItem -label $tempName;
+			}
+
+			if ($tempName == $selectedItem){
+				$selectedExists = 1;
+			}
+		}
+
+		if ($selectedExists == 1){
+			optionMenuGrp -e -v $selectedItem "OptionMenuGroupObjectList_Sky";
+		}else{
+			optionMenuGrp -e -v "NONE" "OptionMenuGroupObjectList_Sky";
+		}
+	}
+
+	setUITemplate -pst attributeEditorTemplate;
+
+	rowLayout -nc 2;
+	text -l "";
+
+	button -label "Refresh Object List"
+		-c "refreshSkyPortalObjectsRPR"
+		-width 217
+		refreshObjectListButton_Sky;
+	setParent ..;
+
+	setUITemplate -ppt;
+}
+
+global proc AERPRSkySetTimeToNow()
+{
+}
+
+global proc AERefreshObjectListEditSetup_Sky()
+{
+	setUITemplate -pst attributeEditorTemplate;
+	button -e -c "refreshSkyPortalObjectsRPR" refreshObjectListButton_Sky;
+	setUITemplate -ppt;
+}
+
+global proc AEObjectListChanged_Sky()
+{
+	string $item = `optionMenuGrp -q -v "OptionMenuGroupObjectList_Sky"`;
+	string $oldNode[] = `listConnections -shapes true "RPRSkyShape.portal"`;
+
+	if (size($oldNode))
+	{
+		if ($oldNode[0] != $item){
+			disconnectAttr ($oldNode[0] + ".message") "RPRSkyShape.portal";
+		}else{
+			return;
+		}
+	}
+
+	if ($item != "NONE") {
+		connectAttr ($item + ".message") "RPRSkyShape.portal";
+	}
+}
+
+global proc AERPRSkyGetLocationButton()
+{
+	if(!hasSkyNodeRPR())
+		return;
+
+	string $skyNode = getSkyNodeRPR();
+
+	// Get the current sky location values.
+	int $type = getAttr ($skyNode + ".sunPositionType");
+	int $enable = ($type == 1);
+
+	setUITemplate -pst attributeEditorTemplate;
+
+	rowLayout -nc 2;
+	text -l "";
+
+	button -label "Get Location"
+		-width 250
+		-c "AERPRSkyGetLocation"
+		-enable $enable
+		getLocationButton;
+
+	setParent ..;
+
+	setUITemplate -ppt;
+}
+
+global proc AERPRSkyGetLocationButtonEdit()
+{
+	if(!hasSkyNodeRPR())
+		return;
+
+	string $skyNode = getSkyNodeRPR();
+
+	// Get the current sky location values.
+	int $type = getAttr ($skyNode + ".sunPositionType");
+	int $enable = ($type == 1);
+
+	setUITemplate -pst attributeEditorTemplate;
+	button -e -c "AERPRSkyGetLocation" -enable $enable getLocationButton;
+	setUITemplate -ppt;
+}
+
+// Open the location selector window.
+global proc AERPRSkyGetLocation()
+{
+	if(!hasSkyNodeRPR())
+		return;
+
+	string $skyNode = getSkyNodeRPR();
+
+	// Get the current sky location values.
+	float $latitude = getAttr ($skyNode + ".latitude");
+	float $longitude = getAttr ($skyNode + ".longitude");
+	float $utcOffset = getAttr ($skyNode + ".timeZone");
+
+	// Create the Python script to show the location selector.
+	string $command =
+		"import fireRender.rpr_location_selector\n" +
+		"reload(fireRender.rpr_location_selector)\n" +
+		"fireRender.rpr_location_selector.show(" +
+		$latitude + ", " + $longitude + ", " + $utcOffset + ")";
+
+	// Execute the Python script.
+	python($command);
+}
+
+global proc AERPRSkySetTimeToNowButton()
+{
+	if(!hasSkyNodeRPR())
+		return;
+
+	string $skyNode = getSkyNodeRPR();
+
+	// Get the current sky location values.
+	int $type = getAttr ($skyNode + ".sunPositionType");
+	int $enable = ($type == 1);
+
+	setUITemplate -pst attributeEditorTemplate;
+
+	rowLayout -nc 2;
+	text -l "";
+
+	button -label "Set Time To Now"
+		-width 250
+		-c "AERPRSkySetTimeToNow"
+		-enable $enable
+		setTimeToNowButton;
+
+	setParent ..;
+
+	setUITemplate -ppt;
+}
+
+global proc AERPRSkySetTimeToNowButtonEdit()
+{
+	if(!hasSkyNodeRPR())
+		return;
+
+	string $skyNode = getSkyNodeRPR();
+
+	// Get the current sky location values.
+	int $type = getAttr ($skyNode + ".sunPositionType");
+	int $enable = ($type == 1);
+
+	setUITemplate -pst attributeEditorTemplate;
+	button -e -c "AERPRSkySetTimeToNow" -enable $enable setTimeToNowButton;
+	setUITemplate -ppt;
+}
+
+// Set the sky to reflect the specified location.
+global proc AERPRSetSkyLocation(float $latitude, float $longitude, float $utcOffset)
+{
+	if(!hasSkyNodeRPR())
+		return;
+
+	string $skyNode = getSkyNodeRPR();
+
+	// Set the location values on the sky.
+	setAttr ($skyNode + ".latitude") $latitude;
+	setAttr ($skyNode + ".longitude") $longitude;
+	setAttr ($skyNode + ".timeZone") $utcOffset;
+}
+
+// Set the sky to reflect the current local time.
+global proc AERPRSkySetTimeToNow()
+{
+	if(!hasSkyNodeRPR())
+		return;
+
+	string $skyNode = getSkyNodeRPR();
+
+	// Get the date and time as a string array.
+	string $values[];
+	string $date = `date -format "YYYY,MM,DD,hh,mm,ss"`;
+	tokenize $date "," $values;
+
+	// Set the date and time values on the sky.
+	setAttr ($skyNode + ".year") ((int)$values[0]);
+	setAttr ($skyNode + ".month") ((int)$values[1]);
+	setAttr ($skyNode + ".day") ((int)$values[2]);
+	setAttr ($skyNode + ".hours") ((int)$values[3]);
+	setAttr ($skyNode + ".minutes") ((int)$values[4]);
+	setAttr ($skyNode + ".seconds") ((int)$values[5]);
+}
+
+global proc AERPRSkySunPositionTypeChanged(string $nodeName)
+{
+	if(!hasSkyNodeRPR())
+		return;
+
+	string $skyNode = getSkyNodeRPR();
+
+	// Get the current sky location values.
+	int $type = getAttr ($skyNode + ".sunPositionType");
+
+	if ($type == 0)
+	{
+		editorTemplate -dimControl $nodeName "altitude" false;
+		editorTemplate -dimControl $nodeName "azimuth" false;
+
+		editorTemplate -dimControl $nodeName "year" true;
+		editorTemplate -dimControl $nodeName "month" true;
+		editorTemplate -dimControl $nodeName "day" true;
+		editorTemplate -dimControl $nodeName "hours" true;
+		editorTemplate -dimControl $nodeName "minutes" true;
+		editorTemplate -dimControl $nodeName "seconds" true;
+		editorTemplate -dimControl $nodeName "timeZone" true;
+		editorTemplate -dimControl $nodeName "daylightSaving" true;
+		editorTemplate -dimControl $nodeName "latitude" true;
+		editorTemplate -dimControl $nodeName "longitude" true;
+
+		if (`control -exists setTimeToNowButton`)
+			button -e -enable false setTimeToNowButton;
+
+		if (`control -exists getLocationButton`)
+			button -e -enable false getLocationButton;
+	}
+	else
+	{
+		editorTemplate -dimControl $nodeName "altitude" true;
+		editorTemplate -dimControl $nodeName "azimuth" true;
+
+		editorTemplate -dimControl $nodeName "year" false;
+		editorTemplate -dimControl $nodeName "month" false;
+		editorTemplate -dimControl $nodeName "day" false;
+		editorTemplate -dimControl $nodeName "hours" false;
+		editorTemplate -dimControl $nodeName "minutes" false;
+		editorTemplate -dimControl $nodeName "seconds" false;
+		editorTemplate -dimControl $nodeName "timeZone" false;
+		editorTemplate -dimControl $nodeName "daylightSaving" false;
+		editorTemplate -dimControl $nodeName "latitude" false;
+		editorTemplate -dimControl $nodeName "longitude" false;
+
+		if (`control -exists setTimeToNowButton`)
+			button -e -enable true setTimeToNowButton;
+
+		if (`control -exists getLocationButton`)
+			button -e -enable true getLocationButton;
+	}
+}
+
+global proc AERPRSkyTemplate(string $nodeName)
+{
+	AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -beginLayout "Sky Properties" -collapse 0;
+		editorTemplate -addControl "turbidity";
+		editorTemplate -addControl "intensity";
+		editorTemplate -addSeparator;
+		editorTemplate -addControl "filterColor";
+		editorTemplate -addControl "groundColor";
+		editorTemplate -addControl "groundAlbedo";
+		editorTemplate -addSeparator;
+		editorTemplate -addControl "sunGlow";
+		editorTemplate -addControl "sunDiskSize";
+		editorTemplate -label "Sun Position" -addControl "sunPositionType" AERPRSkySunPositionTypeChanged;
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Altitude / Azimuth" -collapse 0;
+		editorTemplate -addControl "altitude";
+		editorTemplate -addControl "azimuth";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Time / Location" -collapse 0;
+		editorTemplate -addControl "year";
+		editorTemplate -addControl "month";
+		editorTemplate -addControl "day";
+		editorTemplate -addControl "hours";
+		editorTemplate -addControl "minutes";
+		editorTemplate -addControl "seconds";
+		editorTemplate -addControl "timeZone";
+		editorTemplate -addControl "daylightSaving";
+		editorTemplate -callCustom "AERPRSkySetTimeToNowButton" "AERPRSkySetTimeToNowButtonEdit";
+		editorTemplate -addSeparator;
+		editorTemplate -addControl "latitude";
+		editorTemplate -addControl "longitude";
+		editorTemplate -callCustom "AERPRSkyGetLocationButton" "AERPRSkyGetLocationButtonEdit";
+	editorTemplate -endLayout;
+
+	//editorTemplate -beginLayout "Portal" -collapse 1;
+	//	editorTemplate -addControl "portal";
+	//	// List all objects in the scene
+	//	editorTemplate -callCustom "AERefreshObjectListSetup_Sky" "AERefreshObjectListEditSetup_Sky";
+	//editorTemplate -endLayout;
+	AEdependNodeTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

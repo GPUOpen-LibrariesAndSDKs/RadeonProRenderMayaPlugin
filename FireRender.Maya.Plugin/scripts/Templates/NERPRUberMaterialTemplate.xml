@@ -1,0 +1,128 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='NERPRUberMaterial'>
+		<attribute name='message' type='maya.message'>
+			<label>Message</label>
+		</attribute>
+		<attribute name='outColor' type='maya.float3'>
+			<label>Out Color</label>
+		</attribute>
+		<attribute name='outTransparency' type='maya.float3'>
+			<label>Out Transparency</label>
+		</attribute>
+		<attribute name='diffuseColor' type='maya.float3'>
+			<label>Diffuse Color</label>
+		</attribute>
+		<attribute name='diffuseWeight' type='maya.float'>
+			<label>Diffuse Weight</label>
+		</attribute>
+		<attribute name='diffuseRoughness' type='maya.float'>
+			<label>Diffuse Roughness</label>
+		</attribute>
+		<attribute name='reflectColor' type='maya.float3'>
+			<label>Reflect Color</label>
+		</attribute>
+		<attribute name='reflectWeight' type='maya.float'>
+			<label>Reflect Weight</label>
+		</attribute>
+		<attribute name='reflectRoughness' type='maya.float'>
+			<label>Reflect Roughness</label>
+		</attribute>
+		<attribute name='reflectAnisotropy' type='maya.float'>
+			<label>Reflect Anisotropy</label>
+		</attribute>
+		<attribute name='reflectMetalness' type='maya.float'>
+			<label>Reflect Metalness</label>
+		</attribute>
+		<attribute name='refractColor' type='maya.float3'>
+			<label>Refract Color</label>
+		</attribute>
+		<attribute name='refractWeight' type='maya.float'>
+			<label>Refract Weight</label>
+		</attribute>
+		<attribute name='refractRoughness' type='maya.float'>
+			<label>Refract Roughness</label>
+		</attribute>
+		<attribute name='coatColor' type='maya.float3'>
+			<label>Coat Color</label>
+		</attribute>
+		<attribute name='coatWeight' type='maya.float'>
+			<label>Coat Weight</label>
+		</attribute>
+		<attribute name='coatRoughness' type='maya.float'>
+			<label>Coat Roughness</label>
+		</attribute>
+		<attribute name='coatMetalness' type='maya.float'>
+			<label>Coat Metalness</label>
+		</attribute>
+		<attribute name='emissiveColor' type='maya.float3'>
+			<label>Emissive Color</label>
+		</attribute>
+		<attribute name='emissiveWeight' type='maya.float'>
+			<label>Emissive Weight</label>
+		</attribute>
+		<attribute name='sssColor' type='maya.float3'>
+			<label>Sss Color</label>
+		</attribute>
+		<attribute name='sssWeight' type='maya.float'>
+			<label>Sss Weight</label>
+		</attribute>
+		<attribute name='volumeTransmission' type='maya.float3'>
+			<label>Sss Transmission</label>
+		</attribute>
+		<attribute name='volumeScatter' type='maya.float3'>
+			<label>Sss Scatter</label>
+		</attribute>
+		<attribute name='volumeDensity' type='maya.float'>
+			<label>Sss Density</label>
+		</attribute>
+		<attribute name='scatteringDirection' type='maya.float'>
+			<label>Sss Scattering Direction</label>
+		</attribute>
+		<attribute name='transparencyLevel' type='maya.float'>
+			<label>Transparency</label>
+		</attribute>
+		<attribute name='normalMap' type='maya.float3'>
+			<label>Normal Map</label>
+		</attribute>
+		<attribute name='bumpMap' type='maya.float3'>
+			<label>Bump Map</label>
+		</attribute>
+		<attribute name='displacementMap' type='maya.float'>
+			<label>Displacement Map</label>
+		</attribute>
+	</template>
+	<view name='NEDefault' template='NERPRUberMaterial'>
+		<property name='message'/>
+		<property name='outColor'/>
+		<property name='outTransparency'/>
+		<property name='diffuseColor'/>
+		<property name='diffuseWeight'/>
+		<property name='diffuseRoughness'/>
+		<property name='reflectColor'/>
+		<property name='reflectWeight'/>
+		<property name='reflectRoughness'/>
+		<property name='reflectAnisotropy'/>
+		<property name='reflectMetalness'/>
+		<property name='refractColor'/>
+		<property name='refractWeight'/>
+		<property name='refractRoughness'/>
+		<property name='coatColor'/>
+		<property name='coatWeight'/>
+		<property name='coatRoughness'/>
+		<property name='coatMetalness'/>
+		<property name='emissiveColor'/>
+		<property name='emissiveWeight'/>
+		<property name='sssColor'/>
+		<property name='sssWeight'/>
+		<property name='volumeTransmission'/>
+		<property name='volumeScatter'/>
+		<property name='volumeDensity'/>
+		<property name='scatteringDirection'/>
+		<property name='transparencyLevel'/>
+		<property name='normalMap'/>
+		<property name='bumpMap'/>
+		<property name='displacementMap'/>
+	</view>
+</templates>

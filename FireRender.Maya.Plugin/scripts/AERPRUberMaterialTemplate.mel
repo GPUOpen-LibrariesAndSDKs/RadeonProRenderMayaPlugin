@@ -1,0 +1,209 @@
+global proc AEUberCheckReflectMetalness(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".reflectMetalMaterial";
+	int $value = `getAttr $nodeAttr`;
+	editorTemplate -dimControl $nodeName "reflectMetalness" ($value == 0);
+	editorTemplate -dimControl $nodeName "reflectIOR" ($value == 1);
+}
+
+global proc AEUberCheckCoatMetalness(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".coatMetalMaterial";
+	int $value = `getAttr $nodeAttr`;
+	editorTemplate -dimControl $nodeName "coatMetalness" ($value == 0);
+	editorTemplate -dimControl $nodeName "coatIOR" ($value == 1);
+}
+
+global proc AEUberCheckLinkRefl(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".refractLinkToReflect";
+	int $value = `getAttr $nodeAttr`;
+	// disable refraction IOR control when needed
+	editorTemplate -dimControl $nodeName "refractIOR" ($value == 1);
+	// when just enabling link, copy IOR from reflection to refraction
+	if ($value) AEUberCheckReflIOR($nodeName);
+}
+
+global proc AEUberCheckReflIOR(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".refractLinkToReflect";
+	if (`getAttr $nodeAttr` == 1)
+	{
+		// copy IOR value from reflection to refraction
+		// note: everything will work even without copying, this is just for more clean appearance
+		string $reflectIOR_attr = $nodeName + ".reflectIOR";
+		float $ior = `getAttr $reflectIOR_attr`;
+		setAttr ($nodeName + ".refractIOR") $ior;
+	}
+}
+
+global proc AEUberCheckUseSssDiffuse(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".sssUseDiffuseColor";
+	int $value = `getAttr $nodeAttr`;
+	// disable refraction IOR control when needed
+	editorTemplate -dimControl $nodeName "sssColor" ($value == 1);
+}
+
+global proc AERPRUberMaterialTemplateNew(string $nodeName)
+{
+	AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -beginLayout "Diffuse" -collapse 0;
+		editorTemplate -label "Enable" -addControl "diffuse";
+		editorTemplate -label "Color" -addControl "diffuseColor";
+		editorTemplate -label "Weight" -addControl "diffuseWeight";
+		editorTemplate -label "Roughness" -addControl "diffuseRoughness";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Reflection" -collapse 0;
+		editorTemplate -label "Enable" -addControl "reflections";
+		editorTemplate -label "Color" -addControl "reflectColor";
+		editorTemplate -label "Weight" -addControl "reflectWeight";
+		editorTemplate -label "Roughness" -addControl "reflectRoughness";
+		editorTemplate -label "Anisotropy" -addControl "reflectAnisotropy";
+		editorTemplate -label "Anisotropy Rotation" -addControl "reflectAnisotropyRotation";
+		editorTemplate -beginLayout "Fresnel" -collapse 0;
+			editorTemplate -label "IOR" -addControl "reflectIOR" "AEUberCheckReflIOR";
+			editorTemplate -label "Metalness" -addControl "reflectMetalness";
+			editorTemplate -label "Metal Material" -addControl "reflectMetalMaterial" "AEUberCheckReflectMetalness";
+		editorTemplate -endLayout;
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Refraction" -collapse 0;
+		editorTemplate -label "Enable" -addControl "refraction";
+		editorTemplate -label "Color" -addControl "refractColor";
+		editorTemplate -label "Weight" -addControl "refractWeight";
+		editorTemplate -label "Roughness" -addControl "refractRoughness";
+		editorTemplate -label "IOR" -addControl "refractIOR";
+		editorTemplate -label "Link to Reflection" -addControl "refractLinkToReflect" "AEUberCheckLinkRefl";
+		editorTemplate -label "Thin Surface" -addControl "refractThinSurface";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Coating" -collapse 0;
+		editorTemplate -label "Enable" -addControl "clearCoat";
+		editorTemplate -label "Color" -addControl "coatColor";
+		editorTemplate -label "Weight" -addControl "coatWeight";
+		editorTemplate -label "Roughness" -addControl "coatRoughness";
+		editorTemplate -beginLayout "Fresnel" -collapse 0;
+			editorTemplate -label "IOR" -addControl "coatIOR";
+			editorTemplate -label "Metalness" -addControl "coatMetalness";
+			editorTemplate -label "Metal Material" -addControl "coatMetalMaterial" "AEUberCheckCoatMetalness";
+		editorTemplate -endLayout;
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Emissive" -collapse 0;
+		editorTemplate -label "Enable" -addControl "emissive";
+		editorTemplate -label "Color" -addControl "emissiveColor";
+		editorTemplate -label "Weight" -addControl "emissiveWeight";
+		editorTemplate -label "Double Sided" -addControl "emissiveDoubleSided";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Subsurface" -collapse 0;
+		editorTemplate -label "Enable" -addControl "sssEnable";
+		editorTemplate -label "Color" -addControl "sssColor";
+		editorTemplate -label "Use Diffuse Color" -addControl "sssUseDiffuseColor" "AEUberCheckUseSssDiffuse";
+		editorTemplate -label "Weight" -addControl "sssWeight";
+
+		editorTemplate -addControl "volumeTransmission";
+		editorTemplate -addControl "volumeScatter";
+		editorTemplate -addControl "volumeDensity";
+		editorTemplate -addControl "scatteringDirection";
+		editorTemplate -addControl "multipleScattering";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Material Settings" -collapse 0;
+		editorTemplate -label "Use Transparency" -addControl "transparencyEnable";
+		editorTemplate -label "Transparency" -addControl "transparencyLevel";
+		editorTemplate -label "Use Normal Map" -addControl "normalMapEnable";
+		editorTemplate -label "Normal Map" -addControl "normalMap";
+		editorTemplate -label "Use Displacement" -addControl "displacementEnable";
+		editorTemplate -label "Displacement Map" -addControl "displacementMap";
+	editorTemplate -endLayout;
+
+//	editorTemplate -addControl "Caustics/Shadows";
+//	editorTemplate -addControl "shadowCatcher";
+
+	AEdependNodeTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}
+
+global proc AERPRUberMaterialTemplateOld(string $nodeName)
+{
+	AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -beginLayout "Diffuse Base" -collapse 0;
+		editorTemplate -addControl "diffuseColor";
+		editorTemplate -addControl "diffuseNormal";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Glossy Reflections" -collapse 0;
+		editorTemplate -addControl "reflections";
+		editorTemplate -addControl "reflectColor";
+		editorTemplate -addControl "reflectIOR";
+		editorTemplate -addControl "reflectRotation";
+		editorTemplate -addControl "reflectRoughnessX";
+		editorTemplate -addControl "reflectRoughnessY";
+		editorTemplate -addControl "reflectNormal";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Clear Coat" -collapse 0;
+		editorTemplate -addControl "clearCoat";
+		editorTemplate -addControl "coatColor";
+		editorTemplate -addControl "coatIOR";
+		editorTemplate -addControl "coatNormal";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Refraction" -collapse 0;
+		editorTemplate -addControl "refractWeight";
+		editorTemplate -addControl "refractColor";
+		editorTemplate -addControl "refractIOR";
+		editorTemplate -addControl "refractRoughness";
+		editorTemplate -addControl "refNormal";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Transparency" -collapse 0;
+		editorTemplate -addControl "transparencyLevel";
+		editorTemplate -addControl "transparencyColor";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Volume" -collapse 0;
+		editorTemplate -addControl "enableVolume";
+		editorTemplate -addControl "volumeScatter";
+		editorTemplate -addControl "volumeTransmission";
+		editorTemplate -addControl "volumeEmission";
+		editorTemplate -addControl "volumeDensity";
+		//editorTemplate -addControl "volumeEmissionMultiplier";
+		editorTemplate -addControl "scatteringDirection";
+		editorTemplate -addControl "multipleScattering";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Displacement" -collapse 0;
+		editorTemplate -addControl "displacementMap";
+	editorTemplate -endLayout;
+
+	editorTemplate -addControl "Caustics/Shadows";
+	editorTemplate -addControl "shadowCatcher";
+
+	AEdependNodeTemplate $nodeName;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}
+
+global proc AERPRUberMaterialTemplate(string $nodeName)
+{
+	// Use old template when plugin compiled without new code (should remove this part when conversion to new UberMaterial will be finished)
+	if (`attributeQuery -node $nodeName -ex "materialVersion"`)
+	{
+		AERPRUberMaterialTemplateNew($nodeName);
+	}
+	else
+	{
+		AERPRUberMaterialTemplateOld($nodeName);
+	}
+}

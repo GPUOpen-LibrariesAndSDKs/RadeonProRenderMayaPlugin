@@ -1,0 +1,102 @@
+global proc fireRenderChangeIprRegion(string $editor)
+{
+	print("region\n");
+	if (eval("fireRender -ipr -isRunning"))
+	{
+		eval("fireRender -ipr -region");
+	}
+}
+
+global proc fireRenderStartIprRenderInPlugin(string $editor)
+{
+	renderWindowEditor
+		-edit
+		-caption "fireRender started"
+		$editor;
+
+	global int $fireRenderIprRenderIsPreStarted;
+	global int $fireRenderIprRenderPreRes0;
+	global int $fireRenderIprRenderPreRes1;
+	global string $fireRenderIprRenderPreCamera;
+
+	// we have pre-started the IPR render, start it now for real
+	fireRenderIprRender(
+		$fireRenderIprRenderPreRes0, $fireRenderIprRenderPreRes1,
+		1, 0, $fireRenderIprRenderPreCamera);
+
+	// reset pre-start flag
+	$fireRenderIprRenderIsPreStarted = false;
+
+	renderWindowRefreshLayout($editor);
+}
+
+global proc fireRenderStartIprRender(
+	string $editor, int $resolution0, int $resolution1, string $camera)
+{
+	// take snapshot to use before region selection
+	//
+	renderWindowTakeSnapshot($resolution0, $resolution1, $camera);
+
+	// Prompt the user to select a region to begin tuning
+	//
+	renderWindowEditor
+		-edit
+		-resetRegion
+		-caption "Select region"
+		$editor;
+
+	fireRenderIprRender(
+		$resolution0, $resolution1,
+		1, 0, $camera);
+}
+
+global proc fireRenderStopIprRender()
+{
+	// Stop IPR if it is running.
+	//
+	if (eval("fireRender -ipr -isRunning"))
+	{
+		eval("fireRender -ipr -stop");
+	}
+}
+
+// Description:  This procedure is called to check if IPR is running.
+//
+global proc int fireRenderIsRunningIpr()
+{
+	if (!`pluginInfo -q -l "RadeonProRender"`)
+	{
+		// If fireRender plugin is not loaded yet, then
+		// fireRender is not running ipr.
+		//
+		return false;
+	}
+	return eval("fireRender -ipr -isRunning");
+}
+
+global proc fireRenderRefreshIpr()
+{
+
+}
+
+global proc fireRenderPauseIprRender(string $editor, int $pause)
+{
+	// Pause IPR.
+	//
+	if (eval("fireRender -ipr -isRunning"))
+	{
+		eval("fireRender -ipr -pause " + $pause);
+	}
+}
+
+global proc string fireRenderIprRender(int $resolution0, int $resolution1,
+								   int $doShadows, int $doGlowPass, string $camera)
+{
+	eval("fireRender -ipr -start -w " + $resolution0 + " -h " + $resolution1 + " -cam " + $camera + ";");
+	return "";
+}
+
+global proc fireRenderIprOptionsWindow()
+{
+
+}

@@ -1,0 +1,35 @@
++ MAYAVERSION:2015 RadeonProRender 1.0 %FR_MAYA_PLUGIN_DEV_PATH%/dist
+PATH+:=bin
+MAYA_RENDER_DESC_PATH+:=renderDesc
+MAYA_CUSTOM_TEMPLATE_PATH+:=scripts/Templates
+XBMLANGPATH+:=icons
+MAYA_SHADER_LIBRARY_PATH+:=materials
+RPR_SCRIPTS_PATH:=scripts
+plug-ins: plug-ins/2015/
+
++ MAYAVERSION:2016 RadeonProRender 1.0 %FR_MAYA_PLUGIN_DEV_PATH%/dist
+PATH+:=bin
+MAYA_RENDER_DESC_PATH+:=renderDesc
+MAYA_CUSTOM_TEMPLATE_PATH+:=scripts/Templates
+XBMLANGPATH+:=icons
+MAYA_SHADER_LIBRARY_PATH+:=materials
+RPR_SCRIPTS_PATH:=scripts
+plug-ins: plug-ins/2016/
+
++ MAYAVERSION:2016.5 RadeonProRender 1.0 %FR_MAYA_PLUGIN_DEV_PATH%/dist
+PATH+:=bin
+MAYA_RENDER_DESC_PATH+:=renderDesc
+MAYA_CUSTOM_TEMPLATE_PATH+:=scripts/Templates
+XBMLANGPATH+:=icons
+MAYA_SHADER_LIBRARY_PATH+:=materials
+RPR_SCRIPTS_PATH:=scripts
+plug-ins: plug-ins/2016.5/
+
++ MAYAVERSION:2017 RadeonProRender 1.0 %FR_MAYA_PLUGIN_DEV_PATH%/dist
+PATH+:=bin
+MAYA_RENDER_DESC_PATH+:=renderDesc
+MAYA_CUSTOM_TEMPLATE_PATH+:=scripts/Templates
+XBMLANGPATH+:=icons
+MAYA_SHADER_LIBRARY_PATH+:=materials
+RPR_SCRIPTS_PATH:=scripts
+plug-ins: plug-ins/2017/

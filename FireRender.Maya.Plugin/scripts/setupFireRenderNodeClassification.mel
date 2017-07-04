@@ -1,0 +1,263 @@
+global proc setupFireRenderNodeClassification()
+{
+	callbacks -addCallback fireRenderBuildRenderNodeTreeListerContentCallback -hook "buildRenderNodeTreeListerContent" -owner "firerender";
+	callbacks -addCallback fireRenderHyperShadePanelBuildCreateMenuCallback -hook "hyperShadePanelBuildCreateMenu" -owner "firerender";
+	callbacks -addCallback fireRenderCreateRenderNodePluginChangeCallback -hook "createRenderNodePluginChange" -owner "firerender";
+	callbacks -addCallback fireRenderCreateRenderNodeSelectNodeCategoriesCallback -hook "createRenderNodeSelectNodeCategories" -owner "firerender";
+	callbacks -addCallback fireRenderProvideClassificationStringsForFilteredTreeListerCallback -hook "provideClassificationStringsForFilteredTreeLister" -owner "firerender";
+	callbacks -addCallback fireRenderHyperShadePanelBuildCreateSubMenuCallback -hook hyperShadePanelBuildCreateSubMenu -owner fireRender;
+	callbacks -addCallback fireRenderRenderNodeClassificationCallback -hook renderNodeClassification -owner fireRender;
+}
+
+proc string fireRenderStringInsertSpaceBeforeUppercase(string $str) {
+	string $resultStr = "";
+	for($s = 1; $s <= size($str); $s++) {
+		string $first = `substring $str $s $s`;
+
+		// capitalize first letter
+		if(($s == 1) && ($first == tolower($first)))
+			$first = toupper($first);
+
+		// insert space if current char is lowercase (or digit) and next is uppercase
+		string $separator = "";
+		if($s < size($str))
+		{
+			// next char
+			string $sec = `substring $str ($s + 1) ($s + 1)`;
+
+			if((`match "[0-9]+" $first` == "") && ($first == tolower($first)) && ($sec == toupper($sec)))
+			{
+				$separator = " ";
+			}
+			else
+			{
+				// for RPRName
+				if($s < size($str) - 1)
+				{
+					// next char
+					string $third = `substring $str ($s + 2) ($s + 2)`;
+
+					if((`match "[0-9]+" $first` == "") && ($first == toupper($first)) && ($sec == toupper($sec)) && ($third == tolower($third)))
+						$separator = " ";
+				}
+			}
+
+		}
+		$resultStr += $first + $separator;
+	}
+	return $resultStr;
+}
+
+
+global proc fireRenderCreateRenderNodeSelectNodeCategoriesCallback(string $flag, string $treeLister) {
+	if($flag == "allWithFireRenderUp") {
+		treeLister -e -selectPath "firerender" $treeLister;
+	}
+}
+
+
+global proc string fireRenderCreateRenderNodePluginChangeCallback(string $classification) {
+	return `substring $classification 1 21` == "rendernode/firerender";
+}
+
+
+global proc string fireRenderProvideClassificationStringsForFilteredTreeListerCallback(string $classification) {
+	return "rendernode/firerender/shader/surface";
+}
+
+
+global proc int fireRenderNodeCanBeUsedAsMaterialCallback(string $nodeId, string $nodeOwner) {
+	return $nodeOwner == "firerender";
+}
+
+global proc string fireRenderRenderNodeClassificationCallback() {
+	return "rendernode/firerender";
+}
+
+global proc string fireRenderHyperShadePanelBuildCreateSubMenuCallback() {
+	return "rendernode/firerender";
+}
+
+// the currently present classes of nodes
+proc string[] getClasses() {
+	string $classes[];
+	$classes[0] = "rendernode/firerender/shader/surface";
+	$classes[1] = "rendernode/firerender/shader/volume";
+	$classes[2] = "rendernode/firerender/texture/2d";
+	$classes[3] = "rendernode/firerender/utility";
+	$classes[4] = "rendernode/firerender/shader/displacement";
+	return $classes;
+}
+
+global proc setupFireRenderLayeredMaterial(string $node)
+{
+	string $materialName = getRPRNodePrefix() + "Material";
+	string $blendMaterialName = getRPRNodePrefix() + "BlendMaterial";
+	string $fresnelName = getRPRNodePrefix() + "Fresnel";
+
+	//create microfacet
+	string $microfacet = `shadingNode -asShader $materialName`;
+	setAttr ($microfacet + ".type") 1;
+
+	string $diffuse = `shadingNode -asShader $materialName`;
+	string $fresnel = `shadingNode -asUtility $fresnelName`;
+	string $blend = `shadingNode -asShader $blendMaterialName`;
+
+	connectAttr ($fresnel + ".out0") ($blend + ".weight") -f;
+	connectAttr ($microfacet + ".outColor") ($blend + ".color1") -f;
+	connectAttr ($diffuse + ".outColor") ($blend + ".color0") -f;
+
+	string $refract = `shadingNode -asShader $materialName`;
+	setAttr ($refract + ".type") 4;
+	string $fresnel2 = `shadingNode -asUtility $fresnelName`;
+
+	connectAttr ($fresnel2 + ".out0") ($node + ".weight") -f;
+	connectAttr ($refract + ".outColor") ($node + ".color0") -f;
+	connectAttr ($blend + ".outColor") ($node + ".color1") -f;
+
+	select -r $node;
+}
+
+// for registering firerender nodes in node tree listers (hypershade, assign material dialog, etc.)
+// iterates through all firerender nodes (taking the classification filter string into account)
+// and adds them with a path to the node tree lister in question
+global proc fireRenderBuildRenderNodeTreeListerContentCallback(string $renderNodeTreeLister, string $postCommand, string $filterString) {
+
+	string $classes[] = getClasses();
+	string $commands[];
+	$commands[0] = "createRenderNodeCB -asShader \"surfaceShader\" ";
+	$commands[1] = "createRenderNodeCB -asShader \"volumeShader\" ";
+	$commands[2] = "createRenderNodeCB -as2DTexture \"\" ";
+	$commands[3] = "createRenderNodeCB -asUtility \"\" ";
+	$commands[4] = "createRenderNodeCB -asShader \"displacementShader\" ";
+
+	string $asType[];
+	$asType[0] = "asShader";
+	$asType[1] = "asShader";
+	$asType[2] = "as2DTexture";
+	$asType[3] = "asUtility";
+	$asType[4] = "asDisplacement";
+
+	string $paths[];
+	$paths[0] = "Surface";
+	$paths[1] = "Volumetric";
+	$paths[2] = "Textures";
+	$paths[3] = "Utilities";
+	$paths[4] = "Displacement";
+
+	string $filters[];
+	int $numFilters = tokenize($filterString, $filters);
+
+	string $layeredMaterialName = getRPRNodePrefix() + "LayeredMaterial";
+	string $blendMaterialName = getRPRNodePrefix() + "BlendMaterial";
+
+	string $nodes[] = `listNodeTypes "rendernode/firerender"`;
+	$nodes[size($nodes)] = $layeredMaterialName;
+
+	$nodes = sort($nodes);
+
+	// for each of our node classifications
+	for($i = 0; $i < size($classes); $i++) {
+		// for each of our nodes
+		for($k = 0; $k < size($nodes); $k++) {
+			string $nodeType = $nodes[$k];
+
+			// if the node classification matches that of the current classification (outer loop)
+			string $classification[] = `getClassification $nodeType`;
+			int $satisfies = `getClassification -satisfies $classes[$i] $nodeType`;
+			if(($satisfies && size($classification) > 0) ||
+				($nodeType == $layeredMaterialName) && ($classes[$i] == $classes[0]))
+			{
+				// taking the filterString into account
+				int $matches = 0;
+				for($s = 0; $s < $numFilters; $s++) {
+					if ($nodeType == $layeredMaterialName)
+					{
+						if(`getClassification -satisfies $filters[$s] $blendMaterialName`) {
+							$matches = 1;
+							break;
+						}
+					}
+					else
+					{
+						if(`getClassification -satisfies $filters[$s] $nodeType`) {
+							$matches = 1;
+							break;
+						}
+					}
+				}
+
+				// if not filtered out by the filterString
+				if(($numFilters == 0) || ($matches == 1)) {
+					// split the name each time there is an uppercase letter after a lowercase letter (for human readability)
+					string $resultName = fireRenderStringInsertSpaceBeforeUppercase($nodeType);
+
+					// the node path string will determine the hierarchy into which the node will end up
+					string $nodePath = getRPRPluginName() + "/" + $paths[$i] + "/" + $resultName;
+					string $cmd = "";
+					if ($nodeType == $layeredMaterialName)
+					{
+						$cmd = $commands[$i] + $blendMaterialName + " \"\"";
+					}
+					else
+					{
+						$cmd = $commands[$i] + $nodeType + " \"\"";
+					}
+
+					string $customPostCommand = $postCommand;
+					if ($nodeType == $layeredMaterialName)
+					{
+						$customPostCommand = "setupFireRenderLayeredMaterial(%node);";
+					}
+
+					// add the post command to the command string if present
+					if($customPostCommand != "") {
+						$cmd = "string \$node = `" + $cmd + "`;";
+						$customPostCommand = `substitute "%node" $customPostCommand "\$node"`;
+						$customPostCommand = `substitute "%type" $customPostCommand $asType[$i]`;
+						$cmd += $customPostCommand;
+					}
+					// add entry
+					if ($nodeType == $layeredMaterialName)
+					{
+						nodeTreeLister -e -add $nodePath ("render_" + $blendMaterialName +".png") $cmd $renderNodeTreeLister;
+					}
+					else
+					{
+						nodeTreeLister -e -add $nodePath ("render_" + $nodeType + ".png") $cmd $renderNodeTreeLister;
+					}
+				}
+			}
+		}
+	}
+}
+
+global proc fireRenderHyperShadePanelBuildCreateMenuCallback() {
+	string $classes[] = getClasses();
+	string $rendererName = getRPRPluginName();
+
+	string $names[];
+	$names[0] = $rendererName + " Surface Shader";
+	$names[1] = $rendererName + " Volume Shader";
+	$names[2] = $rendererName + " 2D Texture";
+	$names[3] = $rendererName + " Utility";
+	$names[4] = $rendererName + " Displacement";
+
+	string $commands[];
+	$commands[0] = "hyperShadePanelCreate \"shader\" ";
+	$commands[1] = "hyperShadePanelCreate \"shader\" ";
+	$commands[2] = "hyperShadePanelCreate \"2dTexture\" ";
+	$commands[3] = "hyperShadePanelCreate \"light\" ";
+	$commands[4] = "hyperShadePanelCreate \"utility\" ";
+	$commands[5] = "hyperShadePanelCreate \"displacement\" ";
+
+	if(`pluginInfo -query -loaded "RadeonProRender"`) {
+		for($i = 0; $i < size($classes); $i++) {
+			menuItem -tearOff true -subMenu true $names[$i];
+			buildCreateSubMenu($classes[$i], $commands[$i]);
+			setParent -menu "..";
+		}
+
+		menuItem -divider true;
+	}
+}

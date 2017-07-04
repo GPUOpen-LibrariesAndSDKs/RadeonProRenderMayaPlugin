@@ -1,0 +1,19 @@
+global proc string getRPRPluginName()
+{
+	return "Radeon ProRender";
+}
+
+global proc string getRPRPluginVersion()
+{
+	return `pluginInfo -query -version RadeonProRender`;
+}
+
+global proc string getRPRNodePrefix()
+{
+	return "RPR";
+}
+
+global proc int getNumberOfCachedShaders(string $folderPath){
+	string $result[] = `getFileList -folder $folderPath -filespec "*.bin"`;
+	return size($result);
+}

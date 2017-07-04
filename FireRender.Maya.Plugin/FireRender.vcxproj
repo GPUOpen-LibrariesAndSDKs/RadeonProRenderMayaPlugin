@@ -1,0 +1,780 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug2015|x64">
+      <Configuration>Debug2015</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug2016.5|x64">
+      <Configuration>Debug2016.5</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug2017|x64">
+      <Configuration>Debug2017</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug2016|x64">
+      <Configuration>Debug2016</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release2015|x64">
+      <Configuration>Release2015</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release2016.5|x64">
+      <Configuration>Release2016.5</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release2017|x64">
+      <Configuration>Release2017</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release2016|x64">
+      <Configuration>Release2016</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\Rebuild Wrappers.cmd" />
+    <None Include="frMaya.module" />
+    <None Include="icons\amd.xpm" />
+    <None Include="python\fireRender\fireRenderMenu.py">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="python\fireRender\fireRenderUtils.py">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="python\fireRender\renderViewUtils.py">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="python\fireRender\rpr_location_selector.py">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="python\fireRender\rpr_material_browser.py">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="python\fireRender\vrayUtils.py">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="python\fireRender\__init__.py">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="python\__init__.py">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="scripts\AboutAndCopyright.html" />
+    <None Include="scripts\AERPRAddMaterialTemplate.mel" />
+    <None Include="scripts\AERPRBlendMaterialTemplate.mel" />
+    <None Include="scripts\AERPRGlobalsTemplate.mel" />
+    <None Include="scripts\AERPRIBLTemplate.mel" />
+    <None Include="scripts\AERPRMaterialTemplate.mel" />
+    <None Include="scripts\AERPRSkyTemplate.mel" />
+    <None Include="scripts\AERPRSubsurfaceMaterialTemplate.mel" />
+    <None Include="scripts\AERPRUberMaterialTemplate.mel" />
+    <None Include="scripts\AERPRVolumeMaterialTemplate.mel" />
+    <None Include="scripts\common.mel" />
+    <None Include="scripts\createFireRenderGlobalsTab.mel" />
+    <None Include="scripts\createFireRenderCommonGlobalsTab.mel" />
+    <None Include="scripts\fireRenderBatch.mel" />
+    <None Include="scripts\fireRenderEnvironment.mel" />
+    <None Include="scripts\fireRenderIpr.mel" />
+    <None Include="scripts\fireRenderUpdateAE.mel" />
+    <None Include="scripts\rprUnifiedRenderGlobalsWindow201500.mel" />
+    <None Include="scripts\rprUnifiedRenderGlobalsWindow201600.mel" />
+    <None Include="scripts\rprUnifiedRenderGlobalsWindow201650.mel" />
+    <None Include="scripts\rprUnifiedRenderGlobalsWindow201700.mel" />
+    <None Include="scripts\setupFireRenderNodeClassification.mel" />
+    <None Include="scripts\shelfCommands.mel" />
+    <None Include="shaders\rprBlitColor.ogsfx">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="shaders\rprBlitColorGL.cgfx">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">true</ExcludedFromBuild>
+    </None>
+    <None Include="Shelfs\shelf_Radeon_ProRender.mel" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\half.cpp" />
+    <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.cpp" />
+    <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.cpp" />
+    <ClCompile Include="DependencyNode.cpp" />
+    <ClCompile Include="FileSystemUtils.cpp" />
+    <ClCompile Include="FireMaya.cpp" />
+    <ClCompile Include="FireRenderAOV.cpp" />
+    <ClCompile Include="FireRenderAOVs.cpp" />
+    <ClCompile Include="FireRenderArithmetic.cpp" />
+    <ClCompile Include="FireRenderBlendOverride.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="FireRenderBlendValue.cpp" />
+    <ClCompile Include="FireRenderBump.cpp" />
+    <ClCompile Include="FireRenderChecker.cpp" />
+    <ClCompile Include="FireRenderCmd.cpp" />
+    <ClCompile Include="FireRenderContext.cpp" />
+    <ClCompile Include="FireRenderConvertVRayCmd.cpp" />
+    <ClCompile Include="FireRenderDisplacement.cpp" />
+    <ClCompile Include="FireRenderDot.cpp" />
+    <ClCompile Include="FireRenderEnvironmentLight.cpp" />
+    <ClCompile Include="FireRenderError.cpp" />
+    <ClCompile Include="FireRenderExportCmd.cpp" />
+    <ClCompile Include="FireRenderFresnel.cpp" />
+    <ClCompile Include="FireRenderFresnelSchlick.cpp" />
+    <ClCompile Include="FireRenderGlobals.cpp" />
+    <ClCompile Include="FireRenderGradient.cpp" />
+    <ClCompile Include="FireRenderIBL.cpp" />
+    <ClCompile Include="FireRenderIESLight.cpp" />
+    <ClCompile Include="FireRenderImageComparing.cpp" />
+    <ClCompile Include="FireRenderImageUtil.cpp" />
+    <ClCompile Include="FireRenderImportCmd.cpp" />
+    <ClCompile Include="FireRenderImportExportXML.cpp" />
+    <ClCompile Include="FireRenderIpr.cpp" />
+    <ClCompile Include="FireRenderLocationCmd.cpp" />
+    <ClCompile Include="FireRenderLookup.cpp" />
+    <ClCompile Include="FireRenderMaterialSwatchRender.cpp" />
+    <ClCompile Include="FireMaterialViewRenderer.cpp" />
+    <ClCompile Include="FireRenderBlendMaterial.cpp" />
+    <ClCompile Include="FireRenderNoise.cpp" />
+    <ClCompile Include="FireRenderNormal.cpp" />
+    <ClCompile Include="FireRenderObjects.cpp" />
+    <ClCompile Include="FireRenderOverride.cpp" />
+    <ClCompile Include="FireRenderPassthrough.cpp" />
+    <ClCompile Include="FireRenderPortableUtils.cpp" />
+    <ClCompile Include="FireRenderProduction.cpp" />
+    <ClCompile Include="FireRenderSkyLocator.cpp" />
+    <ClCompile Include="FireRenderStandardMaterial.cpp" />
+    <ClCompile Include="FireRenderSurfaceOverride.cpp" />
+    <ClCompile Include="FireRenderTexture.cpp" />
+    <ClCompile Include="FireRenderTextureCache.cpp" />
+    <ClCompile Include="FireRenderTransparentMaterial.cpp" />
+    <ClCompile Include="FireRenderViewportOperation.cpp" />
+    <ClCompile Include="FireRenderViewportUI.cpp" />
+    <ClCompile Include="FireRenderUtils.cpp" />
+    <ClCompile Include="FireRenderViewport.cpp" />
+    <ClCompile Include="FireRenderViewportBlit.cpp" />
+    <ClCompile Include="FireRenderViewportCmd.cpp" />
+    <ClCompile Include="FireRenderViewportManager.cpp" />
+    <ClCompile Include="FireRenderThread.cpp" />
+    <ClCompile Include="FireRenderVolumeMaterial.cpp" />
+    <ClCompile Include="frWrap.cpp" />
+    <ClCompile Include="Hosek\ArHosekSkyModel.cpp" />
+    <ClCompile Include="IESLightLocatorMesh.cpp" />
+    <ClCompile Include="MaterialLoader.cpp" />
+    <ClCompile Include="pluginMain.cpp" />
+    <ClCompile Include="FireRenderMaterial.cpp" />
+    <ClCompile Include="RenderCacheWarningDialog.cpp" />
+    <ClCompile Include="RenderProgressBars.cpp" />
+    <ClCompile Include="RenderStamp.cpp" />
+    <ClCompile Include="ShadersManager.cpp" />
+    <ClCompile Include="SkyAttributes.cpp" />
+    <ClCompile Include="SkyBuilder.cpp" />
+    <ClCompile Include="SkyGen.cpp" />
+    <ClCompile Include="SkyLocatorMesh.cpp" />
+    <ClCompile Include="SubsurfaceMaterial.cpp" />
+    <ClCompile Include="SunPositionCalculator.cpp" />
+    <ClCompile Include="Translators.cpp" />
+    <ClCompile Include="VRay.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\eLut.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\float2.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\float3.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\half.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\int2.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\mathutils.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\matrix.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\quaternion.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\toFloat.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\RadeonProRender.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\RadeonProRender_CL.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\RadeonProRender_GL.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\RprLoadStore.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedDefinitions.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedDefinitions_GL.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedFunctions.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedFunctions_GL.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.h" />
+    <ClInclude Include="AutoLock.h" />
+    <ClInclude Include="base_mesh.h" />
+    <ClInclude Include="common.h" />
+    <ClInclude Include="DependencyNode.h" />
+    <ClInclude Include="FileSystemUtils.h" />
+    <ClInclude Include="FireMaya.h" />
+    <ClInclude Include="FireRenderAOV.h" />
+    <ClInclude Include="FireRenderAOVs.h" />
+    <ClInclude Include="FireRenderArithmetic.h" />
+    <ClInclude Include="FireRenderBlendOverride.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="FireRenderBlendValue.h" />
+    <ClInclude Include="FireRenderBump.h" />
+    <ClInclude Include="FireRenderChecker.h" />
+    <ClInclude Include="FireRenderContext.h" />
+    <ClInclude Include="FireRenderConvertVRayCmd.h" />
+    <ClInclude Include="FireRenderDisplacement.h" />
+    <ClInclude Include="FireRenderDot.h" />
+    <ClInclude Include="FireRenderEnvironmentLight.h" />
+    <ClInclude Include="FireRenderError.h" />
+    <ClInclude Include="FireRenderFresnelSchlick.h" />
+    <ClInclude Include="FireRenderGlobals.h" />
+    <ClInclude Include="FireRenderGradient.h" />
+    <ClInclude Include="FireRenderIBL.h" />
+    <ClInclude Include="FireRenderIESLight.h" />
+    <ClInclude Include="FireRenderImageComparing.h" />
+    <ClInclude Include="FireRenderImageUtil.h" />
+    <ClInclude Include="FireRenderImportCmd.h" />
+    <ClInclude Include="FireRenderImportExportXML.h" />
+    <ClInclude Include="FireRenderIpr.h" />
+    <ClInclude Include="FireRenderLocationCmd.h" />
+    <ClInclude Include="FireRenderLookup.h" />
+    <ClInclude Include="FireRenderMaterial.h" />
+    <ClInclude Include="FireRenderMaterialSwatchRender.h" />
+    <ClInclude Include="FireMaterialViewRenderer.h" />
+    <ClInclude Include="FireRenderBlendMaterial.h" />
+    <ClInclude Include="FireRenderCmd.h" />
+    <ClInclude Include="FireRenderMath.h" />
+    <ClInclude Include="FireRenderNoise.h" />
+    <ClInclude Include="FireRenderNormal.h" />
+    <ClInclude Include="FireRenderObjects.h" />
+    <ClInclude Include="FireRenderOverride.h" />
+    <ClInclude Include="FireRenderPassthrough.h" />
+    <ClInclude Include="FireRenderPortableUtils.h" />
+    <ClInclude Include="FireRenderProduction.h" />
+    <ClInclude Include="FireRenderSkyLocator.h" />
+    <ClInclude Include="FireRenderStandardMaterial.h" />
+    <ClInclude Include="FireRenderSurfaceOverride.h" />
+    <ClInclude Include="FireRenderTexture.h" />
+    <ClInclude Include="FireRenderTextureCache.h" />
+    <ClInclude Include="FireRenderTransparentMaterial.h" />
+    <ClInclude Include="FireRenderUtils.h" />
+    <ClInclude Include="FireRenderViewport.h" />
+    <ClInclude Include="FireRenderViewportBlit.h" />
+    <ClInclude Include="FireRenderViewportCmd.h" />
+    <ClInclude Include="FireRenderFresnel.h" />
+    <ClInclude Include="FireRenderViewportOperation.h" />
+    <ClInclude Include="FireRenderViewportUI.h" />
+    <ClInclude Include="FireRenderThread.h" />
+    <ClInclude Include="FireRenderExportCmd.h" />
+    <ClInclude Include="FireRenderVolumeMaterial.h" />
+    <ClInclude Include="frWrap.h" />
+    <ClInclude Include="FireRenderViewportManager.h" />
+    <ClInclude Include="Hosek\ArHosekSkyModel.h" />
+    <ClInclude Include="Hosek\ArHosekSkyModelData_CIEXYZ.h" />
+    <ClInclude Include="Hosek\ArHosekSkyModelData_RGB.h" />
+    <ClInclude Include="Hosek\ArHosekSkyModelData_Spectral.h" />
+    <ClInclude Include="IESLightLocatorMesh.h" />
+    <ClInclude Include="Logger.h" />
+    <ClInclude Include="MaterialLoader.h" />
+    <ClInclude Include="RenderCacheWarningDialog.h" />
+    <ClInclude Include="RenderProgressBars.h" />
+    <ClInclude Include="RenderRegion.h" />
+    <ClInclude Include="RenderStamp.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="ShadersManager.h" />
+    <ClInclude Include="SkyAttributes.h" />
+    <ClInclude Include="SkyBuilder.h" />
+    <ClInclude Include="SkyGen.h" />
+    <ClInclude Include="SkyLocatorMesh.h" />
+    <ClInclude Include="SubsurfaceMaterial.h" />
+    <ClInclude Include="SunPositionCalculator.h" />
+    <ClInclude Include="Translators.h" />
+    <ClInclude Include="VRay.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icons\amd.png" />
+    <Image Include="icons\FireRenderAddMaterial.png" />
+    <Image Include="icons\FireRenderBlendMaterial.png" />
+    <Image Include="icons\FireRenderDot.png" />
+    <Image Include="icons\FireRenderFresnel.png" />
+    <Image Include="icons\FireRenderIBL.png" />
+    <Image Include="icons\FireRenderMaterial.png" />
+    <Image Include="icons\FireRenderSky.png" />
+    <Image Include="icons\FireRenderStandardMaterial.png" />
+    <Image Include="icons\out_FireRenderAddMaterial.png" />
+    <Image Include="icons\out_FireRenderBlendMaterial.png" />
+    <Image Include="icons\out_FireRenderFresnel.png" />
+    <Image Include="icons\out_FireRenderIBL.png" />
+    <Image Include="icons\out_FireRenderMaterial.png" />
+    <Image Include="icons\out_FireRenderSky.png" />
+    <Image Include="icons\out_FireRenderStandardMaterial.png" />
+    <Image Include="icons\render_FireRenderAddMaterial.png" />
+    <Image Include="icons\render_FireRenderBlendMaterial.png" />
+    <Image Include="icons\render_FireRenderFresnel.png" />
+    <Image Include="icons\render_FireRenderIBL.png" />
+    <Image Include="icons\render_FireRenderMaterial.png" />
+    <Image Include="icons\render_FireRenderSky.png" />
+    <Image Include="icons\render_FireRenderStandardMaterial.png" />
+    <Image Include="icons\shelf\RPRDocs.png" />
+    <Image Include="icons\shelf\RPREmissive.png" />
+    <Image Include="icons\shelf\RPRIBL.png" />
+    <Image Include="icons\shelf\RPRInfo.png" />
+    <Image Include="icons\shelf\RPRQuality.png" />
+    <Image Include="icons\shelf\RPRSettings.png" />
+    <Image Include="icons\shelf\RPRSky.png" />
+    <Image Include="icons\shelf\RPRStart.png" />
+    <Image Include="icons\shelf\RPRXMLImport.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="docs\Material Node Parameters.txt" />
+    <Text Include="docs\Context Parameters.txt" />
+    <Text Include="scripts\registerFireRender.mel" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="renderDesc\FireRenderRenderer.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="fireRender.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shaders\rprBlitColor10.fx">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{3BD95191-5C34-4990-8573-C9B34F148C1B}</ProjectGuid>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>RadeonProRender</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="FireRenderMaya.props" />
+    <Import Project="FrMaya2016.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="FireRenderMaya.props" />
+    <Import Project="FrMaya2015.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="FireRenderMaya.props" />
+    <Import Project="FrMaya2016.5.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="FireRenderMaya.props" />
+    <Import Project="FrMaya2017.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="FireRenderMaya.props" />
+    <Import Project="FrMaya2016.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="FireRenderMaya.props" />
+    <Import Project="FrMaya2015.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="FireRenderMaya.props" />
+    <Import Project="FrMaya2016.5.props" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="FireRenderMaya.props" />
+    <Import Project="FrMaya2017.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\output\$(ProjectName)\$(Configuration)\</OutDir>
+    <TargetExt>.mll</TargetExt>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <IntDir>$(SolutionDir)bin/system\$(ProjectName)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\output\$(ProjectName)\$(Configuration)\</OutDir>
+    <TargetExt>.mll</TargetExt>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <IntDir>$(SolutionDir)bin/system\$(ProjectName)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\output\$(ProjectName)\$(Configuration)\</OutDir>
+    <TargetExt>.mll</TargetExt>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <IntDir>$(SolutionDir)bin/system\$(ProjectName)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\output\$(ProjectName)\$(Configuration)\</OutDir>
+    <TargetExt>.mll</TargetExt>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <IntDir>$(SolutionDir)bin/system\$(ProjectName)\$(Configuration)\</IntDir>
+    <TargetName>$(ProjectName)</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug2016|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
+    </Link>
+    <PostBuildEvent />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug2015|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <PostBuildEvent />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug2016.5|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
+    </Link>
+    <PostBuildEvent />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug2017|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent />
+  </ItemDefinitionGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\output\$(ProjectName)\$(Configuration)\</OutDir>
+    <TargetExt>.mll</TargetExt>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <IntDir>$(SolutionDir)bin/system\$(ProjectName)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\output\$(ProjectName)\$(Configuration)\</OutDir>
+    <TargetExt>.mll</TargetExt>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <IntDir>$(SolutionDir)bin/system\$(ProjectName)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\output\$(ProjectName)\$(Configuration)\</OutDir>
+    <TargetExt>.mll</TargetExt>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <IntDir>$(SolutionDir)bin/system\$(ProjectName)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\output\$(ProjectName)\$(Configuration)\</OutDir>
+    <TargetExt>.mll</TargetExt>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <IntDir>$(SolutionDir)bin/system\$(ProjectName)\$(Configuration)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release2016|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>NDEBUG;TBB_USE_DEBUG=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
+      <MinimalRebuild>false</MinimalRebuild>
+      <OpenMPSupport>true</OpenMPSupport>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
+    </Link>
+    <PostBuildEvent />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release2015|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>NDEBUG;TBB_USE_DEBUG=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
+      <MinimalRebuild>false</MinimalRebuild>
+      <OpenMPSupport>true</OpenMPSupport>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
+    </Link>
+    <PostBuildEvent />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release2016.5|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>NDEBUG;TBB_USE_DEBUG=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
+      <MinimalRebuild>false</MinimalRebuild>
+      <OpenMPSupport>true</OpenMPSupport>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
+    </Link>
+    <PostBuildEvent />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release2017|x64'">
+    <ClCompile>
+      <PreprocessorDefinitions>NDEBUG;TBB_USE_DEBUG=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <ProgramDataBaseFileName>$(OutDir)$(ProjectName).pdb</ProgramDataBaseFileName>
+      <StringPooling>true</StringPooling>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
+      <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <OpenMPSupport>true</OpenMPSupport>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <RandomizedBaseAddress>false</RandomizedBaseAddress>
+      <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
+      <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
+      <AdditionalDependencies>RadeonProRender64.lib;RprSupport64.lib;OpenImageIO_RPR.lib;glew.lib;glu32.lib;Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaRender.lib;Image.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent />
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>.;..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic;..\ThirdParty\glew\include;..\ThirdParty\OpenCL\include;..\ThirdParty\oiio\include;..\ThirdParty\AxfPackage\AxfInclude\;..\ThirdParty\AxfPackage\include\</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>MAYA_PLUGIN;GL_INTEROP;WIN32;_WINDOWS;_USRDLL;NT_PLUGIN;_HAS_ITERATOR_DEBUGGING=0;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;__TBB_LIB_NAME=tbb.lib;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>..\ThirdParty\glew\lib\x64;..\ThirdParty\oiio\lib;..\ThirdParty\RadeonProRender SDK\Win\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RadeonProRender64.lib;RprSupport64.lib;OpenImageIO_RPR.lib;glew.lib;glu32.lib;Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaRender.lib;Image.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
+      <DelayLoadDLLs>RadeonProRender64.dll;RprSupport64.dll</DelayLoadDLLs>
+    </Link>
+    <PostBuildEvent>
+      <Command>echo creating dist folders
+md $(SolutionDir)dist
+md $(SolutionDir)dist\bin
+md $(SolutionDir)dist\scripts
+md $(SolutionDir)dist\plug-ins
+md $(SolutionDir)dist\plug-ins\$(FR_MAYA_VERSION)
+md $(SolutionDir)dist\images
+md $(SolutionDir)dist\icons
+md $(SolutionDir)dist\shaders
+md $(SolutionDir)dist\renderDesc
+
+XCOPY /E /Y $(ProjectDir)\scripts\* $(SolutionDir)dist\scripts\
+XCOPY /E /Y $(ProjectDir)\python $(SolutionDir)dist\scripts\
+
+COPY $(TargetPath) $(SolutionDir)dist\plug-ins\$(FR_MAYA_VERSION)\* /Y
+
+COPY $(ProjectDir)\images\* $(SolutionDir)dist\images\ /Y
+
+XCOPY /E /Y $(ProjectDir)\icons\* $(SolutionDir)dist\icons\
+COPY $(ProjectDir)\shaders\* $(SolutionDir)dist\shaders\ /Y
+
+COPY $(ProjectDir)\renderDesc\* $(SolutionDir)dist\renderDesc\ /Y
+COPY "$(SolutionDir)ThirdParty\RadeonProRender SDK\Win\bin\*.dll" $(SolutionDir)dist\bin\ /Y
+COPY $(SolutionDir)ThirdParty\glew\bin\x64\*.dll $(SolutionDir)dist\bin\ /Y
+IF EXIST "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)\prefs\shelves\" COPY $(ProjectDir)\Shelfs\* "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)\prefs\shelves\" /Y
+
+IF EXIST "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)-x64\prefs\shelves" COPY $(ProjectDir)\Shelfs\* "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)-x64\prefs\shelves\" /Y
+
+
+COPY $(SolutionDir)ThirdParty\AxfPackage\ReleaseDll\AxfDll\*.dll $(SolutionDir)dist\bin\ /Y
+COPY $(SolutionDir)ThirdParty\AxfPackage\ReleaseDll\AxfDll\*.def $(SolutionDir)dist\bin\ /Y</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup />
+</Project>

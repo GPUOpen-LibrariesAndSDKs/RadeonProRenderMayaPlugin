@@ -1,0 +1,122 @@
+<?xml version="1.0"?>
+<!DOCTYPE renderer SYSTEM "renderer.dtd">
+<!--
+  Top level tag, mandatory:
+    <renderer>: "desc" gives a one line description.
+
+  Header tags, not mandatory, must be specified only once.
+    <melheader>: "s" is a mel script executed just after the file is read
+    <meltrailer>: "s" is a mel script executed after all flags are converted
+        to mel. Should contain at least the rendering command.
+
+  Other tags:
+    <sep>: "desc" produces a line in the help. Blank if desc is missing.
+    <attr>: produces a setAttr line.
+        "n" is the flag name.
+        "s" the attribute name.
+        "t" the parameter type, used in help description.
+        "h" the help description.
+    <attrString>: produces a setAttr line for a string attribute.
+        Same parameters as <attr>, but for string attributes.
+    <mel>: Calls a mel script.
+        "n" is the flag name.
+        "p" the number of parameters.
+        "s" the string defining the action %1 ... %p are replaced with values
+                read after the flag.
+        "t" the parameter types, used in help description.
+    	"h" the help description.
+-->
+<renderer desc="FireRender renderer">
+	<melheader s='string $opt = ""; string $rl=""; string $rp=""; float $resize=-1.; int $interactive=0; select RadeonProRenderGlobals;'/>
+	<meltrailer s='setMayaSoftwareLayers($rl, $rp); setImageSizePercent($resize); mayaBatchRenderProcedure($interactive, "", "", "FireRender", $opt);'/>
+	<sep/>
+	<!-- ______________________________________________________________ -->
+	<sep desc="General purpose flags:"/>
+	<mel n="rd" p="1" s='workspace -fr "images" "%1";workspace -fr "depth" "%1";' t="path" h="Directory in which to store image file"/>
+	<attrString n="im" s="defaultRenderGlobals.imageFilePrefix" t="filename" h="Image file output name"/>
+	<sep/>
+	<mel n="fnc" s='setMayaSoftwareFrameExt("%1", 1)' p="1" t="int" h="File Name Convention: any of name, name.ext, ... See the\n\tRender Settings window to find available options. Use namec and\n\tnamec.ext for Multi Frame Concatenated formats. As a shortcut,\n\tnumbers 1, 2, ... can also be used"/>
+	<mel n="of" s='setMayaSoftwareImageFormat("%1")' p="1" t="string" h="Output image file format. See the Render Settings window\n\tto find available formats"/>
+	<mel n="s" p="1" t="float" s="removeRenderLayerAdjustmentAndUnlock defaultRenderGlobals.animation; setAttr defaultRenderGlobals.animation 1; removeRenderLayerAdjustmentAndUnlock defaultRenderGlobals.startFrame; setAttr defaultRenderGlobals.startFrame %1" h="Starting frame for an animation sequence"/>
+	<mel n="e" p="1" t="float" s="removeRenderLayerAdjustmentAndUnlock defaultRenderGlobals.animation; setAttr defaultRenderGlobals.animation 1; removeRenderLayerAdjustmentAndUnlock defaultRenderGlobals.endFrame; setAttr defaultRenderGlobals.endFrame %1" h="End frame for an animation sequence"/>
+	<attr n="b" s="defaultRenderGlobals.byFrame" t="float" h="By frame (or step) for an animation sequence"/>
+	<attr n="skipExistingFrames" s="defaultRenderGlobals.skipExistingFrames" t="boolean" h="Skip frames that are already rendered (if true) or force rendering all frames (if false)"/>
+	<attr n="pad" s="defaultRenderGlobals.extensionPadding" t="int" h="Number of digits in the output image frame file name\n\textension"/>
+	<mel n="rfs" p="1" t="int" s="removeRenderLayerAdjustmentAndUnlock defaultRenderGlobals.modifyExtension; setAttr defaultRenderGlobals.modifyExtension 1; removeRenderLayerAdjustmentAndUnlock defaultRenderGlobals.startExtension; setAttr defaultRenderGlobals.startExtension %1" h="Renumber Frame Start: number for the first image when\n\trenumbering frames"/>
+	<attr n="rfb" s="defaultRenderGlobals.byExtension" t="int" h="Renumber Frame By (or step) used for renumbering frames"/>
+	<sep/>
+	<mel n="cam" s='makeCameraRenderable("%1")' p="1" t="name" h="Specify which camera to be rendered"/>
+	<mel n="rgb" s='applyOnCameras("image", "%1")' p="1" t="boolean" h="Turn RGB output on or off"/>
+	<mel n="alpha" s='applyOnCameras("mask", "%1")' p="1" t="boolean" h="Turn Alpha output on or off"/>
+	<mel n="depth" s='applyOnCameras("depth", "%1")' p="1" t="boolean" h="Turn Depth output on or off"/>
+	<mel n="iip" s="disableImagePlanes" p="0" t="" h="Ignore Image Planes turn off all image planes before\n\trendering"/>
+	<sep/>
+	<attr n="x" s="defaultResolution.width" t="int" h="Set X resolution of the final image"/>
+	<attr n="y" s="defaultResolution.height" t="int" h="Set Y resolution of the final image"/>
+	<mel n="percentRes" s="$resize=%1" p="1" t="float" h="Renders the image using percent of the resolution"/>
+	<attr n="ard" s="defaultResolution.deviceAspectRatio" t="float" h="Device aspect ratio for the rendered image"/>
+	<attr n="par" s="defaultResolution.pixelAspectRatio" t="float" h="Pixel aspect ratio for the rendered image"/>
+	<sep/>
+   <!--______________________________________________________________-->
+  <sep desc="Completion criteria:"/>
+  <attr n="cctp" s=".completionCriteriaType" t="int" h="Type"/>
+  <attr n="cchr" s=".completionCriteriaHours" t="int" h="Hours"/>
+  <attr n="ccmn" s=".completionCriteriaMinutes" t="int" h="Minute"/>
+  <attr n="ccsc" s=".completionCriteriaSeconds" t="int" h="Seconds"/>
+  <attr n="ccit" s=".completionCriteriaIterations" t="int" h="Iterations"/>
+  <sep/>
+	<!-- ______________________________________________________________ -->
+	<sep desc="Globals:"/>
+	<attr n="mode" s=".renderMode" t="int" h="Render mode"/>
+	<attr n="it" s=".iterations" t="int" h="Iterations"/>
+	<sep/>
+  <!-- ______________________________________________________________ -->
+  <sep desc="Global Illumination:"/>
+  <attr n="gici" s=".giClampIrradiance" t="boolean" h="Clamp Irradiance"/>
+  <attr n="giciv" s=".giClampIrradianceValue" t="float" h="Clamp Irradiance Value"/>
+  <sep/>
+	<!-- ______________________________________________________________ -->
+	<sep desc="Sampling:"/>
+	<attr n="ns" s=".samples" t="int" h="Number of samples"/>
+	<attr n="cs" s=".cellSize" t="float" h="AA cell size"/>
+	<sep/>
+  <!-- ______________________________________________________________ -->
+	<sep desc="Filter:"/>
+	<attr n="ft" s=".filter" t="int" h="Filter type"/>
+	<attr n="fs" s=".filterSize" t="int" h="Filter size"/>
+	<sep/>
+  <!-- ______________________________________________________________ -->
+	<sep desc="Trace depth:"/>
+	<attr n="mrd" s=".maxRayDepth" t="boolean" h="Max ray depth"/>
+	<sep/>
+  <!-- ______________________________________________________________ -->
+  <sep desc="Utils:"/>
+  <attr n="port" s=".commandPort" t="int" h="Command port"/>
+  <sep/>
+	<!-- ______________________________________________________________ -->
+	<sep desc="Render Layers and Passes:"/>
+	<mel n="rl" s='$rl="%1"' p="1" t="boolean|name(s)" h="Render each render layer separately"/>
+	<mel n="rp" s='$rp="%1"' p="1" t="boolean|name(s)" h="Render passes separately. 'all' will render all passes"/>
+	<attr n="rs" s=".renderLayerSubdirs" t="boolean" h="Obsolete flag. Used only for backward compatibility"/>
+	<mel n="sel" p="1" s="select -add %1; removeRenderLayerAdjustmentAndUnlock defaultRenderGlobals.renderAll; setAttr defaultRenderGlobals.renderAll 0" t="boolean|name(s)" h="Selects which objects, groups and/or sets to render"/>
+	<mel n="l" p="1" s="selectLayerMembers %1; removeRenderLayerAdjustmentAndUnlock defaultRenderGlobals.renderAll; setAttr defaultRenderGlobals.renderAll 0" t="boolean|name(s)" h="Selects which display and render layers to render"/>
+	<sep/>
+	<!-- ______________________________________________________________ -->
+	<sep desc="Mel callbacks"/>
+	<attrString n="preRender" s="defaultRenderGlobals.preMel" t="string" h="Mel code executed before rendering"/>
+	<attrString n="postRender" s="defaultRenderGlobals.postMel" t="string" h="Mel code executed after rendering"/>
+	<attrString n="preLayer" s="defaultRenderGlobals.preRenderLayerMel" t="string" h="Mel code executed before each render layer"/>
+	<attrString n="postLayer" s="defaultRenderGlobals.postRenderLayerMel" t="string" h="Mel code executed after each render layer"/>
+	<attrString n="preFrame" s="defaultRenderGlobals.preRenderMel" t="string" h="Mel code executed before each frame"/>
+	<attrString n="postFrame" s="defaultRenderGlobals.postRenderMel" t="string" h="Mel code executed after each frame"/>
+	<mel n="pre" s='print("WARNING: flag -pre is obsolete. Use -preRender, -preLayer, -preFrame\n");' p="1" t="string" h="Obsolete flag"/>
+	<mel n="post" s='print("WARNING: flag -post is obsolete. Use -postRender, -postLayer, -postFrame\n");' p="1" t="string" h="Obsolete flag"/>
+	<sep/>
+	<!-- ______________________________________________________________ -->
+	<sep desc=" *** Remember to place a space between option flags and their arguments. ***"/>
+	<sep desc="Any boolean flag will take the following values as TRUE: on, yes, true, or 1."/>
+	<sep desc="Any boolean flag will take the following values as FALSE: off, no, false, or 0."/>
+	<sep/>
+	<sep desc="    e.g. -s 1 -e 10 -x 512 -y 512 -cam persp file."/>
+</renderer>
+

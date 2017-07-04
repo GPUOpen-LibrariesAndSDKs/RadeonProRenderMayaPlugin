@@ -1,0 +1,306 @@
+global int $gFireRenderDeleteAEScriptJob = -1;
+
+global proc string fireRenderGetSelectedAETab() {
+	global string $gAECurrentTab;  // Maya internal var.
+	if (!`objExists $gAECurrentTab`) {
+		return "";
+	}
+	return $gAECurrentTab;
+}
+
+global proc addLightAttribute(string $node)
+{
+	if (`attributeQuery -node $node -ex "primaryVisibility"`)
+	{
+		setAttr ($node + ".primaryVisibility") 1;
+		deleteAttr ($node + ".primaryVisibility");
+	}
+	else
+	{
+		addAttr -ln "primaryVisibility" -nn "Primary Visibility" -dv 0 -at bool  $node;
+	}
+
+	fireRenderUpdateAE();
+}
+
+global proc addCameraAttribute(string $node)
+{
+	if (`attributeQuery -node $node -ex "fireRenderApertureBlades"`)
+	{
+		setAttr ($node + ".fireRenderApertureBlades") 0;
+		deleteAttr ($node + ".fireRenderApertureBlades");
+	}
+	else
+	{
+		addAttr -ln "fireRenderApertureBlades" -nn "Aperture Blades" -dv 4 -smn 4 -smx 32 -at long  $node;
+	}
+
+	if (`attributeQuery -node $node -ex "fireRenderExposure"`)
+	{
+		setAttr ($node + ".fireRenderExposure") 0.0;
+		deleteAttr ($node + ".fireRenderExposure");
+	}
+	else
+	{
+		addAttr -ln "fireRenderExposure" -nn "Exposure" -dv 0.0 -smn 0.0 -smx 1.0 -at "float"  $node;
+	}
+
+	fireRenderUpdateAE();
+}
+
+global proc addMeshAttribute(string $node)
+{
+	if (`attributeQuery -node $node -ex "fireRenderShadowCatcher"`)
+	{
+		setAttr ($node + ".fireRenderShadowCatcher") 0;
+		deleteAttr ($node + ".fireRenderShadowCatcher");
+	}
+	else
+	{
+		addAttr -ln "fireRenderShadowCatcher" -nn "Shadow Catcher" -dv 0 -at bool  $node;
+	}
+
+	fireRenderUpdateAE();
+}
+
+global proc buildFireRenderAEAttributesSubMenu()
+{
+	global string $gAERootLayoutName;
+
+	if (`layout -exists $gAERootLayoutName`) {
+		setParent $gAERootLayoutName;
+		setParent -menu frAEMenu;
+		menu -edit -deleteAllItems frAEMenu;
+		string $selected;
+		$selected = `fireRenderGetSelectedAETab`;
+		if (size($selected)) {
+			string $ntype = `nodeType $selected`;
+			if ($ntype == "areaLight")
+			{
+				if (`attributeQuery -node $selected -ex "primaryVisibility"`)
+				{
+					menuItem -checkBox 1 -c ("addLightAttribute "+$selected) -label "Light attributes";
+				}
+				else
+				{
+					menuItem -checkBox 0 -c ("addLightAttribute "+$selected) -label "Light attributes";
+				}
+			}
+			if ($ntype == "camera")
+			{
+				if (`attributeQuery -node $selected -ex "fireRenderExposure"`)
+				{
+					menuItem -checkBox 1 -c ("addCameraAttribute "+$selected) -label "Camera attributes";
+				}
+				else
+				{
+					menuItem -checkBox 0 -c ("addCameraAttribute "+$selected) -label "Camera attributes";
+				}
+			}
+			if ($ntype == "mesh")
+			{
+				if (`attributeQuery -node $selected -ex "fireRenderPortal"`)
+				{
+					menuItem -checkBox 1 -c ("addMeshAttribute "+$selected) -label "Mesh attributes";
+				}
+				else
+				{
+					menuItem -checkBox 0 -c ("addMeshAttribute "+$selected) -label "Mesh attributes";
+				}
+			}
+		}
+	}
+}
+
+global proc buildFireRenderAEAttributesMenu()
+{
+	global string $gAERootLayoutName;
+	string $label = "Radeon ProRender";
+
+	if( `layout -exists $gAERootLayoutName` ) {
+	setParent $gAERootLayoutName;
+	setParent -menu addMenu;
+	string $ia[] = `menu -q -ia addMenu`;
+	int $exists = 0;
+	int $i;
+	for( $i = size($ia) - 1; $i >= 0; $i-- ) {
+		if( `menuItem -q -label $ia[$i]` == $label ) {
+		$exists = 1;
+		break;
+		}
+	}
+	if( !$exists ) {
+		menuItem -divider true;
+		menuItem -subMenu true -label $label -pmc "buildFireRenderAEAttributesSubMenu" frAEMenu;
+	}
+	}
+}
+
+global proc fireRenderUpdateAE()
+{
+	global string	$gAETabLayoutName;
+	global string	$gAEControlLayoutName;
+	global string	$gRelatedNodes[];
+	global string	$gAERootLayoutName;
+	global int          $gFireRenderDeleteAEScriptJob;
+	string              $frAELabel = "Extra Radeon ProRender Attributes";
+	string              $eaLabel = "Extra Attributes";
+
+	if( `layout -exists $gAERootLayoutName` ) {
+		setParent $gAERootLayoutName;
+		string $origpmc = `menu -q -pmc addMenu`;
+		if( !`gmatch $origpmc "*buildFireRenderAEAttributesMenu*"` ) {
+			menu -e -pmc ($origpmc + ";buildFireRenderAEAttributesMenu") addMenu;
+		}
+		if( !`scriptJob -exists $gFireRenderDeleteAEScriptJob` )
+		{
+			$gFireRenderDeleteAEScriptJob = `scriptJob -runOnce true -uiDeleted $gAERootLayoutName "fireRenderUpdateAE"`;
+		}
+	}
+
+
+	if( !`layout -exists $gAETabLayoutName` )
+	{
+		return;
+	}
+
+	string $tabChangeCmd = `tabLayout -q -changeCommand $gAETabLayoutName`;
+	if( `match "fireRender*" $tabChangeCmd` == "" )
+	{
+		tabLayout -e -changeCommand ("fireRenderUpdateAE;\n" + $tabChangeCmd) $gAETabLayoutName;
+	}
+
+	string $tab = `tabLayout -q -selectTab $gAETabLayoutName`;
+	int $tabIndex = `tabLayout -q -selectTabIndex $gAETabLayoutName`;
+
+	if( $tabIndex <= 0 )
+		return;
+
+	string $node = $gRelatedNodes[$tabIndex-1];
+	if (!`objExists $node`) return;
+
+	string $ntype = `nodeType $node`;
+	if( `match "^FireRender" $ntype` == "FireRender")
+	{
+		return;
+	}
+
+	string $nodeTypeForm = ("AttrEd"+$ntype+"FormLayout");
+	int $ex = `formLayout -exists $nodeTypeForm`;
+
+	if( `formLayout -exists $nodeTypeForm` )
+	{
+		setUITemplate -pushTemplate attributeEditorTemplate;
+		string $oldParent = `setParent -q`;
+
+		setParent $gAEControlLayoutName;
+
+		// Hunt for container that holds the frame layouts in AE,
+		// so we can add a frame for FireRender Extra Attributes.
+		// Makes assumptions about layout of AE.
+		setParent $nodeTypeForm;
+		string $kidsi[] = `layout -q -ca $nodeTypeForm`;
+		int $i, $j;
+		string $frFrame = "";
+		string $playout = "";
+		for( $i=0; $i<size($kidsi); $i++ )
+		{
+			if( `match "scrollLayout*" $kidsi[$i]` == "scrollLayout")
+			{
+				string $kidsj[] = `layout -q -ca $kidsi[$i]`;
+				for( $j=0; $j<size($kidsj); $j++ )
+				{
+					if( `match "columnLayout*" $kidsj[$j]` == "columnLayout")
+					{
+						$playout = $kidsj[$j];
+						break;
+					}
+				}
+				if( $playout != "" )
+					break;
+			}
+		}
+
+		if( $playout != "" )
+		{
+			setParent $playout;
+			$kidsi = `layout -q -ca $playout`;
+		}
+
+		int $isGeom = 0;
+		string $geom[] = `ls -geometry $node`;
+		if( size($geom) )
+		{
+			$isGeom = 1;
+		}
+
+		for( $i=0; $i<size($kidsi); $i++ )
+		{
+			if( `match "frameLayout*" $kidsi[$i]` == "frameLayout" )
+			{
+				string $lbl = `frameLayout -q -label $kidsi[$i]`;
+
+				// If fr section is found, delete it; it'll be
+				// added again further down.
+				if( $lbl == $frAELabel ) {
+					$frFrame = $kidsi[$i];
+					string $kidsj[] = `layout -q -ca $kidsi[$i]`;
+					for( $j=0; $j<size($kidsj); $j++ ) {
+						deleteUI $kidsj[$j];
+					}
+				}
+			}
+		}
+
+		// Add controls for fr attrs under FireRender Extra Attributes frame.
+		// Assume fr attrs begin with fireRender.
+		string $attrs[] = `listAttr -userDefined $node`;
+		string $state;
+		string $buffer[];
+		$i = 0;
+		int $hasFrAttrs = 0;
+		global string $gFrNodeType;
+		string $masterWidgets[];
+		string $masterAttrs[];
+		string $widget;
+		for( $i=0; $i < size($attrs); $i++ )
+		{
+			if( `match "fireRender*" $attrs[$i]` == "fireRender" )
+			{
+				if( !$hasFrAttrs )
+				{
+					if( $frFrame != "" )
+					{
+						setParent $frFrame;
+					}
+					else
+					{
+						$frFrame = `frameLayout -label $frAELabel -cll true -cl true`;
+						if( $playout == "" )
+						{
+							formLayout -e -attachForm $frFrame "bottom" 5 $nodeTypeForm;
+						}
+					}
+					string $lyt = `columnLayout`;
+					$hasFrAttrs = 1;
+				}
+
+				attrControlGrp -attribute ($node + "." + $attrs[$i]);
+			}
+		}
+
+
+		// If fr frame is empty, delete it
+		if( $frFrame != "" )
+		{
+			string $frChildren[] = `layout -q -ca $frFrame`;
+			if( size($frChildren) == 1 )
+				$frKids = `layout -q -ca $frChildren[0]`;
+			if(size($frChildren) == 0 || !$hasFrAttrs)
+				deleteUI $frFrame;
+		}
+
+		setParent $oldParent;
+		setUITemplate -popTemplate;
+	}
+}

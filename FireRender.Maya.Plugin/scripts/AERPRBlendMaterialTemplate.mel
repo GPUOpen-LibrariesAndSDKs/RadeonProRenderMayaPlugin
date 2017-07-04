@@ -1,0 +1,20 @@
+global proc AERPRBlendMaterialTemplate( string $nodeName )
+{
+	AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -beginLayout "Swatch properties" -collapse true;
+		editorTemplate -l "Disable" -addControl "disableSwatch";
+		editorTemplate -l "Iterations" -addControl "swatchIterations";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Common Material Attributes" -collapse 0;
+		editorTemplate -addControl "color0";
+		editorTemplate -addControl "color1";
+		editorTemplate -addControl "weight";
+	editorTemplate -endLayout;
+	AEdependNodeTemplate $nodeName;
+	
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

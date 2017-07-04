@@ -1,0 +1,119 @@
+global proc AERPRToneMappingType(string $nodeName)
+{
+	int $enable[];
+	int $type = `getAttr ($nodeName + ".toneMappingType")`;
+	if ($type == 0) {			// None
+		$enable = {1, 1, 1, 1, 1, 1, 1};
+	} else if ($type == 1) {	// linear
+		$enable = {0, 1, 1, 1, 1, 1, 1};
+	} else if ($type == 2) {	// photolinear
+		$enable = {1, 0, 0, 0, 1, 1, 1};
+	} else if ($type == 3) {	// autolinear
+		$enable = {1, 1, 1, 1, 1, 1, 1};
+	} else if ($type == 4) {	// maxwhite
+		$enable = {1, 1, 1, 1, 1, 1, 1};
+	} else if ($type == 5) {	// reinhard02
+		$enable = {1, 1, 1, 1, 0, 0, 0};
+	} 
+
+	editorTemplate -dimControl $nodeName "toneMappingLinearScale"            $enable[0];
+	editorTemplate -dimControl $nodeName "toneMappingPhotolinearSensitivity" $enable[1];
+	editorTemplate -dimControl $nodeName "toneMappingPhotolinearExposure"	 $enable[2];
+	editorTemplate -dimControl $nodeName "toneMappingPhotolinearFstop"       $enable[3];
+	editorTemplate -dimControl $nodeName "toneMappingReinhard02Prescale"     $enable[4];
+	editorTemplate -dimControl $nodeName "toneMappingReinhard02Postscale"    $enable[5];
+	editorTemplate -dimControl $nodeName "toneMappingReinhard02Burn"		 $enable[6];
+}
+
+global proc AERPRDeviceType(string $nodeName)
+{
+	int $disable;
+
+	int $type = `getAttr ($nodeName + ".resource_Device")`;
+	if ($type == 1) {			// kCPU
+		$disable = 1;
+	} else {	
+		$disable = 0;
+	}
+	
+	editorTemplate -dimControl $nodeName "GPU_Count"   $disable;
+}
+
+global proc AERPRGlobalsTemplate( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+	editorTemplate -beginLayout "Render Resources(Only applicable when FR viewport is not active)" -collapse 0;
+		editorTemplate -addControl "resource_Device" AERPRDeviceType;
+		editorTemplate -addControl "GPU_Count";
+	editorTemplate -endLayout;
+	editorTemplate -beginLayout "Completion Criteria" -collapse 0;
+		editorTemplate -addControl "time_h";
+		editorTemplate -addControl "time_m";
+		editorTemplate -addControl "time_s";
+		editorTemplate -addControl "iterations";
+	editorTemplate -endLayout;
+	editorTemplate -beginLayout "Global" -collapse 0;
+		editorTemplate -addControl "renderMode";
+	editorTemplate -beginLayout "Global Illumination" -collapse 1;
+		editorTemplate -addControl "clampIrradiance";
+	editorTemplate -endLayout;
+    editorTemplate -beginLayout "Quality Presets" -collapse 0;
+        editorTemplate -addControl "qualityPresetsViewport";
+        editorTemplate -addControl "qualityPresets";
+    editorTemplate -endLayout;
+	editorTemplate -beginLayout "Sampling" -collapse 0;
+		editorTemplate -addControl "samples";
+		editorTemplate -addControl "cellSize";
+	editorTemplate -endLayout;
+	editorTemplate -beginLayout "Filtering" -collapse 0;
+		editorTemplate -addControl "filter";
+		editorTemplate -addControl "filterSize";
+	editorTemplate -endLayout;
+	editorTemplate -beginLayout "Trace depth" -collapse 0;
+		editorTemplate -addControl "maxRayDepth";
+	editorTemplate -endLayout;
+	editorTemplate -beginLayout "Environment" -collapse 0;
+		editorTemplate -addControl "imageBasedLighting";
+		editorTemplate -addControl "sky";
+	editorTemplate -endLayout;
+	editorTemplate -beginLayout "Ground" -collapse 0;
+		editorTemplate -addControl "useGround";
+		editorTemplate -addControl "groundHeight";
+		editorTemplate -addControl "groundRadius";
+		editorTemplate -addControl "shadows";
+		editorTemplate -addControl "reflections";
+		editorTemplate -addControl "strength";
+		editorTemplate -addControl "roughness";
+	editorTemplate -endLayout;
+	editorTemplate -beginLayout "ToneMapping" -collapse 0;
+		editorTemplate -label "Type" -addControl "toneMappingType" AERPRToneMappingType;
+		editorTemplate -addControl "displayGamma";
+		editorTemplate -addControl "textureGamma";
+    	editorTemplate -beginLayout "WhiteBalance" -collapse 0;
+    		editorTemplate -label "Enabled" -addControl "toneMappingWhiteBalanceEnabled";
+    		editorTemplate -label "Value" -addControl "toneMappingWhiteBalanceValue";
+		editorTemplate -endLayout;
+    	editorTemplate -beginLayout "Linear" -collapse 0;
+			editorTemplate -label "Scale" -addControl "toneMappingLinearScale";
+		editorTemplate -endLayout;
+		editorTemplate -beginLayout "Photolinear" -collapse 0;
+			editorTemplate -label "Sensitivity" -addControl "toneMappingPhotolinearSensitivity";
+			editorTemplate -label "Exposure" -addControl "toneMappingPhotolinearExposure";
+			editorTemplate -label "Fstop" -addControl "toneMappingPhotolinearFstop";
+		editorTemplate -endLayout;
+		editorTemplate -beginLayout "Reinhard02" -collapse 0;
+			editorTemplate -label "Pre Scale" -addControl "toneMappingReinhard02Prescale";
+			editorTemplate -label "Post Scale" -addControl "toneMappingReinhard02Postscale";
+			editorTemplate -label "Burn" -addControl "toneMappingReinhard02Burn";
+		editorTemplate -endLayout;
+	editorTemplate -endLayout;
+	editorTemplate -beginLayout "Motion Blur" -collapse 0;
+		editorTemplate -label "Enable" -addControl "motionBlur";
+	editorTemplate -endLayout;
+	AEdependNodeTemplate $nodeName;
+
+	AEFireRenderDeviceType $nodeName;
+	
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

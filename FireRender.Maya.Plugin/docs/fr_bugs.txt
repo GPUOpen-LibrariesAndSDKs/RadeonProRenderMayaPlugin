@@ -1,0 +1,8 @@
+ - No Alpha in the frambuffer output
+ - Only one directional light is working, if there are 2 is all black
+ - Multiple context runnign at the same times create problem, like swatch and ipr rendering that when a shader parameter changes the ipr go all black
+ - iterations - don't undertand why I need to divide by the iteration number while reading the framebuffer
+ - shader set parameter image - it's not possible to remove and use a plain color at runtime
+ - exr half not supported
+ - framebuffer black cross with small dimension (see swatch)
+ - not clear when the ref counter is incremented by some functions

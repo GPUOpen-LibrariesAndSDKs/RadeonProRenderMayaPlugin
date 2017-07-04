@@ -1,0 +1,149 @@
+#pragma once
+
+#include "FireRenderContext.h"
+#include <maya/MDagPath.h>
+#include <maya/MThreadAsync.h>
+#include "RenderCacheWarningDialog.h"
+
+/**
+ * Manages an interactive photo real (IPR)
+ * render session in the render view window.
+ */
+class FireRenderIpr
+{
+public:
+
+	// Life Cycle
+	// -----------------------------------------------------------------------------
+
+	FireRenderIpr();
+	virtual ~FireRenderIpr();
+
+
+	// Public Methods
+	// -----------------------------------------------------------------------------
+
+	/** True if the IPR render is running. */
+	bool isRunning();
+
+	/** True if an error occurred. */
+	bool isError();
+
+	/** Start a threaded IPR render. */
+	bool start();
+
+	/** Pause the threaded IPR render. */
+	bool pause(bool value);
+
+	/** Stop the current threaded IPR render. */
+	bool stop();
+
+	/** Perform the threaded render operation. */
+	bool RunOnViewportThread();
+
+	/** Update the render region. */
+	void updateRegion();
+
+	/** Set the frame buffer resolution. */
+	void setResolution(unsigned int w, unsigned int h);
+
+	/** Set the render camera. */
+	void setCamera(MDagPath& camera);
+
+	/** Update the Maya render view. */
+	void updateRenderView();
+
+
+private:
+
+	// Life Cycle
+	// -----------------------------------------------------------------------------
+
+	/** Copy constructor. */
+	FireRenderIpr(const FireRenderIpr& other) = delete;
+
+
+	// Operators
+	// -----------------------------------------------------------------------------
+
+	/** Assignment. */
+	FireRenderIpr& operator=(const FireRenderIpr& other) = delete;
+
+
+	// Private Methods
+	// -----------------------------------------------------------------------------
+
+	/** Schedule a render view update. */
+	void scheduleRenderViewUpdate();
+
+	/** Start the Maya render view render. */
+	void startMayaRender();
+
+	/** Stop the Maya render view render. */
+	void stopMayaRender();
+
+	/** Begin the Maya render view update. */
+	void beginMayaUpdate();
+
+	/** End the Maya render view update. */
+	void endMayaUpdate();
+
+	/** Read data from the RPR frame buffer into the texture. */
+	void readFrameBuffer();
+
+	/** Refresh the context. */
+	void refreshContext();
+
+
+private:
+
+	// Members
+	// -----------------------------------------------------------------------------
+
+	/** The FireRender context. */
+	FireRenderContext m_context;
+
+	/** The current camera. */
+	MDagPath m_camera;
+
+	/** Frame buffer width. */
+	unsigned int m_width;
+
+	/** Frame buffer height. */
+	unsigned int m_height;
+
+	/** The region to render. */
+	RenderRegion m_region;
+
+	/** Frame buffer pixel data for copying to the render view. */
+	std::vector<RV_PIXEL> m_pixels;
+
+	/** True if rendering to a region. */
+	bool m_isRegion;
+
+	/** True if the render has started. */
+	bool m_renderStarted;
+
+	/** True if the IPR is running. */
+	bool m_isRunning;
+
+	/** True if the IPR is paused. */
+	bool m_isPaused;
+
+	bool m_needsContextRefresh;
+
+	/** True if a render view update is scheduled. */
+	tbb::atomic<bool> m_renderViewUpdateScheduled;
+
+	/** A lock to control access to the system memory frame buffer pixels. */
+	MMutexLock m_pixelsLock;
+
+	/** A lock to control access to the RPR context. */
+	MMutexLock m_contextLock;
+
+	/** Error handler. */
+	FireRenderError m_error;
+
+	/** Warning Dialog for Shader Caching. */
+	RenderCacheWarningDialog rcWarningDialog;
+};
