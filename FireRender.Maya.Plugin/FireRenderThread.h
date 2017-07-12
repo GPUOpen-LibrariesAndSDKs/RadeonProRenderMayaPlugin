@@ -237,8 +237,8 @@ public:
 	static void KeepRunningOnMainThread(std::function<bool()> function);
 	/* Checks if caller is running on RPR Thread */
 	static void CheckIsOnRPRThread();
-	/* If set to false to just directly run all run and wait calls */
-	static void UseTheThread(bool value);
+	/* If set to false to just directly run all run and wait calls, returns previous value */
+	static bool UseTheThread(bool value);
 	/* Call with false to quit the thread */
 	static void RunTheThread(bool value);
 	/* Checks is thread is still running */

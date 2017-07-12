@@ -305,6 +305,7 @@ MStatus FireRenderCmd::renderIpr(const MArgDatabase& args)
 // -----------------------------------------------------------------------------
 MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 {
+	auto previousUseThreadValue = FireRenderThread::UseTheThread(false);	// No need to use separate thread for batch render
 
 	// The render context.
 	FireRenderContext context;
@@ -432,9 +433,12 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 
 		// Process the error.
 		FireRenderError error(std::current_exception(), false);
+
+		FireRenderThread::UseTheThread(previousUseThreadValue);
 		return MStatus::kFailure;
 	}
 
+	FireRenderThread::UseTheThread(previousUseThreadValue);
 	// Batch render completed successfully.
 	return MS::kSuccess;
 }

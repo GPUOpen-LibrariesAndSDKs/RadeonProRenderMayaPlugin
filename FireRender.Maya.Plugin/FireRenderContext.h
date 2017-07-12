@@ -342,6 +342,8 @@ public:
 
 	void setRenderMode(RenderMode renderMode);
 
+	void setPreview();
+
 	void UpdateGround(const FireRenderGlobalsData& data);
 
 	bool hasTonemappingChanged() const { return m_tonemappingChanged; }

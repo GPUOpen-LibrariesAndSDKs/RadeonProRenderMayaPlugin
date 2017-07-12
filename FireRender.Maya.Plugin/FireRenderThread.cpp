@@ -277,9 +277,13 @@ void FireRenderThread::RPRMainThreadEventCallback(float, float, void *)
 	}
 }
 
-void FireRenderThread::UseTheThread(bool value)
+bool FireRenderThread::UseTheThread(bool value)
 {
+	bool prevoius = shouldUseThread;
+
 	shouldUseThread = value;
+
+	return prevoius;
 }
 
 FireRenderThread::AutoAddThisExectingThread::AutoAddThisExectingThread():

@@ -18,7 +18,7 @@ find_path(RPR_INCLUDE_DIR RadeonProRender.h
     DOC "RPR include path"
 )
 
-set(_RPR_LIBRARIES RadeonProRender64 RprLoadStore64 Tahoe64)
+set(_RPR_LIBRARIES RadeonProRender64 RprLoadStore64 RprSupport64 Tahoe64)
 foreach(RPR_LIB ${_RPR_LIBRARIES})
     find_library(RPR_${RPR_LIB}_LIBRARY NAMES ${RPR_LIB} PATHS ${RPR_LIBRARY_DIR} NO_DEFAULT_PATH)
     set(RPR_LIBRARIES ${RPR_LIBRARIES} ${RPR_${RPR_LIB}_LIBRARY})

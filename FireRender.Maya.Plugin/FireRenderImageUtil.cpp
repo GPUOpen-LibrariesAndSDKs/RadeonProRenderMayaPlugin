@@ -47,11 +47,19 @@ void FireRenderImageUtil::save(MString filePath, unsigned int width, unsigned in
 		output->write_image(TypeDesc::FLOAT, reinterpret_cast<uint8_t*>(pixels));
 		output->close();
 	}
-
-	// Fall back to Maya image saving if
-	// OpenImageIO wasn't able to write the file.
 	else
-		saveMayaImage( filePath, width, height, pixels, imageFormat);
+	{
+		int extDot = filePath.rindex('.');
+		int len = filePath.length();
+		auto ext = filePath.substring(extDot + 1, len);
+
+		if (ext.toLowerCase() != MString("cin"))
+		{
+			// Fall back to Maya image saving if
+			// OpenImageIO wasn't able to write the file.
+			saveMayaImage( filePath, width, height, pixels, imageFormat);
+		}
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -70,6 +78,10 @@ void FireRenderImageUtil::saveMayaImage(MString filePath, unsigned int width, un
 		pixels[i].b = r;
 	}
 
+	MStatus status;
+
+	try
+	{
 	// Save the image.
 	MImage image;
 	image.create(width, height, 4u, MImage::kFloat);
@@ -78,7 +90,26 @@ void FireRenderImageUtil::saveMayaImage(MString filePath, unsigned int width, un
 	image.convertPixelFormat(MImage::kByte);
 	image.verticalFlip();
 
-	MStatus status = image.writeToFile(filePath, getImageFormatExtension(imageFormat));
+		auto extension = getImageFormatExtension(imageFormat);
+		if (imageFormat == 50)	// Special case for Sony & XPM file formats
+		{
+			int extDot = filePath.rindex('.');
+			if (extDot > 0)
+			{
+				int len = filePath.length();
+				auto ext = filePath.substring(extDot + 1, len);
+
+				if (ext.length() == 3)
+					extension = ext;
+			}
+		}
+
+		status = image.writeToFile(filePath, extension);
+	}
+	catch (...)
+	{
+		status = MStatus::kInvalidParameter;
+	}
 
 	if (status != MS::kSuccess)
 		MGlobal::displayError("Unable to save " + filePath);

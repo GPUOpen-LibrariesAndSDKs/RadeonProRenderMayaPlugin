@@ -187,8 +187,8 @@ MString FireMaya::BlendMaterial::Override::fragmentName() const
 
 void FireMaya::BlendMaterial::Override::getCustomMappings(MHWRender::MAttributeParameterMappingList& mappings)
 {
-	mappings.append(MHWRender::MAttributeParameterMapping("color1", "color0", true, true));
-	mappings.append(MHWRender::MAttributeParameterMapping("color2", "color1", true, true));
+	mappings.append(MHWRender::MAttributeParameterMapping("color2", "color0", true, true));
+	mappings.append(MHWRender::MAttributeParameterMapping("color1", "color1", true, true));
 	mappings.append(MHWRender::MAttributeParameterMapping("blender", "weight", true, true));
 }
 

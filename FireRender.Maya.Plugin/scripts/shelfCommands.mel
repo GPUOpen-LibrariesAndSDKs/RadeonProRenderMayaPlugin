@@ -41,7 +41,12 @@ global proc startProductionRenderRPR()
 		return;
 
 	string $panel = `getPanel -withFocus`;
-	string $cameraName = `modelPanel -q -cam $panel`;
+	string $cameraName = "persp";
+	string $type = `getPanel -typeOf $panel`;
+	if($type == "modelPanel")
+	{
+		$cameraName = `modelPanel -q -cam $panel`;
+	}
 	setCurrentRenderer "FireRender";
 	RenderViewWindow;
 	showWindow renderViewWindow;
@@ -197,12 +202,15 @@ global proc convertVRayObjects()
 			if ($type == "shadingEngine") $SG[size($SG)] = $out;
 		}
 
+		if (size($SG) > 0)
+		{
 		if (size(`listConnections -source 1 ($SG[size($SG)-1] + ".dagSetMembers")`) == 0)
 		{
 			if($material!="lambert1" && $material!="particleCloud1" && $material!="shaderGlow1")
 			{
 				delete $material;
 			}
+		}
 		}
 	};
 

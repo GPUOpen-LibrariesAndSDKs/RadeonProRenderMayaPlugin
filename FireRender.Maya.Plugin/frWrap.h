@@ -2288,6 +2288,17 @@ namespace frw
 			return data().bDirty;
 		}
 
+		void xMaterialCommit() const
+		{
+			Data&d = data();
+
+			if (d.material)
+			{
+				rpr_int res = rprxMaterialCommit(d.context, d.material);
+				checkStatus(res);
+			}
+		}
+
 		void AttachToShape(Shape::Data& shape)
 		{
 			Data& d = data();
@@ -2546,6 +2557,9 @@ namespace frw
 		node._SetInputNode("color0", a);
 		node._SetInputNode("color1", b);
 		node.SetValue("weight", t);
+
+		a.xMaterialCommit();
+		b.xMaterialCommit();
 		return node;
 	}
 

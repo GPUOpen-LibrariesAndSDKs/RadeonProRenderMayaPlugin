@@ -17,6 +17,7 @@
 #include <maya/MFnNurbsSurface.h>
 #include <maya/MRenderView.h>
 #include <maya/MDagPathArray.h>
+#include <maya/MPlug.h>
 #include <maya/MPlugArray.h>
 #include "FireRenderAOVs.h"
 #include "FireRenderError.h"

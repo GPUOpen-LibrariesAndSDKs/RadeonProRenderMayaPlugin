@@ -384,6 +384,11 @@ void FireRenderContext::setRenderMode(RenderMode renderMode)
 	setDirty();
 }
 
+void FireRenderContext::setPreview()
+{
+	GetContext().SetParameter("preview", m_interactive ? 1 : 0);
+}
+
 void FireRenderContext::cleanScene()
 {
 	FireRenderThread::RunOnceProcAndWait([this]()
@@ -1456,6 +1461,8 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		UpdateDefaultLights();
 		setCameraAttributeChanged(true);
 	}
+
+	setPreview();
 
 	if (cancelled())
 		return false;

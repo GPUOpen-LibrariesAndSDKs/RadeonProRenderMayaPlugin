@@ -285,9 +285,13 @@ MStatus FireMaya::StandardMaterial::initialize()
 #define DEPRECATED_PARAM(attr)
 #endif
 
-#define SET_MINMAX(attr, min, max) \
+#define SET_SOFTMINMAX(attr, min, max) \
 	CHECK_MSTATUS(attr.setSoftMin(min)); \
 	CHECK_MSTATUS(attr.setSoftMax(max));
+
+#define SET_MINMAX(attr, min, max) \
+	CHECK_MSTATUS(attr.setMin(min)); \
+	CHECK_MSTATUS(attr.setMax(max));
 
 #if USE_RPRX
 	// Create version attribute. Set default value to VER_INITIAL for correct processing
@@ -317,7 +321,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	Attribute::diffuseRoughness = nAttr.create("diffuseRoughness", "dr", MFnNumericData::kFloat, 1.0);
 	MAKE_INPUT(nAttr);
 	///	CHECK_MSTATUS(nAttr.setDefault(1.0));
-	SET_MINMAX(nAttr, 0.0, 1.0);
+	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
 #endif
 
 	// Reflection
@@ -335,15 +339,15 @@ MStatus FireMaya::StandardMaterial::initialize()
 
 	Attribute::reflectionRoughness = nAttr.create("reflectRoughness", "rr", MFnNumericData::kFloat, 0.5);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, 0.0, 1.0);
+	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
 
 	Attribute::reflectionAnisotropy = nAttr.create("reflectAnisotropy", "ra", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, -1.0, 1.0);
+	SET_SOFTMINMAX(nAttr, -1.0, 1.0);
 
 	Attribute::reflectionAnisotropyRotation = nAttr.create("reflectAnisotropyRotation", "rar", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT_CONST(nAttr);
-	SET_MINMAX(nAttr, 0.0, 1.0);
+	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
 #endif
 
 #if !USE_RPRX
@@ -354,7 +358,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 
 	Attribute::reflectionRoughnessX = nAttr.create("reflectRoughnessX", "grrx", MFnNumericData::kFloat, 0.1);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, 0.0, 1.0);
+	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
 	DEPRECATED_PARAM(nAttr);
 
 #if USE_RPRX
@@ -363,17 +367,17 @@ MStatus FireMaya::StandardMaterial::initialize()
 
 	Attribute::reflectionMetalness = nAttr.create("reflectMetalness", "rmet", MFnNumericData::kFloat, 1);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, 0.0, 1.0);
+	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
 #endif
 
 	Attribute::reflectionIOR = nAttr.create("reflectIOR", "grior", MFnNumericData::kFloat, 1.5);
 	MAKE_INPUT_CONST(nAttr);
-	SET_MINMAX(nAttr, 0.0, 2.0);
+	SET_SOFTMINMAX(nAttr, 0.0, 2.0);
 
 #if !USE_RPRX
 	Attribute::reflectionRoughnessY = nAttr.create("reflectRoughnessY", "grry", MFnNumericData::kFloat, 0.1);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, 0.0, 1.0);
+	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
 #endif
 
 	// Coating
@@ -392,19 +396,19 @@ MStatus FireMaya::StandardMaterial::initialize()
 
 	Attribute::clearCoatRoughness = nAttr.create("coatRoughness", "ccr", MFnNumericData::kFloat, 0.5);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, 0.0, 1.0);
+	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
 
 	Attribute::clearCoatMetalMaterial = nAttr.create("coatMetalMaterial", "ccm", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
 
 	Attribute::clearCoatMetalness = nAttr.create("coatMetalness", "ccmet", MFnNumericData::kFloat, 1);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, 0.0, 1.0);
+	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
 #endif
 
 	Attribute::clearCoatIOR = nAttr.create("coatIOR", "ccior", MFnNumericData::kFloat, 1.5);
 	MAKE_INPUT_CONST(nAttr);
-	SET_MINMAX(nAttr, 0.1, 2.0);
+	SET_SOFTMINMAX(nAttr, 0.1, 2.0);
 
 	// Refraction
 #if USE_RPRX
@@ -422,11 +426,11 @@ MStatus FireMaya::StandardMaterial::initialize()
 
 	Attribute::refractionRoughness = nAttr.create("refractRoughness", "refr", MFnNumericData::kFloat, 0.5);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, 0.0, 1.0);
+	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
 
 	Attribute::refractionIOR = nAttr.create("refractIOR", "refior", MFnNumericData::kFloat, 1.5);
 	MAKE_INPUT_CONST(nAttr);
-	SET_MINMAX(nAttr, 0.0, 2.0);
+	SET_SOFTMINMAX(nAttr, 0.0, 2.0);
 
 #if USE_RPRX
 	Attribute::refractionLinkToReflection = nAttr.create("refractLinkToReflect", "reflink", MFnNumericData::kBoolean, 0);
@@ -447,7 +451,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 
 	Attribute::emissiveWeight = nAttr.create("emissiveWeight", "emw", MFnNumericData::kFloat, 1.0);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, 0.0, 1.0);
+	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
 
 	Attribute::emissiveDoubleSided = nAttr.create("emissiveDoubleSided", "emds", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
@@ -456,7 +460,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	// Material parameters
 	Attribute::transparencyLevel = nAttr.create("transparencyLevel", "trl", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, 0.0, 1.0);
+	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
 
 	Attribute::displacementMap = nAttr.createColor("displacementMap", "disp");
 	MAKE_INPUT(nAttr);
@@ -510,11 +514,11 @@ MStatus FireMaya::StandardMaterial::initialize()
 
 	Attribute::volumeDensity = nAttr.create("volumeDensity", "vd", MFnNumericData::kFloat, 1.0);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, 0.0, 10.0);
+	SET_SOFTMINMAX(nAttr, 0.0, 10.0);
 
 	Attribute::volumeScatteringDirection = nAttr.create("scatteringDirection", "vsd", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, -1.0, 1.0);
+	SET_SOFTMINMAX(nAttr, -1.0, 1.0);
 
 	Attribute::volumeMultipleScattering = nAttr.create("multipleScattering", "vms", MFnNumericData::kBoolean, true);
 	MAKE_INPUT_CONST(nAttr);
