@@ -1312,7 +1312,7 @@ HardwareResources::HardwareResources()
 	{
 		Device device;
 		device.creationFlag = creationFlagsGPU[i];
-		device.compatibility = rprIsDeviceCompatible(dll, RPR_TOOLS_DEVICE(i), true, os);
+		device.compatibility = rprIsDeviceCompatible(dll, RPR_TOOLS_DEVICE(i), NULL, true, os);
 		if (device.compatibility == RPRTC_INCOMPATIBLE_UNCERTIFIED || device.compatibility == RPRTC_COMPATIBLE)
 		{
 			// Request device name. Earlier (before RPR 1.255) rprIsDeviceCompatible returned device name, however
