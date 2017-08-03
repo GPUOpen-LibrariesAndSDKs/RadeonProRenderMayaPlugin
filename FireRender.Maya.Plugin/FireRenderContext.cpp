@@ -244,7 +244,7 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 				else
 				{
 					// Success, display a message and continue
-					MGlobal::displayError("Unable to create Radeon ProRender context in interop mode. Falling back to non-interop mode.");
+					MGlobal::displayWarning("Unable to create Radeon ProRender context in interop mode. Falling back to non-interop mode.");
 				}
 			}
 			else
@@ -520,7 +520,7 @@ void FireRenderContext::render(bool lock)
 	if (!context)
 		return;
 
-	CheckSetRayCastEpsilon();
+	//CheckSetRayCastEpsilon();
 
 	if (m_restartRender)
 	{
@@ -710,17 +710,9 @@ bool FireRenderContext::createContextEtc(rpr_context_type context_type, rpr_crea
 		// Use OpenGL interop for OpenGL based viewports if required.
 		if (glViewport)
 		{
-			// Check if GL interop is enabled.
-			bool exists = false;
-			bool enabled = MGlobal::optionVarIntValue("RPR_GLInteropEnabled", &exists) == 1;
-
-			// Default to disabled if not specified.
-			if (!exists)
-				enabled = false;
-
 			// GL interop is active if enabled and not using CPU rendering.
 			bool useCPU = (creation_flags & RPR_CREATION_FLAGS_ENABLE_CPU) != 0;
-			m_glInteropActive = !useCPU && enabled;
+			m_glInteropActive = !useCPU;
 
 			if (m_glInteropActive)
 				creation_flags |= RPR_CREATION_FLAGS_ENABLE_GL_INTEROP;

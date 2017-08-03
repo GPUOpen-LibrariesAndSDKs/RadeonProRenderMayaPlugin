@@ -1380,6 +1380,8 @@ void FireMaya::Scope::RegisterCallback(MObject node)
 
 void FireMaya::Scope::NodeDirtyCallback(MObject& ob)
 {
+	try
+	{
 	MFnDependencyNode node(ob);
 	DebugPrint("Callback: %s dirty", node.typeName().asUTF8());
 
@@ -1389,6 +1391,17 @@ void FireMaya::Scope::NodeDirtyCallback(MObject& ob)
 	}
 	if (auto shader = GetCachedVolumeShader(shaderId)) {
 		shader.SetDirty();
+	}
+}
+	catch (const std::exception & ex)
+	{
+		DebugPrint("NodeDirtyCallback -> %s", ex.what());
+		throw;
+	}
+	catch (...)
+	{
+		DebugPrint("NodeDirtyCallback ... unknown exception");
+		throw;
 	}
 }
 

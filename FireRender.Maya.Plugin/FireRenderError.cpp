@@ -280,7 +280,7 @@ bool FireRenderError::isErrorCodeCritical(rpr_int errorCode)
 }
 
 // -----------------------------------------------------------------------------
-bool checkStatus(rpr_int status, const MString& message, bool showDialog)
+bool checkStatus(rpr_int status, const MString message, bool showDialog)
 {
 	// Return true if the status is success.
 	if (status == RPR_SUCCESS)
@@ -297,7 +297,7 @@ bool checkStatus(rpr_int status, const MString& message, bool showDialog)
 }
 
 // -----------------------------------------------------------------------------
-void checkStatusThrow(rpr_int status, const MString& message)
+void checkStatusThrow(rpr_int status, const MString message)
 {
 	// Throw an exception if the status is not success.
 	if (status != RPR_SUCCESS)

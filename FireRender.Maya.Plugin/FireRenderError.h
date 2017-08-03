@@ -152,7 +152,7 @@ private:
 };
 
 /** Check an RPR return status and display an error if it's not a success. */
-bool checkStatus(rpr_int status, const MString& message = "", bool showDialog = false);
+bool checkStatus(rpr_int status, const MString message = "", bool showDialog = false);
 
 /** Check an RPR return status and throw an error if it's not a success. */
-void checkStatusThrow(rpr_int status, const MString& message = "");
+void checkStatusThrow(rpr_int status, const MString message = "");

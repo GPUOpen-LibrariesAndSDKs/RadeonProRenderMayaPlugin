@@ -34,7 +34,7 @@ MStatus FireMaya::Fresnel::initialize()
 	Attribute::inVec = nAttr.create("inVec", "inVec", MFnNumericData::k3Float, 0.0);
 	MAKE_INPUT(nAttr);
 
-	Attribute::output = nAttr.create("out", "o", MFnNumericData::k3Float, 0.0);
+	Attribute::output = nAttr.create("out", "o", MFnNumericData::kFloat, 0.0);
 	MAKE_OUTPUT(nAttr);
 
 	CHECK_MSTATUS(addAttribute(Attribute::ior));
@@ -79,7 +79,7 @@ const char fresnelFragmento[] = "\
 <connect from = \"mayaSamplerInfo.mayaSamplerInfoOutput.facingRatio\" to = \"mayaReverse.input\" name = \"input\" / >\
 </connections>\
 <outputs>\
-<target name = \"output\" ref = \"mayaReverse.ouput\" / >\
+<target name = \"output\" ref = \"mayaReverse.ouput0\" / >\
 </outputs>\
 </fragment_graph>";
 
@@ -88,7 +88,7 @@ const char fresnelFragment_ok[] = "<fragment_graph name=\"RPRFresnel\" ref=\"RPR
 <fragment_ref name = \"mayaSamplerInfo\" ref = \"mayaSamplerInfo\" />\
 </fragments>\
 <outputs>\
-<struct name = \"out\" ref = \"mayaSamplerInfo.mayaSamplerInfoOutput\" />\
+<struct name = \"out\" ref = \"mayaSamplerInfo.mayaSamplerInfoOutput0\" />\
 </outputs>\
 </fragment_graph>";
 
@@ -103,7 +103,7 @@ const char fresnelFragment[] = "<fragment_graph name=\"RPRFresnel\" ref=\"RPRFre
 <connect from = \"mayaSamplerInfo.mayaSamplerInfoOutput.facingRatio\" to = \"mayaReverse.inputZ\" name = \"inz\" />\
 </connections>\
 <outputs>\
-<float3 name = \"output\" ref = \"mayaReverse.output\" />\
+<float name = \"output\" ref = \"mayaReverse.output0\" />\
 </outputs>\
 </fragment_graph>";
 

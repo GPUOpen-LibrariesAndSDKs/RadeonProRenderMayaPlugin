@@ -48,4 +48,7 @@ private:
 
 	/** Canceled flag */
 	bool m_canceled;
+
+	/** Visible flag */
+	bool m_visible;
 };

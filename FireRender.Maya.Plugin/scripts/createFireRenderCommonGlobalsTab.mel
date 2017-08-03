@@ -1405,7 +1405,7 @@ proc string cameraShape(string $dag)
 	return $dag;
 }
 
-// Callback used when the user chnaged a renderable camera.
+// Callback used when the user changed a renderable camera.
 // $camera is the previous camera
 // $cameraMode was its type
 // $menu is the menu item used for this change

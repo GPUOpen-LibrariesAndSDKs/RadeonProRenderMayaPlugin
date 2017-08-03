@@ -73,44 +73,6 @@ global proc deviceTypeChangedUI()
 	int $useCPU = `checkBox -q -v checkBox_ResourcesCPU`;
 
 	optionVar -iva RPR_DevicesSelected ($useCPU);
-
-	updateGLInteropRPR($useCPU);
-}
-
-// Called when GL Interop check box changes.
-global proc glInteropChangedRPR()
-{
-	// Update the enabled state from the check box.
-	optionVar -iv RPR_GLInteropEnabled `checkBox -q -v checkBox_GLInterop`;
-
-	// Update the UI.
-	deviceTypeChangedUI();
-}
-
-// Update the check box to reflect whether OpenGL interop is active.
-global proc updateGLInteropRPR(int $useCPU)
-{
-	// Get the current enabled state.
-	$glInteropEnabled = isGLInteropEnabledRPR();
-
-	// GL Interop is active if enabled and not using CPU rendering.
-	$glInteropActiveRPR = !$useCPU && $glInteropEnabled;
-
-	// Update the check box.
-	checkBox
-		-edit
-		-enable (!$useCPU)
-		-value $glInteropActiveRPR
-		checkBox_GLInterop;
-}
-
-// Return true if OpenGL interop is enabled.
-global proc int isGLInteropEnabledRPR()
-{
-	// Default to disabled.
-	return
-		`optionVar -ex RPR_GLInteropEnabled` ?
-		`optionVar -q RPR_GLInteropEnabled` : false;
 }
 
 // Open a browser window and display the specified URL.
@@ -232,18 +194,13 @@ global proc createRenderResourcesFrame(string $parent){
 		checkBox_ResourcesCPU
 		;
 
-	setParent ..;
-
 	separator -height 5;
 
-	$glInteropEnabled = isGLInteropEnabledRPR();
+	setParent ..;
 
-	checkBox
-		-label "Enable OpenGL Interop"
-		-cc glInteropChangedRPR
-		-enable $glInteropEnabled
-		-ann "OpenGL Interop is only available for OpenGL viewports."
-		checkBox_GLInterop;
+	columnLayout -cat left -150;
+
+	attrControlGrp -label "Texture Compression" -attribute "RadeonProRenderGlobals.textureCompression";
 
 	setParent ..;
 
@@ -285,22 +242,6 @@ global proc createFireRenderCompletionCriteriaFrame(string $parent){
 	setUITemplate -popTemplate;
 
 	completionCriteriaTypeChanged();
-}
-
-global proc createFireRenderTextureCompressionFrame(string $parent){
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-	setParentToFireRenderTab();
-	setParent $parent;
-
-	columnLayout -adjustableColumn true;
-
-	text -label "Changing of this setting will not affect currently active viewports.";
-
-	attrControlGrp -label "Compress" -attribute "RadeonProRenderGlobals.textureCompression";
-
-	setParent ..;
-	setUITemplate -popTemplate;
 }
 
 global proc completionCriteriaTypeChanged()
@@ -347,12 +288,21 @@ global proc createFireRenderGlobalIlluminationFrame(string $parent)
 
 	columnLayout -adjustableColumn true;
 
+	// Render mode
+	attrControlGrp
+		 -label "Mode"
+		 -attribute "RadeonProRenderGlobals.renderMode";
+
+	// Clamp irradiance
 	attrControlGrp
 		 -label "Clamp Irradiance"
 		 -attribute "RadeonProRenderGlobals.giClampIrradiance";
+
+	// Clamp irradiance value
 	attrControlGrp
 		 -label "Clamp Irradiance Value"
 		 -attribute "RadeonProRenderGlobals.giClampIrradianceValue";
+
 	setParent ..;
 	setUITemplate -popTemplate;
 }
@@ -416,65 +366,6 @@ global proc createFireRenderQualityPresetsFrame(string $parent)
 	setUITemplate -popTemplate;
 }
 
-global proc createFireRenderSamplingFrame(string $parent)
-{
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-	setParentToFireRenderTab();
-	setParent $parent;
-
-	columnLayout -adjustableColumn true;
-
-	attrControlGrp
-		 -label "AA samples"
-		 -attribute "RadeonProRenderGlobals.samples";
-
-	attrControlGrp
-		 -label "AA cell size"
-		 -attribute "RadeonProRenderGlobals.cellSize";
-
-	setParent ..;
-	setUITemplate -popTemplate;
-}
-
-global proc createFireRenderFilteringFrame(string $parent)
-{
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-	setParentToFireRenderTab();
-	setParent $parent;
-
-	columnLayout -adjustableColumn true;
-
-	attrControlGrp
-		 -label "Filter"
-		 -attribute "RadeonProRenderGlobals.filter";
-
-	attrControlGrp
-		 -label "Filter size"
-		 -attribute "RadeonProRenderGlobals.filterSize";
-
-	setParent ..;
-	setUITemplate -popTemplate;
-}
-
-global proc createFireRenderTraceDepthFrame(string $parent)
-{
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-	setParentToFireRenderTab();
-	setParent $parent;
-
-	columnLayout -adjustableColumn true;
-
-	attrControlGrp
-		 -label "Max ray depth"
-		 -attribute "RadeonProRenderGlobals.maxRayDepth";
-
-	setParent ..;
-	setUITemplate -popTemplate;
-}
-
 global proc toneMappingTypeChangedUI()
 {
 	int $enable[];
@@ -517,19 +408,19 @@ global proc createFireRenderToneMappingFrame(string $parent)
 	attrControlGrp -label "Display Gamma" -attribute "RadeonProRenderGlobals.displayGamma";
 	attrControlGrp -label "Texture Gamma" -attribute "RadeonProRenderGlobals.textureGamma";
 
-	frameLayout -label "Linear" -cll true -cl 1;
+	frameLayout -label "Linear" -cll false;
 		columnLayout -adjustableColumn true;
 			attrControlGrp -label "Scale" -attribute "RadeonProRenderGlobals.toneMappingLinearScale" toneMapLinScaleGrp;
 		setParent ..;
 	setParent ..;
-	frameLayout -label "Photolinear" -cll true -cl 1;
+	frameLayout -label "Photolinear" -cll false;
 		columnLayout -adjustableColumn true;
 			attrControlGrp -label "Sensitivity" -attribute "RadeonProRenderGlobals.toneMappingPhotolinearSensitivity" toneMapPhotoSensGrp;
 			attrControlGrp -label "Exposure" -attribute "RadeonProRenderGlobals.toneMappingPhotolinearExposure" toneMapPhotoExpGrp;
 			attrControlGrp -label "Fstop" -attribute "RadeonProRenderGlobals.toneMappingPhotolinearFstop" toneMapPhotoFstopGrp;
 		setParent ..;
 	setParent ..;
-	frameLayout -label "Reinhard02" -cll true -cl 1;
+	frameLayout -label "Reinhard02" -cll false;
 		columnLayout -adjustableColumn true;
 			attrControlGrp -label "Pre Scale" -attribute "RadeonProRenderGlobals.toneMappingReinhard02Prescale" toneMapReinPreScaleGrp;
 			attrControlGrp -label "Post Scale" -attribute "RadeonProRenderGlobals.toneMappingReinhard02Postscale" toneMapReinProstScaleGrp;
@@ -537,7 +428,7 @@ global proc createFireRenderToneMappingFrame(string $parent)
 		setParent ..;
 	setParent ..;
 
-	frameLayout -label "White-balance" -cll true -cl 0;
+	frameLayout -label "White-balance" -cll false;
 		columnLayout -adjustableColumn true toneMappingWhiteBalanceLayout;
 			attrControlGrp -label "Enabled" -attribute "RadeonProRenderGlobals.toneMappingWhiteBalanceEnabled" toneMappingWhiteBalanceEnabled;
 
@@ -549,11 +440,6 @@ global proc createFireRenderToneMappingFrame(string $parent)
 			floatSliderGrp -min 1000 -max 12000 -field true -precision 0 -changeCommand "updateWhiteBalanceValue" toneMappingWhiteBalanceValue;
 			connectControl toneMappingWhiteBalanceValue RadeonProRenderGlobals.toneMappingWhiteBalanceValue;
 
-			int $int_array[] = {1000, 1800, 2800, 3200, 4500, 5600, 6500, 8000, 12000};
-			optionMenuGrp -label "Presets" -changeCommand "setAttr RadeonProRenderGlobals.toneMappingWhiteBalanceValue #1" toneMappingWhiteBalancePresets;
-			for($i in $int_array){
-				menuItem -label $i;
-			}
 		setParent ..;
 
 		scriptJob -parent toneMappingWhiteBalanceLayout -replacePrevious
@@ -883,160 +769,27 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 global proc createFireRenderGlobalsTab()
 {
 	string $parentForm = `setParent -query`;
-	scrollLayout -horizontalScrollBarThickness 0 fireRenderGlobalsScrollLayout;
-	columnLayout -adjustableColumn true fireRenderTabColumn;
+	scrollLayout -w 375 -horizontalScrollBarThickness 0 fireRenderGlobalsScrollLayout;
+	columnLayout -w 375 -adjustableColumn true fireRenderTabColumn;
 
 	// About
 	//
-	frameLayout -label "About Radeon ProRender"
-		-cll true -cl 0
-		fireRenderAbout;
+	frameLayout -label "About Radeon ProRender" -cll false -cl 0 fireRenderAbout;
 	createAboutFrame ("fireRenderAbout");
 	setParent ..;
 
 	// Render Resources
 	//
-	frameLayout -label "Render Resources"
-		-cll true -cl 0
-		fireRenderResources;
+	frameLayout -label "Render Resources" -cll false -cl 0 fireRenderResources;
 	createRenderResourcesFrame ("fireRenderResources");
 	setParent ..;
 
 	// Completion criteria section
 	//
-	frameLayout -label "Completion Criteria"
-		-cll true -cl 0
-		fireRenderCompletionCriteriaFrame;
+	frameLayout -label "Completion Criteria" -cll false -cl 0 fireRenderCompletionCriteriaFrame;
 
 	createFireRenderCompletionCriteriaFrame ("fireRenderCompletionCriteriaFrame");
 	setParent ..;
-
-	// Completion criteria section
-	//
-	frameLayout -label "Texture Compression"
-		-cll true -cl 0
-		fireRenderTextureCompressionFrame;
-
-	createFireRenderTextureCompressionFrame ("fireRenderTextureCompressionFrame");
-	setParent ..;
-
-	// Globals section
-	//
-	frameLayout -label "Globals"
-		-cll true -cl 0
-		fireRenderGlobalsFrame;
-
-	createFireRenderGlobalsFrame ("fireRenderGlobalsFrame");
-	setParent ..;
-
-	// Global Illumination section
-	//
-	frameLayout -label "Global Illumination"
-		-cll true -cl 1
-		fireRenderGlobalIlluminationFrame;
-
-	createFireRenderGlobalIlluminationFrame ("fireRenderGlobalIlluminationFrame");
-	setParent ..;
-
-	// Quality Presets
-	//
-	frameLayout -label "Quality Presets"
-		-cll true -cl 0
-		fireRenderQualityPresetsFrame;
-
-	createFireRenderQualityPresetsFrame ("fireRenderQualityPresetsFrame");
-	setParent ..;
-
-	// Sampling section
-	//
-	frameLayout -label "Sampling"
-		-cll true -cl 0
-		fireRenderSamplingFrame;
-
-	createFireRenderSamplingFrame ("fireRenderSamplingFrame");
-	setParent ..;
-
-	// Filtering section
-	//
-	frameLayout -label "Filtering"
-		-cll true -cl 0
-		fireRenderFilterFrame;
-
-	createFireRenderFilteringFrame ("fireRenderFilterFrame");
-	setParent ..;
-
-	// Trace depth section
-	//
-	frameLayout -label "Trace depth"
-		-cll true -cl 0
-		fireRenderTraceDepthFrame;
-
-	createFireRenderTraceDepthFrame ("fireRenderTraceDepthFrame");
-	setParent ..;
-
-	// Render stamp
-	//
-	frameLayout -label "Render stamp"
-		-cll true -cl 0
-		fireRenderRenderStampFrame;
-	createRenderStampFrame fireRenderRenderStampFrame;
-	setParent ..;
-
-	// Environment
-	//
-	frameLayout -label "Environment"
-		-cll true -cl 0
-		fireRenderEnvironmentFrame;
-
-	createEnvironmentFrame fireRenderEnvironmentFrame;
-	setParent ..;
-
-	// Ground
-	//
-	frameLayout -label "Ground"
-		-cll true -cl 0
-		fireRenderGroundFrame;
-
-	createGroundFrame fireRenderGroundFrame;
-	setParent ..;
-
-	// Tone mapping
-	//
-	frameLayout -label "Tone Mapping"
-		-cll true -cl 0
-		fireRenderToneMappingFrame;
-
-	createFireRenderToneMappingFrame ("fireRenderToneMappingFrame");
-	setParent ..;
-
-	// Motion Blur
-	//
-	frameLayout -label "Motion Blur"
-		-cll true -cl 0
-		fireRenderMotionBlurFrame;
-
-	createFireRenderMotionBlurFrame ("fireRenderMotionBlurFrame");
-	setParent ..;
-
-	// Cameras
-	//
-	frameLayout -label "Camera"
-		-cll true -cl 0
-		fireRenderCameraFrame;
-
-	createFireRenderCameraFrame ("fireRenderCameraFrame");
-	setParent ..;
-
-	// Render Passes
-	//
-	frameLayout -label "Render Passes (AOV)"
-		-cll true -cl 0
-		fireRenderRenderPassesFrame;
-
-	createFireRenderRenderPassesFrame ("fireRenderRenderPassesFrame");
-	setParent ..;
-
-
 
 	setParent ..;
 	setParent ..;
@@ -1056,4 +809,167 @@ global proc updateFireRenderGlobalsTab()
 	setParentToFireRenderTab();
 
 	setParent $oldParent;
+}
+
+global proc createFireRenderQualityTab()
+{
+	string $parentForm = `setParent -query`;
+	scrollLayout -w 375 -horizontalScrollBarThickness 0 fireRenderGlobalsScrollLayout;
+	columnLayout -w 375 -adjustableColumn true fireRenderTabColumn;
+
+	// Quality Presets
+	//
+	frameLayout -label "Quality Presets" -cll false -cl 0 fireRenderQualityPresetsFrame;
+
+	createFireRenderQualityPresetsFrame ("fireRenderQualityPresetsFrame");
+	setParent ..;
+
+	// Render Resources section
+	//
+	frameLayout -label "Render Sampling" -cll false -cl 0 fireRenderSamplingFrame;
+
+	
+	// Render samples
+	attrControlGrp
+		 -label "Render samples"
+		 -attribute "RadeonProRenderGlobals.samples";
+
+	// Filter
+	attrControlGrp
+		 -label "Filter"
+		 -attribute "RadeonProRenderGlobals.filter";
+
+	// Filter size
+	attrControlGrp
+		 -label "Filter size"
+		 -attribute "RadeonProRenderGlobals.filterSize";
+
+	// Trace depth
+	attrControlGrp
+		 -label "Max ray depth"
+		 -attribute "RadeonProRenderGlobals.maxRayDepth";
+
+	setParent ..;
+
+	formLayout
+		-edit
+		-af fireRenderGlobalsScrollLayout "top" 0
+		-af fireRenderGlobalsScrollLayout "bottom" 0
+		-af fireRenderGlobalsScrollLayout "left" 0
+		-af fireRenderGlobalsScrollLayout "right" 0
+		$parentForm;
+}
+
+global proc createFireRenderGlobals2Tab()
+{
+	string $parentForm = `setParent -query`;
+	scrollLayout -w 375 -horizontalScrollBarThickness 0 fireRenderGlobalsScrollLayout;
+	columnLayout -w 375 -adjustableColumn true fireRenderTabColumn;
+
+	// Globals section
+	//
+	//frameLayout -label "Globals" -cll false -cl 0 fireRenderGlobalsFrame;
+
+	// Global Illumination section
+	//
+	frameLayout -label "Global Illumination" -cll false fireRenderGlobalIlluminationFrame;
+
+	createFireRenderGlobalIlluminationFrame ("fireRenderGlobalIlluminationFrame");
+	setParent ..;
+
+	// Motion Blur
+	//
+	frameLayout -label "Motion Blur" -cll false -cl 0 fireRenderMotionBlurFrame;
+
+	createFireRenderMotionBlurFrame ("fireRenderMotionBlurFrame");
+	setParent ..;
+
+	// Cameras
+	//
+	frameLayout -label "Camera" -cll false -cl 0 fireRenderCameraFrame;
+
+	createFireRenderCameraFrame ("fireRenderCameraFrame");
+	setParent ..;
+
+	// Render stamp
+	//
+	frameLayout -label "Render stamp" -cll false -cl 0 fireRenderRenderStampFrame;
+	createRenderStampFrame fireRenderRenderStampFrame;
+	setParent ..;
+
+	// Environment
+	//
+	frameLayout -label "Environment" -cll false -cl 0 fireRenderEnvironmentFrame;
+
+	createEnvironmentFrame fireRenderEnvironmentFrame;
+	setParent ..;
+
+	// Ground
+	//
+	frameLayout -label "Ground" -cll false -cl 0 fireRenderGroundFrame;
+
+	createGroundFrame fireRenderGroundFrame;
+	setParent ..;
+
+	setParent ..;
+	setParent ..;
+
+	formLayout
+		-edit
+		-af fireRenderGlobalsScrollLayout "top" 0
+		-af fireRenderGlobalsScrollLayout "bottom" 0
+		-af fireRenderGlobalsScrollLayout "left" 0
+		-af fireRenderGlobalsScrollLayout "right" 0
+		$parentForm;
+}
+
+global proc createFireRenderAOVsTab()
+{
+	string $parentForm = `setParent -query`;
+	scrollLayout -w 375 -horizontalScrollBarThickness 0 fireRenderGlobalsScrollLayout;
+	columnLayout -w 375 -adjustableColumn true fireRenderTabColumn;
+
+	// Render Passes
+	//
+	frameLayout -label "Render Passes (AOV)" -cll false -cl 0 fireRenderRenderPassesFrame;
+
+	createFireRenderRenderPassesFrame ("fireRenderRenderPassesFrame");
+	setParent ..;
+
+
+	setParent ..;
+	setParent ..;
+
+	formLayout
+		-edit
+		-af fireRenderGlobalsScrollLayout "top" 0
+		-af fireRenderGlobalsScrollLayout "bottom" 0
+		-af fireRenderGlobalsScrollLayout "left" 0
+		-af fireRenderGlobalsScrollLayout "right" 0
+		$parentForm;
+}
+
+global proc createFireRenderToneMappingTab()
+{
+	string $parentForm = `setParent -query`;
+	scrollLayout -w 375 -horizontalScrollBarThickness 0 fireRenderGlobalsScrollLayout;
+	columnLayout -w 375 -adjustableColumn true fireRenderTabColumn;
+
+	// Tone mapping
+	//
+	frameLayout -label "Tone Mapping" -cll false -cl 0 fireRenderToneMappingFrame;
+
+	createFireRenderToneMappingFrame ("fireRenderToneMappingFrame");
+	setParent ..;
+
+	setParent ..;
+	setParent ..;
+
+	formLayout
+		-edit
+		-af fireRenderGlobalsScrollLayout "top" 0
+		-af fireRenderGlobalsScrollLayout "bottom" 0
+		-af fireRenderGlobalsScrollLayout "left" 0
+		-af fireRenderGlobalsScrollLayout "right" 0
+		$parentForm;
 }

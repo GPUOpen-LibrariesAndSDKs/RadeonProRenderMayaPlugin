@@ -34,7 +34,7 @@ MStatus FireMaya::FresnelSchlick::initialize()
 	Attribute::inVec = nAttr.create("inVec", "inVec", MFnNumericData::k3Float, 0.0);
 	MAKE_INPUT(nAttr);
 
-	Attribute::output = nAttr.create("out", "o", MFnNumericData::k3Float, 0.0);
+	Attribute::output = nAttr.create("out", "o", MFnNumericData::kFloat, 0.0);
 	MAKE_OUTPUT(nAttr);
 
 	CHECK_MSTATUS(addAttribute(Attribute::reflectance));

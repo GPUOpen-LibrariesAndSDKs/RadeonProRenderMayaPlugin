@@ -1629,7 +1629,7 @@ namespace frw
 				if (rprxContext)
 				{
 					rprxDeleteContext(rprxContext);
-					FRW_PRINT_DEBUG("\tDeleted RPRX context %08X", rprxContext);
+					FRW_PRINT_DEBUG("\tDeleted RPRX context 0x%016llX", rprxContext);
 				}
 			}
 			rprx_context rprxContext = nullptr;
@@ -1639,7 +1639,7 @@ namespace frw
 		friend class Node;
 		rpr_material_node CreateNode(rpr_material_node_type type) const
 		{
-			FRW_PRINT_DEBUG("CreateNode(%d) in MaterialSystem: %08X", type, Handle());
+			FRW_PRINT_DEBUG("CreateNode(%d) in MaterialSystem: 0x%016llX", type, Handle());
 			rpr_material_node node = nullptr;
 			auto res = rprMaterialSystemCreateNode(Handle(), type, &node);
 			checkStatus(res);
@@ -1663,7 +1663,7 @@ namespace frw
 				m->Attach(hMS, destroyOnDelete);
 				res = rprxCreateContext(Handle(), 0, &data().rprxContext);
 				checkStatus(res);
-				FRW_PRINT_DEBUG("\tCreated RPRX context %08X", data().rprxContext);
+				FRW_PRINT_DEBUG("\tCreated RPRX context 0x%016llX", data().rprxContext);
 			}
 		}
 
@@ -2226,9 +2226,14 @@ namespace frw
 			{
 				if (material)
 				{
+					for(auto kvp : inputs)
+						rprxMaterialDetachMaterial(context, kvp.second, kvp.first.c_str(), material);
+					inputs.clear();
+
+					FRW_PRINT_DEBUG("\tDeleting RPRX material 0x%016llX (from context 0x%016llX)", material, context);
 					auto res = rprxMaterialDelete(context, material);
 					checkStatus(res);
-					FRW_PRINT_DEBUG("\tDeleted RPRX material %08X", material);
+					FRW_PRINT_DEBUG("\tDeleted RPRX material 0x%016llX", material);
 				}
 			}
 
@@ -2239,16 +2244,19 @@ namespace frw
 				return false;
 			}
 
-			bool bDirty = false;
+			bool bDirty = true;
 			int numAttachedShapes = 0;
 			ShaderType shaderType = ShaderTypeInvalid;
 			rprx_context context = nullptr;
 			rprx_material material = nullptr; // RPRX material
+			std::map<std::string, rpr_material_node> inputs;
 		};
 
 	public:
 		Shader(DataPtr p)
-		{ m = p; }
+		{
+			m = p;
+		}
 		explicit Shader(const MaterialSystem& ms, ShaderType type, bool destroyOnDelete = true)
 		: Node(ms, type, destroyOnDelete, new Data())
 		{
@@ -2263,7 +2271,7 @@ namespace frw
 			auto status = rprxCreateMaterial(rprxContext, type, &d.material);
 			checkStatusThrow(status, "Unable to create rprx material");
 			d.shaderType = ShaderTypeRprx;
-			FRW_PRINT_DEBUG("\tCreated RPRX material %08X", d.material);
+			FRW_PRINT_DEBUG("\tCreated RPRX material 0x%016llX of type: 0x%X", d.material, type);
 		}
 
 		ShaderType GetShaderType() const
@@ -2294,8 +2302,17 @@ namespace frw
 
 			if (d.material)
 			{
-				rpr_int res = rprxMaterialCommit(d.context, d.material);
-				checkStatus(res);
+				try
+				{
+					rpr_int res = rprxMaterialCommit(d.context, d.material);
+					checkStatus(res);
+				}
+				catch (...)
+				{
+					DebugPrint("Failed to rprx commit: Context=0x%016llX x_material=0x%016llX", d.context, d.material);
+
+					throw;
+				}
 			}
 		}
 
@@ -2306,7 +2323,7 @@ namespace frw
 			rpr_int res;
 			if (d.material)
 			{
-				FRW_PRINT_DEBUG("\tShape.AttachMaterial: shape=%08X x_material=%08X", shape.Handle(), d.material);
+				FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX x_material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.material);
 				res = rprxShapeAttachMaterial(d.context, shape.Handle(), d.material);
 				checkStatus(res);
 				// An idea behind this line ("if") is to compile material only once, and reuse it for all
@@ -2323,7 +2340,7 @@ namespace frw
 			}
 			else
 			{
-				FRW_PRINT_DEBUG("\tShape.AttachMaterial: shape=%08X material=%08X", shape.Handle(), d.Handle());
+				FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX material=0x%016llX", d, d.numAttachedShapes, shape.Handle(), d.Handle());
 				res = rprShapeSetMaterial(shape.Handle(), d.Handle());
 				checkStatus(res);
 			}
@@ -2332,7 +2349,7 @@ namespace frw
 		{
 			Data& d = data();
 			d.numAttachedShapes--;
-			FRW_PRINT_DEBUG("\tShape.DetachMaterial: shape=%08X", shape.Handle());
+			FRW_PRINT_DEBUG("\tShape.DetachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX, material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.material);
 			if (d.material)
 			{
 				rpr_int res = rprxShapeDetachMaterial(d.context, shape.Handle(), d.material);
@@ -2347,17 +2364,37 @@ namespace frw
 
 		void AttachToMaterialInput(rpr_material_node node, const char* inputName) const
 		{
-			const Data& d = data();
+			auto& d = data();
 			rpr_int res;
+			FRW_PRINT_DEBUG("\tShape.AttachToMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, d.material, inputName);
 			if (d.material)
 			{
 				// attach rprx shader output to some material's input
-				// note: there's no call to rprxShapeDetachMaterial
+				auto it = d.inputs.find(inputName);
+				if (it != d.inputs.end())
+					DetachFromMaterialInput(it->second, it->first.c_str());
+
 				res = rprxMaterialAttachMaterial(d.context, node, inputName, d.material);
+				checkStatus(res);
+				d.inputs.emplace(inputName, node);
 			}
 			else
 			{
 				res = rprMaterialNodeSetInputN(node, inputName, d.Handle());
+			}
+			checkStatus(res);
+		}
+
+		void DetachFromMaterialInput(rpr_material_node node, const char* inputName) const
+		{
+			auto& d = data();
+			rpr_int res;
+			FRW_PRINT_DEBUG("\tShape.DetachFromMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, d.material, inputName);
+			if (d.material)
+			{
+				// detach rprx shader output to some material's input
+				res = rprxMaterialDetachMaterial(d.context, node, inputName, d.material);
+				d.inputs.erase(inputName);
 			}
 			checkStatus(res);
 		}
@@ -2442,7 +2479,7 @@ namespace frw
 #if FRW_LOGGING
 			typeNameMirror = GetTypeName();
 #endif
-			FRW_PRINT_DEBUG("\tFR+ %s %08X%s (%d total)", GetTypeName(), h, destroyOnDelete ? "" : "*", allocatedObjects);
+			FRW_PRINT_DEBUG("\tFR+ %s 0x%016llX%s (%d total)", GetTypeName(), h, destroyOnDelete ? "" : "*", allocatedObjects);
 		}
 	}
 
@@ -2460,7 +2497,7 @@ namespace frw
 			allocatedObjects--;
 
 			// Can't use virtual GetTypeName() in destructor, so using "mirrored" type name
-			FRW_PRINT_DEBUG("\tFR- %s %08X%s (%d total)", typeNameMirror, handle, destroyOnDelete ? "" : "*", allocatedObjects);
+			FRW_PRINT_DEBUG("\tFR- %s 0x%016llX%s (%d total)", typeNameMirror, handle, destroyOnDelete ? "" : "*", allocatedObjects);
 		}
 	}
 
@@ -2473,7 +2510,7 @@ namespace frw
 
 			allocatedObjects--;
 
-			FRW_PRINT_DEBUG("\tFR- %s %08X%s (%d total)", GetTypeName(), handle, destroyOnDelete ? "" : "*", allocatedObjects);
+			FRW_PRINT_DEBUG("\tFR- %s 0x%016llX%s (%d total)", GetTypeName(), handle, destroyOnDelete ? "" : "*", allocatedObjects);
 		}
 
 		if (h)
@@ -2485,7 +2522,7 @@ namespace frw
 #if FRW_LOGGING
 			typeNameMirror = GetTypeName();
 #endif
-			FRW_PRINT_DEBUG("\tFR+ %s %08X%s (%d total)", GetTypeName(), h, destroyOnDelete ? "" : "*", allocatedObjects);
+			FRW_PRINT_DEBUG("\tFR+ %s 0x%016llX%s (%d total)", GetTypeName(), h, destroyOnDelete ? "" : "*", allocatedObjects);
 		}
 	}
 
@@ -2503,8 +2540,11 @@ namespace frw
 
 	inline void Node::_SetInputNode(const char* key, const Shader& shader)
 	{
-		AddReference(shader);
-		shader.AttachToMaterialInput(Handle(), key);
+		if (shader)
+		{
+			AddReference(shader);
+			shader.AttachToMaterialInput(Handle(), key);
+		}
 	}
 
 	inline bool Node::SetValue(const char* key, const Value& v)
@@ -2540,26 +2580,28 @@ namespace frw
 	{
 		// in theory a null could be considered a transparent material, but would create unexpected node
 		if (!a)
-			return b;
-		if (!b)
-			return a;
-
-		// shortcuts
-		if (t.IsFloat())
 		{
-			if (t.x <= 0)
-				return a;
-			if (t.x >= 1)
-				return b;
+			b.xMaterialCommit();
+			return b;
+		}
+
+		if (!b)
+		{
+			a.xMaterialCommit();
+			return a;
 		}
 
 		Shader node(*this, ShaderTypeBlend);
 		node._SetInputNode("color0", a);
 		node._SetInputNode("color1", b);
+
 		node.SetValue("weight", t);
+
+		node.xMaterialCommit();
 
 		a.xMaterialCommit();
 		b.xMaterialCommit();
+
 		return node;
 	}
 

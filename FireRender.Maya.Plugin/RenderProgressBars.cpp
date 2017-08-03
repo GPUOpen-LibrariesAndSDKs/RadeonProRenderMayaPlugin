@@ -10,7 +10,8 @@ RenderProgressBars::RenderProgressBars(bool unlimited) :
 	m_unlimited(unlimited),
 	m_progress(-1),
 	m_lastCanceledCheck(-1),
-	m_canceled(false)
+	m_canceled(false),
+	m_visible(false)
 {
 	MAIN_THREAD_ONLY;
 
@@ -41,6 +42,8 @@ RenderProgressBars::RenderProgressBars(bool unlimited) :
 
 	// Show the progress bar window.
 	MGlobal::executeCommand("showWindow rprProductionRenderingInfoWindow;");
+
+	m_visible = true;
 
 	// This needs to be done due to a bug (if esc hit
 	// multiple times before cancel is registered in plugin).
@@ -91,6 +94,19 @@ void RenderProgressBars::update(int progress)
 
 	if (m_progress != progress)
 	{
+		if (m_visible)
+		{
+			MString commandExists = "progressBar -ex rprPlaceHolderProgressBar;";
+			int exists;
+			MGlobal::executeCommand(commandExists, exists);
+
+			if (exists == 0)
+			{
+				m_visible = false;
+				m_canceled = true;	// Cancel when closed
+			}
+		}
+
 		// Update progress on the window and main progress bars.
 		MString command = "progressBar -edit -pr ";
 		command += progress;
@@ -98,7 +114,7 @@ void RenderProgressBars::update(int progress)
 		MString commandMain = command + " $gMainProgressBar;";
 		MGlobal::executeCommand(commandMain);
 
-		if (!m_unlimited)
+		if (!m_unlimited && m_visible)
 		{
 			MString commandPlaceHolder = command + " rprPlaceHolderProgressBar;";
 			MGlobal::executeCommand(commandPlaceHolder);
@@ -115,10 +131,13 @@ void RenderProgressBars::close()
 
 	MGlobal::executeCommand("progressBar -edit -endProgress $gMainProgressBar;");
 
-	if (!m_unlimited)
+	if (!m_unlimited && m_visible)
 		MGlobal::executeCommand("progressBar -edit -vis false rprPlaceHolderProgressBar;");
 
-	MGlobal::executeCommand("deleteUI rprProductionRenderingInfoWindow;");
+	if(m_visible)
+		MGlobal::executeCommand("deleteUI rprProductionRenderingInfoWindow;");
+
+	m_visible = false;
 
 	MGlobal::executeCommand("refresh -f;");
 

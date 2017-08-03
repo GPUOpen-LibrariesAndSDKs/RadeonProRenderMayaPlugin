@@ -29,7 +29,7 @@ void FireRenderImageUtil::save(MString filePath, unsigned int width, unsigned in
 		// was not able to create the image output.
 		if (!output)
 		{
-			saveMayaImage( filePath, width, height, pixels, imageFormat);
+			saveMayaImage(filePath, width, height, pixels, imageFormat);
 			return;
 		}
 	}
@@ -47,6 +47,7 @@ void FireRenderImageUtil::save(MString filePath, unsigned int width, unsigned in
 		output->write_image(TypeDesc::FLOAT, reinterpret_cast<uint8_t*>(pixels));
 		output->close();
 	}
+
 	else
 	{
 		int extDot = filePath.rindex('.');
@@ -57,7 +58,7 @@ void FireRenderImageUtil::save(MString filePath, unsigned int width, unsigned in
 		{
 			// Fall back to Maya image saving if
 			// OpenImageIO wasn't able to write the file.
-			saveMayaImage( filePath, width, height, pixels, imageFormat);
+			saveMayaImage(filePath, width, height, pixels, imageFormat);
 		}
 	}
 }
@@ -82,13 +83,13 @@ void FireRenderImageUtil::saveMayaImage(MString filePath, unsigned int width, un
 
 	try
 	{
-	// Save the image.
-	MImage image;
-	image.create(width, height, 4u, MImage::kFloat);
-	image.setRGBA(true);
-	image.setFloatPixels(reinterpret_cast<float*>(pixels), width, height);
-	image.convertPixelFormat(MImage::kByte);
-	image.verticalFlip();
+		// Save the image.
+		MImage image;
+		image.create(width, height, 4u, MImage::kFloat);
+		image.setRGBA(true);
+		image.setFloatPixels(reinterpret_cast<float*>(pixels), width, height);
+		image.convertPixelFormat(MImage::kByte);
+		image.verticalFlip();
 
 		auto extension = getImageFormatExtension(imageFormat);
 		if (imageFormat == 50)	// Special case for Sony & XPM file formats
@@ -122,11 +123,11 @@ void FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 	int aovs_component_count[RPR_AOV_MAX] = { 0 };
 
 	auto outImage = OIIO::ImageOutput::create(filePath.asUTF8());
-	if( !outImage )
+	if (!outImage)
 	{
-		auto nameWithExt = filePath + "." + getImageFormatExtension( imageFormat );
-		outImage = ImageOutput::create( nameWithExt.asUTF8() );
-		if( !outImage )
+		auto nameWithExt = filePath + "." + getImageFormatExtension(imageFormat);
+		outImage = ImageOutput::create(nameWithExt.asUTF8());
+		if (!outImage)
 		{
 			return;
 		}
@@ -155,7 +156,7 @@ void FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 			{
 				if (c)
 				{
-				++aov_component_count;
+					++aov_component_count;
 					++imgSpec.nchannels;
 					imgSpec.channelformats.push_back(TypeDesc::FLOAT);
 

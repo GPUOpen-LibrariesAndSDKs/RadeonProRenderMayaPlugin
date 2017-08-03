@@ -68,6 +68,11 @@
 
 #include "FireRenderThread.h"
 
+#ifdef _WIN32
+# include <DbgHelp.h>
+# pragma comment(lib, "dbghelp.lib")
+#endif
+
 using namespace FireMaya;
 
 MCallbackId newSceneCallback;
@@ -77,6 +82,64 @@ MCallbackId beforeNewSceneCallback;
 MCallbackId beforeOpenSceneCallback;
 
 MCallbackId mayaExitingCallback;
+
+
+#ifdef _WIN32
+static LPTOP_LEVEL_EXCEPTION_FILTER pTopLevelExceptionFilter = nullptr;
+
+LONG WINAPI FrUnhandledExceptionFilter(EXCEPTION_POINTERS * pExceptionPointers)
+{
+	std::cout << "Exception code: " << std::hex << pExceptionPointers->ExceptionRecord->ExceptionCode << std::endl;
+
+	CHAR filePath[MAX_PATH]{ 0 };
+
+	::GetTempPath(MAX_PATH, filePath);
+	sprintf_s(filePath, "%sMaya.dmp", filePath);
+
+	auto hDumpFile = ::CreateFile(filePath,
+		GENERIC_READ | GENERIC_WRITE,
+		0,
+		nullptr,
+		CREATE_ALWAYS,
+		FILE_ATTRIBUTE_NORMAL,
+		nullptr);
+
+	auto miniDumpExceptionInformation = MINIDUMP_EXCEPTION_INFORMATION
+	{
+		::GetCurrentThreadId(),
+		pExceptionPointers,
+		FALSE,
+	};
+
+	if (!::MiniDumpWriteDump(
+		::GetCurrentProcess(),
+		::GetCurrentProcessId(),
+		hDumpFile,
+		MiniDumpNormal,
+		&miniDumpExceptionInformation,
+		nullptr,
+		nullptr))
+	{
+		auto error = ::GetLastError();
+
+		CHAR message[MAX_PATH]{ 0 };
+		sprintf_s(message, "Failed to create mini-dump: %u", error);
+		::OutputDebugString(message);
+		std::cout << message << std::endl;
+	}
+	else
+	{
+		std::cout << "Mini-dump created: " << filePath << std::endl;
+	}
+
+	::CloseHandle(hDumpFile);
+
+	if (pTopLevelExceptionFilter)
+		return pTopLevelExceptionFilter(pExceptionPointers);
+	else
+		return EXCEPTION_CONTINUE_SEARCH;
+}
+#endif // _WIN32
 
 bool gExitingMaya = false;
 
@@ -108,6 +171,89 @@ void mayaExiting(void* data)
 
 	FireRenderThread::RunTheThread(false);
 	std::this_thread::yield();
+}
+
+void PluginUpdater()
+{
+	// TODO need a proper .json path for maya, the below path is an example
+	MString pluginUpdateHttpPath = "https://radeon-prorender.github.io/rpr_renderer_plugin_maya_latest_version.json";
+
+	MString pluginUpdatePy =
+		"import urllib\n"
+		"import json\n"
+		"import maya.cmds as cmds\n"
+		"import subprocess\n"
+		"import os\n"
+		"import urllib2\n"
+		"\n"
+		"def versionStringToNumbers(versionStr):\n"
+		"	result = []\n"
+		"	subVer = ''\n"
+		"	for i in range(0,len(versionStr)):\n"
+		"		if versionStr[i] != '.':\n"
+		"			subVer += versionStr[i]\n"
+		"\n"
+		"	if versionStr[i] == '.' or i == len(versionStr) - 1:\n"
+		"		result.append(int(subVer))\n"
+		"		subVer = ''\n"
+		"	return result\n"
+		"\n"
+		"def IsUserHaveOlderVersion(oldVersionStr, newVersionStr):\n"
+		"	oldVersion = versionStringToNumbers(oldVersionStr)\n"
+		"	newVersion = versionStringToNumbers(newVersionStr)\n"
+		"\n"
+		"	for i in range(0, len(oldVersion)):\n"
+		"		oldVersion.append(0)\n"
+		"\n"
+		"	for i in range(0, len(newVersion)):\n"
+		"		newVersion.append(0)\n"
+		"\n"
+		"	needUpdate = False\n"
+		"	for i in range(0, len(oldVersion)):\n"
+		"		if oldVersion[i] < newVersion[i]:\n"
+		"			needUpdate = True\n"
+		"			break\n"
+		"		elif oldVersion[i] > newVersion[i]:\n"
+		"			needUpdate = False\n"
+		"			break\n"
+		"	return needUpdate\n"
+		"\n"
+		"def progress(count, blockSize, totalSize):\n"
+		"	cmds.progressWindow(edit = True, progress = int(count * blockSize * 100 / totalSize))\n"
+		"	if cmds.progressWindow(query = True, isCancelled = True):\n"
+		"		cmds.progressWindow(edit = True, endProgress = True)\n"
+		"		sys.exit()\n"
+		"\n"
+		"try:\n"
+		"	urlData = urllib.urlopen('" + pluginUpdateHttpPath + "').read();\n"
+		"	jsonData = json.loads(urlData)\n"
+		"except IOError:\n"
+		"	sys.exit()\n"
+		"\n"
+		"if IsUserHaveOlderVersion('" + PLUGIN_VERSION + "', jsonData['version']):\n"
+		"	text = 'New version of Radeon ProRender available.\\n\\nVersion:\\t%s \\nDate:\\t%s\\nChanges:\\t%s ' % (jsonData['version'], jsonData['date'], jsonData['changes'])\n"
+		"	if jsonData['mustUpdate']:\n"
+		"		result = cmds.confirmDialog(title = 'Update', message = text, button = ['Download Now'], defaultButton = 'Download Now')\n"
+		"	else:\n"
+		"		result = cmds.confirmDialog(title = 'Update', message = text, button = ['Download Now', 'Ask me later'], defaultButton = 'Download Now', cancelButton = 'Ask me later', dismissString = 'Ask me later')\n"
+		"\n"
+		"	if result == 'Download Now':\n"
+		"		downloadPath = jsonData['url']\n"
+		"		splits = downloadPath.split('/')\n"
+		"		fileName = splits[len(splits) - 1]\n"
+		"\n"
+		"		ret = urllib2.urlopen(downloadPath)\n"
+		"		if ret.code == 200:\n"
+		"			cmds.progressWindow(title = 'Downloading...', progress = 0, status = '', isInterruptable = True)\n"
+		"\n"
+		"			urllib.urlretrieve(downloadPath, fileName, reporthook = progress)\n"
+		"\n"
+		"			cmds.progressWindow(edit = True, endProgress = True)\n"
+		"\n"
+		"			subprocess.call([fileName], shell = True)\n"
+		"			os.remove(fileName)\n";
+
+	MGlobal::executePythonCommand(pluginUpdatePy);
 }
 
 void DebugCallback(const char *sz)
@@ -156,6 +302,12 @@ MStatus initializePlugin(MObject obj)
 //		obj - a handle to the plug-in object (use MFnPlugin to access it)
 //
 {
+#ifdef _WIN32
+	pTopLevelExceptionFilter = ::SetUnhandledExceptionFilter(FrUnhandledExceptionFilter);
+#endif
+
+	PluginUpdater();
+
 	// Added for Linux:
 	Logger::AddCallback(InfoCallback, Logger::LevelInfo);
 

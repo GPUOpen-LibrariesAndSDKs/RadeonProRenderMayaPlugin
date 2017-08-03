@@ -12,7 +12,7 @@ global proc shelf_Radeon_ProRender () {
 		-manage 1
 		-visible 1
 		-preventOverride 0
-		-annotation "Open the Radeon ProRender settings tab"
+		-annotation "Radeon ProRender settings"
 		-enableBackground 0
 		-align "center"
 		// -label "Render Settings"
@@ -65,7 +65,7 @@ global proc shelf_Radeon_ProRender () {
 		-manage 1
 		-visible 1
 		-preventOverride 0
-		-annotation "Set the render quality (right click for presets)"
+		-annotation "Select Render quality (right click for presets)"
 		-enableBackground 0
 		-align "center"
 		// -label "Render Quality"
@@ -108,7 +108,7 @@ global proc shelf_Radeon_ProRender () {
 		-manage 1
 		-visible 1
 		-preventOverride 0
-		-annotation "Import XML materials"
+		-annotation "Import RPR material"
 		-enableBackground 0
 		-align "center"
 		// -label "Import Materials"
@@ -134,7 +134,7 @@ global proc shelf_Radeon_ProRender () {
 		-manage 1
 		-visible 1
 		-preventOverride 0
-		-annotation "Export XML materials"
+		-annotation "Export RPR material"
 		-enableBackground 0
 		-align "center"
 		// -label "Export Materials"
@@ -160,7 +160,7 @@ global proc shelf_Radeon_ProRender () {
 		-manage 1
 		-visible 1
 		-preventOverride 0
-		-annotation "Open the Radeon ProRender material library"
+		-annotation "Radeon ProRender material library"
 		-enableBackground 0
 		-align "center"
 		// -label "Material Library"
@@ -298,6 +298,7 @@ global proc shelf_Radeon_ProRender () {
 		-flat 1
 	;
 	*/
+	/*
 		separator
 		-enable 1
 		-width 35
@@ -316,7 +317,7 @@ global proc shelf_Radeon_ProRender () {
 		-manage 1
 		-visible 1
 		-preventOverride 0
-		-annotation "Convert selected VRay light or all VRay lights in the scene"
+		-annotation "Convert VRay scene to RPR"
 		-enableBackground 0
 		-align "center"
 		// -label "Convert VRay Lights"
@@ -339,6 +340,7 @@ global proc shelf_Radeon_ProRender () {
 		-commandRepeatable 1
 		-flat 1
 	;
+	*/
 	separator
 		-enable 1
 		-width 35
@@ -357,7 +359,7 @@ global proc shelf_Radeon_ProRender () {
 		-manage 1
 		-visible 1
 		-preventOverride 0
-		-annotation "Open Radeon ProRender plug-in info"
+		-annotation "Radeon ProRender Information"
 		-enableBackground 0
 		-align "center"
 		// -label "Plug-in Info"
@@ -384,7 +386,7 @@ global proc shelf_Radeon_ProRender () {
 		-manage 1
 		-visible 1
 		-preventOverride 0
-		-annotation "Open online documentation"
+		-annotation "Online documentation"
 		-enableBackground 0
 		-align "center"
 		// -label "Web Docs"

@@ -28,6 +28,10 @@
 #include <maya/MUuid.h>
 #endif
 
+#ifndef PI
+#define PI 3.14159265358979323846
+#endif
+
 FireRenderObject::FireRenderObject(FireRenderContext* context, const MObject& ob)
 {
 	m.context = context;
@@ -893,6 +897,8 @@ void FireRenderMesh::RebuildTransforms()
 			MQuaternion dispRotation = nextRotation * currentRotation.inverse();
 
 			dispRotation.getAxisAngle(rotationAxis, rotationAngle);
+			if (rotationAngle > PI)
+				rotationAngle -= 2 * PI;
 			rotationAngle *= timeMultiplier;
 		}
 	}

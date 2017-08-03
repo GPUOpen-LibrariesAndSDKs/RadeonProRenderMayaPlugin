@@ -53,6 +53,10 @@ global proc registerFireRender()
 
 	renderer -edit -addGlobalsTab "Common" "createFireRenderCommonGlobalsTab" "updateFireRenderCommonGlobalsTab" FireRender;
 	renderer -edit -addGlobalsTab  $currentRendererName "createFireRenderGlobalsTab" "updateFireRenderGlobalsTab" FireRender;
+	renderer -edit -addGlobalsTab  "Quality" "createFireRenderQualityTab" "updateFireRenderGlobalsTab" FireRender;
+	renderer -edit -addGlobalsTab  "Globals" "createFireRenderGlobals2Tab" "updateFireRenderGlobalsTab" FireRender;
+	renderer -edit -addGlobalsTab  "Tone Mapping" "createFireRenderToneMappingTab" "updateFireRenderGlobalsTab" FireRender;
+	renderer -edit -addGlobalsTab  "AOVs" "createFireRenderAOVsTab" "updateFireRenderGlobalsTab" FireRender;
 
 	// These will update Attribute Editor when the selection is changed.
 	scriptJob -event "SelectionChanged" "fireRenderUpdateAE";
