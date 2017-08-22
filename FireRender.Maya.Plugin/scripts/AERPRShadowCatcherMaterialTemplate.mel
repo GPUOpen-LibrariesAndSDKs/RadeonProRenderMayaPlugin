@@ -1,0 +1,34 @@
+global proc AERPRShadowCatcherMaterialTemplate( string $nodeName )
+{
+	AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -beginLayout "Swatch properties" -collapse true;
+		editorTemplate -l "Disable" -addControl "disableSwatch";
+		editorTemplate -l "Iterations" -addControl "swatchIterations";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Shadow Catcher Attributes" -collapse 0;
+		editorTemplate -l "Background is Environment" -addControl "bgIsEnv";
+		editorTemplate -l "Background weight" -addControl "bgWeight";
+		editorTemplate -l "Background color" -addControl "bgColor";
+
+		editorTemplate -l "Reflective override" -addControl "refOverride";
+		editorTemplate -l "Reflective weight" -addControl "refWeight";
+		editorTemplate -l "Reflective color" -addControl "refColor";
+
+		editorTemplate -l "Shadow color" -addControl "shadowColor";
+		editorTemplate -l "Shadow weight" -addControl "shadowWeight";
+		editorTemplate -l "Shadow transparency" -addControl "shadowTransp";
+
+		editorTemplate -l "Use normal map" -addControl "useNormalMap";
+		editorTemplate -l "Normal map" -addControl "normalMap";
+		editorTemplate -l "Use displacement map" -addControl "useDispMap";
+		editorTemplate -l "Displacement map" -addControl "dispMap";
+	editorTemplate -endLayout;
+
+	AEdependNodeTemplate $nodeName;
+	
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}
