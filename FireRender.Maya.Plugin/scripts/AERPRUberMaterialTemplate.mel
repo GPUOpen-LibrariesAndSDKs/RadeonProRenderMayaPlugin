@@ -123,7 +123,10 @@ global proc AERPRUberMaterialTemplateNew(string $nodeName)
 	editorTemplate -endLayout;
 
 //	editorTemplate -addControl "Caustics/Shadows";
-//	editorTemplate -addControl "shadowCatcher";
+
+	editorTemplate -beginLayout "Shadow Catcher" -collapse 0;
+		editorTemplate -label "Use shadow catcher" -addControl "shadowCatcher";
+	editorTemplate -endLayout;
 
 	AEdependNodeTemplate $nodeName;
 

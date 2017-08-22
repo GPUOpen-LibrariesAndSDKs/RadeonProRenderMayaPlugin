@@ -413,6 +413,9 @@
     <ClCompile Include="Hosek\ArHosekSkyModel.cpp">
       <Filter>Hosek</Filter>
     </ClCompile>
+    <ClCompile Include="FireRenderShadowCatcherMaterial.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -498,12 +501,6 @@
     </ClInclude>
     <ClInclude Include="common.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PluginContext.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PluginContext.cpp">
-      <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="FireRenderSurfaceOverride.h">
       <Filter>Source Files</Filter>
@@ -726,6 +723,9 @@
     </ClInclude>
     <ClInclude Include="Hosek\ArHosekSkyModelData_Spectral.h">
       <Filter>Hosek</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderShadowCatcherMaterial.h">
+      <Filter>Materials</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
