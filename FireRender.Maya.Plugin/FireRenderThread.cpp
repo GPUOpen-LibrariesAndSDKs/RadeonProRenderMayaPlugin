@@ -15,7 +15,7 @@ vector<shared_ptr<FireRenderThread::QueueItemBase>> FireRenderThread::itemQueue;
 vector<shared_ptr<FireRenderThread::QueueItemBase>> FireRenderThread::itemQueueForMainThread;
 mutex FireRenderThread::itemQueueMutex;
 unique_ptr<thread> FireRenderThread::ptrWorkerThread;
-atomic_bool FireRenderThread::shouldUseThread { true };
+atomic_bool FireRenderThread::shouldUseThread { false };
 atomic_bool FireRenderThread::runTheThread { true };
 set<thread::id> FireRenderThread::executingThreadIds;
 
@@ -281,7 +281,13 @@ bool FireRenderThread::UseTheThread(bool value)
 {
 	bool prevoius = shouldUseThread;
 
-	shouldUseThread = value;
+	/**
+	 * Disallow threading. 
+	 * Maya documentation (https://knowledge.autodesk.com/search-result/caas/CloudHelp/cloudhelp/2016/ENU/Maya-SDK/files/Technical-Notes-Threading-and-Maya-API-htm.html)
+	 * says that it's best to call Maya API function only from main Maya thread.
+	 * Forcing this fixes RPRMAYA-24 issue and make plugin to go same path in both CPU and GPU RPR mode.
+	 */
+	shouldUseThread = false;
 
 	return prevoius;
 }
