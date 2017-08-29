@@ -138,7 +138,8 @@ void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip)
 		m_region,
 		flip,
 		isColor,
-		context.framebufferAOV(RPR_AOV_OPACITY));
+		context.frameBufferAOV_Resolved(RPR_AOV_OPACITY),
+		context.frameBufferAOV_Resolved(RPR_AOV_SHADOW_CATCHER));
 
 	// Render stamp, but only when region matches the whole frame buffer
 	if (m_region.getHeight() == m_frameHeight && m_region.getWidth() == m_frameWidth && renderStamp.numChars() > 0)

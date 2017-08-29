@@ -202,7 +202,13 @@ public:
 	// Read frame buffer pixels and optionally normalize and flip the image.
 	void readFrameBuffer(RV_PIXEL* pixels, rpr_framebuffer frameBuffer,
 		unsigned int width, unsigned int height, const RenderRegion& region,
-		bool flip, bool isColor, rpr_framebuffer opacityFrameBuffer = NULL);
+		bool flip, bool isColor, rpr_framebuffer opacityFrameBuffer = NULL, rpr_framebuffer shadowCatcherFrameBuffer = NULL);
+
+	// Composite image for Shadow Catcher
+	void compositeOutput(RV_PIXEL* pixels, rpr_framebuffer frameBuffer,
+		unsigned int width, unsigned int height, const RenderRegion& region,
+		bool flip, bool isColor, rpr_framebuffer opacityFrameBuffer, rpr_framebuffer shadowCatcherFrameBuffer);
+
 
 	// Copy pixels from the source buffer to the destination buffer.
 	void copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
