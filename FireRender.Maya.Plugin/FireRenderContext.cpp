@@ -654,6 +654,9 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 {
 	RPR_THREAD_ONLY;
 
+	rprContextSetParameterString(0, "tracingfolder", "e:/tmp/maya_trace");
+	rprContextSetParameter1u(0, "tracing", 1);
+
 	auto cachePath = getShaderCachePath();
 	if (g_tahoePluginID == -1)
 	{
@@ -806,6 +809,8 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, rpr_framebuffer frameB
 	size_t dataSize;
 	rpr_int frstatus = rprFrameBufferGetInfo(frameBuffer, RPR_FRAMEBUFFER_DATA, 0, nullptr, &dataSize);
 	checkStatus(frstatus);
+	rprFrameBufferSaveToFile(frameBuffer, "e:\\tmp\\sc.png");
+
 
 	// Check that the reported frame buffer size
 	// in bytes matches the required dimensions.

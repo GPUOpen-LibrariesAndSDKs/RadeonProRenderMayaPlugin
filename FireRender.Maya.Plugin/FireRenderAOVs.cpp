@@ -50,9 +50,6 @@ FireRenderAOVs::FireRenderAOVs() :
 
 	m_aovs.push_back(FireRenderAOV(RPR_AOV_SHADOW_CATCHER, "aovShadowCatcher", "Shadow", "shadow",
 				{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } }));
-
-	m_aovs.push_back(FireRenderAOV(RPR_AOV_SHADOW_CATCHER, "aovCombined", "Shadow", "shadow",
-	{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } }));
 }
 
 // -----------------------------------------------------------------------------
