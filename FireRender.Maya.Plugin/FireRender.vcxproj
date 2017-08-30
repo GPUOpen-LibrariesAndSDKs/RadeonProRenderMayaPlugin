@@ -238,6 +238,7 @@
     <ClCompile Include="RenderCacheWarningDialog.cpp" />
     <ClCompile Include="RenderProgressBars.cpp" />
     <ClCompile Include="RenderStamp.cpp" />
+    <ClCompile Include="RprComposite.cpp" />
     <ClCompile Include="ShadersManager.cpp" />
     <ClCompile Include="SkyAttributes.cpp" />
     <ClCompile Include="SkyBuilder.cpp" />
@@ -348,6 +349,7 @@
     <ClInclude Include="RenderRegion.h" />
     <ClInclude Include="RenderStamp.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="RprComposite.h" />
     <ClInclude Include="ShadersManager.h" />
     <ClInclude Include="SkyAttributes.h" />
     <ClInclude Include="SkyBuilder.h" />

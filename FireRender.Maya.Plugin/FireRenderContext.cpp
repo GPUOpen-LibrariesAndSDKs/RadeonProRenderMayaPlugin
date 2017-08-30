@@ -27,6 +27,8 @@
 #include "VRay.h"
 #include <chrono>
 
+#include "RprComposite.h"
+
 #include "FireRenderThread.h"
 
 using namespace RPR;
@@ -1777,38 +1779,46 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	assert(dataSize == (sizeof(RV_PIXEL) * pixelCount));
 
 	auto context = GetContext();
-	rpr_composite compositeBg = 0;
-	rpr_composite compositeColor = 0;
-	rpr_composite compositeOpacity = 0;
-	rpr_composite compositeShadowCatcher = 0;
-	rpr_composite compositeLerp = 0;
+	RprComposite compositeBg(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
+	compositeBg.SetInputFb("framebuffer.input", backgroundFrameBuffer);
 
-	auto CreateComposite = [](rpr_context context, rpr_composite *composite, rpr_framebuffer fb)
-	{
-		rpr_int frstatus;
-		frstatus = rprContextCreateComposite(context, RPR_COMPOSITE_FRAMEBUFFER, composite);
-		checkStatus(frstatus);
-		frstatus = rprCompositeSetInputFb(*composite, "framebuffer.input", fb);
-		checkStatus(frstatus);
-	};
-	CreateComposite(context.Handle(), &compositeColor, frameBuffer);
-	CreateComposite(context.Handle(), &compositeOpacity, opacityFrameBuffer);
-	CreateComposite(context.Handle(), &compositeShadowCatcher, shadowCatcherFrameBuffer);
+	RprComposite compositeColor(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
+	compositeColor.SetInputFb("framebuffer.input", frameBuffer);
 
-	rpr_composite composite_zero = 0;
-	frstatus = rprContextCreateComposite(context.Handle(), RPR_COMPOSITE_CONSTANT, &composite_zero);
-	checkStatus(frstatus);
-	frstatus = rprCompositeSetInput4f(composite_zero, "constant.input", 0.0, 0.0, 0.0, 1.0);
-	checkStatus(frstatus);
+	RprComposite compositeOpacity(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
+	compositeOpacity.SetInputFb("framebuffer.input", opacityFrameBuffer);
 
-	frstatus = rprContextCreateComposite(context.Handle(), RPR_COMPOSITE_LERP_VALUE, &compositeLerp);
-	checkStatus(frstatus);
-	frstatus = rprCompositeSetInputC(compositeLerp, "lerp.color0", compositeColor);
-	checkStatus(frstatus);
-	frstatus = rprCompositeSetInputC(compositeLerp, "lerp.color1", composite_zero);
-	checkStatus(frstatus);
-	frstatus = rprCompositeSetInputC(compositeLerp, "lerp.weight", compositeShadowCatcher);
-	checkStatus(frstatus);
+	RprComposite compositeBgNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
+	compositeBgNorm.SetInputC("normalize.color", compositeBg);
+
+	RprComposite compositeColorNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
+	compositeColorNorm.SetInputC("normalize.color", compositeColor);
+
+	RprComposite compositeOpacityNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
+	compositeOpacityNorm.SetInputC("normalize.color", compositeOpacity);
+
+	RprComposite compositeLerp1(context.Handle(), RPR_COMPOSITE_LERP_VALUE);
+	compositeLerp1.SetInputC("lerp.color0", compositeBgNorm);
+	compositeLerp1.SetInputC("lerp.color1", compositeColorNorm);
+	compositeLerp1.SetInputC("lerp.weight", compositeOpacityNorm);
+
+	RprComposite compositeShadowCatcher(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
+	compositeShadowCatcher.SetInputFb("framebuffer.input", shadowCatcherFrameBuffer);
+
+	RprComposite compositeOne(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	compositeOne.SetInput4f("constant.input", 1.0f, 0.0f, 0.0f, 0.0f);
+
+	RprComposite compositeZero(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	compositeZero.SetInput4f("constant.input", 0.0f, 0.0f, 0.0f, 1.0f);
+
+	RprComposite compositeShadowCatcherNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
+	compositeShadowCatcherNorm.SetInputC("normalize.color", compositeShadowCatcher);
+	compositeShadowCatcherNorm.SetInputC("normalize.shadowcatcher", compositeOne);
+	
+	RprComposite compositeLerp2(context.Handle(), RPR_COMPOSITE_LERP_VALUE);
+	compositeLerp2.SetInputC("lerp.color0", compositeLerp1);
+	compositeLerp2.SetInputC("lerp.color1", compositeZero);
+	compositeLerp2.SetInputC("lerp.weight", compositeShadowCatcherNorm);
 
 	rpr_framebuffer frameBufferComposite = 0;
 	rpr_framebuffer_format fmt = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
@@ -1818,7 +1828,7 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 
 	frstatus = rprContextCreateFrameBuffer(context.Handle(), fmt, &desc, &frameBufferComposite);
 	checkStatus(frstatus);
-	frstatus = rprCompositeCompute(compositeLerp, frameBufferComposite);
+	frstatus = rprCompositeCompute(compositeLerp2, frameBufferComposite);
 	checkStatus(frstatus);
 
 	// Copy the frame buffer into temporary memory, if
@@ -1836,12 +1846,6 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	}
 
 	rprObjectDelete(frameBufferComposite);
-	rprObjectDelete(compositeLerp);
-//	rprObjectDelete(compositeBg);
-	rprObjectDelete(compositeColor);
-	rprObjectDelete(compositeOpacity);
-	rprObjectDelete(compositeShadowCatcher);
-	rprObjectDelete(composite_zero);
 
 	//combine (Opacity to Alpha)
 	//combineWithOpacity(pixels, region.getArea(), m_opacityData.get());
