@@ -5,14 +5,15 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>.;..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic;..\ThirdParty\glew\include;..\ThirdParty\OpenCL\include;..\ThirdParty\oiio\include;..\ThirdParty\AxfPackage\AxfInclude\;..\ThirdParty\AxfPackage\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic;..\ThirdParty\glew\include;..\ThirdParty\OpenCL\include;..\ThirdParty\oiio\include;..\ThirdParty\AxfPackage\AxfInclude\;..\ThirdParty\AxfPackage\include\;..\ThirdParty\synColor\include\;..\ThirdParty\OpenColorIO\include\export;..\ThirdParty\OpenColorIO\include\build\export\</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>MAYA_PLUGIN;GL_INTEROP;WIN32;_WINDOWS;_USRDLL;NT_PLUGIN;_HAS_ITERATOR_DEBUGGING=0;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;__TBB_LIB_NAME=tbb.lib;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>..\ThirdParty\glew\lib\x64;..\ThirdParty\oiio\lib;..\ThirdParty\RadeonProRender SDK\Win\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RadeonProRender64.lib;RprSupport64.lib;OpenImageIO_RPR.lib;glew.lib;glu32.lib;Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaRender.lib;Image.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\ThirdParty\glew\lib\x64;..\ThirdParty\oiio\lib;..\ThirdParty\RadeonProRender SDK\Win\lib;..\ThirdParty\synColor\Win\lib;..\ThirdParty\OpenColorIO\Win\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RadeonProRender64.lib;RprSupport64.lib;OpenImageIO_RPR.lib;OpenColorIO_RPR.lib;synColor.lib;glew.lib;glu32.lib;Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaRender.lib;Image.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
       <DelayLoadDLLs>RadeonProRender64.dll;RprSupport64.dll</DelayLoadDLLs>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
     </Link>
     <PostBuildEvent>
       <Command>echo creating dist folders
@@ -21,6 +22,9 @@ md $(SolutionDir)dist\bin
 md $(SolutionDir)dist\scripts
 md $(SolutionDir)dist\plug-ins
 md $(SolutionDir)dist\plug-ins\$(FR_MAYA_VERSION)
+md $(SolutionDir)dist\plug-ins\$(FR_MAYA_VERSION)\ocio
+md $(SolutionDir)dist\plug-ins\$(FR_MAYA_VERSION)\oiio
+md $(SolutionDir)dist\plug-ins\$(FR_MAYA_VERSION)\synColorMgr
 md $(SolutionDir)dist\images
 md $(SolutionDir)dist\icons
 md $(SolutionDir)dist\shaders
@@ -37,16 +41,31 @@ XCOPY /E /Y $(ProjectDir)\icons\* $(SolutionDir)dist\icons\
 COPY $(ProjectDir)\shaders\* $(SolutionDir)dist\shaders\ /Y
 
 COPY $(ProjectDir)\renderDesc\* $(SolutionDir)dist\renderDesc\ /Y
-COPY "$(SolutionDir)ThirdParty\RadeonProRender SDK\Win\bin\*.dll" $(SolutionDir)dist\bin\ /Y
-COPY $(SolutionDir)ThirdParty\glew\bin\x64\*.dll $(SolutionDir)dist\bin\ /Y
+COPY "$(SolutionDir)\ThirdParty\RadeonProRender SDK\Win\bin\*.dll" $(SolutionDir)dist\bin\ /Y
+COPY $(SolutionDir)\ThirdParty\glew\bin\x64\*.dll $(SolutionDir)dist\bin\ /Y
 IF EXIST "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)\prefs\shelves\" COPY $(ProjectDir)\Shelfs\* "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)\prefs\shelves\" /Y
 
 IF EXIST "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)-x64\prefs\shelves" COPY $(ProjectDir)\Shelfs\* "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)-x64\prefs\shelves\" /Y
 
 
 COPY $(SolutionDir)ThirdParty\AxfPackage\ReleaseDll\AxfDll\*.dll $(SolutionDir)dist\bin\ /Y
-COPY $(SolutionDir)ThirdParty\AxfPackage\ReleaseDll\AxfDll\*.def $(SolutionDir)dist\bin\ /Y</Command>
+COPY $(SolutionDir)ThirdParty\AxfPackage\ReleaseDll\AxfDll\*.def $(SolutionDir)dist\bin\ /Y
+
+COPY $(SolutionDir)\FireRender.Maya.Plugin\oiio.MANIFEST $(SolutionDir)dist\plug-ins\$(FR_MAYA_VERSION)\oiio\ /Y
+COPY "$(SolutionDir)ThirdParty\RadeonProRender SDK\Win\bin\OpenImageIO_RPR.dll" $(SolutionDir)dist\plug-ins\$(FR_MAYA_VERSION)\oiio\ /Y
+
+COPY $(SolutionDir)\FireRender.Maya.Plugin\ocio.MANIFEST $(SolutionDir)dist\plug-ins\$(FR_MAYA_VERSION)\ocio\ /Y
+COPY "$(SolutionDir)ThirdParty\RadeonProRender SDK\Win\bin\OpenColorIO.dll" $(SolutionDir)dist\plug-ins\$(FR_MAYA_VERSION)\ocio\ /Y
+
+COPY $(SolutionDir)\FireRender.Maya.Plugin\synColorMgr.MANIFEST $(SolutionDir)dist\plug-ins\$(FR_MAYA_VERSION)\synColorMgr\ /Y
+COPY "$(SolutionDir)ThirdParty\RadeonProRender SDK\Win\bin\synColor.dll" $(SolutionDir)dist\plug-ins\$(FR_MAYA_VERSION)\synColorMgr\ /Y
+
+COPY $(SolutionDir)dist\bin\* $(SolutionDir)dist\plug-ins\$(FR_MAYA_VERSION)\  /Y</Command>
     </PostBuildEvent>
+    <Manifest>
+      <AdditionalManifestFiles>
+      </AdditionalManifestFiles>
+    </Manifest>
   </ItemDefinitionGroup>
   <ItemGroup />
 </Project>

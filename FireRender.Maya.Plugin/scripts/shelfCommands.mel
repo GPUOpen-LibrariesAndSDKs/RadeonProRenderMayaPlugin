@@ -204,13 +204,13 @@ global proc convertVRayObjects()
 
 		if (size($SG) > 0)
 		{
-		if (size(`listConnections -source 1 ($SG[size($SG)-1] + ".dagSetMembers")`) == 0)
-		{
-			if($material!="lambert1" && $material!="particleCloud1" && $material!="shaderGlow1")
+			if(size(`listConnections -source 1 ($SG[size($SG)-1] + ".dagSetMembers")`) == 0)
 			{
-				delete $material;
+				if($material!="lambert1" && $material!="particleCloud1" && $material!="shaderGlow1")
+				{
+					delete $material;
+				}
 			}
-		}
 		}
 	};
 

@@ -11,16 +11,24 @@
 #include "FireRenderThread.h"
 #include "VRay.h"
 
-#ifdef MAYA2017
+#ifndef MAYA2015
 #include "maya/MColorManagementUtilities.h"
-#ifdef USE_SYNCOLOR
+#endif
+
 #include "synColor/synColor.h"
 #include "synColor/synColorInit.h"
 #include "synColor/synColorFactory.h"
-
 using namespace SYNCOLOR;
-#endif
-#endif
+
+#include "OpenColorIO/OpenColorIO.h"
+using namespace OpenColorIO;
+using namespace OpenColorIO::v1;
+
+#include "maya/MItDependencyNodes.h"
+
+#pragma comment(linker, "/manifestDependency:\"name='ocio' processorArchitecture='AMD64' version='1.0.0.0' type='win32' \"")
+#pragma comment(linker, "/manifestDependency:\"name='oiio' processorArchitecture='AMD64' version='1.0.0.0' type='win32' \"")
+#pragma comment(linker, "/manifestDependency:\"name='synColorMgr' processorArchitecture='AMD64' version='1.0.0.0' type='win32' \"")
 
 void FireMaya::Dump(const MFnDependencyNode& shader_node)
 {
@@ -52,7 +60,7 @@ void FireMaya::Dump(const MFnDependencyNode& shader_node)
 	}
 }
 
-MPlug	FireMaya::GetConnectedPlug(const MPlug& plug)
+MPlug FireMaya::GetConnectedPlug(const MPlug& plug)
 {
 	if (!plug.isNull())
 	{
@@ -115,75 +123,133 @@ MString FireMaya::GetShaderPath()
 
 void convertColorSpace(MString colorSpace, rpr_image_format format, rpr_image_desc img_desc, std::vector<unsigned char> & buffer)
 {
-#if defined(MAYA2017) && defined(USE_SYNCOLOR)
-	if (colorSpace.length() &&
-		MColorManagementUtilities::isColorManagementAvailable() &&
-		MColorManagementUtilities::isColorManagementEnabled())
+#ifndef MAYA2015
+	if (MColorManagementUtilities::isColorManagementAvailable() && MColorManagementUtilities::isColorManagementEnabled())
 	{
-		using namespace std;
+		bool bOcioEnabled = false;
+		MString ocioConfigFilePath;
 
-		MString inputId;
-		MStatus status = MColorManagementUtilities::getColorTransformCacheIdForInputSpace(colorSpace, inputId);
-		if (status.error())
-			throw logic_error(status.errorString().asUTF8());
-
-		MColorManagementUtilities::MColorTransformData data;
-
-		auto inputIdStart = strstr((const char*)data.getData(), inputId.asUTF8());
-
-		assert(inputIdStart != nullptr);
-		if (inputIdStart == nullptr)
-			return;
-
-		auto xmlStart = strstr(inputIdStart, "<?xml");
-		assert(xmlStart != nullptr);
-		if (xmlStart == nullptr)
-			return;
-
-		string xmlData(xmlStart);
+		// Before we start work with OCIO set the "OCIO" environment variable to the .ocio config file path the user set in Maya 2017, without that OCIO won't work at all
+		MItDependencyNodes it(MFn::kColorMgtGlobals);
+		
+		if(!it.isDone())
 		{
-			auto start = xmlData.c_str();
-			auto end = strstr(start, "</ProcessListEntry>");
-			auto len = end - start;
-			xmlData = xmlData.substr(0, len);
+			MObject node = it.item();
+
+			MFnDependencyNode vraySettings(node);
+		
+			MPlug p0 = vraySettings.findPlug("configFileEnabled");
+			MPlug p1 = vraySettings.findPlug("configFilePath");
+		
+			if (!p0.isNull())
+				bOcioEnabled = p0.asBool();
+		
+			if (!p1.isNull())
+				ocioConfigFilePath = p1.asString();
 		}
 
-		SynStatus sc_status;
-		TransformPtr loadedTransformPtr;
-
-		sc_status = loadColorTransformFromBuffer(xmlData.c_str(), loadedTransformPtr);
-		if (!sc_status)
-			throw std::logic_error(sc_status.getErrorMessage());
-
-		PixelFormat pf;
-		switch (format.type)
+		if (bOcioEnabled)
 		{
-		case RPR_COMPONENT_TYPE_FLOAT16:
-			pf = format.num_components == 3 ? PixelFormat::PF_RGB_16f : PixelFormat::PF_RGBA_16f;
-			break;
-		case RPR_COMPONENT_TYPE_FLOAT32:
-			pf = format.num_components == 3 ? PixelFormat::PF_RGB_32f : PixelFormat::PF_RGBA_32f;
-			break;
-		case RPR_COMPONENT_TYPE_UINT8:
-		default:
-			pf = format.num_components == 3 ? PixelFormat::PF_RGB_8i : PixelFormat::PF_RGBA_8i;
-			break;
+			if (format.type == RPR_COMPONENT_TYPE_UINT8)
+			{
+				SetEnv("OCIO", ocioConfigFilePath.asUTF8());
+
+				// Convert to normalized floats
+				std::vector<float> pixels;
+				for (unsigned char& pixel : buffer)
+				{
+					pixels.push_back(pixel / 255.f);
+				}
+
+				try
+				{
+					ConstConfigRcPtr config = GetCurrentConfig();
+					ConstProcessorRcPtr processor = config->getProcessor(colorSpace.asUTF8(), "role_scene_linear");
+
+					PackedImageDesc img(pixels.data(), img_desc.image_width, img_desc.image_height, format.num_components);
+					processor->apply(img);
+
+					// Convert back to u8
+					for (int i = 0; i < pixels.size(); ++i)
+					{
+						buffer[i] = pixels[i] * 255.f;
+					}
+				}
+				catch (Exception& e)
+				{
+					MString what = e.what();
+					MGlobal::displayError("OpenColorIO Error: " + what);
+				}
+			}
 		}
-		vector<char> converted(buffer.size());
-		auto src = buffer.data();
-		auto dst = converted.data();
-		ROI roi(img_desc.image_width, img_desc.image_height);
-		TransformPtr finalizedTransformPtr;
-		sc_status = finalize(loadedTransformPtr, pf, pf, OptimizerFlags::OPTIMIZER_LOSSLESS, ResolveFlags::RESOLVE_GRAPHICS_MONITOR, finalizedTransformPtr);
-		if (!sc_status)
-			throw std::logic_error(sc_status.getErrorMessage());
+		else
+		{
+#ifdef MAYA2017
+			using namespace std;
 
-		sc_status = loadedTransformPtr->applyCPU(src, roi, dst);
-		if (!sc_status)
-			throw std::logic_error(sc_status.getErrorMessage());
+			MString inputId;
+			MStatus status = MColorManagementUtilities::getColorTransformCacheIdForInputSpace(colorSpace, inputId);
+			if (status.error())
+				throw logic_error(status.errorString().asUTF8());
 
-		buffer.clear();
-		buffer.assign(converted.begin(), converted.end());
+			MColorManagementUtilities::MColorTransformData data;
+
+			auto inputIdStart = strstr((const char*)data.getData(), inputId.asUTF8());
+
+			assert(inputIdStart != nullptr);
+			if (inputIdStart == nullptr)
+				return;
+
+			auto xmlStart = strstr(inputIdStart, "<?xml");
+			assert(xmlStart != nullptr);
+			if (xmlStart == nullptr)
+				return;
+
+			string xmlData(xmlStart);
+			{
+				auto start = xmlData.c_str();
+				auto end = strstr(start, "</ProcessListEntry>");
+				auto len = end - start;
+				xmlData = xmlData.substr(0, len);
+			}
+
+			SynStatus sc_status;
+			TransformPtr loadedTransformPtr;
+
+			sc_status = loadColorTransformFromBuffer(xmlData.c_str(), loadedTransformPtr);
+			if (!sc_status)
+				throw std::logic_error(sc_status.getErrorMessage());
+
+			PixelFormat pf;
+			switch (format.type)
+			{
+			case RPR_COMPONENT_TYPE_FLOAT16:
+				pf = format.num_components == 3 ? PixelFormat::PF_RGB_16f : PixelFormat::PF_RGBA_16f;
+				break;
+			case RPR_COMPONENT_TYPE_FLOAT32:
+				pf = format.num_components == 3 ? PixelFormat::PF_RGB_32f : PixelFormat::PF_RGBA_32f;
+				break;
+			case RPR_COMPONENT_TYPE_UINT8:
+			default:
+				pf = format.num_components == 3 ? PixelFormat::PF_RGB_8i : PixelFormat::PF_RGBA_8i;
+				break;
+			}
+			vector<unsigned char> converted(buffer.size());
+			auto src = buffer.data();
+			auto dst = converted.data();
+			ROI roi(img_desc.image_width, img_desc.image_height);
+			TransformPtr finalizedTransformPtr;
+			sc_status = finalize(loadedTransformPtr, pf, pf, OptimizerFlags::OPTIMIZER_LOSSLESS, ResolveFlags::RESOLVE_GRAPHICS_MONITOR, finalizedTransformPtr);
+			if (!sc_status)
+				throw std::logic_error(sc_status.getErrorMessage());
+
+			sc_status = loadedTransformPtr->applyCPU(src, roi, dst);
+			if (!sc_status)
+				throw std::logic_error(sc_status.getErrorMessage());
+
+			buffer = converted;
+#endif
+		}
 	}
 #endif
 }
@@ -191,6 +257,7 @@ void convertColorSpace(MString colorSpace, rpr_image_format format, rpr_image_de
 frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace)
 {
 	std::string key = texturePath.asUTF8();
+	key += colorSpace.asUTF8();
 
 	if (key.length() == 0) {
 		return NULL;
@@ -205,10 +272,17 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace)
 		MAIN_THREAD_ONLY; // MTextureManager will not work in other threads
 		DebugPrint("Loading Image: %s in colorSpace: %s", texturePath.asUTF8(), colorSpace.asUTF8());
 
-		frw::Image image(m->context, texturePath.asUTF8());
-
-		// using texture system appears more reliable that using MImage functions (which don't support exr)
-		if (!image)
+		MString extension;
+		const char* filePath = texturePath.asUTF8();
+		int length = texturePath.length();
+		extension += &filePath[length - 3];
+		
+		frw::Image image;
+		//image = frw::Image(m->context, texturePath.asUTF8());
+		if(extension == "hdr" || extension == "exr")
+			image = frw::Image(m->context, texturePath.asUTF8());
+		else
+		//if(!image)
 		{
 			if (auto renderer = MHWRender::MRenderer::theRenderer())
 			{
@@ -1382,17 +1456,17 @@ void FireMaya::Scope::NodeDirtyCallback(MObject& ob)
 {
 	try
 	{
-	MFnDependencyNode node(ob);
-	DebugPrint("Callback: %s dirty", node.typeName().asUTF8());
+		MFnDependencyNode node(ob);
+		DebugPrint("Callback: %s dirty", node.typeName().asUTF8());
 
-	auto shaderId = getNodeUUid(ob);
-	if (auto shader = GetCachedShader(shaderId)) {
-		shader.SetDirty();
+		auto shaderId = getNodeUUid(ob);
+		if (auto shader = GetCachedShader(shaderId)) {
+			shader.SetDirty();
+		}
+		if (auto shader = GetCachedVolumeShader(shaderId)) {
+			shader.SetDirty();
+		}
 	}
-	if (auto shader = GetCachedVolumeShader(shaderId)) {
-		shader.SetDirty();
-	}
-}
 	catch (const std::exception & ex)
 	{
 		DebugPrint("NodeDirtyCallback -> %s", ex.what());

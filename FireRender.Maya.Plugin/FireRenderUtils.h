@@ -486,3 +486,6 @@ public:
 };
 
 MObject findDependNode(MString name);
+
+std::string GetEnv(const std::string& name);
+bool SetEnv(const std::string& name, const std::string& value);
