@@ -801,7 +801,12 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 {
 	RPR_THREAD_ONLY;
 
-	if (mergeShadowCatcher && m.framebufferAOV[RPR_AOV_SHADOW_CATCHER])
+	if ( (aov == RPR_AOV_COLOR) && 
+		mergeShadowCatcher && 
+		m.framebufferAOV[RPR_AOV_SHADOW_CATCHER] &&
+		m.framebufferAOV[RPR_AOV_BACKGROUND] &&
+		m.framebufferAOV[RPR_AOV_OPACITY]
+		)
 	{
 		compositeOutput(pixels, width, height, region, flip);
 		return;
@@ -1846,8 +1851,5 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	}
 
 	rprObjectDelete(frameBufferComposite);
-
-	//combine (Opacity to Alpha)
-	//combineWithOpacity(pixels, region.getArea(), m_opacityData.get());
 }
 
