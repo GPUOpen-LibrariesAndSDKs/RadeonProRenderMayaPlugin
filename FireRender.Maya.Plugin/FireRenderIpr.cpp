@@ -403,9 +403,8 @@ void FireRenderIpr::readFrameBuffer()
 {
 	RPR_THREAD_ONLY;
 
-	m_context.readFrameBuffer(m_pixels.data(),
-		m_context.frameBufferAOV_Resolved(RPR_AOV_COLOR), m_context.width(),
-		m_context.height(), m_region, true, true);
+	m_context.readFrameBuffer(m_pixels.data(), RPR_AOV_COLOR, m_context.width(),
+		m_context.height(), m_region, true);
 }
 
 // -----------------------------------------------------------------------------

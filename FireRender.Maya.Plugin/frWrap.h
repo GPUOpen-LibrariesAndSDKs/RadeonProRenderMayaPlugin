@@ -2325,8 +2325,6 @@ namespace frw
 			rpr_int res;
 			if (d.material)
 			{
-				if (!d.isShadowCatcher)
-				{
 					FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX x_material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.material);
 					res = rprxShapeAttachMaterial(d.context, shape.Handle(), d.material);
 					checkStatus(res);
@@ -2341,7 +2339,6 @@ namespace frw
 						res = rprxMaterialCommit(d.context, d.material);
 						checkStatus(res);
 					}
-				}
 				if (data().isShadowCatcher)
 				{
 					res = rprShapeSetShadowCatcher(shape.Handle(), true);
