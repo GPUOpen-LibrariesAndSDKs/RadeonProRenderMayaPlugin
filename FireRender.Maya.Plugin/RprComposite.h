@@ -2,6 +2,12 @@
 
 #include "RadeonProRender.h"
 
+/**
+ * Class responsible for wrapping rpr_composite object.
+ *
+ * rpr_composite created in constructor. Exception thrown in case of error
+ * rpr_composite destroyed in destructor.
+ */
 class RprComposite
 {
 public:

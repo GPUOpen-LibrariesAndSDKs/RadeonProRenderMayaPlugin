@@ -133,6 +133,14 @@ void FireRenderAOVs::readFromGlobals(const MFnDependencyNode& globals)
 		MPlug uplug = globals.findPlug(aov.attribute);
 		if (!uplug.isNull())
 			aov.active = uplug.asBool();
+
+		//Shadow catcher AOV requires Color, Opacity and BackGround AOVs to be active
+		if ((aov.id == RPR_AOV_SHADOW_CATCHER) && aov.active)
+		{
+			uplug = globals.findPlug("aovBackground");
+			assert(!uplug.isNull());
+			uplug.setBool(true);
+		}
 	}
 }
 

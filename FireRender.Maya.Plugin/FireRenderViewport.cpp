@@ -656,7 +656,10 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 	// The resolved frame buffer is shared with the Maya viewport
 	// when GL interop is active, so only the resolve step is required.
 	if (m_context.isGLInteropActive())
+	{
+		m_context.frameBufferAOV_Resolved(RPR_AOV_COLOR);
 		return;
+	}
 
 	// Read the frame buffer.
 	RenderRegion region(0, m_context.width() - 1, 0, m_context.height() - 1);

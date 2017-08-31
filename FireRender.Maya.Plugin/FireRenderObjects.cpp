@@ -731,16 +731,10 @@ void FireRenderMesh::Rebuild()
 
 	if (meshPath.isValid())
 	{
-		bool shadowCatcherValue = false;
 		MFnDependencyNode nodeFn(node);
 		for (auto i = 0; i < nodeFn.attributeCount(); ++i)
 		{
 			MObject obj = nodeFn.attribute(i);
-		}
-		if (nodeFn.hasAttribute("fireRenderShadowCatcher"))
-		{
-			MPlug shadowCatcherPlug = nodeFn.findPlug("fireRenderShadowCatcher");
-			shadowCatcherValue = shadowCatcherPlug.asBool();
 		}
 
 		for (int i = 0; i < m.elements.size(); i++)
@@ -767,7 +761,6 @@ void FireRenderMesh::Rebuild()
 			{
 				element.shape.SetShader(element.shader);
 				element.shape.SetVolumeShader(element.volumeShader);
-				//element.shape.SetShadowCatcherFlag(shadowCatcherValue);
 				if (element.shader.GetShaderType() == frw::ShaderTypeEmissive)
 					m.isEmissive = true;
 			}

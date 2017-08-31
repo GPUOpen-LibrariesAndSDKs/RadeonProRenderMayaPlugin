@@ -154,12 +154,8 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 {
 	MFnDependencyNode shaderNode(thisMObject());
 
-/*	auto a = scope.GetShader(shaderNode.findPlug(Attribute::inputA));
-	auto b = scope.GetShader(shaderNode.findPlug(Attribute::inputB));*/
-
 	frw::Shader shader(scope.MaterialSystem(), scope.Context(), RPRX_MATERIAL_UBER);
 	shader.SetShadowCatcher(true);
 
 	return shader;
-	//return scope.MaterialSystem().;
 }

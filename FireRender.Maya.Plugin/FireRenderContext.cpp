@@ -656,10 +656,8 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 {
 	RPR_THREAD_ONLY;
 
-	rprContextSetParameterString(0, "tracingfolder", "e:/tmp/maya_trace");
-	rprContextSetParameter1u(0, "tracing", 1);
-
 	auto cachePath = getShaderCachePath();
+
 	if (g_tahoePluginID == -1)
 	{
 #ifdef OSMac_
