@@ -732,10 +732,6 @@ void FireRenderMesh::Rebuild()
 	if (meshPath.isValid())
 	{
 		MFnDependencyNode nodeFn(node);
-		for (auto i = 0; i < nodeFn.attributeCount(); ++i)
-		{
-			MObject obj = nodeFn.attribute(i);
-		}
 
 		for (int i = 0; i < m.elements.size(); i++)
 		{
