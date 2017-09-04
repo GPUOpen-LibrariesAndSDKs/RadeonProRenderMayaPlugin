@@ -1786,6 +1786,8 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	assert(dataSize == (sizeof(RV_PIXEL) * pixelCount));
 
 	auto context = GetContext();
+	// Step 1.
+	// Combine normalized color, background and opacity AOVs using lerp
 	RprComposite compositeBg(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
 	compositeBg.SetInputFb("framebuffer.input", backgroundFrameBuffer);
 
@@ -1809,6 +1811,8 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	compositeLerp1.SetInputC("lerp.color1", compositeColorNorm);
 	compositeLerp1.SetInputC("lerp.weight", compositeOpacityNorm);
 
+	// Step 2.
+	// Combine result from step 1, black color and normalized shadow catcher AOV
 	RprComposite compositeShadowCatcher(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
 	compositeShadowCatcher.SetInputFb("framebuffer.input", shadowCatcherFrameBuffer);
 
@@ -1827,6 +1831,8 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	compositeLerp2.SetInputC("lerp.color1", compositeZero);
 	compositeLerp2.SetInputC("lerp.weight", compositeShadowCatcherNorm);
 
+	// Step 3.
+	// Compute results from step 2 into separate framebuffer
 	rpr_framebuffer frameBufferComposite = 0;
 	rpr_framebuffer_format fmt = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
 	rpr_framebuffer_desc desc;
