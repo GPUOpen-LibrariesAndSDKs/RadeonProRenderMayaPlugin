@@ -23,23 +23,31 @@ RprComposite::~RprComposite()
 
 RprComposite::operator rpr_composite()
 {
+	RPR_THREAD_ONLY;
+
 	return mData;
 }
 
 void RprComposite::SetInputC(const char *inputName, rpr_composite input)
 {
+	RPR_THREAD_ONLY;
+
 	rpr_int status = rprCompositeSetInputC(mData, inputName, input);
 	checkStatus(status);
 }
 
 void RprComposite::SetInputFb(const char *inputName, rpr_framebuffer input)
 {
+	RPR_THREAD_ONLY;
+
 	rpr_int status = rprCompositeSetInputFb(mData, inputName, input);
 	checkStatus(status);
 }
 
 void RprComposite::SetInput4f(const char *inputName, float r, float g, float b, float a)
 {
+	RPR_THREAD_ONLY;
+
 	rpr_int status = rprCompositeSetInput4f(mData, inputName, r, g, b, a);
 	checkStatus(status);
 }
