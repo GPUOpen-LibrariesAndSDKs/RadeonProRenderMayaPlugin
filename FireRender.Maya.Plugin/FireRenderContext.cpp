@@ -799,6 +799,10 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 {
 	RPR_THREAD_ONLY;
 
+	/**
+	 * Shadow catcher can work only if COLOR, BACKGROUND, OPACITY and SHADOW_CATCHER AOVs turned on.
+	 * If all of them turned on and shadow catcher requested - run composite pipeline.
+	 */
 	if ( (aov == RPR_AOV_COLOR) && 
 		mergeShadowCatcher && 
 		m.framebufferAOV[RPR_AOV_SHADOW_CATCHER] &&

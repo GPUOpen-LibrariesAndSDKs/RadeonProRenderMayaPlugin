@@ -134,20 +134,12 @@ MStatus FireMaya::ShadowCatcherMaterial::compute(const MPlug& plug, MDataBlock& 
 {
 	if ((plug == Attribute::output) || (plug.parent() == Attribute::output))
 	{
-/*		MFloatVector& topColor = block.inputValue(Attribute::inputA).asFloatVector();
-		MFloatVector& baseColor = block.inputValue(Attribute::inputB).asFloatVector();
-
-		// set ouput color attribute
-		MDataHandle outColorHandle = block.outputValue(Attribute::output);
-		MFloatVector& outColor = outColorHandle.asFloatVector();
-		outColor = topColor + baseColor;
-		outColorHandle.setClean();
-		block.setClean(plug);*/
+		return MS::kSuccess;
 	}
 	else
+	{
 		return MS::kUnknownParameter;
-
-	return MS::kSuccess;
+	}
 }
 
 frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
