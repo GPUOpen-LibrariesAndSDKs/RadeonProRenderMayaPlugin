@@ -123,7 +123,6 @@ global proc AERPRUberMaterialTemplateNew(string $nodeName)
 	editorTemplate -endLayout;
 
 //	editorTemplate -addControl "Caustics/Shadows";
-//	editorTemplate -addControl "shadowCatcher";
 
 	AEdependNodeTemplate $nodeName;
 
@@ -187,7 +186,6 @@ global proc AERPRUberMaterialTemplateOld(string $nodeName)
 	editorTemplate -endLayout;
 
 	editorTemplate -addControl "Caustics/Shadows";
-	editorTemplate -addControl "shadowCatcher";
 
 	AEdependNodeTemplate $nodeName;
 

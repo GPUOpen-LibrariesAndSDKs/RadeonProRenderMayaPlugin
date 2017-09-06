@@ -27,6 +27,8 @@
 #include "VRay.h"
 #include <chrono>
 
+#include "RprComposite.h"
+
 #include "FireRenderThread.h"
 
 using namespace RPR;
@@ -655,6 +657,7 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 	RPR_THREAD_ONLY;
 
 	auto cachePath = getShaderCachePath();
+
 	if (g_tahoePluginID == -1)
 	{
 #ifdef OSMac_
@@ -765,7 +768,7 @@ rpr_material_system FireRenderContext::materialSystem()
 	return scope.MaterialSystem().Handle();
 }
 
-rpr_framebuffer FireRenderContext::framebufferAOV(int aov) const
+rpr_framebuffer FireRenderContext::frameBufferAOV(int aov) const
 {
 	RPR_THREAD_ONLY;
 
@@ -790,17 +793,35 @@ rpr_framebuffer FireRenderContext::frameBufferAOV_Resolved(int aov) {
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, rpr_framebuffer frameBuffer,
+void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 	unsigned int width, unsigned int height, const RenderRegion& region,
-	bool flip, bool isColor, rpr_framebuffer opacityFrameBuffer)
+	bool flip, bool mergeOpacity, bool mergeShadowCatcher)
 {
 	RPR_THREAD_ONLY;
+
+	/**
+	 * Shadow catcher can work only if COLOR, BACKGROUND, OPACITY and SHADOW_CATCHER AOVs turned on.
+	 * If all of them turned on and shadow catcher requested - run composite pipeline.
+	 */
+	if ( (aov == RPR_AOV_COLOR) && 
+		mergeShadowCatcher && 
+		m.framebufferAOV[RPR_AOV_SHADOW_CATCHER] &&
+		m.framebufferAOV[RPR_AOV_BACKGROUND] &&
+		m.framebufferAOV[RPR_AOV_OPACITY]
+		)
+	{
+		compositeOutput(pixels, width, height, region, flip);
+		return;
+	}
+
 	// A temporary pixel buffer is required if the region is less
 	// than the full width and height, or the image should be flipped.
 	bool useTempData = flip || region.getWidth() < width || region.getHeight() < height;
 
 	// Find the number of pixels in the frame buffer.
 	int pixelCount = width * height;
+
+	rpr_framebuffer frameBuffer = frameBufferAOV_Resolved(aov);
 
 	// Get data from the RPR frame buffer.
 	size_t dataSize;
@@ -819,31 +840,34 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, rpr_framebuffer frameB
 	frstatus = rprFrameBufferGetInfo(frameBuffer, RPR_FRAMEBUFFER_DATA, dataSize, &data[0], nullptr);
 	checkStatus(frstatus);
 
-	if (opacityFrameBuffer != nullptr)
+	if (mergeOpacity)
 	{
-		m_opacityData.resize(pixelCount);
-
-		if (useTempData)
+		rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
+		if (opacityFrameBuffer != nullptr)
 		{
-			m_opacityTempData.resize(pixelCount);
+			m_opacityData.resize(pixelCount);
 
-			frstatus = rprFrameBufferGetInfo(opacityFrameBuffer, RPR_FRAMEBUFFER_DATA, dataSize, m_opacityTempData.get(), nullptr);
-			checkStatus(frstatus);
+			if (useTempData)
+			{
+				m_opacityTempData.resize(pixelCount);
 
-			copyPixels(m_opacityData.get(), m_opacityTempData.get(), width, height, region, flip, false);
-		}
-		else
-		{
-			frstatus = rprFrameBufferGetInfo(opacityFrameBuffer, RPR_FRAMEBUFFER_DATA, dataSize, m_opacityData.get(), nullptr);
-			checkStatus(frstatus);
+				frstatus = rprFrameBufferGetInfo(opacityFrameBuffer, RPR_FRAMEBUFFER_DATA, dataSize, m_opacityTempData.get(), nullptr);
+				checkStatus(frstatus);
+
+				copyPixels(m_opacityData.get(), m_opacityTempData.get(), width, height, region, flip, false);
+			}
+			else
+			{
+				frstatus = rprFrameBufferGetInfo(opacityFrameBuffer, RPR_FRAMEBUFFER_DATA, dataSize, m_opacityData.get(), nullptr);
+				checkStatus(frstatus);
+			}
 		}
 	}
-
 	// Copy the region from the temporary
 	// buffer into supplied pixel memory.
 	if (useTempData)
 	{
-		copyPixels(pixels, data, width, height, region, flip, isColor);
+		copyPixels(pixels, data, width, height, region, flip, aov == RPR_AOV_COLOR);
 	}
 
 	//combine (Opacity to Alpha)
@@ -892,50 +916,6 @@ void FireRenderContext::copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 				(regionHeight - y - 1) * w : y * w;
 
 			memcpy(&dest[destIndex], &source[sourceIndex], sizeof(RV_PIXEL) * regionWidth);
-		}
-	}
-}
-
-// -----------------------------------------------------------------------------
-void FireRenderContext::normalizePixels(RV_PIXEL* pixels, unsigned int size, RV_PIXEL *opacityPixels) const
-{
-	RPR_THREAD_ONLY;
-	// Normalize color values by dividing by the number
-	// of iterations, which is stored in the alpha value.
-	float iterations = 0;
-
-	if (opacityPixels == NULL) {
-		for (unsigned int i = 0; i < size; i++)
-		{
-			iterations = pixels[i].a;
-
-			if (iterations <= 0)
-				continue;
-
-			iterations = 1.0f / iterations;
-
-			pixels[i].r *= iterations;
-			pixels[i].g *= iterations;
-			pixels[i].b *= iterations;
-			pixels[i].a *= 1.0f;
-		}
-	}
-	else {
-		float alpha = 0.0f;
-		for (unsigned int i = 0; i < size; i++)
-		{
-			iterations = pixels[i].a;
-			alpha = opacityPixels[i].r;
-
-			if (iterations <= 0)
-				continue;
-
-			iterations = 1.0f / iterations;
-
-			pixels[i].r *= iterations;
-			pixels[i].g *= iterations;
-			pixels[i].b *= iterations;
-			pixels[i].a = alpha;
 		}
 	}
 }
@@ -1779,3 +1759,105 @@ void FireRenderContext::UpdateGround(const FireRenderGlobalsData& data)
 		}
 	}
 }
+
+// -----------------------------------------------------------------------------
+void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region, bool flip)
+{
+	RPR_THREAD_ONLY;
+	// A temporary pixel buffer is required if the region is less
+	// than the full width and height, or the image should be flipped.
+	bool useTempData = flip || region.getWidth() < width || region.getHeight() < height;
+
+	// Find the number of pixels in the frame buffer.
+	int pixelCount = width * height;
+
+	rpr_framebuffer frameBuffer = frameBufferAOV(RPR_AOV_COLOR);
+	rpr_framebuffer opacityFrameBuffer = frameBufferAOV(RPR_AOV_OPACITY);
+	rpr_framebuffer shadowCatcherFrameBuffer = frameBufferAOV(RPR_AOV_SHADOW_CATCHER);
+	rpr_framebuffer backgroundFrameBuffer = frameBufferAOV(RPR_AOV_BACKGROUND);
+
+	// Get data from the RPR frame buffer.
+	size_t dataSize;
+	rpr_int frstatus = rprFrameBufferGetInfo(frameBuffer, RPR_FRAMEBUFFER_DATA, 0, nullptr, &dataSize);
+	checkStatus(frstatus);
+
+	// Check that the reported frame buffer size
+	// in bytes matches the required dimensions.
+	assert(dataSize == (sizeof(RV_PIXEL) * pixelCount));
+
+	auto context = GetContext();
+	// Step 1.
+	// Combine normalized color, background and opacity AOVs using lerp
+	RprComposite compositeBg(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
+	compositeBg.SetInputFb("framebuffer.input", backgroundFrameBuffer);
+
+	RprComposite compositeColor(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
+	compositeColor.SetInputFb("framebuffer.input", frameBuffer);
+
+	RprComposite compositeOpacity(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
+	compositeOpacity.SetInputFb("framebuffer.input", opacityFrameBuffer);
+
+	RprComposite compositeBgNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
+	compositeBgNorm.SetInputC("normalize.color", compositeBg);
+
+	RprComposite compositeColorNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
+	compositeColorNorm.SetInputC("normalize.color", compositeColor);
+
+	RprComposite compositeOpacityNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
+	compositeOpacityNorm.SetInputC("normalize.color", compositeOpacity);
+
+	RprComposite compositeLerp1(context.Handle(), RPR_COMPOSITE_LERP_VALUE);
+	compositeLerp1.SetInputC("lerp.color0", compositeBgNorm);
+	compositeLerp1.SetInputC("lerp.color1", compositeColorNorm);
+	compositeLerp1.SetInputC("lerp.weight", compositeOpacityNorm);
+
+	// Step 2.
+	// Combine result from step 1, black color and normalized shadow catcher AOV
+	RprComposite compositeShadowCatcher(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
+	compositeShadowCatcher.SetInputFb("framebuffer.input", shadowCatcherFrameBuffer);
+
+	RprComposite compositeOne(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	compositeOne.SetInput4f("constant.input", 1.0f, 0.0f, 0.0f, 0.0f);
+
+	RprComposite compositeZero(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	compositeZero.SetInput4f("constant.input", 0.0f, 0.0f, 0.0f, 1.0f);
+
+	RprComposite compositeShadowCatcherNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
+	compositeShadowCatcherNorm.SetInputC("normalize.color", compositeShadowCatcher);
+	compositeShadowCatcherNorm.SetInputC("normalize.shadowcatcher", compositeOne);
+	
+	RprComposite compositeLerp2(context.Handle(), RPR_COMPOSITE_LERP_VALUE);
+	compositeLerp2.SetInputC("lerp.color0", compositeLerp1);
+	compositeLerp2.SetInputC("lerp.color1", compositeZero);
+	compositeLerp2.SetInputC("lerp.weight", compositeShadowCatcherNorm);
+
+	// Step 3.
+	// Compute results from step 2 into separate framebuffer
+	rpr_framebuffer frameBufferComposite = 0;
+	rpr_framebuffer_format fmt = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
+	rpr_framebuffer_desc desc;
+	desc.fb_width = width;
+	desc.fb_height = height;
+
+	frstatus = rprContextCreateFrameBuffer(context.Handle(), fmt, &desc, &frameBufferComposite);
+	checkStatus(frstatus);
+	frstatus = rprCompositeCompute(compositeLerp2, frameBufferComposite);
+	checkStatus(frstatus);
+
+	// Copy the frame buffer into temporary memory, if
+	// required, or directly into the supplied pixel buffer.
+	if (useTempData)
+		m_tempData.resize(pixelCount);
+	RV_PIXEL* data = useTempData ? m_tempData.get() : pixels;
+	frstatus = rprFrameBufferGetInfo(frameBufferComposite, RPR_FRAMEBUFFER_DATA, dataSize, &data[0], nullptr);
+	checkStatus(frstatus);
+	// Copy the region from the temporary
+	// buffer into supplied pixel memory.
+	if (useTempData)
+	{
+		copyPixels(pixels, data, width, height, region, flip, true);
+	}
+
+	rprObjectDelete(frameBufferComposite);
+}
+

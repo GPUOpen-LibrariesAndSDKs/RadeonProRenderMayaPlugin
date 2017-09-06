@@ -49,6 +49,7 @@
 #include "FireRenderNoise.h"
 #include "SubsurfaceMaterial.h"
 #include "FireRenderUtils.h"
+#include "FireRenderShadowCatcherMaterial.h"
 
 #include "FireRenderImportExportXML.h"
 #include "FireRenderImageComparing.h"
@@ -522,6 +523,10 @@ MStatus initializePlugin(MObject obj)
 		FireMaya::TransparentMaterial::initialize,
 		MPxNode::kDependNode, &UserClassify));
 
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "ShadowCatcherMaterial", FireMaya::ShadowCatcherMaterial::FRTypeID(),
+		FireMaya::ShadowCatcherMaterial::creator,
+		FireMaya::ShadowCatcherMaterial::initialize,
+		MPxNode::kDependNode, &UserClassify));
 
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "Displacement", FireMaya::Displacement::FRTypeID(),
 		FireMaya::Displacement::creator,
@@ -598,6 +603,7 @@ MStatus initializePlugin(MObject obj)
 		FireMaya::Normal::creator,
 		FireMaya::Normal::initialize,
 		MPxNode::kDependNode, &UserUtilityClassify));
+
 
 	// Initialize the viewport render override.
 	FireRenderOverride::instance()->initialize();

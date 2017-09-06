@@ -196,21 +196,22 @@ public:
 	rpr_material_system materialSystem();
 
 	// Return the framebuffer
-	rpr_framebuffer framebufferAOV(int aov) const;
+	rpr_framebuffer frameBufferAOV(int aov) const;
 	rpr_framebuffer frameBufferAOV_Resolved(int aov);
 
 	// Read frame buffer pixels and optionally normalize and flip the image.
-	void readFrameBuffer(RV_PIXEL* pixels, rpr_framebuffer frameBuffer,
+	void readFrameBuffer(RV_PIXEL* pixels, int aov,
 		unsigned int width, unsigned int height, const RenderRegion& region,
-		bool flip, bool isColor, rpr_framebuffer opacityFrameBuffer = NULL);
+		bool flip, bool mergeOpacity = false, bool mergeShadowCatcher = false);
 
+	// Composite image for Shadow Catcher
+	void compositeOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region,
+		bool flip);
+	
 	// Copy pixels from the source buffer to the destination buffer.
 	void copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 		unsigned int sourceWidth, unsigned int sourceHeight,
 		const RenderRegion& region, bool flip, bool isColor) const;
-
-	// Normalize the specified pixel buffer.
-	void normalizePixels(RV_PIXEL* pixels, unsigned int size, RV_PIXEL *opacityPixels = NULL) const;
 
 	// Combine pixels (set alpha) with Opacity pixels
 	void combineWithOpacity(RV_PIXEL* pixels, unsigned int size, RV_PIXEL *opacityPixels = NULL) const;

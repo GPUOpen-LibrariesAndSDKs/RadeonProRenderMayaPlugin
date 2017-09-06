@@ -213,6 +213,7 @@
     <ClCompile Include="FireRenderPassthrough.cpp" />
     <ClCompile Include="FireRenderPortableUtils.cpp" />
     <ClCompile Include="FireRenderProduction.cpp" />
+    <ClCompile Include="FireRenderShadowCatcherMaterial.cpp" />
     <ClCompile Include="FireRenderSkyLocator.cpp" />
     <ClCompile Include="FireRenderStandardMaterial.cpp" />
     <ClCompile Include="FireRenderSurfaceOverride.cpp" />
@@ -237,6 +238,7 @@
     <ClCompile Include="RenderCacheWarningDialog.cpp" />
     <ClCompile Include="RenderProgressBars.cpp" />
     <ClCompile Include="RenderStamp.cpp" />
+    <ClCompile Include="RprComposite.cpp" />
     <ClCompile Include="ShadersManager.cpp" />
     <ClCompile Include="SkyAttributes.cpp" />
     <ClCompile Include="SkyBuilder.cpp" />
@@ -316,6 +318,7 @@
     <ClInclude Include="FireRenderPassthrough.h" />
     <ClInclude Include="FireRenderPortableUtils.h" />
     <ClInclude Include="FireRenderProduction.h" />
+    <ClInclude Include="FireRenderShadowCatcherMaterial.h" />
     <ClInclude Include="FireRenderSkyLocator.h" />
     <ClInclude Include="FireRenderStandardMaterial.h" />
     <ClInclude Include="FireRenderSurfaceOverride.h" />
@@ -346,6 +349,7 @@
     <ClInclude Include="RenderRegion.h" />
     <ClInclude Include="RenderStamp.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="RprComposite.h" />
     <ClInclude Include="ShadersManager.h" />
     <ClInclude Include="SkyAttributes.h" />
     <ClInclude Include="SkyBuilder.h" />

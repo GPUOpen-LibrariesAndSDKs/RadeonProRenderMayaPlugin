@@ -653,13 +653,13 @@ MStatus FireRenderViewport::refreshContext()
 // -----------------------------------------------------------------------------
 void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 {
-	// Get the resolved frame buffer. This also performs the resolve
-	rpr_framebuffer fb = m_context.frameBufferAOV_Resolved(RPR_AOV_COLOR);
-
 	// The resolved frame buffer is shared with the Maya viewport
 	// when GL interop is active, so only the resolve step is required.
 	if (m_context.isGLInteropActive())
+	{
+		m_context.frameBufferAOV_Resolved(RPR_AOV_COLOR);
 		return;
+	}
 
 	// Read the frame buffer.
 	RenderRegion region(0, m_context.width() - 1, 0, m_context.height() - 1);
@@ -668,13 +668,13 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 	if (storedFrame)
 	{
 		m_context.readFrameBuffer(reinterpret_cast<RV_PIXEL*>(storedFrame->data()),
-			fb, m_context.width(), m_context.height(), region, false, true);
+			RPR_AOV_COLOR, m_context.width(), m_context.height(), region, false);
 	}
 
 	// Otherwise, read to a temporary buffer.
 	else
 	{
-		m_context.readFrameBuffer(m_pixels.data(), fb, m_context.width(), m_context.height(), region, false, true);
+		m_context.readFrameBuffer(m_pixels.data(), RPR_AOV_COLOR, m_context.width(), m_context.height(), region, false);
 
 		// Flag as updated so the pixels will
 		// be copied to the viewport texture.

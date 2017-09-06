@@ -2250,9 +2250,11 @@ namespace frw
 			rprx_context context = nullptr;
 			rprx_material material = nullptr; // RPRX material
 			std::map<std::string, rpr_material_node> inputs;
+			bool isShadowCatcher = false;
 		};
 
 	public:
+		void SetShadowCatcher(bool isShadowCatcher) { data().isShadowCatcher = isShadowCatcher; }
 		Shader(DataPtr p)
 		{
 			m = p;
@@ -2326,15 +2328,13 @@ namespace frw
 				FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX x_material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.material);
 				res = rprxShapeAttachMaterial(d.context, shape.Handle(), d.material);
 				checkStatus(res);
-				// An idea behind this line ("if") is to compile material only once, and reuse it for all
-				// shapes. Unfortunately this won't work - rprxShapeAttachMaterial is not enough to attach
-				// rprx material to a shape, rprxMaterialCommit is required.
-//				if (d.numAttachedShapes == 1)
+
+				res = rprxMaterialCommit(d.context, d.material);
+				checkStatus(res);
+
+				if (d.isShadowCatcher)
 				{
-					// Compile shader only once. We're relying on plugin's behavior: shader is never modified.
-					// When something is changed in Max/Maya material, shader is entirely recreated. So, if
-					// material will be changed, we'll get another instance of RPR Shader class.
-					res = rprxMaterialCommit(d.context, d.material);
+					res = rprShapeSetShadowCatcher(shape.Handle(), true);
 					checkStatus(res);
 				}
 			}
@@ -2354,6 +2354,12 @@ namespace frw
 			{
 				rpr_int res = rprxShapeDetachMaterial(d.context, shape.Handle(), d.material);
 				checkStatus(res);
+
+				if (d.isShadowCatcher)
+				{
+					res = rprShapeSetShadowCatcher(shape.Handle(), false);
+					checkStatus(res);
+				}
 			}
 //			else -- RPR 1.262 crashes when changing any RPRX parameter (when creating new material and replacing old one); mirroring call to rpr API fixes that
 			{

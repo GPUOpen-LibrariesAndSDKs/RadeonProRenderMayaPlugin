@@ -756,6 +756,8 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 		attrControlGrp -label "Shading Normal" -attribute "RadeonProRenderGlobals.aovShadingNormal";
 		attrControlGrp -label "Depth" -attribute "RadeonProRenderGlobals.aovDepth";
 		attrControlGrp -label "Object ID" -attribute "RadeonProRenderGlobals.aovObjectId";
+		attrControlGrp -label "Shadow Catcher" -attribute "RadeonProRenderGlobals.aovShadowCatcher";
+		attrControlGrp -label "Background" -attribute "RadeonProRenderGlobals.aovBackground";
 
 	setParent ..;
 	setUITemplate -popTemplate;
