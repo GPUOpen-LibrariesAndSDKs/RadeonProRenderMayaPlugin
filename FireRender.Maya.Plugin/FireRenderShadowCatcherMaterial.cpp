@@ -144,10 +144,35 @@ MStatus FireMaya::ShadowCatcherMaterial::compute(const MPlug& plug, MDataBlock& 
 
 frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 {
+#define GET_BOOL(_attrib_) \
+	shaderNode.findPlug(Attribute::_attrib_).asBool()
+
+#define GET_VALUE(_attrib_) \
+	scope.GetValue(shaderNode.findPlug(Attribute::_attrib_))
+	
 	MFnDependencyNode shaderNode(thisMObject());
 
 	frw::Shader shader(scope.MaterialSystem(), scope.Context(), RPRX_MATERIAL_UBER);
+	
+	// Normal map
+	if (GET_BOOL(useNormalMap))
+	{
+		frw::Value value = GET_VALUE(normalMap);
+		int type = value.GetNodeType();
+		if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
+		{
+			shader.xSetValue(RPRX_UBER_MATERIAL_NORMAL, value);
+		}
+		else if (type >= 0)
+		{
+			ErrorPrint("%s NormalMap: invalid node type %d\n", shaderNode.name().asChar(), value.GetNodeType());
+		}
+	}
+
 	shader.SetShadowCatcher(true);
 
 	return shader;
+
+#undef GET_BOOL
+#undef GET_VALUE
 }
