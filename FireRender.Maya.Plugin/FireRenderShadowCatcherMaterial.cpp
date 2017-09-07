@@ -10,6 +10,9 @@
 #include <maya/MFloatVector.h>
 #include <maya/MDataBlock.h>
 #include <maya/MDataHandle.h>
+#include <maya/MPlugArray.h>
+
+#include "FireRenderDisplacement.h"
 
 #include "FireMaya.h"
 
@@ -144,20 +147,16 @@ MStatus FireMaya::ShadowCatcherMaterial::compute(const MPlug& plug, MDataBlock& 
 
 frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 {
-#define GET_BOOL(_attrib_) \
-	shaderNode.findPlug(Attribute::_attrib_).asBool()
-
-#define GET_VALUE(_attrib_) \
-	scope.GetValue(shaderNode.findPlug(Attribute::_attrib_))
 	
 	MFnDependencyNode shaderNode(thisMObject());
 
 	frw::Shader shader(scope.MaterialSystem(), scope.Context(), RPRX_MATERIAL_UBER);
 	
+	// Code below this line copyed from FireRenderStandardMaterial
 	// Normal map
-	if (GET_BOOL(useNormalMap))
+	if (shaderNode.findPlug(Attribute::useNormalMap).asBool())
 	{
-		frw::Value value = GET_VALUE(normalMap);
+		frw::Value value = scope.GetValue(shaderNode.findPlug(Attribute::normalMap));
 		int type = value.GetNodeType();
 		if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
 		{
@@ -169,10 +168,50 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 		}
 	}
 
+	// Special code for displacement map. We're using GetDisplacementNode() function which is called twice:
+	// from this function, and from FireRenderMesh::setupDisplacement(). This is done because RPRX UberMaterial
+	// doesn't have capabilities to set any displacement parameters except map image, so we're setting other
+	// parameters from FireRenderMesh. If we'll skip setting RPRX_UBER_MATERIAL_DISPLACEMENT parameter here,
+	// RPRX will reset displacement map in some unpredicted cases.
+	MObject displacementNode = GetDisplacementNode();
+	if (displacementNode != MObject::kNullObj)
+	{
+		MFnDependencyNode dispShaderNode(displacementNode);
+		FireMaya::Displacement* displacement = dynamic_cast<FireMaya::Displacement*>(dispShaderNode.userNode());
+		if (displacement)
+		{
+			float minHeight, maxHeight, creaseWeight;
+			int subdivision, boundary;
+			frw::Value mapValue;
+
+			bool haveDisplacement = displacement->getValues(mapValue, scope, minHeight, maxHeight, subdivision, creaseWeight, boundary);
+			if (haveDisplacement)
+			{
+				shader.xSetValue(RPRX_UBER_MATERIAL_DISPLACEMENT, mapValue);
+			}
+		}
+	}
+	
 	shader.SetShadowCatcher(true);
 
 	return shader;
+}
 
-#undef GET_BOOL
-#undef GET_VALUE
+MObject FireMaya::ShadowCatcherMaterial::GetDisplacementNode()
+{
+	MFnDependencyNode shaderNode(thisMObject());
+
+	if (!shaderNode.findPlug(Attribute::useDispMap).asBool())
+		return MObject::kNullObj;
+
+	MPlug plug = shaderNode.findPlug(Attribute::dispMap);
+	if (plug.isNull())
+		return MObject::kNullObj;
+
+	MPlugArray shaderConnections;
+	plug.connectedTo(shaderConnections, true, false);
+	if (shaderConnections.length() == 0)
+		return MObject::kNullObj;
+	MObject node = shaderConnections[0].node();
+	return node;
 }
