@@ -1,7 +1,0 @@
- <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-
-    <assemblyIdentity name="synColorMgr" processorArchitecture="AMD64" version="1.0.0.0" type="win32" />
-
-    <file name = "synColor.dll"/>
-
-    </assembly>

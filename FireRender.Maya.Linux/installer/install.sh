@@ -6,7 +6,6 @@ installDirectory="/opt/AMD/RadeonProRenderPlugins/Maya"
 # Required packages.
 packageEmbree='embree-lib-2.12.0'
 packageOpenImageIO='OpenImageIO-1.2.3'
-packageOpenColorIO='OpenColorIO'
 packageLibgomp='libgomp'
 packageGlibc='glibc'
 
@@ -99,11 +98,6 @@ fi
 
 if ! rpm -q $packageOpenImageIO 2>&1 > /dev/null; then
     echo -e "${red}Unable to install required package: $packageOpenImageIO.${default}" 
-    exit 1
-fi
-
-if ! rpm -q $packageOpenColorIO 2>&1 > /dev/null; then
-    echo -e "${red}Unable to install required package: $packageOpenColorIO.${default}"
     exit 1
 fi
 

@@ -2679,9 +2679,6 @@ namespace frw
 
 	inline void Shape::SetVolumeShader(const frw::Shader& shader)
 	{
-		if (!shader)
-			return;
-
 		if( auto old = GetVolumeShader() )
 		{
 			if( old == shader )	// no change?

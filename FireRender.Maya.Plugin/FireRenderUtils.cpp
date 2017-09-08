@@ -1663,20 +1663,3 @@ void CheckGlError()
 	}
 }
 
-std::string GetEnv(const std::string& name)
-{
-	return std::getenv(name.c_str());
-}
-
-bool SetEnv(const std::string& name, const std::string& value)
-{
-#ifdef WIN32
-	auto path = name + "=" + value;
-	int result = _putenv(path.c_str());
-#elif __linux__
-	int result = setenv(name.c_str(), value.c_str(), 1);
-#elif OSMac_
-	int result = setenv(name.c_str(), value.c_str(), 1);
-#endif
-	return result == 0 ? true : false;
-}
