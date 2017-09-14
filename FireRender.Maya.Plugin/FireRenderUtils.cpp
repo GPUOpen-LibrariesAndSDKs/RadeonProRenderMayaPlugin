@@ -34,6 +34,15 @@
 #include "float.h"
 #endif
 
+#ifdef __APPLE__
+#ifndef FLT_MAX
+#include <math.h>
+#ifdef __FLT_MAX__
+#define FLT_MAX __FLT_MAX__
+#endif
+#endif
+#endif
+
 #ifndef MAYA2015
 #include <maya/MUuid.h>
 #endif

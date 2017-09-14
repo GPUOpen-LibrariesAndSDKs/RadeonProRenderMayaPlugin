@@ -1,0 +1,315 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4D1B13AE1DA51D04007BDCCD /* MyInstallerPane.m in Sources */ = {isa = PBXBuildFile; fileRef = 4D1B13AD1DA51D04007BDCCD /* MyInstallerPane.m */; };
+		4D1B13B11DA51D04007BDCCD /* MyInstallerPane.xib in Resources */ = {isa = PBXBuildFile; fileRef = 4D1B13AF1DA51D04007BDCCD /* MyInstallerPane.xib */; };
+		4D1B13B41DA51D04007BDCCD /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4D1B13B21DA51D04007BDCCD /* Localizable.strings */; };
+		4D1B13B61DA51D04007BDCCD /* InstallerSections.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4D1B13B51DA51D04007BDCCD /* InstallerSections.plist */; };
+		4D1B13BA1DA51D04007BDCCD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 4D1B13B81DA51D04007BDCCD /* InfoPlist.strings */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		4D1B13A91DA51D04007BDCCD /* RDRRegistrationCheck.bundle */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RDRRegistrationCheck.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		4D1B13AC1DA51D04007BDCCD /* MyInstallerPane.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = MyInstallerPane.h; sourceTree = "<group>"; };
+		4D1B13AD1DA51D04007BDCCD /* MyInstallerPane.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = MyInstallerPane.m; sourceTree = "<group>"; };
+		4D1B13B01DA51D04007BDCCD /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/MyInstallerPane.xib; sourceTree = "<group>"; };
+		4D1B13B31DA51D04007BDCCD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		4D1B13B51DA51D04007BDCCD /* InstallerSections.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = InstallerSections.plist; sourceTree = "<group>"; };
+		4D1B13B71DA51D04007BDCCD /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		4D1B13B91DA51D04007BDCCD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		4D1B13A61DA51D04007BDCCD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		4D1B13A01DA51D04007BDCCD = {
+			isa = PBXGroup;
+			children = (
+				4D1B13AB1DA51D04007BDCCD /* RDRRegistrationCheck */,
+				4D1B13AA1DA51D04007BDCCD /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		4D1B13AA1DA51D04007BDCCD /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				4D1B13A91DA51D04007BDCCD /* RDRRegistrationCheck.bundle */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		4D1B13AB1DA51D04007BDCCD /* RDRRegistrationCheck */ = {
+			isa = PBXGroup;
+			children = (
+				4D1B13AC1DA51D04007BDCCD /* MyInstallerPane.h */,
+				4D1B13AD1DA51D04007BDCCD /* MyInstallerPane.m */,
+				4D1B13AF1DA51D04007BDCCD /* MyInstallerPane.xib */,
+				4D1B13B21DA51D04007BDCCD /* Localizable.strings */,
+				4D1B13B51DA51D04007BDCCD /* InstallerSections.plist */,
+				4D1B13B71DA51D04007BDCCD /* Info.plist */,
+				4D1B13B81DA51D04007BDCCD /* InfoPlist.strings */,
+			);
+			path = RDRRegistrationCheck;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		4D1B13A81DA51D04007BDCCD /* RDRRegistrationCheck */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 4D1B13BD1DA51D04007BDCCD /* Build configuration list for PBXNativeTarget "RDRRegistrationCheck" */;
+			buildPhases = (
+				4D1B13A51DA51D04007BDCCD /* Sources */,
+				4D1B13A61DA51D04007BDCCD /* Frameworks */,
+				4D1B13A71DA51D04007BDCCD /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RDRRegistrationCheck;
+			productName = RDRRegistrationCheck;
+			productReference = 4D1B13A91DA51D04007BDCCD /* RDRRegistrationCheck.bundle */;
+			productType = "com.apple.product-type.bundle";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4D1B13A11DA51D04007BDCCD /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0810;
+				ORGANIZATIONNAME = AMD;
+				TargetAttributes = {
+					4D1B13A81DA51D04007BDCCD = {
+						CreatedOnToolsVersion = 8.0;
+						DevelopmentTeam = 865M6K8X2A;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 4D1B13A41DA51D04007BDCCD /* Build configuration list for PBXProject "RDRRegistrationCheck" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 4D1B13A01DA51D04007BDCCD;
+			productRefGroup = 4D1B13AA1DA51D04007BDCCD /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				4D1B13A81DA51D04007BDCCD /* RDRRegistrationCheck */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		4D1B13A71DA51D04007BDCCD /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D1B13B11DA51D04007BDCCD /* MyInstallerPane.xib in Resources */,
+				4D1B13BA1DA51D04007BDCCD /* InfoPlist.strings in Resources */,
+				4D1B13B41DA51D04007BDCCD /* Localizable.strings in Resources */,
+				4D1B13B61DA51D04007BDCCD /* InstallerSections.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		4D1B13A51DA51D04007BDCCD /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4D1B13AE1DA51D04007BDCCD /* MyInstallerPane.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		4D1B13AF1DA51D04007BDCCD /* MyInstallerPane.xib */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4D1B13B01DA51D04007BDCCD /* Base */,
+			);
+			name = MyInstallerPane.xib;
+			sourceTree = "<group>";
+		};
+		4D1B13B21DA51D04007BDCCD /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4D1B13B31DA51D04007BDCCD /* en */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		4D1B13B81DA51D04007BDCCD /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4D1B13B91DA51D04007BDCCD /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		4D1B13BB1DA51D04007BDCCD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_SUSPICIOUS_MOVES = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		4D1B13BC1DA51D04007BDCCD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_SUSPICIOUS_MOVES = YES;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		4D1B13BE1DA51D04007BDCCD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 865M6K8X2A;
+				INFOPLIST_FILE = RDRRegistrationCheck/Info.plist;
+				INSTALL_PATH = "$(HOME)/Library/Bundles";
+				PRODUCT_BUNDLE_IDENTIFIER = com.AMD.RDRRegistrationCheck;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = bundle;
+			};
+			name = Debug;
+		};
+		4D1B13BF1DA51D04007BDCCD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = 865M6K8X2A;
+				INFOPLIST_FILE = RDRRegistrationCheck/Info.plist;
+				INSTALL_PATH = "$(HOME)/Library/Bundles";
+				PRODUCT_BUNDLE_IDENTIFIER = com.AMD.RDRRegistrationCheck;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = bundle;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		4D1B13A41DA51D04007BDCCD /* Build configuration list for PBXProject "RDRRegistrationCheck" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4D1B13BB1DA51D04007BDCCD /* Debug */,
+				4D1B13BC1DA51D04007BDCCD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		4D1B13BD1DA51D04007BDCCD /* Build configuration list for PBXNativeTarget "RDRRegistrationCheck" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4D1B13BE1DA51D04007BDCCD /* Debug */,
+				4D1B13BF1DA51D04007BDCCD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4D1B13A11DA51D04007BDCCD /* Project object */;
+}

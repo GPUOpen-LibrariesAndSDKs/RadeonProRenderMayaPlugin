@@ -56,7 +56,7 @@ namespace FireMaya
 			}
 #elif defined(OSMac_)
 			size_t bufLen = 256;
-			sysctlbyname("machdep.cpu.brand_string", &buffer, &buflen, NULL, 0);
+			sysctlbyname("machdep.cpu.brand_string", &buffer, &bufLen, NULL, 0);
 #elif defined(__linux__)
 			std::string line;
 			std::ifstream finfo("/proc/cpuinfo");

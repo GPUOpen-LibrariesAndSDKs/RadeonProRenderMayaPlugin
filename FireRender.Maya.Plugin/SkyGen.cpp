@@ -37,16 +37,20 @@
 
 #include "SkyGen.h"
 #include <assert.h>
+#ifndef __APPLE__
 #include <omp.h>
+#else
+#include <cmath>
+#endif
 #include "Hosek/ArHosekSkyModel.h"
 #include <algorithm>
 #include <math.h>
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__APPLE__)
 #define CHECK_NE(x, y) assert(x != y)
 #endif
 
-using namespace std;
+//using namespace std;
 
 const int nRGB2SpectSamples = 32;
 const float sampledLambdaStart = 400.0f;
@@ -1261,8 +1265,13 @@ float AverageSpectrumSamples(const float *lambda, const float *vals, int n, floa
 			vals[i + 1]);
 	};
 	for (; i + 1 < n && lambdaEnd >= lambda[i]; ++i) {
+#ifdef __APPLE__
+        float segLambdaStart = fmax(lambdaStart, lambda[i]);
+        float segLambdaEnd = fmin(lambdaEnd, lambda[i + 1]);
+#else
 		float segLambdaStart = max(lambdaStart, lambda[i]);
 		float segLambdaEnd = min(lambdaEnd, lambda[i + 1]);
+#endif
 		sum += 0.5f * (interp(segLambdaStart, i) + interp(segLambdaEnd, i)) *
 			(segLambdaEnd - segLambdaStart);
 	}
