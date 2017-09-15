@@ -50,7 +50,7 @@
 #define CHECK_NE(x, y) assert(x != y)
 #endif
 
-//using namespace std;
+using namespace std;
 
 const int nRGB2SpectSamples = 32;
 const float sampledLambdaStart = 400.0f;
