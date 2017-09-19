@@ -2251,10 +2251,32 @@ namespace frw
 			rprx_material material = nullptr; // RPRX material
 			std::map<std::string, rpr_material_node> inputs;
 			bool isShadowCatcher = false;
+			float mShadowR = 0.0f;
+			float mShadowG = 0.0f;
+			float mShadowB = 0.0f;
+			float mShadowA = 0.0f;
 		};
 
 	public:
 		void SetShadowCatcher(bool isShadowCatcher) { data().isShadowCatcher = isShadowCatcher; }
+		bool IsShadowCatcher() { return data().isShadowCatcher; }
+		void SetShadowColor(float r, float g, float b, float a)
+		{
+			data().mShadowR = r;
+			data().mShadowG = g;
+			data().mShadowB = b;
+			data().mShadowA = a;
+		}
+		void GetShadowColor(float *r, float *g, float *b, float *a)
+		{
+			*r = data().mShadowR;
+			*g = data().mShadowG;
+			*b = data().mShadowB;
+			*a = data().mShadowA;
+		}
+
+
+
 		Shader(DataPtr p)
 		{
 			m = p;

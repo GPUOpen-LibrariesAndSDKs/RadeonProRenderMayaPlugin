@@ -20,12 +20,13 @@ namespace
 {
 	namespace Attribute
 	{
+/* Disabled since it doesn't supported for now
 		MObject bgIsEnv;
 		MObject bgWeight;
 		MObject	bgColor;
 		MObject refOverride;
 		MObject refWeight;
-		MObject refColor;
+		MObject refColor;*/
 		MObject shadowColor;
 		MObject shadowWeight;
 		MObject shadowTransparency;
@@ -68,15 +69,15 @@ MStatus FireMaya::ShadowCatcherMaterial::initialize()
 	
 	std::vector<AttributeEntry<float>> floatAttributes =
 	{
-		{&Attribute::bgWeight, "bgWeight", "bgw", 0.0, 1.0, 1.0, MFnNumericData::kFloat},
-		{&Attribute::refWeight, "refWeight", "rw", 0.0, 1.0, 1.0, MFnNumericData::kFloat},
+//		{&Attribute::bgWeight, "bgWeight", "bgw", 0.0, 1.0, 1.0, MFnNumericData::kFloat},
+//		{&Attribute::refWeight, "refWeight", "rw", 0.0, 1.0, 1.0, MFnNumericData::kFloat},
 		{&Attribute::shadowTransparency, "shadowTransp", "st", 0.0, 1.0, 0.0, MFnNumericData::kFloat},
 		{&Attribute::shadowWeight, "shadowWeight", "sw", 0.0, 1.0, 1.0, MFnNumericData::kFloat}
 	};
 	std::vector<AttributeEntry<bool>> boolAttributes = 
 	{
-		{ &Attribute::bgIsEnv, "bgIsEnv", "bgie", 0, 0, 1, MFnNumericData::kBoolean },
-		{ &Attribute::refOverride, "refOverride", "ro", 0, 0, 0, MFnNumericData::kBoolean },
+//		{ &Attribute::bgIsEnv, "bgIsEnv", "bgie", 0, 0, 1, MFnNumericData::kBoolean },
+//		{ &Attribute::refOverride, "refOverride", "ro", 0, 0, 0, MFnNumericData::kBoolean },
 		{ &Attribute::useNormalMap, "useNormalMap", "unm", 0, 0, 0, MFnNumericData::kBoolean },
 		{ &Attribute::useDispMap, "useDispMap", "udm", 0, 0, 0, MFnNumericData::kBoolean },
 		{ &Attribute::disableSwatch, "disableSwatch", "ds", 0, 0, 0, MFnNumericData::kBoolean }
@@ -84,8 +85,8 @@ MStatus FireMaya::ShadowCatcherMaterial::initialize()
 
 	std::vector<ColorAttributeEntry> colorAttributes = 
 	{
-		{&Attribute::bgColor, "bgColor", "bgc", {0.0f, 0.0f, 0.0f} },
-		{&Attribute::refColor, "refColor", "rc", { 0.0f, 0.0f, 0.0f } },
+//		{&Attribute::bgColor, "bgColor", "bgc", {0.0f, 0.0f, 0.0f} },
+//		{&Attribute::refColor, "refColor", "rc", { 0.0f, 0.0f, 0.0f } },
 		{&Attribute::shadowColor, "shadowColor", "sc", { 0.0f, 0.0f, 0.0f } },
 		{&Attribute::normalMap, "normalMap", "nm", { 0.0f, 0.0f, 0.0f } },
 		{&Attribute::dispMap, "dispMap", "dm", { 0.0f, 0.0f, 0.0f } }
@@ -192,6 +193,18 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 		}
 	}
 	
+	frw::Value shadowColor = scope.GetValue(shaderNode.findPlug(Attribute::shadowColor));
+	frw::Value shadowAlpha = scope.GetValue(shaderNode.findPlug(Attribute::shadowTransparency));
+	if (shadowColor.IsFloat())
+	{
+		float r = shadowColor.GetX();
+		float g = shadowColor.GetY();
+		float b = shadowColor.GetZ();
+		float a = shadowColor.GetX();
+		shader.SetShadowColor(r, g, b, a);
+	}
+	//if (type == frw::ValueType)
+
 	shader.SetShadowCatcher(true);
 
 	return shader;

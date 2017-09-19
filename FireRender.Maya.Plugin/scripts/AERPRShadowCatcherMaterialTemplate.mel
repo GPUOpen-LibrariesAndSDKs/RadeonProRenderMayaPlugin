@@ -9,13 +9,13 @@ global proc AERPRShadowCatcherMaterialTemplate( string $nodeName )
 	editorTemplate -endLayout;
 
 	editorTemplate -beginLayout "Shadow Catcher Attributes" -collapse 0;
-		editorTemplate -l "Background is Environment" -addControl "bgIsEnv";
-		editorTemplate -l "Background weight" -addControl "bgWeight";
-		editorTemplate -l "Background color" -addControl "bgColor";
+//		editorTemplate -l "Background is Environment" -addControl "bgIsEnv";
+//		editorTemplate -l "Background weight" -addControl "bgWeight";
+//		editorTemplate -l "Background color" -addControl "bgColor";
 
-		editorTemplate -l "Reflective override" -addControl "refOverride";
-		editorTemplate -l "Reflective weight" -addControl "refWeight";
-		editorTemplate -l "Reflective color" -addControl "refColor";
+//		editorTemplate -l "Reflective override" -addControl "refOverride";
+//		editorTemplate -l "Reflective weight" -addControl "refWeight";
+//		editorTemplate -l "Reflective color" -addControl "refColor";
 
 		editorTemplate -l "Shadow color" -addControl "shadowColor";
 		editorTemplate -l "Shadow weight" -addControl "shadowWeight";

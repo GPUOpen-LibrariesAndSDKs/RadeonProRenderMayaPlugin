@@ -1819,8 +1819,16 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	RprComposite compositeOne(context.Handle(), RPR_COMPOSITE_CONSTANT);
 	compositeOne.SetInput4f("constant.input", 1.0f, 0.0f, 0.0f, 0.0f);
 
-	RprComposite compositeZero(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	compositeZero.SetInput4f("constant.input", 0.0f, 0.0f, 0.0f, 1.0f);
+	//Find first shadow catcher shader
+	frw::Shader shadowCatcherShader = scope.GetShadowCatcherShader();
+	float r = 0.0f;
+	float g = 0.0f;
+	float b = 0.0f;
+	float a = 0.0f;
+	shadowCatcherShader.GetShadowColor(&r, &g, &b, &a);
+
+	RprComposite compositeShadowColor(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	compositeShadowColor.SetInput4f("constant.input", r, g, b, a);
 
 	RprComposite compositeShadowCatcherNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
 	compositeShadowCatcherNorm.SetInputC("normalize.color", compositeShadowCatcher);
@@ -1828,7 +1836,7 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	
 	RprComposite compositeLerp2(context.Handle(), RPR_COMPOSITE_LERP_VALUE);
 	compositeLerp2.SetInputC("lerp.color0", compositeLerp1);
-	compositeLerp2.SetInputC("lerp.color1", compositeZero);
+	compositeLerp2.SetInputC("lerp.color1", compositeShadowColor);
 	compositeLerp2.SetInputC("lerp.weight", compositeShadowCatcherNorm);
 
 	// Step 3.
