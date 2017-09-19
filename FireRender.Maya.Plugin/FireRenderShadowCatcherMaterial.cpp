@@ -200,9 +200,16 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 		float r = shadowColor.GetX();
 		float g = shadowColor.GetY();
 		float b = shadowColor.GetZ();
-		float a = shadowColor.GetX();
+		float a = shadowAlpha.GetX();
 		shader.SetShadowColor(r, g, b, a);
 	}
+
+	frw::Value shadowWeight = scope.GetValue(shaderNode.findPlug(Attribute::shadowWeight));
+	if (shadowWeight.IsFloat())
+	{
+		shader.SetShadowWeight(shadowWeight.GetX());
+	}
+
 	//if (type == frw::ValueType)
 
 	shader.SetShadowCatcher(true);

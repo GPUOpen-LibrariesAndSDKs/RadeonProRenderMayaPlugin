@@ -2255,11 +2255,12 @@ namespace frw
 			float mShadowG = 0.0f;
 			float mShadowB = 0.0f;
 			float mShadowA = 0.0f;
+			float mShadowWeight = 0.0f;
 		};
 
 	public:
 		void SetShadowCatcher(bool isShadowCatcher) { data().isShadowCatcher = isShadowCatcher; }
-		bool IsShadowCatcher() { return data().isShadowCatcher; }
+		bool IsShadowCatcher() const { return data().isShadowCatcher; }
 		void SetShadowColor(float r, float g, float b, float a)
 		{
 			data().mShadowR = r;
@@ -2267,7 +2268,7 @@ namespace frw
 			data().mShadowB = b;
 			data().mShadowA = a;
 		}
-		void GetShadowColor(float *r, float *g, float *b, float *a)
+		void GetShadowColor(float *r, float *g, float *b, float *a) const
 		{
 			*r = data().mShadowR;
 			*g = data().mShadowG;
@@ -2275,6 +2276,15 @@ namespace frw
 			*a = data().mShadowA;
 		}
 
+		void SetShadowWeight(float w)
+		{
+			data().mShadowWeight = w;
+		}
+
+		float GetShadowWeight() const
+		{
+			return data().mShadowWeight;
+		}
 
 
 		Shader(DataPtr p)
