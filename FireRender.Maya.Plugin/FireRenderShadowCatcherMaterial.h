@@ -14,5 +14,6 @@ namespace FireMaya
 
 		virtual MStatus compute(const MPlug& plug, MDataBlock& block);
 		frw::Shader GetShader(Scope& scope) override;
+		MObject GetDisplacementNode() override;
 	};
 }

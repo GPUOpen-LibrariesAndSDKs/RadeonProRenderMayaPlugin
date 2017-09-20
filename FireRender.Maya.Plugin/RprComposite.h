@@ -18,6 +18,7 @@ public:
 	void SetInputC(const char *inputName, rpr_composite input);
 	void SetInputFb(const char *inputName, rpr_framebuffer input);
 	void SetInput4f(const char *inputName, float r, float g, float b, float a);
+	void SetInputOp(const char *inputName, rpr_material_node_arithmetic_operation op);
 
 private:
 	rpr_composite mData = 0;

@@ -1523,6 +1523,15 @@ frw::Shader FireMaya::Scope::GetVolumeShader(MObject node, bool forceUpdate)
 	return shader;
 }
 
+frw::Shader FireMaya::Scope::GetShadowCatcherShader()
+{
+	for (auto shader : m->shaderMap)
+	{
+		if (shader.second.IsShadowCatcher()) return shader.second;
+	}
+	return nullptr;
+}
+
 frw::Value FireMaya::Scope::GetValue(MObject ob, const MString &outPlugName)
 {
 	return ParseValue(ob, outPlugName);

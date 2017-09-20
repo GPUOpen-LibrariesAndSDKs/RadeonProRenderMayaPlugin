@@ -807,7 +807,8 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 		mergeShadowCatcher && 
 		m.framebufferAOV[RPR_AOV_SHADOW_CATCHER] &&
 		m.framebufferAOV[RPR_AOV_BACKGROUND] &&
-		m.framebufferAOV[RPR_AOV_OPACITY]
+		m.framebufferAOV[RPR_AOV_OPACITY] &&
+		scope.GetShadowCatcherShader()
 		)
 	{
 		compositeOutput(pixels, width, height, region, flip);
@@ -1819,17 +1820,41 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	RprComposite compositeOne(context.Handle(), RPR_COMPOSITE_CONSTANT);
 	compositeOne.SetInput4f("constant.input", 1.0f, 0.0f, 0.0f, 0.0f);
 
-	RprComposite compositeZero(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	compositeZero.SetInput4f("constant.input", 0.0f, 0.0f, 0.0f, 1.0f);
+	//Find first shadow catcher shader
+	frw::Shader shadowCatcherShader = scope.GetShadowCatcherShader();
+	assert(shadowCatcherShader);
+	float r = 0.0f;
+	float g = 0.0f;
+	float b = 0.0f;
+	float a = 0.0f;
+	shadowCatcherShader.GetShadowColor(&r, &g, &b, &a);
+
+	float weight = shadowCatcherShader.GetShadowWeight();
+
+	RprComposite compositeShadowColor(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	compositeShadowColor.SetInput4f("constant.input", r, g, b, a);
+
+	RprComposite compositeShadowWeight(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	compositeShadowWeight.SetInput4f("constant.input", weight, weight, weight, weight);
 
 	RprComposite compositeShadowCatcherNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
 	compositeShadowCatcherNorm.SetInputC("normalize.color", compositeShadowCatcher);
 	compositeShadowCatcherNorm.SetInputC("normalize.shadowcatcher", compositeOne);
 	
+	RprComposite compositeSCWeight(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	compositeSCWeight.SetInputC("arithmetic.color0", compositeShadowCatcherNorm);
+	compositeSCWeight.SetInputC("arithmetic.color1", compositeShadowWeight);
+	compositeSCWeight.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+
 	RprComposite compositeLerp2(context.Handle(), RPR_COMPOSITE_LERP_VALUE);
-	compositeLerp2.SetInputC("lerp.color0", compositeLerp1);
-	compositeLerp2.SetInputC("lerp.color1", compositeZero);
-	compositeLerp2.SetInputC("lerp.weight", compositeShadowCatcherNorm);
+	//Setting BgIsEnv to false means that we should use shadow catcher color instead of environment background
+	if (shadowCatcherShader.BgIsEnv())
+		compositeLerp2.SetInputC("lerp.color0", compositeLerp1);
+	else
+		compositeLerp2.SetInputC("lerp.color0", compositeColorNorm);
+		
+	compositeLerp2.SetInputC("lerp.color1", compositeShadowColor);
+	compositeLerp2.SetInputC("lerp.weight", compositeSCWeight);
 
 	// Step 3.
 	// Compute results from step 2 into separate framebuffer

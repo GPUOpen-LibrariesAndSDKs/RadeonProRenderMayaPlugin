@@ -232,6 +232,7 @@ namespace FireMaya
 		// by object
 		frw::Shader GetShader(MObject ob, bool forceUpdate = false);
 		frw::Shader GetShader(MPlug ob);
+		frw::Shader GetShadowCatcherShader();
 
 		frw::Shader GetVolumeShader( MObject ob, bool forceUpdate = false );
 		frw::Shader GetVolumeShader( MPlug ob );

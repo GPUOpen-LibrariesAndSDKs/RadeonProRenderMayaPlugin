@@ -2221,6 +2221,17 @@ namespace frw
 		class Data : public Node::Data
 		{
 			DECLARE_OBJECT_DATA
+
+			struct ShadowCatcherParams
+			{
+				float mShadowR = 0.0f;
+				float mShadowG = 0.0f;
+				float mShadowB = 0.0f;
+				float mShadowA = 0.0f;
+				float mShadowWeight = 1.0f;
+				bool mBgIsEnv = false;
+			};
+
 		public:
 			virtual ~Data()
 			{
@@ -2251,10 +2262,33 @@ namespace frw
 			rprx_material material = nullptr; // RPRX material
 			std::map<std::string, rpr_material_node> inputs;
 			bool isShadowCatcher = false;
+			ShadowCatcherParams mShadowCatcherParams;
 		};
 
 	public:
 		void SetShadowCatcher(bool isShadowCatcher) { data().isShadowCatcher = isShadowCatcher; }
+		bool IsShadowCatcher() const { return data().isShadowCatcher; }
+		void SetShadowColor(float r, float g, float b, float a)
+		{
+			data().mShadowCatcherParams.mShadowR = r;
+			data().mShadowCatcherParams.mShadowG = g;
+			data().mShadowCatcherParams.mShadowB = b;
+			data().mShadowCatcherParams.mShadowA = a;
+		}
+		void GetShadowColor(float *r, float *g, float *b, float *a) const
+		{
+			*r = data().mShadowCatcherParams.mShadowR;
+			*g = data().mShadowCatcherParams.mShadowG;
+			*b = data().mShadowCatcherParams.mShadowB;
+			*a = data().mShadowCatcherParams.mShadowA;
+		}
+
+		void SetShadowWeight(float w) { data().mShadowCatcherParams.mShadowWeight = w; }
+		float GetShadowWeight() const { return data().mShadowCatcherParams.mShadowWeight; }
+
+		void SetBackgroundIsEnvironment(bool bgIsEnv) { data().mShadowCatcherParams.mBgIsEnv = bgIsEnv; }
+		bool BgIsEnv() const { return data().mShadowCatcherParams.mBgIsEnv; }
+
 		Shader(DataPtr p)
 		{
 			m = p;

@@ -51,3 +51,11 @@ void RprComposite::SetInput4f(const char *inputName, float r, float g, float b, 
 	rpr_int status = rprCompositeSetInput4f(mData, inputName, r, g, b, a);
 	checkStatus(status);
 }
+
+void RprComposite::SetInputOp(const char *inputName, rpr_material_node_arithmetic_operation op)
+{
+	RPR_THREAD_ONLY;
+
+	rpr_int status = rprCompositeSetInputOp(mData, inputName, op);
+	checkStatus(status);
+}
