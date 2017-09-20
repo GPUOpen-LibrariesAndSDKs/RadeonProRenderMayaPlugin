@@ -24,9 +24,6 @@ namespace
 		MObject bgWeight;
 		MObject	bgColor;
 		MObject bgTransparency;
-/*		MObject refOverride;
-		MObject refWeight;
-		MObject refColor;*/
 		MObject shadowColor;
 		MObject shadowWeight;
 		MObject shadowTransparency;
@@ -71,14 +68,12 @@ MStatus FireMaya::ShadowCatcherMaterial::initialize()
 	{
 		{&Attribute::bgWeight, "bgWeight", "bgw", 0.0, 1.0, 1.0, MFnNumericData::kFloat},
 		{&Attribute::bgTransparency, "bgTransparency", "bgt", 0.0, 1.0, 0.0, MFnNumericData::kFloat},
-//		{&Attribute::refWeight, "refWeight", "rw", 0.0, 1.0, 1.0, MFnNumericData::kFloat},
 		{&Attribute::shadowTransparency, "shadowTransp", "st", 0.0, 1.0, 0.0, MFnNumericData::kFloat},
 		{&Attribute::shadowWeight, "shadowWeight", "sw", 0.0, 1.0, 1.0, MFnNumericData::kFloat}
 	};
 	std::vector<AttributeEntry<bool>> boolAttributes = 
 	{
 		{ &Attribute::bgIsEnv, "bgIsEnv", "bgie", 0, 0, 1, MFnNumericData::kBoolean },
-//		{ &Attribute::refOverride, "refOverride", "ro", 0, 0, 0, MFnNumericData::kBoolean },
 		{ &Attribute::useNormalMap, "useNormalMap", "unm", 0, 0, 0, MFnNumericData::kBoolean },
 		{ &Attribute::useDispMap, "useDispMap", "udm", 0, 0, 0, MFnNumericData::kBoolean },
 		{ &Attribute::disableSwatch, "disableSwatch", "ds", 0, 0, 0, MFnNumericData::kBoolean }
@@ -87,7 +82,6 @@ MStatus FireMaya::ShadowCatcherMaterial::initialize()
 	std::vector<ColorAttributeEntry> colorAttributes = 
 	{
 		{&Attribute::bgColor, "bgColor", "bgc", {0.0f, 0.0f, 0.0f} },
-//		{&Attribute::refColor, "refColor", "rc", { 0.0f, 0.0f, 0.0f } },
 		{&Attribute::shadowColor, "shadowColor", "sc", { 0.0f, 0.0f, 0.0f } },
 		{&Attribute::normalMap, "normalMap", "nm", { 0.0f, 0.0f, 0.0f } },
 		{&Attribute::dispMap, "dispMap", "dm", { 0.0f, 0.0f, 0.0f } }
