@@ -807,7 +807,8 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 		mergeShadowCatcher && 
 		m.framebufferAOV[RPR_AOV_SHADOW_CATCHER] &&
 		m.framebufferAOV[RPR_AOV_BACKGROUND] &&
-		m.framebufferAOV[RPR_AOV_OPACITY]
+		m.framebufferAOV[RPR_AOV_OPACITY] &&
+		scope.GetShadowCatcherShader()
 		)
 	{
 		compositeOutput(pixels, width, height, region, flip);
