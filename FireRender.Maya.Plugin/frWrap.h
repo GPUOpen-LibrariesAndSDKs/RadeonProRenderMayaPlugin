@@ -2255,7 +2255,8 @@ namespace frw
 			float mShadowG = 0.0f;
 			float mShadowB = 0.0f;
 			float mShadowA = 0.0f;
-			float mShadowWeight = 0.0f;
+			float mShadowWeight = 1.0f;
+			bool mBgIsEnv = false;
 		};
 
 	public:
@@ -2276,16 +2277,11 @@ namespace frw
 			*a = data().mShadowA;
 		}
 
-		void SetShadowWeight(float w)
-		{
-			data().mShadowWeight = w;
-		}
+		void SetShadowWeight(float w) { data().mShadowWeight = w; }
+		float GetShadowWeight() const { return data().mShadowWeight; }
 
-		float GetShadowWeight() const
-		{
-			return data().mShadowWeight;
-		}
-
+		void SetBackgroundIsEnvironment(bool bgIsEnv) { data().mBgIsEnv = bgIsEnv; }
+		bool BgIsEnv() const { return data().mBgIsEnv; }
 
 		Shader(DataPtr p)
 		{

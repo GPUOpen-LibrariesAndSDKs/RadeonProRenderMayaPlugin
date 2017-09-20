@@ -1845,7 +1845,12 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	compositeSCWeight.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
 
 	RprComposite compositeLerp2(context.Handle(), RPR_COMPOSITE_LERP_VALUE);
-	compositeLerp2.SetInputC("lerp.color0", compositeLerp1);
+	//Setting BgIsEnv to false means that we should use shadow catcher color instead of environment background
+	if (shadowCatcherShader.BgIsEnv())
+		compositeLerp2.SetInputC("lerp.color0", compositeLerp1);
+	else
+		compositeLerp2.SetInputC("lerp.color0", compositeColorNorm);
+		
 	compositeLerp2.SetInputC("lerp.color1", compositeShadowColor);
 	compositeLerp2.SetInputC("lerp.weight", compositeSCWeight);
 
