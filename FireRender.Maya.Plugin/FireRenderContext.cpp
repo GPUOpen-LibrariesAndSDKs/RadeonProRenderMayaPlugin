@@ -1821,6 +1821,7 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 
 	//Find first shadow catcher shader
 	frw::Shader shadowCatcherShader = scope.GetShadowCatcherShader();
+	assert(shadowCatcherShader);
 	float r = 0.0f;
 	float g = 0.0f;
 	float b = 0.0f;

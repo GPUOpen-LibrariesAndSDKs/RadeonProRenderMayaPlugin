@@ -1529,6 +1529,7 @@ frw::Shader FireMaya::Scope::GetShadowCatcherShader()
 	{
 		if (shader.second.IsShadowCatcher()) return shader.second;
 	}
+	return nullptr;
 }
 
 frw::Value FireMaya::Scope::GetValue(MObject ob, const MString &outPlugName)
