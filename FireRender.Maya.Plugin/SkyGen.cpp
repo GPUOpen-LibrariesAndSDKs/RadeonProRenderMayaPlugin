@@ -1269,8 +1269,8 @@ float AverageSpectrumSamples(const float *lambda, const float *vals, int n, floa
         float segLambdaStart = fmax(lambdaStart, lambda[i]);
         float segLambdaEnd = fmin(lambdaEnd, lambda[i + 1]);
 #else
-		float segLambdaStart = std::max(lambdaStart, lambda[i]);
-		float segLambdaEnd = std::min(lambdaEnd, lambda[i + 1]);
+		float segLambdaStart = max(lambdaStart, lambda[i]);
+		float segLambdaEnd = min(lambdaEnd, lambda[i + 1]);
 #endif
 		sum += 0.5f * (interp(segLambdaStart, i) + interp(segLambdaEnd, i)) *
 			(segLambdaEnd - segLambdaStart);
