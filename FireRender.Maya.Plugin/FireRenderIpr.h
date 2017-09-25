@@ -5,6 +5,8 @@
 #include <maya/MThreadAsync.h>
 #include "RenderCacheWarningDialog.h"
 
+#include <mutex>
+
 /**
  * Manages an interactive photo real (IPR)
  * render session in the render view window.
@@ -146,4 +148,7 @@ private:
 
 	/** Warning Dialog for Shader Caching. */
 	RenderCacheWarningDialog rcWarningDialog;
+
+	/** Mutex for syncronization of updateRegion and readFrameBuffer methods. */
+	std::mutex m_regionUpdateMutex;
 };
