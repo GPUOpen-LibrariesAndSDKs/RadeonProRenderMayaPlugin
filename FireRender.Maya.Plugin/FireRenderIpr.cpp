@@ -6,6 +6,7 @@
 #include "FireRenderThread.h"
 #include "AutoLock.h"
 #include <thread>
+#include <mutex>
 
 #include "FireRenderUtils.h"
 
@@ -52,6 +53,12 @@ bool FireRenderIpr::isError()
 // -----------------------------------------------------------------------------
 void FireRenderIpr::updateRegion()
 {
+	// We need to sync this function with readFrameBuffer since they operate on
+	// same data (m_region and m_pixels).
+	// Without this syncronization race condition may occur for m_pixels that will
+	// lead to crash in readFrameBuffer function
+	std::lock_guard<std::mutex> guard(m_regionUpdateMutex);
+
 	// Get the render view region if any.
 	MRenderView::getRenderRegion(
 		m_region.left, m_region.right,
@@ -402,6 +409,8 @@ void FireRenderIpr::endMayaUpdate()
 void FireRenderIpr::readFrameBuffer()
 {
 	RPR_THREAD_ONLY;
+
+	std::lock_guard<std::mutex> guard(m_regionUpdateMutex);
 
 	m_context.readFrameBuffer(m_pixels.data(), RPR_AOV_COLOR, m_context.width(),
 		m_context.height(), m_region, true);
