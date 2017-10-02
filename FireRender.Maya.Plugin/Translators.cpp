@@ -437,6 +437,14 @@ namespace FireMaya
 		fnMesh.getUVSetNames(uvSetNames);
 		unsigned int uvSetNamesNum = uvSetNames.length();
 
+		// RPR supports only 2 UV sets. There is no way to get this value from RPR so it's hadrcoded
+		static const int rprMaxUVSetCount = 2;
+		if (uvSetNamesNum > rprMaxUVSetCount)
+		{
+			uvSetNamesNum = rprMaxUVSetCount;
+			FireRenderError err("UV set error", "One or more objects have multiple UV sets. Only two UV sets per object supported. Scene will be rendered with first two UV sets.", true);
+		}
+
 		MFloatPointArray points;
 		MFloatVectorArray normals;
 
