@@ -1,5 +1,8 @@
 source "createMayaSoftwareCommonGlobalsTab.mel";
 source "createFireRenderCommonGlobalsTab.mel";
+// This include needed to provide Maya access to all tab creation function
+// If we skip this only "Radeon ProRender" tab will work, since it's creation function has same name as the name of mel file with that function
+source "createFireRenderGlobalsTab.mel";
 source "fireRenderIpr.mel";
 source "fireRenderBatch.mel";
 source "fireRenderUpdateAE.mel";
