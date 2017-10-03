@@ -736,6 +736,23 @@ global proc aovDisplayedInRenderViewChanged()
 {
 }
 
+// Set BG and Opacity AOVs to ON if SC turned ON. Also lock controls to guarantee that while we have SC set Bg and Opacity can't be turned off
+global proc shadowCatcherStateChanged()
+{
+	if (`getAttr RadeonProRenderGlobals.aovShadowCatcher`)
+	{
+		// Lock controls and set it to ON state
+		setAttr RadeonProRenderGlobals.aovBackground -lock 1 1;
+		setAttr RadeonProRenderGlobals.aovOpacity -lock 1 1;
+	}
+	else
+	{
+		// Unlock controls
+		setAttr RadeonProRenderGlobals.aovBackground -lock 0;
+		setAttr RadeonProRenderGlobals.aovOpacity -lock 0;
+	}
+}
+
 global proc createFireRenderRenderPassesFrame(string $parent)
 {
 	setUITemplate -pushTemplate attributeEditorTemplate;
@@ -746,7 +763,6 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 	columnLayout -adjustableColumn true;
 
 	columnLayout frPassesLayout;
-
 		attrControlGrp -label "Displayed In Render View" -cc aovDisplayedInRenderViewChanged -attribute "RadeonProRenderGlobals.aovDisplayedInRenderView";
 		attrControlGrp -label "Opacity" -attribute "RadeonProRenderGlobals.aovOpacity";
 		attrControlGrp -label "World Coordinate" -attribute "RadeonProRenderGlobals.aovWorldCoordinate";
@@ -756,7 +772,8 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 		attrControlGrp -label "Shading Normal" -attribute "RadeonProRenderGlobals.aovShadingNormal";
 		attrControlGrp -label "Depth" -attribute "RadeonProRenderGlobals.aovDepth";
 		attrControlGrp -label "Object ID" -attribute "RadeonProRenderGlobals.aovObjectId";
-		attrControlGrp -label "Shadow Catcher" -attribute "RadeonProRenderGlobals.aovShadowCatcher";
+		// Set change handler to automatically control BG and Opacity AOV checkboxes
+		attrControlGrp -label "Shadow Catcher" -attribute "RadeonProRenderGlobals.aovShadowCatcher" -changeCommand shadowCatcherStateChanged;
 		attrControlGrp -label "Background" -attribute "RadeonProRenderGlobals.aovBackground";
 
 	setParent ..;
