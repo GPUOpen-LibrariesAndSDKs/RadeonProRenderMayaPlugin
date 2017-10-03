@@ -169,6 +169,9 @@ void mayaExiting(void* data)
 	gExitingMaya = true;
 
 	FireRenderSwatchInstance::instance().cleanScene();
+	// We need to cleanup before terminating thread
+	// For some reason Maya willn't call this method if we simply close Maya
+	FireRenderCmd::cleanUp();
 
 	FireRenderThread::RunTheThread(false);
 	std::this_thread::yield();
