@@ -129,6 +129,17 @@ bool FireRenderIpr::start()
 		//enable AOV-COLOR so that it can be resolved and used properly
 		m_context.enableAOV(RPR_AOV_COLOR);
 
+		// Enable SC related AOVs if they was turned on
+		FireRenderGlobalsData globals;
+		globals.readFromCurrentScene();
+
+		if (globals.aovs.getAOV(RPR_AOV_OPACITY).active)
+			m_context.enableAOV(RPR_AOV_OPACITY);
+		if (globals.aovs.getAOV(RPR_AOV_BACKGROUND).active)
+			m_context.enableAOV(RPR_AOV_BACKGROUND);
+		if (globals.aovs.getAOV(RPR_AOV_SHADOW_CATCHER).active)
+			m_context.enableAOV(RPR_AOV_SHADOW_CATCHER);
+		
 		m_context.setInteractive(true);
 		m_context.buildScene(false, false, false, false);
 		m_needsContextRefresh = true;
@@ -412,8 +423,10 @@ void FireRenderIpr::readFrameBuffer()
 
 	std::lock_guard<std::mutex> guard(m_regionUpdateMutex);
 
+	// We need to made SC merge here, but we don't want to do opacity merge 
+	// since we render in interactive mode
 	m_context.readFrameBuffer(m_pixels.data(), RPR_AOV_COLOR, m_context.width(),
-		m_context.height(), m_region, true);
+		m_context.height(), m_region, true, false, true);
 }
 
 // -----------------------------------------------------------------------------
