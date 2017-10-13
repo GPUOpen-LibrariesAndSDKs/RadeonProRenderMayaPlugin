@@ -91,6 +91,9 @@ private:
 	/** Update the whether debug output is enabled or disabled. */
 	MStatus updateDebugOutput(const MArgDatabase& argData);
 
+	/** Enables or disables gltf export */
+	MStatus exportsGLTF(const MArgDatabase& argData);
+
 	/** Get the output file path, with an optional frame for multi-frame renders. */
 	MString getOutputFilePath(const MCommonRenderSettingsData& settings,
 		unsigned int frame, const MString& camera, bool preview) const;
@@ -162,4 +165,6 @@ private:
 #define kWaitForItLong "-waitForIt"
 #define kWaitForItTwoStep "-wft"
 #define kWaitForItTwoStepLong "-waitForItTwo"
+#define kExportsGLTF "-eg"
+#define kExportsGLTFLong "-exportsGLTF"
 

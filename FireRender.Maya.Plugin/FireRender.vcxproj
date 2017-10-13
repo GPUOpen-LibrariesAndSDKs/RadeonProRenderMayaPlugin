@@ -230,6 +230,7 @@
     <ClCompile Include="FireRenderThread.cpp" />
     <ClCompile Include="FireRenderVolumeMaterial.cpp" />
     <ClCompile Include="frWrap.cpp" />
+    <ClCompile Include="GLTFTranslator.cpp" />
     <ClCompile Include="Hosek\ArHosekSkyModel.cpp" />
     <ClCompile Include="IESLightLocatorMesh.cpp" />
     <ClCompile Include="MaterialLoader.cpp" />
@@ -337,6 +338,7 @@
     <ClInclude Include="FireRenderVolumeMaterial.h" />
     <ClInclude Include="frWrap.h" />
     <ClInclude Include="FireRenderViewportManager.h" />
+    <ClInclude Include="GLTFTranslator.h" />
     <ClInclude Include="Hosek\ArHosekSkyModel.h" />
     <ClInclude Include="Hosek\ArHosekSkyModelData_CIEXYZ.h" />
     <ClInclude Include="Hosek\ArHosekSkyModelData_RGB.h" />
@@ -553,6 +555,7 @@
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>$(MAYA_SDK_2016)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -561,6 +564,8 @@
       <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
+      <AdditionalDependencies>RprLoadStore64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(MAYA_x64_2016)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
@@ -577,6 +582,7 @@
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>$(MAYA_x64_2015)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -586,6 +592,8 @@
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>RprLoadStore64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(MAYA_x64_2015)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
@@ -602,6 +610,7 @@
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>$(MAYA_SDK_2016_5)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -610,6 +619,8 @@
       <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
+      <AdditionalDependencies>RprLoadStore64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(MAYA_x64_2016_5)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
@@ -626,6 +637,7 @@
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -634,7 +646,8 @@
       <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RprLoadStore64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(MAYA_X64_2017)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
@@ -681,6 +694,7 @@
       <MinimalRebuild>false</MinimalRebuild>
       <OpenMPSupport>true</OpenMPSupport>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(MAYA_SDK_2016)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -691,6 +705,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
+      <AdditionalDependencies>RprLoadStore64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(MAYA_x64_2016)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
@@ -709,6 +725,7 @@
       <MinimalRebuild>false</MinimalRebuild>
       <OpenMPSupport>true</OpenMPSupport>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(MAYA_x64_2015)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -719,6 +736,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
+      <AdditionalDependencies>RprLoadStore64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(MAYA_x64_2015)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
@@ -737,6 +756,7 @@
       <MinimalRebuild>false</MinimalRebuild>
       <OpenMPSupport>true</OpenMPSupport>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(MAYA_SDK_2016_5)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -747,6 +767,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
+      <AdditionalDependencies>RprLoadStore64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(MAYA_x64_2016_5)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>
@@ -764,6 +786,7 @@
       <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <OpenMPSupport>true</OpenMPSupport>
+      <AdditionalIncludeDirectories>$(MAYA_SDK_2017)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -774,7 +797,8 @@
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
-      <AdditionalDependencies>RadeonProRender64.lib;RprSupport64.lib;OpenImageIO_RPR.lib;glew.lib;glu32.lib;Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaRender.lib;Image.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RprLoadStore64.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(MAYA_X64_2017)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>

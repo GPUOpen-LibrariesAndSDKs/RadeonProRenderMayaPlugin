@@ -419,6 +419,9 @@
     <ClCompile Include="RprComposite.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="GLTFTranslator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -731,6 +734,9 @@
       <Filter>Materials</Filter>
     </ClInclude>
     <ClInclude Include="RprComposite.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="GLTFTranslator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

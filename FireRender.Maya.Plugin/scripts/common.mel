@@ -17,3 +17,7 @@ global proc int getNumberOfCachedShaders(string $folderPath){
 	string $result[] = `getFileList -folder $folderPath -filespec "*.bin"`;
 	return size($result);
 }
+
+global proc rprExportsGLTF(int $enable){
+	eval("fireRender -exportsGLTF " + $enable);
+}

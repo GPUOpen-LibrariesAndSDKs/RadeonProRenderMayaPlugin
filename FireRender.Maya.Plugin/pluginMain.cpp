@@ -69,6 +69,8 @@
 
 #include "FireRenderThread.h"
 
+#include "GLTFTranslator.h"
+
 #ifdef _WIN32
 # include <DbgHelp.h>
 # pragma comment(lib, "dbghelp.lib")
@@ -140,6 +142,10 @@ LONG WINAPI FrUnhandledExceptionFilter(EXCEPTION_POINTERS * pExceptionPointers)
 	else
 		return EXCEPTION_CONTINUE_SEARCH;
 }
+
+bool RPRInit();
+void RPRRelease();
+
 #endif // _WIN32
 
 bool gExitingMaya = false;
@@ -294,6 +300,31 @@ public:
 };
 
 MTypeId FireRenderRenderPass::id(FireMaya::TypeId::FireRenderRenderPass);
+
+// Forward declaration for this function is in FireRenderCmd.cpp
+// Wasn't able to implement it there due to link problems when including
+// MFnPlugin from a few places
+void RprExportsGLTF(bool enable)
+{
+	auto handle = MFnPlugin::findPlugin("RadeonProRender");
+
+	if (handle != MObject::kNullObj)
+	{
+		MFnPlugin plugin;
+		CHECK_MSTATUS(plugin.setObject(handle));
+		MString translatorTitle = "RPR GLTF";
+
+		if (enable)
+		{
+			CHECK_MSTATUS(plugin.registerFileTranslator(translatorTitle,
+				nullptr, FireMaya::GLTFTranslator::creator));
+		}
+		else
+		{
+			CHECK_MSTATUS(plugin.deregisterFileTranslator(translatorTitle));
+		}
+	}
+}
 
 MStatus initializePlugin(MObject obj)
 //

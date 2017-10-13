@@ -1,11 +1,10 @@
 #pragma once
 
+// Switched from inc_dynamic to inc version of RadeonProRender.h so 
+// RprSupport and RadeonProRender_GL needs to be included manually
 #include <RadeonProRender.h>
-
-#ifndef _WIN32
 #include <RadeonProRender_GL.h>
 #include <RprSupport.h>
-#endif
 
 #include <list>
 #include <map>

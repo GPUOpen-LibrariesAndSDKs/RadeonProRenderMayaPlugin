@@ -80,6 +80,7 @@ MSyntax FireRenderCmd::newSyntax()
 	CHECK_MSTATUS(syntax.addFlag(kOpenFolder, kOpenFolderLong, MSyntax::kString));
 	CHECK_MSTATUS(syntax.addFlag(kWaitForIt, kWaitForItLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kWaitForItTwoStep, kWaitForItTwoStepLong, MSyntax::kNoArg));
+	CHECK_MSTATUS(syntax.addFlag(kExportsGLTF, kExportsGLTFLong, MSyntax::kBoolean));
 
 	return syntax;
 }
@@ -93,6 +94,9 @@ MStatus FireRenderCmd::doIt(const MArgList & args)
 	// Enable or disable debugging.
 	if (argData.isFlagSet(kDebugTraceFlag))
 		return updateDebugOutput(argData);
+
+	else if (argData.isFlagSet(kExportsGLTF))
+		return exportsGLTF(argData);
 
 	else if (argData.isFlagSet(kOpenFolder))
 	{
@@ -459,6 +463,21 @@ MStatus FireRenderCmd::updateDebugOutput(const MArgDatabase& argData)
 	MStatus status = argData.getFlagArgument(kDebugTraceFlag, 0, traceFlag);
 	if (status == MS::kSuccess)
 		frw::Context::TraceOutput(traceFlag ? getLogFolder().asUTF8() : nullptr);
+
+	return status;
+}
+
+// Implemented in pluginMain.cpp
+void RprExportsGLTF(bool enable);
+
+MStatus FireRenderCmd::exportsGLTF(const MArgDatabase& argData)
+{
+	bool enableFlag = false;
+	MStatus status = argData.getFlagArgument(kExportsGLTF, 0, enableFlag);
+	if (status == MS::kSuccess)
+	{
+		RprExportsGLTF(enableFlag);
+	}
 
 	return status;
 }
