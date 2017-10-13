@@ -69,6 +69,15 @@
     <Filter Include="Hosek">
       <UniqueIdentifier>{5a9743b7-e730-4e37-bd0b-ed886596a93a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="IES">
+      <UniqueIdentifier>{6cba0e1d-36a2-4dba-8c3b-af914f20e7e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FireRender.Components">
+      <UniqueIdentifier>{9d98f002-58da-4936-8799-d32d1060b91d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FireRender.Components\IESLight">
+      <UniqueIdentifier>{a8b053cd-2eeb-4bea-a6be-aeb76ea2640d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="python\__init__.py">
@@ -380,12 +389,6 @@
     <ClCompile Include="FireRenderConvertVRayCmd.cpp">
       <Filter>Commands</Filter>
     </ClCompile>
-    <ClCompile Include="FireRenderIESLight.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="IESLightLocatorMesh.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="RenderCacheWarningDialog.cpp">
       <Filter>Commands</Filter>
     </ClCompile>
@@ -418,6 +421,18 @@
     </ClCompile>
     <ClCompile Include="RprComposite.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="IES\FireRenderIESLight.cpp">
+      <Filter>IES</Filter>
+    </ClCompile>
+    <ClCompile Include="IES\IESLightLocatorMesh.cpp">
+      <Filter>IES</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.cpp">
+      <Filter>FireRender.Components\IESLight</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESprocessor.cpp">
+      <Filter>FireRender.Components\IESLight</Filter>
     </ClCompile>
     <ClCompile Include="GLTFTranslator.cpp">
       <Filter>Source Files</Filter>
@@ -688,12 +703,6 @@
     <ClInclude Include="FireRenderConvertVRayCmd.h">
       <Filter>Commands</Filter>
     </ClInclude>
-    <ClInclude Include="FireRenderIESLight.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IESLightLocatorMesh.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="RenderCacheWarningDialog.h">
       <Filter>Commands</Filter>
     </ClInclude>
@@ -735,6 +744,18 @@
     </ClInclude>
     <ClInclude Include="RprComposite.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IES\FireRenderIESLight.h">
+      <Filter>IES</Filter>
+    </ClInclude>
+    <ClInclude Include="IES\IESLightLocatorMesh.h">
+      <Filter>IES</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.h">
+      <Filter>FireRender.Components\IESLight</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESprocessor.h">
+      <Filter>FireRender.Components\IESLight</Filter>
     </ClInclude>
     <ClInclude Include="GLTFTranslator.h">
       <Filter>Header Files</Filter>

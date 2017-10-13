@@ -6,6 +6,7 @@
 #include "maya/MEulerRotation.h"
 #include "base_mesh.h"
 #include "FireRenderMath.h"
+#include "Translators.h"
 #include <functional>
 
 namespace FireMaya
@@ -365,7 +366,17 @@ namespace FireMaya
 				status = dagNode.getPath(dagPath);
 				assert(status == MStatus::kSuccess);
 
-				ret.matrix = dagPath.inclusiveMatrix(&status);
+				auto getRotation = [&](const char* name)
+				{
+					return FireMaya::deg2rad(findPlugTryGetValue(depNodeVRayLight, name, 0.0f));
+				};
+
+				MEulerRotation rotation(
+					getRotation("xRotation"),
+					getRotation("yRotation"),
+					getRotation("zRotation"));
+				ret.matrix = rotation.asMatrix();
+				ret.matrix *= dagPath.inclusiveMatrix(&status);
 			}
 
 			ret.filePath = findPlugTryGetValue(depNodeVRayLight, "iesFile", ""_ms);
@@ -677,7 +688,7 @@ namespace FireMaya
 			mfloats[3][1] *= 0.01f;
 			mfloats[3][2] *= 0.01f;
 
-			auto color = data.color * data.filterColor * data.intensity * PI_F;
+			auto color = data.color /** data.filterColor */ * data.intensity;// *PI_F;
 
 			// Fire Render's area light is implemented as a mesh with emissive shader
 			if (update)

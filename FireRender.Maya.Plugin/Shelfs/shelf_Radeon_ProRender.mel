@@ -269,7 +269,7 @@ global proc shelf_Radeon_ProRender () {
 		-commandRepeatable 1
 		-flat 1
 	;
-	/*
+	
 	shelfButton
 		-enableCommandRepeat 1
 		-enable 1
@@ -297,7 +297,7 @@ global proc shelf_Radeon_ProRender () {
 		-commandRepeatable 1
 		-flat 1
 	;
-	*/
+	
 	/*
 		separator
 		-enable 1

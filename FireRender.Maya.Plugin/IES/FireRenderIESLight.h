@@ -47,18 +47,30 @@ public:
 
 	static MStatus initialize();
 
+	MString GetFilename() const;
+	float GetAreaWidth() const;
+	bool GetDisplay() const;
+	float GetXRotation() const;
+	float GetYRotation() const;
+	float GetZRotation() const;
+	float GetAxisRotation(unsigned axis) const;
+
 public:
 	static MTypeId	id;
 	static MString	drawDbClassification;
 	static MString	drawRegistrantId;
 	static MObject	aFilePath;
+	static MObject	aAreaWidth;
+	static MObject	aRotations[3];
 	static MObject	aIntensity;
 	static MObject	aDisplay;
-	static MObject	aPortal;
+	static MObject	aMeshRepresentationUpdated;
 
 private:
+	void UpdateMesh(bool forced) const;
+
 	/** The mesh used to represent the mesh in the Maya viewports. */
-	std::unique_ptr<IESLightLocatorMesh> m_mesh;
+	std::unique_ptr<IESLightLegacyLocatorMesh> m_mesh;
 };
 
 /** The override is required for drawing to Maya's Viewport 2.0. */
@@ -78,7 +90,7 @@ public:
 	virtual bool hasUIDrawables() const { return false; }
 
 	virtual void updateDG();
-	virtual bool isIndexingDirty(const MHWRender::MRenderItem &item) { return false; }
+	virtual bool isIndexingDirty(const MHWRender::MRenderItem &item) { return m_changed; }
 	virtual bool isStreamDirty(const MHWRender::MVertexBufferDescriptor &desc) { return m_changed; }
 	virtual void updateRenderItems(const MDagPath &path, MHWRender::MRenderItemList& list);
 	virtual void populateGeometry(const MHWRender::MGeometryRequirements &requirements, const MHWRender::MRenderItemList &renderItems, MHWRender::MGeometry &data);
@@ -96,10 +108,20 @@ public:
 		const MDagPath& path,
 		MHWRender::MSelectionContext& selectionContext);
 #endif
+
+	MString GetFilename() const;
+	float GetAreaWidth() const;
+	bool GetDisplay() const;
+	float GetXRotation() const;
+	float GetYRotation() const;
+	float GetZRotation() const;
+	float GetAxisRotation(unsigned axis) const;
+
 private:
 
 	FireRenderIESLightLocatorOverride(const MObject& obj);
 
+	MObject m_obj;
 	IESLightLocatorMesh m_mesh;
 
 	bool m_changed;

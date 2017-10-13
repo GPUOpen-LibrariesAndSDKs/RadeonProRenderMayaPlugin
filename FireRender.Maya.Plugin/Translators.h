@@ -111,9 +111,12 @@ namespace FireMaya
 		return (180.0 / M_PI)*radians;
 	}
 
-	inline double deg2rad(double degrees)
+	template<typename T,
+		// Enable this function for floating point types only
+		class = std::enable_if_t<std::is_floating_point<T>::value>>
+	inline T deg2rad(T degrees)
 	{
-		return (M_PI / 180.0)*degrees;
+		return (static_cast<T>(M_PI) / static_cast<T>(180)) * degrees;
 	}
 
 	inline double limit_degrees180pm(double degrees)

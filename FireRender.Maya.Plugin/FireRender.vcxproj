@@ -164,6 +164,8 @@
     <None Include="Shelfs\shelf_Radeon_ProRender.mel" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.cpp" />
+    <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESprocessor.cpp" />
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\half.cpp" />
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.cpp" />
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.cpp" />
@@ -195,7 +197,6 @@
     <ClCompile Include="FireRenderGlobals.cpp" />
     <ClCompile Include="FireRenderGradient.cpp" />
     <ClCompile Include="FireRenderIBL.cpp" />
-    <ClCompile Include="FireRenderIESLight.cpp" />
     <ClCompile Include="FireRenderImageComparing.cpp" />
     <ClCompile Include="FireRenderImageUtil.cpp" />
     <ClCompile Include="FireRenderImportCmd.cpp" />
@@ -232,7 +233,8 @@
     <ClCompile Include="frWrap.cpp" />
     <ClCompile Include="GLTFTranslator.cpp" />
     <ClCompile Include="Hosek\ArHosekSkyModel.cpp" />
-    <ClCompile Include="IESLightLocatorMesh.cpp" />
+    <ClCompile Include="IES\FireRenderIESLight.cpp" />
+    <ClCompile Include="IES\IESLightLocatorMesh.cpp" />
     <ClCompile Include="MaterialLoader.cpp" />
     <ClCompile Include="pluginMain.cpp" />
     <ClCompile Include="FireRenderMaterial.cpp" />
@@ -251,6 +253,8 @@
     <ClCompile Include="VRay.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.h" />
+    <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESprocessor.h" />
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\eLut.h" />
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\float2.h" />
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\float3.h" />
@@ -298,7 +302,6 @@
     <ClInclude Include="FireRenderGlobals.h" />
     <ClInclude Include="FireRenderGradient.h" />
     <ClInclude Include="FireRenderIBL.h" />
-    <ClInclude Include="FireRenderIESLight.h" />
     <ClInclude Include="FireRenderImageComparing.h" />
     <ClInclude Include="FireRenderImageUtil.h" />
     <ClInclude Include="FireRenderImportCmd.h" />
@@ -343,7 +346,8 @@
     <ClInclude Include="Hosek\ArHosekSkyModelData_CIEXYZ.h" />
     <ClInclude Include="Hosek\ArHosekSkyModelData_RGB.h" />
     <ClInclude Include="Hosek\ArHosekSkyModelData_Spectral.h" />
-    <ClInclude Include="IESLightLocatorMesh.h" />
+    <ClInclude Include="IES\FireRenderIESLight.h" />
+    <ClInclude Include="IES\IESLightLocatorMesh.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="MaterialLoader.h" />
     <ClInclude Include="RenderCacheWarningDialog.h" />

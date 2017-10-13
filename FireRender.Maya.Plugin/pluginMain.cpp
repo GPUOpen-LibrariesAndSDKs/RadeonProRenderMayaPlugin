@@ -25,7 +25,7 @@
 #include "FireRenderLocationCmd.h"
 #include "FireRenderIBL.h"
 #include "FireRenderSkyLocator.h"
-#include "FireRenderIESLight.h"
+#include "IES/FireRenderIESLight.h"
 #include "FireRenderEnvironmentLight.h"
 #include "FireRenderOverride.h"
 #include "FireRenderViewport.h"

@@ -456,6 +456,40 @@ inline T findPlugTryGetValue(const MFnDependencyNode & mfnDepNode, const MString
 	return retValue;
 }
 
+template<typename T>
+inline T findPlugTryGetValue(const MFnDependencyNode& mfnDepNode, const MObject& attr, T defaultValue, bool failOnNotFound = true)
+{
+	auto plug = mfnDepNode.findPlug(attr);
+
+	T result = defaultValue;
+
+	if (plug.isNull())
+	{
+		DebugPrint("Failed to find an attribute in %s", mfnDepNode.name().asUTF8());
+
+		if (failOnNotFound)
+		{
+			assert(false);
+		}
+	}
+	else
+	{
+		auto status = plug.getValue(result);
+
+		if (!status)
+		{
+			DebugPrint("Failed to find an attribute in %s", mfnDepNode.name().asUTF8());
+
+			if (failOnNotFound)
+			{
+				assert(false);
+			}
+		}
+	}
+
+	return result;
+}
+
 inline MString operator "" _ms(const char * str, std::size_t len)
 {
 	return MString(str, static_cast<int>(len));

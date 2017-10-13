@@ -1,0 +1,378 @@
+#include "FireRenderIESLight.h"
+
+#include <maya/MFnDependencyNode.h>
+#include <maya/MFnTypedAttribute.h>
+#include <maya/MFnEnumAttribute.h>
+#include <maya/MFnNumericAttribute.h>
+#include <maya/MFnMessageAttribute.h>
+#include <maya/MImage.h>
+#include <maya/MFileObject.h>
+#include <maya/MDagModifier.h>
+#include <maya/MFnTransform.h>
+#include <maya/MEulerRotation.h>
+#include "FireMaya.h"
+#include "FireRenderUtils.h"
+#include <Translators.h>
+
+MObject FireRenderIESLightLocator::aFilePath;
+MObject FireRenderIESLightLocator::aAreaWidth;
+MObject FireRenderIESLightLocator::aRotations[3];
+MObject	FireRenderIESLightLocator::aIntensity;
+MObject	FireRenderIESLightLocator::aDisplay;
+MObject FireRenderIESLightLocator::aMeshRepresentationUpdated;
+MTypeId FireRenderIESLightLocator::id(FireMaya::TypeId::FireRenderIESLightLocator);
+
+MString FireRenderIESLightLocator::drawDbClassification("drawdb/geometry/FireRenderIESLightLocator");
+MString FireRenderIESLightLocator::drawRegistrantId("FireRenderIESLightNode");
+
+MStatus FireRenderIESLightLocator::compute(const MPlug& plug, MDataBlock& data)
+{
+	if (plug == aMeshRepresentationUpdated)
+	{
+		UpdateMesh(false);
+		data.setClean(plug);
+	}
+
+	return MS::kUnknownParameter;
+}
+
+template <class T>
+void makeAttribute(T& attr)
+{
+	CHECK_MSTATUS(attr.setKeyable(true));
+	CHECK_MSTATUS(attr.setStorable(true));
+	CHECK_MSTATUS(attr.setReadable(true));
+	CHECK_MSTATUS(attr.setWritable(true));
+}
+
+MStatus FireRenderIESLightLocator::initialize()
+{
+	MFnNumericAttribute nAttr;
+	MFnTypedAttribute tAttr;
+	MFnEnumAttribute eAttr;
+	MFnMessageAttribute mAttr;
+
+	aMeshRepresentationUpdated = nAttr.create("meshRepresentationUpdated", "mru", MFnNumericData::kBoolean, 0);
+	nAttr.setKeyable(false);
+	nAttr.setStorable(false);
+	nAttr.setReadable(true);
+	nAttr.setWritable(true);
+	nAttr.setInternal(true);
+	nAttr.setHidden(true);
+	addAttribute(aMeshRepresentationUpdated);
+
+	aFilePath = tAttr.create("iesFile", "ies", MFnData::kString);
+	tAttr.setStorable(true);
+	tAttr.setReadable(true);
+	tAttr.setWritable(true);
+	tAttr.setUsedAsFilename(true);
+	addAttribute(aFilePath);
+
+	aAreaWidth = nAttr.create("areaWidth", "aw", MFnNumericData::kFloat, 1.f);
+	makeAttribute(nAttr);
+	nAttr.setMin(0);
+	nAttr.setMax(100);
+	nAttr.setSoftMax(2.0);
+	addAttribute(aAreaWidth);
+
+	const char* aRotationFullNames[3]
+	{
+		"xRotation",
+		"yRotation",
+		"zRotation",
+	};
+
+	const char* aRotationShortNames[3]
+	{
+		"rtx",
+		"rty",
+		"rtz",
+	};
+
+	for (size_t i = 0; i < 3; ++i)
+	{
+		aRotations[i] = nAttr.create(aRotationFullNames[i], aRotationShortNames[i], MFnNumericData::kFloat, 0.f);
+		makeAttribute(nAttr);
+		nAttr.setSoftMin(-180);
+		nAttr.setSoftMax( 180);
+		addAttribute(aRotations[i]);
+	}
+
+	aIntensity = nAttr.create("intensity", "i", MFnNumericData::kFloat, 1.f);
+	makeAttribute(nAttr);
+	nAttr.setMin(0);
+	nAttr.setMax(1000);
+	nAttr.setSoftMax(2.0);
+	addAttribute(aIntensity);
+
+	aDisplay = nAttr.create("display", "d", MFnNumericData::kBoolean, 1);
+	nAttr.setKeyable(true);
+	nAttr.setStorable(true);
+	nAttr.setReadable(true);
+	nAttr.setWritable(true);
+	addAttribute(aDisplay);
+
+	MObject a = nAttr.createColor("color", "fcol");
+	makeAttribute(nAttr);
+	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
+	addAttribute(a);
+
+	auto setMeshReprAffects = [&](auto... args)
+	{
+		(void)std::initializer_list<int>
+		{
+			(0, attributeAffects(args, aMeshRepresentationUpdated))...
+		};
+	};
+
+	setMeshReprAffects(
+		aFilePath, aDisplay, aAreaWidth,
+		aRotations[0], aRotations[1], aRotations[2]);
+
+	return MS::kSuccess;
+}
+
+MString FireRenderIESLightLocator::GetFilename() const
+{
+	return findPlugTryGetValue(thisMObject(), aFilePath, ""_ms);
+}
+
+float FireRenderIESLightLocator::GetAreaWidth() const
+{
+	return findPlugTryGetValue(thisMObject(), aAreaWidth, 1.f);
+}
+
+bool FireRenderIESLightLocator::GetDisplay() const
+{
+	return findPlugTryGetValue(thisMObject(), aDisplay, true);
+}
+
+float FireRenderIESLightLocator::GetXRotation() const
+{
+	return GetAxisRotation(0);
+}
+
+float FireRenderIESLightLocator::GetYRotation() const
+{
+	return GetAxisRotation(1);
+}
+
+float FireRenderIESLightLocator::GetZRotation() const
+{
+	return GetAxisRotation(2);
+}
+
+float FireRenderIESLightLocator::GetAxisRotation(unsigned axis) const
+{
+	if (axis > 2)
+	{
+		assert(!"Invalid usage");
+		return 0.f;
+	}
+
+	return findPlugTryGetValue(thisMObject(), FireRenderIESLightLocator::aRotations[axis], 0.f);
+}
+
+void FireRenderIESLightLocator::UpdateMesh(bool forced) const
+{
+	if (m_mesh)
+	{
+		m_mesh->SetEnabled(GetDisplay());
+		m_mesh->SetScale(GetAreaWidth());
+		m_mesh->SetFilename(GetFilename(), forced);
+
+		for (int axis = 0; axis < 3; ++axis)
+		{
+			float angle = GetAxisRotation(axis);
+			m_mesh->SetAngle(angle, axis);
+		}
+	}
+}
+
+void FireRenderIESLightLocator::draw(
+	M3dView& view,
+	const MDagPath& dag,
+	M3dView::DisplayStyle style,
+	M3dView::DisplayStatus status)
+{
+	bool forcedUpdate = false;
+
+	// Create the locator mesh if required.
+	if (!m_mesh)
+	{
+		m_mesh = std::make_unique<IESLightLegacyLocatorMesh>();
+		forcedUpdate = true;
+	}
+
+	// Refresh and draw the mesh.
+	UpdateMesh(forcedUpdate);
+	m_mesh->Draw(view);
+}
+
+bool FireRenderIESLightLocator::isBounded() const
+{
+	return true;
+}
+
+MBoundingBox FireRenderIESLightLocator::boundingBox() const
+{
+	MObject thisNode = thisMObject();
+	MPoint corner1(-1.0, -1.0, -1.0);
+	MPoint corner2(1.0, 1.0, 1.0);
+	return MBoundingBox(corner1, corner2);
+}
+void* FireRenderIESLightLocator::creator()
+{
+	return new FireRenderIESLightLocator();
+}
+
+// ================================
+// Viewport 2.0 override
+// ================================
+
+FireRenderIESLightLocatorOverride::FireRenderIESLightLocatorOverride(const MObject& obj) :
+	MHWRender::MPxGeometryOverride(obj),
+	m_obj(obj),
+	m_changed(true)
+{
+	m_mesh.SetFilename(GetFilename(), true);
+}
+
+FireRenderIESLightLocatorOverride::~FireRenderIESLightLocatorOverride() = default;
+
+MHWRender::DrawAPI FireRenderIESLightLocatorOverride::supportedDrawAPIs() const
+{
+#ifndef MAYA2015
+	return (MHWRender::kOpenGL | MHWRender::kDirectX11 | MHWRender::kOpenGLCoreProfile);
+#else
+	return (MHWRender::kOpenGL | MHWRender::kDirectX11);
+#endif
+}
+
+void FireRenderIESLightLocatorOverride::updateDG()
+{
+	if (m_mesh.SetFilename(GetFilename(), false))
+		m_changed = true;
+}
+
+void FireRenderIESLightLocatorOverride::updateRenderItems(const MDagPath& path, MHWRender::MRenderItemList& list)
+{
+	MHWRender::MRenderItem* mesh = nullptr;
+	const char* renderItemName = "locatorMesh";
+	int index = list.indexOf(renderItemName);
+
+	if (index < 0)
+	{
+		mesh = MHWRender::MRenderItem::Create(renderItemName,
+			MHWRender::MRenderItem::DecorationItem,
+			MHWRender::MGeometry::kLines);
+		mesh->setDrawMode(MHWRender::MGeometry::kAll);
+		list.append(mesh);
+	}
+	else
+		mesh = list.itemAt(index);
+
+	if (mesh)
+	{
+		float areaWidth = GetAreaWidth();
+
+		MEulerRotation rotation(
+			FireMaya::deg2rad(GetAxisRotation(0)),
+			FireMaya::deg2rad(GetAxisRotation(1)),
+			FireMaya::deg2rad(GetAxisRotation(2)));
+		MMatrix matrix = rotation.asMatrix();
+
+		MTransformationMatrix trm;
+		double scale[3]{ areaWidth, areaWidth, areaWidth };
+		trm.setScale(scale, MSpace::Space::kObject);
+
+		matrix *= trm.asMatrix();
+		bool ok = mesh->setMatrix(&matrix);
+		assert(ok);
+
+		auto renderer = MHWRender::MRenderer::theRenderer();
+		auto shaderManager = renderer->getShaderManager();
+		auto shader = shaderManager->getStockShader(MHWRender::MShaderManager::k3dSolidShader);
+
+		if (shader)
+		{
+			MColor c = MHWRender::MGeometryUtilities::wireframeColor(path);
+			float color[] = { c.r, c.g, c.b, 1.0f };
+			shader->setParameter("solidColor", color);
+			mesh->setShader(shader);
+			shaderManager->releaseShader(shader);
+		}
+
+		mesh->enable(GetDisplay());
+	}
+}
+
+void FireRenderIESLightLocatorOverride::populateGeometry(
+	const MHWRender::MGeometryRequirements& requirements,
+	const MHWRender::MRenderItemList& renderItems,
+	MHWRender::MGeometry& data)
+{
+	m_mesh.populateOverrideGeometry(requirements, renderItems, data);
+	m_changed = false;
+}
+
+#ifndef MAYA2015
+
+bool FireRenderIESLightLocatorOverride::refineSelectionPath(const MHWRender::MSelectionInfo &  	selectInfo,
+	const MHWRender::MRenderItem &  	hitItem,
+	MDagPath &  	path,
+	MObject &  	components,
+	MSelectionMask &  	objectMask
+)
+{
+	return true;
+}
+
+void FireRenderIESLightLocatorOverride::updateSelectionGranularity(
+	const MDagPath& path,
+	MHWRender::MSelectionContext& selectionContext)
+{
+}
+
+MString FireRenderIESLightLocatorOverride::GetFilename() const
+{
+	return findPlugTryGetValue(m_obj, FireRenderIESLightLocator::aFilePath, ""_ms);
+}
+
+float FireRenderIESLightLocatorOverride::GetAreaWidth() const
+{
+	return findPlugTryGetValue(m_obj, FireRenderIESLightLocator::aAreaWidth, 1.f);
+}
+
+bool FireRenderIESLightLocatorOverride::GetDisplay() const
+{
+	return findPlugTryGetValue(m_obj, FireRenderIESLightLocator::aDisplay, true);
+}
+
+float FireRenderIESLightLocatorOverride::GetXRotation() const
+{
+	return GetAxisRotation(0);
+}
+
+float FireRenderIESLightLocatorOverride::GetYRotation() const
+{
+	return GetAxisRotation(1);
+}
+
+float FireRenderIESLightLocatorOverride::GetZRotation() const
+{
+	return GetAxisRotation(2);
+}
+
+float FireRenderIESLightLocatorOverride::GetAxisRotation(unsigned axis) const
+{
+	if (axis > 2)
+	{
+		assert(!"Invalid usage");
+		return 0.f;
+	}
+
+	return findPlugTryGetValue(m_obj, FireRenderIESLightLocator::aRotations[axis], 0.f);
+}
+
+#endif
