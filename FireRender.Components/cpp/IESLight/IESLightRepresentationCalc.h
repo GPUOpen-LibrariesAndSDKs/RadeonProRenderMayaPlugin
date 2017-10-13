@@ -9,7 +9,7 @@
 #pragma once
 
 #include <vector>
-#include "inc\Math\float3.h"
+#include "Math/float3.h"
 #include "IESprocessor.h"
 
 struct IESLightRepresentationParams

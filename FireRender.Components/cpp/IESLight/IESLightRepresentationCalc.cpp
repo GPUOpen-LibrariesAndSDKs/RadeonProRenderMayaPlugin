@@ -6,9 +6,9 @@
 * IES light representation calculation
 *********************************************************************************************************************************/
 
-#include "inc\Math\mathutils.h"
-#include "inc\Math\float3.h"
-#include "inc\Math\matrix.h"
+#include "Math/mathutils.h"
+#include "Math/float3.h"
+#include "Math/matrix.h"
 #include "IESLightRepresentationCalc.h"
 #include "IESprocessor.h"
 
