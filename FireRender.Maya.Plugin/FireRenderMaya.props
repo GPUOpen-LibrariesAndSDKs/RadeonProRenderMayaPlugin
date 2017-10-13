@@ -46,7 +46,8 @@ IF EXIST "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)-x64\prefs\shelves" COP
 COPY $(SolutionDir)ThirdParty\AxfPackage\ReleaseDll\AxfDll\*.dll $(SolutionDir)dist\bin\ /Y
 COPY $(SolutionDir)ThirdParty\AxfPackage\ReleaseDll\AxfDll\*.def $(SolutionDir)dist\bin\ /Y
 
-COPY $(SolutionDir)ThirdParty\RadeonProRender-GLTF\lib\*.dll $(SolutionDir)dist\bin\ /Y</Command>
+COPY $(SolutionDir)ThirdParty\RadeonProRender-GLTF\lib\ProRenderGLTF.dll $(SolutionDir)dist\bin\ /Y
+if $(ConfigurationName) == Debug COPY $(SolutionDir)ThirdParty\RadeonProRender-GLTF\lib\ProRenderGLTFD.dll $(SolutionDir)dist\bin\ /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup />
