@@ -334,6 +334,8 @@ void FireRenderIESLightLocatorOverride::updateSelectionGranularity(
 {
 }
 
+#endif
+
 MString FireRenderIESLightLocatorOverride::GetFilename() const
 {
 	return findPlugTryGetValue(m_obj, FireRenderIESLightLocator::aFilePath, ""_ms);
@@ -374,5 +376,3 @@ float FireRenderIESLightLocatorOverride::GetAxisRotation(unsigned axis) const
 
 	return findPlugTryGetValue(m_obj, FireRenderIESLightLocator::aRotations[axis], 0.f);
 }
-
-#endif
