@@ -30,6 +30,9 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	const MString& optionsString,
 	FileAccessMode mode)
 {
+#if defined(OSMac_)
+    return MStatus::kFailure;
+#else
 	// Create new context and fill it with scene
 	std::unique_ptr<FireRenderContext> m_context = std::make_unique<FireRenderContext>();
 
@@ -81,4 +84,5 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	m_context->cleanScene();
 
 	return MS::kSuccess;
+#endif
 }

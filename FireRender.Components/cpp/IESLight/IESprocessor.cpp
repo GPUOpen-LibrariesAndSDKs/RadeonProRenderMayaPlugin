@@ -17,6 +17,8 @@
 #include <map>
 #include <functional>
 #include <clocale>
+#include <cmath>
+#include <float.h>
 #include "IESprocessor.h"
 
 const char* IESProcessor::IES_FileTag = "IESNA";
@@ -477,7 +479,7 @@ bool IESProcessor::ReadValue(IESLightData& lightData, IESProcessor::ParseState& 
 		return false;
 
 	// read values from input
-	auto& parseFuncImpl = m_parseImpl.find(state);
+	const auto& parseFuncImpl = m_parseImpl.find(state);
 	if (parseFuncImpl != m_parseImpl.end())
 	{
 		state = parseFuncImpl->second(lightData, value);
@@ -515,6 +517,10 @@ IESProcessor::ErrorCode IESProcessor::ParseTokens(IESLightData& lightData, std::
 
 IESProcessor::ErrorCode IESProcessor::Parse(IESLightData& lightData, const wchar_t* filename) const
 {
+#if defined(OSMac_)
+	// Todo : std::ifstream does not take a wchar_t filename on OSX
+	return IESProcessor::ErrorCode::NO_FILE;
+#else
 	// back-off
 	if (filename == nullptr)
 	{
@@ -559,6 +565,7 @@ IESProcessor::ErrorCode IESProcessor::Parse(IESLightData& lightData, const wchar
 
 	// parse successfull!
 	return IESProcessor::ErrorCode::SUCCESS;
+#endif
 }
 
 IESProcessor::ErrorCode IESProcessor::Update(IESLightData& lightData, const IESUpdateRequest& req) const

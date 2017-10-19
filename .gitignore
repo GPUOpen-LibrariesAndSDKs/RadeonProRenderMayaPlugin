@@ -6,5 +6,6 @@ x64/
 *.user
 *.db
 *.opendb
+.DS_Store
 
 

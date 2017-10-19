@@ -11,8 +11,8 @@
 #include "base_mesh.h"
 #include "FireRenderError.h"
 #include "FireRenderUtils.h"
-#include "IESLight\IESprocessor.h"
-#include "IESLight\IESLightRepresentationCalc.h"
+#include "IESLight/IESprocessor.h"
+#include "IESLight/IESLightRepresentationCalc.h"
 #include "Translators.h"
 
 namespace
