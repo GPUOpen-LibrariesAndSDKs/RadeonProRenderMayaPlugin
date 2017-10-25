@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RadeonProRender", "FireRender.Maya.Plugin\FireRender.vcxproj", "{3BD95191-5C34-4990-8573-C9B34F148C1B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RadeonProRender", "FireRender.Maya.Src\FireRender.vcxproj", "{3BD95191-5C34-4990-8573-C9B34F148C1B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{C8A122D0-B67F-4A64-B927-2531E657D218}"
 	ProjectSection(SolutionItems) = preProject

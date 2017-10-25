@@ -1,13 +1,13 @@
 
 # copy all the resources and dependencies
 
-cp -r "$PROJECT_DIR/../../../FireRender.Maya.Plugin/shaders" "/Users/Shared/RadeonProRender/"
-cp -r "$PROJECT_DIR/../../../FireRender.Maya.Plugin/icons" "/Users/Shared/RadeonProRender/"
-cp -r "$PROJECT_DIR/../../../FireRender.Maya.Plugin/images" "/Users/Shared/RadeonProRender/"
-cp -r "$PROJECT_DIR/../../../FireRender.Maya.Plugin/renderDesc" "/Users/Shared/RadeonProRender/"
-cp -r "$PROJECT_DIR/../../../FireRender.Maya.Plugin/scripts" "/Users/Shared/RadeonProRender/"
-cp -r "$PROJECT_DIR/../../../FireRender.Maya.Plugin/python/" "/Users/Shared/RadeonProRender/scripts/"
-cp -r "$PROJECT_DIR/../../../FireRender.Maya.Plugin/shelfs/" "/Users/Shared/RadeonProRender/shelves/"
+cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/shaders" "/Users/Shared/RadeonProRender/"
+cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/icons" "/Users/Shared/RadeonProRender/"
+cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/images" "/Users/Shared/RadeonProRender/"
+cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/renderDesc" "/Users/Shared/RadeonProRender/"
+cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/scripts" "/Users/Shared/RadeonProRender/"
+cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/python/" "/Users/Shared/RadeonProRender/scripts/"
+cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/shelfs/" "/Users/Shared/RadeonProRender/shelves/"
 cp -r "$PROJECT_DIR/../../../ThirdParty/RadeonProRender SDK/Mac/lib" "/Users/Shared/RadeonProRender/"
 
 # copy module files

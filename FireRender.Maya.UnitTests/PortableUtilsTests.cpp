@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "CppUnitTest.h"
 
-#include "..\FireRender.Maya.Plugin\FireRenderPortableUtils.h"
+#include "..\FireRender.Maya.Src\FireRenderPortableUtils.h"
 
 using namespace FireMaya;
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
