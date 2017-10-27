@@ -223,5 +223,5 @@ private:
 	}
 
 public:
-	void GenerateSkyHosek(int w, int h, SkyRgbFloat32 *buffer);
+	void GenerateSkyHosek(int w, int h, SkyRgbFloat32 *buffer, float maxIntensity);
 };

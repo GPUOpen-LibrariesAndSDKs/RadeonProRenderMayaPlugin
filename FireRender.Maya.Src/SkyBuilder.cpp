@@ -255,7 +255,23 @@ void SkyBuilder::createSkyImage()
 	sg.mSunDirection = m_sunDirection;
 	sg.mTurbidity = 1.f + m_attributes.turbidity * (9.0f / 50.0f);
 
+	float skyIntensity = m_attributes.intensity;
+	float maxSunIntensity;
+
+	if (skyIntensity < std::numeric_limits<float>::epsilon())
+	{
+		maxSunIntensity = std::numeric_limits<float>::max();
+	}
+	else if (skyIntensity > 1.f)
+	{
+		maxSunIntensity = skyIntensity;
+	}
+	else
+	{
+		maxSunIntensity = 1.f / skyIntensity;
+	}
+
 	// Generate the image.
 	memset(m_imageBuffer.get(), 0, sizeof(SkyRgbFloat32) * m_imageWidth * m_imageHeight);
-	sg.GenerateSkyHosek(m_imageWidth, m_imageHeight, m_imageBuffer.get());
+	sg.GenerateSkyHosek(m_imageWidth, m_imageHeight, m_imageBuffer.get(), maxSunIntensity);
 }
