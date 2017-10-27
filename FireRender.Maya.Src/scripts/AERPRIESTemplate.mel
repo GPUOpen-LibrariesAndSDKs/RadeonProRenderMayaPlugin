@@ -1,0 +1,77 @@
+// This is the procedure to open a file browser to choose ies file
+//
+global proc AEIESfileBrowser( string $fileNameAttr )
+{
+    // prepare filter and starting dir for file dialog
+    string $filter = "IES" + " (*.ies);;"
+                      + "All Files" + " (*.*)";
+
+    // choose a file to import
+    string $result[] = `fileDialog2
+            -returnFilter 1
+            -fileFilter $filter
+            -dialogStyle 2
+            -caption "Select IES file"
+            -fileMode 1
+            `;
+    if (size($result) == 0 || size($result[0]) == 0) {
+        // cancelled
+        return;
+    }
+
+    // set the file name attribute of the cache node
+    setAttr $fileNameAttr -type "string" $result[0];
+
+    // This will force an update to display the effects
+    // of the new cachefile.
+    //
+    currentTime `currentTime -q`;
+}
+
+// The following two procedures generate the UI for file name field
+//
+global proc AEIESFileNameNew ( string $fileNameAttr )
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	columnLayout -adjustableColumn true;
+	
+		rowLayout -numberOfColumns 3;
+			text -label "IES File" fileNameText;
+			textField fileNameField;
+				symbolButton -image "navButtonBrowse.png" browser;
+		setParent ..;
+	setParent ..;
+	
+	setUITemplate -popTemplate;
+
+	AEIESFileNameReplace( $fileNameAttr );
+}
+
+global proc AEIESFileNameReplace ( string $fileNameAttr )
+{
+	string $fileName = `getAttr $fileNameAttr`;
+	string $nodeName = `plugNode $fileNameAttr`;
+
+	// file name attribute
+	connectControl -fileName fileNameField $fileNameAttr;
+	button -e -c ("AEIESfileBrowser " + $fileNameAttr) browser;
+}
+
+global proc AERPRIESTemplate( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout "Radeon ProRender" -collapse 0;
+			editorTemplate -callCustom AEIESFileNameNew AEIESFileNameReplace "iesFile";
+			editorTemplate -addControl "areaWidth";
+			editorTemplate -addControl "xRotation";
+			editorTemplate -addControl "yRotation";
+			editorTemplate -addControl "zRotation";
+			editorTemplate -addControl "intensity";
+			editorTemplate -addControl "display";
+			editorTemplate -addControl "color";
+		editorTemplate -endLayout;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}

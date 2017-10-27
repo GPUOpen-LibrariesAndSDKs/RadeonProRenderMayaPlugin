@@ -123,6 +123,7 @@
     <None Include="scripts\AERPRBlendMaterialTemplate.mel" />
     <None Include="scripts\AERPRGlobalsTemplate.mel" />
     <None Include="scripts\AERPRIBLTemplate.mel" />
+    <None Include="scripts\AERPRIESTemplate.mel" />
     <None Include="scripts\AERPRMaterialTemplate.mel" />
     <None Include="scripts\AERPRSkyTemplate.mel" />
     <None Include="scripts\AERPRSubsurfaceMaterialTemplate.mel" />

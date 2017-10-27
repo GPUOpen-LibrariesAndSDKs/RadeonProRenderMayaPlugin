@@ -78,6 +78,9 @@
     <Filter Include="FireRender.Components\IESLight">
       <UniqueIdentifier>{a8b053cd-2eeb-4bea-a6be-aeb76ea2640d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Resources\Scripts\AttributeEditorTemplates">
+      <UniqueIdentifier>{c3527e75-96bc-4665-a6c5-d24dc1665482}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="python\__init__.py">
@@ -122,24 +125,6 @@
     <None Include="Shelfs\shelf_Radeon_ProRender.mel">
       <Filter>Resources\Shelfs</Filter>
     </None>
-    <None Include="scripts\AERPRAddMaterialTemplate.mel">
-      <Filter>Resources\Scripts</Filter>
-    </None>
-    <None Include="scripts\AERPRBlendMaterialTemplate.mel">
-      <Filter>Resources\Scripts</Filter>
-    </None>
-    <None Include="scripts\AERPRGlobalsTemplate.mel">
-      <Filter>Resources\Scripts</Filter>
-    </None>
-    <None Include="scripts\AERPRIBLTemplate.mel">
-      <Filter>Resources\Scripts</Filter>
-    </None>
-    <None Include="scripts\AERPRMaterialTemplate.mel">
-      <Filter>Resources\Scripts</Filter>
-    </None>
-    <None Include="scripts\AERPRSkyTemplate.mel">
-      <Filter>Resources\Scripts</Filter>
-    </None>
     <None Include="frMaya.module" />
     <None Include="python\fireRender\rpr_material_browser.py">
       <Filter>Resources\Python</Filter>
@@ -156,9 +141,6 @@
     <None Include="scripts\AboutAndCopyright.html">
       <Filter>Resources\Scripts</Filter>
     </None>
-    <None Include="scripts\AERPRVolumeMaterialTemplate.mel">
-      <Filter>Resources\Scripts</Filter>
-    </None>
     <None Include="scripts\common.mel">
       <Filter>Resources\Scripts</Filter>
     </None>
@@ -169,9 +151,6 @@
       <Filter>Resources\Scripts</Filter>
     </None>
     <None Include="scripts\rprUnifiedRenderGlobalsWindow201700.mel">
-      <Filter>Resources\Scripts</Filter>
-    </None>
-    <None Include="scripts\AERPRUberMaterialTemplate.mel">
       <Filter>Resources\Scripts</Filter>
     </None>
     <None Include="python\fireRender\rpr_location_selector.py">
@@ -186,8 +165,35 @@
     <None Include="scripts\rprUnifiedRenderGlobalsWindow201500.mel">
       <Filter>Resources\Scripts</Filter>
     </None>
+    <None Include="scripts\AERPRAddMaterialTemplate.mel">
+      <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
+    </None>
+    <None Include="scripts\AERPRBlendMaterialTemplate.mel">
+      <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
+    </None>
+    <None Include="scripts\AERPRGlobalsTemplate.mel">
+      <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
+    </None>
+    <None Include="scripts\AERPRIBLTemplate.mel">
+      <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
+    </None>
+    <None Include="scripts\AERPRMaterialTemplate.mel">
+      <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
+    </None>
+    <None Include="scripts\AERPRSkyTemplate.mel">
+      <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
+    </None>
     <None Include="scripts\AERPRSubsurfaceMaterialTemplate.mel">
-      <Filter>Resources\Scripts</Filter>
+      <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
+    </None>
+    <None Include="scripts\AERPRUberMaterialTemplate.mel">
+      <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
+    </None>
+    <None Include="scripts\AERPRVolumeMaterialTemplate.mel">
+      <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
+    </None>
+    <None Include="scripts\AERPRIESTemplate.mel">
+      <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

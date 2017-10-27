@@ -170,6 +170,8 @@ global proc createIESLight()
 		return;
 
 	string $IESNode = `createNode RPRIES -n RPRIESLight`;
+	string $parent[] = `listRelatives -p $IESNode`;
+	rename $parent[0] "RPRIES#";
 }
 
 global proc convertVRayObjects()
