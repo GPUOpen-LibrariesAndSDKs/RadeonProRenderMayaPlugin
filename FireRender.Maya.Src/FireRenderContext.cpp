@@ -52,8 +52,6 @@ using namespace FireMaya;
 #include "FireRenderIBL.h"
 #include <maya/MFnRenderLayer.h>
 
-#include <FireRenderPortableUtils.h>
-
 rpr_int g_tahoePluginID = -1;
 
 FireRenderContext::FireRenderContext() :
@@ -488,27 +486,15 @@ void FireRenderContext::updateSwatchSceneRenderLimits(const MObject& shaderObj)
 void FireRenderContext::CheckSetRayCastEpsilon()
 {
 	RPR_THREAD_ONLY;
-	MBoundingBox boundingBox;
 
-	for (auto & it : m_sceneObjects)
+	FireRenderGlobalsData globals;
+	globals.readFromCurrentScene();
+
+	if (fabs(m_lastRayCastEpsilon - globals.raycastEpsilon) > FLT_EPSILON)
 	{
-		if (it.second)
-		{
-			MFnDagNode node{ it.second->Object() };
-			auto nodeBoundingBox = node.boundingBox();
-			boundingBox.expand(nodeBoundingBox);
-		}
-	}
+		scope.Context().SetParameter("raycastepsilon", globals.raycastEpsilon);
 
-	auto epsilon = FireMaya::RayCastEpsilon::Calculate(boundingBox.width(), boundingBox.height(), boundingBox.depth());
-
-	if (epsilon != m_lastRayCastEpsilon &&
-		epsilon * 10 != m_lastRayCastEpsilon &&
-		epsilon / 10 != m_lastRayCastEpsilon)	// Avoid changing if not off by factor of 2
-	{
-		scope.Context().SetParameter("raycastepsilon", epsilon);
-
-		m_lastRayCastEpsilon = epsilon;
+		m_lastRayCastEpsilon = globals.raycastEpsilon;
 	}
 }
 
@@ -522,7 +508,7 @@ void FireRenderContext::render(bool lock)
 	if (!context)
 		return;
 
-	//CheckSetRayCastEpsilon();
+	CheckSetRayCastEpsilon();
 
 	if (m_restartRender)
 	{

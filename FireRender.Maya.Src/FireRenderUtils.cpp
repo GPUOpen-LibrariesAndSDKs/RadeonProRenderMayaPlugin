@@ -194,6 +194,11 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			maxRayDepthProduction = plug.asShort();
 
+		// In UI raycast epsilon defined in millimeters, convert it to meters
+		plug = frGlobalsNode.findPlug("raycastEpsilon");
+		if (!plug.isNull())
+			raycastEpsilon = plug.asFloat() / 1000.f;
+
 		plug = frGlobalsNode.findPlug("maxRayDepthViewport");
 		if (!plug.isNull())
 			maxRayDepthViewport = plug.asShort();

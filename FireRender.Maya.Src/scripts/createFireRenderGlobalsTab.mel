@@ -870,6 +870,15 @@ global proc createFireRenderQualityTab()
 
 	setParent ..;
 
+	// Advanced settings section
+	frameLayout -label "Advanced Settings" -cll false -cl 0 fireRenderAdvancedFrame;
+
+	attrControlGrp
+		-label "Ray epsilon(mm)"
+		-attribute "RadeonProRenderGlobals.raycastEpsilon";
+
+	setParent ..;
+
 	formLayout
 		-edit
 		-af fireRenderGlobalsScrollLayout "top" 0

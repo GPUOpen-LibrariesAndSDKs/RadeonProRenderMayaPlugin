@@ -386,9 +386,6 @@
     <ClCompile Include="FireRenderImageUtil.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="FireRenderPortableUtils.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
     <ClCompile Include="VRay.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -695,9 +692,6 @@
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="FireRenderImageUtil.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="FireRenderPortableUtils.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="FireRenderMath.h">

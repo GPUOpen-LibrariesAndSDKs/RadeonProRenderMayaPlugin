@@ -33,6 +33,8 @@ namespace
 		MObject AACellSizeProduction;
 		MObject MaxRayDepthProduction;
 
+		MObject RaycastEpsilon;
+
 		MObject AASampleCountViewport;
 		MObject AACellSizeViewport;
 		MObject MaxRayDepthViewport;
@@ -214,6 +216,12 @@ MStatus FireRenderGlobals::initialize()
 	nAttr.setMin(0);
 	nAttr.setMax(50);
 
+	Attribute::RaycastEpsilon = nAttr.create("raycastEpsilon", "rce", MFnNumericData::kFloat, 0.02f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0f);
+	nAttr.setSoftMax(2.0f);
+	nAttr.setMax(10.0f);
+
 	Attribute::MaxRayDepthViewport = nAttr.create("maxRayDepthViewport", "mrdV", MFnNumericData::kShort, 5, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0);
@@ -391,6 +399,7 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::AASampleCountProduction));
 	CHECK_MSTATUS(addAttribute(Attribute::AACellSizeProduction));
 	CHECK_MSTATUS(addAttribute(Attribute::MaxRayDepthProduction));
+	CHECK_MSTATUS(addAttribute(Attribute::RaycastEpsilon));
 	CHECK_MSTATUS(addAttribute(Attribute::AASampleCountViewport));
 	CHECK_MSTATUS(addAttribute(Attribute::AACellSizeViewport));
 	CHECK_MSTATUS(addAttribute(Attribute::MaxRayDepthViewport));

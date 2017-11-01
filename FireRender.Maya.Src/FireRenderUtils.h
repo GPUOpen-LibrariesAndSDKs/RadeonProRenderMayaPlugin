@@ -155,6 +155,9 @@ public:
 
 	// AOVs.
 	FireRenderAOVs aovs;
+
+	// Advanced settings
+	float raycastEpsilon;
 };
 
 namespace FireMaya
