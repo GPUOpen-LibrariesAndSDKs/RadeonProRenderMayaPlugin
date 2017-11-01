@@ -1575,9 +1575,9 @@ void SkyGen::GenerateSkyHosek(int w, int h, SkyRgbFloat32 *buffer, float maxInte
 				buffer[idx].b = rgb[0];
 				AdjustColor(buffer[idx], mSaturation, mFilterColor);
 
-				buffer[idx].r = std::min(buffer[idx].r, maxIntensity);
-				buffer[idx].g = std::min(buffer[idx].g, maxIntensity);
-				buffer[idx].b = std::min(buffer[idx].b, maxIntensity);
+				buffer[idx].r = std::min<float>(buffer[idx].r, maxIntensity);
+				buffer[idx].g = std::min<float>(buffer[idx].g, maxIntensity);
+				buffer[idx].b = std::min<float>(buffer[idx].b, maxIntensity);
 			}
 		}
 	}
