@@ -374,7 +374,7 @@ namespace FireMaya
 				MEulerRotation rotation(
 					getRotation("xRotation"),
 					getRotation("yRotation"),
-					getRotation("zRotation"));
+					getRotation("zRotation") + PI / 2);
 				ret.matrix = rotation.asMatrix();
 				ret.matrix *= dagPath.inclusiveMatrix(&status);
 			}
@@ -679,9 +679,7 @@ namespace FireMaya
 
 			auto primaryVisibility = data.visible;
 
-			MTransformationMatrix t(data.matrix);
-			t.rotateBy(rotation, MSpace::kWorld);
-			MMatrix m = t.asMatrix();
+			MMatrix m = data.matrix;
 			m = scaleM * m;
 			m.get(mfloats);
 			mfloats[3][0] *= 0.01f;
