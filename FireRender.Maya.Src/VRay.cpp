@@ -740,8 +740,6 @@ namespace FireMaya
 
 			if (data.visible)
 			{
-				rpr_int frstatus = RPR_SUCCESS;
-
 				float intensity = data.intensity;
 
 				MColor color = data.color;

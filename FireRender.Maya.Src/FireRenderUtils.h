@@ -445,6 +445,8 @@ inline T findPlugTryGetValue(const MFnDependencyNode & mfnDepNode, const MString
 	if (!plug.isNull())
 	{
 		auto mstatus = plug.getValue(retValue);
+        if (failOnNotFound && (!mstatus))
+            assert(false);
 	}
 	else
 	{

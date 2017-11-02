@@ -13,7 +13,7 @@ namespace FireMaya
 		static MStatus initialize();
 		static MTypeId FRTypeID() { return FireMaya::TypeId::FireRenderBlendMaterial; }
 
-		virtual MStatus compute(const MPlug& plug, MDataBlock& block);
+		virtual MStatus compute(const MPlug& plug, MDataBlock& block) override;
 		frw::Shader GetShader(Scope& scope) override;
 		frw::Shader GetVolumeShader(Scope& scope) override;
 

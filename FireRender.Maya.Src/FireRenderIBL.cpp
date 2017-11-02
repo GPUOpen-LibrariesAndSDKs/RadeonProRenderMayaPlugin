@@ -345,7 +345,6 @@ void FireRenderIBLOverride::updateRenderItems(const MDagPath& path, MHWRender::M
 
 		if (shader)
 		{
-			static const float theColor[] = { 1.0f, 1.0f, 0.0f, 1.0f };
 			auto textureManager = renderer->getTextureManager();
 			MHWRender::MTextureAssignment texResource;
 			texResource.texture = textureManager->acquireTexture(mFilePath, path.partialPathName());
@@ -477,7 +476,6 @@ void FireRenderIBLOverride::populateGeometry(
 
 		int startIndex = 0;
 		int numIndex = 0;
-		bool isWireFrame = true;
 
 		if (item->name() == wireframeSphereItemName_)
 		{

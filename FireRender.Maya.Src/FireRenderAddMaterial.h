@@ -12,7 +12,7 @@ namespace FireMaya
 		static MStatus initialize();
 		static MTypeId FRTypeID() { return FireMaya::TypeId::FireRenderAddMaterial; }
 
-		virtual MStatus compute(const MPlug& plug, MDataBlock& block);
+		virtual MStatus compute(const MPlug& plug, MDataBlock& block) override;
 		frw::Shader GetShader(Scope& scope) override;
 	};
 }

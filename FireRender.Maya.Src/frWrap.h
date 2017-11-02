@@ -488,8 +488,8 @@ namespace frw
 			m->references.clear();
 		}
 
-		int ReferenceCount() const { return (int)m->references.size(); }
-		int UseCount() const { return m.use_count(); }
+		long ReferenceCount() const { return m->references.size(); }
+		long UseCount() const { return m.use_count(); }
 
 
 	public:
@@ -2427,7 +2427,7 @@ namespace frw
 		void DetachFromMaterialInput(rpr_material_node node, const char* inputName) const
 		{
 			auto& d = data();
-			rpr_int res;
+			rpr_int res = RPR_ERROR_INVALID_PARAMETER;
 			FRW_PRINT_DEBUG("\tShape.DetachFromMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, d.material, inputName);
 			if (d.material)
 			{

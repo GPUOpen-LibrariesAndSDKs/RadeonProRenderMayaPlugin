@@ -69,45 +69,6 @@ frw::Value FireMaya::Fresnel::GetValue(Scope& scope)
 #include <maya/MShaderManager.h>
 
 
-const char fresnelFragmento[] = "\
-<fragment_graph  name=\"RPRFresnel\" ref=\"RPRFresnel\" class=\"FragmentGraph\" version=\"1.0\" feature_level=\"0\" >\
-<fragments>\
-<fragment_ref name = \"mayaReverse\" ref = \"mayaReverse\" / >\
-<fragment_ref name = \"mayaSamplerInfo\" ref = \"mayaSamplerInfo\" / >\
-</fragments>\
-<connections>\
-<connect from = \"mayaSamplerInfo.mayaSamplerInfoOutput.facingRatio\" to = \"mayaReverse.input\" name = \"input\" / >\
-</connections>\
-<outputs>\
-<target name = \"output\" ref = \"mayaReverse.ouput0\" / >\
-</outputs>\
-</fragment_graph>";
-
-const char fresnelFragment_ok[] = "<fragment_graph name=\"RPRFresnel\" ref=\"RPRFresnel\" class=\"FragmentGraph\" version=\"1.0\" feature_level=\"0\" >\
-<fragments>\
-<fragment_ref name = \"mayaSamplerInfo\" ref = \"mayaSamplerInfo\" />\
-</fragments>\
-<outputs>\
-<struct name = \"out\" ref = \"mayaSamplerInfo.mayaSamplerInfoOutput0\" />\
-</outputs>\
-</fragment_graph>";
-
-const char fresnelFragment[] = "<fragment_graph name=\"RPRFresnel\" ref=\"RPRFresnel\" class=\"FragmentGraph\" version=\"1.0\" feature_level=\"0\" >\
-<fragments>\
-<fragment_ref name = \"mayaReverse\" ref = \"mayaReverse\" />\
-<fragment_ref name = \"mayaSamplerInfo\" ref = \"mayaSamplerInfo\" />\
-</fragments>\
-<connections>\
-<connect from = \"mayaSamplerInfo.mayaSamplerInfoOutput.facingRatio\" to = \"mayaReverse.inputX\" name = \"inx\" />\
-<connect from = \"mayaSamplerInfo.mayaSamplerInfoOutput.facingRatio\" to = \"mayaReverse.inputY\" name = \"iny\" />\
-<connect from = \"mayaSamplerInfo.mayaSamplerInfoOutput.facingRatio\" to = \"mayaReverse.inputZ\" name = \"inz\" />\
-</connections>\
-<outputs>\
-<float name = \"output\" ref = \"mayaReverse.output0\" />\
-</outputs>\
-</fragment_graph>";
-
-
 FireMaya::Fresnel::Override::Override(const MObject& obj) : MPxShadingNodeOverride(obj)
 {
 	m_shader = obj;

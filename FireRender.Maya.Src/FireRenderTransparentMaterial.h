@@ -7,9 +7,9 @@ namespace FireMaya
 	{
 	public:
 
-		virtual MStatus compute(const MPlug&, MDataBlock&);
+		virtual MStatus compute(const MPlug&, MDataBlock&) override;
 
-		virtual void    postConstructor();
+		virtual void    postConstructor() override;
 
 		static  void *  creator();
 		static  MStatus initialize();

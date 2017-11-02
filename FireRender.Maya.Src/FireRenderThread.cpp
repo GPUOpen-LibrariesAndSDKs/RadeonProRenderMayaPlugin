@@ -177,8 +177,6 @@ void FireRenderThread::ThreadProc(void *)
 			queue = itemQueue;
 		}
 
-		auto count = queue.size();
-
 		if (queue.empty())
 		{
 			this_thread::sleep_for(10ms);
