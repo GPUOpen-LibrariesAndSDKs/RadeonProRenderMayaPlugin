@@ -166,7 +166,6 @@ MStatus FireMaterialViewRenderer::translateLightSource(const MUuid& id, const MO
 	{
 		MFnDependencyNode nodeFn(node);
 
-		rpr_int frstatus = RPR_SUCCESS;
 		FrLight& light = m_renderData.m_lights[id.asString().asChar()];
 		m_renderData.m_lightsNames[id.asString().asChar()] = nodeFn.name().asChar();
 		if (light.isAreaLight)
@@ -487,7 +486,6 @@ MStatus FireMaterialViewRenderer::endSceneUpdate()
 	{
 		rpr_int frstatus;
 		rpr_context frcontext = m_renderData.m_context.context();
-		rpr_scene frscene = m_renderData.m_context.scene();
 
 		rpr_framebuffer_desc desc;
 		desc.fb_width = m_renderData.m_width;
@@ -539,7 +537,6 @@ void FireMaterialViewRenderer::render()
 {
 	RPR_THREAD_ONLY;
 
-	int NUM_ITERATIONS = 1;
 	rpr_int frstatus;
 	auto context = m_renderData.m_context.GetContext();
 	context.Render();

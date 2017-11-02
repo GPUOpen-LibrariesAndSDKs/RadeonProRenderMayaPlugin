@@ -19,7 +19,6 @@ namespace
 {
 	// TODO: these parameters are hardcoded for now. Fix it!
 	const float IES_SCALE_MUL = 0.05f;
-	const size_t POINTS_PER_POLYLINE = 32;
 
 	template<typename T, size_t N>
 	constexpr size_t StackArraySize(const T(&arr)[N])

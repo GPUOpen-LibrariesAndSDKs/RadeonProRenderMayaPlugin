@@ -718,7 +718,6 @@ MObject FireRenderConvertVRayCmd::ConvertVRayShader(const MFnDependencyNode & sh
 	MStatus status;
 
 	MTypeId typeId = shaderNode.typeId();
-	auto typeIdUI = typeId.id();
 	auto id = MayaSurfaceId(shaderNode.typeId().id());
 	auto typeName = shaderNode.typeName();
 
@@ -834,7 +833,7 @@ MStatus FireRenderConvertVRayCmd::doIt(const MArgList & args)
 		}
 	}
 
-	auto vrayShadersDeleted = TryDeleteUnusedVRayMaterials();
+	/* auto vrayShadersDeleted = */ TryDeleteUnusedVRayMaterials();
 
 	MString message;
 

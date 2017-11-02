@@ -324,12 +324,10 @@ namespace FireMaya
 
 			bool smoothEdge = attributes.getBool("smoothEdge");
 
-			bool useChordHeight = attributes.getBool("useChordHeight");
 			bool useChordHeightRatio = attributes.getBool("useChordHeightRatio");
 			bool edgeSwap = attributes.getBool("edgeSwap");
 			bool useMinScreen = attributes.getBool("useMinScreen");
 
-			double chordHeight = attributes.getDouble("chordHeight");
 			double chordHeightRatio = attributes.getDouble("chordHeightRatio");
 			double minScreen = attributes.getDouble("minScreen");
 
@@ -648,7 +646,6 @@ namespace FireMaya
 		MColor color = fnLight.color() * fnLight.intensity(&mstatus) * LIGHT_SCALE;
 
 		assert(mstatus == MStatus::kSuccess);
-		MFn::Type lightType = object.apiType();
 		if (!update)
 		{
 			frlight.isAreaLight = false;
@@ -874,8 +871,6 @@ namespace FireMaya
 
 	bool translateFireRenderIBL(frw::EnvironmentLight& frlight, frw::Image frImage, frw::Context frcontext, const MObject& object, const MMatrix& matrix, bool update)
 	{
-		rpr_int frstatus = RPR_SUCCESS;
-
 		float intensity = 1.0;
 		{
 			MFnDependencyNode nodeFn(object);
@@ -901,8 +896,6 @@ namespace FireMaya
 		const MMatrix& matrix,
 		bool update)
 	{
-		rpr_int frstatus = RPR_SUCCESS;
-
 		if (!update)
 			frlight = frcontext.CreateEnvironmentLight();
 
@@ -1021,8 +1014,6 @@ namespace FireMaya
 		const MMatrix& matrix,
 		bool update)
 	{
-		rpr_int frstatus = RPR_SUCCESS;
-
 		MFnDependencyNode nodeFn(object);
 		if (nodeFn.typeId() == FireMaya::TypeId::FireRenderIBL)
 		{
@@ -1053,8 +1044,6 @@ namespace FireMaya
 		using namespace FireMaya::VRay;
 
 		MStatus mstatus;
-
-		bool hasShape = object.hasFn(MFn::kShape);
 
 		MFnDagNode dagNode(object);
 		MDagPath dagPath;

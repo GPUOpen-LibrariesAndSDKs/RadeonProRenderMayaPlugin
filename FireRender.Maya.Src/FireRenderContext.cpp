@@ -1628,7 +1628,7 @@ void FireRenderContext::UpdateGround(const FireRenderGlobalsData& data)
 		{
 			break;
 		}
-		FireRenderObject* ob = nullptr;
+
 		auto node = dagPath.node();
 
 		if (node.hasFn(MFn::kDagNode))

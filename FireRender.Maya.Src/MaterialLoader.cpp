@@ -517,7 +517,7 @@ void ExportMaterials(const std::string& filename, rpr_material_node* materials, 
 				case RPR_MATERIAL_NODE_INPUT_TYPE_NODE:
 				{
 					rpr_material_node connection = nullptr;
-					rpr_int res = rprMaterialNodeGetInputInfo(node, input_id, RPR_MATERIAL_NODE_INPUT_VALUE, sizeof(connection), &connection, nullptr);
+					/*rpr_int res =*/ rprMaterialNodeGetInputInfo(node, input_id, RPR_MATERIAL_NODE_INPUT_VALUE, sizeof(connection), &connection, nullptr);
 					CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(node, input_id, RPR_MATERIAL_NODE_INPUT_VALUE, sizeof(connection), &connection, nullptr));
 					type = "connection";
 					if (!objects.count(connection) && connection)
@@ -539,7 +539,6 @@ void ExportMaterials(const std::string& filename, rpr_material_node* materials, 
 					CHECK_NO_ERROR(rprImageGetInfo(tex, RPR_OBJECT_NAME, name_size, &tex_name[0], nullptr));
 					if (!textures.count(tex_name))
 					{
-						int tex_node_id = 0;
 						std::string tex_node_name = objects[tex];
 						textures[tex_name] = tex_node_name;
 					}

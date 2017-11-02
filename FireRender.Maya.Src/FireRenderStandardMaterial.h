@@ -7,9 +7,9 @@ namespace FireMaya
 	{
 	public:
 
-		virtual MStatus compute(const MPlug&, MDataBlock&);
+		virtual MStatus compute(const MPlug&, MDataBlock&) override;
 
-		virtual void    postConstructor();
+		virtual void    postConstructor() override;
 
 		static  void *  creator();
 		static  MStatus initialize();
@@ -19,7 +19,7 @@ namespace FireMaya
 		virtual frw::Shader GetVolumeShader( Scope& scope ) override;
 		virtual MObject GetDisplacementNode() override;
 
-		virtual MStatus shouldSave(const MPlug& plug, bool& isSaving);
+		virtual MStatus shouldSave(const MPlug& plug, bool& isSaving) override;
 
 	private:
 		virtual void OnFileLoaded() override;

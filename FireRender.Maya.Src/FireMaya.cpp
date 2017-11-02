@@ -488,8 +488,8 @@ frw::Image FireMaya::Scope::GetAdjustedImage(MString texturePath,
 
 						std::vector<unsigned char> buffer(img_desc.image_height * img_desc.image_row_pitch);
 
-						double srcAspect = double(desc.fWidth) / double(desc.fHeight);
-						double dstAspect = double(img_desc.image_width) / double(img_desc.image_height);
+						// double srcAspect = double(desc.fWidth) / double(desc.fHeight);
+						// double dstAspect = double(img_desc.image_width) / double(img_desc.image_height);
 
 
 						double fitX = 0, fitY = 0;
@@ -1244,7 +1244,6 @@ frw::Shader FireMaya::Scope::ParseShader(MObject node)
 	{
 		// interpret Maya nodes (complex materials, not utilities and maps)
 		MTypeId typeId = shaderNode.typeId();
-		auto typeIdUI = typeId.id();
 		auto id = MayaSurfaceId(shaderNode.typeId().id());
 		auto name = shaderNode.typeName();
 
@@ -1360,14 +1359,8 @@ frw::Shader FireMaya::Scope::ParseVolumeShader(MObject node)
 	}
 	else
 	{
-		// interpret Maya nodes (complex materials, not utilities and maps)
 		// TODO
-		frw::Shader result;
-		// interpret Maya nodes (complex materials, not utilities and maps)
-		MTypeId typeId = shaderNode.typeId();
-		unsigned int typeIdUI = typeId.id();
-		auto id = MayaSurfaceId(shaderNode.typeId().id());
-		auto name = shaderNode.typeName();
+		// Interpret Maya nodes (complex materials, not utilities and maps)
 	}
 	return frw::Shader();
 }

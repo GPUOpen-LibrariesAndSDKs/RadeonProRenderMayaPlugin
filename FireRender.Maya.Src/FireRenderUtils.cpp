@@ -1075,7 +1075,6 @@ MObjectArray GetShadingEngines(MFnDagNode& mesh, uint instanceNum)
 	}
 	else
 	{
-		int children = ogrp.numChildren();
 		MPlug ogrps = ogrp.child(0);
 		for (unsigned int i = 0; i < ogrps.numElements(); i++)
 		{
@@ -1228,8 +1227,6 @@ const HardwareResources& HardwareResources::GetInstance()
 	return theInstance;
 }
 
-
-static const int gpuCountMax = 8;
 
 std::vector<HardwareResources::Device> HardwareResources::GetCompatibleCPUs()
 {
@@ -1601,10 +1598,6 @@ bool HardwareResources::parseNVIDIADriver(const std::wstring & rawDriver, int& p
 		if (separatedNumbers.size() != 4)
 			return false;
 
-		int n0 = toInt(separatedNumbers[0]);
-		int n1 = toInt(separatedNumbers[1]);
-		int n2 = toInt(separatedNumbers[2]);
-
 		if (separatedNumbers[2].length() < 1)
 			return false;
 
@@ -1664,8 +1657,8 @@ bool HardwareResources::compareDeviceNames(std::wstring& a, std::wstring& b)
 {
 	return
 		a == b ||
-		a.find(b) >= 0 ||
-		b.find(a) >= 0;
+		a.find(b) != std::wstring::npos ||
+		b.find(a) != std::wstring::npos ;
 }
 
 void CheckGlError()

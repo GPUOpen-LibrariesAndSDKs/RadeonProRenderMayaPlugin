@@ -290,7 +290,7 @@ void FireRenderLocationCmd::getLocationData(const MArgDatabase& argData)
 	argData.getFlagArgument(kIndex, 0, index);
 
 	// Check that the index is valid.
-	if (index < 0 || index >= s_searchResults.size())
+	if (index >= s_searchResults.size())
 	{
 		MGlobal::displayWarning("Location index out of bounds.");
 		return;

@@ -320,7 +320,7 @@ public:
 	const FrLight& data() { return m_light; }
 
 	// clear
-	virtual void clear();
+	virtual void clear() override;
 
 	// detach from the scene
 	void detachFromScene() override;
@@ -413,7 +413,7 @@ public:
 	const frw::Camera& data();
 
 	// clear
-	virtual void clear();
+	virtual void clear() override;
 	virtual void Freshen() override;
 
 	// build camera for swatch render
@@ -451,7 +451,7 @@ public:
 	virtual ~FireRenderDisplayLayer();
 
 	// clear
-	virtual void clear();
+    virtual void clear() override;
 
 	// attribute changed callback
 	virtual void attributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug) override;
@@ -475,13 +475,13 @@ public:
 	virtual void Freshen() override;
 
 	// clear
-	virtual void clear();
+	virtual void clear() override;
 
 	// detach from the scene
-	virtual void detachFromScene();
+	virtual void detachFromScene() override;
 
 	// attach to the scene
-	virtual void attachToScene();
+	virtual void attachToScene() override;
 
 	// The sky system is emissive.
 	virtual bool IsEmissive() override { return true; }

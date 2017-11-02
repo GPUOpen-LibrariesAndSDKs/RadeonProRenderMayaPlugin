@@ -131,8 +131,6 @@ HashValue GetHashValue(const MPlug& plug)
 	HashValue hash;
 	MFnAttribute attr(plug.attribute());
 
-	auto name = attr.name().asUTF8();
-
 	if (!attr.isWritable() || attr.isDynamic())
 		return hash;
 
@@ -701,7 +699,6 @@ void FireRenderMesh::Rebuild()
 	auto node = Object();
 	MFnDagNode meshFn(node);
 	MString name = meshFn.name();
-	auto cname = name.asUTF8();
 	auto meshPath = DagPath();
 
 	FireRenderContext *context = this->context();

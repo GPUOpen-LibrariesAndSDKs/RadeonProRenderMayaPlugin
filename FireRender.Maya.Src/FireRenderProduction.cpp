@@ -179,9 +179,6 @@ bool FireRenderProduction::start()
 
 		// Allocate space for region pixels. This is equivalent to
 		// the size of the entire frame if a region isn't specified.
-		unsigned int regionWidth = m_region.getWidth();
-		unsigned int regionHeight = m_region.getHeight();
-		unsigned int regionPixelCount = regionWidth * regionHeight;
 
 		// Setup render stamp
 		m_aovs->setRenderStamp(renderStamp);
