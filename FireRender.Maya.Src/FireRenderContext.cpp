@@ -3,6 +3,7 @@
 #include "FireRenderContext.h"
 #include "FireRenderUtils.h"
 #include <cassert>
+#include <float.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MMatrix.h>
 #include <maya/MRenderView.h>
