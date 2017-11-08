@@ -511,6 +511,9 @@ MStatus initializePlugin(MObject obj)
 	MGlobal::executeCommand("registerFireRender()");
 	MGlobal::executeCommand("setupFireRenderNodeClassification()");
 
+	// Enable GLTF by default
+	MGlobal::executeCommand("rprExportsGLTF(1)");
+
 	// register shaders
 
 	// RPR Material
