@@ -85,7 +85,9 @@ FireRenderContext::FireRenderContext() :
 
 FireRenderContext::~FireRenderContext()
 {
-	DebugPrint("FireRenderContext::~FireRenderContext()");
+	DebugPrint("FireRenderContext(context=%p)::~FireRenderContext()", this);
+	// Unsubscribe from all callbacks.
+	removeCallbacks();
 }
 
 void FireRenderContext::initializeContext()
@@ -104,9 +106,6 @@ void FireRenderContext::initializeContext()
 void FireRenderContext::resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture)
 {
 	RPR_THREAD_ONLY;
-	// Get global data.
-	FireRenderGlobalsData globals;
-	globals.readFromCurrentScene();
 
 	// Set the context resolution.
 	setResolution(w, h, renderView, glTexture);
@@ -151,7 +150,7 @@ void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool rende
 	}
 }
 
-void FireRenderContext::enableDisplayGammaCorrection(const FireRenderGlobalsData& globals)
+void FireRenderContext::enableDisplayGammaCorrection(const FireRenderGlobalsData &globals)
 {
 	RPR_THREAD_ONLY;
 	GetContext().SetParameter("displaygamma", globals.displayGamma);
@@ -159,16 +158,13 @@ void FireRenderContext::enableDisplayGammaCorrection(const FireRenderGlobalsData
 
 void FireRenderContext::setCamera(MDagPath& cameraPath, bool useVRCamera)
 {
-	RPR_THREAD_ONLY;
+	MAIN_THREAD_ONLY;
 	DebugPrint("FireRenderContext::setCamera(...)");
 	m_camera.SetObject(cameraPath.node());
 
 	if (useVRCamera)
 	{
-		// Read scene globals.
-		FireRenderGlobalsData globals;
-		globals.readFromCurrentScene();
-		m_camera.setType(globals.cameraType);
+		m_camera.setType(m_globals.cameraType);
 	}
 	else
 		m_camera.setType(0);
@@ -176,15 +172,11 @@ void FireRenderContext::setCamera(MDagPath& cameraPath, bool useVRCamera)
 
 void FireRenderContext::updateLimits(bool animation)
 {
-	// Read scene globals.
-	FireRenderGlobalsData globals;
-	globals.readFromCurrentScene();
-
 	// Update limits.
-	updateLimitsFromGlobalData(globals, animation);
+	updateLimitsFromGlobalData(m_globals, animation);
 }
 
-void FireRenderContext::updateLimitsFromGlobalData(const FireRenderGlobalsData& globalData, bool animation, bool batch)
+void FireRenderContext::updateLimitsFromGlobalData(const FireRenderGlobalsData & globalData, bool animation, bool batch)
 {
 	// Get completion type.
 	short type = globalData.completionCriteriaType;
@@ -216,11 +208,10 @@ void FireRenderContext::updateLimitsFromGlobalData(const FireRenderGlobalsData& 
 
 bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewport, bool freshen)
 {
-	RPR_THREAD_ONLY;
+	MAIN_THREAD_ONLY;
 	DebugPrint("FireRenderContext::buildScene()");
 
-	FireRenderGlobalsData frGlobalData;
-	frGlobalData.readFromCurrentScene();
+	m_globals.readFromCurrentScene();
 
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags();
 
@@ -258,11 +249,11 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 		m_transparent = frw::TransparentShader(GetMaterialSystem());
 		m_transparent.SetValue("color", 1.0f);
 
-		frGlobalData.setupContext(*this);
+		m_globals.setupContext(*this);
 
-		updateLimitsFromGlobalData(frGlobalData);
+		updateLimitsFromGlobalData(m_globals);
 
-		m_motionBlur = frGlobalData.motionBlur;
+		m_motionBlur = m_globals.motionBlur;
 
 		MStatus status;
 
@@ -284,7 +275,7 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 			AddSceneObject(dagPath);
 		}
 
-		UpdateGround(frGlobalData);
+		UpdateGround(m_globals);
 
 		attachCallbacks();
 	}
@@ -300,7 +291,7 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 
 void FireRenderContext::UpdateDefaultLights()
 {
-	RPR_THREAD_ONLY;
+	MAIN_THREAD_ONLY;
 	bool enabled = true;
 	for (auto ob : m_sceneObjects)
 	{
@@ -488,14 +479,11 @@ void FireRenderContext::CheckSetRayCastEpsilon()
 {
 	RPR_THREAD_ONLY;
 
-	FireRenderGlobalsData globals;
-	globals.readFromCurrentScene();
-
-	if (fabs(m_lastRayCastEpsilon - globals.raycastEpsilon) > FLT_EPSILON)
+	if (fabs(m_lastRayCastEpsilon - m_globals.raycastEpsilon) > FLT_EPSILON)
 	{
-		scope.Context().SetParameter("raycastepsilon", globals.raycastEpsilon);
+		scope.Context().SetParameter("raycastepsilon", m_globals.raycastEpsilon);
 
-		m_lastRayCastEpsilon = globals.raycastEpsilon;
+		m_lastRayCastEpsilon = m_globals.raycastEpsilon;
 	}
 }
 
@@ -967,7 +955,7 @@ void FireRenderContext::RemoveRenderObject(const MObject& ob)
 
 void FireRenderContext::RefreshInstances()
 {
-	RPR_THREAD_ONLY;
+	MAIN_THREAD_ONLY;
 
 	std::list<MDagPath> toAdd;
 	for (auto it = m_sceneObjects.begin(); it != m_sceneObjects.end();)
@@ -1020,9 +1008,12 @@ FireRenderCamera & FireRenderContext::camera()
 
 void FireRenderContext::attachCallbacks()
 {
-	DebugPrint("FireRenderContext::attachCallbacks()");
+	DebugPrint("FireRenderContext(context=%p)::attachCallbacks()", this);
 	if (getCallbackCreationDisabled())
 		return;
+
+	//Remove old callbacks from this context if any exist
+	removeCallbacks();
 
 	MStatus status;
 	m_removedNodeCallback = MDGMessage::addNodeRemovedCallback(FireRenderContext::removedNodeCallback, "dependNode", this, &status);
@@ -1040,6 +1031,8 @@ void FireRenderContext::attachCallbacks()
 
 void FireRenderContext::removeCallbacks()
 {
+	DebugPrint("FireRenderContext(context=%p)::removeCallbacks()", this);
+	
 	if (m_removedNodeCallback)
 		MMessage::removeCallback(m_removedNodeCallback);
 	if (m_addedNodeCallback)
@@ -1048,12 +1041,25 @@ void FireRenderContext::removeCallbacks()
 		MMessage::removeCallback(m_renderGlobalsCallback);
 	if (m_renderLayerCallback)
 		MMessage::removeCallback(m_renderLayerCallback);
+
+	m_removedNodeCallback = m_addedNodeCallback = m_renderGlobalsCallback = m_renderLayerCallback = 0;
 }
 
 void FireRenderContext::removedNodeCallback(MObject &node, void *clientData)
 {
 	if (auto frContext = GetCallbackContext(clientData))
 	{
+		DebugPrint("FireRenderContext(context=%p)::removedNodeCallback()", frContext);
+		// If we have same node in added list then it wasn't yet processed by FireRenderContext.
+		// We should remove it from added list, since it's already removed. Calling any function on such node
+		// will lead to crash in Maya
+		auto it = std::find(frContext->m_addedNodes.begin(), frContext->m_addedNodes.end(), node);
+		if (it != frContext->m_addedNodes.end())
+		{
+			frContext->m_addedNodes.erase(it);
+			return;
+		}
+
 		frContext->m_removedNodes.push_back(node);
 		frContext->setDirty();
 	}
@@ -1063,6 +1069,7 @@ void FireRenderContext::addedNodeCallback(MObject &node, void *clientData)
 {
 	if (auto frContext = GetCallbackContext(clientData))
 	{
+		DebugPrint("FireRenderContext(context=%p)::addedNodeCallback()", frContext);
 		frContext->m_addedNodes.push_back(node);
 		frContext->setDirty();
 	}
@@ -1070,7 +1077,7 @@ void FireRenderContext::addedNodeCallback(MObject &node, void *clientData)
 
 void FireRenderContext::addNode(MObject& node)
 {
-	RPR_THREAD_ONLY;
+	MAIN_THREAD_ONLY;
 
 	if (!node.isNull() && node.hasFn(MFn::kDagNode))
 	{
@@ -1089,48 +1096,45 @@ void FireRenderContext::addNode(MObject& node)
 
 void FireRenderContext::removeNode(MObject& node)
 {
-	RPR_THREAD_ONLY;
+	MAIN_THREAD_ONLY;
 
 	RemoveRenderObject(node);
 }
 
 void FireRenderContext::updateFromGlobals()
 {
-	FireRenderThread::RunOnceProcAndWait([this]()
+	MAIN_THREAD_ONLY;
+
+	if (m_tonemappingChanged)
 	{
-		if (m_tonemappingChanged)
-		{
-			Lock lock(this);
-
-			FireRenderGlobalsData globalsData;
-			globalsData.readFromCurrentScene();
-			globalsData.updateTonemapping(*this);
-
-			m_tonemappingChanged = false;
-		}
-
-		if (!m_globalsChanged)
-			return;
-
 		Lock lock(this);
 
-		FireRenderGlobalsData globalsData;
-		globalsData.readFromCurrentScene();
-		globalsData.setupContext(*this);
+		m_globals.readFromCurrentScene();
+		m_globals.updateTonemapping(*this);
 
-		updateLimitsFromGlobalData(globalsData);
-		setMotionBlur(globalsData.motionBlur);
-		UpdateGround(globalsData);
+		m_tonemappingChanged = false;
+	}
 
-		m_camera.setType(globalsData.cameraType);
+	if (!m_globalsChanged)
+		return;
 
-		m_globalsChanged = false;
-	});
+	Lock lock(this);
+
+	m_globals.readFromCurrentScene();
+	m_globals.setupContext(*this);
+
+	updateLimitsFromGlobalData(m_globals);
+	setMotionBlur(m_globals.motionBlur);
+	UpdateGround(m_globals);
+
+	m_camera.setType(m_globals.cameraType);
+
+	m_globalsChanged = false;
 }
 
 void FireRenderContext::updateRenderLayers()
 {
-	RPR_THREAD_ONLY;
+	MAIN_THREAD_ONLY;
 
 	if (!m_renderLayersChanged)
 		return;
@@ -1163,6 +1167,8 @@ void FireRenderContext::updateRenderLayers()
 
 void FireRenderContext::globalsChangedCallback(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
 {
+	MAIN_THREAD_ONLY
+
 	DebugPrint("FireRenderContext::globalsChangedCallback(%d, %s, isNull=%d, 0x%x)", msg,  plug.name().asUTF8(), otherPlug.isNull(), clientData);
 
 	if (auto frContext = GetCallbackContext(clientData))
@@ -1245,7 +1251,7 @@ bool FireRenderContext::AddSceneObject(FireRenderObject* ob)
 
 bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 {
-	RPR_THREAD_ONLY;
+	MAIN_THREAD_ONLY;
 	using namespace FireMaya;
 
 	FireRenderObject* ob = nullptr;
@@ -1360,10 +1366,15 @@ HashValue FireRenderContext::GetStateHash()
 
 bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 {
-	RPR_THREAD_ONLY;
+	MAIN_THREAD_ONLY;
 
 	if (!isDirty() || cancelled())
 		return false;
+
+	setCallbackCreationDisabled(false);
+	// Attach callbacks and remove them on function exit.
+	// This needed to correctly pass callbacks to correct context.
+	CallbacksAttachmentHelper callbackAttachment(this);
 
 	LOCKFORUPDATE((lock ? this : nullptr));
 
@@ -1591,9 +1602,9 @@ bool FireRenderContext::updateOutput()
 }
 
 
-void FireRenderContext::UpdateGround(const FireRenderGlobalsData& data)
+void FireRenderContext::UpdateGround(const FireRenderGlobalsData & data)
 {
-	RPR_THREAD_ONLY;
+	MAIN_THREAD_ONLY;
 
 	auto context = GetContext();
 	auto scene = GetScene();

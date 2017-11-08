@@ -30,9 +30,10 @@
 #include <thread>
 #include <functional>
 
+#include "FireRenderUtils.h"
+
 // Forward declarations.
 class FireRenderViewport;
-class FireRenderGlobalsData;
 struct RV_PIXEL;
 
 // Image file description
@@ -264,6 +265,7 @@ public:
 
 
 	// Attach all the global callbacks
+	// This function will remove current callbacks installed from current context and then attach new callbacks.
 	void attachCallbacks();
 
 	// Remove callbacks
@@ -359,6 +361,23 @@ public:
 	frw::PostEffect gamma_correction;
 
 private:
+	struct CallbacksAttachmentHelper
+	{
+	public:
+		CallbacksAttachmentHelper(FireRenderContext *context)
+		{
+			mContext = context;
+			mContext->attachCallbacks();
+		}
+		~CallbacksAttachmentHelper()
+		{
+			if (mContext)
+				mContext->removeCallbacks();
+		}
+	private:
+		FireRenderContext *mContext;
+	};
+
 	// Helper function showing if we need to use buffer or resolved buffer
 	bool needResolve() const
 	{
@@ -430,6 +449,9 @@ private:
 
 	/** Mutex used for disabling simultaneous access to dirty objects list. */
 	MMutexLock m_dirtyMutex;
+
+	/** Holds current globals state obtained in previous refresh call. */
+	FireRenderGlobalsData m_globals;
 
 	/** True if globals have changed since the last refresh. */
 	bool m_globalsChanged;

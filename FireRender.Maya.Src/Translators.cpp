@@ -372,6 +372,8 @@ namespace FireMaya
 
 	std::vector<frw::Shape> TranslateMesh(frw::Context context, const MObject& originalObject)
 	{
+		MAIN_THREAD_ONLY;
+
 		std::vector<frw::Shape> elements;
 		MStatus mstatus;
 		MString errMsg;

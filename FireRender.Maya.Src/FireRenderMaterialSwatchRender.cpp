@@ -141,7 +141,7 @@ bool FireRenderMaterialSwatchRender::doIteration()
 						return false;
 
 					swatchInstance.context.setDirty();
-					swatchInstance.context.Freshen();
+					FireRenderThread::RunProcOnMainThread([&swatchInstance]() {swatchInstance.context.Freshen(); });
 
 					while (swatchInstance.context.keepRenderRunning())
 					{
