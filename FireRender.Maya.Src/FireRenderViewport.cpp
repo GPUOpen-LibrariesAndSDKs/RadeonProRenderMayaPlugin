@@ -289,10 +289,15 @@ bool FireRenderViewport::start()
 // -----------------------------------------------------------------------------
 bool FireRenderViewport::stop()
 {
+	MAIN_THREAD_ONLY;
+
 	// should wait for thread
 	// m_isRunning could be not updated when exiting Maya during rendering, so check for two conditions
 	while (m_isRunning && FireRenderThread::IsThreadRunning())
 	{
+		//Run items queued for main thread
+		FireRenderThread::RunItemsQueuedForTheMainThread();
+
 		// terminate the thread
 		m_context.state = FireRenderContext::StateExiting;
 		this_thread::sleep_for(10ms); // 10.03.2017 - perhaps this is better than yield()

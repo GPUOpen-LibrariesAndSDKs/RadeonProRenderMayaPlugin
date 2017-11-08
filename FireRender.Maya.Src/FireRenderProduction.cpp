@@ -202,6 +202,9 @@ bool FireRenderProduction::start()
 
 		m_isRunning = true;
 
+		refreshContext();
+		m_needsContextRefresh = false;
+
 		// Start the render
 		FireRenderThread::KeepRunning([this]()
 		{
@@ -289,13 +292,6 @@ bool FireRenderProduction::RunOnViewportThread()
 		// The context is rendering.
 	case FireRenderContext::StateRendering:
 	{
-		if (m_needsContextRefresh)
-		{
-			refreshContext();
-
-			m_needsContextRefresh = false;
-		}
-
 		if (m_cancelled || m_context->keepRenderRunning() == false)
 		{
 			stop();

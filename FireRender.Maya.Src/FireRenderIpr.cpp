@@ -107,6 +107,7 @@ void FireRenderIpr::setResolution(unsigned int w, unsigned int h)
 // -----------------------------------------------------------------------------
 void FireRenderIpr::setCamera(MDagPath& camera)
 {
+	MAIN_THREAD_ONLY;
 	m_camera = camera;
 	MRenderView::setCurrentCamera(camera);
 }
@@ -217,10 +218,15 @@ bool FireRenderIpr::stop()
 	if (m_isRunning)
 	{
 		m_context.state = FireRenderContext::StateExiting;
+
 		stopMayaRender();
 
 		while (m_isRunning)
+		{
+			//Run items queued for main thread
+			FireRenderThread::RunItemsQueuedForTheMainThread();
 			this_thread::sleep_for(1ms);
+		}
 	}
 
 	return true;
@@ -243,8 +249,8 @@ bool FireRenderIpr::RunOnViewportThread()
 	{
 		if (m_needsContextRefresh)
 		{
-			refreshContext();
-
+			FireRenderThread::RunProcOnMainThread([this]() {refreshContext(); });
+			
 			m_needsContextRefresh = false;
 		}
 
