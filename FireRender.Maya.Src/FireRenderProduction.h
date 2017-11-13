@@ -112,7 +112,6 @@ private:
 	/** Refresh the context. */
 	void refreshContext();
 
-
 private:
 
 	// Members

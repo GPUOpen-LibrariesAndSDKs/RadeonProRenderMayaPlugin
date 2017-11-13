@@ -249,7 +249,7 @@ bool FireRenderProduction::stop()
 {
 	if (m_isRunning)
 	{
-		if(m_context)
+		if (m_context)
 			m_context->state = FireRenderContext::StateExiting;
 
 		stopMayaRender();
@@ -263,14 +263,22 @@ bool FireRenderProduction::stop()
 
 		if (m_context)
 		{
-			FireRenderThread::RunOnceProcAndWait([&]()
-			{
-				AutoMutexLock contextLock(m_contextLock);
-				m_context->cleanScene();
 
-				AutoMutexLock contextCreationLock(m_contextCreationLock);
-				m_context.reset();
-			});
+			if (FireRenderThread::AreWeOnMainThread())
+			{
+				// Try-lock context lock. If can't lock it then RPR thread is rendering - run item queue
+				while (!m_contextLock.tryLock())
+					FireRenderThread::RunItemsQueuedForTheMainThread();
+			}
+			else
+				m_contextLock.lock();
+
+			m_context->cleanScene();
+
+			AutoMutexLock contextCreationLock(m_contextCreationLock);
+			m_context.reset();
+
+			m_contextLock.unlock();
 		}
 	}
 
@@ -278,6 +286,7 @@ bool FireRenderProduction::stop()
 }
 
 // -----------------------------------------------------------------------------
+
 bool FireRenderProduction::RunOnViewportThread()
 {
 	RPR_THREAD_ONLY;
@@ -302,6 +311,8 @@ bool FireRenderProduction::RunOnViewportThread()
 		try
 		{	// Render.
 			AutoMutexLock contextLock(m_contextLock);
+			if (m_context->state != FireRenderContext::StateRendering) return false;
+
 			m_context->render(false);
 
 			m_context->updateProgress();

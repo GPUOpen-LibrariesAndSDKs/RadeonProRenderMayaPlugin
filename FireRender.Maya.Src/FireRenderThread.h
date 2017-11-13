@@ -245,6 +245,8 @@ public:
 	static bool IsThreadRunning() { return runTheThread; }
 	/* Runs items queued to run on the main thread (call only from the main thread) */
 	static size_t RunItemsQueuedForTheMainThread();
+	static bool AreWeOnMainThread();
+
 
 private:
 	struct AutoAddThisExectingThread
@@ -257,7 +259,6 @@ private:
 
 private:
 	static bool CheckThreadIsRunning();
-	static bool AreWeOnMainThread();
 	static void ThreadProc(void *);
 	static void RPRMainThreadEventCallback(float, float, void *);
 	static void RegisterRPREventCallback();
