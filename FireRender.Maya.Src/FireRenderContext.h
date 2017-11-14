@@ -30,6 +30,8 @@
 #include <thread>
 #include <functional>
 
+#include <future>
+
 #include "FireRenderUtils.h"
 
 // Forward declarations.
@@ -130,6 +132,9 @@ public:
 
 	// Clean scene
 	void cleanScene();
+
+	// Run clean scene asynchronously
+	void cleanSceneAsync(std::shared_ptr<FireRenderContext> refToKeepAlive);
 
 	// Setup the motion blur
 	void setMotionBlur(bool doBlur);
@@ -463,6 +468,9 @@ private:
 	bool m_renderLayersChanged;
 
 	bool m_inRefresh = false;
+
+	/** Future object for async cleaning*/
+	std::future<void> m_cleanSceneFuture;
 
 	/** Returns valid context pointer only if we are in the mood to process callbacks */
 	static FireRenderContext* GetCallbackContext(void *clientData)

@@ -118,7 +118,7 @@ private:
 	// -----------------------------------------------------------------------------
 
 	/** The FireRender context. */
-	std::unique_ptr<FireRenderContext> m_context;
+	std::shared_ptr<FireRenderContext> m_context;
 
 	/** The current camera. */
 	MDagPath m_camera;
