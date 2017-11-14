@@ -132,7 +132,7 @@ bool FireRenderProduction::start()
 		{
 			AutoMutexLock contextCreationLock(m_contextCreationLock);
 
-			m_context = make_unique<FireRenderContext>();
+			m_context = make_shared<FireRenderContext>();
 		}
 
 		m_aovs->applyToContext(*m_context);
@@ -263,22 +263,25 @@ bool FireRenderProduction::stop()
 
 		if (m_context)
 		{
-
 			if (FireRenderThread::AreWeOnMainThread())
 			{
 				// Try-lock context lock. If can't lock it then RPR thread is rendering - run item queue
 				while (!m_contextLock.tryLock())
+				{
 					FireRenderThread::RunItemsQueuedForTheMainThread();
+				}
+
+				m_context->cleanScene();
+
+				m_contextLock.unlock();
 			}
 			else
-				m_contextLock.lock();
+			{
+				std::shared_ptr<FireRenderContext> refToKeepAlive = m_context;
+				m_context.reset();
 
-			m_context->cleanScene();
-
-			AutoMutexLock contextCreationLock(m_contextCreationLock);
-			m_context.reset();
-
-			m_contextLock.unlock();
+				refToKeepAlive->cleanSceneAsync(refToKeepAlive);
+			}
 		}
 	}
 

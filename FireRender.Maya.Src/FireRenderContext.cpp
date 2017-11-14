@@ -430,6 +430,12 @@ void FireRenderContext::cleanScene()
 	});
 }
 
+void FireRenderContext::cleanSceneAsync(std::shared_ptr<FireRenderContext> refToKeepAlive)
+{
+	m_cleanSceneFuture = std::async( [] (std::shared_ptr<FireRenderContext> refToKeepAlive)
+		{ refToKeepAlive->cleanScene(); }, refToKeepAlive);
+}
+
 void FireRenderContext::initSwatchScene()
 {
 	FireRenderThread::RunOnceProcAndWait([this]()

@@ -48,7 +48,7 @@ using namespace FireMaya;
 bool FireRenderCmd::s_rendering = false;
 bool FireRenderCmd::s_waitForIt = false;
 unique_ptr<FireRenderIpr> FireRenderCmd::s_ipr;
-unique_ptr<FireRenderProduction> FireRenderCmd::s_production;
+unique_ptr<FireRenderProduction> FireRenderCmd::s_production = make_unique<FireRenderProduction>();
 
 
 // MPxCommand Implementation
@@ -176,8 +176,7 @@ MStatus FireRenderCmd::renderFrame(const MArgDatabase& argData)
 	// restored once the render is complete.
 	switchRenderLayer(argData, oldLayerName, newLayerName);
 
-	// Start the IPR render on a new thread.
-	s_production = make_unique<FireRenderProduction>();
+	// Start production render on a new thread.
 	s_production->setCamera(cameraPath);
 	s_production->setResolution(width, height);
 	s_production->setRenderRegion(region);
