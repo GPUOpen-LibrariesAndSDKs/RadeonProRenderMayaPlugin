@@ -822,7 +822,8 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 	frstatus = rprFrameBufferGetInfo(frameBuffer, RPR_FRAMEBUFFER_DATA, dataSize, &data[0], nullptr);
 	checkStatus(frstatus);
 
-	if (mergeOpacity)
+	// No need to merge opacity for any FB other then color
+	if (mergeOpacity && aov == RPR_AOV_COLOR)
 	{
 		rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
 		if (opacityFrameBuffer != nullptr)
@@ -853,7 +854,11 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 	}
 
 	//combine (Opacity to Alpha)
-	combineWithOpacity(pixels, region.getArea(), m_opacityData.get());
+	// No need to merge opacity for any FB other then color
+	if (mergeOpacity && aov == RPR_AOV_COLOR)
+	{
+		combineWithOpacity(pixels, region.getArea(), m_opacityData.get());
+	}
 }
 
 // -----------------------------------------------------------------------------
