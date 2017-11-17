@@ -488,7 +488,7 @@ namespace frw
 			m->references.clear();
 		}
 
-		long ReferenceCount() const { return m->references.size(); }
+		long ReferenceCount() const { return (long)m->references.size(); }
 		long UseCount() const { return m.use_count(); }
 
 
@@ -1102,6 +1102,9 @@ namespace frw
 			Camera camera;
 			Image backgroundImage;
 			std::map<EnvironmentOverride, EnvironmentLight> overrides;
+			int mAreaLightCount = 0;
+			int mShapeCount = 0;
+			int mLightCount = 0;
 		};
 
 	public:
@@ -1112,24 +1115,34 @@ namespace frw
 			AddReference(v);
 			auto res = rprSceneAttachShape(Handle(), v.Handle());
 			checkStatus(res);
+
+			if (v.IsAreaLight()) data().mAreaLightCount++;
+			data().mShapeCount++;
 		}
 		void Attach(Light v)
 		{
 			AddReference(v);
 			auto res = rprSceneAttachLight(Handle(), v.Handle());
 			checkStatus(res);
+
+			data().mLightCount++;
 		}
 		void Detach(Shape v)
 		{
 			RemoveReference(v);
 			auto res = rprSceneDetachShape(Handle(), v.Handle());
 			checkStatus(res);
+
+			if (v.IsAreaLight()) data().mAreaLightCount--;
+			data().mShapeCount--;
 		}
 		void Detach(Light v)
 		{
 			RemoveReference(v);
 			auto res = rprSceneDetachLight(Handle(), v.Handle());
 			checkStatus(res);
+
+			data().mLightCount--;
 		}
 
 		void SetCamera(Camera v)
@@ -1155,34 +1168,28 @@ namespace frw
 			d.camera = Camera();
 			d.backgroundImage = Image();
 			d.overrides.clear();
+
+			data().mAreaLightCount = data().mLightCount = data().mShapeCount = 0;
 		}
 
 		int AreaLightCount() const
 		{
-			int count = 0;
-			for (Shape& shape : GetShapes())
-				if (shape.IsAreaLight())
-					++count;
-
-			return count;
+			return data().mAreaLightCount;
 		}
 
 		int ShapeObjectCount() const
 		{
-			return ShapeCount() - AreaLightCount();
+			return data().mShapeCount - data().mAreaLightCount;
 		}
 
 		int LightObjectCount() const
 		{
-			return LightCount() + AreaLightCount();
+			return data().mLightCount + data().mAreaLightCount;
 		}
 
 		int ShapeCount() const
 		{
-			size_t count = 0;
-			auto res = rprSceneGetInfo(Handle(), RPR_SCENE_SHAPE_COUNT, sizeof(count), &count, nullptr);
-			checkStatus(res);
-			return (int)count;
+			return data().mShapeCount;
 		}
 
 		void DetachShapes()
@@ -1198,6 +1205,8 @@ namespace frw
 				checkStatus(res);
 				RemoveReference(it);
 			}
+
+			data().mShapeCount = 0;
 		}
 
 		std::list<Shape> GetShapes() const
@@ -1217,10 +1226,7 @@ namespace frw
 
 		int LightCount() const
 		{
-			size_t count = 0;
-			auto res = rprSceneGetInfo(Handle(), RPR_SCENE_LIGHT_COUNT, sizeof(count), &count, nullptr);
-			checkStatus(res);
-			return (int)count;
+			return data().mLightCount;
 		}
 
 		std::list<Light> GetLights() const
@@ -1250,6 +1256,7 @@ namespace frw
 				checkStatus(res);
 				RemoveReference(it);
 			}
+			data().mLightCount = 0;
 		}
 
 		void SetEnvironmentOverride(EnvironmentOverride e, EnvironmentLight light)
