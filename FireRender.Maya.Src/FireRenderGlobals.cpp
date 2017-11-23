@@ -143,6 +143,7 @@ MStatus FireRenderGlobals::initialize()
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0.0);
 	nAttr.setSoftMax(24.0);
+	nAttr.setMax(INT_MAX);
 
 	Attribute::completionCriteriaMinutes = nAttr.create("completionCriteriaMinutes", "ccmn", MFnNumericData::kInt, 0, &status);
 	MAKE_INPUT(nAttr);
@@ -158,6 +159,7 @@ MStatus FireRenderGlobals::initialize()
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(1.0);
 	nAttr.setSoftMax(1000);
+	nAttr.setMax(INT_MAX);
 
 
 	Attribute::textureCompression = nAttr.create("textureCompression", "texC", MFnNumericData::kBoolean, false, &status);
