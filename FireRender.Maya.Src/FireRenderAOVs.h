@@ -76,7 +76,7 @@ private:
 	RenderRegion m_region;
 
 	/** The set of AOV data. */
-	std::vector<FireRenderAOV> m_aovs;
+	std::vector<std::shared_ptr<FireRenderAOV> > m_aovs;
 
 	/** The ID of the AOV to display in the Maya render view. */
 	short m_renderViewAOVId;

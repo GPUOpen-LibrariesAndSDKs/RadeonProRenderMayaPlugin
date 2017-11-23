@@ -964,6 +964,12 @@ global proc createFireRenderAOVsTab()
 	createFireRenderRenderPassesFrame ("fireRenderRenderPassesFrame");
 	setParent ..;
 
+	// Depth settings
+	frameLayout -label "RPR Depth" -cll false -cl 0 fireRenderRenderDepth;
+
+	createFireRenderDepthParams ("fireRenderRenderDepth");
+	setParent ..;
+
 
 	setParent ..;
 	setParent ..;
@@ -976,6 +982,70 @@ global proc createFireRenderAOVsTab()
 		-af fireRenderGlobalsScrollLayout "right" 0
 		$parentForm;
 }
+
+global proc aovDepthAutoNormaliseChanged()
+{
+	if (`getAttr RadeonProRenderGlobals.aovDepthAutoNormalise`)
+	{
+		// Lock controls and
+		setAttr RadeonProRenderGlobals.aovDepthNormaliseMin -lock 1;
+		setAttr RadeonProRenderGlobals.aovDepthNormaliseMax -lock 1;
+	}
+	else
+	{
+		// Unlock controls
+		setAttr RadeonProRenderGlobals.aovDepthNormaliseMin -lock 0;
+		setAttr RadeonProRenderGlobals.aovDepthNormaliseMax -lock 0;
+	}
+}
+
+global proc aovDepthNormaliseMinMaxChanged()
+{
+	float $min = `getAttr RadeonProRenderGlobals.aovDepthNormaliseMin`;
+	float $max = `getAttr RadeonProRenderGlobals.aovDepthNormaliseMax`;
+
+	if ($min > $max)
+	{
+		$min = $max;
+		setAttr RadeonProRenderGlobals.aovDepthNormaliseMin $min;
+	}
+}
+
+global proc createFireRenderDepthParams(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	setParentToFireRenderTab();
+	setParent $parent;
+
+	columnLayout;
+
+	attrControlGrp
+		 -label "AutoNormalise"
+		 -attribute "RadeonProRenderGlobals.aovDepthAutoNormalise"
+		 -changeCommand aovDepthAutoNormaliseChanged;
+
+	attrControlGrp
+		 -label "Min (Black)"
+		 -attribute "RadeonProRenderGlobals.aovDepthNormaliseMin"
+		 -changeCommand aovDepthNormaliseMinMaxChanged;
+
+	attrControlGrp
+		 -label "Max (White)"
+		 -attribute "RadeonProRenderGlobals.aovDepthNormaliseMax"
+		 -changeCommand aovDepthNormaliseMinMaxChanged;
+
+	attrControlGrp
+		 -label "Invert Output"
+		 -attribute "RadeonProRenderGlobals.aovDepthInvertOutput";
+
+	setParent ..;
+	setUITemplate -popTemplate;
+
+	// Update state
+	aovDepthAutoNormaliseChanged();
+}
+
 
 global proc createFireRenderToneMappingTab()
 {

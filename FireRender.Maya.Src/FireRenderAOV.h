@@ -17,6 +17,7 @@
 
 // Forward declarations.
 class FireRenderContext;
+class MFnDependencyNode;
 struct RV_PIXEL;
 
 
@@ -145,7 +146,14 @@ public:
 	/** AOV pixel data. Allocated if the buffer is active. */
 	PixelBuffer pixels;
 
-private:
+	/** Getting settings for making post processing*/
+	virtual void ReadFromGlobals(const MFnDependencyNode& globals) {}
+
+protected:
+	/** Make post processing for the specific AOV if required*/
+	virtual void PostProcess(){}
+
+protected:
 	// Members
 	// -----------------------------------------------------------------------------
 
