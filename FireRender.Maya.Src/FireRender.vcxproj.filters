@@ -440,6 +440,9 @@
     <ClCompile Include="GLTFTranslator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FireRenderAOVDepth.cpp">
+      <Filter>AOVs</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -759,6 +762,9 @@
     </ClInclude>
     <ClInclude Include="GLTFTranslator.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderAOVDepth.h">
+      <Filter>AOVs</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
