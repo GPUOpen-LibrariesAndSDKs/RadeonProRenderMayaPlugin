@@ -33,3 +33,12 @@ XBMLANGPATH+:=icons
 MAYA_SHADER_LIBRARY_PATH+:=materials
 RPR_SCRIPTS_PATH:=scripts
 plug-ins: plug-ins/2017/
+
++ MAYAVERSION:2018 RadeonProRender 1.0 %FR_MAYA_PLUGIN_DEV_PATH%/dist
+PATH+:=bin
+MAYA_RENDER_DESC_PATH+:=renderDesc
+MAYA_CUSTOM_TEMPLATE_PATH+:=scripts/Templates
+XBMLANGPATH+:=icons
+MAYA_SHADER_LIBRARY_PATH+:=materials
+RPR_SCRIPTS_PATH:=scripts
+plug-ins: plug-ins/2018/

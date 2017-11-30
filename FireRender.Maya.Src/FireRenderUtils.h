@@ -8,6 +8,9 @@
 // Created by Alan Stanzione.
 //
 
+#if MAYA_API_VERSION >= 20180000
+#include <maya/MapiNamespace.h>
+#endif
 #include <maya/MFnDagNode.h>
 #include <maya/MObjectArray.h>
 #include <maya/MIntArray.h>
@@ -376,6 +379,10 @@ public:
 	}
 };
 
+#if MAYA_API_VERSION >= 20180000
+OPENMAYA_MAJOR_NAMESPACE_OPEN
+#endif
+
 inline MayaIterator<MDagPathArray, MDagPath> begin(MDagPathArray &arr)
 {
 	return MayaIterator<MDagPathArray, MDagPath>(arr);
@@ -435,6 +442,10 @@ inline MayaCIterator<MStringArray, MString> end(const MStringArray &arr)
 {
 	return MayaCIterator<MStringArray, MString>(arr, arr.length());
 }
+
+#if MAYA_API_VERSION >= 20180000
+OPENMAYA_NAMESPACE_CLOSE
+#endif
 
 template<typename T>
 inline T findPlugTryGetValue(const MFnDependencyNode & mfnDepNode, const MString& plugName, T defaultValue, bool failOnNotFound = true)

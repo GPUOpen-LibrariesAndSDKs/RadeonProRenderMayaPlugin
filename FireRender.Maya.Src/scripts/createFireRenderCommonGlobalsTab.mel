@@ -1937,7 +1937,15 @@ proc createCommonColorMgt()
 	string $menuName = "colorManagementOutputTransformOptionMenuRenderSettings";
 	string $checkBoxName = "colorManagementOutputEnableCheckBoxRenderSettings";
 
-	createOutputTransformUI($menuName, $checkBoxName, 0);
+	int $mayaVersion=`about -apiVersion`;
+	if ($mayaVersion >= 20180000)
+	{
+		eval "createOutputTransformUI(0,$menuName, $checkBoxName, 0);";
+	}
+	else
+	{
+		eval "createOutputTransformUI($menuName, $checkBoxName, 0);";
+	}
 
 	enableColorMgtWidgetsRenderSettings();
 
