@@ -220,7 +220,11 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace)
 						{
 							MHWRender::MTextureDescription desc = {};
 							texture->textureDescription(desc);
+#if MAYA_API_VERSION >= 20180000
+							size_t slicePitch = 0;
+#else
 							int slicePitch = 0;
+#endif
 							int rowPitch = 0;
 							if (const auto rawData_to_free = texture->rawData(rowPitch, slicePitch))
 							{
@@ -466,7 +470,11 @@ frw::Image FireMaya::Scope::GetAdjustedImage(MString texturePath,
 					MHWRender::MTextureDescription desc = {};
 					texture->textureDescription(desc);
 
+#if MAYA_API_VERSION >= 20180000
+					size_t slicePitch = 0;
+#else
 					int slicePitch = 0;
+#endif
 					int rowPitch = 0;
 					if (auto rawData = texture->rawData(rowPitch, slicePitch))
 					{
@@ -992,7 +1000,11 @@ frw::Value FireMaya::Scope::createImageFromShaderNode(MObject node, int width, i
 				{
 					std::vector<unsigned char> buffer(width * height * 3, 128);
 
+#if MAYA_API_VERSION >= 20180000
+					size_t slicePitch = 0;
+#else
 					int slicePitch = 0;
+#endif
 					int rowPitch = 0;
 					if (auto pixelData = static_cast<const unsigned char*>(texture->rawData(rowPitch, slicePitch)))
 					{
