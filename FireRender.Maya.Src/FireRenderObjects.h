@@ -422,6 +422,8 @@ public:
 	// Set the camera type (default or a VR camera).
 	void setType(short type);
 
+	bool GetAlphaMask() const;
+
 	virtual void RegisterCallbacks() override;
 
 private:
@@ -432,6 +434,9 @@ private:
 
 	// Camera type (default or a VR camera).
 	short m_type;
+
+	//Camera alpha mask
+	bool m_alphaMask;
 
 	// Camera
 	frw::Camera m_camera;

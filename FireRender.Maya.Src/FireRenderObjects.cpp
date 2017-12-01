@@ -1234,7 +1234,9 @@ void FireRenderEnvLight::Freshen()
 //===================
 FireRenderCamera::FireRenderCamera(FireRenderContext* context, const MDagPath& dagPath) :
 	FireRenderNode(context, dagPath)
-{}
+{
+	m_alphaMask = true;
+}
 
 FireRenderCamera::~FireRenderCamera()
 {
@@ -1282,6 +1284,12 @@ void FireRenderCamera::Freshen()
 		{
 			if (int n = imagePlanePlug.numElements())
 				imagePlanePlug = imagePlanePlug.elementByPhysicalIndex(0);
+		}
+
+		auto maskPlug = dagNode.findPlug("mask");
+		if (!maskPlug.isNull())
+		{
+			m_alphaMask = maskPlug.asBool();
 		}
 
 		m_imagePlane = FireMaya::GetConnectedNode(imagePlanePlug);
@@ -1441,6 +1449,11 @@ void FireRenderCamera::buildSwatchCamera()
 void FireRenderCamera::setType(short type)
 {
 	m_type = type;
+}
+
+bool FireRenderCamera::GetAlphaMask() const
+{
+	return m_alphaMask;
 }
 
 //===================

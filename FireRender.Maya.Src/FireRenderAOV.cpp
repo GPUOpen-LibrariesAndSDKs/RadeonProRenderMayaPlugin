@@ -130,7 +130,8 @@ void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip)
 	if (!active || !pixels || m_region.isZeroArea())
 		return;
 
-	context.readFrameBuffer(pixels.get(), id, m_frameWidth, m_frameHeight, m_region, flip, true, true);
+	bool opacityMerge = context.camera().GetAlphaMask();
+	context.readFrameBuffer(pixels.get(), id, m_frameWidth, m_frameHeight, m_region, flip, opacityMerge, true);
 
 	PostProcess();
 
