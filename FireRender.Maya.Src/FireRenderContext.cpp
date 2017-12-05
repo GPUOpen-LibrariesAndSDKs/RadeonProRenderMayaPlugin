@@ -1841,7 +1841,10 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	float weight = shadowCatcherShader.GetShadowWeight();
 
 	RprComposite compositeShadowColor(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	compositeShadowColor.SetInput4f("constant.input", r, g, b, a);
+
+	// We have "Shadow Transparency" parameter in Shadow Catcher, but not "Shadow opacity"
+	// It means we should invert this parameter
+	compositeShadowColor.SetInput4f("constant.input", r, g, b, 1.0f - a);
 
 	RprComposite compositeShadowWeight(context.Handle(), RPR_COMPOSITE_CONSTANT);
 	compositeShadowWeight.SetInput4f("constant.input", weight, weight, weight, weight);
