@@ -80,6 +80,11 @@ public:
 
 	bool createFailed() const { return m_createFailed; }
 
+    /** Returns current used M3dView object */
+    const QWidget* getMayaWidget() const { return m_widget; }
+
+    /** Finds M3dView object by panel name. Returns active M3dView if it can't be found by name */
+    static MStatus FindMayaView(const MString& panelName, M3dView *view);
 private:
 
 	// Members
@@ -130,6 +135,8 @@ private:
 	FireRenderError m_error;
 
 	int m_renderingErrors;
+
+    QWidget* m_widget;
 
 
 	// Private Methods

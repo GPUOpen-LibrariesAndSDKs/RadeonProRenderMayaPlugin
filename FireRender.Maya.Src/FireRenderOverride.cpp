@@ -153,7 +153,9 @@ MStatus FireRenderOverride::setup(const MString& panelName)
 
 	// Ensure the view is rendered using gouraud shaded display style.
 	M3dView view;
-	if (panelName.length() && M3dView::getM3dViewFromModelPanel(panelName, view) == MStatus::kSuccess)
+    MStatus status = FireRenderViewport::FindMayaView(panelName, &view);
+
+	if (panelName.length() && status == MStatus::kSuccess)
 		if (view.displayStyle() != M3dView::kGouraudShaded)
 			view.setDisplayStyle(M3dView::kGouraudShaded);
 
@@ -198,8 +200,17 @@ MStatus FireRenderOverride::setupViewport(const MString & panelName)
 	FireRenderViewportManager& viewportManager = FireRenderViewportManager::instance();
 	FireRenderViewport* viewport = viewportManager.getViewport(panelName);
 
+    bool doReinit = false;
+    if (viewport)
+    {
+        M3dView currentView;
+        MStatus status = FireRenderViewport::FindMayaView(panelName, &currentView);
+        if ((status == MStatus::kSuccess) && (currentView.widget() != viewport->getMayaWidget()))
+            doReinit = true;
+    }
+
 	// Create the viewport if required.
-	if (!viewport)
+	if (!viewport || doReinit)
 	{
 		viewport = viewportManager.createViewport(panelName);
 		if (!viewport) // creation failed
