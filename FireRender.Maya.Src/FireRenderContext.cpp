@@ -76,7 +76,7 @@ FireRenderContext::FireRenderContext() :
 	m_glInteropActive(false),
 	m_globalsChanged(false),
 	m_renderLayersChanged(false),
-	m_cameraDirty(false)
+	m_cameraDirty(true)
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
 	state = StateUpdating;

@@ -174,6 +174,10 @@ void mayaExiting(void* data)
 	DebugPrint("mayaExiting");
 	gExitingMaya = true;
 
+    // Clear ViewportManager. It should be cleared before maya destroys OpenGL context
+    // so we can't rely on ViewportManager destructor
+    FireRenderViewportManager::instance().clear();
+
 	FireRenderSwatchInstance::instance().cleanScene();
 	// We need to cleanup before terminating thread
 	// For some reason Maya willn't call this method if we simply close Maya

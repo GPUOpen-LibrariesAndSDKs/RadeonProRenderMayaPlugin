@@ -30,6 +30,17 @@ using namespace FireMaya;
 
 //#define HIGHLIGHT_TEXTURE_UPDATES	1	// debugging: every update will draw a color line on top of the rendered picture
 
+MStatus FireRenderViewport::FindMayaView(const MString& panelName, M3dView *view)
+{
+    // Get the Maya 3D view.
+    MStatus status = M3dView::getM3dViewFromModelPanel(panelName, *view);
+    //Unable to find M3dView. This happens in hypershade vieport. Use active one.
+    if (status != MStatus::kSuccess)
+        *view = M3dView::active3dView(&status);
+
+    return status;
+}
+
 // Life Cycle
 // -----------------------------------------------------------------------------
 FireRenderViewport::FireRenderViewport(const MString& panelName) :
@@ -46,8 +57,13 @@ FireRenderViewport::FireRenderViewport(const MString& panelName) :
 	if (!initialize())
 		m_createFailed = true;
 
-	// Get the Maya 3D view.
-	M3dView::getM3dViewFromModelPanel(panelName, m_view);
+    if (!FindMayaView(panelName, &m_view))
+        m_createFailed = true;
+
+    if (!m_createFailed)
+        m_widget = m_view.widget();
+    else
+        m_widget = nullptr;
 
 	// Add the RPR panel menu.
 	addMenu();
@@ -94,18 +110,12 @@ MStatus FireRenderViewport::setup()
 		updateTexture(m_pixels.data(), m_context.width(), m_context.height());
 	}
 
-	// Execute doSetup() in context of rendering thread
-	auto status = FireRenderThread::RunOnceAndWait<MStatus>([this]() -> MStatus
-	{
-		return doSetup();
-	});
-
-	return status;
+	return doSetup();
 }
 
 MStatus FireRenderViewport::doSetup()
 {
-	RPR_THREAD_ONLY;
+	MAIN_THREAD_ONLY;
 
 
 	// Check for errors.
@@ -202,15 +212,12 @@ bool FireRenderViewport::RunOnViewportThread()
 				// Perform a render iteration.
 				{
 					AutoMutexLock contextLock(m_contextLock);
+                    AutoMutexLock pixelsLock(m_pixelsLock);
 
 					m_context.render(false);
 					m_closeDialogNeeded = true;
-				}
 
-				// Lock pixels and read the frame buffer.
-				{
-					AutoMutexLock pixelsLock(m_pixelsLock);
-					readFrameBuffer();
+                    readFrameBuffer();
 				}
 
 				if (m_renderingErrors > 0)
@@ -225,8 +232,25 @@ bool FireRenderViewport::RunOnViewportThread()
 					throw;
 			}
 
-			// Schedule a Maya viewport refresh.
-			m_view.scheduleRefresh();
+            FireRenderThread::RunProcOnMainThread([&]()
+            {
+                // Schedule a Maya viewport refresh or set exit flag
+                MStatus status;
+                M3dView activeView;
+                status = M3dView::getM3dViewFromModelPanel(m_panelName, activeView);
+                if (status == MStatus::kSuccess) // Regular render view
+                {
+                    m_view.scheduleRefresh();
+                }
+                else //Standalone render view (hypershade only?)
+                {
+                    activeView = M3dView::active3dView(&status);
+                    if (activeView.widget() == m_widget)
+                        m_view.scheduleRefresh();
+                    else
+                        m_context.state = FireRenderContext::StateExiting;
+                }
+            });
 		}
 		else
 		{
@@ -520,9 +544,9 @@ MStatus FireRenderViewport::resize(unsigned int width, unsigned int height)
 
 		// Update the camera.
 		M3dView mView;
-		MStatus status = M3dView::getM3dViewFromModelPanel(m_panelName, mView);
-		if (status != MStatus::kSuccess)
-			return status;
+        MStatus status = FindMayaView(m_panelName, &mView);
+        if (status != MStatus::kSuccess)
+            return status;
 
 		MDagPath cameraPath;
 		status = mView.getCamera(cameraPath);
