@@ -1250,7 +1250,9 @@ frw::Shader FireMaya::Scope::ParseShader(MObject node)
 
 	if (auto n = dynamic_cast<FireMaya::ShaderNode*>(shaderNode.userNode()))
 	{
+		FireRenderThread::Pause();
 		result = n->GetShader(*this);
+		FireRenderThread::Resume();
 	}
 	else
 	{

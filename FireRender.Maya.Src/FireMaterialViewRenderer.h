@@ -29,7 +29,6 @@ public:
 	~FireRenderRenderData();
 
 public:
-
 	MMutexLock m_mutex;
 
 	std::map<std::string, FrLight> m_lights;

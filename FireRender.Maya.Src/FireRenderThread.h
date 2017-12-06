@@ -132,6 +132,7 @@ private:
 	static std::atomic_bool shouldUseThread;
 	static std::atomic_bool runTheThread;
 	static MCallbackId callbackId_RPRMainThreadEvent;
+	static std::mutex renderThreadPauseMutex;
 
 public:
 	/**
@@ -246,6 +247,23 @@ public:
 	/* Runs items queued to run on the main thread (call only from the main thread) */
 	static size_t RunItemsQueuedForTheMainThread();
 	static bool AreWeOnMainThread();
+
+	static void Pause(void)
+	{
+		if (AreWeOnMainThread())
+		{
+			while (!renderThreadPauseMutex.try_lock())
+				RunItemsQueuedForTheMainThread();
+		}
+	}
+
+	static void Resume(void)
+	{
+		if (AreWeOnMainThread())
+		{
+			renderThreadPauseMutex.unlock();
+		}
+	}
 
 
 private:

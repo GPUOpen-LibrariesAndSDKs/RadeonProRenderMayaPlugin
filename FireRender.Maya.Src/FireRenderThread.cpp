@@ -14,6 +14,7 @@ namespace FireMaya
 vector<shared_ptr<FireRenderThread::QueueItemBase>> FireRenderThread::itemQueue;
 vector<shared_ptr<FireRenderThread::QueueItemBase>> FireRenderThread::itemQueueForMainThread;
 mutex FireRenderThread::itemQueueMutex;
+mutex FireRenderThread::renderThreadPauseMutex;
 unique_ptr<thread> FireRenderThread::ptrWorkerThread;
 atomic_bool FireRenderThread::shouldUseThread { false };
 atomic_bool FireRenderThread::runTheThread { true };
@@ -185,6 +186,8 @@ void FireRenderThread::ThreadProc(void *)
 		{
 			for (auto item : queue)
 			{
+				std::lock_guard<std::mutex> updateLock(renderThreadPauseMutex);
+
 				item->Run();
 				this_thread::yield();
 			}
