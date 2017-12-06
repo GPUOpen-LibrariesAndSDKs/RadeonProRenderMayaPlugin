@@ -782,7 +782,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	}
 	else
 	{
-		material.xSetParameterF(RPRX_UBER_MATERIAL_COATING_WEIGHT, 0, 0, 0, 0);
+		material.xSetParameterF(RPRX_UBER_MATERIAL_REFRACTION_WEIGHT, 0, 0, 0, 0);
 	}
 
 	// Emissive
