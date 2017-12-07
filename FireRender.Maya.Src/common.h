@@ -9,7 +9,7 @@
 // use in hypershade window for nodes name prefix
 #define FIRE_RENDER_NODE_PREFIX "RPR"
 
-#define PLUGIN_VERSION	"2.2.4.0"
+#define PLUGIN_VERSION	"2.2.4.1"
 
 #define PLUGIN_VENDOR	"AMD"
 
