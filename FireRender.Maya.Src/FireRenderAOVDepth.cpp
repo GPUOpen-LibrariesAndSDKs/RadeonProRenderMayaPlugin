@@ -32,7 +32,7 @@ void FireRenderAOVDepth::InitValues()
 
 inline bool IsPixelDepthCorrectValue(const RV_PIXEL& pixel)
 {
-	return pixel.r > 0.0f;
+	return !isinf<float>(pixel.r);
 }
 
 inline float clamp(float val, float lower, float upper)
@@ -72,6 +72,13 @@ void FireRenderAOVDepth::SearchMinMax(float& minOut, float& maxOut)
 	maxOut = max;
 }
 
+inline void SetPixelWithVal(RV_PIXEL& pixel, float val)
+{
+	pixel.r = val;
+	pixel.g = val;
+	pixel.b = val;
+}
+
 void FireRenderAOVDepth::PostProcess()
 {
 	RV_PIXEL* pData = pixels.get();
@@ -89,6 +96,8 @@ void FireRenderAOVDepth::PostProcess()
 		for (unsigned int x = m_region.left; x <= m_region.right; x++)
 		{
 			int index = y * m_frameWidth + x;
+			
+			RV_PIXEL& pixel = pData[index];
 
 			if (IsPixelDepthCorrectValue(pData[index]))
 			{
@@ -112,9 +121,13 @@ void FireRenderAOVDepth::PostProcess()
 					val = 1.0f - val;
 				}
 
-				pData[index].r = val;
-				pData[index].g = val;
-				pData[index].b = val;
+				SetPixelWithVal(pixel, val);
+			}
+			else
+			{
+				float val = m_bIsInvertOutput ? 0.0f : 1.0f;
+
+				SetPixelWithVal(pixel, val);
 			}
 		}
 	}
