@@ -214,6 +214,8 @@ bool FireRenderProduction::start()
 			}
 			catch (...)
 			{
+				// We should stop rendering if some exception(error on core side) occured. It will close all progress bars etc
+				stop();
 				m_isRunning = false;
 				m_error.set(current_exception());
 			}
