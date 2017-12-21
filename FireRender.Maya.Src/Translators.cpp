@@ -29,6 +29,8 @@
 #include <maya/MAnimControl.h>
 #include <maya/MFnSubd.h>
 #include <maya/MEulerRotation.h>
+#include <maya/MPointArray.h>
+#include <unordered_map>
 
 #include <functional>
 #include <map>
@@ -480,6 +482,175 @@ namespace FireMaya
 #if PROFILE
 		clock_t tick = clock();
 #endif
+
+#define USE_NEW_MESH_EXPORT
+#ifdef USE_NEW_MESH_EXPORT
+		// pointer to array of vertices coordinates in Maya
+		const float* pVertices = fnMesh.getRawPoints(&mstatus);
+		assert(MStatus::kSuccess == mstatus);
+		int countVertices = fnMesh.numVertices(&mstatus);
+		assert(MStatus::kSuccess == mstatus);
+
+		// pointer to array of normal coordinates in Maya
+		const float* pNormals = fnMesh.getRawNormals(&mstatus);
+		assert(MStatus::kSuccess == mstatus);
+		int countNormals = fnMesh.numNormals(&mstatus);
+		assert(MStatus::kSuccess == mstatus);
+
+		// get triangle count (max possible count; this number is used for reserve only)
+		MIntArray triangleCounts; // basically number of triangles in polygons; size of array equal to number of polygons in mesh
+		MIntArray triangleVertices; // indices of points in triangles (3 indices per triangle)
+		mstatus = fnMesh.getTriangles(triangleCounts, triangleVertices);
+		assert(MStatus::kSuccess == mstatus);
+
+		// UV coordinates
+		// - auxillary arrays for passing data to RPR
+		std::vector<std::vector<Float2> > uvCoords;
+		std::vector<const float*> puvCoords; puvCoords.reserve(uvSetNamesNum);
+		std::vector<size_t> sizeCoords; sizeCoords.reserve(uvSetNamesNum);
+		// - fill these arrays with data
+		// - up to 2 UV channels is supported
+		for (unsigned int currUVCHannel = 0; currUVCHannel < uvSetNamesNum; ++currUVCHannel)
+		{
+			// - get data from Maya
+			MFloatArray uArray;
+			MFloatArray vArray;
+			mstatus = fnMesh.getUVs(uArray, vArray, &uvSetNames[currUVCHannel]);
+			assert(MStatus::kSuccess == mstatus);
+			assert(uArray.length() == vArray.length());
+
+			// - RPR needs UV pairs instead of 2 parallel arrays (U and V) that Maya returns
+			uvCoords.emplace_back();
+			uvCoords[currUVCHannel].reserve(uArray.length());
+			for (unsigned int idx = 0; idx < uArray.length(); ++idx)
+			{
+				Float2 uv;
+				uv.x = uArray[idx];
+				uv.y = vArray[idx];
+				uvCoords[currUVCHannel].push_back(uv);
+			}
+
+			puvCoords.push_back((float*)uvCoords[currUVCHannel].data());
+			sizeCoords.push_back(uvCoords[currUVCHannel].size());
+		}
+
+		// different RPR mesh is created for each shader
+		for (int shaderId = 0; shaderId < elementCount; shaderId++)
+		{
+			// output indices of vertexes (3 indices for each triangle)
+			std::vector<int> vertexIndices;
+			vertexIndices.reserve(triangleVertices.length());
+
+			// output indices of normals (3 indices for each triangle)
+			std::vector<int> normalIndices;
+			normalIndices.reserve(triangleVertices.length());
+
+			// output indices of UV coordinates (3 indices for each triangle)
+			// up to 2 UV chanels is supported, thus vector of vectors
+			std::vector<std::vector<int> > uvIndices;
+			for (unsigned int currUVCHannel = 0; currUVCHannel < uvSetNamesNum; ++currUVCHannel)
+			{
+				uvIndices.emplace_back();
+				uvIndices[currUVCHannel].reserve(triangleVertices.length());
+			}
+			
+			// iterate through mesh
+			MItMeshPolygon it = MItMeshPolygon(fnMesh.object());
+			for (; !it.isDone(); it.next())
+			{
+				// skip polygons that have different shader from current one
+				if (faceMaterialIndices[it.index()] != shaderId)
+					continue;
+
+				// get indices of vertexes of polygon
+				// - these are indices of verts of polygion, not triangles!!!
+				MIntArray vertices;
+				mstatus = it.getVertices(vertices);
+				assert(MStatus::kSuccess == mstatus);
+
+				// - dump indices into array to be able to view them in debugger
+				#ifdef _DEBUG
+					int verticesLengths = vertices.length();
+					int* pdbgItVerts = new int[vertices.length()];
+					mstatus = vertices.get(pdbgItVerts);
+					assert(MStatus::kSuccess == mstatus);
+					delete[] pdbgItVerts;
+				#endif
+
+				// get indices of vertices of triangles of current polygon
+				// - these are indices of verts in triangles!
+				MIntArray vertexList;
+				MPointArray points;
+				mstatus = it.getTriangles(points, vertexList);
+				assert(MStatus::kSuccess == mstatus);
+
+				// - dump indices into array to be able to view them in debugger
+				#ifdef _DEBUG
+					int triangleLengths = vertexList.length();
+					int* pdbgItTriangles = new int[vertexList.length()];
+					mstatus = vertexList.get(pdbgItTriangles);
+					assert(MStatus::kSuccess == mstatus);
+					delete[] pdbgItTriangles;
+				#endif
+
+				// write indices of triangles in mesh into output triangle indices array
+				for (unsigned int idx = 0; idx < vertexList.length(); ++idx)
+				{
+					vertexIndices.push_back(vertexList[idx]);
+				}
+
+				// create table to convert global index in vertex indices array to local one [0...number of vertex in polygon]
+				std::unordered_map<int, int> vertexIdxGlobalToLocal;
+				for (unsigned int idx = 0; idx < vertices.length(); ++idx)
+				{
+					vertexIdxGlobalToLocal[vertices[idx]] = idx;
+				}
+
+				// write indices of normals of vertices (parallel to triangle vertices) into output array
+				for (unsigned int idx = 0; idx < vertexList.length(); ++idx)
+				{
+					auto localNormalIdxIt = vertexIdxGlobalToLocal.find(vertexList[idx]);
+					assert(localNormalIdxIt != vertexIdxGlobalToLocal.end());
+					normalIndices.push_back(it.normalIndex(localNormalIdxIt->second));
+				}
+
+				// up to 2 UV channels is supported
+				for (unsigned int currUVCHannel = 0; currUVCHannel < uvSetNamesNum; ++currUVCHannel)
+				{
+					// write indices 
+					for (unsigned int idx = 0; idx < vertexList.length(); ++idx)
+					{
+						int uvIdx = 0;
+						auto localUVIdxIt = vertexIdxGlobalToLocal.find(vertexList[idx]);
+						assert(localUVIdxIt != vertexIdxGlobalToLocal.end());
+						mstatus = it.getUVIndex(localUVIdxIt->second, uvIdx, &uvSetNames[currUVCHannel]);
+						assert(MStatus::kSuccess == mstatus);
+						uvIndices[currUVCHannel].push_back(uvIdx);
+					}
+				}
+			}
+
+			// auxillary array for passing data to RPR
+			std::vector<const int*>	puvIndices;
+			for (unsigned int idx = 0; idx < uvSetNamesNum; ++idx)
+			{
+				puvIndices.push_back(uvIndices[idx].data());
+			}
+
+			// create mesh in RPR
+			auto multiUV_texcoord_strides = std::vector<int>(uvSetNamesNum, sizeof(Float2));
+			elements[shaderId] = context.CreateMeshEx(
+				pVertices, countVertices, sizeof(Float3),
+				pNormals, countNormals, sizeof(Float3),
+				nullptr, 0, 0,
+				uvSetNamesNum, puvCoords.data(), sizeCoords.data(), multiUV_texcoord_strides.data(),
+				vertexIndices.data(), sizeof(rpr_int),
+				normalIndices.data(), sizeof(rpr_int),
+				puvIndices.data(), std::vector<int>(uvSetNamesNum, sizeof(int)).data(),
+				std::vector<int>(vertexIndices.size() / 3, 3).data(), vertexIndices.size()/3
+			);
+		}
+#else
 		for (int shaderId = 0; shaderId < elementCount; shaderId++)
 		{
 			FastVector<Float3> uniqueVertices;
@@ -604,7 +775,13 @@ namespace FireMaya
 					std::vector<int>(triangles, 3).data(), triangles);
 
 			}
+
+			const float* dbgUVCoordsArr = multiUV_texcoords[0];
+			int dbgUVArrSize = multiUV_texcoords_Temp[0].size();
+			const int* dbgUVIndices = multiUV_indices[0];
+			int numFaces = pointIndices.size() / 3;
 		}
+#endif
 
 		if (degenerates > 0)
 			DebugPrint("Skipped %d degenerate triangle(s).", degenerates);
