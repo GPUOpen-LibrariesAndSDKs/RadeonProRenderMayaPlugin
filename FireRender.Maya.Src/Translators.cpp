@@ -482,6 +482,7 @@ namespace FireMaya
 #if PROFILE
 		clock_t tick = clock();
 #endif
+
 #define USE_NEW_MESH_EXPORT
 #ifdef USE_NEW_MESH_EXPORT
 		// pointer to array of vertices coordinates in Maya
@@ -547,6 +548,7 @@ namespace FireMaya
 			// output indices of UV coordinates (3 indices for each triangle)
 			// up to 2 UV chanels is supported, thus vector of vectors
 			std::vector<std::vector<int> > uvIndices;
+			uvIndices.reserve(triangleVertices.length());
 			for (unsigned int currUVCHannel = 0; currUVCHannel < uvSetNamesNum; ++currUVCHannel)
 			{
 				uvIndices.emplace_back();
@@ -568,13 +570,13 @@ namespace FireMaya
 				assert(MStatus::kSuccess == mstatus);
 
 				// - dump indices into array to be able to view them in debugger
-				#ifdef _DEBUG
+				/*#ifdef _DEBUG
 					int verticesLengths = vertices.length();
 					int* pdbgItVerts = new int[vertices.length()];
 					mstatus = vertices.get(pdbgItVerts);
 					assert(MStatus::kSuccess == mstatus);
 					delete[] pdbgItVerts;
-				#endif
+				#endif*/
 
 				// get indices of vertices of triangles of current polygon
 				// - these are indices of verts in triangles!
@@ -584,13 +586,13 @@ namespace FireMaya
 				assert(MStatus::kSuccess == mstatus);
 
 				// - dump indices into array to be able to view them in debugger
-				#ifdef _DEBUG
+				/*#ifdef _DEBUG
 					int triangleLengths = vertexList.length();
 					int* pdbgItTriangles = new int[vertexList.length()];
 					mstatus = vertexList.get(pdbgItTriangles);
 					assert(MStatus::kSuccess == mstatus);
 					delete[] pdbgItTriangles;
-				#endif
+				#endif*/
 
 				// write indices of triangles in mesh into output triangle indices array
 				for (unsigned int idx = 0; idx < vertexList.length(); ++idx)
