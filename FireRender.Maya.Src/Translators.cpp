@@ -482,7 +482,6 @@ namespace FireMaya
 #if PROFILE
 		clock_t tick = clock();
 #endif
-
 #define USE_NEW_MESH_EXPORT
 #ifdef USE_NEW_MESH_EXPORT
 		// pointer to array of vertices coordinates in Maya
@@ -617,6 +616,10 @@ namespace FireMaya
 				// up to 2 UV channels is supported
 				for (unsigned int currUVCHannel = 0; currUVCHannel < uvSetNamesNum; ++currUVCHannel)
 				{
+					// polygon might not have UVs
+					if (!it.hasUVs(uvSetNames[currUVCHannel]))
+						continue;
+
 					// write indices 
 					for (unsigned int idx = 0; idx < vertexList.length(); ++idx)
 					{
