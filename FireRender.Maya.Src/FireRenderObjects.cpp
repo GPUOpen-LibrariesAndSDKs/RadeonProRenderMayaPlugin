@@ -1186,7 +1186,10 @@ void FireRenderEnvLight::Freshen()
 	auto node = Object();
 	auto dagPath = DagPath();
 	MFnDagNode dagNode(node);
-	if (dagPath.isValid() && dagPath.isVisible())
+
+	// Check node visibility without checking current render layer.
+	// We should render env light on all render layers.
+	if (dagPath.isValid() && isVisible(dagNode, MFn::kInvalid))
 	{
 		MPlug filePathPlug = dagNode.findPlug("filePath");
 		if (!filePathPlug.isNull())
