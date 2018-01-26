@@ -95,6 +95,8 @@ namespace FireMaya
 		MayaNodeRamp = 0x52545241,
 		MayaNoise = 0x52544e33,
 		MayaBump2d = 0x5242554D,
+		MayaNodeRemapHSV = 0x524d4853,
+		MayaNodeGammaCorrect = 0x5247414d,
 
 		// arithmetic
 		MayaAddDoubleLinear = 0x4441444c,
@@ -199,9 +201,12 @@ namespace FireMaya
 
 		frw::Shader ParseVolumeShader( MObject ob );
 		frw::Shader ParseShader(MObject ob);
-		frw::Value createImageFromShaderNode(MObject node, int width=256, int height=256);
+		frw::Value createImageFromShaderNode(MObject node, MString plugName = "outColor", int width = 256, int height = 256);
 
 		frw::Value ParseValue(MObject ob, const MString &outPlugName);
+
+		bool FindFileNodeRecursive(MObject objectNode, int& width, int& height);
+		frw::Value FireMaya::Scope::createImageFromShaderNodeUsingFileNode(MObject node, MString plugName);
 
 		frw::Value CosinePowerToRoughness(const frw::Value &power);
 
