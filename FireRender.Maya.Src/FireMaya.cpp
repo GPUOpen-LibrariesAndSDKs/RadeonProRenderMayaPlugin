@@ -975,15 +975,88 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 
 	case MayaNodeRamp:
 		//falling back onto rasterization:
-		return createImageFromShaderNode(node, 128, 128);
+		return createImageFromShaderNode(node, MString("outColor"), 128, 128);
 
-		break;
+	// Try to detect what is connected to this node to obtain a texture of proper size
+	case MayaNodeGammaCorrect:
+		return createImageFromShaderNodeUsingFileNode(node, MString("outValue"));
+
+	case MayaNodeRemapHSV:
+		return createImageFromShaderNodeUsingFileNode(node, MString("outColor"));
 	}
 
 	return nullptr;
 }
 
-frw::Value FireMaya::Scope::createImageFromShaderNode(MObject node, int width, int height)
+frw::Value FireMaya::Scope::createImageFromShaderNodeUsingFileNode(MObject node, MString plugName)
+{
+	int width = 0;
+	int height = 0;
+
+	if (FindFileNodeRecursive(node, width, height) &&
+		(width > 0 && height > 0))
+	{
+		return createImageFromShaderNode(node, plugName, width, height);
+	}
+	else
+	{
+		return createImageFromShaderNode(node, plugName);
+	}
+}
+
+bool FireMaya::Scope::FindFileNodeRecursive(MObject objectNode, int& width, int& height)
+{
+	if (!objectNode.hasFn(MFn::kDependencyNode))
+	{
+		return false;
+	}
+
+	// Check if we have got file node
+	if (objectNode.hasFn(MFn::kFileTexture))
+	{
+		MFnDependencyNode fileNode(objectNode);
+
+		MPlug sizePlug = fileNode.findPlug("outSizeX");
+		if (!sizePlug.isNull())
+		{
+			width = (int)sizePlug.asFloat();
+		}
+
+		sizePlug = fileNode.findPlug("outSizeY");
+		if (!sizePlug.isNull())
+		{
+			height = (int)sizePlug.asFloat();
+		}
+
+		return true;
+	}
+
+	MPlugArray connections;
+	MStatus status;
+
+	MFnDependencyNode node(objectNode);
+	if (node.getConnections(connections) == MStatus::kSuccess)
+	{
+		for (auto c : connections)
+		{
+			auto name = c.name(&status);
+
+			if (c.isDestination())
+			{
+				MObject node = GetConnectedNode(c);
+
+				if (FindFileNodeRecursive(node, width, height))
+				{
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+frw::Value FireMaya::Scope::createImageFromShaderNode(MObject node, MString plugName, int width, int height)
 {
 	return FireRenderThread::RunOnMainThread<frw::Value>([&]()
 	{
@@ -995,7 +1068,11 @@ frw::Value FireMaya::Scope::createImageFromShaderNode(MObject node, int width, i
 			if (auto textureManager = renderer->getTextureManager())
 			{
 				MFnDependencyNode shaderNode(node);
-				MPlug outColorPlug = shaderNode.findPlug("outColor");
+
+				// Get first output connection to cover such cases as outputColor, outputValue etc.
+			
+				MPlug outColorPlug = shaderNode.findPlug(plugName);
+
 				if (auto texture = textureManager->acquireTexture("", outColorPlug, width, height, false))
 				{
 					std::vector<unsigned char> buffer(width * height * 3, 128);
