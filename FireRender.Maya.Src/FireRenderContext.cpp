@@ -1781,10 +1781,10 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	// Find the number of pixels in the frame buffer.
 	int pixelCount = width * height;
 
-	rpr_framebuffer frameBuffer = frameBufferAOV(RPR_AOV_COLOR);
-	rpr_framebuffer opacityFrameBuffer = frameBufferAOV(RPR_AOV_OPACITY);
+	rpr_framebuffer frameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
+	rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
 	rpr_framebuffer shadowCatcherFrameBuffer = frameBufferAOV(RPR_AOV_SHADOW_CATCHER);
-	rpr_framebuffer backgroundFrameBuffer = frameBufferAOV(RPR_AOV_BACKGROUND);
+	rpr_framebuffer backgroundFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_BACKGROUND);
 
 	// Get data from the RPR frame buffer.
 	size_t dataSize;
@@ -1807,19 +1807,10 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	RprComposite compositeOpacity(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
 	compositeOpacity.SetInputFb("framebuffer.input", opacityFrameBuffer);
 
-	RprComposite compositeBgNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
-	compositeBgNorm.SetInputC("normalize.color", compositeBg);
-
-	RprComposite compositeColorNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
-	compositeColorNorm.SetInputC("normalize.color", compositeColor);
-
-	RprComposite compositeOpacityNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
-	compositeOpacityNorm.SetInputC("normalize.color", compositeOpacity);
-
 	RprComposite compositeLerp1(context.Handle(), RPR_COMPOSITE_LERP_VALUE);
-	compositeLerp1.SetInputC("lerp.color0", compositeBgNorm);
-	compositeLerp1.SetInputC("lerp.color1", compositeColorNorm);
-	compositeLerp1.SetInputC("lerp.weight", compositeOpacityNorm);
+	compositeLerp1.SetInputC("lerp.color0", compositeBg);
+	compositeLerp1.SetInputC("lerp.color1", compositeColor);
+	compositeLerp1.SetInputC("lerp.weight", compositeOpacity);
 
 	// Step 2.
 	// Combine result from step 1, black color and normalized shadow catcher AOV
@@ -1863,7 +1854,7 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	if (shadowCatcherShader.BgIsEnv())
 		compositeLerp2.SetInputC("lerp.color0", compositeLerp1);
 	else
-		compositeLerp2.SetInputC("lerp.color0", compositeColorNorm);
+		compositeLerp2.SetInputC("lerp.color0", compositeColor);
 		
 	compositeLerp2.SetInputC("lerp.color1", compositeShadowColor);
 	compositeLerp2.SetInputC("lerp.weight", compositeSCWeight);
