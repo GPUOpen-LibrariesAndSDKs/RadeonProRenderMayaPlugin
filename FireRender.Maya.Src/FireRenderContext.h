@@ -193,7 +193,7 @@ public:
 
 	bool isRenderView() const;
 
-	bool createContextEtc(rpr_context_type context_type, rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete = true, bool glViewport = false);
+	bool createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete = true, bool glViewport = false);
 
 	// Return the context
 	rpr_context context();

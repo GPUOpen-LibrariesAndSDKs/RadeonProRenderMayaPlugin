@@ -100,7 +100,7 @@ void FireRenderContext::initializeContext()
 
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags();
 
-	createContextEtc(RPR_CONTEXT_OPENCL, createFlags);
+	createContextEtc(createFlags);
 }
 
 void FireRenderContext::resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture)
@@ -221,13 +221,13 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 		FireRenderThread::UseTheThread((createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) != 0);
 
 		bool avoidMaterialSystemDeletion_workaround = isViewport && (createFlags & RPR_CREATION_FLAGS_ENABLE_CPU);
-		if (!createContextEtc(RPR_CONTEXT_OPENCL, createFlags, !avoidMaterialSystemDeletion_workaround, glViewport))
+		if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, glViewport))
 		{
 			// Failed to create context
 			if (glViewport)
 			{
 				// If we attempted to create gl interop context, try again without interop
-				if (!createContextEtc(RPR_CONTEXT_OPENCL, createFlags, !avoidMaterialSystemDeletion_workaround, false))
+				if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, false))
 				{
 					// Failed again, aborting
 					MGlobal::displayError("Failed to create Radeon ProRender context in interop and non-interop modes. Aborting.");
@@ -444,7 +444,7 @@ void FireRenderContext::initSwatchScene()
 
 		auto createFlags = FireMaya::Options::GetContextDeviceFlags();
 
-		createContextEtc(RPR_CONTEXT_OPENCL, createFlags);
+		createContextEtc(createFlags);
 
 		enableAOV(RPR_AOV_COLOR);
 
@@ -683,13 +683,13 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 }
 
 
-bool FireRenderContext::createContextEtc(rpr_context_type context_type, rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete, bool glViewport)
+bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete, bool glViewport)
 {
-	return FireRenderThread::RunOnceAndWait<bool>([this, context_type, &creation_flags, destroyMaterialSystemOnDelete, glViewport]()
+	return FireRenderThread::RunOnceAndWait<bool>([this, &creation_flags, destroyMaterialSystemOnDelete, glViewport]()
 	{
 		RPR_THREAD_ONLY;
 
-		DebugPrint("FireRenderContext::createContextEtc(%d, %d)", context_type, creation_flags);
+		DebugPrint("FireRenderContext::createContextEtc(%d)", creation_flags);
 
 		// Use OpenGL interop for OpenGL based viewports if required.
 		if (glViewport)
