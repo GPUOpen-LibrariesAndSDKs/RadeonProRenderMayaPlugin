@@ -38,7 +38,7 @@ FireRenderRenderData::FireRenderRenderData() :
 	m_context.setCallbackCreationDisabled(true);
 
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags();
-	m_context.createContextEtc(RPR_CONTEXT_OPENCL, createFlags);
+	m_context.createContextEtc(createFlags);
 }
 
 FireRenderRenderData::~FireRenderRenderData()
