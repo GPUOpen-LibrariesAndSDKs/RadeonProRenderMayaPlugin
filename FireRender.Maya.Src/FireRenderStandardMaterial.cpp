@@ -788,8 +788,15 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	// Emissive
 	if (GET_BOOL(emissiveEnable))
 	{
-		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_EMISSION_COLOR, emissiveColor);
-		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_EMISSION_WEIGHT, emissiveWeight);
+		frw::Value valueEmissiveWeight = scope.GetValue(shaderNode.findPlug(Attribute::emissiveWeight));
+		material.xSetValue(RPRX_UBER_MATERIAL_EMISSION_WEIGHT, valueEmissiveWeight);
+
+		frw::Value valueEmissiveColor = scope.GetValue(shaderNode.findPlug(Attribute::emissiveColor));
+
+		const frw::MaterialSystem ms = valueEmissiveColor.GetMaterialSystem();
+		valueEmissiveColor = ms.ValueMul(valueEmissiveColor, valueEmissiveWeight);
+		material.xSetValue(RPRX_UBER_MATERIAL_EMISSION_COLOR, valueEmissiveColor);
+
 		bool bDoubleSided = GET_BOOL(emissiveDoubleSided);
 		material.xSetParameterU(RPRX_UBER_MATERIAL_EMISSION_MODE, bDoubleSided ? RPRX_UBER_MATERIAL_EMISSION_MODE_DOUBLESIDED : RPRX_UBER_MATERIAL_EMISSION_MODE_SINGLESIDED);
 	}
