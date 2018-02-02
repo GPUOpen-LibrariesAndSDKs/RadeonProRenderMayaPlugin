@@ -195,6 +195,9 @@
     <None Include="scripts\AERPRIESTemplate.mel">
       <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
     </None>
+    <None Include="scripts\AERPRPBRMaterialTemplate.mel">
+      <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pluginMain.cpp">
@@ -442,6 +445,9 @@
     </ClCompile>
     <ClCompile Include="FireRenderAOVDepth.cpp">
       <Filter>AOVs</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderPBRMaterial.cpp">
+      <Filter>Materials</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -765,6 +771,9 @@
     </ClInclude>
     <ClInclude Include="FireRenderAOVDepth.h">
       <Filter>AOVs</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderPBRMaterial.h">
+      <Filter>Materials</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
