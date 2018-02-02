@@ -568,7 +568,12 @@ void FireRenderMesh::setRenderStats(MDagPath dagPath)
 	bool primaryVisibility;
 	primaryVisibilityPlug.getValue(primaryVisibility);
 
-	setVisibility(dagPath.isVisible());
+	int isRenderSelectedOnly = 0;
+	MGlobal::executeCommand("isRenderSelectedObjectsOnlyFlagSet()", isRenderSelectedOnly);
+
+	bool selectionCheck = !isRenderSelectedOnly || MGlobal::isSelected(dagPath.node());
+
+	setVisibility(dagPath.isVisible() && selectionCheck);
 	setPrimaryVisibility(primaryVisibility);
 
 	//TODO: doesn't seem to be working just right
