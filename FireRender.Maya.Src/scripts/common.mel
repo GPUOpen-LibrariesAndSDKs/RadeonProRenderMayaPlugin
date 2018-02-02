@@ -21,3 +21,8 @@ global proc int getNumberOfCachedShaders(string $folderPath){
 global proc rprExportsGLTF(int $enable){
 	eval("fireRender -exportsGLTF " + $enable);
 }
+
+global proc int isRenderSelectedObjectsOnlyFlagSet()
+{
+	return `optionVar -q renderViewRenderSelectedObj`;
+}
