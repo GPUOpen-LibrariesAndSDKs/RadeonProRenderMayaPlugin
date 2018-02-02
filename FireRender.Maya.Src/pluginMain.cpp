@@ -16,6 +16,7 @@
 #include "FireRenderBlendMaterial.h"
 #include "FireRenderVolumeMaterial.h"
 #include "FireRenderStandardMaterial.h"
+#include "FireRenderPBRMaterial.h"
 #include "FireRenderTransparentMaterial.h"
 #include "FireRenderMaterialSwatchRender.h"
 #include "FireRenderFresnel.h"
@@ -551,6 +552,12 @@ MStatus initializePlugin(MObject obj)
 		FireMaya::SubsurfaceMaterial::creator,
 		FireMaya::SubsurfaceMaterial::initialize,
 		MPxNode::kDependNode, &UserClassify));
+
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "PbrMaterial", FireMaya::FireRenderPBRMaterial::FRTypeID(),
+		FireMaya::FireRenderPBRMaterial::creator,
+		FireMaya::FireRenderPBRMaterial::initialize,
+		MPxNode::kDependNode, &UserClassify));
+
 
 	static const MString FireRenderUberDrawDBClassification("drawdb/shader/surface/" + namePrefix + "UberMaterial");
 	static const MString FireRenderUberRegistrantId(namePrefix + "UberMaterialRegistrantId");
