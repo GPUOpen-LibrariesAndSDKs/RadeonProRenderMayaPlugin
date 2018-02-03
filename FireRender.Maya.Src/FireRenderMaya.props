@@ -5,10 +5,10 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>.;..\ThirdParty\RadeonProRender SDK\Win\inc;..\ThirdParty\glew\include;..\ThirdParty\OpenCL\include;..\ThirdParty\oiio\include;..\ThirdParty\AxfPackage\AxfInclude\;..\ThirdParty\AxfPackage\include\;..\ThirdParty\json\include\;..\ThirdParty\RadeonProRender-GLTF\inc\;..\FireRender.Components\cpp\</AdditionalIncludeDirectories>    <PreprocessorDefinitions>MAYA_PLUGIN;GL_INTEROP;WIN32;_WINDOWS;_USRDLL;NT_PLUGIN;_HAS_ITERATOR_DEBUGGING=0;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;__TBB_LIB_NAME=tbb.lib;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;..\ThirdParty\RadeonProRender SDK\Win\inc;..\ThirdParty\glew\include;..\ThirdParty\OpenCL\include;..\ThirdParty\oiio\include;..\ThirdParty\AxfPackage\AxfInclude\;..\ThirdParty\AxfPackage\include\;..\ThirdParty\json\include\;..\ThirdParty\RadeonProRender-GLTF\Win\inc\;..\FireRender.Components\cpp\</AdditionalIncludeDirectories>    <PreprocessorDefinitions>MAYA_PLUGIN;GL_INTEROP;WIN32;_WINDOWS;_USRDLL;NT_PLUGIN;_HAS_ITERATOR_DEBUGGING=0;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;__TBB_LIB_NAME=tbb.lib;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>..\ThirdParty\glew\lib\x64;..\ThirdParty\oiio\lib;..\ThirdParty\RadeonProRender SDK\Win\lib;..\ThirdParty\RadeonProRender-GLTF\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\ThirdParty\glew\lib\x64;..\ThirdParty\oiio\lib;..\ThirdParty\RadeonProRender SDK\Win\lib;..\ThirdParty\RadeonProRender-GLTF\Win\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>RadeonProRender64.lib;RprSupport64.lib;OpenImageIO_RPR.lib;glew.lib;glu32.lib;Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaRender.lib;Image.lib;OpenGL32.lib;ProRenderGLTF.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
       <DelayLoadDLLs>RadeonProRender64.dll;RprSupport64.dll</DelayLoadDLLs>
@@ -46,8 +46,8 @@ IF EXIST "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)-x64\prefs\shelves" COP
 COPY $(SolutionDir)ThirdParty\AxfPackage\ReleaseDll\AxfDll\*.dll $(SolutionDir)dist\bin\ /Y
 COPY $(SolutionDir)ThirdParty\AxfPackage\ReleaseDll\AxfDll\*.def $(SolutionDir)dist\bin\ /Y
 
-COPY $(SolutionDir)ThirdParty\RadeonProRender-GLTF\lib\ProRenderGLTF.dll $(SolutionDir)dist\bin\ /Y
-if $(ConfigurationName) == Debug COPY $(SolutionDir)ThirdParty\RadeonProRender-GLTF\lib\ProRenderGLTFD.dll $(SolutionDir)dist\bin\ /Y</Command>
+COPY $(SolutionDir)ThirdParty\RadeonProRender-GLTF\Win\lib\ProRenderGLTF.dll $(SolutionDir)dist\bin\ /Y
+if $(ConfigurationName) == Debug COPY $(SolutionDir)ThirdParty\RadeonProRender-GLTF\Win\lib\ProRenderGLTFD.dll $(SolutionDir)dist\bin\ /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup />
