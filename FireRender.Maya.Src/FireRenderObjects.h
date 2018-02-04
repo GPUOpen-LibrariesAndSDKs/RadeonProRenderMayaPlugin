@@ -283,6 +283,7 @@ public:
 	std::vector<FrElement>& Elements() { return m.elements; }
 	FrElement& Element(int i) { return m.elements[i]; }
 private:
+	bool IsSelected(const MDagPath& dagPath) const;
 
 	// A mesh in Maya can have multiple shaders
 	// in fr it must be split in multiple shapes

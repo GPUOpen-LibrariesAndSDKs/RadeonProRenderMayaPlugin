@@ -23,6 +23,7 @@
 #include <maya/MAnimControl.h>
 #include <maya/MQuaternion.h>
 #include <maya/MDagPathArray.h>
+#include <maya/MSelectionList.h>
 
 #ifndef MAYA2015
 #include <maya/MUuid.h>
@@ -551,7 +552,6 @@ void FireRenderMesh::buildSphere()
 	}
 }
 
-
 void FireRenderMesh::setRenderStats(MDagPath dagPath)
 {
 	MFnDependencyNode depNode(dagPath.node());
@@ -568,10 +568,7 @@ void FireRenderMesh::setRenderStats(MDagPath dagPath)
 	bool primaryVisibility;
 	primaryVisibilityPlug.getValue(primaryVisibility);
 
-	int isRenderSelectedOnly = 0;
-	MGlobal::executeCommand("isRenderSelectedObjectsOnlyFlagSet()", isRenderSelectedOnly);
-
-	bool selectionCheck = !isRenderSelectedOnly || MGlobal::isSelected(dagPath.node());
+	bool selectionCheck = !context()->renderSelectedObjectsOnly() || IsSelected(dagPath);
 
 	setVisibility(dagPath.isVisible() && selectionCheck);
 	setPrimaryVisibility(primaryVisibility);
@@ -581,6 +578,33 @@ void FireRenderMesh::setRenderStats(MDagPath dagPath)
 	//setReflectionVisibility(visibleInReflections);
 
 	setCastShadows(castsShadows);
+}
+
+bool FireRenderMesh::IsSelected(const MDagPath& dagPath) const
+{
+	MObject transformObject = dagPath.transform();
+	bool isSelected = false;
+
+	// get a list of the currently selected items 
+	MSelectionList selected;
+	MGlobal::getActiveSelectionList(selected);
+
+	// iterate through the list of items returned
+	for (unsigned int i = 0; i<selected.length(); ++i)
+	{
+		MObject obj;
+
+		// returns the i'th selected dependency node
+		selected.getDependNode(i, obj);
+
+		if (obj == transformObject)
+		{
+			isSelected = true;
+			break;
+		}
+	}
+
+	return isSelected;
 }
 
 void FireRenderMesh::setVisibility(bool visibility)
