@@ -250,13 +250,15 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 		m_transparent.SetValue("color", 1.0f);
 
 		m_globals.setupContext(*this);
-
 		updateLimitsFromGlobalData(m_globals);
-
 		m_motionBlur = m_globals.motionBlur;
 
-		MStatus status;
+		// Update render selected objects only flag
+		int isRenderSelectedOnly = 0;
+		MGlobal::executeCommand("isRenderSelectedObjectsOnlyFlagSet()", isRenderSelectedOnly);
+		m_renderSelectedObjectsOnly = isRenderSelectedOnly > 0;
 
+		MStatus status;
 
 		MItDag itDag(MItDag::kDepthFirst, MFn::kDagNode, &status);
 		if (MStatus::kSuccess != status)
@@ -1491,6 +1493,11 @@ void FireRenderContext::setCallbackCreationDisabled(bool value)
 bool FireRenderContext::getCallbackCreationDisabled()
 {
 	return m_callbackCreationDisabled;
+}
+
+bool FireRenderContext::renderSelectedObjectsOnly() const
+{
+	return m_renderSelectedObjectsOnly;
 }
 
 bool FireRenderContext::motionBlur()
