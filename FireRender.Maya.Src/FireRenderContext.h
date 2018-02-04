@@ -333,6 +333,9 @@ public:
 	// Check if the callbacks are disabled
 	bool getCallbackCreationDisabled();
 
+	// Check if render selected objects only
+	bool renderSelectedObjectsOnly() const;
+
 	// Check if motion blur is active
 	bool motionBlur();
 
@@ -433,6 +436,9 @@ private:
 	PixelBuffer m_opacityTempData;
 
 	FireMaya::Scope scope;
+
+	// Render selected objects flag
+	bool m_renderSelectedObjectsOnly;
 
 	// Motion blur flag
 	bool m_motionBlur;
