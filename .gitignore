@@ -1,5 +1,7 @@
 bin/
 dist/
+Debug*/
+Release*/
 x64/
 .suo
 .db
@@ -7,5 +9,4 @@ x64/
 *.db
 *.opendb
 .DS_Store
-
-
+.vs
