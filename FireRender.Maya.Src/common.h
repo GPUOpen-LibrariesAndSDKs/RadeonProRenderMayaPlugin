@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../version.h"
+
 // Name of the renderer displayed in the UI
 #define FIRE_RENDER_NAME "Radeon ProRender"
 
@@ -8,8 +10,6 @@
 
 // use in hypershade window for nodes name prefix
 #define FIRE_RENDER_NODE_PREFIX "RPR"
-
-#define PLUGIN_VERSION	"2.2.31"
 
 #define PLUGIN_VENDOR	"AMD"
 
