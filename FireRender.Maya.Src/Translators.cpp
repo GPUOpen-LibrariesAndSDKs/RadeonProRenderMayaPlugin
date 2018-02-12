@@ -109,6 +109,9 @@ namespace FireMaya
 		MStatus mstatus;
 		MFnCamera fnCamera(camera);
 
+		// Maya always returns all lengths in centimeters despite the settings in Preferences (detected experimentally)
+		float cmToMCoefficient = 0.01f;
+
 		auto frcamera = frw_camera.Handle();
 
 		bool showFilmGate = fnCamera.isDisplayFilmGate();
@@ -150,7 +153,7 @@ namespace FireMaya
 			checkStatus(frstatus);
 
 			// convert fnCamera.focusDistance() in cm to m
-			float focusDistance = static_cast<float>(fnCamera.focusDistance(&mstatus) * 0.01);
+			float focusDistance = static_cast<float>(fnCamera.focusDistance(&mstatus) * cmToMCoefficient);
 			checkStatus(frstatus);
 
 			frstatus = rprCameraSetFocusDistance(frcamera, focusDistance);
@@ -224,7 +227,7 @@ namespace FireMaya
 		assert(mstatus == MStatus::kSuccess);
 		MPoint eye = MPoint(0, 0, 0, 1) * matrix;
 		// convert eye and lookat from cm to m
-		eye = eye * 0.01;
+		eye = eye * cmToMCoefficient;
 		MVector viewDir = MVector::zNegAxis * matrix;
 		MVector upDir = MVector::yAxis * matrix;
 		MPoint  lookat = eye + viewDir;
@@ -251,6 +254,14 @@ namespace FireMaya
 			frstatus = rprCameraSetExposure(frcamera, exposure);
 			checkStatus(frstatus);
 		}
+
+		// Setting Near and Far clipping plane
+		frstatus = rprCameraSetNearPlane(frcamera, fnCamera.nearClippingPlane() * cmToMCoefficient);
+		checkStatus(frstatus);
+
+		frstatus = rprCameraSetFarPlane(frcamera, fnCamera.farClippingPlane() * cmToMCoefficient);
+		checkStatus(frstatus);
+
 		return true;
 	}
 
