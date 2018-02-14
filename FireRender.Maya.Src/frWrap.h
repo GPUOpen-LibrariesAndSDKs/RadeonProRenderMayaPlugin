@@ -968,6 +968,13 @@ namespace frw
 		Image(Context context, float r, float g, float b);
 		Image(Context context, const rpr_image_format& format, const rpr_image_desc& image_desc, const void* data);
 		Image(Context context, const char * filename);
+		void SetGamma(float gamma)
+		{
+#if (RPR_API_VERSION >= 0x010029100) 
+			rpr_int res = rprImageSetGamma(Handle(), gamma);
+			checkStatus(res);
+#endif
+		}
 	};
 
 	class PointLight : public Light
