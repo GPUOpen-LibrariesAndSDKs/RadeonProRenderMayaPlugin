@@ -43,8 +43,11 @@ FireRenderRenderData::FireRenderRenderData() :
 
 FireRenderRenderData::~FireRenderRenderData()
 {
+	if (m_framebuffer != nullptr)
+	{
+		rprObjectDelete(m_framebuffer);
+	}
 
-	rprObjectDelete(m_framebuffer);
 	m_context.cleanScene();
 
 	if (m_pixels)
