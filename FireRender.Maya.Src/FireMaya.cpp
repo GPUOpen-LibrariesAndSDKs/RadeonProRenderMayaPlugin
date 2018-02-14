@@ -861,6 +861,30 @@ frw::Value FireMaya::Scope::convertMayaVectorProduct(const MFnDependencyNode &no
 	return res;
 }
 
+float colorSpace2Gamma(const MString& colorSpace)
+{
+	if (colorSpace == "sRGB")
+		return 2.2f;
+
+	else if (colorSpace == "camera Rec 709")
+		return 2.2f;
+
+	else if (colorSpace == "Raw")
+		return 1.0f;
+
+	else if (colorSpace == "gamma 1.8 Rec 709")
+		return 1.8f;
+
+	else if (colorSpace == "gamma 2.2 Rec 709")
+		return 2.2f;
+
+	else if (colorSpace == "gamma 2.4 Rec 709 (video)")
+		return 2.4f;
+
+	// default
+	return 1.0f;
+}
+
 frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 {
 	if (node.isNull())
@@ -942,6 +966,7 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 		if (auto image = GetImage(texturePath, colorSpace))
 		{
 			frw::ImageNode imageNode(materialSystem);
+			image.SetGamma(colorSpace2Gamma(colorSpace));
 			imageNode.SetMap(image);
 			imageNode.SetValue("uv", GetConnectedValue(shaderNode.findPlug("uvCoord")));
 			return imageNode;
