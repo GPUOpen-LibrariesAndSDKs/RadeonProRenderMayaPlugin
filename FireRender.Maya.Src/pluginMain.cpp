@@ -711,6 +711,12 @@ MStatus uninitializePlugin(MObject obj)
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::Bump::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::Normal::FRTypeID()));
 
+	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::FireRenderPBRMaterial::FRTypeID()));
+	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::ShadowCatcherMaterial::FRTypeID()));
+	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::SubsurfaceMaterial::FRTypeID()));
+	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::VolumeMaterial::FRTypeID()));
+	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::TransparentMaterial::FRTypeID()));
+
 	CHECK_MSTATUS(plugin.deregisterNode(FireRenderGlobals::FRTypeID()));
 
 	CHECK_MSTATUS(plugin.deregisterNode(FireRenderRenderPass::id));
