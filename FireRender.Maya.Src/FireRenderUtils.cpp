@@ -87,6 +87,8 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	toneMappingReinhard02Postscale(1.0f),
 	toneMappingReinhard02Burn(1.0f),
 	motionBlur(false),
+	motionBlurCameraExposure(0.0f),
+	motionBlurScale(0.0f),
 	cameraType(0)
 {
 
@@ -299,6 +301,14 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("motionBlur");
 		if (!plug.isNull())
 			motionBlur = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("motionBlurCameraExposure");
+		if (!plug.isNull())
+			motionBlurCameraExposure = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("motionBlurScale");
+		if (!plug.isNull())
+			motionBlurScale = plug.asFloat();
 
 		plug = frGlobalsNode.findPlug("cameraType");
 		if (!plug.isNull())

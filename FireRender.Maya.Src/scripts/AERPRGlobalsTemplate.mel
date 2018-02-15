@@ -109,6 +109,8 @@ global proc AERPRGlobalsTemplate( string $nodeName )
 	editorTemplate -endLayout;
 	editorTemplate -beginLayout "Motion Blur" -collapse 0;
 		editorTemplate -label "Enable" -addControl "motionBlur";
+        editorTemplate -label "Camera Exposure" -addControl "motionBlurCameraExposure";
+        editorTemplate -label "Scale" -addControl "motionBlurScale";
 	editorTemplate -endLayout;
 	AEdependNodeTemplate $nodeName;
 

@@ -251,7 +251,7 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 
 		m_globals.setupContext(*this);
 		updateLimitsFromGlobalData(m_globals);
-		m_motionBlur = m_globals.motionBlur;
+		setMotionBlur(m_globals.motionBlur);
 
 		// Update render selected objects only flag
 		int isRenderSelectedOnly = 0;
@@ -1209,6 +1209,8 @@ void FireRenderContext::setMotionBlur(bool doBlur)
 		return;
 
 	m_motionBlur = doBlur;
+	m_motionBlurCameraExposure = m_globals.motionBlurCameraExposure;
+	m_motionBlurScale = m_globals.motionBlurScale;
 
 	for (const auto& it : m_sceneObjects)
 	{
@@ -1500,10 +1502,21 @@ bool FireRenderContext::renderSelectedObjectsOnly() const
 	return m_renderSelectedObjectsOnly;
 }
 
-bool FireRenderContext::motionBlur()
+bool FireRenderContext::motionBlur() const
 {
 	return m_motionBlur;
 }
+
+float FireRenderContext::motionBlurCameraExposure() const
+{
+	return m_motionBlurCameraExposure;
+}
+
+float FireRenderContext::motionBlurScale() const
+{
+	return m_motionBlurScale;
+}
+
 
 void FireRenderContext::setCameraAttributeChanged(bool value)
 {
