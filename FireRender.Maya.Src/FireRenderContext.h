@@ -337,7 +337,13 @@ public:
 	bool renderSelectedObjectsOnly() const;
 
 	// Check if motion blur is active
-	bool motionBlur();
+	bool motionBlur() const;
+
+	// Getting camera exposure for motion blur
+	float motionBlurCameraExposure() const;
+
+	// Getting scale for motion blur
+	float motionBlurScale() const;
 
 	// State flag of the renderer
 	tbb::atomic<StateEnum> state;
@@ -442,6 +448,12 @@ private:
 
 	// Motion blur flag
 	bool m_motionBlur;
+
+	// Motion blur camera exposure
+	float m_motionBlurCameraExposure;
+
+	// // Motion blur Scale
+	float m_motionBlurScale;
 
 	/** True if the render should be interactive. */
 	bool m_interactive;

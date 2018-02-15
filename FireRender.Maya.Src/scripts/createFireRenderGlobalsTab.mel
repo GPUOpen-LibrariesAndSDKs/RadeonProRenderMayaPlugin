@@ -659,6 +659,12 @@ global proc createFireRenderMotionBlurFrame(string $parent)
 	attrControlGrp
 		 -label "Enable"
 		 -attribute "RadeonProRenderGlobals.motionBlur";
+	attrControlGrp
+		 -label "Camera Exposure"
+		 -attribute "RadeonProRenderGlobals.motionBlurCameraExposure";
+	attrControlGrp
+		 -label "Scale"
+		 -attribute "RadeonProRenderGlobals.motionBlurScale";
 
 	setParent ..;
 	setUITemplate -popTemplate;

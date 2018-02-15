@@ -882,10 +882,12 @@ void FireRenderMesh::RebuildTransforms()
 	MVector rotationAxis(1, 0, 0);
 	double rotationAngle = 0.0;
 
-	if (context()->motionBlur())
+	MTime nextTime = MAnimControl::currentTime();
+	MTime minTime = MAnimControl::minTime();
+
+	if (context()->motionBlur() && (nextTime != minTime))
 	{
-		MTime nextTime = MAnimControl::currentTime();
-		nextTime++;
+		nextTime--;
 		MDGContext dgcontext(nextTime);
 		MObject val;
 		MFnDependencyNode nodeFn(meshPath.node());
@@ -895,10 +897,10 @@ void FireRenderMesh::RebuildTransforms()
 		nextFrameMatrix = MFnMatrixData(val).matrix();
 		if (nextFrameMatrix != matrix)
 		{
-			double timeMultiplier = 1.0;
+			float timeMultiplier = context()->motionBlurScale();
 			MTime time = MAnimControl::currentTime();
 			MTime t2 = MTime(1.0, time.unit());
-			timeMultiplier = 1.0 / t2.asUnits(MTime::kSeconds);
+			timeMultiplier = (float) (timeMultiplier / t2.asUnits(MTime::kSeconds));
 
 			MMatrix nextMatrix = nextFrameMatrix;
 			nextMatrix *= scaleM;
@@ -1426,6 +1428,12 @@ void FireRenderCamera::Freshen()
 		}
 
 		Scene().SetBackgroundImage(image);
+
+		// Set exposure from motion blur block parameters if we didn't add fireRenderExposure attribute to the camera before
+		if (context()->motionBlur() && fnCamera.findPlug("fireRenderExposure").isNull())
+		{
+			rprCameraSetExposure(m_camera.Handle(), context()->motionBlurCameraExposure());
+		}
 	}
 	else
 	{
