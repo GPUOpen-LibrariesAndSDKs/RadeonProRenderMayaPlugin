@@ -1386,11 +1386,6 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 	if (!isDirty() || cancelled())
 		return false;
 
-	setCallbackCreationDisabled(false);
-	// Attach callbacks and remove them on function exit.
-	// This needed to correctly pass callbacks to correct context.
-	CallbacksAttachmentHelper callbackAttachment(this);
-
 	LOCKFORUPDATE((lock ? this : nullptr));
 
 	m_inRefresh = true;
