@@ -591,7 +591,7 @@ global proc createEnvironmentFrame(string $parent)
 	setUITemplate -pushTemplate attributeEditorTemplate;
 	columnLayout -adjustableColumn true miEnvironmentLayout;
 
-	rowLayout -numberOfColumns 3 miIblLayout;
+	rowLayout -numberOfColumns 4 -cw 2 130 -cw 4 60 miIblLayout;
 		text -label "Image Based Lighting";
 		button -label "Create"
 			-command "createIBLNodeRPR"
@@ -599,11 +599,14 @@ global proc createEnvironmentFrame(string $parent)
 		symbolButton -image "inArrow.png"
 			-command "showIBLEditorRPR"
 				frOpenIblButton;
+		checkBox -label "Flip" -changeCommand flipIBLValueChanged chkboxCtl;
 	setParent ..;
+
+	connectControl chkboxCtl "RadeonProRenderGlobals.flipIBL";
 
 	updateIBLInterfaceRPR();
 
-	rowLayout -numberOfColumns 3 miSkyLayout;
+	rowLayout -numberOfColumns 3 -cw 2 130 miSkyLayout;
 		text -label "Sky";
 		button -label "Create"
 			-command "createSkyNodeRPR"
@@ -623,6 +626,17 @@ global proc createEnvironmentFrame(string $parent)
 
 	setParent ..;
 	setUITemplate -popTemplate;
+}
+
+global proc flipIBLValueChanged()
+{
+	$flip = `getAttr RadeonProRenderGlobals.flipIBL`;
+
+	if (hasIBLNodeRPR())
+	{
+		$node = getIBLNodeRPR();
+		setAttr ($node + ".flipIBL") $flip;
+	}
 }
 
 global proc createGroundFrame(string $parent)

@@ -74,6 +74,7 @@ global proc AERPRGlobalsTemplate( string $nodeName )
 	editorTemplate -endLayout;
 	editorTemplate -beginLayout "Environment" -collapse 0;
 		editorTemplate -addControl "imageBasedLighting";
+		editorTemplate -addControl "flipIBL";
 		editorTemplate -addControl "sky";
 	editorTemplate -endLayout;
 	editorTemplate -beginLayout "Ground" -collapse 0;

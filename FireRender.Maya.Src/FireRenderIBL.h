@@ -57,6 +57,7 @@ public:
 	static MObject	aIntensity;
 	static MObject	aDisplay;
 	static MObject	aPortal;
+	static MObject	aFlipIBL;
 
 public:
 	static  MTypeId id;

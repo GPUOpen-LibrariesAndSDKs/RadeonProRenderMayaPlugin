@@ -106,17 +106,14 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		MStatus status;
 
 		// Get RadeonProRenderGlobals node
-		MSelectionList selList;
-		selList.add("RadeonProRenderGlobals");
 		MObject fireRenderGlobals;
-		status = selList.getDependNode(0, fireRenderGlobals);
+		status = GetRadeonProRenderGlobals(fireRenderGlobals);
 		if (status != MS::kSuccess)
 		{
 			// If not exists, create one
 			MGlobal::executeCommand("if (!(`objExists RadeonProRenderGlobals`)){ createNode -n RadeonProRenderGlobals -ss RadeonProRenderGlobals; }");
-			// and try to get it again
-			selList.add("RadeonProRenderGlobals");
-			status = selList.getDependNode(0, fireRenderGlobals);
+			// and try to get it again	
+			status = GetRadeonProRenderGlobals(fireRenderGlobals);
 			if (status != MS::kSuccess)
 			{
 				MGlobal::displayError("No RadeonProRenderGlobals node found");
@@ -1218,6 +1215,48 @@ MDagPathArray getRenderableCameras()
 
 	}
 	return cameras;
+}
+
+MStatus GetRadeonProRenderGlobals(MObject& outGlobalsNode)
+{
+	MSelectionList selList;
+	selList.add("RadeonProRenderGlobals");
+	MObject fireRenderGlobals;
+	return selList.getDependNode(0, outGlobalsNode);
+}
+
+MPlug GetRadeonProRenderGlobalsPlug(const char* name, MStatus* outStatus)
+{
+	MObject objGlobals;
+	MStatus status = GetRadeonProRenderGlobals(objGlobals);
+	CHECK_MSTATUS(status);
+
+	MPlug plug;
+
+	if (status == MStatus::kSuccess)
+	{
+		MFnDependencyNode node(objGlobals);
+		plug = node.findPlug(name, &status);
+	}
+
+	if (outStatus != nullptr)
+	{
+		*outStatus = status;
+	}
+
+	return plug;
+}
+
+bool IsFlipIBL()
+{
+	MPlug flipPlug = GetRadeonProRenderGlobalsPlug("flipIBL");
+
+	if (!flipPlug.isNull())
+	{
+		return flipPlug.asBool();
+	}
+
+	return false;
 }
 
 MObject findDependNode(MString name)
