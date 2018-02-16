@@ -188,24 +188,28 @@ void convertColorSpace(MString colorSpace, rpr_image_format format, rpr_image_de
 #endif
 }
 
-frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace)
+frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, bool flipX)
 {
-	std::string key = texturePath.asUTF8();
-
-	if (key.length() == 0) {
+	if (texturePath.length() == 0)
+	{
 		return NULL;
 	}
+
+	std::string key = (texturePath + (flipX ? "_flipped" : "_notflipped")).asUTF8();
 
 	auto it = m->imageCache.find(key);
 	if (it != m->imageCache.end())
 		return it->second;
 
-	return FireRenderThread::RunOnMainThread<frw::Image>([this, texturePath, key, colorSpace]() -> frw::Image
+	frw::Image retImage = FireRenderThread::RunOnMainThread<frw::Image>([this, flipX, texturePath, key, colorSpace]() -> frw::Image
 	{
 		MAIN_THREAD_ONLY; // MTextureManager will not work in other threads
 		DebugPrint("Loading Image: %s in colorSpace: %s", texturePath.asUTF8(), colorSpace.asUTF8());
 
-		frw::Image image(m->context, texturePath.asUTF8());
+		frw::Image image;
+
+		if (!flipX)
+			image = frw::Image(m->context, texturePath.asUTF8());
 
 		// using texture system appears more reliable that using MImage functions (which don't support exr)
 		if (!image)
@@ -326,7 +330,7 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace)
 									//case MHWRender::kR32G32B32_UINT: break;
 									//case MHWRender::kR32G32B32_SINT: break;
 								case MHWRender::kR32G32B32A32_FLOAT:
-									channels = 3;
+									channels = 4;
 									componentSize = 4;
 									break;
 									//case MHWRender::kR32G32B32A32_UINT: break;
@@ -386,7 +390,16 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace)
 									auto src = static_cast<const char*>(srcData) + y * srcRowPitch;
 									auto dst = buffer.data() + y * img_desc.image_row_pitch;
 									for (unsigned int x = 0; x < width; x++)
-										memcpy(dst + x * dstPixSize, src + x * srcPixSize, dstPixSize);
+									{
+										if (flipX)
+										{
+											memcpy(dst + x * dstPixSize, src + (width - x - 1) * srcPixSize, dstPixSize);
+										}
+										else
+										{
+											memcpy(dst + x * dstPixSize, src + x * srcPixSize, dstPixSize);
+										}
+									}
 								}
 
 								convertColorSpace(colorSpace, format, img_desc, buffer);
@@ -415,6 +428,8 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace)
 
 		return image;
 	});
+
+	return retImage;
 }
 
 template <class T>

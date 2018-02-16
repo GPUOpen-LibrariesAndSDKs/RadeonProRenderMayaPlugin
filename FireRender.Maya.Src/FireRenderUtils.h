@@ -228,6 +228,15 @@ int GetFaceMaterials(MFnMesh& mesh, MIntArray& faceList);
 // Get render-able cameras
 MDagPathArray getRenderableCameras();
 
+// Get RadeonProRenderGlobals node
+MStatus GetRadeonProRenderGlobals(MObject& outGlobalsNode);
+
+// Get Plug from RadeonProRenderGlobals
+MPlug GetRadeonProRenderGlobalsPlug(const char* name, MStatus* status = nullptr);
+
+// Is IBL image fliping switched on
+bool IsFlipIBL();
+
 class HardwareResources
 {
 	HardwareResources();

@@ -42,6 +42,7 @@ namespace
 		MObject AAFilter;
 		MObject AAGridSize;
 		MObject ibl;
+		MObject flipIBL;
 		MObject sky;
 		MObject commandPort;
 
@@ -234,6 +235,10 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::ibl = mAttr.create("imageBasedLighting", "ibl");
 	MAKE_INPUT(mAttr);
 
+	Attribute::flipIBL = nAttr.create("flipIBL", "fibl", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setReadable(true);
+
 	Attribute::sky = mAttr.create("sky", "sky");
 	MAKE_INPUT(mAttr);
 
@@ -418,6 +423,7 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::AAFilter));
 	CHECK_MSTATUS(addAttribute(Attribute::AAGridSize));
 	CHECK_MSTATUS(addAttribute(Attribute::ibl));
+	CHECK_MSTATUS(addAttribute(Attribute::flipIBL));
 	CHECK_MSTATUS(addAttribute(Attribute::sky));
 	CHECK_MSTATUS(addAttribute(Attribute::commandPort));
 	CHECK_MSTATUS(addAttribute(Attribute::motionBlur));

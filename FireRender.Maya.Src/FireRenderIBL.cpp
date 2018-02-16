@@ -6,6 +6,7 @@
 #include <maya/MImage.h>
 #include <maya/MFileObject.h>
 #include "base_mesh.h"
+#include "FireRenderUtils.h"
 
 #include "FireMaya.h"
 
@@ -15,6 +16,7 @@ MObject FireRenderIBL::aFilePath;
 MObject	FireRenderIBL::aIntensity;
 MObject	FireRenderIBL::aDisplay;
 MObject	FireRenderIBL::aPortal;
+MObject	FireRenderIBL::aFlipIBL;
 MTypeId FireRenderIBL::id(FireMaya::TypeId::FireRenderIBL);
 
 MString FireRenderIBL::drawDbClassification("drawdb/geometry/FireRenderIBL");
@@ -73,10 +75,19 @@ MStatus FireRenderIBL::initialize()
 
 	aPortal = mAttr.create("portal", "p");
 
+	// Create attribute inside current node and connect it to RadeonProRenderGlobals.flipIBL attribute to
+	// have an automatical update
+	aFlipIBL = nAttr.create("flipIBL", "fibl", MFnNumericData::kBoolean, 0);
+	nAttr.setStorable(true);
+	nAttr.setReadable(true);
+	nAttr.setWritable(true);
+
 	addAttribute(aFilePath);
 	addAttribute(aIntensity);
 	addAttribute(aDisplay);
 	addAttribute(aPortal);
+	addAttribute(aFlipIBL);
+
 	return MS::kSuccess;
 }
 
@@ -88,9 +99,21 @@ void main()
 	gl_Position = ftransform(); //Transform the vertex position
 	gl_TexCoord[0] = gl_MultiTexCoord0;
 	gl_TexCoord[0].t = 1.0 - gl_TexCoord[0].t;
+	gl_TexCoord[0].s = 1.0 - (gl_TexCoord[0].s + 0.3);
+};
+)";
+
+const char* frIblVSFlipped =
+R"(#version 110
+void main()
+{
+	gl_Position = ftransform(); //Transform the vertex position
+	gl_TexCoord[0] = gl_MultiTexCoord0;
+	gl_TexCoord[0].t = 1.0 - gl_TexCoord[0].t;
 	gl_TexCoord[0].s = gl_TexCoord[0].s + 0.3;
 };
 )";
+
 
 const char *frIblFS =
 R"(#version 110
@@ -147,7 +170,15 @@ void FireRenderIBL::draw(
 		if (!mShader)
 		{
 			mShader = std::unique_ptr<Shader>(new Shader());
-			mShader->init(frIblVS, frIblFS, "");
+
+			if (!IsFlipIBL())
+			{
+				mShader->init(frIblVS, frIblFS, "");
+			}
+			else
+			{
+				mShader->init(frIblVSFlipped, frIblFS, "");
+			}
 		}
 
 		auto theRenderer = MHWRender::MRenderer::theRenderer();
@@ -349,11 +380,7 @@ void FireRenderIBLOverride::updateRenderItems(const MDagPath& path, MHWRender::M
 			MHWRender::MTextureAssignment texResource;
 			texResource.texture = textureManager->acquireTexture(mFilePath, path.partialPathName());
 			shader->setParameter("map", texResource);
-			float uvscale[2] = { 1.0f, -1.0f };
-			float uvoffset[2] = { 0.3f, 0.0f };
 			float colorGain[3] = { mIntensity, mIntensity, mIntensity };
-			shader->setParameter("UVScale", &uvscale[0]);
-			shader->setParameter("UVOffset", &uvoffset[0]);
 			shader->setParameter("colorGain", &colorGain[0]);
 			shadedSphere->setShader(shader);
 			textureManager->releaseTexture(texResource.texture);
@@ -367,6 +394,15 @@ void FireRenderIBLOverride::updateRenderItems(const MDagPath& path, MHWRender::M
 
 	if (shadedSphere)
 	{
+		// Updating UV coordinates of texture (may be affected by "flipIBL" parameter)
+		float flipCoeff = IsFlipIBL() ? 1.0f : -1.0f;
+		MHWRender::MShaderInstance* shader = shadedSphere->getShader();
+
+		float uvscale[2] = { flipCoeff * 1.0f, -1.0f };
+		float uvoffset[2] = { flipCoeff * 0.3f, 0.0f };
+		MStatus status = shader->setParameter("UVScale", &uvscale[0]);
+		status = shader->setParameter("UVOffset", &uvoffset[0]);
+
 		shadedSphere->enable(mDisplay && mFileExists);
 		if (wireframeSphere)
 		{
