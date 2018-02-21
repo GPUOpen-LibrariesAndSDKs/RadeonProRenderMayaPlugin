@@ -22,6 +22,7 @@
 #include "Logger.h"
 #include "FireRenderError.h"
 
+#include <maya/MGlobal.h>
 
 //#define FRW_LOGGING 1
 
@@ -2768,7 +2769,22 @@ namespace frw
 			data().displacementShader = n;
 			auto res = rprShapeSetDisplacementMaterial(Handle(), n.Handle());
 			checkStatus(res);
-			res = rprShapeSetDisplacementScale(Handle(), minscale, maxscale);
+
+			if (minscale > maxscale)
+			{
+				// Create the command to show the error dialog
+				MString command = "confirmDialog -title \"Radeon ProRender Error\" -button \"OK\" -message \" Invalid parameters passed to displacement material! \"";
+
+				// Show the error dialog
+				MGlobal::executeCommandOnIdle(command);
+
+				// render with no displacement
+				res = rprShapeSetDisplacementScale(Handle(), maxscale, maxscale);
+			}
+			else
+			{
+				res = rprShapeSetDisplacementScale(Handle(), minscale, maxscale);
+			}
 			checkStatus(res);
 		}
 	}
