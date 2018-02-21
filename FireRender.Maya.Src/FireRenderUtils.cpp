@@ -506,7 +506,7 @@ void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disa
 	frstatus = rprContextSetParameter1u(frcontext, "aasamples", getSamples(inContext));
 	checkStatus(frstatus);
 
-	frstatus = rprContextSetParameter1f(frcontext, "pdfthreshold", 0.0005f);
+	frstatus = rprContextSetParameter1f(frcontext, "pdfthreshold", 0.0000f);
 	checkStatus(frstatus);
 
 	//
