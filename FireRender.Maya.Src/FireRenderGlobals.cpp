@@ -186,7 +186,8 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::giClampIrradianceValue = nAttr.create("giClampIrradianceValue", "giciv", MFnNumericData::kFloat, 1.0, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(1.0);
-	nAttr.setSoftMax(999999.f);
+	nAttr.setSoftMax(100.0f);
+	nAttr.setMax(999999.f);
 
 	Attribute::AASampleCountProduction = nAttr.create("samples", "s", MFnNumericData::kShort, 1, &status);
 	MAKE_INPUT(nAttr);
