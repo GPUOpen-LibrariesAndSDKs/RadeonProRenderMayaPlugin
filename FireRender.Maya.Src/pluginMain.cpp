@@ -179,7 +179,15 @@ void mayaExiting(void* data)
     // so we can't rely on ViewportManager destructor
     FireRenderViewportManager::instance().clear();
 
-	FireRenderSwatchInstance::instance().cleanScene();
+	// instance() may force initialization with exception in case of context creation problems
+	try
+	{
+		FireRenderSwatchInstance::instance().cleanScene();
+	}
+	catch (int)
+	{
+	}
+
 	// We need to cleanup before terminating thread
 	// For some reason Maya willn't call this method if we simply close Maya
 	FireRenderCmd::cleanUp();
@@ -331,6 +339,30 @@ void RprExportsGLTF(bool enable)
 	}
 }
 
+// Checking availability of context creation
+bool CheckContextCreationProcedure()
+{
+	rpr_int res;
+	FireRenderContext context;
+	auto createFlags = FireMaya::Options::GetContextDeviceFlags();
+	context.createContextEtc(createFlags, true, false, &res);
+
+	if (res != RPR_SUCCESS)
+	{
+		MString msg;
+
+		if (res == RPR_ERROR_INVALID_API_VERSION)
+		{
+			msg = "Please remove all previous versions of plugin if any and make a fresh install";
+		}
+
+		FireRenderError(res, msg, true);
+		return false;
+	}
+
+	return true;
+}
+
 MStatus initializePlugin(MObject obj)
 //
 //	Description:
@@ -424,6 +456,11 @@ MStatus initializePlugin(MObject obj)
 	MString iesCalssification = FireRenderIESLightLocator::drawDbClassification;
 	MString envLightCalssification = FireRenderEnvironmentLight::drawDbClassification;
 
+	if (!CheckContextCreationProcedure())
+	{
+		return MStatus::kFailure;
+	}
+	
 	static const MString swatchName("swatchFireRenderMaterial");
 	if (MGlobal::mayaState() != MGlobal::kBatch)
 	{

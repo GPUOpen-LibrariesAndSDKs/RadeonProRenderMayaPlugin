@@ -172,7 +172,15 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 
 	FireRenderContext context;
 	context.setCallbackCreationDisabled(true);
-	context.initializeContext();
+
+	rpr_int res = context.initializeContext();
+	if (res != RPR_SUCCESS)
+	{
+		MString msg;
+		FireRenderError(res, msg, true);
+		return MS::kFailure;
+	}
+
 	context.setCallbackCreationDisabled(true);
 
 	std::map<std::string, int> namesUsed;

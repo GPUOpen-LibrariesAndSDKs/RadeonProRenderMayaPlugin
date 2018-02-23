@@ -92,7 +92,7 @@ public:
 class FireRenderContext
 {
 public:
-	static bool createContext(rpr_creation_flags createFlags, rpr_context& result);
+	static bool createContext(rpr_creation_flags createFlags, rpr_context& result, int* pOutRes = nullptr);
 
 	enum RenderMode {
 		kGlobalIllumination = 1,
@@ -122,7 +122,7 @@ public:
 
 	// Initialize the context
 	// It create  the rpr_context, rpr_scene and rpr_material_system
-	void initializeContext();
+	int initializeContext();
 
 	// Build scene
 	// Build the scene from the current Maya scene attaching all the callbacks needed
@@ -193,7 +193,7 @@ public:
 
 	bool isRenderView() const;
 
-	bool createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete = true, bool glViewport = false);
+	bool createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete = true, bool glViewport = false, int* pOutRes = nullptr);
 
 	// Return the context
 	rpr_context context();
