@@ -30,183 +30,192 @@ FireRenderMaterialSwatchRender::~FireRenderMaterialSwatchRender()
 
 bool FireRenderMaterialSwatchRender::doIteration()
 {
-	MObject mnode = node();
-
-	MImage& img = image();
-	int res = resolution();
-	img.create(res, res, 4);
-
-	MFnDependencyNode nodeFn(mnode);
-	auto fireMayaNode = dynamic_cast<FireMaya::Node*>(nodeFn.userNode());
-
-	if (m_cancelAsyncRender)
+	try
 	{
-		m_runningAsyncRender = false;
-		m_finnishedAsyncRender = false;
+		MObject mnode = node();
 
-		return true;
-	}
+		MImage& img = image();
+		int res = resolution();
+		img.create(res, res, 4);
 
-	if (m_runningAsyncRender)
-		return false;
+		MFnDependencyNode nodeFn(mnode);
+		auto fireMayaNode = dynamic_cast<FireMaya::Node*>(nodeFn.userNode());
 
-	if (m_finnishedAsyncRender)
-	{
-		if (m_warningDialogOpen &&  rcWarningDialog.shown)
-			rcWarningDialog.close();
-
-		size_t width, height;
-		auto data = FireRenderThread::RunOnceAndWait<std::vector<float>>([this, &width, &height]() -> std::vector<float>
+		if (m_cancelAsyncRender)
 		{
-			FireRenderSwatchInstance& swatchInstance = FireRenderSwatchInstance::instance();
-
-			RPR::AutoLock<MSpinLock> lock(swatchInstance.mutex);
-			width = swatchInstance.context.m_width;
-			height = swatchInstance.context.m_height;
-			return swatchInstance.context.getRenderImageData();
-		});
-
-		{
-			unsigned int iw = 0;
-			unsigned int ih = 0;
-			img.getSize(iw, ih);
-#pragma warning(disable: 4267)
-			if ((iw != width) || (ih != height))
-				img.create(width, height, 4u);
-
-			img.setFloatPixels(data.data(), width, height);
-#pragma warning(default: 4267)
-			img.convertPixelFormat(MImage::kByte);
-		}
-
-		finishParallelRender();
-
-		return true;
-	}
-
-	if (fireMayaNode)
-	{
-		auto disableSwatchPlug = nodeFn.findPlug("disableSwatch");
-
-		if (disableSwatchPlug.isNull() || !disableSwatchPlug.asBool())
-		{
-			m_runningAsyncRender = true;
+			m_runningAsyncRender = false;
 			m_finnishedAsyncRender = false;
 
-			FireRenderSwatchInstance& swatchInstance = FireRenderSwatchInstance::instance();
-			if (swatchInstance.context.isFirstIterationAndShadersNOTCached())
-			{
-				//first iteration and shaders are _NOT_ cached
-				rcWarningDialog.show();
-				m_warningDialogOpen = true;
-			}
+			return true;
+		}
 
-			FireRenderThread::RunOnceProcAndWait([&]
+		if (m_runningAsyncRender)
+			return false;
+
+		if (m_finnishedAsyncRender)
+		{
+			if (m_warningDialogOpen &&  rcWarningDialog.shown)
+				rcWarningDialog.close();
+
+			size_t width, height;
+			auto data = FireRenderThread::RunOnceAndWait<std::vector<float>>([this, &width, &height]() -> std::vector<float>
 			{
 				FireRenderSwatchInstance& swatchInstance = FireRenderSwatchInstance::instance();
 
 				RPR::AutoLock<MSpinLock> lock(swatchInstance.mutex);
-
-				swatchInstance.context.updateSwatchSceneRenderLimits(mnode);
-				swatchInstance.context.setStartedRendering();
-				// consider using a different mesh depending on surface or value type
-				if (auto mesh = swatchInstance.context.getRenderObject<FireRenderMesh>("mesh"))
-				{
-					if (mesh->Elements().size())
-					{
-						if (auto shape = mesh->Element(0).shape)
-						{
-							shape.SetShader(swatchInstance.context.GetShader(mnode));
-							shape.SetVolumeShader(swatchInstance.context.GetVolumeShader(mnode));
-						}
-					}
-				}
-
-				if ((swatchInstance.context.width() != res) && (swatchInstance.context.height() != res))
-					swatchInstance.context.setResolution(res, res, false);
+				width = swatchInstance.context.m_width;
+				height = swatchInstance.context.m_height;
+				return swatchInstance.context.getRenderImageData();
 			});
 
-			FireRenderThread::KeepRunning([this]() -> bool
 			{
-				try
-				{
-					if (m_cancelAsyncRender)
-						return false;
+				unsigned int iw = 0;
+				unsigned int ih = 0;
+				img.getSize(iw, ih);
+#pragma warning(disable: 4267)
+				if ((iw != width) || (ih != height))
+					img.create(width, height, 4u);
 
+				img.setFloatPixels(data.data(), width, height);
+#pragma warning(default: 4267)
+				img.convertPixelFormat(MImage::kByte);
+			}
+
+			finishParallelRender();
+
+			return true;
+		}
+
+		if (fireMayaNode)
+		{
+			auto disableSwatchPlug = nodeFn.findPlug("disableSwatch");
+
+			if (disableSwatchPlug.isNull() || !disableSwatchPlug.asBool())
+			{
+				m_runningAsyncRender = true;
+				m_finnishedAsyncRender = false;
+
+				FireRenderSwatchInstance& swatchInstance = FireRenderSwatchInstance::instance();
+				if (swatchInstance.context.isFirstIterationAndShadersNOTCached())
+				{
+					//first iteration and shaders are _NOT_ cached
+					rcWarningDialog.show();
+					m_warningDialogOpen = true;
+				}
+
+				FireRenderThread::RunOnceProcAndWait([&]
+				{
 					FireRenderSwatchInstance& swatchInstance = FireRenderSwatchInstance::instance();
 
 					RPR::AutoLock<MSpinLock> lock(swatchInstance.mutex);
 
-					if (m_cancelAsyncRender)
-						return false;
+					swatchInstance.context.updateSwatchSceneRenderLimits(mnode);
+					swatchInstance.context.setStartedRendering();
+					// consider using a different mesh depending on surface or value type
+					if (auto mesh = swatchInstance.context.getRenderObject<FireRenderMesh>("mesh"))
+					{
+						if (mesh->Elements().size())
+						{
+							if (auto shape = mesh->Element(0).shape)
+							{
+								shape.SetShader(swatchInstance.context.GetShader(mnode));
+								shape.SetVolumeShader(swatchInstance.context.GetVolumeShader(mnode));
+							}
+						}
+					}
 
-					swatchInstance.context.setDirty();
-					FireRenderThread::RunProcOnMainThread([&swatchInstance]() {swatchInstance.context.Freshen(); });
+					if ((swatchInstance.context.width() != res) && (swatchInstance.context.height() != res))
+						swatchInstance.context.setResolution(res, res, false);
+				});
 
-					while (swatchInstance.context.keepRenderRunning())
+				FireRenderThread::KeepRunning([this]() -> bool
+				{
+					try
 					{
 						if (m_cancelAsyncRender)
 							return false;
 
-						swatchInstance.context.render();
+						FireRenderSwatchInstance& swatchInstance = FireRenderSwatchInstance::instance();
+
+						RPR::AutoLock<MSpinLock> lock(swatchInstance.mutex);
+
+						if (m_cancelAsyncRender)
+							return false;
+
+						swatchInstance.context.setDirty();
+						FireRenderThread::RunProcOnMainThread([&swatchInstance]() {swatchInstance.context.Freshen(); });
+
+						while (swatchInstance.context.keepRenderRunning())
+						{
+							if (m_cancelAsyncRender)
+								return false;
+
+							swatchInstance.context.render();
+						}
 					}
-				}
-				catch (...)
-				{
-					DebugPrint("Unknown error running material swatch render");
-				}
+					catch (...)
+					{
+						DebugPrint("Unknown error running material swatch render");
+					}
 
-				m_runningAsyncRender = false;
-				m_finnishedAsyncRender = true;
+					m_runningAsyncRender = false;
+					m_finnishedAsyncRender = true;
 
-				return false;
-			});
+					return false;
+				});
+			}
+
+			return false;
 		}
 
-		return false;
-	}
+		if (auto node = dynamic_cast<FireRenderIBL*>(nodeFn.userNode()))
+		{
+			MPlug filePathPlug = nodeFn.findPlug("filePath");
+			MString filePath;
+			filePathPlug.getValue(filePath);
+			if (img.readFromFile(filePath) == MS::kSuccess)
+			{
+				img.resize(res, res, false);
+				img.verticalFlip();
 
-	if (auto node = dynamic_cast<FireRenderIBL*>(nodeFn.userNode()))
-	{
-		MPlug filePathPlug = nodeFn.findPlug("filePath");
-		MString filePath;
-		filePathPlug.getValue(filePath);
-		if (img.readFromFile(filePath) == MS::kSuccess)
+				finishParallelRender();
+				return true;
+			}
+		}
+
+		if (auto node = dynamic_cast<FireRenderSkyLocator*>(nodeFn.userNode()))
+		{
+			SkyBuilder skyBuilder(fObjToRender, res, res);
+			skyBuilder.refresh();
+			skyBuilder.updateSampleImage(img);
+
+			finishParallelRender();
+			return true;
+		}
+
+		// OK so we can look for preset icon for this material type
+		if (MStatus::kSuccess == img.readFromFile(FireMaya::GetIconPath() + "/" + nodeFn.typeName() + ".png"))
 		{
 			img.resize(res, res, false);
-			img.verticalFlip();
+
+			finishParallelRender();
+			return true;
+		}
+
+		// or fall through to basic default
+		if (MStatus::kSuccess == img.readFromFile(FireMaya::GetIconPath() + "/Default.png"))
+		{
+			img.resize(res, res, false);
 
 			finishParallelRender();
 			return true;
 		}
 	}
-
-	if (auto node = dynamic_cast<FireRenderSkyLocator*>(nodeFn.userNode()))
+	catch (int errCode)
 	{
-		SkyBuilder skyBuilder(fObjToRender, res, res);
-		skyBuilder.refresh();
-		skyBuilder.updateSampleImage(img);
-
-		finishParallelRender();
-		return true;
-	}
-
-	// OK so we can look for preset icon for this material type
-	if (MStatus::kSuccess == img.readFromFile(FireMaya::GetIconPath() + "/" + nodeFn.typeName() + ".png"))
-	{
-		img.resize(res, res, false);
-
-		finishParallelRender();
-		return true;
-	}
-
-	// or fall through to basic default
-	if (MStatus::kSuccess == img.readFromFile(FireMaya::GetIconPath() + "/Default.png"))
-	{
-		img.resize(res, res, false);
-
-		finishParallelRender();
-		return true;
+		errCode;
+		// preventing from being crashed
+		return false;
 	}
 
 	return false;

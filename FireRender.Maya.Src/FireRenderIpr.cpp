@@ -142,7 +142,11 @@ bool FireRenderIpr::start()
 			m_context.enableAOV(RPR_AOV_SHADOW_CATCHER);
 		
 		m_context.setInteractive(true);
-		m_context.buildScene(false, false, false, false);
+		if (!m_context.buildScene(false, false, false, false))
+		{
+			return false;
+		}
+
 		m_needsContextRefresh = true;
 		m_context.setResolution(m_width, m_height, true);
 		m_context.setCamera(m_camera, true);

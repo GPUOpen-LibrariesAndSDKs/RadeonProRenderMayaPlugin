@@ -90,7 +90,7 @@ FireRenderContext::~FireRenderContext()
 	removeCallbacks();
 }
 
-void FireRenderContext::initializeContext()
+int FireRenderContext::initializeContext()
 {
 	DebugPrint("FireRenderContext::initializeContext()");
 
@@ -100,7 +100,10 @@ void FireRenderContext::initializeContext()
 
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags();
 
-	createContextEtc(createFlags);
+	rpr_int res;
+	createContextEtc(createFlags, true, false, &res);
+
+	return res;
 }
 
 void FireRenderContext::resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture)
@@ -221,7 +224,9 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 		FireRenderThread::UseTheThread((createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) != 0);
 
 		bool avoidMaterialSystemDeletion_workaround = isViewport && (createFlags & RPR_CREATION_FLAGS_ENABLE_CPU);
-		if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, glViewport))
+
+		rpr_int res;
+		if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, glViewport, &res))
 		{
 			// Failed to create context
 			if (glViewport)
@@ -242,6 +247,9 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 			else
 			{
 				MGlobal::displayError("Aborting switching to Radeon ProRender.");
+				MString msg;
+				FireRenderError error(res, msg, true);
+
 				return false;
 			}
 		}
@@ -446,7 +454,14 @@ void FireRenderContext::initSwatchScene()
 
 		auto createFlags = FireMaya::Options::GetContextDeviceFlags();
 
-		createContextEtc(createFlags);
+		rpr_int res;
+		if (!createContextEtc(createFlags, true, false, &res))
+		{
+			MString msg;
+			FireRenderError errorToShow(res, msg, true);
+
+			throw res;
+		}
 
 		enableAOV(RPR_AOV_COLOR);
 
@@ -635,7 +650,7 @@ bool FireRenderContext::isRenderView() const
 	return m_isRenderView;
 }
 
-bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_context& result)
+bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_context& result, int* pOutRes)
 {
 	RPR_THREAD_ONLY;
 
@@ -667,6 +682,12 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 
 	rpr_context context = nullptr;
 	int res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, NULL, cachePath.asUTF8(), &context);
+
+	if (pOutRes != nullptr)
+	{
+		*pOutRes = res;
+	}
+
 	switch (res)
 	{
 	case RPR_SUCCESS:
@@ -685,9 +706,9 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 }
 
 
-bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete, bool glViewport)
+bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete, bool glViewport, int* pOutRes)
 {
-	return FireRenderThread::RunOnceAndWait<bool>([this, &creation_flags, destroyMaterialSystemOnDelete, glViewport]()
+	return FireRenderThread::RunOnceAndWait<bool>([this, &creation_flags, destroyMaterialSystemOnDelete, glViewport, pOutRes]()
 	{
 		RPR_THREAD_ONLY;
 
@@ -707,7 +728,7 @@ bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool
 			m_glInteropActive = false;
 
 		rpr_context handle;
-		bool contextCreated = createContext(creation_flags, handle);
+		bool contextCreated = createContext(creation_flags, handle, pOutRes);
 		if (!contextCreated)
 		{
 			MGlobal::displayError("Unable to create Radeon ProRender context.");
