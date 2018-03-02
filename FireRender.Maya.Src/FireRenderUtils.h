@@ -9,7 +9,7 @@
 //
 
 #if MAYA_API_VERSION >= 20180000
-#include <maya/MapiNamespace.h>
+#include <maya/MApiNamespace.h>
 #endif
 #include <maya/MFnDagNode.h>
 #include <maya/MObjectArray.h>
@@ -546,4 +546,10 @@ public:
 	}
 };
 
+
 MObject findDependNode(MString name);
+
+// Same environment variable used in the Blender addon
+//
+bool isMetalOn();
+

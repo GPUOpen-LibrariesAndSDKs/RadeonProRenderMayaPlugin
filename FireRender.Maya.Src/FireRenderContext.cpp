@@ -35,6 +35,10 @@
 using namespace RPR;
 using namespace FireMaya;
 
+#ifdef DEBUG_LOCKS
+std::map<FireRenderContext*,FireRenderContext::Lock::frcinfo> FireRenderContext::Lock::lockMap;
+#endif
+
 #ifdef MAYA2015
 #undef min
 #undef max
@@ -681,6 +685,10 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 	DebugPrint("* Creating Context: %d (0x%x) - useThread: %d", createFlags, createFlags, useThread);
 
 	rpr_context context = nullptr;
+    if (isMetalOn() && !(createFlags & RPR_CREATION_FLAGS_ENABLE_CPU))
+    {
+        createFlags = createFlags | RPR_CREATION_FLAGS_ENABLE_METAL;
+    }
 	int res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, NULL, cachePath.asUTF8(), &context);
 
 	if (pOutRes != nullptr)
@@ -1135,13 +1143,16 @@ void FireRenderContext::removeNode(MObject& node)
 	RemoveRenderObject(node);
 }
 
-void FireRenderContext::updateFromGlobals()
+void FireRenderContext::updateFromGlobals(bool applyLock)
 {
 	MAIN_THREAD_ONLY;
 
 	if (m_tonemappingChanged)
 	{
-		Lock lock(this);
+        if (applyLock)
+        {
+            LOCKFORUPDATE(this);
+        }
 
 		m_globals.readFromCurrentScene();
 		m_globals.updateTonemapping(*this);
@@ -1152,8 +1163,11 @@ void FireRenderContext::updateFromGlobals()
 	if (!m_globalsChanged)
 		return;
 
-	Lock lock(this);
-
+    if (applyLock)
+    {
+        LOCKFORUPDATE(this);
+    }
+    
 	m_globals.readFromCurrentScene();
 	m_globals.setupContext(*this);
 
@@ -1411,7 +1425,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 	m_inRefresh = true;
 
-	updateFromGlobals();
+	updateFromGlobals(false /*applyLock*/);
 
 	decltype(m_addedNodes) addedNodes = m_addedNodes;
 	m_addedNodes.clear();
@@ -1588,7 +1602,13 @@ bool FireRenderContext::keepRenderRunning()
 }
 
 bool FireRenderContext::isFirstIterationAndShadersNOTCached() {
-	if (m_currentIteration == 0) {
+    if (isMetalOn())
+    {
+        // Metal does not cache shaders the way OCL does
+        return false;
+    }
+	if (m_currentIteration == 0)
+    {
 		return !areShadersCached();
 	}
 	return false;

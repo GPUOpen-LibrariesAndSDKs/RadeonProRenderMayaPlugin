@@ -3,7 +3,33 @@
 <plist version="1.0">
 <dict>
 	<key>SchemeUserState</key>
-	<dict/>
+	<dict>
+		<key>All Releases.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>0</integer>
+		</dict>
+		<key>Debug 2017.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>1</integer>
+		</dict>
+		<key>Debug 2018.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>2</integer>
+		</dict>
+		<key>Release 2017.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
+		<key>Release 2018.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>4</integer>
+		</dict>
+	</dict>
 	<key>SuppressBuildableAutocreation</key>
 	<dict>
 		<key>4D6C218D1DEBFAF500D745F8</key>
@@ -17,6 +43,11 @@
 			<true/>
 		</dict>
 		<key>4DE508631D9950A1009B2BD6</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>8D595D8B20372FE20031988A</key>
 		<dict>
 			<key>primary</key>
 			<true/>

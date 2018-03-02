@@ -1359,7 +1359,11 @@ HardwareResources::HardwareResources()
 	const int maxDevices = 9;
 #ifdef OSMac_
 	auto os = RPRTOS_MACOS;
-	auto dll = "/Users/Shared/RadeonProRender/lib/libTahoe64.dylib";
+	auto dll = "/Users/Shared/RadeonProRender/Maya/lib/libTahoe64.dylib";
+    if (0 != access(dll,F_OK))
+    {
+        dll = "/Users/Shared/RadeonProRender/lib/libTahoe64.dylib";
+    }
 #elif __linux__
 	auto os = RPRTOS_LINUX;
 	auto dll = "libTahoe64.so";
@@ -1372,7 +1376,15 @@ HardwareResources::HardwareResources()
 	{
 		Device device;
 		device.creationFlag = creationFlagsGPU[i];
-		device.compatibility = rprIsDeviceCompatible(dll, RPR_TOOLS_DEVICE(i), nullptr, true, os);
+        rpr_creation_flags additionalFlags = 0;
+        bool doWhiteList = true;
+        if (isMetalOn() && !(device.creationFlag & RPR_CREATION_FLAGS_ENABLE_CPU))
+        {
+            additionalFlags = additionalFlags | RPR_CREATION_FLAGS_ENABLE_METAL;
+            doWhiteList = false;
+        }
+        device.creationFlag = device.creationFlag | additionalFlags;
+		device.compatibility = rprIsDeviceCompatible(dll, RPR_TOOLS_DEVICE(i), nullptr, doWhiteList, os, additionalFlags );
 		if (device.compatibility == RPRTC_INCOMPATIBLE_UNCERTIFIED || device.compatibility == RPRTC_COMPATIBLE)
 		{
 			// Request device name. Earlier (before RPR 1.255) rprIsDeviceCompatible returned device name, however
@@ -1383,7 +1395,7 @@ HardwareResources::HardwareResources()
 			rpr_int plugins[] = { g_tahoePluginID };
 			size_t pluginCount = sizeof(plugins) / sizeof(plugins[0]);
 			rpr_context temporaryContext = 0;
-			rpr_int status = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, creationFlagsGPU[i], NULL, NULL, &temporaryContext);
+			rpr_int status = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, device.creationFlag , NULL, NULL, &temporaryContext);
 			assert(status == RPR_SUCCESS);
 			size_t size = 0;
 			status = rprContextGetInfo(temporaryContext, nameFlags[i], 0, 0, &size);
@@ -1394,6 +1406,10 @@ HardwareResources::HardwareResources()
 			status = rprObjectDelete(temporaryContext);
 			assert(status == RPR_SUCCESS);
 
+#if defined(OSMac_)
+            printf("### Radeon ProRender Device %s\n",deviceName);
+#endif
+            
 			// Register the device.
 			device.name = deviceName;
 			delete[] deviceName;
@@ -1719,3 +1735,11 @@ void CheckGlError()
 	}
 }
 
+bool isMetalOn()
+{
+#if defined(OSMac_)
+    return (NULL == getenv("USE_GPU_OCL"));
+#else
+    return false;
+#endif
+}
