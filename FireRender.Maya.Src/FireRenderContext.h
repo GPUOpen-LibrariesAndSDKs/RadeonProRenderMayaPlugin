@@ -38,6 +38,9 @@
 class FireRenderViewport;
 struct RV_PIXEL;
 
+// Turn on to track lock information
+//#define DEBUG_LOCKS 1
+
 // Image file description
 // This class stores the information need by the image file writer
 // during a non interactive render session, like file image extension
@@ -310,7 +313,7 @@ public:
 	void removeNode(MObject& node);
 
 	// Update from globals.
-	void updateFromGlobals();
+	void updateFromGlobals(bool applyLock);
 
 	// Update active render layers.
 	void updateRenderLayers();
@@ -581,6 +584,7 @@ public:
 	void updateProgress();
 	int	getProgress();
 	bool updateOutput();
+    
 
 	class Lock
 	{
@@ -589,11 +593,15 @@ public:
 
 		Lock(const Lock&) = delete;
 	public:
-		Lock(FireRenderContext* _context, StateEnum newState = StateUpdating, const char* lockedBy = "?")
+
+        Lock(FireRenderContext* _context, StateEnum newState, const char* lockedBy)
 			: context(_context)
 		{
 			if (context)
 			{
+#ifdef DEBUG_LOCKS
+                addMapLock(context,lockedBy);
+#endif
 				context->m_mutex.lock();
 				oldState = context->state;
 				context->state = newState;
@@ -606,6 +614,9 @@ public:
 		{
 			if (context)
 			{
+#ifdef DEBUG_LOCKS
+                addMapLock(context,lockedBy);
+#endif
 				context->m_mutex.lock();
 				oldState = -1;
 				context->lockedBy = lockedBy;
@@ -618,6 +629,9 @@ public:
 			{
 				if (oldState >= 0)
 					context->state = StateEnum(oldState);
+#ifdef DEBUG_LOCKS
+                removeMapLock(context);
+#endif
 				context->m_mutex.unlock();
 			}
 		}
@@ -625,6 +639,65 @@ public:
 	};
 
 	friend class Lock;
+    
+private:
+    
+#ifdef DEBUG_LOCKS
+    struct frcinfo
+    {
+        frcinfo(const char* s="") : count(1), str(s) {}
+        int count;
+        std::string str;
+    };
+    static std::map<FireRenderContext*,frcinfo> lockMap;
+    
+    void addMapLock(FireRenderContext* ctx, const char* str)
+    {
+        if (lockMap.count(ctx) == 0)
+        {
+            frcinfo i(str);
+            lockMap[ctx] = i;
+        }
+        else
+        {
+            frcinfo i = lockMap[ctx];
+            if (i.count > 0)
+            {
+                printf("###### Collision: \n\t%s\n\t%s\n",i.str.c_str(),str);
+                assert(false);
+            }
+            i.count++;
+            i.str = str;
+            lockMap[ctx] = i;
+        }
+        dumpMapLock("addMapLock");
+    }
+    
+    void removeMapLock(FireRenderContext* ctx)
+    {
+        if (lockMap.count(ctx) == 0)
+        {
+            assert(false);
+        }
+        else
+        {
+            frcinfo i = lockMap[ctx];
+            i.count--;
+            i.str = "";
+            lockMap[ctx] = i;
+        }
+        dumpMapLock("removeMapLock");
+    }
+    
+    void dumpMapLock(const char*str = "Unknown")
+    {
+        for (auto& i : lockMap)
+        {
+            printf("%s : Map Lock ctx %p count %d\n",str,i.first,i.second.count);
+        }
+    }
+#endif
+
 };
 
 extern rpr_int g_tahoePluginID;

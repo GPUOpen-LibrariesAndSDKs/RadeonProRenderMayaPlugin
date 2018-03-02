@@ -4,7 +4,9 @@
 #include <memory>
 #include <Translators.h>
 
+#if MAYA_API_VERSION < 20180000
 class MFnDagNode;
+#endif
 
 namespace FireMaya
 {

@@ -17,7 +17,9 @@
 
 // Forward declarations.
 class FireRenderContext;
+#if MAYA_API_VERSION < 20180000
 class MFnDependencyNode;
+#endif
 struct RV_PIXEL;
 
 

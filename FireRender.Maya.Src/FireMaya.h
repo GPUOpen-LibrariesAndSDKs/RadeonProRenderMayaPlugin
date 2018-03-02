@@ -2,6 +2,9 @@
 
 #include "frWrap.h"
 
+#if MAYA_API_VERSION >= 20180000
+#include <maya/MApiNamespace.h>
+#endif
 #include <maya/MTypeId.h>
 #include <maya/MPxNode.h>
 #include <maya/MFnNumericAttribute.h>
@@ -207,7 +210,7 @@ namespace FireMaya
 		frw::Value ParseValue(MObject ob, const MString &outPlugName);
 
 		bool FindFileNodeRecursive(MObject objectNode, int& width, int& height);
-		frw::Value FireMaya::Scope::createImageFromShaderNodeUsingFileNode(MObject node, MString plugName);
+		frw::Value createImageFromShaderNodeUsingFileNode(MObject node, MString plugName);
 
 		frw::Value CosinePowerToRoughness(const frw::Value &power);
 
@@ -269,8 +272,10 @@ namespace FireMaya
 		void Init(rpr_context handle, bool destroyMaterialSystemOnDelete = true);
 	};
 
-
+#ifdef DEBUG
 	static void	Dump(const MFnDependencyNode& shader_node);
+#endif
+    
 	MPlug	GetConnectedPlug(const MPlug& plug);
 	MObject GetConnectedNode(const MPlug& plug);
 	MString GetBasePath();

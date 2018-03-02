@@ -10,3 +10,7 @@ x64/
 *.opendb
 .DS_Store
 .vs
+FireRender.Maya.OSX/frMayaPluginMac/frMayaMac/RadeonProRender.xcodeproj/xcuserdata/amd.xcuserdatad/xcdebugger/Breakpoints_v2.xcbkptlist
+FireRender.Maya.OSX/frMayaPluginMac/frMayaMac/RadeonProRender.xcodeproj/project.xcworkspace/xcuserdata/amd.xcuserdatad/UserInterfaceState.xcuserstate
+tahoe.log
+

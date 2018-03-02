@@ -16,7 +16,9 @@ proc overrideUnifiedRenderGlobalsWindow()
 {
 	int $mayaVersion=`about -apiVersion`;
 
-	if ($mayaVersion >= 201700)
+	if ($mayaVersion >= 201800)
+		eval("source \"rprUnifiedRenderGlobalsWindow201800.mel\"");
+	else if ($mayaVersion >= 201700)
 		eval("source \"rprUnifiedRenderGlobalsWindow201700.mel\"");
 	else if($mayaVersion >= 201650)
 		eval("source \"rprUnifiedRenderGlobalsWindow201650.mel\"");

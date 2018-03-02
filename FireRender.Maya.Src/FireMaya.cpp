@@ -22,6 +22,7 @@ using namespace SYNCOLOR;
 #endif
 #endif
 
+#ifdef DEBUG
 void FireMaya::Dump(const MFnDependencyNode& shader_node)
 {
 	DebugPrint("Attributes for %s node \"%s\" (TypeID: 0x%X)", shader_node.typeName().asUTF8(), shader_node.name().asUTF8(), shader_node.typeId().id());
@@ -51,6 +52,7 @@ void FireMaya::Dump(const MFnDependencyNode& shader_node)
 		}
 	}
 }
+#endif
 
 MPlug	FireMaya::GetConnectedPlug(const MPlug& plug)
 {
