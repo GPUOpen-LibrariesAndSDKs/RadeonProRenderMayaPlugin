@@ -54,6 +54,8 @@ public:
 protected:
 	static const char* IES_FileTag;
 	static const int IES_TagSize = 5;
+	static const char* IES_FileExtraTag;
+	static const int IES_ExtraTagSize = 9;
 
 	/**
 	* Reads file and fills array tokens with numbers (as strings) and text array with data other than numbers
