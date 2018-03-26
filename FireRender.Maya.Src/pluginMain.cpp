@@ -701,6 +701,20 @@ MStatus initializePlugin(MObject obj)
 		MGlobal::executePythonCommand("import fireRender.fireRenderMenu\nfireRender.fireRenderMenu.createFireRenderMenu()");
 	}
 
+
+	//#define RPR_API_VERSION 0x010029200 
+	int mj = (RPR_API_VERSION & 0xFFFF00000) >> 28;
+	int mn = (RPR_API_VERSION & 0xFFFFF) >> 8;
+
+	std::ostringstream oss;
+
+	oss << std::hex << mj << "." << mn;
+
+	std::string versionStr = oss.str();
+	std::string commandStr = "setRprCoreVersion(\"" + versionStr + "\")";
+
+	MGlobal::executeCommand( commandStr.c_str() );
+
 	return status;
 }
 
