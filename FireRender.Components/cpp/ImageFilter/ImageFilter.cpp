@@ -161,6 +161,25 @@ void RifContextWrapper::CreateOutput(const rif_image_desc& desc)
 		throw std::exception("RPR denoiser failed to create output image.");
 }
 
+std::vector<rpr_char> RifContextWrapper::GetRprCachePath(rpr_context rprContext) const
+{
+	size_t length;
+	rpr_status rprStatus = rprContextGetInfo(rprContext, RPR_CONTEXT_CACHE_PATH, sizeof(size_t), nullptr, &length);
+	assert(RPR_SUCCESS == rprStatus);
+
+	if (RPR_SUCCESS != rprStatus)
+		throw std::exception("RPR denoiser failed to get cache path.");
+
+	std::vector<rpr_char> path(length);
+	rprStatus = rprContextGetInfo(rprContext, RPR_CONTEXT_CACHE_PATH, path.size(), &path[0], nullptr);
+	assert(RPR_SUCCESS == rprStatus);
+
+	if (RPR_SUCCESS != rprStatus)
+		throw std::exception("RPR denoiser failed to get cache path.");
+
+	return std::move(path);
+}
+
 
 
 RifContextGPU::RifContextGPU(const rpr_context rprContext)
@@ -195,19 +214,7 @@ RifContextGPU::RifContextGPU(const rpr_context rprContext)
 	if (RPR_SUCCESS != rprStatus)
 		throw std::exception("RPR denoiser failed to get CL command queue.");
 
-	size_t length;
-	rprStatus = rprContextGetInfo(rprContext, RPR_CONTEXT_CACHE_PATH, sizeof(rpr_int), nullptr, &length);
-	assert(RPR_SUCCESS == rprStatus);
-
-	if (RPR_SUCCESS != rprStatus)
-		throw std::exception("RPR denoiser failed to get cache path.");
-
-	std::vector<rpr_char> path(length);
-	rprStatus = rprContextGetInfo(rprContext, RPR_CONTEXT_CACHE_PATH, path.size(), &path[0], nullptr);
-	assert(RPR_SUCCESS == rprStatus);
-
-	if (RPR_SUCCESS != rprStatus)
-		throw std::exception("RPR denoiser failed to get cache path.");
+	std::vector<rpr_char> path = GetRprCachePath(rprContext);
 
 	rifStatus = rifCreateContextFromOpenClContext(RIF_API_VERSION, clContext, clDevice, clCommandQueue, path.data(), &mRifContextHandle);
 	assert(RIF_SUCCESS == rifStatus);
@@ -263,7 +270,9 @@ RifContextCPU::RifContextCPU(const rpr_context rprContext)
 	if (RIF_SUCCESS != rifStatus || 0 == deviceCount)
 		throw std::exception("RPR denoiser hasn't found compatible devices.");
 
-	rifStatus = rifCreateContext(RIF_API_VERSION, rifBackendApiType, rifProcessorType, 0, nullptr, &mRifContextHandle);
+	std::vector<rpr_char> path = GetRprCachePath(rprContext);
+
+	rifStatus = rifCreateContext(RIF_API_VERSION, rifBackendApiType, rifProcessorType, 0, path.data(), &mRifContextHandle);
 	assert(RIF_SUCCESS == rifStatus);
 
 	if (RIF_SUCCESS != rifStatus)
