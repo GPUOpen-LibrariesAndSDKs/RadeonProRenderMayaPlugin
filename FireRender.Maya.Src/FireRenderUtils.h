@@ -24,6 +24,7 @@
 #include <maya/MPlugArray.h>
 #include "FireRenderAOVs.h"
 #include "FireRenderError.h"
+#include "FireRenderGlobals.h"
 #include "Logger.h"
 #include <chrono>
 #include <../RprTools.h>
@@ -33,11 +34,37 @@
 // FireRenderGlobals
 // Utility class used to read attributes form the render global node
 // and configure the rpr_context
+
+struct DenoiserSettings
+{
+	DenoiserSettings()
+	{
+		enabled = false;
+		type = FireRenderGlobals::kBilateral;
+		radius = 0;
+		samples = 0;
+		filterRadius = 0;
+		bandwidth = 0.0f;
+		color = 0.0f;
+		depth = 0.0f;
+		normal = 0.0f;
+		trans = 0.0f;
+	}
+
+	bool enabled;
+	FireRenderGlobals::DenoiserType type;
+	int radius;
+	int samples;
+	int filterRadius;
+	float bandwidth;
+	float color;
+	float depth;
+	float normal;
+	float trans;
+};
+
 class FireRenderGlobalsData
 {
-	short getMaxRayDepth(const FireRenderContext& context) const;
-	rpr_uint getCellSize(const FireRenderContext& context) const;
-	short getSamples(const FireRenderContext& context) const;
 public:
 
 	// Constructor
@@ -57,6 +84,9 @@ public:
 
 	// Checks if name is one of the options are tonemapping options
 	static bool isTonemapping(MString name);
+
+	// Checks if name is one of the options are denoiser options
+	static bool isDenoiser(MString name);
 public:
 
 	// Completion criteria.
@@ -163,6 +193,15 @@ public:
 
 	// Advanced settings
 	float raycastEpsilon;
+
+	DenoiserSettings denoiserSettings;
+
+private:
+	short getMaxRayDepth(const FireRenderContext& context) const;
+	rpr_uint getCellSize(const FireRenderContext& context) const;
+	short getSamples(const FireRenderContext& context) const;
+
+	void readDenoiserParameters(const MFnDependencyNode& frGlobalsNode);
 };
 
 namespace FireMaya
@@ -173,6 +212,8 @@ namespace FireMaya
 		static int GetContextDeviceFlags();
 	};
 }
+
+MString GetPropertyNameFromPlugName(const MString& name);
 
 // Check if the object is visible
 bool isVisible(MFnDagNode & fnDag, MFn::Type type);
