@@ -68,6 +68,12 @@ public:
 		kCubeMapStereo
 	};
 
+	enum DenoiserType {
+		kBilateral,
+		kLWR,
+		kEAW
+	};
+
 	FireRenderGlobals();
 
 	virtual ~FireRenderGlobals();
@@ -79,6 +85,8 @@ public:
 	static void* creator();
 
 	static MStatus initialize();
+
+	static void createDenoiserAttributes();
 
 	/** Return the FR camera mode that matches the given camera type. */
 	static frw::CameraMode getCameraModeForType(CameraType type, bool defaultIsOrtho = false);

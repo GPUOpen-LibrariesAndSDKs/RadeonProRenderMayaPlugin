@@ -68,6 +68,24 @@ namespace
 
 		MObject qualityPresetsViewport;
 		MObject qualityPresetsProduction;
+
+		// Denoiser
+		MObject denoiserEnabled;
+		MObject denoiserType;
+
+			// Denoiser type: Bilateral
+		MObject denoiserRadius;
+
+			// Denoiser type: Local Weighted Regression
+		MObject denoiserSamples;
+		MObject denoiserFilterRadius;
+		MObject denoiserBandwidth;
+
+			// Denoiser type: EAW
+		MObject denoiserColor;
+		MObject denoiserDepth;
+		MObject denoiserNormal;
+		MObject denoiserTrans;
 	}
 
 	bool operator==(const MStringArray& a, const MStringArray& b)
@@ -105,6 +123,7 @@ MObject FireRenderGlobals::m_groundShadows;
 MObject FireRenderGlobals::m_groundReflections;
 MObject FireRenderGlobals::m_groundStrength;
 MObject FireRenderGlobals::m_groundRoughness;
+
 MObject FireRenderGlobals::m_useRenderStamp;
 MObject FireRenderGlobals::m_renderStampText;
 MObject FireRenderGlobals::m_renderStampTextDefault;
@@ -463,7 +482,95 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(m_renderStampText));
 	CHECK_MSTATUS(addAttribute(m_renderStampTextDefault));
 
+	createDenoiserAttributes();
+
 	return status;
+}
+
+void FireRenderGlobals::createDenoiserAttributes()
+{
+	MStatus status;
+	MFnNumericAttribute nAttr;
+	MFnEnumAttribute eAttr;
+
+	Attribute::denoiserEnabled = nAttr.create("denoiserEnabled", "de", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setReadable(true);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserEnabled));
+
+	Attribute::denoiserType = eAttr.create("denoiserType", "dt", kBilateral, &status);
+	eAttr.addField("Bilateral", kBilateral);
+	eAttr.addField("LWR", kLWR);
+	eAttr.addField("EAW", kEAW);
+	MAKE_INPUT_CONST(eAttr);
+	nAttr.setReadable(true);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserType));
+
+	// Radio buttons attributes
+	/*Attribute::denoiserIsBilateral = nAttr.create("denoiserIsBilateral", "dib", MFnNumericData::kBoolean, true, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserIsBilateral));
+
+	Attribute::denoiserIsLWR = nAttr.create("denoiserIsLWR", "dil", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserIsLWR));
+
+	Attribute::denoiserIsEAW = nAttr.create("denoiserIsEAW", "die", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserIsEAW));
+	// Radio buttons end*/
+
+	// Bilateral
+	Attribute::denoiserRadius = nAttr.create("denoiserRadius", "dr", MFnNumericData::kInt, 1, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserRadius));
+	nAttr.setMin(1);
+	nAttr.setMax(10);
+
+	//LWR
+	Attribute::denoiserSamples = nAttr.create("denoiserSamples", "ds", MFnNumericData::kInt, 2, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserSamples));
+	nAttr.setMin(2);
+	nAttr.setMax(10);
+
+	Attribute::denoiserFilterRadius = nAttr.create("denoiserFilterRadius", "dfr", MFnNumericData::kInt, 1, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserFilterRadius));
+	nAttr.setMin(1);
+	nAttr.setMax(10);
+
+
+	Attribute::denoiserBandwidth = nAttr.create("denoiserBandwidth", "db", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserBandwidth));
+	nAttr.setMin(0.1f);
+	nAttr.setMax(1.0f);
+
+	//EAW
+	Attribute::denoiserColor = nAttr.create("denoiserColor", "dc", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserColor));
+	nAttr.setMin(0.1f);
+	nAttr.setMax(1.0f);
+
+	Attribute::denoiserDepth = nAttr.create("denoiserDepth", "dd", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserDepth));
+	nAttr.setMin(0.1f);
+	nAttr.setMax(1.0f);
+
+	Attribute::denoiserNormal = nAttr.create("denoiserNormal", "dn", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserNormal));
+	nAttr.setMin(0.1f);
+	nAttr.setMax(1.0f);
+
+	Attribute::denoiserTrans = nAttr.create("denoiserTrans", "dtrn", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserTrans));
+	nAttr.setMin(0.1f);
+	nAttr.setMax(1.0f);
 }
 
 /** Return the FR camera mode that matches the given camera type. */

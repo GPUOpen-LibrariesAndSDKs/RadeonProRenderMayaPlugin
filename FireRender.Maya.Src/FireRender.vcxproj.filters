@@ -81,6 +81,9 @@
     <Filter Include="Resources\Scripts\AttributeEditorTemplates">
       <UniqueIdentifier>{c3527e75-96bc-4665-a6c5-d24dc1665482}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FireRender.Components\Denoiser">
+      <UniqueIdentifier>{3faa1ebe-5f43-4cfb-801a-0c7d34b193d6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="python\__init__.py">
@@ -449,6 +452,9 @@
     <ClCompile Include="FireRenderPBRMaterial.cpp">
       <Filter>Materials</Filter>
     </ClCompile>
+    <ClCompile Include="..\FireRender.Components\cpp\ImageFilter\ImageFilter.cpp">
+      <Filter>FireRender.Components\Denoiser</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -774,6 +780,9 @@
     </ClInclude>
     <ClInclude Include="FireRenderPBRMaterial.h">
       <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FireRender.Components\cpp\ImageFilter\ImageFilter.h">
+      <Filter>FireRender.Components\Denoiser</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

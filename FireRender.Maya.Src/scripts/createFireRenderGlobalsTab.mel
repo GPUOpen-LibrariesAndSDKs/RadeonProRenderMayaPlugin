@@ -684,6 +684,89 @@ global proc createFireRenderMotionBlurFrame(string $parent)
 	setUITemplate -popTemplate;
 }
 
+global proc createFireRenderDenoiserFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	setParentToFireRenderTab();
+	setParent $parent;
+
+	columnLayout -adjustableColumn true;
+
+	attrControlGrp
+		 -label "Enable"
+		 -attribute "RadeonProRenderGlobals.denoiserEnabled"
+		 -cc updateDenoiserUI;
+
+	attrControlGrp
+		 -label "Type"
+		 -attribute "RadeonProRenderGlobals.denoiserType"
+		 -cc updateDenoiserUI
+		 denoiserTypeCombobox;
+
+	// Bilateral
+	frameLayout -label "Bilateral" -cll 0 -li 30 denoiserBilateralFrame;
+		attrControlGrp
+			 -label "Radius"
+			 -attribute "RadeonProRenderGlobals.denoiserRadius";
+	setParent ..;
+	
+	// Local Weighted Regression
+	frameLayout -label "Local Weighted Regression" -cll 0 -li 30 denoiserLWRFrame;
+		attrControlGrp
+			 -label "Samples"
+			 -attribute "RadeonProRenderGlobals.denoiserSamples";
+
+		attrControlGrp
+			 -label "Filter Radius"
+			 -attribute "RadeonProRenderGlobals.denoiserFilterRadius";
+
+		attrControlGrp
+			 -label "Bandwidth"
+			 -attribute "RadeonProRenderGlobals.denoiserBandwidth";
+	setParent ..;
+
+	// Edge Avoiding Wavelets
+	frameLayout -label "Edge Avoiding Wavelets" -cll 0 -li 30 denoiserEAWFrame;
+		attrControlGrp
+			 -label "Color"
+			 -attribute "RadeonProRenderGlobals.denoiserColor";
+
+		attrControlGrp
+			 -label "Depth"
+			 -attribute "RadeonProRenderGlobals.denoiserDepth";
+
+		attrControlGrp
+			 -label "Normal"
+			 -attribute "RadeonProRenderGlobals.denoiserNormal";
+
+		attrControlGrp
+			 -label "Trans"
+			 -attribute "RadeonProRenderGlobals.denoiserTrans";
+	setParent ..;
+
+	setParent ..;	// columnLayout ends
+	setUITemplate -popTemplate;
+
+	updateDenoiserUI();
+}
+
+global proc updateDenoiserUI()
+{
+	int $enabled = `getAttr RadeonProRenderGlobals.denoiserEnabled`;
+	int $type = `getAttr RadeonProRenderGlobals.denoiserType`;
+	int $enabledBilateral = $type == 0;
+	int $enabledLWR = $type == 1;
+	int $enabledEAW = $type == 2;
+
+	// Lock controls and set it to ON state
+	control -edit -enable ($enabled > 0) denoiserTypeCombobox;
+
+	control -edit -enable ($enabledBilateral && $enabled) denoiserBilateralFrame;
+	control -edit -enable ($enabledLWR && $enabled) denoiserLWRFrame;
+	control -edit -enable ($enabledEAW && $enabled) denoiserEAWFrame;
+}
+
 global proc createFireRenderCameraFrame(string $parent)
 {
 	setUITemplate -pushTemplate attributeEditorTemplate;
@@ -916,45 +999,52 @@ global proc createFireRenderGlobals2Tab()
 
 	// Globals section
 	//
-	//frameLayout -label "Globals" -cll false -cl 0 fireRenderGlobalsFrame;
+	//frameLayout -label "Globals" -cll true -cl 0 fireRenderGlobalsFrame;
 
 	// Global Illumination section
 	//
-	frameLayout -label "Global Illumination" -cll false fireRenderGlobalIlluminationFrame;
+	frameLayout -label "Global Illumination" -cll true fireRenderGlobalIlluminationFrame;
 
 	createFireRenderGlobalIlluminationFrame ("fireRenderGlobalIlluminationFrame");
 	setParent ..;
 
 	// Motion Blur
 	//
-	frameLayout -label "Motion Blur" -cll false -cl 0 fireRenderMotionBlurFrame;
+	frameLayout -label "Motion Blur" -cll true -cl 0 fireRenderMotionBlurFrame;
 
 	createFireRenderMotionBlurFrame ("fireRenderMotionBlurFrame");
 	setParent ..;
 
+	// Denoiser
+	//
+	frameLayout -label "Denoiser" -cll true -cl true fireRenderDenoiserFrame;
+
+	createFireRenderDenoiserFrame ("fireRenderDenoiserFrame");
+	setParent ..;
+
 	// Cameras
 	//
-	frameLayout -label "Camera" -cll false -cl 0 fireRenderCameraFrame;
+	frameLayout -label "Camera" -cll true -cl 0 fireRenderCameraFrame;
 
 	createFireRenderCameraFrame ("fireRenderCameraFrame");
 	setParent ..;
 
 	// Render stamp
 	//
-	frameLayout -label "Render stamp" -cll false -cl 0 fireRenderRenderStampFrame;
+	frameLayout -label "Render stamp" -cll true -cl 0 fireRenderRenderStampFrame;
 	createRenderStampFrame fireRenderRenderStampFrame;
 	setParent ..;
 
 	// Environment
 	//
-	frameLayout -label "Environment" -cll false -cl 0 fireRenderEnvironmentFrame;
+	frameLayout -label "Environment" -cll true -cl 0 fireRenderEnvironmentFrame;
 
 	createEnvironmentFrame fireRenderEnvironmentFrame;
 	setParent ..;
 
 	// Ground
 	//
-	frameLayout -label "Ground" -cll false -cl 0 fireRenderGroundFrame;
+	frameLayout -label "Ground" -cll true -cl 0 fireRenderGroundFrame;
 
 	createGroundFrame fireRenderGroundFrame;
 	setParent ..;

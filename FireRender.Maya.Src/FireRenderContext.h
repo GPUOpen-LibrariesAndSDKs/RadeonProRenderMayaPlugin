@@ -36,6 +36,7 @@
 
 // Forward declarations.
 class FireRenderViewport;
+class ImageFilter;
 struct RV_PIXEL;
 
 // Turn on to track lock information
@@ -401,10 +402,17 @@ private:
 		return bool(white_balance) || bool(simple_tonemap) || bool(tonemap) || bool(normalization) || bool(gamma_correction);
 	}
 
+	void InitBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture = nullptr);
+
+	void turnOnAOVsForDenoiser(bool allocBuffer = false);
+	void setupDenoiser();
+
 	// Tweaks precision of the ray-cast system, based on scene bounding box size:
 	void CheckSetRayCastEpsilon();
 
 	float m_lastRayCastEpsilon;
+
+	std::shared_ptr<ImageFilter> m_denoiserFilter;
 
 	frw::DirectionalLight m_defaultLight;
 
@@ -484,6 +492,9 @@ private:
 
 	/** Signals if tone-mapping options have changed */
 	bool m_tonemappingChanged;
+
+	/** Signals if denoiser options have changed */
+	bool m_denoiserChanged;
 
 	/** True if render layers have changed since the last refresh. */
 	bool m_renderLayersChanged;

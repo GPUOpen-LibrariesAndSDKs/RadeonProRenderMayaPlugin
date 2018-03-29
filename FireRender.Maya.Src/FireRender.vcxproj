@@ -196,6 +196,7 @@
   <ItemGroup>
     <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.cpp" />
     <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESprocessor.cpp" />
+    <ClCompile Include="..\FireRender.Components\cpp\ImageFilter\ImageFilter.cpp" />
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\half.cpp" />
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.cpp" />
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.cpp" />
@@ -287,6 +288,7 @@
   <ItemGroup>
     <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.h" />
     <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESprocessor.h" />
+    <ClInclude Include="..\FireRender.Components\cpp\ImageFilter\ImageFilter.h" />
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\eLut.h" />
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\float2.h" />
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\float3.h" />

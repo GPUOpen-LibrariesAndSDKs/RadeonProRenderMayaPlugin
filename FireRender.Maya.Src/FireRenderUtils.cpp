@@ -312,7 +312,52 @@ void FireRenderGlobalsData::readFromCurrentScene()
 			cameraType = plug.asShort();
 
 		aovs.readFromGlobals(frGlobalsNode);
+
+		readDenoiserParameters(frGlobalsNode);
 	});
+}
+
+void FireRenderGlobalsData::readDenoiserParameters(const MFnDependencyNode& frGlobalsNode)
+{
+	MPlug plug = frGlobalsNode.findPlug("denoiserEnabled");
+	if (!plug.isNull())
+		denoiserSettings.enabled = plug.asBool();
+
+	plug = frGlobalsNode.findPlug("denoiserType");
+	if (!plug.isNull())
+		denoiserSettings.type = (FireRenderGlobals::DenoiserType) plug.asInt();
+
+	plug = frGlobalsNode.findPlug("denoiserRadius");
+	if (!plug.isNull())
+		denoiserSettings.radius = plug.asInt();
+
+	plug = frGlobalsNode.findPlug("denoiserSamples");
+	if (!plug.isNull())
+		denoiserSettings.samples = plug.asInt();
+
+	plug = frGlobalsNode.findPlug("denoiserFilterRadius");
+	if (!plug.isNull())
+		denoiserSettings.filterRadius = plug.asInt();
+
+	plug = frGlobalsNode.findPlug("denoiserBandwidth");
+	if (!plug.isNull())
+		denoiserSettings.bandwidth = plug.asFloat();
+
+	plug = frGlobalsNode.findPlug("denoiserColor");
+	if (!plug.isNull())
+		denoiserSettings.color = plug.asFloat();
+
+	plug = frGlobalsNode.findPlug("denoiserDepth");
+	if (!plug.isNull())
+		denoiserSettings.depth = plug.asFloat();
+
+	plug = frGlobalsNode.findPlug("denoiserNormal");
+	if (!plug.isNull())
+		denoiserSettings.normal = plug.asFloat();
+
+	plug = frGlobalsNode.findPlug("denoiserTrans");
+	if (!plug.isNull())
+		denoiserSettings.trans = plug.asFloat();
 }
 
 short FireRenderGlobalsData::getMaxRayDepth(const FireRenderContext& context) const
@@ -551,8 +596,7 @@ void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disa
 
 bool FireRenderGlobalsData::isTonemapping(MString name)
 {
-	int dotIndex = name.index('.');
-	name = name.substring(dotIndex + 1, name.length());
+	name = GetPropertyNameFromPlugName(name);
 
 	if (name == "toneMappingType")
 		return true;
@@ -588,6 +632,24 @@ bool FireRenderGlobalsData::isTonemapping(MString name)
 	return false;
 }
 
+bool FireRenderGlobalsData::isDenoiser(MString name)
+{
+	name = GetPropertyNameFromPlugName(name);
+
+	static const std::vector<MString> propNames = { "denoiserEnabled", "denoiserType", "denoiserRadius", "denoiserSamples",
+		"denoiserFilterRadius", "denoiserBandwidth", "denoiserColor", "denoiserDepth", "denoiserNormal", "denoiserTrans" };
+
+	for (const MString& propName : propNames)
+	{
+		if (propName == name)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 int FireMaya::Options::GetContextDeviceFlags()
 {
 	int ret = FireRenderThread::RunOnMainThread<int>([]
@@ -596,6 +658,7 @@ int FireMaya::Options::GetContextDeviceFlags()
 		MIntArray devicesUsing;
 		MGlobal::executeCommand("optionVar -q RPR_DevicesSelected", devicesUsing);
 		auto allDevices = HardwareResources::GetAllDevices();
+		
 		for (auto i = 0u; i < devicesUsing.length(); i++)
 		{
 			if (devicesUsing[i] && i < allDevices.size())
@@ -609,6 +672,16 @@ int FireMaya::Options::GetContextDeviceFlags()
 	});
 
 	return ret;
+}
+
+
+MString GetPropertyNameFromPlugName(const MString& name)
+{
+	MString outName;
+	int dotIndex = name.index('.');
+	outName = name.substring(dotIndex + 1, name.length());
+
+	return outName;
 }
 
 bool isVisible(MFnDagNode & fnDag, MFn::Type type)
