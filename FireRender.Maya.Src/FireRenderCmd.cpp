@@ -220,6 +220,11 @@ MStatus FireRenderCmd::renderIpr(const MArgDatabase& args)
 		// Start an IPR render.
 		if (args.isFlagSet(kStartFlag) && !s_ipr)
 		{
+			if (s_production != nullptr)
+			{
+				s_production->stop();
+			}
+
 			// Get frame buffer dimensions.
 			unsigned int width = 0;
 			unsigned int height = 0;
