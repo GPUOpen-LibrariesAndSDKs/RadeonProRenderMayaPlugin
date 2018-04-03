@@ -64,7 +64,7 @@ global proc AERPRUberMaterialTemplateNew(string $nodeName)
 		editorTemplate -label "Roughness" -addControl "reflectRoughness";
 		editorTemplate -label "Anisotropy" -addControl "reflectAnisotropy";
 		editorTemplate -label "Anisotropy Rotation" -addControl "reflectAnisotropyRotation";
-		editorTemplate -beginLayout "Fresnel" -collapse 0;
+		editorTemplate -beginLayout "Fresnel Reflection" -collapse 0;
 			editorTemplate -label "IOR" -addControl "reflectIOR" "AEUberCheckReflIOR";
 			editorTemplate -label "Metalness" -addControl "reflectMetalness";
 			editorTemplate -label "Metal Material" -addControl "reflectMetalMaterial" "AEUberCheckReflectMetalness";
@@ -86,7 +86,7 @@ global proc AERPRUberMaterialTemplateNew(string $nodeName)
 		editorTemplate -label "Color" -addControl "coatColor";
 		editorTemplate -label "Weight" -addControl "coatWeight";
 		editorTemplate -label "Roughness" -addControl "coatRoughness";
-		editorTemplate -beginLayout "Fresnel" -collapse 0;
+		editorTemplate -beginLayout "Fresnel Refraction" -collapse 0;
 			editorTemplate -label "IOR" -addControl "coatIOR";
 			editorTemplate -label "Metalness" -addControl "coatMetalness";
 			editorTemplate -label "Metal Material" -addControl "coatMetalMaterial" "AEUberCheckCoatMetalness";
