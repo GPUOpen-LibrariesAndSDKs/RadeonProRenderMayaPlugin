@@ -26,7 +26,7 @@
 #include <maya/MUserEventMessage.h>
 #include "AutoLock.h"
 #include "VRay.h"
-#include "ImageFilter.h"
+#include "ImageFilter/ImageFilter.h"
 #include <chrono>
 
 #include "RprComposite.h"
@@ -334,8 +334,9 @@ void FireRenderContext::turnOnAOVsForDenoiser(bool allocBuffer)
 			enableAOV(aov);
 
 			if (allocBuffer)
-			{		
-				InitBuffersForAOV(scope.Context(), aov);
+			{
+                auto ctx = scope.Context();
+				InitBuffersForAOV(ctx, aov);
 			}
 		}
 	}
