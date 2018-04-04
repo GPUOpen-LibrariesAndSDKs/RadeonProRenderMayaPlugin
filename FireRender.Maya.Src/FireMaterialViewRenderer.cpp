@@ -195,7 +195,7 @@ MStatus FireMaterialViewRenderer::translateLightSource(const MUuid& id, const MO
 			}
 		}
 
-		FireMaya::translateLight(light, m_renderData.m_context.GetMaterialSystem(), m_renderData.m_context.GetContext(), node, MMatrix());
+		FireMaya::translateLight(light, m_renderData.m_context.GetScope(), m_renderData.m_context.GetContext(), node, MMatrix());
 		if (!m_renderData.m_endLight)
 		{
 			if (light.isAreaLight)

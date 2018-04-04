@@ -26,7 +26,9 @@
 #include "FireRenderLocationCmd.h"
 #include "FireRenderIBL.h"
 #include "FireRenderSkyLocator.h"
-#include "IES/FireRenderIESLight.h"
+#include "Lights/IES/FireRenderIESLight.h"
+#include "Lights/PhysicalLight/FireRenderPhysicalLightLocator.h"
+#include "Lights/PhysicalLight/FireRenderPhysicalOverride.h"
 #include "FireRenderEnvironmentLight.h"
 #include "FireRenderOverride.h"
 #include "FireRenderViewport.h"
@@ -344,19 +346,27 @@ bool CheckContextCreationProcedure()
 {
 	rpr_int res;
 	FireRenderContext context;
-	auto createFlags = FireMaya::Options::GetContextDeviceFlags();
-	context.createContextEtc(createFlags, true, false, &res);
-
-	if (res != RPR_SUCCESS)
+	try
 	{
-		MString msg;
+		auto createFlags = FireMaya::Options::GetContextDeviceFlags();
+		context.createContextEtc(createFlags, true, false, &res);
 
-		if (res == RPR_ERROR_INVALID_API_VERSION)
+		if (res != RPR_SUCCESS)
 		{
-			msg = "Please remove all previous versions of plugin if any and make a fresh install";
-		}
+			MString msg;
 
-		FireRenderError(res, msg, true);
+			if (res == RPR_ERROR_INVALID_API_VERSION)
+			{
+				msg = "Please remove all previous versions of plugin if any and make a fresh install";
+			}
+
+			FireRenderError(res, msg, true);
+			return false;
+		}
+	}
+	catch (FireRenderException e)
+	{
+		FireRenderError(e.code, e.message, true);
 		return false;
 	}
 
@@ -451,10 +461,11 @@ MStatus initializePlugin(MObject obj)
 	MString setCachePathString = "import fireRender.fireRenderUtils as fru\nfru.setShaderCachePathEnvironment(\"" + pluginVersion + "\")";
 	MGlobal::executePythonCommand(setCachePathString);
 
-	MString iblCalssification = FireRenderIBL::drawDbClassification;
+	MString iblClassification = FireRenderIBL::drawDbClassification;
 	MString skyClassification = FireRenderSkyLocator::drawDbClassification;
-	MString iesCalssification = FireRenderIESLightLocator::drawDbClassification;
-	MString envLightCalssification = FireRenderEnvironmentLight::drawDbClassification;
+	MString iesClassification = FireRenderIESLightLocator::drawDbClassification;
+	MString physicalClassification = FireRenderPhysicalLightLocator::drawDbClassification;
+	MString envLightClassification = FireRenderEnvironmentLight::drawDbClassification;
 
 	if (!CheckContextCreationProcedure())
 	{
@@ -469,10 +480,10 @@ MStatus initializePlugin(MObject obj)
 		UserUtilityClassify += ":swatch/"_ms + swatchName;
 		UserTextureClassify += ":swatch/"_ms + swatchName;
 
-		iblCalssification += ":swatch/"_ms + swatchName;
+		iblClassification += ":swatch/"_ms + swatchName;
 		skyClassification += ":swatch/"_ms + swatchName;
-		iesCalssification += ":swatch/"_ms + swatchName;
-		envLightCalssification += ":swatch/"_ms + swatchName;
+		iesClassification += ":swatch/"_ms + swatchName;
+		envLightClassification += ":swatch/"_ms + swatchName;
 
 #ifndef MAYA2015
 		CHECK_MSTATUS(plugin.registerRenderer(FIRE_RENDER_NAME, FireMaterialViewRenderer::creator));
@@ -501,7 +512,7 @@ MStatus initializePlugin(MObject obj)
 
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "IBL", FireRenderIBL::id,
 		FireRenderIBL::creator, FireRenderIBL::initialize,
-		MPxNode::kLocatorNode, &iblCalssification));
+		MPxNode::kLocatorNode, &iblClassification));
 
 	CHECK_MSTATUS(MHWRender::MDrawRegistry::registerGeometryOverrideCreator(
 		FireRenderIBL::drawDbClassification,
@@ -519,16 +530,26 @@ MStatus initializePlugin(MObject obj)
 
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "IES", FireRenderIESLightLocator::id,
 		FireRenderIESLightLocator::creator, FireRenderIESLightLocator::initialize,
-		MPxNode::kLocatorNode, &iesCalssification));
+		MPxNode::kLocatorNode, &iesClassification));
 
 	CHECK_MSTATUS(MHWRender::MDrawRegistry::registerGeometryOverrideCreator(
 		FireRenderIESLightLocator::drawDbClassification,
 		FireRenderIESLightLocator::drawRegistrantId,
 		FireRenderIESLightLocatorOverride::Creator));
 
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "PhysicalLight", FireRenderPhysicalLightLocator::id,
+		FireRenderPhysicalLightLocator::creator, FireRenderPhysicalLightLocator::initialize,
+		MPxNode::kLocatorNode, &physicalClassification));
+
+	CHECK_MSTATUS(MHWRender::MDrawRegistry::registerGeometryOverrideCreator(
+		FireRenderPhysicalLightLocator::drawDbClassification,
+		FireRenderPhysicalLightLocator::drawRegistrantId,
+		FireRenderPhysicalOverride::Creator));
+
+
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "EnvLight", FireRenderEnvironmentLight::id,
 		FireRenderEnvironmentLight::creator, FireRenderEnvironmentLight::initialize,
-		MPxNode::kLocatorNode, &envLightCalssification));
+		MPxNode::kLocatorNode, &envLightClassification));
 
 	MString renderPassClassification("rendernode/firerender/renderpass");
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "RenderPass", FireRenderRenderPass::id,

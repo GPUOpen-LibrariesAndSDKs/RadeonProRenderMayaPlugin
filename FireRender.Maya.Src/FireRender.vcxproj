@@ -150,6 +150,7 @@
     <None Include="scripts\AERPRIESTemplate.mel" />
     <None Include="scripts\AERPRMaterialTemplate.mel" />
     <None Include="scripts\AERPRPBRMaterialTemplate.mel" />
+    <None Include="scripts\AERPRPhysicalLightTemplate.mel" />
     <None Include="scripts\AERPRSkyTemplate.mel" />
     <None Include="scripts\AERPRSubsurfaceMaterialTemplate.mel" />
     <None Include="scripts\AERPRUberMaterialTemplate.mel" />
@@ -161,6 +162,7 @@
     <None Include="scripts\fireRenderEnvironment.mel" />
     <None Include="scripts\fireRenderIpr.mel" />
     <None Include="scripts\fireRenderUpdateAE.mel" />
+    <None Include="scripts\physicalLightScripts.mel" />
     <None Include="scripts\rprUnifiedRenderGlobalsWindow201500.mel" />
     <None Include="scripts\rprUnifiedRenderGlobalsWindow201600.mel" />
     <None Include="scripts\rprUnifiedRenderGlobalsWindow201650.mel" />
@@ -266,8 +268,12 @@
     <ClCompile Include="frWrap.cpp" />
     <ClCompile Include="GLTFTranslator.cpp" />
     <ClCompile Include="Hosek\ArHosekSkyModel.cpp" />
-    <ClCompile Include="IES\FireRenderIESLight.cpp" />
-    <ClCompile Include="IES\IESLightLocatorMesh.cpp" />
+    <ClCompile Include="Lights\IES\FireRenderIESLight.cpp" />
+    <ClCompile Include="Lights\IES\IESLightLocatorMesh.cpp" />
+    <ClCompile Include="Lights\PhysicalLight\FireRenderPhysicalLightLocator.cpp" />
+    <ClCompile Include="Lights\PhysicalLight\FireRenderPhysicalOverride.cpp" />
+    <ClCompile Include="Lights\PhysicalLight\PhysicalLightAttributes.cpp" />
+    <ClCompile Include="Lights\PhysicalLight\PhysicalLightGeometryUtility.cpp" />
     <ClCompile Include="MaterialLoader.cpp" />
     <ClCompile Include="pluginMain.cpp" />
     <ClCompile Include="FireRenderMaterial.cpp" />
@@ -382,8 +388,13 @@
     <ClInclude Include="Hosek\ArHosekSkyModelData_CIEXYZ.h" />
     <ClInclude Include="Hosek\ArHosekSkyModelData_RGB.h" />
     <ClInclude Include="Hosek\ArHosekSkyModelData_Spectral.h" />
-    <ClInclude Include="IES\FireRenderIESLight.h" />
-    <ClInclude Include="IES\IESLightLocatorMesh.h" />
+    <ClInclude Include="Lights\IES\FireRenderIESLight.h" />
+    <ClInclude Include="Lights\IES\IESLightLocatorMesh.h" />
+    <ClInclude Include="Lights\PhysicalLight\FireRenderPhysicalLightLocator.h" />
+    <ClInclude Include="Lights\PhysicalLight\FireRenderPhysicalOverride.h" />
+    <ClInclude Include="Lights\PhysicalLight\PhysicalLight.h" />
+    <ClInclude Include="Lights\PhysicalLight\PhysicalLightAttributes.h" />
+    <ClInclude Include="Lights\PhysicalLight\PhysicalLightGeometryUtility.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="MaterialLoader.h" />
     <ClInclude Include="RenderCacheWarningDialog.h" />

@@ -69,9 +69,6 @@
     <Filter Include="Hosek">
       <UniqueIdentifier>{5a9743b7-e730-4e37-bd0b-ed886596a93a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="IES">
-      <UniqueIdentifier>{6cba0e1d-36a2-4dba-8c3b-af914f20e7e6}</UniqueIdentifier>
-    </Filter>
     <Filter Include="FireRender.Components">
       <UniqueIdentifier>{9d98f002-58da-4936-8799-d32d1060b91d}</UniqueIdentifier>
     </Filter>
@@ -80,6 +77,15 @@
     </Filter>
     <Filter Include="Resources\Scripts\AttributeEditorTemplates">
       <UniqueIdentifier>{c3527e75-96bc-4665-a6c5-d24dc1665482}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lights">
+      <UniqueIdentifier>{c8a856f7-c3bf-463e-a9f2-63b0f38277fe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lights\IES">
+      <UniqueIdentifier>{6cba0e1d-36a2-4dba-8c3b-af914f20e7e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Lights\PhysicalLight">
+      <UniqueIdentifier>{11342f44-7b0b-475f-86f2-d9fb8bf2570f}</UniqueIdentifier>
     </Filter>
     <Filter Include="FireRender.Components\Denoiser">
       <UniqueIdentifier>{3faa1ebe-5f43-4cfb-801a-0c7d34b193d6}</UniqueIdentifier>
@@ -200,6 +206,12 @@
     </None>
     <None Include="scripts\AERPRPBRMaterialTemplate.mel">
       <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
+    </None>
+    <None Include="scripts\AERPRPhysicalLightTemplate.mel">
+      <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
+    </None>
+    <None Include="scripts\physicalLightScripts.mel">
+      <Filter>Resources\Scripts</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -431,12 +443,6 @@
     <ClCompile Include="RprComposite.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="IES\FireRenderIESLight.cpp">
-      <Filter>IES</Filter>
-    </ClCompile>
-    <ClCompile Include="IES\IESLightLocatorMesh.cpp">
-      <Filter>IES</Filter>
-    </ClCompile>
     <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.cpp">
       <Filter>FireRender.Components\IESLight</Filter>
     </ClCompile>
@@ -451,6 +457,24 @@
     </ClCompile>
     <ClCompile Include="FireRenderPBRMaterial.cpp">
       <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="Lights\IES\FireRenderIESLight.cpp">
+      <Filter>Lights\IES</Filter>
+    </ClCompile>
+    <ClCompile Include="Lights\IES\IESLightLocatorMesh.cpp">
+      <Filter>Lights\IES</Filter>
+    </ClCompile>
+    <ClCompile Include="Lights\PhysicalLight\FireRenderPhysicalLightLocator.cpp">
+      <Filter>Lights\PhysicalLight</Filter>
+    </ClCompile>
+    <ClCompile Include="Lights\PhysicalLight\FireRenderPhysicalOverride.cpp">
+      <Filter>Lights\PhysicalLight</Filter>
+    </ClCompile>
+    <ClCompile Include="Lights\PhysicalLight\PhysicalLightGeometryUtility.cpp">
+      <Filter>Lights\PhysicalLight</Filter>
+    </ClCompile>
+    <ClCompile Include="Lights\PhysicalLight\PhysicalLightAttributes.cpp">
+      <Filter>Lights\PhysicalLight</Filter>
     </ClCompile>
     <ClCompile Include="..\FireRender.Components\cpp\ImageFilter\ImageFilter.cpp">
       <Filter>FireRender.Components\Denoiser</Filter>
@@ -760,12 +784,6 @@
     <ClInclude Include="RprComposite.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="IES\FireRenderIESLight.h">
-      <Filter>IES</Filter>
-    </ClInclude>
-    <ClInclude Include="IES\IESLightLocatorMesh.h">
-      <Filter>IES</Filter>
-    </ClInclude>
     <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.h">
       <Filter>FireRender.Components\IESLight</Filter>
     </ClInclude>
@@ -780,6 +798,27 @@
     </ClInclude>
     <ClInclude Include="FireRenderPBRMaterial.h">
       <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\IES\FireRenderIESLight.h">
+      <Filter>Lights\IES</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\IES\IESLightLocatorMesh.h">
+      <Filter>Lights\IES</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\PhysicalLight\PhysicalLight.h">
+      <Filter>Lights\PhysicalLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\PhysicalLight\FireRenderPhysicalLightLocator.h">
+      <Filter>Lights\PhysicalLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\PhysicalLight\FireRenderPhysicalOverride.h">
+      <Filter>Lights\PhysicalLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\PhysicalLight\PhysicalLightGeometryUtility.h">
+      <Filter>Lights\PhysicalLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\PhysicalLight\PhysicalLightAttributes.h">
+      <Filter>Lights\PhysicalLight</Filter>
     </ClInclude>
     <ClInclude Include="..\FireRender.Components\cpp\ImageFilter\ImageFilter.h">
       <Filter>FireRender.Components\Denoiser</Filter>

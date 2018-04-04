@@ -20,10 +20,11 @@
 
 #define CM_2_M 0.01
 
-#define LIGHT_SCALE 2.5
+#define LIGHT_SCALE 2.5f
 
 // Forward declarations
 class SkyBuilder;
+struct PhysicalLightData;
 
 struct FrElement
 {
@@ -98,7 +99,10 @@ namespace FireMaya
 
 	std::vector<frw::Shape> TranslateMesh(frw::Context context, const MObject& originalObject);
 
-	bool translateLight(FrLight& frlight, frw::MaterialSystem frMatsys, frw::Context frcontext, const MObject& object, const MMatrix& matrix, bool update = false);
+	bool translateLight(FrLight& frlight, Scope& scope, frw::Context frcontext, const MObject& object, const MMatrix& matrix, bool update = false);
+
+	bool translateAreaLightInternal(FrLight& frlight, Scope& scope, frw::Context frcontext, const MObject& object,
+											const MMatrix& matrix, const MDagPath& dagPath, const PhysicalLightData& areaLightData, bool update);
 
 	bool translateEnvLight(frw::EnvironmentLight& frlight, frw::Image& frImage, frw::Context frcontext, FireMaya::Scope &scope, const MObject& object, const MMatrix& matrix, bool update = false);
 
@@ -106,10 +110,10 @@ namespace FireMaya
 
 	bool translateVrayLight(FrLight& frlight, frw::MaterialSystem frMatsys, frw::Context frcontext, const MObject& object, const MMatrix& matrix, bool update = false);
 
-	inline double rad2deg(double radians)
-	{
-		return (180.0 / M_PI)*radians;
-	}
+	void ScaleMatrixFromCmToMFloats(const MMatrix& matrix, float floats[4][4]);
+	void ScaleMatrixFromCmToM(MMatrix& matrix);
+
+	void FillLightData(PhysicalLightData& physicalLightData, const MObject& object, Scope& scope);
 
 	template<typename T,
 		// Enable this function for floating point types only

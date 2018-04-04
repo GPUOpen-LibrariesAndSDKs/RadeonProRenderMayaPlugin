@@ -80,6 +80,9 @@ def createEmissive(data):
 def createIESLight(data):
     mel.eval('source shelfCommands.mel; createIESLight();')
 
+def createPhysicalLight(data):
+    mel.eval('source shelfCommands.mel; createPhysicalLight();')
+
 def convertVRayToRPR(data):
     mel.eval('source shelfCommands.mel; convertVRayObjects();')
 
@@ -150,6 +153,7 @@ def createFireRenderMenu():
         maya.cmds.menuItem("FrLightsIBL", label="Create or Select an IBL Node", p=frRPRLights, c=createIBL)
         maya.cmds.menuItem("FrLightsEmissive", label="Create and Assign an Emissive Material to the Selected Object", p=frRPRLights, c=createEmissive)
         maya.cmds.menuItem("FrLightsIES", label="Create IES light node", p=frRPRLights, c=createIESLight)
+        maya.cmds.menuItem("FrLightsPhysical", label="Create physical light node", p=frRPRLights, c=createPhysicalLight)
 
 
         frRPRConvert = maya.cmds.menuItem("frRPRConvert", subMenu=True, label="Convert", p=showFireRenderMenuCtrl)
