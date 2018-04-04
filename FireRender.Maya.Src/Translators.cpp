@@ -47,6 +47,9 @@
 #include "FireRenderMath.h"
 #include "FireRenderThread.h"
 
+#include "PhysicalLightAttributes.h"
+#include "PhysicalLightGeometryUtility.h"
+
 namespace
 {
 	//	#define PROFILE 1			// profile mesh loading code
@@ -256,10 +259,10 @@ namespace FireMaya
 		}
 
 		// Setting Near and Far clipping plane
-		frstatus = rprCameraSetNearPlane(frcamera, fnCamera.nearClippingPlane() * cmToMCoefficient);
+		frstatus = rprCameraSetNearPlane(frcamera, (float)(fnCamera.nearClippingPlane() * cmToMCoefficient));
 		checkStatus(frstatus);
 
-		frstatus = rprCameraSetFarPlane(frcamera, fnCamera.farClippingPlane() * cmToMCoefficient);
+		frstatus = rprCameraSetFarPlane(frcamera, (float)(fnCamera.farClippingPlane() * cmToMCoefficient));
 		checkStatus(frstatus);
 
 		return true;
@@ -633,8 +636,7 @@ namespace FireMaya
 		return elements;
 	}
 
-
-	bool translateLight(FrLight& frlight, frw::MaterialSystem frMatsys, frw::Context frcontext, const MObject& object, const MMatrix& matrix, bool update)
+	bool translateLight(FrLight& frlight, Scope& scope, frw::Context frcontext, const MObject& object, const MMatrix& matrix, bool update)
 	{
 		rpr_int frstatus;
 		MStatus mstatus;
@@ -644,21 +646,6 @@ namespace FireMaya
 		mstatus = dagNode.getPath(dagPath);
 		assert(mstatus == MStatus::kSuccess);
 
-		MMatrix m = matrix;
-		assert(mstatus == MStatus::kSuccess);
-		// convert Maya mesh in cm to m
-		MMatrix scaleM;
-		scaleM.setToIdentity();
-		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
-		m *= scaleM;
-		float mfloats[4][4];
-		mstatus = m.get(mfloats);
-		assert(mstatus == MStatus::kSuccess);
-
-		MFnLight fnLight(object);
-		MColor color = fnLight.color() * fnLight.intensity(&mstatus) * LIGHT_SCALE;
-
-		assert(mstatus == MStatus::kSuccess);
 		if (!update)
 		{
 			frlight.isAreaLight = false;
@@ -666,130 +653,67 @@ namespace FireMaya
 				frlight.areaLight.SetAreaLightFlag(false);
 		}
 
-		if (object.apiType() == MFn::kAreaLight)
+		PhysicalLightData lightData;
+		FillLightData(lightData, object, scope);
+
+		if (!lightData.enabled)
 		{
-			// Fire Render's area light is implemented as a mesh with emissive shader
-			if (update)
-			{
-				if (!frlight.areaLight)
-				{
-					return false;
-				}
-
-				frlight.areaLight.SetTransform((rpr_float*)mfloats);
-				if (frlight.emissive)
-					frlight.emissive.SetValue("color", frw::Value(color.r, color.g, color.b));
-			}
-			else
-			{
-				if (!frlight.emissive)
-					frlight.emissive = frw::EmissiveShader(frMatsys);
-
-				if (!frlight.transparent)
-					frlight.transparent = frw::EmissiveShader(frMatsys);
-
-				//create transparent shader for portals
-
-				struct vertex
-				{
-					rpr_float pos[3];
-					rpr_float norm[3];
-					rpr_float tex[2];
-				};
-
-				static const vertex quad[] =
-				{
-					{ -1.f, -1.f, 0.f,		0.f, 0.f, -1.f,			0.f, 0.f },
-					{ 1.f, -1.f, 0.f,		0.f, 0.f, -1.f,			1.f, 0.f },
-					{ 1.f,  1.f, 0.f,		0.f, 0.f, -1.f,			1.f, 1.f },
-					{ -1.f,  1.f, 0.f,		0.f, 0.f, -1.f,			0.f, 1.f }
-				};
-
-				static const rpr_int indices[] =
-				{
-					0, 2, 1,
-					0, 3, 2
-				};
-
-				static const rpr_int num_face_vertices[] =
-				{
-					3, 3
-				};
-
-				frlight.areaLight = frcontext.CreateMesh(
-					(rpr_float const*)&quad[0], 24, sizeof(vertex),
-					(rpr_float const*)((char*)&quad[0] + sizeof(rpr_float) * 3), 24, sizeof(vertex),
-					(rpr_float const*)((char*)&quad[0] + sizeof(rpr_float) * 6), 24, sizeof(vertex),
-					(rpr_int const*)indices, sizeof(rpr_int),
-					(rpr_int const*)indices, sizeof(rpr_int),
-					(rpr_int const*)indices, sizeof(rpr_int),
-					num_face_vertices, 2);
-
-				frlight.areaLight.SetTransform((rpr_float*)mfloats);
-				frlight.areaLight.SetShader(frlight.emissive);
-				frlight.areaLight.SetAreaLightFlag(true);
-				frlight.emissive.SetValue("color", frw::Value(color.r, color.g, color.b));
-				frlight.isAreaLight = true;
-			}
-
-			if (frlight.areaLight)
-			{
-				bool shapeVisibility = false;
-				MPlug shapeVisibilityPlug = fnLight.findPlug("primaryVisibility");
-				if (!shapeVisibilityPlug.isNull())
-					shapeVisibilityPlug.getValue(shapeVisibility);
-
-				frlight.areaLight.SetPrimaryVisibility(shapeVisibility);
-				frlight.areaLight.SetShadowFlag(shapeVisibility);
-			}
+			return true;
+		}
+	
+		if (lightData.lightType == PLTArea)
+		{
+			return translateAreaLightInternal(frlight, scope, frcontext, object, matrix, dagPath, lightData, update);
 		}
 		else
 		{
-			if (object.apiType() == MFn::kSpotLight)
+			MColor color = lightData.GetChosenColor() * lightData.GetCalculatedIntensity();
+
+			float mfloats[4][4];
+			ScaleMatrixFromCmToMFloats(matrix, mfloats);
+
+			if (lightData.lightType == PLTSpot)
 			{
 				if (!update)
 					frlight.light = frcontext.CreateSpotLight();
 
-				MFnSpotLight fnSpotLight(object);
-				double coneAngle = fnSpotLight.coneAngle(&mstatus) * 0.5;
-				assert(mstatus == MStatus::kSuccess);
-
-				double penumbraAngle = coneAngle + fnSpotLight.penumbraAngle(&mstatus);
-
-				assert(mstatus == MStatus::kSuccess);
-				frstatus = rprSpotLightSetConeShape(frlight.light.Handle(), static_cast<float>(coneAngle), static_cast<float>(penumbraAngle));
+				frstatus = rprSpotLightSetConeShape(frlight.light.Handle(), lightData.spotInnerAngle, lightData.spotOuterFallOff);
 				checkStatus(frstatus);
 
-				auto factor = MDistance::uiToInternal(0.01);
+				float factor = 1.0f;// MDistance::uiToInternal(0.01);
 				frstatus = rprSpotLightSetRadiantPower3f(frlight.light.Handle(),
 					static_cast<float>(color.r * factor),
 					static_cast<float>(color.g * factor),
 					static_cast<float>(color.b * factor));
 				checkStatus(frstatus);
 			}
-			else if (object.apiType() == MFn::kDirectionalLight)
+			else if (lightData.lightType == PLTDirectional)
 			{
 				if (!update)
 					frlight.light = frcontext.CreateDirectionalLight();
 
 				frstatus = rprDirectionalLightSetRadiantPower3f(frlight.light.Handle(), color.r, color.g, color.b);
 				checkStatus(frstatus);
+
+				float softness = lightData.shadowsEnabled ? lightData.shadowsSoftness : 0.0f;
+				
+				frstatus = rprDirectionalLightSetShadowSoftness(frlight.light.Handle(), softness);
+				checkStatus(frstatus);
 			}
-			else if (object.apiType() == MFn::kPointLight)
+			else if (lightData.lightType == PLTPoint)
 			{
 				if (!update)
 					frlight.light = frcontext.CreatePointLight();
-				auto factor = MDistance::uiToInternal(0.01);
+
+				float factor = 1.0f;// MDistance::uiToInternal(0.01);
 				frstatus = rprPointLightSetRadiantPower3f(frlight.light.Handle(),
 					static_cast<float>(color.r * factor * factor),
 					static_cast<float>(color.g * factor * factor),
 					static_cast<float>(color.b * factor * factor));
 				checkStatus(frstatus);
 			}
-			else if (object.apiType() == MFn::kAmbientLight) {
-				return false;
-			}
-			else if (object.apiType() == MFn::kVolumeLight) {
+			else if (lightData.lightType == PLTUnknown)
+			{
 				return false;
 			}
 
@@ -797,6 +721,189 @@ namespace FireMaya
 		}
 
 		return true;
+	}
+
+	void FillLightData(PhysicalLightData& physicalLightData, const MObject& node, Scope& scope)
+	{
+		// Maya's light
+		if (node.hasFn(MFn::kLight))
+		{
+			MStatus mstatus;
+			MFnLight fnLight(node);
+
+			physicalLightData.enabled = true;
+			physicalLightData.colorMode = PLCColor;
+			physicalLightData.intensityUnits = PLTIUWatts;
+			physicalLightData.colorBase = fnLight.color();
+			physicalLightData.intensity = fnLight.intensity(&mstatus) * LIGHT_SCALE;
+
+			physicalLightData.resultFrwColor = frw::Value(physicalLightData.colorBase.r, physicalLightData.colorBase.g,
+															physicalLightData.colorBase.b) * physicalLightData.intensity;
+
+			physicalLightData.areaWidth = 1.0f;
+			physicalLightData.areaLength = 1.0f;
+
+			physicalLightData.shadowsEnabled = true;
+			physicalLightData.shadowsSoftness = 1.0f;
+
+			assert(mstatus == MStatus::kSuccess);
+
+			if (node.apiType() == MFn::kAreaLight)
+			{
+				physicalLightData.lightType = PLTArea;
+				physicalLightData.areaLightShape = PLARectangle;
+			}
+			else if (node.apiType() == MFn::kSpotLight)
+			{
+				physicalLightData.lightType = PLTSpot;
+
+				MFnSpotLight fnSpotLight(node);
+				double coneAngle = fnSpotLight.coneAngle(&mstatus) * 0.5;
+				assert(mstatus == MStatus::kSuccess);
+
+				double penumbraAngle = coneAngle + fnSpotLight.penumbraAngle(&mstatus);
+				assert(mstatus == MStatus::kSuccess);
+
+				physicalLightData.spotInnerAngle = (float)coneAngle;
+				physicalLightData.spotOuterFallOff = (float) penumbraAngle;
+			}
+			else if (node.apiType() == MFn::kDirectionalLight)
+			{
+				physicalLightData.lightType = PLTDirectional;
+			}
+			else if (node.apiType() == MFn::kPointLight)
+			{
+				physicalLightData.lightType = PLTPoint;
+			}
+			else if (node.apiType() == MFn::kAmbientLight)
+			{
+				physicalLightData.lightType = PLTUnknown;
+			}
+			else if (node.apiType() == MFn::kVolumeLight)
+			{
+				physicalLightData.lightType = PLTUnknown;
+			}
+		}
+		// RPR physical light
+		else 
+		{
+			PhysicalLightAttributes::FillPhysicalLightData(physicalLightData, node, &scope);
+		}
+	}
+
+	bool translateAreaLightInternal(FrLight& frlight, 
+									Scope& scope,
+									frw::Context frcontext, 
+									const MObject& lightObject, 
+									const MMatrix& matrix,
+									const MDagPath& dagPath,
+									const PhysicalLightData& areaLightData,
+									bool update)
+	{
+		MFnDependencyNode depNode(lightObject);
+
+		MTransformationMatrix trm;
+
+		double scale[3]{ areaLightData.areaWidth, areaLightData.areaWidth, areaLightData.areaLength };
+		trm.setScale(scale, MSpace::Space::kObject);
+
+		MMatrix transformMatrix = trm.asMatrix() * matrix;
+
+		float calculatedArea = 1.0f;
+		if (update && !frlight.areaLight)
+		{
+			return false;
+		}
+		else
+		{
+			if (!frlight.emissive)
+				frlight.emissive = frw::EmissiveShader(scope.MaterialSystem());
+
+			if (!frlight.transparent)
+				frlight.transparent = frw::EmissiveShader(scope.MaterialSystem());
+
+			if (areaLightData.areaLightShape != PLAMesh)
+			{
+				frlight.areaLight = PhysicalLightGeometryUtility::CreateShapeForAreaLight(areaLightData.areaLightShape, frcontext);
+				calculatedArea = PhysicalLightGeometryUtility::GetAreaOfMeshPrimitive(areaLightData.areaLightShape, transformMatrix);
+			}
+			else
+			{
+				MDagPath shapeDagPath;
+				if (!findMeshShapeForMeshPhysicalLight(dagPath, shapeDagPath))
+				{
+					return false; // no mesh found
+				}
+
+				std::vector<frw::Shape> shapes = TranslateMesh(frcontext, shapeDagPath.node());
+				if (shapes.size() > 0)
+				{
+					frlight.areaLight = shapes[0];
+				}
+				else
+				{
+					// bad node probably
+					return false;
+				}
+
+				transformMatrix = trm.asMatrix() * shapeDagPath.inclusiveMatrix();
+				calculatedArea = PhysicalLightGeometryUtility::GetAreaOfMesh(shapeDagPath.node(), transformMatrix);
+			}
+
+			frlight.areaLight.SetShader(frlight.emissive);
+			frlight.areaLight.SetAreaLightFlag(true);
+			frlight.isAreaLight = true;
+		}
+
+		if (frlight.areaLight)
+		{
+			float matrixfloats[4][4];
+			ScaleMatrixFromCmToMFloats(transformMatrix, matrixfloats);
+
+			frlight.areaLight.SetTransform((rpr_float*)matrixfloats);
+			if (frlight.emissive)
+			{
+				frlight.emissive.SetValue("color", 
+					areaLightData.resultFrwColor * areaLightData.GetCalculatedIntensity(calculatedArea));
+			}
+
+			bool shapeVisibility = false;
+			MPlug shapeVisibilityPlug = depNode.findPlug("primaryVisibility");
+			if (!shapeVisibilityPlug.isNull())
+			{
+				shapeVisibilityPlug.getValue(shapeVisibility);
+			}
+
+			shapeVisibility = shapeVisibility && areaLightData.areaLightVisible;
+
+			frlight.areaLight.SetPrimaryVisibility(shapeVisibility);
+			frlight.areaLight.SetShadowFlag(shapeVisibility && areaLightData.shadowsEnabled);
+			frlight.areaLight.SetReflectionVisibility(shapeVisibility);
+		}
+
+		return true;
+	}
+
+	void ScaleMatrixFromCmToMFloats(const MMatrix& matrix, float floats[4][4])
+	{
+		MStatus mstatus;
+
+		MMatrix m = matrix;
+		// convert Maya mesh in cm to m
+
+		ScaleMatrixFromCmToM(m);
+		mstatus = m.get(floats);
+		assert(mstatus == MStatus::kSuccess);
+	}
+
+	void ScaleMatrixFromCmToM(MMatrix& matrix)
+	{
+		// convert Maya mesh in cm to m
+		MMatrix scaleM;
+		scaleM.setToIdentity();
+		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = CM_2_M;
+
+		matrix *= scaleM;
 	}
 
 	bool getInputColorConnection(const MPlug& colorPlug, MPlug& connectedPlug)

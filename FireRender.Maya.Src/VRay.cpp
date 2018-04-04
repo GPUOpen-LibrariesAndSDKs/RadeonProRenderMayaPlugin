@@ -641,7 +641,7 @@ namespace FireMaya
 					vertexIndices, sizeof(int),
 					normalIndices, sizeof(int),
 					texcoord_indices, sizeof(int),
-					polyCount, 400);
+					polyCountArray, 400);
 
 				frlight.areaLight.SetTransform((rpr_float*)mfloats);
 				frlight.areaLight.SetShader(frlight.emissive);

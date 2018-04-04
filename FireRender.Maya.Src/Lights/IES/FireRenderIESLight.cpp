@@ -49,7 +49,6 @@ MStatus FireRenderIESLightLocator::initialize()
 {
 	MFnNumericAttribute nAttr;
 	MFnTypedAttribute tAttr;
-	MFnEnumAttribute eAttr;
 	MFnMessageAttribute mAttr;
 
 	aMeshRepresentationUpdated = nAttr.create("meshRepresentationUpdated", "mru", MFnNumericData::kBoolean, 0);

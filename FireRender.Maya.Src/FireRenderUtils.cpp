@@ -760,7 +760,46 @@ bool isGeometry(const MObject& node)
 
 bool isLight(const MObject& node)
 {
-	return node.hasFn(MFn::kLight);
+	return node.hasFn(MFn::kLight) || 
+		MFnDependencyNode(node).typeId() == FireMaya::TypeId::FireRenderPhysicalLightLocator;
+}
+
+double rad2deg(double radians)
+{
+	return (180.0 / M_PI)*radians;
+}
+
+double deg2rad(double degrees)
+{
+	return (M_PI / 180.0)*degrees;
+}
+
+// Finds Mesh node on the same level as Light transform
+bool findMeshShapeForMeshPhysicalLight(const MDagPath&  physicalLightPath, MDagPath& shapeDagPath)
+{
+	MDagPath path = physicalLightPath;
+
+	// Search for 1 level above and than iterating throught children to find mesh
+	MStatus status = path.pop(1);
+
+	if (status != MStatus::kSuccess)
+	{
+		return false;
+	}
+
+	int c = path.childCount();
+
+	for (int i = 0; i < c; i++)
+	{
+		if (path.child(i).hasFn(MFn::kMesh))
+		{
+			path.push(path.child(i));
+			shapeDagPath = path;
+			return true;
+		}
+	}
+
+	return false;
 }
 
 MStatus getVisibleObjects(MDagPathArray& objects, MFn::Type type, bool checkVisibility)

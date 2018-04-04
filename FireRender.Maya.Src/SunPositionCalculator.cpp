@@ -1,6 +1,7 @@
 #include <maya/MTypes.h>
 #include <math.h>
 #include "SunPositionCalculator.h"
+#include "FireRenderUtils.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // Sun Position Calculator
@@ -406,16 +407,6 @@ namespace
 	};
 
 	///////////////////////////////////////////////
-
-	double rad2deg(double radians)
-	{
-		return (180.0 / M_PI)*radians;
-	}
-
-	double deg2rad(double degrees)
-	{
-		return (M_PI / 180.0)*degrees;
-	}
 
 	int integer(double value)
 	{

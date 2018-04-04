@@ -546,7 +546,7 @@ void FireRenderMesh::buildSphere()
 		vertexIndices, sizeof(int),
 		normalIndices, sizeof(int),
 		texcoord_indices, sizeof(int),
-		polyCount, 400))
+		polyCountArray, 400))
 	{
 		m.elements.push_back(FrElement{ sphere });
 	}
@@ -1050,10 +1050,13 @@ void FireRenderLight::Freshen()
 	{
 		auto mMtx = dagPath.inclusiveMatrix();
 
-		if (node.hasFn(MFn::kPluginLocatorNode) || node.hasFn(MFn::kPluginTransformNode))
+		MFnDependencyNode depNode(node);
+		if (depNode.typeId() == FireMaya::TypeId::FireRenderPhysicalLightLocator)
+			FireMaya::translateLight(m_light, context()->GetScope(), Context(), node, mMtx);
+		else if (node.hasFn(MFn::kPluginLocatorNode) || node.hasFn(MFn::kPluginTransformNode))
 			FireMaya::translateVrayLight(m_light, context()->GetMaterialSystem(), Context(), node, mMtx);
 		else
-			FireMaya::translateLight(m_light, context()->GetMaterialSystem(), Context(), node, mMtx);
+			FireMaya::translateLight(m_light, context()->GetScope(), Context(), node, mMtx);
 
 		if (dagPath.isVisible())
 			attachToScene();

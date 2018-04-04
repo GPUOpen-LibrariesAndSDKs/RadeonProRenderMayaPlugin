@@ -220,6 +220,11 @@ bool isVisible(MFnDagNode & fnDag, MFn::Type type);
 bool isGeometry(const MObject& node);
 bool isLight(const MObject& node);
 
+double rad2deg(double radians);
+double deg2rad(double degrees);
+
+bool findMeshShapeForMeshPhysicalLight(const MDagPath&  physicalLightPath, MDagPath& shapeDagPath);
+
 // Get visible objects
 MStatus getVisibleObjects(MDagPathArray& dagArray, MFn::Type type, bool checkVisibility = true);
 

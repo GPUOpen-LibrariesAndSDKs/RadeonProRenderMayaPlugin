@@ -1,0 +1,267 @@
+global proc AERPRPhysicalLightTemplate( string $nodeName )
+{
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout "General" -collapse 0 plGeneralSection;
+			editorTemplate -addControl "enabled";
+			editorTemplate -addControl "lightType" "onLightTypeChanged";
+			editorTemplate -addControl "areaWidth";
+			editorTemplate -addControl "areaLength";
+//			editorTemplate -addControl "targeted";
+		editorTemplate -endLayout;
+
+		editorTemplate -beginLayout "Intensity" -collapse 0 plIntensitySection;
+			editorTemplate -addControl "lightIntensity";
+			//editorTemplate -addControl "intensityUnits" onIntensityUnitsChanged;
+			editorTemplate -callCustom "intensityUnitsNew" "intensityUnitsReplace" "intensityUnits";
+			editorTemplate -addControl "luminousEfficacy";
+			editorTemplate -addControl "colorMode" onColorModeChanged;
+			editorTemplate -addControl "colorPicker";
+			editorTemplate -addControl "temperature" onTemperatureChanged;
+			editorTemplate -label " " -addControl "temperatureColor";
+		editorTemplate -endLayout;
+
+		editorTemplate -beginLayout "Area Light" -collapse 0 plAreaLightSection;
+			editorTemplate -label "Visible" -addControl "areaLightVisible";
+			editorTemplate -label "Bi-Directional" -addControl "areaLightBidirectional";
+			editorTemplate -label "Light Shape" -addControl "areaLightShape" onAreaLightShapeChanged;
+			editorTemplate -callCustom "areaLightMeshSelectNew" "areaLightMeshSelectReplace" "areaLightSelectingMesh";
+			editorTemplate -label "Intensity Normalization" -addControl "areaLightIntensityNorm";
+		editorTemplate -endLayout;
+
+		editorTemplate -beginLayout "Spot Light" -collapse 0 plSpotLightSection;
+			editorTemplate -label "Visible" -addControl "spotLightVisible";
+			editorTemplate -label "Inner Cone Angle" -addControl "spotLightInnerConeAngle" onConeAngleChanged;
+			editorTemplate -label "Outer Cone Falloff" -addControl "spotLightOuterConeFalloff" onConeAngleChanged;
+		editorTemplate -endLayout;
+
+		editorTemplate -beginLayout "Decay" -collapse 0 plDecaySection;
+			editorTemplate -label "Type" -addControl "decayType" dimUnsupportedAttributes;
+			editorTemplate -label "Falloff Start" -addControl "decayFalloffStart";
+			editorTemplate -label "Falloff End" -addControl "decayFalloffEnd";
+		editorTemplate -endLayout;
+
+		editorTemplate -beginLayout "Shadows" -collapse 0 plShadowsSection;
+			editorTemplate -label "Enabled" -addControl "shadowsEnabled";
+			editorTemplate -label "Softness" -addControl "shadowsSoftness";
+			editorTemplate -label "Transparency" -addControl "shadowsTransparency";
+		editorTemplate -endLayout;
+
+		editorTemplate -beginLayout "Volume" -collapse 0 plVolumeSection;
+			editorTemplate -label "volume Scale" -addControl "volumeScale";
+		editorTemplate -endLayout;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}
+
+global proc intensityUnitsNew( string $attrName )
+{
+	rowLayout -columnAttach1 "left" -columnOffset1 60;
+		optionMenu -label "Intensity Units" -changeCommand "onIntensityUnitsChanged" RPR_IntensityUnitsControl;
+		menuItem -label "Lumen" -data 0 RPR_LumenItem;
+		menuItem -label "Luminance" -data 1 RPR_LuminanceItem;
+		menuItem -label "Watts" -data 2 RPR_WattsItem;
+		menuItem -label "Radiance" -data 3 RPR_RadianceItem;
+
+		//button;button;
+	setParent ..;
+
+	connectControl RPR_IntensityUnitsControl $attrName;
+}
+
+global proc intensityUnitsReplace( string $attrName )
+{
+	connectControl RPR_IntensityUnitsControl $attrName;
+}
+
+global proc onIntensityUnitsChanged()
+{
+	$attrName = `attrControlGrp -query -attribute RPR_IntensityUnitsControl`;
+
+	$unitLumens = 0;
+	$unitLuminance = 1;
+	$unitWatts = 2;
+	$unitRadiance = 3;
+
+	string $strArray[] = stringToStringArray($attrName, ".");
+
+	$nodeName = $strArray[0];
+
+	$unitsType = `getAttr $attrName`;
+	$disabled = ($unitsType == $unitLumens) || ($unitsType == $unitLuminance);
+
+	editorTemplate -dimControl $nodeName "luminousEfficacy" $disabled;
+}
+
+global proc onLightTypeChanged(string $nodeName)
+{
+	$optionsCount = 4;
+
+	$areaType = 0;
+	$spotType = 1;
+	$pointType = 2;
+	$directionalType = 3;
+
+	$type = `getAttr ($nodeName + ".lightType")`;
+
+	enableAreaSection($nodeName, $type == $areaType);
+	enableSpotSection($nodeName, $type == $spotType);
+
+	// Shadow Softness is supported only for directional light at the moment
+	//enableShadowsSection($nodeName, $type == $directionalType);
+	editorTemplate -dimControl $nodeName "shadowsSoftness" ($type != $directionalType);
+	editorTemplate -dimControl $nodeName "shadowsEnabled" ($type != $areaType);
+
+	//setting up Intensity Units
+	int $enables[];
+	$enables[0] = $type != $directionalType;
+	$enables[1] = ($type == $directionalType) || ($type == $areaType);
+	$enables[2] = $enables[0];
+	$enables[3] = $enables[1];
+
+	// select query has 1-based index
+	int $sel = `optionMenu -query -select RPR_IntensityUnitsControl` - 1;
+
+	if ($enables[$sel] == 0)
+	{
+		$sel = ($sel % 2) == 0 ? $sel + 1 : $sel - 1;
+		//optionMenu -edit -select ($sel + 1) RPR_IntensityUnitsControl;
+
+		$attrName = `attrControlGrp -query -attribute RPR_IntensityUnitsControl`;
+		setAttr $attrName $sel;
+	}
+
+	menuItem -edit -enable $enables[0] RPR_LumenItem;
+	menuItem -edit -enable $enables[1] RPR_LuminanceItem;
+	menuItem -edit -enable $enables[2] RPR_WattsItem;
+	menuItem -edit -enable $enables[3] RPR_RadianceItem;
+}
+
+
+global proc string getMeshButtonCommand(string $attrName)
+{
+	return "onSelectMeshButtonClicked(\"" + $attrName + "\")";
+}
+
+global proc areaLightMeshSelectNew( string $attrName )
+{
+	// Maya the "quick set" control for the scale attribute
+	$command = getMeshButtonCommand($attrName);
+	rowLayout;
+	button
+		-label "Select Mesh"
+		-width 150
+		-command $command
+		areaLightMeshSelectButton;
+	setParent ..;
+
+	connectControl areaLightMeshSelectButton $attrName;
+}
+
+global proc areaLightMeshSelectReplace( string $attrName )
+{
+	$command = getMeshButtonCommand($attrName);
+
+	connectControl areaLightMeshSelectButton $attrName;
+
+	button -edit -command $command areaLightMeshSelectButton;
+}
+
+global proc onSelectMeshButtonClicked(string $attrName)
+{
+	setAttr $attrName 1;
+}
+
+global proc enableAreaSection(string $nodeName, int $flag)
+{
+	$val = $flag == 0;
+	editorTemplate -dimControl $nodeName "areaLightVisible" $val;
+	editorTemplate -dimControl $nodeName "areaLightBidirectional" $val;
+	editorTemplate -dimControl $nodeName "areaLightShape" $val;
+//	editorTemplate -dimControl $nodeName "areaLightButton" $val;
+//	editorTemplate -dimControl $nodeName "areaLightIntensityNorm" $val;
+
+	editorTemplate -dimControl $nodeName "areaWidth" $val;
+	editorTemplate -dimControl $nodeName "areaLength" $val;
+}
+
+global proc enableSpotSection(string $nodeName, int $flag)
+{
+	$val = $flag == 0;
+
+	//editorTemplate -dimControl $nodeName "spotLightVisible" $val;
+	editorTemplate -dimControl $nodeName "spotLightInnerConeAngle" $val;
+	editorTemplate -dimControl $nodeName "spotLightOuterConeFalloff" $val;
+}
+
+global proc enableVolumeSection(string $nodeName, int $flag)
+{
+	editorTemplate -dimControl $nodeName "volumeScale" ($flag == 0);
+}
+
+global proc enableDecaySection(string $nodeName, int $flag)
+{
+	$val = $flag == 0;
+
+	editorTemplate -dimControl $nodeName "decayType" $val;
+	editorTemplate -dimControl $nodeName "decayFalloffStart" $val;
+	editorTemplate -dimControl $nodeName "decayFalloffEnd" $val;
+}
+
+global proc enableShadowsSection(string $nodeName, int $flag)
+{
+	$val = $flag == 0;
+
+	editorTemplate -dimControl $nodeName "shadowsEnabled" $val;
+	editorTemplate -dimControl $nodeName "shadowsSoftness" $val;
+}
+
+global proc dimUnsupportedAttributes(string $nodeName)
+{
+	enableVolumeSection($nodeName, 0);
+	enableDecaySection($nodeName, 0);
+
+	editorTemplate -dimControl $nodeName "shadowsTransparency" 1;
+	editorTemplate -dimControl $nodeName "areaLightBidirectional" 1;
+	editorTemplate -dimControl $nodeName "spotLightVisible" 1;
+	editorTemplate -dimControl $nodeName "areaLightIntensityNorm" 1;
+}
+
+global proc onColorModeChanged(string $nodeName)
+{
+	$colorMode = `getAttr ($nodeName + ".colorMode")`;
+
+	editorTemplate -dimControl $nodeName "colorPicker" ($colorMode != 0);
+	editorTemplate -dimControl $nodeName "temperature" ($colorMode == 0);
+}
+
+global proc onConeAngleChanged(string $nodeName)
+{
+	float $innerAngle = `getAttr ($nodeName + ".spotLightInnerConeAngle")`;
+	float $outerAngle = `getAttr ($nodeName + ".spotLightOuterConeFalloff")`;
+
+	if ($innerAngle > $outerAngle)
+	{
+		setAttr ($nodeName + ".spotLightInnerConeAngle") $outerAngle;
+	}
+}
+
+global proc onAreaLightShapeChanged(string $nodeName)
+{
+	$meshType = 4;
+	$type = `getAttr ($nodeName + ".areaLightShape")`;
+
+	editorTemplate -dimControl $nodeName "areaLightSelectingMesh" ($type != $meshType);
+}
+
+global proc onTemperatureChanged(string $nodeName)
+{
+	$temperature = getAttr ($nodeName + ".temperature");
+
+	float $arrColor[] = kelvin2Color($temperature);
+
+	//print $arrColor;
+	//print "\n";
+
+	setAttr ($nodeName + ".temperatureColor") -type double3 $arrColor[0] $arrColor[1] $arrColor[2];
+}

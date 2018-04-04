@@ -288,8 +288,8 @@ void IESLightLocatorMesh::populateOverrideGeometry(
 	MHWRender::MGeometry &data)
 {
 	// Get the vertex and index counts.
-	auto vertexCount = static_cast<unsigned int>(m_vertices.size());
-	auto indexCount = static_cast<unsigned int>(m_indices.size());
+	unsigned int vertexCount = static_cast<unsigned int>(m_vertices.size());
+	unsigned int indexCount = static_cast<unsigned int>(m_indices.size());
 
 	// Get vertex buffer requirements.
 	auto& vertexBufferDescriptorList = requirements.vertexRequirements();
