@@ -84,6 +84,7 @@ struct PhysicalLightData
 	float GetCalculatedIntensity(float area = 1.0f) const
 	{
 		float maxEfficacy = 684.0f;
+		float luminousEfficiency = luminousEfficacy / maxEfficacy;
 
 		float calculatedIntensity = 0.0f;
 		// In case of area light we need to setup Emiisive shader color. 
@@ -102,10 +103,10 @@ struct PhysicalLightData
 				calculatedIntensity = intensity;
 				break;
 			case PLTIUWatts:
-				calculatedIntensity = intensity * luminousEfficacy / area;
+				calculatedIntensity = intensity * luminousEfficiency / area;
 				break;
 			case PLTIURadiance:
-				calculatedIntensity = intensity * luminousEfficacy;
+				calculatedIntensity = intensity * luminousEfficiency;
 				break;
 			}
 		}
@@ -117,7 +118,7 @@ struct PhysicalLightData
 				calculatedIntensity = intensity;
 				break;
 			case PLTIURadiance:
-				calculatedIntensity = intensity * luminousEfficacy;
+				calculatedIntensity = intensity * luminousEfficiency;
 				break;
 			default: // _TODO need to disable in UI
 				calculatedIntensity = intensity;
@@ -131,14 +132,13 @@ struct PhysicalLightData
 				calculatedIntensity = intensity;
 				break;
 			case PLTIUWatts:
-				calculatedIntensity = intensity * luminousEfficacy;
+				calculatedIntensity = intensity * luminousEfficiency;
 				break;
 			default: // _TODO need to disable in UI
 				calculatedIntensity = intensity;
 			}
 		}
 
-		calculatedIntensity /= maxEfficacy;
 		return calculatedIntensity;
 	}
 
