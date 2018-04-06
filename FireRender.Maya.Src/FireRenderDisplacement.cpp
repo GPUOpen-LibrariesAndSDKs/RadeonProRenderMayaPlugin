@@ -47,9 +47,9 @@ MStatus FireMaya::Displacement::initialize()
 
 	Attribute::maxHeight = nAttr.create("maxHeight", "maH", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(0.0f);
-	nAttr.setSoftMax(1000.0f);
-	nAttr.setMax(9999999.0f);
+	nAttr.setMin(-1.0f);
+	nAttr.setSoftMax(1.0f);
+	nAttr.setMax(1.0f);
 
 	Attribute::subdivision = nAttr.create("subdivision", "sub", MFnNumericData::kInt, 0.0);
 	MAKE_INPUT(nAttr);
