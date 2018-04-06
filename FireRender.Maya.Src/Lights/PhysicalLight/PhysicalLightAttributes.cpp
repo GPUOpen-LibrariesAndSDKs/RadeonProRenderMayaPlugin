@@ -226,7 +226,7 @@ MColor GetColorAttribute(const MFnDependencyNode& node, const MObject& attribute
 {
 	MPlug plug = node.findPlug(attribute);
 
-	_ASSERT(!plug.isNull());
+	assert(!plug.isNull());
 
 	if (!plug.isNull())
 	{
@@ -246,7 +246,7 @@ int GetIntAttribute(const MFnDependencyNode& node, const MObject& attribute)
 {
 	MPlug plug = node.findPlug(attribute);
 
-	_ASSERT(!plug.isNull());
+	assert(!plug.isNull());
 
 	if (!plug.isNull())
 	{
@@ -260,7 +260,7 @@ float GetFloatAttribute(const MFnDependencyNode& node, const MObject& attribute)
 {
 	MPlug plug = node.findPlug(attribute);
 
-	_ASSERT(!plug.isNull());
+	assert(!plug.isNull());
 	if (!plug.isNull())
 	{
 		return plug.asFloat();
@@ -273,7 +273,7 @@ bool GetBoolAttribute(const MFnDependencyNode& node, const MObject& attribute)
 {
 	MPlug plug = node.findPlug(attribute);
 
-	_ASSERT(!plug.isNull());
+	assert(!plug.isNull());
 	if (!plug.isNull())
 	{
 		return plug.asBool();
@@ -286,7 +286,7 @@ MString GetStringAttribute(const MFnDependencyNode& node, const MObject& attribu
 {
 	MPlug plug = node.findPlug(attribute);
 
-	_ASSERT(!plug.isNull());
+	assert(!plug.isNull());
 	if (!plug.isNull())
 	{
 		return plug.asString();

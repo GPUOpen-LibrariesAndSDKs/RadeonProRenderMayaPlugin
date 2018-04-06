@@ -816,11 +816,12 @@ namespace FireMaya
 		}
 		else
 		{
+            frw::MaterialSystem matSys = scope.MaterialSystem();
 			if (!frlight.emissive)
-				frlight.emissive = frw::EmissiveShader(scope.MaterialSystem());
+				frlight.emissive = frw::EmissiveShader(matSys);
 
 			if (!frlight.transparent)
-				frlight.transparent = frw::EmissiveShader(scope.MaterialSystem());
+				frlight.transparent = frw::EmissiveShader(matSys);
 
 			if (areaLightData.areaLightShape != PLAMesh)
 			{

@@ -9,6 +9,7 @@ cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/scripts" "/Users/Shared/RadeonP
 cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/python/" "/Users/Shared/RadeonProRender/scripts/"
 cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/shelfs/" "/Users/Shared/RadeonProRender/shelves/"
 cp -r "$PROJECT_DIR/../../../ThirdParty/RadeonProRender SDK/Mac/lib" "/Users/Shared/RadeonProRender/"
+cp    "$PROJECT_DIR/../../../ThirdParty/RadeonProImageProcessing/Mac/lib/libRadeonImageFilters64.dylib" "/Users/Shared/RadeonProRender/lib"
 
 mkdir -p "/Users/Shared/RadeonProRender/modules"
 cp "$PROJECT_DIR/../rpr2016.mod" "/Users/Shared/RadeonProRender/modules/rpr2016.mod"

@@ -108,6 +108,9 @@ struct PhysicalLightData
 			case PLTIURadiance:
 				calculatedIntensity = intensity * luminousEfficiency;
 				break;
+            case PLTIUUnknown:
+                    assert(false);
+                    break;
 			}
 		}
 		else if (lightType == PLTDirectional)
