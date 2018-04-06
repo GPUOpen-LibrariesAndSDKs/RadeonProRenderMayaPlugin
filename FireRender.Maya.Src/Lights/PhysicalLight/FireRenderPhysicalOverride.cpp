@@ -31,7 +31,8 @@ FireRenderPhysicalOverride::FireRenderPhysicalOverride(const MObject& obj)
 	m_changed(true)
 {
 	MStatus status;
-	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(m_depNodeObj.object(), FireRenderPhysicalOverride::onImportantAttributeChanged, this, &status);
+    MObject mobj = m_depNodeObj.object();
+	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(mobj, FireRenderPhysicalOverride::onImportantAttributeChanged, this, &status);
 	assert(status == MStatus::kSuccess);
 }
 
@@ -243,7 +244,8 @@ void FireRenderPhysicalOverride::updateRenderItems(const MDagPath& path, MRender
 		double scale[3]{ areaWidth, areaWidth, areaLength};
 		trm.setScale(scale, MSpace::Space::kObject);
 
-		shapeToRender->setMatrix(&trm.asMatrix());
+        MMatrix mmatrix = trm.asMatrix();
+		shapeToRender->setMatrix(&mmatrix);
 
 		auto renderer = MRenderer::theRenderer();
 		auto shaderManager = renderer->getShaderManager();
