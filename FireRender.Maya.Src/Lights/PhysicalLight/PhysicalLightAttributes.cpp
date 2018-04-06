@@ -153,7 +153,7 @@ void PhysicalLightAttributes::CreateIntensityAttributes()
 
 	CreateFloatAttribute(lightIntensity, "lightIntensity", "li", 0.0f, maxVal, 1.0f);
 
-	CreateIntAttribute(intensityUnits, "intensityUnits", "iu", 0, 3, PLTIULuminance);
+	CreateIntAttribute(intensityUnits, "intensityUnits", "iu", 0, 3, PLTIUWatts);
 
 	CreateFloatAttribute(luminousEfficacy, "luminousEfficacy", "le", 0.1f, maxVal, 17.0f);
 
