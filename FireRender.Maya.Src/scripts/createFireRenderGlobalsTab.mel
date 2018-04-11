@@ -1017,7 +1017,7 @@ global proc createFireRenderGlobals2Tab()
 
 	// Denoiser
 	//
-	frameLayout -label "Denoiser" -cll true -cl true fireRenderDenoiserFrame;
+	frameLayout -label "Denoiser (IPR and Production Renderer)" -cll true -cl true fireRenderDenoiserFrame;
 
 	createFireRenderDenoiserFrame ("fireRenderDenoiserFrame");
 	setParent ..;
