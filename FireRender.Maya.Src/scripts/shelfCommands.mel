@@ -185,6 +185,15 @@ global proc createPhysicalLight()
 	rename $parent[0] "RPRPhysicalLight#";
 }
 
+global proc createLightsSubmenuItems(string $parentMenu)
+{
+	menuItem -label "Create or Select a Sky Node" -p $parentMenu -c createSkyRPR;
+	menuItem -label "Create or Select an IBL Node" -p $parentMenu -c createIBLRPR;
+	menuItem -label "Create and Assign an Emissive Material to the Selected Object" -p $parentMenu -c createAndAssignEmissiveRPR;
+	menuItem -label "Create IES light node" -p $parentMenu -c createIESLight;
+	menuItem -label "Create physical light node" -p $parentMenu -c createPhysicalLight;
+}
+
 global proc convertVRayObjects()
 {
 	if (!checkPluginLoadedRPR())
