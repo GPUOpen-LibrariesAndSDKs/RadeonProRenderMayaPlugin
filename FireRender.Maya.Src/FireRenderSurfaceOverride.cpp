@@ -224,8 +224,12 @@ void FireRenderStandardMaterialNodeOverride::getCustomMappings(MHWRender::MAttri
 	mappings.append(MHWRender::MAttributeParameterMapping("color", GET_BOOL("diffuse") ? "diffuseColor" : "", true, true));
 	mappings.append(MHWRender::MAttributeParameterMapping("incandescence", GET_BOOL("emissive") ? "emissiveColor" : "", true, true));
 
+	// Moved to avoid mapping here. It crashes for unknown reason.
+	// UpdateShader call assigns eccentricity parameter to float value from reflectRoughness
+	// It affects Default Maya material viewer does not show map (if selected in reflectRoughness) but we avoid crash
+	mappings.append(MHWRender::MAttributeParameterMapping("eccentricity", "", true, true));
+
 	bool hasReflection = GET_BOOL("reflections");
-	mappings.append(MHWRender::MAttributeParameterMapping("eccentricity", hasReflection ? "reflectRoughness" : "", true, true));
 	mappings.append(MHWRender::MAttributeParameterMapping("specularColor", hasReflection ? "reflectColor" : "", true, true));
 	mappings.append(MHWRender::MAttributeParameterMapping("specularRollOff", hasReflection ? "reflectWeight" : "", true, true));
 }
@@ -313,7 +317,18 @@ void FireRenderStandardMaterialNodeOverride::updateShader(MHWRender::MShaderInst
 			shader.setParameter(fResolvedParamName, black);
 		}
 	}
+	else
+	{
+		MString fResolvedParamName = GetResolvedParam(mappings, "eccentricity");
 
+		if (fResolvedParamName.length() > 0)
+		{
+			float rr = 0.5f;
+			shaderNode.findPlug("reflectRoughness").getValue(rr);
+
+			shader.setParameter(fResolvedParamName, rr);
+		}
+	}
 }
 
 MString FireRenderStandardMaterialNodeOverride::primaryColorParameter() const
