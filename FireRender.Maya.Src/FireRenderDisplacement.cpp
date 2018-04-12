@@ -45,7 +45,7 @@ MStatus FireMaya::Displacement::initialize()
 	nAttr.setSoftMax(1.0f);
 	nAttr.setMax(1.0f);
 
-	Attribute::maxHeight = nAttr.create("maxHeight", "maH", MFnNumericData::kFloat, 0.0);
+	Attribute::maxHeight = nAttr.create("maxHeight", "maH", MFnNumericData::kFloat, 1.0);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(-1.0f);
 	nAttr.setSoftMax(1.0f);
