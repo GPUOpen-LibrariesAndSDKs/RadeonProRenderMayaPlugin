@@ -1026,16 +1026,18 @@ namespace frw
 	public:
 		IESLight(rpr_light h, const Context &context) : Light(h, context, new Data()) {}
 
-		void SetIESFile(const char* filePath, int xImageResolution, int yImageResolution)
+		int SetIESFile(const char* filePath, int xImageResolution, int yImageResolution)
 		{
 			auto res = rprIESLightSetImageFromFile(Handle(), filePath, xImageResolution, yImageResolution);
 			assert(RPR_SUCCESS == res);
+			return res;
 		}
 
-		void SetIESData(const char* iesData, int xImageResolution, int yImageResolution)
+		int SetIESData(const char* iesData, int xImageResolution, int yImageResolution)
 		{
 			auto res = rprIESLightSetImageFromIESdata(Handle(), iesData, xImageResolution, yImageResolution);
 			assert(RPR_SUCCESS == res);
+			return res;
 		}
 
 		void SetRadiantPower(float r, float g, float b)

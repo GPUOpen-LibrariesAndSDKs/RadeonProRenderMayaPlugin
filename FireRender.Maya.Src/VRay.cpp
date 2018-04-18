@@ -9,6 +9,10 @@
 #include "Translators.h"
 #include <functional>
 
+#include "IESLight/IESprocessor.h"
+#include "IESLight/IESLightRepresentationCalc.h"
+
+
 namespace FireMaya
 {
 	namespace VRay
@@ -704,24 +708,41 @@ namespace FireMaya
 			else
 			{
 				auto iesFile = data.filePath;
-				if (iesFile.length())
+				IESProcessor processor;
+				IESLightRepresentationParams params;
+
+				if (iesFile.length() && 
+					processor.Parse(params.data, iesFile.asWChar()) == IESProcessor::ErrorCode::SUCCESS)
 				{
 					auto iesLight = frcontext.CreateIESLight();
-					iesLight.SetIESFile(iesFile.asUTF8(), 256, 256);
 
-					auto rp = translateColorToRadiantPower(color);
-					iesLight.SetRadiantPower(rp.r, rp.g, rp.b);
+					rpr_int res = iesLight.SetIESData(processor.ToString(params.data).c_str(), 256, 256);
+					assert(res == RPR_SUCCESS);
 
-					iesLight.SetTransform(reinterpret_cast<const rpr_float*>(mfloats));
+					if (res == RPR_SUCCESS)
+					{
+						auto rp = translateColorToRadiantPower(color);
+						iesLight.SetRadiantPower(rp.r, rp.g, rp.b);
 
-					frlight.isAreaLight = false;
+						iesLight.SetTransform(reinterpret_cast<const rpr_float*>(mfloats));
 
-					frlight.light = iesLight;
+						frlight.isAreaLight = false;
+
+						frlight.light = iesLight;
+					}
+					else
+					{
+						MString str = MString("RPR error: Failed to load IES Data: code = ") + res;
+						MGlobal::displayError(str);
+						return false;
+					}
 				}
 			}
 
 			if (frlight.areaLight)
+			{
 				frlight.areaLight.SetVisibility(primaryVisibility);
+			}
 
 			return true;
 		}
