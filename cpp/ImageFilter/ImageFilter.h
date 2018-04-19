@@ -6,6 +6,7 @@
 #include <vector>
 #include <unordered_map>
 #include <memory>
+#include <string>
 
 enum class RifFilterType
 {
@@ -106,6 +107,19 @@ public:
 	explicit RifContextGPU(const rpr_context rprContext);
 	virtual ~RifContextGPU();
 
+	virtual rif_image CreateRifImage(const rpr_framebuffer rprFrameBuffer, const rif_image_desc& desc) const override;
+	virtual void UpdateInputs(const RifFilterWrapper* rifFilter) const override;
+};
+
+class RifContextGPUMetal final : public RifContextWrapper
+{
+	const rif_processor_type rifProcessorType = RIF_PROCESSOR_CPU;
+	const rif_backend_api_type rifBackendApiType = RIF_BACKEND_API_METAL;
+    
+public:
+	explicit RifContextGPUMetal(const rpr_context rprContext);
+	virtual ~RifContextGPUMetal();
+    
 	virtual rif_image CreateRifImage(const rpr_framebuffer rprFrameBuffer, const rif_image_desc& desc) const override;
 	virtual void UpdateInputs(const RifFilterWrapper* rifFilter) const override;
 };
