@@ -21,8 +21,14 @@
 #include <float.h>
 #include "IESprocessor.h"
 
-const char* IESProcessor::IES_FileTag = "IESNA";
-const char* IESProcessor::IES_FileExtraTag = "TILT=NONE";
+// according to ies file specification this tag is supposed to be in all IES files
+// this is not true however for many existing and otherwise valid files so we don't check this flag
+//const char* IESProcessor::IES_FileTag = "IESNA";
+const std::string IESProcessor::IES_FileTag = "IESNA";
+
+// tags other than TILT=NONE are not supported by RPR Core
+const std::string IESProcessor::IES_FileExtraTag = "TILT=NONE";
+const std::string IESProcessor::IES_FileGeneralTag = "TILT=";
 
 IESProcessor::IESLightData::IESLightData()
 {
@@ -113,6 +119,7 @@ bool IESProcessor::IESLightData::IsAsymmetric(void) const
 std::string IESProcessor::ToString(const IESLightData& lightData) const
 {
 	std::stringstream stream(lightData.m_extraData);
+	stream.imbue(std::locale("C"));
 
 	// Write IES header
 	stream << lightData.m_extraData;
@@ -126,20 +133,20 @@ std::string IESProcessor::ToString(const IESLightData& lightData) const
 		<< lightData.m_countHorizontalAngles << ' '
 		<< lightData.m_photometricType << ' '
 		<< lightData.m_unit << ' '
-		<< (float)lightData.m_width << ' '
-		<< (float)lightData.m_length << ' '
-		<< (float)lightData.m_height << std::endl;
+		<< lightData.m_width << ' '
+		<< lightData.m_length << ' '
+		<< lightData.m_height << std::endl;
 
 	// add second line of IES format
 	stream
 		<< lightData.m_ballast << ' '
 		<< lightData.m_version << ' '
-		<< (float)lightData.m_wattage << std::endl;
+		<< lightData.m_wattage << std::endl;
 
 	// add third line of IES format
 	for (double angle : lightData.m_verticalAngles)
 	{
-		stream << std::to_string(angle) << ' ';
+		stream << angle << ' ';
 	}
 
 	stream << std::endl;
@@ -147,7 +154,7 @@ std::string IESProcessor::ToString(const IESLightData& lightData) const
 	// add forth line of IES format
 	for (double angle : lightData.m_horizontalAngles)
 	{
-		stream << std::to_string(angle) << ' ';
+		stream << angle << ' ';
 	}
 
 	stream << std::endl;
@@ -158,7 +165,7 @@ std::string IESProcessor::ToString(const IESLightData& lightData) const
 
 	for (double candelaValue : lightData.m_candelaValues)
 	{
-		stream << std::to_string(candelaValue);
+		stream << candelaValue;
 
 		// Put the end of the line where need
 		if (++indexInLine == valuesPerLine)
@@ -183,7 +190,8 @@ void IESProcessor::SplitLine(std::vector<std::string>& tokens, const std::string
 
 	do
 	{
-		pos = lineToParse.find_first_of(" ,;", prev);
+		const char delimiters[] = {' ', ',', ';', '\t', '\n', '\0' };
+		pos = lineToParse.find_first_of(delimiters, prev);
 
 		if (pos > prev)
 			tokens.push_back(lineToParse.substr(prev, pos - prev));
@@ -224,20 +232,21 @@ IESProcessor::ErrorCode IESProcessor::GetTokensFromFile(std::vector<std::string>
 
 	text += lineToParse + "\n";
 
-	if ((lineToParse.compare(0, IES_TagSize, IES_FileTag) != 0) &&
-		(lineToParse.compare(0, IES_ExtraTagSize, IES_FileExtraTag) != 0))
+	if (lineToParse.compare(0, IES_FileTag.size(), IES_FileTag) != 0)
 	{
 		// no IES file tag but can still be IES file
 		hasIESFileTag = false;
 	}
 
 	// parse file line after line
+	bool hasReachedIESDataSegment = false;
 	while (std::getline(inputFile, lineToParse))
 	{
 		// IES file consists of 2 parts:
 		// - text with some information about light manufacturers and laboratory that made light mesaurments
 		// - IES light data
-		bool hasReachedIESDataSegment = LineHaveNumbers(lineToParse) && hasIESFileTag;
+		if (LineHaveNumbers(lineToParse) && hasIESFileTag)
+			hasReachedIESDataSegment = true;
 
 		// skip all data irrelevant for render
 		// - before we encounter ies file tag we skip lines with numbers as well
@@ -248,15 +257,26 @@ IESProcessor::ErrorCode IESProcessor::GetTokensFromFile(std::vector<std::string>
 			// - check line for IES file tag
 			if (!hasIESFileTag)
 			{
-				if (lineToParse.compare(0, IES_ExtraTagSize, IES_FileExtraTag) == 0)
-					hasIESFileTag = true;
+				if (lineToParse.compare(0, IES_FileGeneralTag.size(), IES_FileGeneralTag) == 0)
+				{
+					// not all types of IES file are supported
+					if (lineToParse.compare(0, IES_FileExtraTag.size(), IES_FileExtraTag) == 0)
+						hasIESFileTag = true;
+				}
+				else
+				{
+					tokens.clear(); // function shouldn't return garbage
+
+					return IESProcessor::ErrorCode::NOT_SUPPORTED;
+				}
 			}
 
 			continue;
 		}
 
 		// split line
-		SplitLine(tokens, lineToParse);
+		if (LineHaveNumbers(lineToParse))
+			SplitLine(tokens, lineToParse);
 	}
 
 	return (hasIESFileTag) ? IESProcessor::ErrorCode::SUCCESS : IESProcessor::ErrorCode::NOT_IES_FILE;
@@ -582,11 +602,17 @@ IESProcessor::ErrorCode IESProcessor::Parse(IESLightData& lightData, const wchar
 	std::setlocale(LC_NUMERIC, currLocale);
 
 	// ensure correct parse results
-	if ((isParseOk != IESProcessor::ErrorCode::SUCCESS) || !lightData.IsValid())
+	if (isParseOk != IESProcessor::ErrorCode::SUCCESS)
 	{
 		// report failure
 		lightData.Clear(); // function shouldn't return garbage
 		return isParseOk;
+	}
+	if (!lightData.IsValid())
+	{
+		// report failure
+		lightData.Clear(); // function shouldn't return garbage
+		return IESProcessor::ErrorCode::NOT_SUPPORTED;
 	}
 
 	// parse successfull!

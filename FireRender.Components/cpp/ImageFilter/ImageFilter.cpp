@@ -23,11 +23,11 @@ ImageFilter::ImageFilter(const rpr_context rprContext, std::uint32_t width, std:
 	{
 		mRifContext.reset( new RifContextCPU(rprContext) );
 	}
-    if (contextFlags & RPR_CREATION_FLAGS_ENABLE_METAL)
-    {
-        mRifContext.reset( new RifContextGPUMetal(rprContext) );
-    }
-    else
+	else if (contextFlags & RPR_CREATION_FLAGS_ENABLE_METAL)
+	{
+		mRifContext.reset( new RifContextGPUMetal(rprContext) );
+	}
+	else
 	{
 		mRifContext.reset( new RifContextGPU(rprContext) );
 	}
@@ -87,9 +87,9 @@ void ImageFilter::AttachFilter() const
 
 void ImageFilter::Run() const
 {
-	mRifContext.get()->UpdateInputs( mRifFilter.get() );
+	mRifContext->UpdateInputs( mRifFilter.get() );
 
-	rif_int rifStatus = rifContextExecuteCommandQueue(mRifContext.get()->Context(), mRifContext.get()->Queue(), nullptr, nullptr);
+	rif_int rifStatus = rifContextExecuteCommandQueue(mRifContext->Context(), mRifContext->Queue(), nullptr, nullptr);
 	assert(RIF_SUCCESS == rifStatus);
 
 	if (RIF_SUCCESS != rifStatus)
@@ -100,7 +100,7 @@ std::vector<float> ImageFilter::GetData() const
 {
 	void* output = nullptr;
 
-	rif_int rifStatus = rifImageMap(mRifContext.get()->Output(), RIF_IMAGE_MAP_READ, &output);
+	rif_int rifStatus = rifImageMap(mRifContext->Output(), RIF_IMAGE_MAP_READ, &output);
 	assert(RIF_SUCCESS == rifStatus);
 	assert(output != nullptr);
 
@@ -109,7 +109,7 @@ std::vector<float> ImageFilter::GetData() const
 
 	std::vector<float> floatData( (float*) output, ( (float*) output ) + mWidth * mHeight * 4 );
 
-	rifStatus = rifImageUnmap(mRifContext.get()->Output(), output);
+	rifStatus = rifImageUnmap(mRifContext->Output(), output);
 	assert(RIF_SUCCESS == rifStatus);
 
 	if (RIF_SUCCESS != rifStatus)
@@ -361,29 +361,30 @@ void RifContextCPU::UpdateInputs(const RifFilterWrapper* rifFilter) const
 }
 
 
+
 RifContextGPUMetal::RifContextGPUMetal(const rpr_context rprContext)
 {
-    int deviceCount = 0;
-    rif_int rifStatus = rifGetDeviceCount(rifBackendApiType, rifProcessorType, &deviceCount);
-    assert(RIF_SUCCESS == rifStatus);
-    assert(deviceCount != 0);
+	int deviceCount = 0;
+	rif_int rifStatus = rifGetDeviceCount(rifBackendApiType, rifProcessorType, &deviceCount);
+	assert(RIF_SUCCESS == rifStatus);
+	assert(deviceCount != 0);
+
+	if (RIF_SUCCESS != rifStatus || 0 == deviceCount)
+		throw std::runtime_error("RPR denoiser hasn't found compatible devices.");
+
+	std::vector<rpr_char> path = GetRprCachePath(rprContext);
+
+	rifStatus = rifCreateContext(RIF_API_VERSION, rifBackendApiType, rifProcessorType, 0, path.data(), &mRifContextHandle);
+	assert(RIF_SUCCESS == rifStatus);
+
+	if (RIF_SUCCESS != rifStatus)
+		throw std::runtime_error("RPR denoiser failed to create RIF context.");
     
-    if (RIF_SUCCESS != rifStatus || 0 == deviceCount)
-        throw std::runtime_error("RPR denoiser hasn't found compatible devices.");
-    
-    std::vector<rpr_char> path = GetRprCachePath(rprContext);
-    
-    rifStatus = rifCreateContext(RIF_API_VERSION, rifBackendApiType, rifProcessorType, 0, path.data(), &mRifContextHandle);
-    assert(RIF_SUCCESS == rifStatus);
-    
-    if (RIF_SUCCESS != rifStatus)
-        throw std::runtime_error("RPR denoiser failed to create RIF context.");
-    
-    rifStatus = rifContextCreateCommandQueue(mRifContextHandle, &mRifCommandQueueHandle);
-    assert(RIF_SUCCESS == rifStatus);
-    
-    if (RIF_SUCCESS != rifStatus)
-        throw std::runtime_error("RPR denoiser failed to create RIF command queue.");
+	rifStatus = rifContextCreateCommandQueue(mRifContextHandle, &mRifCommandQueueHandle);
+	assert(RIF_SUCCESS == rifStatus);
+
+	if (RIF_SUCCESS != rifStatus)
+		throw std::runtime_error("RPR denoiser failed to create RIF command queue.");
 }
 
 RifContextGPUMetal::~RifContextGPUMetal()
@@ -392,27 +393,27 @@ RifContextGPUMetal::~RifContextGPUMetal()
 
 rif_image RifContextGPUMetal::CreateRifImage(const rpr_framebuffer rprFrameBuffer, const rif_image_desc& desc) const
 {
-    rif_image rifImage = nullptr;
-    rpr_cl_mem clMem = nullptr;
-    
-    rpr_int rprStatus = rprFrameBufferGetInfo(rprFrameBuffer, RPR_CL_MEM_OBJECT, sizeof(rpr_cl_mem), &clMem, nullptr);
-    assert(RPR_SUCCESS == rprStatus);
-    
-    if (RPR_SUCCESS != rprStatus)
-        throw std::runtime_error("RPR denoiser failed to get frame buffer info.");
-    
-    rif_int rifStatus = rifContextCreateImageFromOpenClMemory(mRifContextHandle , &desc, clMem, false, &rifImage);
-    assert(RIF_SUCCESS == rifStatus);
-    
-    if (RIF_SUCCESS != rifStatus)
-        throw std::runtime_error("RPR denoiser failed to get frame buffer info.");
-    
-    return rifImage;
+	rif_image rifImage = nullptr;
+	rpr_cl_mem clMem = nullptr;
+
+	rpr_int rprStatus = rprFrameBufferGetInfo(rprFrameBuffer, RPR_CL_MEM_OBJECT, sizeof(rpr_cl_mem), &clMem, nullptr);
+	assert(RPR_SUCCESS == rprStatus);
+
+	if (RPR_SUCCESS != rprStatus)
+		throw std::runtime_error("RPR denoiser failed to get frame buffer info.");
+
+	rif_int rifStatus = rifContextCreateImageFromOpenClMemory(mRifContextHandle , &desc, clMem, false, &rifImage);
+	assert(RIF_SUCCESS == rifStatus);
+
+	if (RIF_SUCCESS != rifStatus)
+		throw std::runtime_error("RPR denoiser failed to get frame buffer info.");
+
+	return rifImage;
 }
 
 void RifContextGPUMetal::UpdateInputs(const RifFilterWrapper* rifFilter) const
 {
-    // image filter processes buffers directly in GPU mode
+	// image filter processes buffers directly in GPU mode
 }
 
 
