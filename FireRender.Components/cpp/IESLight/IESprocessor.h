@@ -25,6 +25,7 @@ public:
 		INVALID_DATA_IN_IES_FILE,   ///< parse OK, but data in IES file is not valid (either data in the file was not correct, or something went wrong during the parse)
 		PARSE_FAILED,               ///< error during parse or file too big (file is longer than parser assumed it should)
 		UNEXPECTED_END_OF_FILE,     ///< have reached end of file before parse was completed
+		NOT_SUPPORTED,				///< file have features that are not supported by RPR Core
 	};
 
 	/**
@@ -52,10 +53,9 @@ public:
 	std::string ToString (const IESLightData& lightData) const;
 
 protected:
-	static const char* IES_FileTag;
-	static const int IES_TagSize = 5;
-	static const char* IES_FileExtraTag;
-	static const int IES_ExtraTagSize = 9;
+	static const std::string IES_FileExtraTag;
+	static const std::string IES_FileGeneralTag;
+	static const std::string IES_FileTag;
 
 	/**
 	* Reads file and fills array tokens with numbers (as strings) and text array with data other than numbers
@@ -139,6 +139,7 @@ public:
 
 	/**
 	* Can be 1, 2 or 3 according to IES specification.
+	* RPR Core however supports only m_photometricType == 1
 	*/
 	int m_photometricType = 0;
 
