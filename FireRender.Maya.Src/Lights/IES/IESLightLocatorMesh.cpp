@@ -63,6 +63,9 @@ namespace
 
 			case IESProcessor::ErrorCode::UNEXPECTED_END_OF_FILE:
 				return "Unexpected end of ies file";
+
+			case IESProcessor::ErrorCode::NOT_SUPPORTED:
+				return "Not supported format of ies file";
 		}
 
 		// Wrong use of this function
@@ -100,7 +103,7 @@ namespace
 				errorMessage << " (reason: " << errorDescription << ") ";
 			}
 
-			error.set("Parse error", errorMessage.str().c_str(), true, true);
+			error.set("Parse error", errorMessage.str().c_str(), true, false);
 		}
 
 		if (!error.check())
@@ -200,7 +203,8 @@ bool IESLightLocatorMeshBase::SetFilename(const MString filename, bool forcedUpd
 	}
 	else
 	{
-		GenerateIESRepresentation(castedName, 32, IES_SCALE_MUL, m_vertices, m_indices);
+		const size_t pointsPerPolyline = 32;
+		return GenerateIESRepresentation(castedName, pointsPerPolyline, IES_SCALE_MUL, m_vertices, m_indices);
 	}
 
 	return true;

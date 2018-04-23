@@ -251,7 +251,14 @@ MHWRender::DrawAPI FireRenderIESLightLocatorOverride::supportedDrawAPIs() const
 void FireRenderIESLightLocatorOverride::updateDG()
 {
 	if (m_mesh.SetFilename(GetFilename(), false))
+	{
 		m_changed = true;
+	}
+	else
+	{
+		// reset filename if it has been loaded incorrectly
+		SetFilename(MString(""));
+	}
 }
 
 void FireRenderIESLightLocatorOverride::updateRenderItems(const MDagPath& path, MHWRender::MRenderItemList& list)
@@ -338,6 +345,18 @@ void FireRenderIESLightLocatorOverride::updateSelectionGranularity(
 MString FireRenderIESLightLocatorOverride::GetFilename() const
 {
 	return findPlugTryGetValue(m_obj, FireRenderIESLightLocator::aFilePath, ""_ms);
+}
+
+void FireRenderIESLightLocatorOverride::SetFilename(const MString& filePath)
+{
+	MPlug plug = MFnDependencyNode(m_obj).findPlug(FireRenderIESLightLocator::aFilePath);
+
+	if (!plug.isNull())
+	{
+		MDGModifier dgModifier;
+		dgModifier.newPlugValueString(plug, filePath);
+		dgModifier.doIt();
+	}
 }
 
 float FireRenderIESLightLocatorOverride::GetAreaWidth() const
