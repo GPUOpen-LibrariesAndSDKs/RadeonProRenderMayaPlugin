@@ -110,6 +110,8 @@ public:
 #endif
 
 	MString GetFilename() const;
+	void SetFilename(const MString& filePath);
+
 	float GetAreaWidth() const;
 	bool GetDisplay() const;
 	float GetXRotation() const;
