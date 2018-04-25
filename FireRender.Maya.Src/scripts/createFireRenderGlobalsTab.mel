@@ -879,10 +879,20 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 		attrControlGrp -label "Shadow Catcher" -attribute "RadeonProRenderGlobals.aovShadowCatcher" -changeCommand shadowCatcherStateChanged;
 		attrControlGrp -label "Background" -attribute "RadeonProRenderGlobals.aovBackground";
 
+		attrControlGrp -label "Emission" -attribute "RadeonProRenderGlobals.aovEmission";
+		attrControlGrp -label "Velocity" -attribute "RadeonProRenderGlobals.aovVelocity";
+		attrControlGrp -label "Direct Illumination" -attribute "RadeonProRenderGlobals.aovDirectIllumination";
+		attrControlGrp -label "Indirect Illumination" -attribute "RadeonProRenderGlobals.aovIndirectIllumination";
+		attrControlGrp -label "Ambient Occlusion" -attribute "RadeonProRenderGlobals.aovAO";
+		attrControlGrp -label "Diffuse Direct" -attribute "RadeonProRenderGlobals.aovDiffuseDirect";
+		attrControlGrp -label "Diffuse Indirect" -attribute "RadeonProRenderGlobals.aovDiffuseIndirect";
+		attrControlGrp -label "Reflection Direct" -attribute "RadeonProRenderGlobals.aovReflectionDirect";
+		attrControlGrp -label "Reflection Indirect" -attribute "RadeonProRenderGlobals.aovReflectionIndirect";
+		attrControlGrp -label "Refraction" -attribute "RadeonProRenderGlobals.aovRefraction";
+		attrControlGrp -label "Volume" -attribute "RadeonProRenderGlobals.aovVolume";
+
 	setParent ..;
 	setUITemplate -popTemplate;
-
-
 }
 
 // Description: This procedure is called to create the FireRender
