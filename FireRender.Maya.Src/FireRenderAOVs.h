@@ -1,6 +1,6 @@
 #pragma once
 
-#include <vector>
+#include <map>
 #include "FireRenderAOV.h"
 #include <maya/MFnDependencyNode.h>
 
@@ -67,8 +67,12 @@ public:
 
 	/** Gets number of AOVs */
 	int getNumberOfAOVs();
-private:
 
+private:
+	void AddAOV(unsigned int id, const MString& attribute, const MString& name,
+									const MString& folder, AOVDescription description);
+
+private:
 	// Members
 	// -----------------------------------------------------------------------------
 
@@ -76,7 +80,7 @@ private:
 	RenderRegion m_region;
 
 	/** The set of AOV data. */
-	std::vector<std::shared_ptr<FireRenderAOV> > m_aovs;
+	std::map<unsigned int, std::shared_ptr<FireRenderAOV> > m_aovs;
 
 	/** The ID of the AOV to display in the Maya render view. */
 	short m_renderViewAOVId;
