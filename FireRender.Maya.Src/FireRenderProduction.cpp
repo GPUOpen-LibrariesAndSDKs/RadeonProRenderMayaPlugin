@@ -554,9 +554,18 @@ void FireRenderProduction::refreshContext()
 	if (!m_context->isDirty())
 		return;
 
-	m_context->Freshen(false,
-		[this]() -> bool
+	try
 	{
-		return m_cancelled;
-	});
+		m_context->Freshen(false,
+			[this]() -> bool
+		{
+			return m_cancelled;
+		});
+	}
+	catch (...)
+	{
+		stop();
+		m_isRunning = false;
+		m_error.set(current_exception());
+	}
 }

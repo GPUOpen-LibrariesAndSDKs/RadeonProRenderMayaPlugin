@@ -825,6 +825,9 @@ namespace frw
 			virtual ~Data();
 
 			bool isAreaLight = false;
+
+			// Used to determine if we can setup displacement or not
+			bool isUVCoordinatesSet = false;
 		};
 
 	public:
@@ -912,6 +915,15 @@ namespace frw
 
 		bool IsAreaLight() { return data().isAreaLight; }
 		void SetAreaLightFlag(bool isAreaLight) { data().isAreaLight = isAreaLight; }
+
+		bool IsUVCoordinatesSet() const 
+		{
+			return data().isUVCoordinatesSet;
+		}
+		void SetUVCoordinatesSetFlag(bool flag)
+		{
+			data().isUVCoordinatesSet = flag;
+		}
 
 		bool IsInstance() const
 		{
@@ -2933,7 +2945,11 @@ namespace frw
 
 		checkStatusThrow(status, "Unable to create mesh");
 
-		return Shape(shape, *this);
+		Shape shapeObj(shape, *this);
+
+		shapeObj.SetUVCoordinatesSetFlag(texcoords != nullptr && num_texcoords > 0);
+
+		return shapeObj;
 	}
 
 	inline Shape Context::CreateMeshEx(const rpr_float* vertices, size_t num_vertices, rpr_int vertex_stride,
@@ -2959,7 +2975,10 @@ namespace frw
 
 		checkStatusThrow(status, "Unable to create mesh");
 
-		return Shape(shape, *this);
+		Shape shapeObj (shape, *this);
+		shapeObj.SetUVCoordinatesSetFlag(numberOfTexCoordLayers > 0);
+
+		return shapeObj;
 	}
 
 	inline void Context::SetAOV(FrameBuffer frameBuffer, rpr_aov aov)

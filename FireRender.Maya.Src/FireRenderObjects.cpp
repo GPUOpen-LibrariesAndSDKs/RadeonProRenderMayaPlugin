@@ -666,54 +666,58 @@ void FireRenderMesh::setupDisplacement(MObject shadingEngine, frw::Shape shape)
 		return;
 
 	bool haveDisplacement = false;
-	FireMaya::Displacement *displacement = nullptr;
 
-	// Check displacement shader connection
-	MObject displacementShader = getDisplacementShader(shadingEngine);
-	if (!displacementShader.isNull())
+	if (shape.IsUVCoordinatesSet())
 	{
-		MFnDependencyNode shaderNode(displacementShader);
-		displacement = dynamic_cast<FireMaya::Displacement*>(shaderNode.userNode());
-	}
+		FireMaya::Displacement *displacement = nullptr;
 
-	if (!displacement)
-	{
-		// Check surface shader connection, look for shader with displacement map input
-		MObject surfaceShader = getSurfaceShader(shadingEngine);
-		if (!surfaceShader.isNull())
+		// Check displacement shader connection
+		MObject displacementShader = getDisplacementShader(shadingEngine);
+		if (!displacementShader.isNull())
 		{
-			MFnDependencyNode shaderNode(surfaceShader);
-			FireMaya::ShaderNode* shader = dynamic_cast<FireMaya::ShaderNode*>(shaderNode.userNode());
-			if (shader)
+			MFnDependencyNode shaderNode(displacementShader);
+			displacement = dynamic_cast<FireMaya::Displacement*>(shaderNode.userNode());
+		}
+
+		if (!displacement)
+		{
+			// Check surface shader connection, look for shader with displacement map input
+			MObject surfaceShader = getSurfaceShader(shadingEngine);
+			if (!surfaceShader.isNull())
 			{
-				displacementShader = shader->GetDisplacementNode();
-				if (!displacementShader.isNull())
+				MFnDependencyNode shaderNode(surfaceShader);
+				FireMaya::ShaderNode* shader = dynamic_cast<FireMaya::ShaderNode*>(shaderNode.userNode());
+				if (shader)
 				{
-					MFnDependencyNode shaderNodeDS(displacementShader);
-					displacement = dynamic_cast<FireMaya::Displacement*>(shaderNodeDS.userNode());
+					displacementShader = shader->GetDisplacementNode();
+					if (!displacementShader.isNull())
+					{
+						MFnDependencyNode shaderNodeDS(displacementShader);
+						displacement = dynamic_cast<FireMaya::Displacement*>(shaderNodeDS.userNode());
+					}
 				}
 			}
 		}
-	}
 
-	if (displacement)
-	{
-		float minHeight = 0;
-		float maxHeight = 0;
-		int subdivision = 0;
-		float creaseWeight = 0;
-		int boundary = 0;
-		frw::Value mapValue;
-
-		auto scope = Scope();
-		haveDisplacement = displacement->getValues(mapValue, scope, minHeight, maxHeight, subdivision, creaseWeight, boundary);
-
-		if (haveDisplacement)
+		if (displacement)
 		{
-			shape.SetDisplacement(mapValue, minHeight, maxHeight);
-			shape.SetSubdivisionFactor(subdivision);
-			shape.SetSubdivisionCreaseWeight(creaseWeight);
-			shape.SetSubdivisionBoundaryInterop(boundary);
+			float minHeight = 0;
+			float maxHeight = 0;
+			int subdivision = 0;
+			float creaseWeight = 0;
+			int boundary = 0;
+			frw::Value mapValue;
+
+			auto scope = Scope();
+			haveDisplacement = displacement->getValues(mapValue, scope, minHeight, maxHeight, subdivision, creaseWeight, boundary);
+
+			if (haveDisplacement)
+			{
+				shape.SetDisplacement(mapValue, minHeight, maxHeight);
+				shape.SetSubdivisionFactor(subdivision);
+				shape.SetSubdivisionCreaseWeight(creaseWeight);
+				shape.SetSubdivisionBoundaryInterop(boundary);
+			}
 		}
 	}
 
