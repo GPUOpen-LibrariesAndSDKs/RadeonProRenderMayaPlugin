@@ -86,7 +86,11 @@ bool IESProcessor::IESLightData::IsValid() const
 		return false;
 
 	// ensure correct value for angles
-	bool correctAngles = IsAxiallySymmetric() || IsQuadrantSymmetric() || IsPlaneSymmetric() || IsAsymmetric();
+	bool isAxiallySymmetric = IsAxiallySymmetric();
+	bool isQuadrantSymmetric = IsQuadrantSymmetric();
+	bool isPlaneSymmetric = IsPlaneSymmetric();
+	bool isAsymmetric = IsAsymmetric();
+	bool correctAngles = isAxiallySymmetric || isQuadrantSymmetric || isPlaneSymmetric || isAsymmetric;
 	if (!correctAngles)
 		return false;
 
@@ -223,8 +227,7 @@ IESProcessor::ErrorCode IESProcessor::GetTokensFromFile(std::vector<std::string>
 
 	std::string lineToParse;
 
-	// file is not IES file => return
-	bool hasIESFileTag = true;
+	// no file => return
 	if (!std::getline(inputFile, lineToParse))
 	{
 		return IESProcessor::ErrorCode::NOT_IES_FILE;
@@ -232,54 +235,69 @@ IESProcessor::ErrorCode IESProcessor::GetTokensFromFile(std::vector<std::string>
 
 	text += lineToParse + "\n";
 
-	if (lineToParse.compare(0, IES_FileTag.size(), IES_FileTag) != 0)
-	{
-		// no IES file tag but can still be IES file
-		hasIESFileTag = false;
-	}
+	// FIle may have no IES file tag but can still be IES file
+	// If file has IES tag it doesn't mean it can be used stil, because not all type of data is supported by the RPR core
+	// thus check by IESNA tag is pointless and is not done
+	bool hasIESFileTag = false;
 
 	// parse file line after line
 	bool hasReachedIESDataSegment = false;
+
 	while (std::getline(inputFile, lineToParse))
 	{
 		// IES file consists of 2 parts:
 		// - text with some information about light manufacturers and laboratory that made light mesaurments
 		// - IES light data
 		if (LineHaveNumbers(lineToParse) && hasIESFileTag)
-			hasReachedIESDataSegment = true;
-
-		// skip all data irrelevant for render
-		// - before we encounter ies file tag we skip lines with numbers as well
-		if (!hasReachedIESDataSegment)
 		{
-			text += lineToParse + "\n";
+			hasReachedIESDataSegment = true;
+		}
 
-			// - check line for IES file tag
-			if (!hasIESFileTag)
+		// parse ies file data
+		if (hasReachedIESDataSegment)
+		{
+			// split line
+			if (LineHaveNumbers(lineToParse))
 			{
-				if (lineToParse.compare(0, IES_FileGeneralTag.size(), IES_FileGeneralTag) == 0)
-				{
-					// not all types of IES file are supported
-					if (lineToParse.compare(0, IES_FileExtraTag.size(), IES_FileExtraTag) == 0)
-						hasIESFileTag = true;
-				}
-				else
-				{
-					tokens.clear(); // function shouldn't return garbage
-
-					return IESProcessor::ErrorCode::NOT_SUPPORTED;
-				}
+				SplitLine(tokens, lineToParse);
 			}
 
 			continue;
 		}
 
-		// split line
-		if (LineHaveNumbers(lineToParse))
-			SplitLine(tokens, lineToParse);
+		// skip all data irrelevant for render
+		// - before we encounter ies file tag we skip lines with numbers as well
+		if (hasIESFileTag)
+		{
+			continue;
+		}
+
+		text += lineToParse + "\n";
+
+		// - check line for IES file tag
+		if (lineToParse.compare(0, IES_FileGeneralTag.size(), IES_FileGeneralTag) != 0)
+			continue;
+
+		// not all types of IES file are supported
+		if (lineToParse.compare(0, IES_FileExtraTag.size(), IES_FileExtraTag) == 0)
+		{
+			hasIESFileTag = true;
+		}
+		else
+		{
+			tokens.clear(); // function shouldn't return garbage
+
+			return IESProcessor::ErrorCode::NOT_SUPPORTED;
+		}
 	}
 
-	return (hasIESFileTag) ? IESProcessor::ErrorCode::SUCCESS : IESProcessor::ErrorCode::NOT_IES_FILE;
+	if (!hasIESFileTag)
+	{
+		tokens.clear(); // function shouldn't return garbage
+		return IESProcessor::ErrorCode::NOT_IES_FILE;
+	}
+
+	return IESProcessor::ErrorCode::SUCCESS;
 }
 
 bool ReadDouble(const std::string& input, double& output)
@@ -611,8 +629,14 @@ IESProcessor::ErrorCode IESProcessor::Parse(IESLightData& lightData, const wchar
 	if (!lightData.IsValid())
 	{
 		// report failure
+
+		if (lightData.m_photometricType != 1)
+		{
+			return IESProcessor::ErrorCode::NOT_SUPPORTED;
+		}
+
 		lightData.Clear(); // function shouldn't return garbage
-		return IESProcessor::ErrorCode::NOT_SUPPORTED;
+		return IESProcessor::ErrorCode::INVALID_DATA_IN_IES_FILE;
 	}
 
 	// parse successfull!
