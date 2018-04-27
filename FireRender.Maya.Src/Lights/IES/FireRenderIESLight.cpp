@@ -250,11 +250,12 @@ MHWRender::DrawAPI FireRenderIESLightLocatorOverride::supportedDrawAPIs() const
 
 void FireRenderIESLightLocatorOverride::updateDG()
 {
-	if (m_mesh.SetFilename(GetFilename(), false))
+	bool fileNameChanged = false;
+	if (m_mesh.SetFilename(GetFilename(), false, &fileNameChanged))
 	{
 		m_changed = true;
 	}
-	else
+	else if (fileNameChanged)
 	{
 		// reset filename if it has been loaded incorrectly
 		SetFilename(MString(""));
