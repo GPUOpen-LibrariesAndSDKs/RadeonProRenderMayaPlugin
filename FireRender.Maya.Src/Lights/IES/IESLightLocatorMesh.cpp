@@ -184,17 +184,21 @@ namespace
 	}
 }
 
-bool IESLightLocatorMeshBase::SetFilename(const MString filename, bool forcedUpdate)
+bool IESLightLocatorMeshBase::SetFilename(const MString filename, bool forcedUpdate, bool* fileNameChanged)
 {
+	if (fileNameChanged != nullptr)
+	{
+		*fileNameChanged = (filename != m_filename);
+	}
+
 	// The same. Do nothing
 	if (!forcedUpdate && filename == m_filename)
 	{
 		return false;
 	}
 
-	m_filename = filename;
-
-	const wchar_t* castedName = m_filename.asWChar();
+	bool changed = true;
+	const wchar_t* castedName = filename.asWChar();
 	std::wstring local = castedName;
 
 	if (local.empty())
@@ -204,7 +208,12 @@ bool IESLightLocatorMeshBase::SetFilename(const MString filename, bool forcedUpd
 	else
 	{
 		const size_t pointsPerPolyline = 32;
-		return GenerateIESRepresentation(castedName, pointsPerPolyline, IES_SCALE_MUL, m_vertices, m_indices);
+		changed = GenerateIESRepresentation(castedName, pointsPerPolyline, IES_SCALE_MUL, m_vertices, m_indices);
+	}
+
+	if (changed)
+	{
+		m_filename = filename;
 	}
 
 	return true;

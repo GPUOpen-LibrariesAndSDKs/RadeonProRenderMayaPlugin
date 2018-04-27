@@ -13,7 +13,7 @@
 class IESLightLocatorMeshBase
 {
 public:
-	bool SetFilename(const MString value, bool forcedUpdate);
+	bool SetFilename(const MString value, bool forcedUpdate, bool* fileNameChanged = nullptr);
 
 protected:
 	MString m_filename;
