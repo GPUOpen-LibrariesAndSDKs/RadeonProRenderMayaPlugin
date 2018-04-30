@@ -655,7 +655,7 @@ namespace FireMaya
 			std::vector<int> multiUV_texcoord_strides(uvSetNamesNum, sizeof(Float2));
 			std::vector<int> texIndexStride(uvSetNamesNum, sizeof(int));
 
-			if (puvIndices.size() == 0 || puvIndices[0] == nullptr)
+			if (sizeCoords.size() == 0 || puvIndices.size() == 0 || sizeCoords[0] == 0 || puvIndices[0] == nullptr)
 			{
 				// no uv set
 				uvSetNamesNum = 0;
