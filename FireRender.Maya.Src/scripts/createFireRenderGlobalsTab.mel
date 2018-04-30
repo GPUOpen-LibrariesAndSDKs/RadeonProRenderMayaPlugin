@@ -136,7 +136,7 @@ global proc createAboutFrame(string $parent)
 			button -label "Downloads" -height 19 -command "showRPRUrl(\"http://pro.radeon.com/en-us/software/prorender/\")";
 			button -label "Community" -height 19 -command "showRPRUrl(\"http://maya.radeonprorender.com/support/discussions/\")";
 			canvas -width 85 -height 1 -enableBackground false;
-			button -label "Knowledgebase" -height 19 -command "showRPRUrl(\"http://maya.radeonprorender.com/support/home/\")";
+			button -label "Knowledge Base" -height 19 -command "showRPRUrl(\"http://maya.radeonprorender.com/support/home/\")";
 			button -label "Bug Report" -height 19 -command "showRPRUrl(\"http://maya.radeonprorender.com/support/tickets/\")";
 
 		setParent..;
