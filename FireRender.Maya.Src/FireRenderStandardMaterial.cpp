@@ -793,7 +793,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 
 		frw::Value valueEmissiveColor = scope.GetValue(shaderNode.findPlug(Attribute::emissiveColor));
 
-		const frw::MaterialSystem ms = valueEmissiveColor.GetMaterialSystem();
+		const frw::MaterialSystem ms = scope.MaterialSystem();
 		valueEmissiveColor = ms.ValueMul(valueEmissiveColor, valueEmissiveWeight);
 		material.xSetValue(RPRX_UBER_MATERIAL_EMISSION_COLOR, valueEmissiveColor);
 
