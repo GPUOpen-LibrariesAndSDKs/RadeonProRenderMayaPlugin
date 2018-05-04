@@ -525,7 +525,6 @@ void FireRenderMesh::RegisterCallbacks()
 	{
 		if (!it.shadingEngine.isNull())
 		{
-			AddCallback(MNodeMessage::addNodeDirtyCallback(it.shadingEngine, ShaderDirtyCallback, this));
 			auto shaderOb = getSurfaceShader(it.shadingEngine);
 			if (!shaderOb.isNull())
 				AddCallback(MNodeMessage::addNodeDirtyCallback(shaderOb, ShaderDirtyCallback, this));
@@ -534,6 +533,19 @@ void FireRenderMesh::RegisterCallbacks()
 			if (!shaderDi.isNull())
 				AddCallback(MNodeMessage::addNodeDirtyCallback(shaderDi, ShaderDirtyCallback, this));
 		}
+	}
+}
+
+void FireRenderMesh::attributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug)
+{
+	std::string name = plug.name().asChar();
+
+	// check if change is connected with shaderEngines
+	if (name.find("instObjGroups") != std::string::npos &&
+		((msg | MNodeMessage::AttributeMessage::kConnectionMade) ||
+			(msg | MNodeMessage::AttributeMessage::kConnectionBroken)))
+	{
+		OnShaderDirty();
 	}
 }
 
@@ -950,7 +962,7 @@ void FireRenderNode::OnWorldMatrixChanged()
 	setDirty();
 }
 
-void FireRenderMesh::OnShaderDirty(MObject& node)
+void FireRenderMesh::OnShaderDirty()
 {
 	m.changed.shader = true;
 	setDirty();
@@ -962,7 +974,7 @@ void FireRenderMesh::ShaderDirtyCallback(MObject& node, void* clientData)
 	if (auto self = static_cast<FireRenderMesh*>(clientData))
 	{
 		assert(node != self->Object());
-		self->OnShaderDirty(node);
+		self->OnShaderDirty();
 	}
 }
 

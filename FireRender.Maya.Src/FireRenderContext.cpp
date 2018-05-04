@@ -1236,6 +1236,11 @@ void FireRenderContext::removeCallbacks()
 
 void FireRenderContext::removedNodeCallback(MObject &node, void *clientData)
 {
+	if (!DoesNodeAffectContextRefresh(node))
+	{
+		return;
+	}
+
 	if (auto frContext = GetCallbackContext(clientData))
 	{
 		DebugPrint("FireRenderContext(context=%p)::removedNodeCallback()", frContext);
@@ -1259,16 +1264,35 @@ void FireRenderContext::addedNodeCallback(MObject &node, void *clientData)
 	if (auto frContext = GetCallbackContext(clientData))
 	{
 		DebugPrint("FireRenderContext(context=%p)::addedNodeCallback()", frContext);
-		frContext->m_addedNodes.push_back(node);
-		frContext->setDirty();
+
+		if (DoesNodeAffectContextRefresh(node))
+		{
+			frContext->m_addedNodes.push_back(node);
+			frContext->setDirty();
+		}
 	}
 }
 
-void FireRenderContext::addNode(MObject& node)
+bool FireRenderContext::DoesNodeAffectContextRefresh(const MObject &node)
+{
+	if (node.isNull())
+	{
+		return false;
+	}
+
+	return node.hasFn(MFn::kDagNode) || node.hasFn(MFn::kDisplayLayer);
+}
+
+void FireRenderContext::addNode(const MObject& node)
 {
 	MAIN_THREAD_ONLY;
 
-	if (!node.isNull() && node.hasFn(MFn::kDagNode))
+	if (!DoesNodeAffectContextRefresh(node))
+	{
+		return;
+	}
+
+	if (node.hasFn(MFn::kDagNode))
 	{
 		MFnDagNode dagNode(node);
 
