@@ -256,7 +256,10 @@ public:
 	virtual void OnNodeDirty() override;
 
 	// node dirty
-	virtual void OnShaderDirty(MObject& node);
+	virtual void OnShaderDirty();
+
+	virtual void attributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug) override;
+
 	static void ShaderDirtyCallback(MObject& node, void* clientData);
 
 

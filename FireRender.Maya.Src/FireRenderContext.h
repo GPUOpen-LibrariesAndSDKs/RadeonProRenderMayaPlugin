@@ -308,7 +308,9 @@ public:
 	HashValue GetStateHash();
 
 	// Add a node to the scene.
-	void addNode(MObject& node);
+	void addNode(const MObject& node);
+
+	static bool DoesNodeAffectContextRefresh(const MObject &node);
 
 	// Remove a node from the scene.
 	void removeNode(MObject& node);
