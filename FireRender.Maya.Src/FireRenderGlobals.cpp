@@ -76,6 +76,9 @@ namespace
 			// Denoiser type: Bilateral
 		MObject denoiserRadius;
 
+		// _TODO Remove after Bileteral fix in ImageProcLibrary
+		MObject limitDenoiserRadius;
+
 			// Denoiser type: Local Weighted Regression
 		MObject denoiserSamples;
 		MObject denoiserFilterRadius;
@@ -128,12 +131,21 @@ MObject FireRenderGlobals::m_useRenderStamp;
 MObject FireRenderGlobals::m_renderStampText;
 MObject FireRenderGlobals::m_renderStampTextDefault;
 
+// _TODO Remove after fix in ImageProcLibrary
+MCallbackId FireRenderGlobals::m_attributeChangedCallback;
+
 FireRenderGlobals::FireRenderGlobals()
 {
+	m_attributeChangedCallback = 0;
 }
 
 FireRenderGlobals::~FireRenderGlobals()
 {
+	// _TODO Remove after fix in ImageProcLibrary
+	if (m_attributeChangedCallback != 0)
+	{
+		MNodeMessage::removeCallback(m_attributeChangedCallback);
+	}
 }
 
 MStatus FireRenderGlobals::compute(const MPlug & plug, MDataBlock & data)
@@ -520,12 +532,27 @@ void FireRenderGlobals::createDenoiserAttributes()
 	CHECK_MSTATUS(addAttribute(Attribute::denoiserIsEAW));
 	// Radio buttons end*/
 
+
+	//_TODO Will be removed after ImageProcLibrary would be fixed
+	int limit = 0;
+	status = MGlobal::executeCommand("source \"createFireRenderGlobalsTab.mel\"; isLimitBileteralRadius()", limit);
+
 	// Bilateral
 	Attribute::denoiserRadius = nAttr.create("denoiserRadius", "dr", MFnNumericData::kInt, 1, &status);
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(addAttribute(Attribute::denoiserRadius));
 	nAttr.setMin(1);
-	nAttr.setMax(10);
+	nAttr.setMax(limit ? 6 : 10);
+
+	//_TODO Will be removed after ImageProcLibrary would be fixed
+	Attribute::limitDenoiserRadius = nAttr.create("limitDenoiserRadius", "ldr", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::limitDenoiserRadius));
+	MObject obj;
+	GetRadeonProRenderGlobals(obj);
+	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(obj, FireRenderGlobals::onAttributeChanged, nullptr, &status);
+	CHECK_MSTATUS(status);
+	////////
 
 	//LWR
 	Attribute::denoiserSamples = nAttr.create("denoiserSamples", "ds", MFnNumericData::kInt, 2, &status);
@@ -572,6 +599,19 @@ void FireRenderGlobals::createDenoiserAttributes()
 	nAttr.setMin(0.1f);
 	nAttr.setMax(1.0f);
 }
+
+void FireRenderGlobals::onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
+{
+	if (plug.name() == "RadeonProRenderGlobals.limitDenoiserRadius")
+	{
+		bool limit = false;
+		if (plug.getValue(limit) == MStatus::kSuccess)
+		{
+			MFnNumericAttribute(Attribute::denoiserRadius).setMax(limit ? 6 : 10);
+		}
+	}
+}
+
 
 /** Return the FR camera mode that matches the given camera type. */
 frw::CameraMode FireRenderGlobals::getCameraModeForType(CameraType type, bool defaultIsOrtho)

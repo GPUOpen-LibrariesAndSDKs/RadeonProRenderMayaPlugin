@@ -17,6 +17,46 @@ global proc setParentToFireRenderTab()
 	setParent fireRenderTabColumn;
 }
 
+// _TODO Remove this code after it will be fixed in ImageProcessingLibrary
+global proc int isLimitBileteralRadius()
+{
+	$devices = `optionVar -q RPR_DevicesName`;
+	int $deviceCount = size($devices);
+
+	// We need to disable bileteral radius more than 6 for system with NVidia
+	// Because it does not work at the moment even on CPU mode
+	int $isAMDSelected = false;
+	int $isNVidiaPresent = false;
+	int $isNVidiaSelected = false;
+
+	$devicesSelected = `optionVar -q RPR_DevicesSelected`;
+	
+	for ($i = 0; $i < $deviceCount; $i++)
+	{
+		string $device_name = $devices[$i];
+
+		string $res = `match "GeForce" $device_name`;
+		if ($res != "")
+		{
+			$isNVidiaPresent = 1;
+			if ($devicesSelected[$i] != 0)
+			{
+				$isNVidiaSelected = 1;
+				break;
+			}
+		}
+
+		$res = `match "Radeon" $device_name`;
+		if ($res != "" && $devicesSelected[$i] != 0)
+		{
+			$isAMDSelected = 1;
+		}
+	}
+
+	return $isNVidiaSelected || ($isNVidiaPresent && !$isAMDSelected);
+}
+
+
 global proc deviceTypeChangedUI()
 {
 	$devices = `optionVar -q RPR_DevicesName`;
@@ -73,7 +113,22 @@ global proc deviceTypeChangedUI()
 	int $useCPU = `checkBox -q -v checkBox_ResourcesCPU`;
 
 	optionVar -iva RPR_DevicesSelected ($useCPU);
+
+
+	// _TODO Remove this code after it will be fixed in ImageProcessingLibrary
+	if (isLimitBileteralRadius())
+	{		
+		// We cannot use editAttrLimits here because attbute has been created from C++ code, it wont work from MEL in this case
+		setAttr "RadeonProRenderGlobals.limitDenoiserRadius" 1;
+	}
+	else
+	{
+		setAttr "RadeonProRenderGlobals.limitDenoiserRadius" 0;
+	}
+	//////////
+
 }
+
 
 // Open a browser window and display the specified URL.
 global proc showRPRUrl(string $url)
