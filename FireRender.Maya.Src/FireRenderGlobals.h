@@ -88,6 +88,9 @@ public:
 
 	static void createDenoiserAttributes();
 
+	// _TODO Remove after fix in ImageProcLibrary
+	static void onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
+
 	/** Return the FR camera mode that matches the given camera type. */
 	static frw::CameraMode getCameraModeForType(CameraType type, bool defaultIsOrtho = false);
 	// Ground
@@ -103,4 +106,8 @@ public:
 	static MObject m_useRenderStamp;
 	static MObject m_renderStampText;
 	static MObject m_renderStampTextDefault; // default value for m_renderStampText
+
+private:
+	// _TODO Remove after fix in ImageProcLibrary
+	static MCallbackId m_attributeChangedCallback;
 };
