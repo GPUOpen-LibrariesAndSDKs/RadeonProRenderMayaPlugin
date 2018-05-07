@@ -3,6 +3,7 @@
 #include "FireRenderUtils.h"
 #include "AutoLock.h"
 #include <maya/MGlobal.h>
+#include <regex>
 
 
 // Namespaces
@@ -108,9 +109,15 @@ void FireRenderError::setError(const ErrorInfo& error, bool showDialog)
 void FireRenderError::logError(const ErrorInfo& error) const
 {
 	// Add the error message to the script and debug logs.
-	MString logMessage = getErrorMessage(error);
-	DebugPrint(logMessage.asChar());
-	MGlobal::displayError(logMessage);
+	std::string logMessage = getErrorMessage(error).asChar();
+
+	// Sometimes Maya has %20 in textures path instead of spaces
+	// We should avoid this because snprintf call will be performed later 
+	// and "%" symbol is special symbol for this function.
+	logMessage = std::regex_replace(logMessage, std::regex("%20"), " ");
+
+	DebugPrint(logMessage.c_str());
+	MGlobal::displayError(MString(logMessage.c_str()));
 }
 
 // -----------------------------------------------------------------------------
