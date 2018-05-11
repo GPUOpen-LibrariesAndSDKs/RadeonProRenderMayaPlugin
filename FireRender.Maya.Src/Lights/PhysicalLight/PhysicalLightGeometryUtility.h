@@ -1,6 +1,6 @@
 #pragma once
 
-#include "PhysicalLight.h"
+#include "PhysicalLightData.h"
 #include "FireMaya.h"
 #include "FireRenderObjects.h"
 

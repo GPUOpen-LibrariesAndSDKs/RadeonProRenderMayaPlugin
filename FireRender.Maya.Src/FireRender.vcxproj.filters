@@ -479,6 +479,9 @@
     <ClCompile Include="..\FireRender.Components\cpp\ImageFilter\ImageFilter.cpp">
       <Filter>FireRender.Components\Denoiser</Filter>
     </ClCompile>
+    <ClCompile Include="Lights\PhysicalLight\PhysicalLightData.cpp">
+      <Filter>Lights\PhysicalLight</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -805,9 +808,6 @@
     <ClInclude Include="Lights\IES\IESLightLocatorMesh.h">
       <Filter>Lights\IES</Filter>
     </ClInclude>
-    <ClInclude Include="Lights\PhysicalLight\PhysicalLight.h">
-      <Filter>Lights\PhysicalLight</Filter>
-    </ClInclude>
     <ClInclude Include="Lights\PhysicalLight\FireRenderPhysicalLightLocator.h">
       <Filter>Lights\PhysicalLight</Filter>
     </ClInclude>
@@ -822,6 +822,9 @@
     </ClInclude>
     <ClInclude Include="..\FireRender.Components\cpp\ImageFilter\ImageFilter.h">
       <Filter>FireRender.Components\Denoiser</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\PhysicalLight\PhysicalLightData.h">
+      <Filter>Lights\PhysicalLight</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ShadersManager.h"
-#include "PhysicalLight.h"
+#include "PhysicalLightData.h"
 #include <maya/MPxLocatorNode.h>
 #include <maya/MPxGeometryOverride.h>
 #include <memory>

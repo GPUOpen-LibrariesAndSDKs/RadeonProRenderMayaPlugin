@@ -928,6 +928,7 @@ namespace FireMaya
 			physicalLightData.enabled = true;
 			physicalLightData.colorMode = PLCColor;
 			physicalLightData.intensityUnits = PLTIUWatts;
+			physicalLightData.luminousEfficacy = PhysicalLightData::defaultLuminousEfficacy;
 			physicalLightData.colorBase = fnLight.color();
 			physicalLightData.intensity = fnLight.intensity(&mstatus) * LIGHT_SCALE;
 
