@@ -525,13 +525,23 @@ void FireRenderMesh::RegisterCallbacks()
 	{
 		if (!it.shadingEngine.isNull())
 		{
-			auto shaderOb = getSurfaceShader(it.shadingEngine);
+			MObject shaderOb = getSurfaceShader(it.shadingEngine);
 			if (!shaderOb.isNull())
+			{
 				AddCallback(MNodeMessage::addNodeDirtyCallback(shaderOb, ShaderDirtyCallback, this));
+			}
 
-			auto shaderDi = getDisplacementShader(it.shadingEngine);
+			MObject shaderDi = getDisplacementShader(it.shadingEngine);
 			if (!shaderDi.isNull())
+			{
 				AddCallback(MNodeMessage::addNodeDirtyCallback(shaderDi, ShaderDirtyCallback, this));
+			}
+
+			MObject shaderVolume = getVolumeShader(it.shadingEngine);
+			if (!shaderVolume.isNull())
+			{
+				AddCallback(MNodeMessage::addNodeDirtyCallback(shaderVolume, ShaderDirtyCallback, this));
+			}
 		}
 	}
 }
