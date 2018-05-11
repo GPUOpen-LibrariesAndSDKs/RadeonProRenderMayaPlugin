@@ -155,7 +155,7 @@ void PhysicalLightAttributes::CreateIntensityAttributes()
 
 	CreateIntAttribute(intensityUnits, "intensityUnits", "iu", 0, 3, PLTIUWatts);
 
-	CreateFloatAttribute(luminousEfficacy, "luminousEfficacy", "le", 0.1f, maxVal, 17.0f);
+	CreateFloatAttribute(luminousEfficacy, "luminousEfficacy", "le", 0.1f, maxVal, PhysicalLightData::defaultLuminousEfficacy);
 
 	std::vector<const char*> colorValues = { "Color", "Temperature" };
 	CreateEnumAttribute(colorMode, "colorMode", "cm", colorValues, PLCColor);

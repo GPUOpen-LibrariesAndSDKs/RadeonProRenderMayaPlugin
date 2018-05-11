@@ -5,7 +5,7 @@
 #include <maya/MColor.h>
 #include <maya/MFnDependencyNode.h>
 
-#include "PhysicalLight.h"
+#include "PhysicalLightData.h"
 
 class PhysicalLightAttributes
 {

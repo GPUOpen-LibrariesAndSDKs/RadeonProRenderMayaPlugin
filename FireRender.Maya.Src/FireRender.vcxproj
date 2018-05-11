@@ -272,6 +272,7 @@
     <ClCompile Include="Lights\IES\IESLightLocatorMesh.cpp" />
     <ClCompile Include="Lights\PhysicalLight\FireRenderPhysicalLightLocator.cpp" />
     <ClCompile Include="Lights\PhysicalLight\FireRenderPhysicalOverride.cpp" />
+    <ClCompile Include="Lights\PhysicalLight\PhysicalLightData.cpp" />
     <ClCompile Include="Lights\PhysicalLight\PhysicalLightAttributes.cpp" />
     <ClCompile Include="Lights\PhysicalLight\PhysicalLightGeometryUtility.cpp" />
     <ClCompile Include="MaterialLoader.cpp" />
@@ -392,7 +393,7 @@
     <ClInclude Include="Lights\IES\IESLightLocatorMesh.h" />
     <ClInclude Include="Lights\PhysicalLight\FireRenderPhysicalLightLocator.h" />
     <ClInclude Include="Lights\PhysicalLight\FireRenderPhysicalOverride.h" />
-    <ClInclude Include="Lights\PhysicalLight\PhysicalLight.h" />
+    <ClInclude Include="Lights\PhysicalLight\PhysicalLightData.h" />
     <ClInclude Include="Lights\PhysicalLight\PhysicalLightAttributes.h" />
     <ClInclude Include="Lights\PhysicalLight\PhysicalLightGeometryUtility.h" />
     <ClInclude Include="Logger.h" />
