@@ -2,14 +2,18 @@
 #include "FireRenderUtils.h"
 #include "FireRenderIpr.h"
 #include "common.h"
+#include "../ThirdParty/RadeonProRender SDK/Win/inc/Math/half.h"
+#include "FireRenderThread.h"
+#include "VRay.h"
+
 #include <maya/MImage.h>
 #include <maya/MPlugArray.h>
 #include <maya/MTextureManager.h>
 #include <maya/MFileIO.h>
 #include <maya/MSceneMessage.h>
-#include "../ThirdParty/RadeonProRender SDK/Win/inc/Math/half.h"
-#include "FireRenderThread.h"
-#include "VRay.h"
+
+#include <exception>
+
 
 #ifdef MAYA2017
 #include "maya/MColorManagementUtilities.h"
@@ -338,15 +342,15 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, bo
 									//case MHWRender::kR32G32B32A32_UINT: break;
 									//case MHWRender::kR32G32B32A32_SINT: break;
 								default:
-									ErrorPrint("Unsupported MRasterFormat format: %d", desc.fFormat);
-#ifndef MAYA2015
+									std::ostringstream stringStream;
+									stringStream << "Error Loading Image : " << texturePath.asUTF8() << 
+													". Unsupported MRasterFormat format: " << desc.fFormat;
+									std::string errMsg = stringStream.str();
+
 									texture->freeRawData(rawData_to_free);
-#else
-									free(rawData_to_free);
-#endif
 									textureManager->releaseTexture(texture);
-									throw;
-									break;
+
+									throw std::exception(errMsg.c_str());
 								}
 
 								int srcRowPitch = desc.fBytesPerRow;
@@ -414,6 +418,10 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, bo
 							}
 							textureManager->releaseTexture(texture);
 						}
+					}
+					catch (std::exception& e)
+					{
+						ErrorPrint(e.what());
 					}
 					catch (...)
 					{
