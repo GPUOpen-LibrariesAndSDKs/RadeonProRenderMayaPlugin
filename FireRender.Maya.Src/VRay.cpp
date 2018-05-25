@@ -376,9 +376,9 @@ namespace FireMaya
 				};
 
 				MEulerRotation rotation(
-					getRotation("xRotation"),
+					getRotation("xRotation") - PI / 2,
 					getRotation("yRotation"),
-					getRotation("zRotation") + PI / 2);
+					getRotation("zRotation"));
 				ret.matrix = rotation.asMatrix();
 				ret.matrix *= dagPath.inclusiveMatrix(&status);
 			}
@@ -670,7 +670,7 @@ namespace FireMaya
 			frw::Context frcontext,
 			MFnDependencyNode & fnVRayLight,
 			const MMatrix scaleM,
-			const MEulerRotation rotation,
+			const MEulerRotation,
 			bool update)
 		{
 			auto data = readVRayIESLightData(fnVRayLight.object());
