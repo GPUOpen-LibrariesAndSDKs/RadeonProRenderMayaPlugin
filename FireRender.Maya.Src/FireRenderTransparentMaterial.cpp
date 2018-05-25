@@ -56,6 +56,10 @@ MStatus FireMaya::TransparentMaterial::compute(const MPlug& plug, MDataBlock& bl
 {
 	if ((plug == Attribute::output) || (plug.parent() == Attribute::output))
 	{
+		// We need to get all attributes which affect outputs in order to recalculate all dependent nodes
+		// It needs to get IPR properly updating while changing attributes on the "left" nodes in dependency graph
+		ForceEvaluateAllAttributes(true);
+		
 		MFloatVector& surfaceColor = block.inputValue(Attribute::color).asFloatVector();
 
 		// set output color attribute

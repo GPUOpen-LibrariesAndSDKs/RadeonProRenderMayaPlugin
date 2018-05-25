@@ -130,6 +130,10 @@ namespace FireMaya
 	{
 		if ((plug == Attribute::outColor) || (plug.parent() == Attribute::outColor))
 		{
+			// We need to get all attributes which affect outputs in order to recalculate all dependent nodes
+			// It needs to get IPR properly updating while changing attributes on the "left" nodes in dependency graph
+			ForceEvaluateAllAttributes(true);
+
 			MFloatVector& surfaceColor = block.inputValue(Attribute::baseColor).asFloatVector();
 
 			// set output color attribute

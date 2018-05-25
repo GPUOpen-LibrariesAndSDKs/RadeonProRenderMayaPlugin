@@ -1,5 +1,7 @@
 #include "FireRenderBlendValue.h"
 
+#include <maya/MFloatVector.h>
+
 namespace
 {
 	namespace Attribute
@@ -21,7 +23,7 @@ MStatus FireMaya::BlendValue::initialize()
 	MAKE_INPUT(nAttr);
 	Attribute::inputB = nAttr.createColor("inputB", "b");
 	MAKE_INPUT(nAttr);
-	Attribute::weight = nAttr.create("weight", "w", MFnNumericData::kFloat, 0.5);
+	Attribute::weight = nAttr.create("weight", "w", MFnNumericData::kFloat, 0.5f);
 	MAKE_INPUT(nAttr);
 
 	nAttr.setSoftMin(0);

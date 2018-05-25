@@ -132,10 +132,27 @@ namespace FireMaya
 
 		void ConvertFilenameToFileInput(MObject filenameAttr, MObject inputAttr);
 
+		// basic implementation of this methods just gets all input attributes and mark as cleaned output
+		virtual MStatus compute(const MPlug& plug, MDataBlock& block) override;
+
+		// We need to get all attributes which affect outputs in order to recalculate all dependent nodes
+		// It needs to get IPR properly updating while changing attributes on the "left" nodes in dependency graph
+		void ForceEvaluateAllAttributes(bool evaluateInputs);
+		static void ForceEvaluateAllAttributes(MObject node, bool evaluateInputs);
+		static bool IsOutputAttribute(MObject attrObj, bool parentsOnly = false);
+
+	protected:
+		void GetOutputAttributes(std::vector<MObject>& outputVec);
+
+	private:
+		void FillOutputAttributeNames();
+
 	private:
 		MCallbackId openCallback;
 		MCallbackId importCallback;
 		static void onFileOpen(void* clientData);
+
+		std::vector<MString> m_outputAttributeNames;
 	};
 
 	// value classes operate on scalars or colors, usually this will be used as an input to something else
@@ -256,6 +273,7 @@ namespace FireMaya
 			double apertureSizeX, double apertureSizeY,
 			double offsetX, double offsetY,
 			bool ignoreColorSpaceFileRules, MString colorSpace);
+
 
 		frw::Value GetValue(MObject ob, const MString &outPlugName = MString());
 		frw::Value GetValue(const MPlug& ob);
