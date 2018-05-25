@@ -11,9 +11,9 @@
 #include <maya/MTextureManager.h>
 #include <maya/MFileIO.h>
 #include <maya/MSceneMessage.h>
+#include <maya/MFnTypedAttribute.h>
 
 #include <exception>
-
 
 #ifdef MAYA2017
 #include "maya/MColorManagementUtilities.h"
@@ -1370,6 +1370,10 @@ frw::Shader FireMaya::Scope::ParseShader(MObject node)
 	if (node.isNull())
 		return nullptr;
 
+	// force output plugs get evaluated to let Maya to calculate, clean and cache all necessary plugs in network.
+	// Without that IPR may not work on quite big dependency graphs because shaders stay dirty and ShaderDirty callback will not be invoked on geometry nodes
+	FireMaya::Node::ForceEvaluateAllAttributes(node, false);
+
 	frw::Shader result;
 
 	MFnDependencyNode shaderNode(node);
@@ -1514,17 +1518,17 @@ void FireMaya::Scope::NodeDirtyCallback(MObject& ob)
 {
 	try
 	{
-	MFnDependencyNode node(ob);
-	DebugPrint("Callback: %s dirty", node.typeName().asUTF8());
+		MFnDependencyNode node(ob);
+		DebugPrint("Callback: %s dirty", node.typeName().asUTF8());
 
-	auto shaderId = getNodeUUid(ob);
-	if (auto shader = GetCachedShader(shaderId)) {
-		shader.SetDirty();
+		auto shaderId = getNodeUUid(ob);
+		if (auto shader = GetCachedShader(shaderId)) {
+			shader.SetDirty();
+		}
+		if (auto shader = GetCachedVolumeShader(shaderId)) {
+			shader.SetDirty();
+		}
 	}
-	if (auto shader = GetCachedVolumeShader(shaderId)) {
-		shader.SetDirty();
-	}
-}
 	catch (const std::exception & ex)
 	{
 		DebugPrint("NodeDirtyCallback -> %s", ex.what());
@@ -1830,6 +1834,8 @@ void FireMaya::Node::postConstructor()
 		openCallback = MSceneMessage::addCallback(MSceneMessage::Message::kAfterOpen, onFileOpen, this);
 		importCallback = MSceneMessage::addCallback(MSceneMessage::Message::kAfterImport, onFileOpen, this);
 	}
+
+	FillOutputAttributeNames();
 }
 
 /*static*/ void FireMaya::Node::onFileOpen(void* clientData)
@@ -1884,4 +1890,153 @@ connectAttr -f ($placeNode+".outUvFilterSize") ($node+".uvFilterSize");
 
 		MGlobal::executeCommand(command);
 	}
+}
+
+void FireMaya::Node::ForceEvaluateAllAttributes(bool evaluateInputs)
+{
+	ForceEvaluateAllAttributes(thisMObject(), evaluateInputs);
+}
+
+void FireMaya::Node::ForceEvaluateAllAttributes(MObject node, bool evaluateInputs)
+{
+	MFnDependencyNode depNode(node);
+
+	unsigned int count = depNode.attributeCount();
+
+	MStatus status;
+	for (unsigned int i = 0; i < count; ++i)
+	{
+		MObject attrObj = depNode.attribute(i);
+		MFnAttribute attr(attrObj);
+		MPlug plug = depNode.findPlug(attr.object(), &status);
+		CHECK_MSTATUS(status);
+		bool attrProcessed = false;
+
+		bool isOutput = IsOutputAttribute(attrObj, !evaluateInputs);
+		if (isOutput == evaluateInputs)
+		{
+			continue;
+		}
+
+		if (attrObj.hasFn(MFn::kNumericAttribute))
+		{
+			if (plug.numChildren() > 0)
+			{
+				continue;
+			}
+			else
+			{
+				float val;
+				MStatus status = plug.getValue(val);
+				CHECK_MSTATUS(status);
+
+				attrProcessed = true;
+			}
+		}
+		else if (attrObj.hasFn(MFn::kEnumAttribute))
+		{
+			int val;
+			MStatus status = plug.getValue(val);
+			CHECK_MSTATUS(status);
+
+			attrProcessed = true;
+		}
+		else if (attrObj.hasFn(MFn::kTypedAttribute))
+		{
+			MFnTypedAttribute typedAttr(attrObj);
+
+			if (typedAttr.attrType() == MFnData::Type::kString)
+			{
+				MString str;
+				MStatus status = plug.getValue(str);
+				CHECK_MSTATUS(status);
+
+				attrProcessed = true;
+			}
+		}
+
+		if (!attrProcessed)
+		{
+			// It may be bad (if we missed something above), may be ok, just log it in case of necessity
+			DebugPrint("Plug hasn't been processed: %s", plug.name().asChar());
+		}
+	}
+}
+
+void FireMaya::Node::GetOutputAttributes(std::vector<MObject>& outputVec)
+{
+	outputVec.clear();
+
+	MFnDependencyNode depNode(thisMObject());
+	size_t count = m_outputAttributeNames.size();
+
+	outputVec.resize(count);
+
+	MStatus status;
+	for (int i = 0; i < count; i++)
+	{
+		outputVec[i] = depNode.attribute(m_outputAttributeNames[i], &status);
+		CHECK_MSTATUS(status);
+	}
+}
+
+// Just request all inputs and set as cleaned requested output
+MStatus FireMaya::Node::compute(const MPlug& plug, MDataBlock& block)
+{
+	std::vector<MObject> outputVec;
+	GetOutputAttributes(outputVec);
+
+	for (size_t i = 0; i < outputVec.size(); i++)
+	{
+		if (plug == outputVec[i] || plug.parent() == outputVec[i])
+		{
+			ForceEvaluateAllAttributes(true);
+
+			MDataHandle outHandle = block.outputValue(plug.attribute());
+			outHandle.setClean();
+
+			block.setClean(plug);
+			return MS::kSuccess;
+		}
+	}
+
+	return MStatus::kUnknownParameter;
+}
+
+void FireMaya::Node::FillOutputAttributeNames()
+{
+	MFnDependencyNode depNode(thisMObject());
+
+	unsigned int count = depNode.attributeCount();
+
+	m_outputAttributeNames.clear();
+
+	MStatus status;
+	for (unsigned int i = 0; i < count; ++i)
+	{
+		MObject attrObj = depNode.attribute(i);
+		MFnAttribute attr(attrObj);
+
+		if (IsOutputAttribute(attrObj, true))
+		{
+			m_outputAttributeNames.push_back(attr.name());
+		}
+	}
+}
+
+bool FireMaya::Node::IsOutputAttribute(MObject attrObj, bool parentsOnly)
+{
+	MFnAttribute attr(attrObj);
+
+	if (attr.isWritable() || (!attr.parent().isNull() && parentsOnly))
+	{
+		return false;
+	}
+
+	if (std::string(attr.name().asChar()).find("out") == 0)
+	{
+		return true;
+	}
+
+	return false;
 }

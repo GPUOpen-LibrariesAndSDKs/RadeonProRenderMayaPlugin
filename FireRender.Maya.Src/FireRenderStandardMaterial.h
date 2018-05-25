@@ -6,7 +6,6 @@ namespace FireMaya
 	class StandardMaterial : public ShaderNode
 	{
 	public:
-
 		virtual MStatus compute(const MPlug&, MDataBlock&) override;
 
 		virtual void    postConstructor() override;

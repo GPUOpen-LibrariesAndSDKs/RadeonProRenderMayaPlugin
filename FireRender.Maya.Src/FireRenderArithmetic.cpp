@@ -1,6 +1,8 @@
 #include "FireRenderArithmetic.h"
-#include <maya/MFnEnumAttribute.h>
 #include "FireRenderMaterial.h"
+
+#include <maya/MFnEnumAttribute.h>
+#include <maya/MFloatVector.h>
 
 namespace
 {
