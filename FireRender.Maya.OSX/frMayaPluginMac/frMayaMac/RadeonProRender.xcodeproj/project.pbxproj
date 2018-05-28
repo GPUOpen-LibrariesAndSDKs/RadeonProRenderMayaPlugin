@@ -346,6 +346,10 @@
 		8D843D6E1F98F5470068CB2D /* IESLightRepresentationCalc.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D843D6A1F98F5460068CB2D /* IESLightRepresentationCalc.h */; };
 		8D843D6F1F98F5470068CB2D /* IESprocessor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D843D6B1F98F5470068CB2D /* IESprocessor.cpp */; };
 		8D843D701F98F5470068CB2D /* IESprocessor.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D843D6C1F98F5470068CB2D /* IESprocessor.h */; };
+		8D8CA4B520BC721300A90237 /* PhysicalLightData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D8CA4B320BC721300A90237 /* PhysicalLightData.cpp */; };
+		8D8CA4B620BC721300A90237 /* PhysicalLightData.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D8CA4B420BC721300A90237 /* PhysicalLightData.h */; };
+		8D8CA4B720BC729D00A90237 /* PhysicalLightData.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D8CA4B420BC721300A90237 /* PhysicalLightData.h */; };
+		8D8CA4B820BC72AA00A90237 /* PhysicalLightData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D8CA4B320BC721300A90237 /* PhysicalLightData.cpp */; };
 		8D8F06EB1F437B2D00A13D6B /* ArHosekSkyModel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D8F06E61F437B2D00A13D6B /* ArHosekSkyModel.cpp */; };
 		8D8F06EC1F437B2D00A13D6B /* ArHosekSkyModel.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D8F06E71F437B2D00A13D6B /* ArHosekSkyModel.h */; };
 		8D8F06ED1F437B2D00A13D6B /* ArHosekSkyModelData_CIEXYZ.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D8F06E81F437B2D00A13D6B /* ArHosekSkyModelData_CIEXYZ.h */; };
@@ -365,7 +369,6 @@
 		8DB6233C2075583C00841D10 /* PhysicalLightGeometryUtility.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB623332075583B00841D10 /* PhysicalLightGeometryUtility.h */; };
 		8DB6233D2075583C00841D10 /* PhysicalLightAttributes.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB623342075583B00841D10 /* PhysicalLightAttributes.h */; };
 		8DB6233E2075583C00841D10 /* FireRenderPhysicalOverride.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB623352075583B00841D10 /* FireRenderPhysicalOverride.cpp */; };
-		8DB6233F2075583C00841D10 /* PhysicalLight.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB623362075583C00841D10 /* PhysicalLight.h */; };
 		8DB623402075583C00841D10 /* FireRenderPhysicalLightLocator.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB623372075583C00841D10 /* FireRenderPhysicalLightLocator.h */; };
 		8DB623412075583C00841D10 /* PhysicalLightGeometryUtility.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB623382075583C00841D10 /* PhysicalLightGeometryUtility.cpp */; };
 		8DB6234220755B2800841D10 /* FireRenderPhysicalLightLocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB623302075583A00841D10 /* FireRenderPhysicalLightLocator.cpp */; };
@@ -512,6 +515,8 @@
 		8D843D6A1F98F5460068CB2D /* IESLightRepresentationCalc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IESLightRepresentationCalc.h; path = ../../../FireRender.Components/cpp/IESLight/IESLightRepresentationCalc.h; sourceTree = "<group>"; };
 		8D843D6B1F98F5470068CB2D /* IESprocessor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IESprocessor.cpp; path = ../../../FireRender.Components/cpp/IESLight/IESprocessor.cpp; sourceTree = "<group>"; };
 		8D843D6C1F98F5470068CB2D /* IESprocessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IESprocessor.h; path = ../../../FireRender.Components/cpp/IESLight/IESprocessor.h; sourceTree = "<group>"; };
+		8D8CA4B320BC721300A90237 /* PhysicalLightData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PhysicalLightData.cpp; path = ../../../FireRender.Maya.Src/Lights/PhysicalLight/PhysicalLightData.cpp; sourceTree = "<group>"; };
+		8D8CA4B420BC721300A90237 /* PhysicalLightData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PhysicalLightData.h; path = ../../../FireRender.Maya.Src/Lights/PhysicalLight/PhysicalLightData.h; sourceTree = "<group>"; };
 		8D8F06E61F437B2D00A13D6B /* ArHosekSkyModel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ArHosekSkyModel.cpp; path = ../../../FireRender.Maya.Src/Hosek/ArHosekSkyModel.cpp; sourceTree = "<group>"; };
 		8D8F06E71F437B2D00A13D6B /* ArHosekSkyModel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ArHosekSkyModel.h; path = ../../../FireRender.Maya.Src/Hosek/ArHosekSkyModel.h; sourceTree = "<group>"; };
 		8D8F06E81F437B2D00A13D6B /* ArHosekSkyModelData_CIEXYZ.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ArHosekSkyModelData_CIEXYZ.h; path = ../../../FireRender.Maya.Src/Hosek/ArHosekSkyModelData_CIEXYZ.h; sourceTree = "<group>"; };
@@ -531,7 +536,6 @@
 		8DB623332075583B00841D10 /* PhysicalLightGeometryUtility.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PhysicalLightGeometryUtility.h; path = ../../../FireRender.Maya.Src/Lights/PhysicalLight/PhysicalLightGeometryUtility.h; sourceTree = "<group>"; };
 		8DB623342075583B00841D10 /* PhysicalLightAttributes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PhysicalLightAttributes.h; path = ../../../FireRender.Maya.Src/Lights/PhysicalLight/PhysicalLightAttributes.h; sourceTree = "<group>"; };
 		8DB623352075583B00841D10 /* FireRenderPhysicalOverride.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderPhysicalOverride.cpp; path = ../../../FireRender.Maya.Src/Lights/PhysicalLight/FireRenderPhysicalOverride.cpp; sourceTree = "<group>"; };
-		8DB623362075583C00841D10 /* PhysicalLight.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PhysicalLight.h; path = ../../../FireRender.Maya.Src/Lights/PhysicalLight/PhysicalLight.h; sourceTree = "<group>"; };
 		8DB623372075583C00841D10 /* FireRenderPhysicalLightLocator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderPhysicalLightLocator.h; path = ../../../FireRender.Maya.Src/Lights/PhysicalLight/FireRenderPhysicalLightLocator.h; sourceTree = "<group>"; };
 		8DB623382075583C00841D10 /* PhysicalLightGeometryUtility.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PhysicalLightGeometryUtility.cpp; path = ../../../FireRender.Maya.Src/Lights/PhysicalLight/PhysicalLightGeometryUtility.cpp; sourceTree = "<group>"; };
 		8DB699D11F9926F90040373F /* GLTFTranslator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GLTFTranslator.cpp; path = ../../../FireRender.Maya.Src/GLTFTranslator.cpp; sourceTree = "<group>"; };
@@ -691,11 +695,12 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				8D8CA4B320BC721300A90237 /* PhysicalLightData.cpp */,
+				8D8CA4B420BC721300A90237 /* PhysicalLightData.h */,
 				8DB623302075583A00841D10 /* FireRenderPhysicalLightLocator.cpp */,
 				8DB623372075583C00841D10 /* FireRenderPhysicalLightLocator.h */,
 				8DB623352075583B00841D10 /* FireRenderPhysicalOverride.cpp */,
 				8DB623312075583B00841D10 /* FireRenderPhysicalOverride.h */,
-				8DB623362075583C00841D10 /* PhysicalLight.h */,
 				8DB623322075583B00841D10 /* PhysicalLightAttributes.cpp */,
 				8DB623342075583B00841D10 /* PhysicalLightAttributes.h */,
 				8DB623382075583C00841D10 /* PhysicalLightGeometryUtility.cpp */,
@@ -1042,6 +1047,7 @@
 				8DB699D41F9926F90040373F /* GLTFTranslator.h in Headers */,
 				4DE508861D9950A1009B2BD6 /* FireRenderBlendValue.h in Headers */,
 				8D8F06EF1F437B2D00A13D6B /* ArHosekSkyModelData_Spectral.h in Headers */,
+				8D8CA4B620BC721300A90237 /* PhysicalLightData.h in Headers */,
 				4DE508871D9950A1009B2BD6 /* ShadersManager.h in Headers */,
 				4D1B139D1DA48D04007BDCCD /* FireRenderImageUtil.h in Headers */,
 				4DE508881D9950A1009B2BD6 /* FireRenderViewport.h in Headers */,
@@ -1068,7 +1074,6 @@
 				4DE508931D9950A1009B2BD6 /* FireRenderGradient.h in Headers */,
 				4DE508941D9950A1009B2BD6 /* FireRenderSurfaceOverride.h in Headers */,
 				8D77AEF71F436244008E88FB /* FireRenderViewportOperation.h in Headers */,
-				8DB6233F2075583C00841D10 /* PhysicalLight.h in Headers */,
 				4DE508951D9950A1009B2BD6 /* FireRenderIpr.h in Headers */,
 				4DE508961D9950A1009B2BD6 /* FireRenderOverride.h in Headers */,
 				8D77AEB61F4361E2008E88FB /* SunPositionCalculator.h in Headers */,
@@ -1081,6 +1086,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D8CA4B720BC729D00A90237 /* PhysicalLightData.h in Headers */,
 				8D595D8D20372FE20031988A /* SkyBuilder.h in Headers */,
 				8D595D8E20372FE20031988A /* base_mesh.h in Headers */,
 				8D595D9020372FE20031988A /* FireRenderBlendMaterial.h in Headers */,
@@ -1263,6 +1269,7 @@
 				8D742CD41F6B031900CB9364 /* FireRenderShadowCatcherMaterial.cpp in Sources */,
 				4DE5089B1D9950A1009B2BD6 /* FireRenderUtils.cpp in Sources */,
 				8DB6233E2075583C00841D10 /* FireRenderPhysicalOverride.cpp in Sources */,
+				8D8CA4B520BC721300A90237 /* PhysicalLightData.cpp in Sources */,
 				4DE5089C1D9950A1009B2BD6 /* FireRenderNoise.cpp in Sources */,
 				4DE5089D1D9950A1009B2BD6 /* FireRenderMaterialSwatchRender.cpp in Sources */,
 				4DE5089E1D9950A1009B2BD6 /* FireRenderAddMaterial.cpp in Sources */,
@@ -1352,6 +1359,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D8CA4B820BC72AA00A90237 /* PhysicalLightData.cpp in Sources */,
 				8DB6234820755B4400841D10 /* FireRenderIESLight.cpp in Sources */,
 				8DB6234220755B2800841D10 /* FireRenderPhysicalLightLocator.cpp in Sources */,
 				8DB6234320755B2800841D10 /* FireRenderPhysicalOverride.cpp in Sources */,
