@@ -350,7 +350,7 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, bo
 									texture->freeRawData(rawData_to_free);
 									textureManager->releaseTexture(texture);
 
-									throw std::exception(errMsg.c_str());
+									throw std::runtime_error(errMsg.c_str());
 								}
 
 								int srcRowPitch = desc.fBytesPerRow;
