@@ -8,13 +8,15 @@
 // Created by Alan Stanzione.
 //
 #include "frWrap.h"
+#include "FireMaya.h"
+#include "MeshTranslator.h"
+
 #include <maya/MObject.h>
 #include <maya/MFnCamera.h>
 #include <maya/MMatrix.h>
 #include <maya/MColor.h>
 #include <maya/MObjectArray.h>
 #include <maya/MFnNurbsSurface.h>
-#include "FireMaya.h"
 #include <cassert>
 #include <vector>
 
@@ -92,12 +94,7 @@ namespace FireMaya
 {
 	bool getInputColorConnection(const MPlug& colorPlug, MPlug& connectedPlug);
 
-	/** Tessellate a NURBS surface and return the resulting mesh object. */
-	MObject tessellateNurbsSurface(const MObject& object, const MObject& parent, MStatus& status);
-
 	bool translateCamera(frw::Camera& frcamera, const MObject& camera, const MMatrix& matrix, bool isRenderView, float aspectRatio = 0.0, bool useAspectRatio = false, int cameraType = 0);
-
-	std::vector<frw::Shape> TranslateMesh(frw::Context context, const MObject& originalObject);
 
 	bool translateLight(FrLight& frlight, Scope& scope, frw::Context frcontext, const MObject& object, const MMatrix& matrix, bool update = false);
 

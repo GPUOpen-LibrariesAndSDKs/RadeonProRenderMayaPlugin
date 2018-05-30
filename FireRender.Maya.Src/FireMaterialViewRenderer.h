@@ -12,7 +12,7 @@
 #ifndef MAYA2015
 #include "frWrap.h"
 #include "FireRenderContext.h"
-#include "Translators.h"
+#include "Translators/Translators.h"
 #include <maya/MPxRenderer.h>
 #include <maya/MGlobal.h>
 #include <maya/MString.h>

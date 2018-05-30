@@ -90,6 +90,9 @@
     <Filter Include="FireRender.Components\Denoiser">
       <UniqueIdentifier>{3faa1ebe-5f43-4cfb-801a-0c7d34b193d6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Translators">
+      <UniqueIdentifier>{7f5c5908-8883-4630-8c8c-4b46eb28a428}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="python\__init__.py">
@@ -222,9 +225,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FireMaterialViewRenderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Translators.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FireRenderContext.cpp">
@@ -482,15 +482,18 @@
     <ClCompile Include="Lights\PhysicalLight\PhysicalLightData.cpp">
       <Filter>Lights\PhysicalLight</Filter>
     </ClCompile>
+    <ClCompile Include="Translators\Translators.cpp">
+      <Filter>Translators</Filter>
+    </ClCompile>
+    <ClCompile Include="Translators\MeshTranslator.cpp">
+      <Filter>Translators</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FireMaterialViewRenderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Translators.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FireRenderContext.h">
@@ -825,6 +828,12 @@
     </ClInclude>
     <ClInclude Include="Lights\PhysicalLight\PhysicalLightData.h">
       <Filter>Lights\PhysicalLight</Filter>
+    </ClInclude>
+    <ClInclude Include="Translators\Translators.h">
+      <Filter>Translators</Filter>
+    </ClInclude>
+    <ClInclude Include="Translators\MeshTranslator.h">
+      <Filter>Translators</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

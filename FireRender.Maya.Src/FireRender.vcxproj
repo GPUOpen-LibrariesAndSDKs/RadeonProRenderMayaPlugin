@@ -289,7 +289,8 @@
     <ClCompile Include="SkyLocatorMesh.cpp" />
     <ClCompile Include="SubsurfaceMaterial.cpp" />
     <ClCompile Include="SunPositionCalculator.cpp" />
-    <ClCompile Include="Translators.cpp" />
+    <ClCompile Include="Translators\MeshTranslator.cpp" />
+    <ClCompile Include="Translators\Translators.cpp" />
     <ClCompile Include="VRay.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -411,7 +412,8 @@
     <ClInclude Include="SkyLocatorMesh.h" />
     <ClInclude Include="SubsurfaceMaterial.h" />
     <ClInclude Include="SunPositionCalculator.h" />
-    <ClInclude Include="Translators.h" />
+    <ClInclude Include="Translators\MeshTranslator.h" />
+    <ClInclude Include="Translators\Translators.h" />
     <ClInclude Include="VRay.h" />
   </ItemGroup>
   <ItemGroup>

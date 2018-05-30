@@ -592,6 +592,48 @@ public:
 	}
 };
 
+struct Float3
+{
+	float x, y, z;
+
+	Float3(const MFloatPoint& v)
+	{
+		x = v.x;
+		y = v.y;
+		z = v.z;
+	}
+	Float3(const MFloatVector& v)
+	{
+		x = v.x;
+		y = v.y;
+		z = v.z;
+	}
+	bool operator<(const Float3& b) const
+	{
+		if (x < b.x)
+			return true;
+		if (x > b.x)
+			return false;
+		if (y < b.y)
+			return true;
+		if (y > b.y)
+			return false;
+		return z < b.z;
+	}
+};
+
+struct Float2
+{
+	float x, y;
+	bool operator<(const Float2& b) const
+	{
+		if (x < b.x)
+			return true;
+		if (x > b.x)
+			return false;
+		return y < b.y;
+	}
+};
 
 MObject findDependNode(MString name);
 

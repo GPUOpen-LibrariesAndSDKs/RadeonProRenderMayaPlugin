@@ -2,7 +2,7 @@
 
 #include <string>
 #include <memory>
-#include <Translators.h>
+#include "Translators/Translators.h"
 
 #if MAYA_API_VERSION < 20180000
 class MFnDagNode;

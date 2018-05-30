@@ -24,7 +24,7 @@
 #include "FireRenderUtils.h"
 #include "FireRenderMath.h"
 #include "VRay.h"
-#include "Translators.h"
+#include "Translators/Translators.h"
 
 using namespace std;
 using namespace FireMaya;
