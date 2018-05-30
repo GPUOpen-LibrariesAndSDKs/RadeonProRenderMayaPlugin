@@ -285,8 +285,12 @@ public:
 	// Mesh bits (each one may have separate shading engine)
 	std::vector<FrElement>& Elements() { return m.elements; }
 	FrElement& Element(int i) { return m.elements[i]; }
+
+	bool IsMainInstance() const { return m.isMainInstance; }
 private:
 	bool IsSelected(const MDagPath& dagPath) const;
+
+	void GetShapes(const MFnDagNode& node, std::vector<frw::Shape>& outShapes);
 
 	// A mesh in Maya can have multiple shaders
 	// in fr it must be split in multiple shapes
@@ -296,6 +300,7 @@ private:
 	{
 		std::vector<FrElement> elements;
 		bool isEmissive = false;
+		bool isMainInstance = false;
 		struct
 		{
 			bool mesh = false;

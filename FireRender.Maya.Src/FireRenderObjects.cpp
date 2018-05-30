@@ -469,7 +469,8 @@ MDagPath FireRenderNode::DagPath()
 //===================
 FireRenderMesh::FireRenderMesh(FireRenderContext* context, const MDagPath& dagPath) :
 	FireRenderNode(context, dagPath)
-{}
+{
+}
 
 FireRenderMesh::~FireRenderMesh()
 {
@@ -772,7 +773,10 @@ void FireRenderMesh::Rebuild()
 		m.elements.clear();
 
 		MObjectArray shaderObjs;
-		auto shapes = FireMaya::TranslateMesh(Context(), meshPath.node());
+		std::vector<frw::Shape> shapes;
+
+		GetShapes(node, shapes);
+				
 		m.elements.resize(shapes.size());
 		for (unsigned int i = 0; i < shapes.size(); i++)
 		{
@@ -804,7 +808,6 @@ void FireRenderMesh::Rebuild()
 					element.shader = frw::TransparentShader(context->GetMaterialSystem());
 			}
 
-
 			if (element.shape)
 			{
 				element.shape.SetShader(element.shader);
@@ -816,9 +819,6 @@ void FireRenderMesh::Rebuild()
 		RebuildTransforms();
 		setRenderStats(meshPath);
 	}
-
-
-
 
 	if (context->iblLight) {
 		MObject temp = context->iblTransformObject;
@@ -885,6 +885,46 @@ void FireRenderMesh::Rebuild()
 	m.changed.shader = false;
 
 	RegisterCallbacks();	// we need to do this in case the shaders change (ie we will need to attach new callbacks)
+}
+
+void FireRenderMesh::GetShapes(const MFnDagNode& meshNode, std::vector<frw::Shape>& outShapes)
+{
+	FireRenderContext* context = this->context();
+
+	FireRenderMesh* mainMesh = nullptr;
+	if (meshNode.isInstanced())
+	{
+		MDagPathArray pathArray;
+		meshNode.getAllPaths(pathArray);
+
+		for (const MDagPath& path : pathArray)
+		{
+			FireRenderMesh* mesh = context->getRenderObject<FireRenderMesh>(path);
+			if (mesh->IsMainInstance())
+			{
+				mainMesh = mesh;
+				break;
+			}
+		}
+
+		if (mainMesh != nullptr)
+		{
+			const std::vector<FrElement>& elements = mainMesh->Elements();
+
+			for (const FrElement& element : elements)
+			{
+				outShapes.push_back(element.shape.CreateInstance(Context()));
+			}
+
+			m.isMainInstance = false;
+		}
+	}
+
+	if (mainMesh == nullptr)
+	{
+		outShapes = FireMaya::TranslateMesh(Context(), meshNode.object());
+		m.isMainInstance = true;
+	}
 }
 
 void FireRenderMesh::RebuildTransforms()

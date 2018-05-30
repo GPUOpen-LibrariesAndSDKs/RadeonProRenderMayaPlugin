@@ -1,7 +1,5 @@
 #include "GLTFTranslator.h"
 
-#include "FireRenderContext.h"
-
 #include <maya/MItDag.h>
 #include <maya/MGlobal.h>
 #include <maya/MDagPath.h>
@@ -13,12 +11,9 @@
 #include "ProRenderGLTF.h"
 #endif
 
-
 using namespace FireMaya;
 
 GLTFTranslator::GLTFTranslator() = default;
-
-
 GLTFTranslator::~GLTFTranslator() = default;
 
 void* GLTFTranslator::creator()
@@ -34,15 +29,16 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
     return MStatus::kFailure;
 #else
 	// Create new context and fill it with scene
-	std::unique_ptr<FireRenderContext> m_context = std::make_unique<FireRenderContext>();
+	std::unique_ptr<FireRenderContext> fireRenderContext = std::make_unique<FireRenderContext>();
+	ContextAutoCleaner contextAutoCleaner(fireRenderContext.get());
 
-	m_context->setCallbackCreationDisabled(true);
-	if (!m_context->buildScene(false, false, false, true))
+	fireRenderContext->setCallbackCreationDisabled(true);
+	if (!fireRenderContext->buildScene(false, false, false, true))
 		return MS::kFailure;
 
 	// Some resolution should be set. It's requred to retrieve background image.
 	// We set 800x600 here but we can set any other resolution.
-	m_context->setResolution(800, 600, false, 0);
+	fireRenderContext->setResolution(800, 600, false, 0);
 
 	MStatus status;
 	
@@ -56,16 +52,16 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	if (status != MS::kSuccess)
 		return status;
 
-	m_context->setCamera(camera);
-	m_context->state = FireRenderContext::StateRendering;
+	fireRenderContext->setCamera(camera);
+	fireRenderContext->state = FireRenderContext::StateRendering;
 
 	//Populate rpr scene with actual data
-	if (!m_context->Freshen(false, [this]() { return false; }))
+	if (!fireRenderContext->Freshen(false, [this]() { return false; }))
 		return MS::kFailure;
 
-	frw::Scene scene = m_context->GetScene();
-	frw::Context context = m_context->GetContext();
-	frw::MaterialSystem materialSystem = m_context->GetMaterialSystem();
+	frw::Scene scene = fireRenderContext->GetScene();
+	frw::Context context = fireRenderContext->GetContext();
+	frw::MaterialSystem materialSystem = fireRenderContext->GetMaterialSystem();
 
 	if (!scene || !context || !materialSystem)
 		return MS::kFailure;
@@ -73,10 +69,11 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	std::vector<rpr_scene> scenes;
 	scenes.push_back(scene.Handle());
 
-	if (!rprExportToGLTF(file.expandedFullName().asChar(), context.Handle(), materialSystem.Handle(), materialSystem.GetRprxContext(), scenes.data(), scenes.size()))
+	int err = rprExportToGLTF(file.expandedFullName().asChar(), context.Handle(), materialSystem.Handle(), materialSystem.GetRprxContext(), scenes.data(), scenes.size());
+	if (err != GLTF_SUCCESS)
+	{
 		return MS::kFailure;
-
-	m_context->cleanScene();
+	}
 
 	return MS::kSuccess;
 #endif
