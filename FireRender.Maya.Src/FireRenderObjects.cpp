@@ -922,7 +922,7 @@ void FireRenderMesh::GetShapes(const MFnDagNode& meshNode, std::vector<frw::Shap
 
 	if (mainMesh == nullptr)
 	{
-		outShapes = FireMaya::TranslateMesh(Context(), meshNode.object());
+		outShapes = FireMaya::MeshTranslator::TranslateMesh(Context(), meshNode.object());
 		m.isMainInstance = true;
 	}
 }

@@ -6,7 +6,7 @@
 #include "maya/MEulerRotation.h"
 #include "base_mesh.h"
 #include "FireRenderMath.h"
-#include "Translators.h"
+#include "Translators/Translators.h"
 #include <functional>
 
 #include "IESLight/IESprocessor.h"

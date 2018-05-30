@@ -8,7 +8,7 @@
 //
 
 #include "frWrap.h"
-#include "Translators.h"
+#include "Translators/Translators.h"
 #include <maya/MNodeMessage.h>
 #include <maya/MDagMessage.h>
 #include <maya/MPlug.h>
