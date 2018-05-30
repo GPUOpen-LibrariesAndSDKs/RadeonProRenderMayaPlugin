@@ -1,9 +1,27 @@
 #pragma once
 
+#include "FireRenderContext.h"
 #include <maya/MPxFileTranslator.h>
 
 namespace FireMaya
 {
+	// Probably we should move cleanScene call in the destructor of FireRenderContext
+	// But it needs to be tested
+	class ContextAutoCleaner
+	{
+	public:
+		ContextAutoCleaner(FireRenderContext* context) : m_Context(context){}
+		~ContextAutoCleaner()
+		{
+			if (m_Context != nullptr)
+			{
+				m_Context->cleanScene();
+			}
+		}
+	private:
+		FireRenderContext* m_Context;
+	};
+	
 	class GLTFTranslator : public MPxFileTranslator
 	{
 	public:
