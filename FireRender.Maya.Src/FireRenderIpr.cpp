@@ -9,6 +9,7 @@
 #include <mutex>
 
 #include "FireRenderUtils.h"
+#include "maya/MItSelectionList.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -24,9 +25,11 @@ FireRenderIpr::FireRenderIpr() :
 	m_isPaused(false),
 	m_isRegion(false),
 	m_renderStarted(false),
-	m_needsContextRefresh(false)
+	m_needsContextRefresh(false),
+	m_previousSelectionList()
 {
 	m_renderViewUpdateScheduled = false;
+	m_context.m_RenderType = FireRenderContext::RenderType::IPR;
 }
 
 // -----------------------------------------------------------------------------
@@ -34,6 +37,7 @@ FireRenderIpr::~FireRenderIpr()
 {
 	stop();
 	m_context.cleanScene();
+	m_previousSelectionList.clear();
 }
 
 
@@ -116,6 +120,9 @@ void FireRenderIpr::setCamera(MDagPath& camera)
 bool FireRenderIpr::start()
 {
 	bool showWarningDialog = false;
+
+	MStatus status = MGlobal::getActiveSelectionList(m_previousSelectionList);
+	CHECK_MSTATUS(status);
 
 	auto ret = FireRenderThread::RunOnceAndWait<bool>([this, &showWarningDialog]()
 	{
@@ -293,11 +300,87 @@ bool FireRenderIpr::RunOnViewportThread()
 	}
 }
 
+void FireRenderIpr::CheckSelection()
+{
+	// render selected is not enabled => back off
+	if (!m_context.renderSelectedObjectsOnly())
+		return;
+
+	MSelectionList currSelectionList;
+	MStatus status = MGlobal::getActiveSelectionList(currSelectionList);
+	CHECK_MSTATUS(status);
+
+	bool selectionChanged = false;
+
+	if (currSelectionList.length() != m_previousSelectionList.length())
+	{
+		// if number of selected objects has changed than selection have been changed
+		selectionChanged = true;
+	}
+	else
+	{
+		// compare objects in prev and curr selections
+		for (MItSelectionList it(currSelectionList); !it.isDone(); it.next())
+		{
+			MDagPath item;
+			MObject component;
+			MStatus status = it.getDagPath(item, component);
+
+			CHECK_MSTATUS(status);
+			if (!m_previousSelectionList.hasItem(item))
+			{
+				selectionChanged = true;
+				break;
+			}
+		}
+	}
+
+	// selection changed => change rendered item(s)
+	if (selectionChanged)
+	{
+		FireRenderThread::RunOnceProcAndWait([&]()
+		{
+			AutoMutexLock contextLock(m_contextLock);
+
+			for (MItSelectionList it(currSelectionList); !it.isDone(); it.next())
+			{
+				MDagPath item;
+				MObject component;
+				MStatus status = it.getDagPath(item, component);
+				item.extendToShape();
+				FireRenderObject* pRObj = m_context.getRenderObject(item);
+				if (pRObj)
+				{
+					pRObj->setDirty();
+				}
+			}
+
+			for (MItSelectionList it2(m_previousSelectionList); !it2.isDone(); it2.next())
+			{
+				MDagPath item;
+				MObject component;
+				MStatus status = it2.getDagPath(item, component);
+				item.extendToShape();
+				FireRenderObject* pRObj = m_context.getRenderObject(item);
+				if (pRObj)
+				{
+					pRObj->setDirty();
+				}
+			}
+		});
+
+		m_previousSelectionList.clear();
+		m_previousSelectionList = currSelectionList;
+	}
+}
+
 // -----------------------------------------------------------------------------
 void FireRenderIpr::updateRenderView()
 {
 	// Clear the scheduled flag.
 	m_renderViewUpdateScheduled = false;
+
+	CheckSelection();
 
 	// Check that rendering is still active.
 	if (m_context.state != FireRenderContext::StateRendering)

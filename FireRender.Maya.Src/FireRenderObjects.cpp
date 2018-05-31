@@ -591,7 +591,16 @@ void FireRenderMesh::setRenderStats(MDagPath dagPath)
 	bool primaryVisibility;
 	primaryVisibilityPlug.getValue(primaryVisibility);
 
-	bool selectionCheck = !context()->renderSelectedObjectsOnly() || IsSelected(dagPath);
+	bool selectionCheck = true; // true => is rendered
+
+	bool shouldIgnoreRenderSelectedObjects = 
+		context()->m_RenderType != FireRenderContext::RenderType::ProductionRender &&
+		context()->m_RenderType != FireRenderContext::RenderType::IPR;
+	if (!shouldIgnoreRenderSelectedObjects)
+	{
+		bool isRenderSelectedModeEnabled = context()->renderSelectedObjectsOnly();
+		selectionCheck = !isRenderSelectedModeEnabled || IsSelected(dagPath);
+	}
 
 	setVisibility(dagPath.isVisible() && selectionCheck);
 	setPrimaryVisibility(primaryVisibility);

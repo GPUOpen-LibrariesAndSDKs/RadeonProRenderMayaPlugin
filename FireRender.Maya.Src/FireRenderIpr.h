@@ -4,6 +4,7 @@
 #include <maya/MDagPath.h>
 #include <maya/MThreadAsync.h>
 #include "RenderCacheWarningDialog.h"
+#include "maya/MSelectionList.h"
 
 #include <mutex>
 
@@ -96,6 +97,9 @@ private:
 	/** Refresh the context. */
 	void refreshContext();
 
+	/** Process selection change. */
+	void CheckSelection();
+
 
 private:
 
@@ -151,4 +155,6 @@ private:
 
 	/** Mutex for syncronization of updateRegion and readFrameBuffer methods. */
 	std::mutex m_regionUpdateMutex;
+
+	MSelectionList m_previousSelectionList;
 };
