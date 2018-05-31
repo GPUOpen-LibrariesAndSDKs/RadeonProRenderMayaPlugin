@@ -83,7 +83,8 @@ FireRenderContext::FireRenderContext() :
 	m_renderLayersChanged(false),
 	m_cameraDirty(true),
 	m_denoiserChanged(false),
-	m_denoiserFilter(nullptr)
+	m_denoiserFilter(nullptr),
+	m_RenderType(RenderType::Undefined)
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
 	state = StateUpdating;

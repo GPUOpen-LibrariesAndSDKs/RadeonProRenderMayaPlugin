@@ -65,6 +65,8 @@ FireRenderViewport::FireRenderViewport(const MString& panelName) :
     else
         m_widget = nullptr;
 
+	m_context.m_RenderType = FireRenderContext::RenderType::ViewportRender;
+
 	// Add the RPR panel menu.
 	addMenu();
 }

@@ -118,6 +118,14 @@ public:
 		StateUpdating = 3,
 	};
 
+	enum class RenderType 
+	{
+		Undefined = 0,
+		ProductionRender,
+		IPR,
+		ViewportRender,
+	};
+
 	// Constructor
 	FireRenderContext();
 
@@ -588,6 +596,9 @@ public:
 
 	double		m_timeIntervalForOutputUpdate;//in sec, TODO: check for Linux/Mac
 	clock_t		m_lastIterationTime;
+
+	// render type information
+	RenderType m_RenderType;
 
 	void setCompletionCriteria(short type, long seconds, int iterations);
 	bool isUnlimited();

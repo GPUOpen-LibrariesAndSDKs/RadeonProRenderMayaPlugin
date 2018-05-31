@@ -133,6 +133,7 @@ bool FireRenderProduction::start()
 			AutoMutexLock contextCreationLock(m_contextCreationLock);
 
 			m_context = make_shared<FireRenderContext>();
+			m_context->m_RenderType = FireRenderContext::RenderType::ProductionRender;
 		}
 
 		m_aovs->applyToContext(*m_context);
