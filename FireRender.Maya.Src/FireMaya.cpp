@@ -1,6 +1,4 @@
 #include "FireMaya.h"
-#include "FireRenderUtils.h"
-#include "FireRenderIpr.h"
 #include "common.h"
 #include "../ThirdParty/RadeonProRender SDK/Win/inc/Math/half.h"
 #include "FireRenderThread.h"
@@ -58,7 +56,7 @@ void FireMaya::Dump(const MFnDependencyNode& shader_node)
 }
 #endif
 
-MPlug	FireMaya::GetConnectedPlug(const MPlug& plug)
+MPlug FireMaya::GetConnectedPlug(const MPlug& plug)
 {
 	if (!plug.isNull())
 	{

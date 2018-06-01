@@ -3,6 +3,7 @@
 #include "frWrap.h"
 #include "FireRenderUtils.h"
 
+#include <maya/MItMeshPolygon.h>
 #include <maya/MObject.h>
 #include <vector>
 
