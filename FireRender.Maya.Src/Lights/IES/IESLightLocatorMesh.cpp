@@ -13,7 +13,11 @@
 #include "FireRenderUtils.h"
 #include "IESLight/IESprocessor.h"
 #include "IESLight/IESLightRepresentationCalc.h"
+#if defined(OSMac_)
+#include "Translators.h"
+#else
 #include "Translators/Translators.h"
+#endif
 
 namespace
 {

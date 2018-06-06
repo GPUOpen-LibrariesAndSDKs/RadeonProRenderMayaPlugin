@@ -12,7 +12,11 @@
 #include <maya/MEulerRotation.h>
 #include "FireMaya.h"
 #include "FireRenderUtils.h"
+#if defined(OSMac_)
+#include "Translators.h"
+#else
 #include "Translators/Translators.h"
+#endif
 
 MObject FireRenderIESLightLocator::aFilePath;
 MObject FireRenderIESLightLocator::aAreaWidth;
