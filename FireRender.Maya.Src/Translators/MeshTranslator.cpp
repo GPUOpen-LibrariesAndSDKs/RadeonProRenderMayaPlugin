@@ -338,7 +338,8 @@ void AddPolygon(MItMeshPolygon& it,
 
 			assert(localUVIdxIt != vertexIdxGlobalToLocal.end());
 
-			mstatus = it.getUVIndex(localUVIdxIt->second, uvIdx, &uvSetNames[currUVCHannel]);
+            MString name = uvSetNames[currUVCHannel];
+			mstatus = it.getUVIndex(localUVIdxIt->second, uvIdx, &name);
 
 			if (mstatus == MStatus::kSuccess)
 			{

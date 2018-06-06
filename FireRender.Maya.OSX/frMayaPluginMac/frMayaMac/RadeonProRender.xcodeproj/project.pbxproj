@@ -31,7 +31,6 @@
 		4DE5086D1D9950A1009B2BD6 /* MaterialLoader.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E57D1D80643600D6DB73 /* MaterialLoader.h */; };
 		4DE5086F1D9950A1009B2BD6 /* FireRenderMaterialSwatchRender.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E5591D80643600D6DB73 /* FireRenderMaterialSwatchRender.h */; };
 		4DE508701D9950A1009B2BD6 /* FireRenderBlendOverride.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E5351D80643600D6DB73 /* FireRenderBlendOverride.h */; };
-		4DE508711D9950A1009B2BD6 /* Translators.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E58E1D80643600D6DB73 /* Translators.h */; };
 		4DE508721D9950A1009B2BD6 /* FireRenderExportCmd.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E5431D80643600D6DB73 /* FireRenderExportCmd.h */; };
 		4DE508741D9950A1009B2BD6 /* FireRenderFresnelSchlick.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E5471D80643600D6DB73 /* FireRenderFresnelSchlick.h */; };
 		4DE508751D9950A1009B2BD6 /* FireRenderPassthrough.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E5631D80643600D6DB73 /* FireRenderPassthrough.h */; };
@@ -94,7 +93,6 @@
 		4DE508B41D9950A1009B2BD6 /* FireRenderObjects.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9FB8E55E1D80643600D6DB73 /* FireRenderObjects.cpp */; };
 		4DE508B51D9950A1009B2BD6 /* FireRenderPassthrough.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9FB8E5621D80643600D6DB73 /* FireRenderPassthrough.cpp */; };
 		4DE508B71D9950A1009B2BD6 /* FireRenderStandardMaterial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9FB8E5661D80643600D6DB73 /* FireRenderStandardMaterial.cpp */; };
-		4DE508B81D9950A1009B2BD6 /* Translators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9FB8E58D1D80643600D6DB73 /* Translators.cpp */; };
 		4DE508B91D9950A1009B2BD6 /* MaterialLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9FB8E57C1D80643600D6DB73 /* MaterialLoader.cpp */; };
 		4DE508BA1D9950A1009B2BD6 /* FireRenderImportExportXML.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9FB8E5501D80643600D6DB73 /* FireRenderImportExportXML.cpp */; };
 		4DE508BB1D9950A1009B2BD6 /* FireRenderChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9FB8E53A1D80643600D6DB73 /* FireRenderChecker.cpp */; };
@@ -118,6 +116,14 @@
 		8D1135891F45D6B300E58A52 /* libRprLoadStore64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */; };
 		8D1E289E2034A0550060BB11 /* FireRenderPBRMaterial.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D1E289B2034A0550060BB11 /* FireRenderPBRMaterial.h */; };
 		8D1E289F2034A0550060BB11 /* FireRenderPBRMaterial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D1E289D2034A0550060BB11 /* FireRenderPBRMaterial.cpp */; };
+		8D55909A20C8743900567EEC /* MeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D55909520C8743800567EEC /* MeshTranslator.h */; };
+		8D55909B20C8743900567EEC /* MeshTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D55909720C8743800567EEC /* MeshTranslator.cpp */; };
+		8D55909C20C8743900567EEC /* Translators.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D55909820C8743800567EEC /* Translators.h */; };
+		8D55909D20C8743900567EEC /* Translators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D55909920C8743800567EEC /* Translators.cpp */; };
+		8D55909F20C874BA00567EEC /* MeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D55909520C8743800567EEC /* MeshTranslator.h */; };
+		8D5590A120C874BA00567EEC /* Translators.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D55909820C8743800567EEC /* Translators.h */; };
+		8D5590A220C874E600567EEC /* MeshTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D55909720C8743800567EEC /* MeshTranslator.cpp */; };
+		8D5590A320C874E600567EEC /* Translators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D55909920C8743800567EEC /* Translators.cpp */; };
 		8D595D8D20372FE20031988A /* SkyBuilder.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D77AEA01F4361E2008E88FB /* SkyBuilder.h */; };
 		8D595D8E20372FE20031988A /* base_mesh.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E5251D80643600D6DB73 /* base_mesh.h */; };
 		8D595D9020372FE20031988A /* FireRenderBlendMaterial.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E5331D80643600D6DB73 /* FireRenderBlendMaterial.h */; };
@@ -131,7 +137,6 @@
 		8D595D9820372FE20031988A /* MaterialLoader.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E57D1D80643600D6DB73 /* MaterialLoader.h */; };
 		8D595D9920372FE20031988A /* FireRenderMaterialSwatchRender.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E5591D80643600D6DB73 /* FireRenderMaterialSwatchRender.h */; };
 		8D595D9A20372FE20031988A /* FireRenderBlendOverride.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E5351D80643600D6DB73 /* FireRenderBlendOverride.h */; };
-		8D595D9B20372FE20031988A /* Translators.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E58E1D80643600D6DB73 /* Translators.h */; };
 		8D595D9C20372FE20031988A /* FireRenderConvertVRayCmd.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D77AEBD1F436244008E88FB /* FireRenderConvertVRayCmd.h */; };
 		8D595D9D20372FE20031988A /* FireRenderExportCmd.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E5431D80643600D6DB73 /* FireRenderExportCmd.h */; };
 		8D595D9E20372FE20031988A /* SubsurfaceMaterial.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D77AEA61F4361E2008E88FB /* SubsurfaceMaterial.h */; };
@@ -263,7 +268,6 @@
 		8D595E2020372FE20031988A /* FireRenderViewportOperation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D77AED11F436244008E88FB /* FireRenderViewportOperation.cpp */; };
 		8D595E2120372FE20031988A /* FireRenderVolumeMaterial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D77AED51F436244008E88FB /* FireRenderVolumeMaterial.cpp */; };
 		8D595E2220372FE20031988A /* GLTFTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB699D11F9926F90040373F /* GLTFTranslator.cpp */; };
-		8D595E2320372FE20031988A /* Translators.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9FB8E58D1D80643600D6DB73 /* Translators.cpp */; };
 		8D595E2420372FE20031988A /* FireRenderViewportBlit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D44B15B1DD9F270004A482F /* FireRenderViewportBlit.cpp */; };
 		8D595E2520372FE20031988A /* MaterialLoader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9FB8E57C1D80643600D6DB73 /* MaterialLoader.cpp */; };
 		8D595E2620372FE20031988A /* FireRenderAOV.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4D0818261DA3829A004F09F0 /* FireRenderAOV.cpp */; };
@@ -461,6 +465,10 @@
 		8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRprLoadStore64.dylib; path = "../../../ThirdParty/RadeonProRender SDK/Mac/lib/libRprLoadStore64.dylib"; sourceTree = "<group>"; };
 		8D1E289B2034A0550060BB11 /* FireRenderPBRMaterial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderPBRMaterial.h; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.h; sourceTree = "<group>"; };
 		8D1E289D2034A0550060BB11 /* FireRenderPBRMaterial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderPBRMaterial.cpp; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.cpp; sourceTree = "<group>"; };
+		8D55909520C8743800567EEC /* MeshTranslator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MeshTranslator.h; path = ../../../FireRender.Maya.Src/Translators/MeshTranslator.h; sourceTree = "<group>"; };
+		8D55909720C8743800567EEC /* MeshTranslator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MeshTranslator.cpp; path = ../../../FireRender.Maya.Src/Translators/MeshTranslator.cpp; sourceTree = "<group>"; };
+		8D55909820C8743800567EEC /* Translators.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Translators.h; path = ../../../FireRender.Maya.Src/Translators/Translators.h; sourceTree = "<group>"; };
+		8D55909920C8743800567EEC /* Translators.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Translators.cpp; path = ../../../FireRender.Maya.Src/Translators/Translators.cpp; sourceTree = "<group>"; };
 		8D595E4620372FE20031988A /* Maya2017 copy.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; name = "Maya2017 copy.bundle"; path = RadeonProRender.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		8D742CD21F6B031900CB9364 /* FireRenderShadowCatcherMaterial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderShadowCatcherMaterial.cpp; path = ../../../FireRender.Maya.Src/FireRenderShadowCatcherMaterial.cpp; sourceTree = "<group>"; };
 		8D742CD31F6B031900CB9364 /* FireRenderShadowCatcherMaterial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderShadowCatcherMaterial.h; path = ../../../FireRender.Maya.Src/FireRenderShadowCatcherMaterial.h; sourceTree = "<group>"; };
@@ -641,8 +649,6 @@
 		9FB8E58A1D80643600D6DB73 /* ShadersManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ShadersManager.cpp; path = ../../../FireRender.Maya.Src/ShadersManager.cpp; sourceTree = "<group>"; };
 		9FB8E58B1D80643600D6DB73 /* ShadersManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ShadersManager.h; path = ../../../FireRender.Maya.Src/ShadersManager.h; sourceTree = "<group>"; };
 		9FB8E58C1D80643600D6DB73 /* Shelfs */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shelfs; path = ../../../FireRender.Maya.Src/Shelfs; sourceTree = "<group>"; };
-		9FB8E58D1D80643600D6DB73 /* Translators.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Translators.cpp; path = ../../../FireRender.Maya.Src/Translators.cpp; sourceTree = "<group>"; };
-		9FB8E58E1D80643600D6DB73 /* Translators.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Translators.h; path = ../../../FireRender.Maya.Src/Translators.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -695,6 +701,10 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				8D55909720C8743800567EEC /* MeshTranslator.cpp */,
+				8D55909520C8743800567EEC /* MeshTranslator.h */,
+				8D55909920C8743800567EEC /* Translators.cpp */,
+				8D55909820C8743800567EEC /* Translators.h */,
 				8D8CA4B320BC721300A90237 /* PhysicalLightData.cpp */,
 				8D8CA4B420BC721300A90237 /* PhysicalLightData.h */,
 				8DB623302075583A00841D10 /* FireRenderPhysicalLightLocator.cpp */,
@@ -879,8 +889,6 @@
 				9FB8E5861D80643600D6DB73 /* resource.h */,
 				9FB8E58A1D80643600D6DB73 /* ShadersManager.cpp */,
 				9FB8E58B1D80643600D6DB73 /* ShadersManager.h */,
-				9FB8E58D1D80643600D6DB73 /* Translators.cpp */,
-				9FB8E58E1D80643600D6DB73 /* Translators.h */,
 			);
 			name = Source;
 			sourceTree = "<group>";
@@ -994,7 +1002,6 @@
 				4DE5086D1D9950A1009B2BD6 /* MaterialLoader.h in Headers */,
 				4DE5086F1D9950A1009B2BD6 /* FireRenderMaterialSwatchRender.h in Headers */,
 				4DE508701D9950A1009B2BD6 /* FireRenderBlendOverride.h in Headers */,
-				4DE508711D9950A1009B2BD6 /* Translators.h in Headers */,
 				8D77AEE21F436244008E88FB /* FireRenderConvertVRayCmd.h in Headers */,
 				4DE508721D9950A1009B2BD6 /* FireRenderExportCmd.h in Headers */,
 				8D77AEB41F4361E2008E88FB /* SubsurfaceMaterial.h in Headers */,
@@ -1013,6 +1020,7 @@
 				4DE5087A1D9950A1009B2BD6 /* FireRenderImportExportXML.h in Headers */,
 				8D8F06EC1F437B2D00A13D6B /* ArHosekSkyModel.h in Headers */,
 				4DE5087B1D9950A1009B2BD6 /* frWrap.h in Headers */,
+				8D55909C20C8743900567EEC /* Translators.h in Headers */,
 				8D77AEB21F4361E2008E88FB /* SkyLocatorMesh.h in Headers */,
 				8DB6233A2075583C00841D10 /* FireRenderPhysicalOverride.h in Headers */,
 				4DE5087C1D9950A1009B2BD6 /* FireRenderAddMaterial.h in Headers */,
@@ -1037,6 +1045,7 @@
 				8D91AC36203C76A800E6226B /* RprTools.h in Headers */,
 				8D77AEF51F436244008E88FB /* FireRenderTransparentMaterial.h in Headers */,
 				4DE508821D9950A1009B2BD6 /* FireRenderGlobals.h in Headers */,
+				8D55909A20C8743900567EEC /* MeshTranslator.h in Headers */,
 				4DE508831D9950A1009B2BD6 /* FireRenderViewportCmd.h in Headers */,
 				4D55F2511DDB1EFC00FD945D /* FireRenderViewportManager.h in Headers */,
 				4D6C220E1DEBFE8F00D745F8 /* FireRenderError.h in Headers */,
@@ -1086,6 +1095,8 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D55909F20C874BA00567EEC /* MeshTranslator.h in Headers */,
+				8D5590A120C874BA00567EEC /* Translators.h in Headers */,
 				8D8CA4B720BC729D00A90237 /* PhysicalLightData.h in Headers */,
 				8D595D8D20372FE20031988A /* SkyBuilder.h in Headers */,
 				8D595D8E20372FE20031988A /* base_mesh.h in Headers */,
@@ -1100,7 +1111,6 @@
 				8D595D9820372FE20031988A /* MaterialLoader.h in Headers */,
 				8D595D9920372FE20031988A /* FireRenderMaterialSwatchRender.h in Headers */,
 				8D595D9A20372FE20031988A /* FireRenderBlendOverride.h in Headers */,
-				8D595D9B20372FE20031988A /* Translators.h in Headers */,
 				8D595D9C20372FE20031988A /* FireRenderConvertVRayCmd.h in Headers */,
 				8D595D9D20372FE20031988A /* FireRenderExportCmd.h in Headers */,
 				8D595D9E20372FE20031988A /* SubsurfaceMaterial.h in Headers */,
@@ -1267,6 +1277,7 @@
 				4DE508991D9950A1009B2BD6 /* FireRenderGlobals.cpp in Sources */,
 				4DE5089A1D9950A1009B2BD6 /* FireRenderMaterial.cpp in Sources */,
 				8D742CD41F6B031900CB9364 /* FireRenderShadowCatcherMaterial.cpp in Sources */,
+				8D55909B20C8743900567EEC /* MeshTranslator.cpp in Sources */,
 				4DE5089B1D9950A1009B2BD6 /* FireRenderUtils.cpp in Sources */,
 				8DB6233E2075583C00841D10 /* FireRenderPhysicalOverride.cpp in Sources */,
 				8D8CA4B520BC721300A90237 /* PhysicalLightData.cpp in Sources */,
@@ -1278,6 +1289,7 @@
 				4DE508A11D9950A1009B2BD6 /* FireRenderExportCmd.cpp in Sources */,
 				8D8F06EB1F437B2D00A13D6B /* ArHosekSkyModel.cpp in Sources */,
 				8DB6232E2075582100841D10 /* IESLightLocatorMesh.cpp in Sources */,
+				8D55909D20C8743900567EEC /* Translators.cpp in Sources */,
 				8D77AEAF1F4361E2008E88FB /* SkyGen.cpp in Sources */,
 				8D77AEE31F436244008E88FB /* FireRenderDisplacement.cpp in Sources */,
 				4DE508A21D9950A1009B2BD6 /* FireRenderBlendValue.cpp in Sources */,
@@ -1328,7 +1340,6 @@
 				8D77AEF61F436244008E88FB /* FireRenderViewportOperation.cpp in Sources */,
 				8D77AEFA1F436244008E88FB /* FireRenderVolumeMaterial.cpp in Sources */,
 				8DB699D31F9926F90040373F /* GLTFTranslator.cpp in Sources */,
-				4DE508B81D9950A1009B2BD6 /* Translators.cpp in Sources */,
 				4D55F2541DDB1EFC00FD945D /* FireRenderViewportBlit.cpp in Sources */,
 				4DE508B91D9950A1009B2BD6 /* MaterialLoader.cpp in Sources */,
 				4D08182C1DA382A9004F09F0 /* FireRenderAOV.cpp in Sources */,
@@ -1359,6 +1370,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D5590A220C874E600567EEC /* MeshTranslator.cpp in Sources */,
+				8D5590A320C874E600567EEC /* Translators.cpp in Sources */,
 				8D8CA4B820BC72AA00A90237 /* PhysicalLightData.cpp in Sources */,
 				8DB6234820755B4400841D10 /* FireRenderIESLight.cpp in Sources */,
 				8DB6234220755B2800841D10 /* FireRenderPhysicalLightLocator.cpp in Sources */,
@@ -1424,7 +1437,6 @@
 				8D595E2020372FE20031988A /* FireRenderViewportOperation.cpp in Sources */,
 				8D595E2120372FE20031988A /* FireRenderVolumeMaterial.cpp in Sources */,
 				8D595E2220372FE20031988A /* GLTFTranslator.cpp in Sources */,
-				8D595E2320372FE20031988A /* Translators.cpp in Sources */,
 				8D595E2420372FE20031988A /* FireRenderViewportBlit.cpp in Sources */,
 				8D595E2520372FE20031988A /* MaterialLoader.cpp in Sources */,
 				8D595E2620372FE20031988A /* FireRenderAOV.cpp in Sources */,
