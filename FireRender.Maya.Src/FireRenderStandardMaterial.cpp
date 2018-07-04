@@ -102,8 +102,7 @@ namespace
 		MObject sssWeight;
 #endif
 		MObject volumeScatter;				// scatter color
-		MObject volumeTransmission;			// absorption color
-		MObject volumeDensity;
+		MObject subsurfaceRadius;
 		MObject volumeScatteringDirection;	//+
 		MObject volumeMultipleScattering;	//+ ! single scattering
 #if !USE_RPRX
@@ -508,13 +507,11 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
 
-	Attribute::volumeTransmission = nAttr.createColor("volumeTransmission", "vt");
+	Attribute::subsurfaceRadius = nAttr.create("subsurfaceRadius", "sssr", MFnNumericData::k3Float);
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
-
-	Attribute::volumeDensity = nAttr.create("volumeDensity", "vd", MFnNumericData::kFloat, 1.0);
-	MAKE_INPUT(nAttr);
-	SET_SOFTMINMAX(nAttr, 0.0, 10.0);
+	nAttr.setMin(0.0f, 0.0f, 0.0f);
+	nAttr.setMax(10.0f, 10.0f, 10.0f);
 
 	Attribute::volumeScatteringDirection = nAttr.create("scatteringDirection", "vsd", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
@@ -640,8 +637,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	ADD_ATTRIBUTE(Attribute::sssWeight);
 #endif
 	ADD_ATTRIBUTE(Attribute::volumeScatter);
-	ADD_ATTRIBUTE(Attribute::volumeTransmission);
-	ADD_ATTRIBUTE(Attribute::volumeDensity);
+	ADD_ATTRIBUTE(Attribute::subsurfaceRadius);
 	ADD_ATTRIBUTE(Attribute::volumeScatteringDirection);
 	ADD_ATTRIBUTE(Attribute::volumeMultipleScattering);
 #if !USE_RPRX
@@ -822,10 +818,8 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SUBSURFACE_COLOR, sssColor);
 		}
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_WEIGHT, sssWeight);
-		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_ABSORPTION_COLOR, volumeTransmission);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SCATTER_COLOR, volumeScatter);
-		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_ABSORPTION_DISTANCE, volumeDensity);
-		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SCATTER_DISTANCE, volumeDensity);
+		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SCATTER_DISTANCE, subsurfaceRadius);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SCATTER_DIRECTION, volumeScatteringDirection);
 		material.xSetParameterU(RPRX_UBER_MATERIAL_SSS_MULTISCATTER, GET_BOOL(volumeMultipleScattering) ? RPR_TRUE : RPR_FALSE);
 	}

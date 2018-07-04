@@ -102,13 +102,12 @@ global proc AERPRUberMaterialTemplateNew(string $nodeName)
 
 	editorTemplate -beginLayout "Subsurface" -collapse 0;
 		editorTemplate -label "Enable" -addControl "sssEnable";
-		editorTemplate -label "Color" -addControl "sssColor";
+		editorTemplate -label "Subsurface Color" -addControl "sssColor";
 		editorTemplate -label "Use Diffuse Color" -addControl "sssUseDiffuseColor" "AEUberCheckUseSssDiffuse";
 		editorTemplate -label "Weight" -addControl "sssWeight";
-
-		editorTemplate -addControl "volumeTransmission";
-		editorTemplate -addControl "volumeScatter";
-		editorTemplate -addControl "volumeDensity";
+		
+		editorTemplate -label "Subsurface Scattering Color" -addControl "volumeScatter";
+		editorTemplate -addControl "subsurfaceRadius";
 		editorTemplate -addControl "scatteringDirection";
 		editorTemplate -addControl "multipleScattering";
 	editorTemplate -endLayout;
