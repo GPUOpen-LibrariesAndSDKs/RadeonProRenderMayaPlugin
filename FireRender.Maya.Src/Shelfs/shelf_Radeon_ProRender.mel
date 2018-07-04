@@ -199,7 +199,7 @@ global proc shelf_Radeon_ProRender () {
 		-annotation "Create or select a sky node"
 		-enableBackground 0
 		-align "center"
-		// -label "Create Sky"
+		-label "Create Sky"
 		-labelOffset 0
 		-font "plainLabelFont"
 		// -imageOverlayLabel "Sky"
@@ -210,7 +210,7 @@ global proc shelf_Radeon_ProRender () {
 		-style "iconOnly"
 		-marginWidth 1
 		-marginHeight 1
-		-command "source shelfCommands.mel; createSkyRPR();"
+		-command createSkyRPR
 		-sourceType "mel"
 		-commandRepeatable 1
 		-flat 1
@@ -226,7 +226,7 @@ global proc shelf_Radeon_ProRender () {
 		-annotation "Create or select an IBL node"
 		-enableBackground 0
 		-align "center"
-		// -label "Create IBL"
+		-label "Create IBL"
 		-labelOffset 0
 		-font "plainLabelFont"
 		// -imageOverlayLabel "IBL"
@@ -237,7 +237,7 @@ global proc shelf_Radeon_ProRender () {
 		-style "iconOnly"
 		-marginWidth 1
 		-marginHeight 1
-		-command "source shelfCommands.mel; createIBLRPR();"
+		-command createIBLRPR
 		-sourceType "mel"
 		-commandRepeatable 1
 		-flat 1
@@ -278,10 +278,10 @@ global proc shelf_Radeon_ProRender () {
 		-manage 1
 		-visible 1
 		-preventOverride 0
-		-annotation "Creates IES Lighting"
+		-annotation "Creates IES Light"
 		-enableBackground 0
 		-align "center"
-		// -label "Create IES Lighting"
+		-label "Create IES Light"
 		-labelOffset 0
 		-font "plainLabelFont"
 		// -imageOverlayLabel "IES Light"
@@ -292,7 +292,7 @@ global proc shelf_Radeon_ProRender () {
 		-style "iconOnly"
 		-marginWidth 1
 		-marginHeight 1
-		-command "source shelfCommands.mel; createIESLight();"
+		-command createIESLight
 		-sourceType "mel"
 		-commandRepeatable 1
 		-flat 1
