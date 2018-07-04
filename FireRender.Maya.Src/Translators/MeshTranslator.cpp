@@ -364,8 +364,9 @@ void GetUVCoords(const MFnMesh& fnMesh,
 	fnMesh.getUVSetNames(uvSetNames);
 	unsigned int uvSetCount = uvSetNames.length();
 
-	// RPR supports only 2 UV sets. There is no way to get this value from RPR so it's hadrcoded
+	// RPR supports only 2 UV sets. There is no way to get this value from RPR so it's hardcoded
 	static const int rprMaxUVSetCount = 2;
+
 	if (uvSetCount > rprMaxUVSetCount)
 	{
 		uvSetCount = rprMaxUVSetCount;
