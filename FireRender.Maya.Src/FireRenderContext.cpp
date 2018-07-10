@@ -1487,9 +1487,15 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 	if (node.hasFn(MFn::kDagNode))
 	{
 		MFnDagNode dagNode(node);
+		MDagPath dagPathTmp;
+
 		if (isGeometry(node))
 		{
 			ob = CreateSceneObject<FireRenderMesh>(dagPath);
+		}
+		else if (isTransformWithInstancedShape(node, dagPathTmp))
+		{
+			ob = CreateSceneObject<FireRenderMesh>(dagPathTmp);
 		}
 		else if (dagNode.typeId() == TypeId::FireRenderIESLightLocator
 			|| isLight(node)

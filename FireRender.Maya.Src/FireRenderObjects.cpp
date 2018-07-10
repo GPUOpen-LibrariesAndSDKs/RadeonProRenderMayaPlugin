@@ -909,6 +909,11 @@ void FireRenderMesh::GetShapes(const MFnDagNode& meshNode, std::vector<frw::Shap
 		for (const MDagPath& path : pathArray)
 		{
 			FireRenderMesh* mesh = context->getRenderObject<FireRenderMesh>(path);
+
+			// safety back-off
+			if (!mesh)
+				continue;
+
 			if (mesh->IsMainInstance())
 			{
 				mainMesh = mesh;
