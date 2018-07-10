@@ -219,6 +219,7 @@ MString GetPropertyNameFromPlugName(const MString& name);
 bool isVisible(MFnDagNode & fnDag, MFn::Type type);
 bool isGeometry(const MObject& node);
 bool isLight(const MObject& node);
+bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath);
 
 double rad2deg(double radians);
 double deg2rad(double degrees);

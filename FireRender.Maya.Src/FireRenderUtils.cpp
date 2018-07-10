@@ -750,6 +750,48 @@ bool isVisible(MFnDagNode & fnDag, MFn::Type type)
 	return true;
 }
 
+bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath)
+{
+	MDagPathArray pathArrayToTransform;
+	{
+		// get path to node. node is a transform
+		MFnDagNode transformNode(node);
+		transformNode.getAllPaths(pathArrayToTransform);
+	}
+
+	assert(pathArrayToTransform.length() == 1);
+
+	if (pathArrayToTransform.length() != 1)
+		return false;
+
+	// get shape (referenced by transform)
+	MStatus status = pathArrayToTransform[0].extendToShape();
+
+	assert(status == MStatus::kSuccess);
+
+	if (status != MStatus::kSuccess)
+	{
+		return false;
+	}
+
+	MDagPathArray pathArrayToShape;
+	{
+		// get path to shape. node here is a shape
+		MFnDagNode shapeNode(pathArrayToTransform[0].node());
+		shapeNode.getAllPaths(pathArrayToShape);
+	}
+	
+	// more than one reference to shape exist => shape is instanced
+	if (pathArrayToShape.length() > 1) 
+	{
+		nodeDagPath = pathArrayToTransform[0];
+		return true;
+	}
+
+	// only one reference => shape is not instanced
+	return false;
+}
+
 bool isGeometry(const MObject& node)
 {
 	return
@@ -963,13 +1005,14 @@ std::string getNodeUUid(const MObject& node)
 std::string getNodeUUid(const MDagPath& node)
 {
 	auto id = getNodeUUid(node.node());
-	if (node.isInstanced())
+
+	if (node.isInstanced() && (node.instanceNumber() > 0))
 	{
-		char buf[1024] = {};
-		int written = snprintf(buf, 1024, "%s:%u", id.c_str(), node.instanceNumber());
-		assert(written >= 0 && written < 1024);
-		id = buf;
+		std::stringstream sstrm;
+		sstrm << id.c_str() << ":" << node.instanceNumber();
+		id = sstrm.str();
 	}
+
 	return id;
 }
 
