@@ -289,7 +289,7 @@ public:
 	bool IsMainInstance() const { return m.isMainInstance; }
 private:
 	bool IsSelected(const MDagPath& dagPath) const;
-
+	bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;
 	void GetShapes(const MFnDagNode& node, std::vector<frw::Shape>& outShapes);
 
 	// A mesh in Maya can have multiple shaders
