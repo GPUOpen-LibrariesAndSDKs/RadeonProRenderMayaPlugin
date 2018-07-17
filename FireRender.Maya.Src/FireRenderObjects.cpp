@@ -591,18 +591,8 @@ void FireRenderMesh::setRenderStats(MDagPath dagPath)
 	bool primaryVisibility;
 	primaryVisibilityPlug.getValue(primaryVisibility);
 
-	bool selectionCheck = true; // true => is rendered
-
-	bool shouldIgnoreRenderSelectedObjects = 
-		context()->m_RenderType != FireRenderContext::RenderType::ProductionRender &&
-		context()->m_RenderType != FireRenderContext::RenderType::IPR;
-	if (!shouldIgnoreRenderSelectedObjects)
-	{
-		bool isRenderSelectedModeEnabled = context()->renderSelectedObjectsOnly();
-		selectionCheck = !isRenderSelectedModeEnabled || IsSelected(dagPath);
-	}
-
-	setVisibility(dagPath.isVisible() && selectionCheck);
+	bool isVisisble = IsMeshVisible(dagPath, context());
+	setVisibility(isVisisble);
 	setPrimaryVisibility(primaryVisibility);
 
 	//TODO: doesn't seem to be working just right
@@ -764,7 +754,7 @@ void FireRenderMesh::Rebuild()
 	auto node = Object();
 	MFnDagNode meshFn(node);
 	MString name = meshFn.name();
-	auto meshPath = DagPath();
+	MDagPath meshPath = DagPath();
 
 	FireRenderContext *context = this->context();
 
@@ -784,7 +774,11 @@ void FireRenderMesh::Rebuild()
 		MObjectArray shaderObjs;
 		std::vector<frw::Shape> shapes;
 
-		GetShapes(node, shapes);
+		// node is not visible => skip
+		if (IsMeshVisible(meshPath, this->context()))
+		{
+			GetShapes(node, shapes);
+		}
 				
 		m.elements.resize(shapes.size());
 		for (unsigned int i = 0; i < shapes.size(); i++)
@@ -894,6 +888,24 @@ void FireRenderMesh::Rebuild()
 	m.changed.shader = false;
 
 	RegisterCallbacks();	// we need to do this in case the shaders change (ie we will need to attach new callbacks)
+}
+
+bool FireRenderMesh::IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const
+{
+	bool selectionCheck = true; // true => is rendered
+
+	bool shouldIgnoreRenderSelectedObjects =
+		context->m_RenderType == FireRenderContext::RenderType::ViewportRender;
+
+	if (!shouldIgnoreRenderSelectedObjects)
+	{
+		bool isRenderSelectedModeEnabled = context->renderSelectedObjectsOnly();
+		selectionCheck = !isRenderSelectedModeEnabled || IsSelected(meshPath);
+	}
+
+	bool isVisible = meshPath.isVisible() && selectionCheck;
+
+	return isVisible;
 }
 
 void FireRenderMesh::GetShapes(const MFnDagNode& meshNode, std::vector<frw::Shape>& outShapes)
