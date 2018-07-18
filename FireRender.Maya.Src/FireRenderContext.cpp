@@ -1648,6 +1648,8 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		}
 	}
 
+	scope.CommitShaders();
+
 	if (m_cameraDirty)
 	{
 		m_cameraDirty = false;
