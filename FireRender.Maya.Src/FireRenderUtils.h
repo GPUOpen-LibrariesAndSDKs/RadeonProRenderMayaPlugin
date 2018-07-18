@@ -597,6 +597,12 @@ struct Float3
 {
 	float x, y, z;
 
+	Float3()
+		: x (0.0f)
+		, y (0.0f)
+		, z (0.0f)
+	{}
+
 	Float3(const MFloatPoint& v)
 	{
 		x = v.x;
@@ -634,6 +640,16 @@ struct Float2
 			return false;
 		return y < b.y;
 	}
+
+	Float2()
+		: x (0.0f)
+		, y (0.0f)
+	{}
+
+	Float2(float _x, float _y)
+		: x (_x)
+		, y (_y)
+	{}
 };
 
 MObject findDependNode(MString name);

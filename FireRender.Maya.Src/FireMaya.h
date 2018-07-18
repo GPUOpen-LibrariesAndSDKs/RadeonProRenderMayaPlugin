@@ -206,6 +206,8 @@ namespace FireMaya
 		// callbacks
 	public:
 		void NodeDirtyCallback(MObject& node);
+		void CommitShaders(void);
+
 	private:
 		static void NodeDirtyCallback(MObject& node, void* clientData);
 

@@ -15,10 +15,15 @@
 
 #include <unordered_map>
 
+#ifdef OPTIMIZATION_CLOCK
+	#include <chrono>
+#endif
+
 namespace FireMaya
 {
 namespace MeshTranslator
 {
+
 MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus& status)
 {
 	MFnMesh mesh(object);
@@ -125,162 +130,207 @@ MObject MeshTranslator::GetTesselatedObjectIfNecessary(const MObject& originalOb
 	return tessellated;
 }
 
-std::vector<frw::Shape> MeshTranslator::TranslateMesh(frw::Context context, const MObject& originalObject)
+struct MeshIdxDictionary
 {
-	MAIN_THREAD_ONLY;
+	// output coords of vertices
+	std::vector<Float3> vertexCoords;
 
-	std::vector<frw::Shape> elements;
-	MStatus mstatus;
-	MString errMsg;
+	// output coords of normals
+	std::vector<Float3> normalCoords;
 
-	MFnDagNode node(originalObject);
+	// output coords of uv's
+	std::vector<Float2> uvSubmeshCoords[2];
 
-	DebugPrint("TranslateMesh: %s", node.fullPathName().asUTF8());
+	// output indices of vertexes (3 indices for each triangle)
+	std::vector<int> vertexIndices;
 
-	// Don't render intermediate object
-	if (node.isIntermediateObject(&mstatus))
-		return elements;
+	// output indices of normals (3 indices for each triangle)
+	std::vector<int> normalIndices;
 
-	MObject parent = node.parent(0);
+	// table to convert global index of vertex (index of vertex in pVertices array) to one in vertexCoords
+	// - local to submesh
+	std::unordered_map<int, int> vertexCoordIdxGlobal2Local;
 
-	MObject tessellated = GetTesselatedObjectIfNecessary(originalObject, mstatus);
+	// table to convert global index of normal (index of normal in pNormals array) to one in vertexCoords
+	// - local to submesh
+	std::unordered_map<int, int> normalCoordIdxGlobal2Local;
 
-	if (mstatus != MStatus::kSuccess)
-	{
-		return elements;
-	}
+	// table to convert global index of uv coord (index of coord in uvIndices array) to one in normalCoords
+	// - local to submesh
+	std::unordered_map<int, int> uvCoordIdxGlobal2Local[2]; // size is always 1 or 2
 
-	MObject object = !tessellated.isNull() ? tessellated : originalObject;
+	// output indices of UV coordinates (3 indices for each triangle)
+	// up to 2 UV channels is supported, thus vector of vectors
+	std::vector<int> uvIndices[2];
+};
 
-	MFnMesh fnMesh(object, &mstatus);
-	if (MStatus::kSuccess != mstatus)
-	{
-		mstatus.perror("MFnMesh constructor");
-		return elements;
-	}
+// make UVCoords and UVIndices arrays have the same size (RPR crashes if they are not)
+void ChangeUVArrsSizes(MeshIdxDictionary* shaderData,
+	const int elementCount,
+	const unsigned int uvSetCount)
+{
+	if (uvSetCount == 1)
+		return;
 
-	MIntArray faceMaterialIndices;
-	int elementCount = GetFaceMaterials(fnMesh, faceMaterialIndices);
-	elements.resize(elementCount);
-
-	assert(faceMaterialIndices.length() == fnMesh.numPolygons());
-
-	MStringArray uvSetNames;
-	// UV coordinates
-	// - auxillary arrays for passing data to RPR
-	std::vector<std::vector<Float2> > uvCoords;
-	std::vector<const float*> puvCoords;
-	std::vector<size_t> sizeCoords;
-
-	GetUVCoords(fnMesh, uvSetNames, uvCoords, puvCoords, sizeCoords);
-	unsigned int uvSetCount = uvSetNames.length();
-
-	//DebugPrint("Elements: %d; Polygons: %d; Vertices: %d; Normals: %d", elementCount, fnMesh.numPolygons(), points.length(), normals.length());
-
-	// pointer to array of vertices coordinates in Maya
-	const float* pVertices = fnMesh.getRawPoints(&mstatus);
-	assert(MStatus::kSuccess == mstatus);
-	int countVertices = fnMesh.numVertices(&mstatus);
-	assert(MStatus::kSuccess == mstatus);
-
-	// pointer to array of normal coordinates in Maya
-	const float* pNormals = fnMesh.getRawNormals(&mstatus);
-	assert(MStatus::kSuccess == mstatus);
-	int countNormals = fnMesh.numNormals(&mstatus);
-	assert(MStatus::kSuccess == mstatus);
-
-	int numIndices = 0;
-	{
-		// get triangle count (max possible count; this number is used for reserve only)
-		MIntArray triangleCounts; // basically number of triangles in polygons; size of array equal to number of polygons in mesh
-		MIntArray triangleVertices; // indices of points in triangles (3 indices per triangle)
-		mstatus = fnMesh.getTriangles(triangleCounts, triangleVertices);
-		numIndices = triangleVertices.length();
-	}
-
-	// different RPR mesh is created for each shader
 	for (int shaderId = 0; shaderId < elementCount; shaderId++)
 	{
-		// output indices of vertexes (3 indices for each triangle)
-		std::vector<int> vertexIndices;
-		vertexIndices.reserve(numIndices);
+		MeshIdxDictionary& currShaderData = shaderData[shaderId];
+	
+		// - get max size of coords
+		size_t maxSize = currShaderData.uvSubmeshCoords[0].size();
 
-		// output indices of normals (3 indices for each triangle)
-		std::vector<int> normalIndices;
-		normalIndices.reserve(numIndices);
+		for (unsigned int currUVCHannel = 1; currUVCHannel < uvSetCount; ++currUVCHannel)
+		{
+			size_t tmpSize = currShaderData.uvSubmeshCoords[currUVCHannel].size();
 
-		// output indices of UV coordinates (3 indices for each triangle)
-		// up to 2 UV chanels is supported, thus vector of vectors
-		std::vector<std::vector<int> > uvIndices;
-		uvIndices.reserve(uvSetCount);
+			if (tmpSize > maxSize)
+			{
+				maxSize = tmpSize;
+			}
+		}
+
+		// - fill the array with less than max with zeros
 		for (unsigned int currUVCHannel = 0; currUVCHannel < uvSetCount; ++currUVCHannel)
 		{
-			uvIndices.emplace_back();
-			uvIndices[currUVCHannel].reserve(numIndices);
-		}
-
-		// iterate through mesh
-		MItMeshPolygon it = MItMeshPolygon(fnMesh.object());
-		for (; !it.isDone(); it.next())
-		{
-
-			// skip polygons that have different shader from current one
-			if (faceMaterialIndices[it.index()] != shaderId)
+			if (currShaderData.uvSubmeshCoords[currUVCHannel].size() == maxSize)
+			{
 				continue;
+			}
 
-			AddPolygon(it, uvSetNames, vertexIndices, normalIndices, uvIndices);
+			currShaderData.uvSubmeshCoords[currUVCHannel].resize(maxSize, Float2(0.0f, 0.0f));
 		}
 
-		// auxillary array for passing data to RPR
+		// - get max size of indices
+		maxSize = currShaderData.uvIndices[0].size();
+
+		for (unsigned int currUVCHannel = 1; currUVCHannel < uvSetCount; ++currUVCHannel)
+		{
+			size_t tmpSize = currShaderData.uvIndices[currUVCHannel].size();
+
+			if (tmpSize > maxSize)
+			{
+				maxSize = tmpSize;
+			}
+		}
+
+		// - fill the array with less than max with zeros
+		for (unsigned int currUVCHannel = 0; currUVCHannel < uvSetCount; ++currUVCHannel)
+		{
+			if (currShaderData.uvIndices[currUVCHannel].size() == maxSize)
+			{
+				continue;
+			}
+
+			currShaderData.uvIndices[currUVCHannel].resize(maxSize, 0);
+		}
+	}
+}
+
+inline void CreateRPRMeshes(std::vector<frw::Shape>& elements, 
+	frw::Context& context,
+	const MeshIdxDictionary* shaderData, 
+	std::vector<std::vector<Float2> > &uvCoords, 
+	const int elementCount, 
+	const unsigned int uvSetCount)
+{
+	for (int shaderId = 0; shaderId < elementCount; shaderId++)
+	{
+		const MeshIdxDictionary& currShaderData = shaderData[shaderId];
+
+		// axillary data structures for passing data to RPR
+		size_t num_faces = currShaderData.vertexIndices.size() / 3;
+		std::vector<int> num_face_vertices(currShaderData.vertexIndices.size() / 3, 3);
+
+		std::vector<const float*> output_submeshUVCoords;
+		output_submeshUVCoords.reserve(uvSetCount);
+		std::vector<size_t> output_submeshSizeCoords;
+		output_submeshSizeCoords.reserve(uvSetCount);
+
+		for (unsigned int currUVCHannel = 0; currUVCHannel < uvSetCount; ++currUVCHannel)
+		{
+			output_submeshUVCoords.push_back((const float*)(currShaderData.uvSubmeshCoords[currUVCHannel].data()));
+			output_submeshSizeCoords.push_back(currShaderData.uvSubmeshCoords[currUVCHannel].size());
+		}
+
+		// dump data from map to auxiliary array (is needed for call to RPR)
 		std::vector<const rpr_int*>	puvIndices;
+		puvIndices.reserve(uvSetCount);
+
 		for (unsigned int idx = 0; idx < uvSetCount; ++idx)
 		{
-			puvIndices.push_back(uvIndices[idx].size() > 0 ? uvIndices[idx].data() : nullptr);
+			puvIndices.push_back(currShaderData.uvIndices[idx].size() > 0 ?
+				currShaderData.uvIndices[idx].data() :
+				nullptr);
 		}
 
-		std::vector<int> multiUV_texcoord_strides(uvSetCount, sizeof(Float2));
+		// arrays with auxiliary data for RPR
 		std::vector<int> texIndexStride(uvSetCount, sizeof(int));
-
-		if (sizeCoords.size() == 0 || puvIndices.size() == 0 || sizeCoords[0] == 0 || puvIndices[0] == nullptr)
-		{
-			// no uv set
-			uvSetCount = 0;
-		}
+		std::vector<int> multiUV_texcoord_strides(uvSetCount, sizeof(Float2));
 
 		// create mesh in RPR
 		elements[shaderId] = context.CreateMeshEx(
-			pVertices, countVertices, sizeof(Float3),
-			pNormals, countNormals, sizeof(Float3),
+			(const rpr_float *)(currShaderData.vertexCoords.data()), currShaderData.vertexCoords.size(), sizeof(Float3),
+			(const rpr_float *)(currShaderData.normalCoords.data()), currShaderData.normalCoords.size(), sizeof(Float3),
 			nullptr, 0, 0,
-			uvSetCount, puvCoords.data(), sizeCoords.data(), multiUV_texcoord_strides.data(),
-			vertexIndices.data(), sizeof(rpr_int),
-			normalIndices.data(), sizeof(rpr_int),
+			uvSetCount, output_submeshUVCoords.data(), output_submeshSizeCoords.data(), multiUV_texcoord_strides.data(),
+			currShaderData.vertexIndices.data(), sizeof(rpr_int),
+			currShaderData.normalIndices.data(), sizeof(rpr_int),
 			puvIndices.data(), texIndexStride.data(),
-			std::vector<int>(vertexIndices.size() / 3, 3).data(), vertexIndices.size() / 3);
+			num_face_vertices.data(), num_faces
+		);
 	}
-
-	// Now remove any temporary mesh we created.
-	if (!tessellated.isNull())
-	{
-		FireRenderThread::RunProcOnMainThread([&]
-		{
-			MFnDagNode parentNode(parent, &mstatus);
-			if (MStatus::kSuccess == mstatus)
-			{
-				mstatus = parentNode.removeChild(tessellated);
-				if (MStatus::kSuccess != mstatus)
-					mstatus.perror("MFnDagNode::removeChild");
-			}
-
-			if (!tessellated.isNull()) // double-check if node hasn't already been removed
-				MGlobal::deleteNode(tessellated);
-		});
-	}
-
-	return elements;
 }
 
-void AddPolygon(MItMeshPolygon& it,
+struct MeshPolygonData
+{
+	MStringArray uvSetNames;
+	std::vector<std::vector<Float2> > uvCoords;
+	std::vector<const float*> puvCoords;
+	std::vector<size_t> sizeCoords;
+	const float* pVertices;
+	int countVertices;
+	const float* pNormals;
+	int countNormals;
+	int numIndices;
+
+	MeshPolygonData()
+		: pVertices(nullptr)
+		, countVertices(0)
+		, pNormals(nullptr)
+		, countNormals(0)
+		, numIndices(0)
+	{}
+
+	void Initialize(MFnMesh& fnMesh)
+	{
+		GetUVCoords(fnMesh, uvSetNames, uvCoords, puvCoords, sizeCoords);
+		unsigned int uvSetCount = uvSetNames.length();
+
+		MStatus mstatus;
+
+		// pointer to array of vertices coordinates in Maya
+		pVertices = fnMesh.getRawPoints(&mstatus);
+		assert(MStatus::kSuccess == mstatus);
+		countVertices = fnMesh.numVertices(&mstatus);
+		assert(MStatus::kSuccess == mstatus);
+
+		// pointer to array of normal coordinates in Maya
+		pNormals = fnMesh.getRawNormals(&mstatus);
+		assert(MStatus::kSuccess == mstatus);
+		countNormals = fnMesh.numNormals(&mstatus);
+		assert(MStatus::kSuccess == mstatus);
+
+		{
+			// get triangle count (max possible count; this number is used for reserve only)
+			MIntArray triangleCounts; // basically number of triangles in polygons; size of array equal to number of polygons in mesh
+			MIntArray triangleVertices; // indices of points in triangles (3 indices per triangle)
+			mstatus = fnMesh.getTriangles(triangleCounts, triangleVertices);
+			numIndices = triangleVertices.length();
+		}
+	}
+};
+
+inline void AddPolygon(MItMeshPolygon& it,
 	const MStringArray& uvSetNames,
 	std::vector<int>& vertexIndices,
 	std::vector<int>& normalIndices,
@@ -290,7 +340,7 @@ void AddPolygon(MItMeshPolygon& it,
 
 	unsigned int uvSetCount = uvSetNames.length();
 	// get indices of vertexes of polygon
-	// - these are indices of verts of polygion, not triangles!!!
+	// - these are indices of verts of polygon, not triangles!!!
 	MIntArray vertices;
 	mstatus = it.getVertices(vertices);
 	assert(MStatus::kSuccess == mstatus);
@@ -338,7 +388,7 @@ void AddPolygon(MItMeshPolygon& it,
 
 			assert(localUVIdxIt != vertexIdxGlobalToLocal.end());
 
-            MString name = uvSetNames[currUVCHannel];
+			MString name = uvSetNames[currUVCHannel];
 			mstatus = it.getUVIndex(localUVIdxIt->second, uvIdx, &name);
 
 			if (mstatus == MStatus::kSuccess)
@@ -354,13 +404,331 @@ void AddPolygon(MItMeshPolygon& it,
 	}
 }
 
+void TranslateMeshSingleShader(frw::Context context, 
+	MFnMesh& fnMesh,
+	std::vector<frw::Shape>& elements,
+	MeshPolygonData& meshPolygonData)
+{
+	// output indices of vertexes (3 indices for each triangle)
+	std::vector<int> vertexIndices;
+	vertexIndices.reserve(meshPolygonData.numIndices);
+
+	// output indices of normals (3 indices for each triangle)
+	std::vector<int> normalIndices;
+	normalIndices.reserve(meshPolygonData.numIndices);
+
+	// output indices of UV coordinates (3 indices for each triangle)
+	// up to 2 UV channels is supported, thus vector of vectors
+	std::vector<std::vector<int> > uvIndices;
+	unsigned int uvSetCount = meshPolygonData.uvSetNames.length();
+	uvIndices.reserve(uvSetCount);
+	for (unsigned int currUVCHannel = 0; currUVCHannel < uvSetCount; ++currUVCHannel)
+	{
+		uvIndices.emplace_back(); // create vector for uv indices
+		uvIndices[currUVCHannel].reserve(meshPolygonData.numIndices);
+	}
+
+	// iterate through mesh
+	for (auto it = MItMeshPolygon(fnMesh.object()); !it.isDone(); it.next())
+	{
+		AddPolygon(it, meshPolygonData.uvSetNames, vertexIndices, normalIndices, uvIndices);
+	}
+
+	// auxiliary array for passing data to RPR
+	std::vector<const rpr_int*>	puvIndices;
+	puvIndices.reserve(uvSetCount);
+	for (unsigned int idx = 0; idx < uvSetCount; ++idx)
+	{
+		puvIndices.push_back(uvIndices[idx].size() > 0 ? uvIndices[idx].data() : nullptr);
+	}
+
+	std::vector<int> multiUV_texcoord_strides(uvSetCount, sizeof(Float2));
+	std::vector<int> texIndexStride(uvSetCount, sizeof(int));
+
+	if (meshPolygonData.sizeCoords.size() == 0 || puvIndices.size() == 0 || meshPolygonData.sizeCoords[0] == 0 || puvIndices[0] == nullptr)
+	{
+		// no uv set
+		uvSetCount = 0;
+	}
+
+	// create mesh in RPR
+	elements[0] = context.CreateMeshEx(
+		meshPolygonData.pVertices, meshPolygonData.countVertices, sizeof(Float3),
+		meshPolygonData.pNormals, meshPolygonData.countNormals, sizeof(Float3),
+		nullptr, 0, 0,
+		uvSetCount, meshPolygonData.puvCoords.data(), meshPolygonData.sizeCoords.data(), multiUV_texcoord_strides.data(),
+		vertexIndices.data(), sizeof(rpr_int),
+		normalIndices.data(), sizeof(rpr_int),
+		puvIndices.data(), texIndexStride.data(),
+		std::vector<int>(vertexIndices.size() / 3, 3).data(), vertexIndices.size() / 3);
+}
+
+const size_t coordsPerPolygon = 12;
+const size_t indicesPerPolygon = 6;
+
+void ReserveShaderData(MFnMesh& fnMesh, MeshIdxDictionary* shaderData, MIntArray& faceMaterialIndices, int elementCount)
+{
+	struct IdxSizes
+	{
+		size_t coords_size;
+		size_t indices_size;
+
+		IdxSizes()
+			: coords_size(0)
+			, indices_size(0)
+		{}
+	};
+
+	std::vector<IdxSizes> idxSizes;
+	idxSizes.resize(elementCount);
+
+	for (auto it = MItMeshPolygon(fnMesh.object()); !it.isDone(); it.next())
+	{
+		int shaderId = faceMaterialIndices[it.index()];
+
+		idxSizes[shaderId].coords_size += coordsPerPolygon;
+		idxSizes[shaderId].indices_size += indicesPerPolygon;
+	}
+
+	for (int shaderId = 0; shaderId < elementCount; shaderId++)
+	{
+		shaderData[shaderId].vertexCoords.reserve(idxSizes[shaderId].coords_size);
+		shaderData[shaderId].normalCoords.reserve(idxSizes[shaderId].coords_size);
+		shaderData[shaderId].vertexIndices.reserve(idxSizes[shaderId].indices_size);
+		shaderData[shaderId].normalIndices.reserve(idxSizes[shaderId].indices_size);
+	}
+}
+
+std::vector<frw::Shape> MeshTranslator::TranslateMesh(frw::Context context, const MObject& originalObject)
+{
+	MAIN_THREAD_ONLY;
+
+	std::vector<frw::Shape> elements;
+	MStatus mstatus;
+	MString errMsg;
+
+	MFnDagNode node(originalObject);
+
+	DebugPrint("TranslateMesh: %s", node.fullPathName().asUTF8());
+
+	// Don't render intermediate object
+	if (node.isIntermediateObject(&mstatus))
+		return elements;
+
+	MObject parent = node.parent(0);
+
+	MObject tessellated = GetTesselatedObjectIfNecessary(originalObject, mstatus);
+
+	// back-off
+	if (mstatus != MStatus::kSuccess)
+	{
+		return elements;
+	}
+
+	MObject object = !tessellated.isNull() ? tessellated : originalObject;
+
+	// back-off
+	MFnMesh fnMesh(object, &mstatus);
+	if (MStatus::kSuccess != mstatus)
+	{
+		mstatus.perror("MFnMesh constructor");
+		return elements;
+	}
+
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+#endif
+
+	// get number of submeshes in mesh (number of materials used in this mesh)
+	MIntArray faceMaterialIndices;
+	int elementCount = GetFaceMaterials(fnMesh, faceMaterialIndices);
+	elements.resize(elementCount);
+	assert(faceMaterialIndices.length() == fnMesh.numPolygons());
+
+	// get common data from mesh
+	MeshPolygonData meshPolygonData;
+	meshPolygonData.Initialize(fnMesh);
+
+	// use special case TranslateMesh that is optimized for 1 shader
+	if (elementCount == 1)
+	{
+		TranslateMeshSingleShader(context, fnMesh, elements, meshPolygonData);
+#ifdef OPTIMIZATION_CLOCK
+		std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
+		std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
+		LogPrint("Elapsed time: %d", elapsed);
+#endif
+
+		return elements;
+	}
+
+	// create mesh data container
+	std::vector<MeshIdxDictionary> shaderData;
+	shaderData.resize(elementCount);
+
+	// reserve space for indices and coordinates
+	ReserveShaderData(fnMesh, shaderData.data(), faceMaterialIndices, elementCount);
+
+	// iterate through mesh
+	for (MItMeshPolygon it = MItMeshPolygon(fnMesh.object()); !it.isDone(); it.next())
+	{
+		int shaderId = faceMaterialIndices[it.index()];
+
+		AddPolygon(it, meshPolygonData, shaderData[shaderId]);
+	}
+
+	// make UVCoords and UVIndices arrays have the same size (RPR crashes if they are not)
+	ChangeUVArrsSizes(shaderData.data(), elementCount, meshPolygonData.uvSetNames.length());
+
+	// export shader data to context
+	CreateRPRMeshes(elements, context, shaderData.data(), meshPolygonData.uvCoords, elementCount, meshPolygonData.uvSetNames.length());
+
+	// Now remove any temporary mesh we created.
+	if (!tessellated.isNull())
+	{
+		FireRenderThread::RunProcOnMainThread([&]
+		{
+			MFnDagNode parentNode(parent, &mstatus);
+			if (MStatus::kSuccess == mstatus)
+			{
+				mstatus = parentNode.removeChild(tessellated);
+				if (MStatus::kSuccess != mstatus)
+					mstatus.perror("MFnDagNode::removeChild");
+			}
+
+			if (!tessellated.isNull()) // double-check if node hasn't already been removed
+				MGlobal::deleteNode(tessellated);
+		});
+	}
+
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
+	std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
+	LogPrint("Elapsed time: %d", elapsed);
+#endif
+
+	return elements;
+}
+
+inline void AddPolygon(MItMeshPolygon& it,
+	const MeshPolygonData& meshPolygonData,
+	MeshIdxDictionary& meshIdxDictionary)
+{
+	MStatus mstatus;
+
+	// get indices of vertices of triangles of current polygon
+	// - these are indices of verts in triangles! (6 indices per polygon basically)
+	MIntArray vertexIndicesList;
+	MPointArray points;
+	mstatus = it.getTriangles(points, vertexIndicesList);
+	assert(MStatus::kSuccess == mstatus);
+
+	// if coords of vertex not in vertex coord array => write them there
+	for (unsigned int idx = 0; idx < vertexIndicesList.length(); ++idx)
+	{
+		std::unordered_map<int, int>::iterator it = meshIdxDictionary.vertexCoordIdxGlobal2Local.find(vertexIndicesList[idx]);
+
+		if (it == meshIdxDictionary.vertexCoordIdxGlobal2Local.end())
+		{
+			unsigned int coordIdx = vertexIndicesList[idx] * 3;
+			Float3 vtx;
+			vtx.x = meshPolygonData.pVertices[coordIdx];
+			vtx.y = meshPolygonData.pVertices[coordIdx + 1];
+			vtx.z = meshPolygonData.pVertices[coordIdx + 2];
+			meshIdxDictionary.vertexCoordIdxGlobal2Local[vertexIndicesList[idx]] = meshIdxDictionary.vertexCoords.size();
+			meshIdxDictionary.vertexIndices.push_back(meshIdxDictionary.vertexCoords.size()); // <= write indices of triangles in mesh into output triangle indices array
+			meshIdxDictionary.vertexCoords.push_back(vtx);
+		}
+		else
+		{
+			// write indices of triangles in mesh into output triangle indices array
+			meshIdxDictionary.vertexIndices.push_back(it->second);
+		}
+	}
+	
+	// get indices of vertexes of polygon
+	// - these are indices of verts of polygon, not triangles!!!
+	MIntArray indicesInPolygon;
+	mstatus = it.getVertices(indicesInPolygon);
+	assert(MStatus::kSuccess == mstatus);
+
+	// create table to convert global index in vertex indices array to local one [0...number of vertex in polygon]
+	// this table is needed for normals and UVs
+	// - local to polygon
+	std::map<int, int> vertexIdxGlobalToLocal;
+	int count = indicesInPolygon.length();
+
+	for (int idx = 0; idx < count; ++idx)
+	{
+		vertexIdxGlobalToLocal[indicesInPolygon[idx]] = idx; 
+	}
+
+	// write indices of normals of vertices (parallel to triangle vertices) into output array
+	for (unsigned int idx = 0; idx < vertexIndicesList.length(); ++idx)
+	{
+		std::map<int, int>::iterator localNormalIdxIt = vertexIdxGlobalToLocal.find(vertexIndicesList[idx]);
+		assert(localNormalIdxIt != vertexIdxGlobalToLocal.end());		
+
+		int globalNormalIdx = it.normalIndex(localNormalIdxIt->second);
+		std::unordered_map<int, int>::iterator normal_it = meshIdxDictionary.normalCoordIdxGlobal2Local.find(globalNormalIdx);
+
+		if (normal_it == meshIdxDictionary.normalCoordIdxGlobal2Local.end())
+		{
+			Float3 normal;
+			normal.x = meshPolygonData.pNormals[globalNormalIdx*3];
+			normal.y = meshPolygonData.pNormals[globalNormalIdx*3+1];
+			normal.z = meshPolygonData.pNormals[globalNormalIdx*3+2];
+			meshIdxDictionary.normalCoordIdxGlobal2Local[globalNormalIdx] = meshIdxDictionary.normalCoords.size();
+			meshIdxDictionary.normalCoords.push_back(normal);
+		}
+
+		meshIdxDictionary.normalIndices.push_back(meshIdxDictionary.normalCoordIdxGlobal2Local[globalNormalIdx]);
+	}
+
+	// up to 2 UV channels is supported
+	unsigned int uvSetCount = meshPolygonData.uvSetNames.length();
+
+	for (unsigned int currUVCHannel = 0; currUVCHannel < uvSetCount; ++currUVCHannel)
+	{
+		// write indices 
+		for (unsigned int idx = 0; idx < vertexIndicesList.length(); ++idx)
+		{
+			std::map<int, int>::iterator localUVIdxIt = vertexIdxGlobalToLocal.find(vertexIndicesList[idx]);
+			assert(localUVIdxIt != vertexIdxGlobalToLocal.end());
+
+			int uvIdx = 0;
+			MString name = meshPolygonData.uvSetNames[currUVCHannel];
+			mstatus = it.getUVIndex(localUVIdxIt->second, uvIdx, &name);
+
+			if (mstatus != MStatus::kSuccess)
+			{
+				// in case if uv coordinate not assigned to polygon set it index to 0
+				meshIdxDictionary.uvIndices[currUVCHannel].push_back(0);
+				continue;
+			}
+
+			auto uv_it = meshIdxDictionary.uvCoordIdxGlobal2Local[currUVCHannel].find(uvIdx);
+
+			if (uv_it == meshIdxDictionary.uvCoordIdxGlobal2Local[currUVCHannel].end())
+			{
+				Float2 uv;
+				uv.x = meshPolygonData.puvCoords[currUVCHannel][uvIdx*2];
+				uv.y = meshPolygonData.puvCoords[currUVCHannel][uvIdx*2 + 1];
+				meshIdxDictionary.uvCoordIdxGlobal2Local[currUVCHannel][uvIdx] = meshIdxDictionary.uvSubmeshCoords[currUVCHannel].size();
+				meshIdxDictionary.uvSubmeshCoords[currUVCHannel].push_back(uv);
+			}
+
+			meshIdxDictionary.uvIndices[currUVCHannel].push_back(meshIdxDictionary.uvCoordIdxGlobal2Local[currUVCHannel][uvIdx]);
+		}
+	}
+}
+
 void GetUVCoords(const MFnMesh& fnMesh, 
 					MStringArray& uvSetNames,
 					std::vector<std::vector<Float2> >& uvCoords,
 					std::vector<const float*>& puvCoords,
 					std::vector<size_t>& sizeCoords)
 {
-	//MStringArray uvSetNames;
 	fnMesh.getUVSetNames(uvSetNames);
 	unsigned int uvSetCount = uvSetNames.length();
 

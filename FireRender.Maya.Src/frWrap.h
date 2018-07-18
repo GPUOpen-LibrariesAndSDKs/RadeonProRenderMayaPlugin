@@ -2335,6 +2335,7 @@ namespace frw
 			auto status = rprxCreateMaterial(rprxContext, type, &d.material);
 			checkStatusThrow(status, "Unable to create rprx material");
 			d.shaderType = ShaderTypeRprx;
+			d.bDirty = false;
 			FRW_PRINT_DEBUG("\tCreated RPRX material 0x%016llX of type: 0x%X", d.material, type);
 		}
 
@@ -2391,9 +2392,6 @@ namespace frw
 				res = rprxShapeAttachMaterial(d.context, shape.Handle(), d.material);
 				checkStatus(res);
 
-				res = rprxMaterialCommit(d.context, d.material);
-				checkStatus(res);
-
 				if (d.isShadowCatcher)
 				{
 					res = rprShapeSetShadowCatcher(shape.Handle(), true);
@@ -2428,6 +2426,18 @@ namespace frw
 				rpr_int res = rprShapeSetMaterial(shape.Handle(), nullptr);
 				checkStatus(res);
 			}
+		}
+
+		void Commit()
+		{
+			Data& d = data();
+			rpr_int res;
+
+			if (!d.context || !d.material)
+				return;
+
+			res = rprxMaterialCommit(d.context, d.material);
+			checkStatus(res);
 		}
 
 		void AttachToMaterialInput(rpr_material_node node, const char* inputName) const
