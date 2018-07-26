@@ -112,6 +112,9 @@ public:
 	// hash is generated during Freshen call
 	HashValue GetStateHash() { return m.hash; }
 
+	// get uuid
+	const std::string& GetUuid() const { return m.uuid; }
+
 	// Return the render context
 	FireRenderContext* context() { return m.context; }
 
@@ -284,6 +287,7 @@ public:
 
 	// Mesh bits (each one may have separate shading engine)
 	std::vector<FrElement>& Elements() { return m.elements; }
+	const std::vector<FrElement>& Elements() const { return m.elements; }
 	FrElement& Element(int i) { return m.elements[i]; }
 
 	bool IsMainInstance() const { return m.isMainInstance; }

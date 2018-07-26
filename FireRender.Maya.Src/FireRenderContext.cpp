@@ -27,7 +27,6 @@
 #include "AutoLock.h"
 #include "VRay.h"
 #include "ImageFilter/ImageFilter.h"
-#include <chrono>
 
 #include "RprComposite.h"
 
@@ -1482,7 +1481,7 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 	using namespace FireMaya;
 
 	FireRenderObject* ob = nullptr;
-	auto node = dagPath.node();
+	MObject node = dagPath.node();
 
 	if (node.hasFn(MFn::kDagNode))
 	{
@@ -1491,36 +1490,36 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 
 		if (isGeometry(node))
 		{
-			ob = CreateSceneObject<FireRenderMesh>(dagPath);
+			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::AddPath>(dagPath);
 		}
 		else if (isTransformWithInstancedShape(node, dagPathTmp))
 		{
-			ob = CreateSceneObject<FireRenderMesh>(dagPathTmp);
+			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::DontAddPath>(dagPathTmp);
 		}
 		else if (dagNode.typeId() == TypeId::FireRenderIESLightLocator
 			|| isLight(node)
 			|| VRay::isNonEnvironmentLight(dagNode))
 		{
-			if (dagNode.typeName() == "ambientLight") {
-				ob = CreateSceneObject<FireRenderEnvLight>(dagPath);
+			if (dagNode.typeName() == "ambientLight") 
+			{
+				ob = CreateSceneObject<FireRenderEnvLight, NodeCachingOptions::AddPath>(dagPath);
 			}
 			else
 			{
-				ob = CreateSceneObject<FireRenderLight>(dagPath);
+				ob = CreateSceneObject<FireRenderLight, NodeCachingOptions::AddPath>(dagPath);
 			}
-
 		}
 		else if (dagNode.typeId() == TypeId::FireRenderIBL
 			|| dagNode.typeId() == TypeId::FireRenderEnvironmentLight
 			|| dagNode.typeName() == "ambientLight"
 			|| VRay::isEnvironmentLight(dagNode))
 		{
-			ob = CreateSceneObject<FireRenderEnvLight>(dagPath);
+			ob = CreateSceneObject<FireRenderEnvLight, NodeCachingOptions::AddPath>(dagPath);
 		}
 		else if (dagNode.typeId() == TypeId::FireRenderSkyLocator
 			|| VRay::isSkyLight(dagNode))
 		{
-			ob = CreateSceneObject<FireRenderSky>(dagPath);
+			ob = CreateSceneObject<FireRenderSky, NodeCachingOptions::AddPath>(dagPath);
 		}
 		else
 		{
@@ -1566,19 +1565,14 @@ void FireRenderContext::setDirtyObject(FireRenderObject* obj)
 
 	AutoMutexLock lock(m_dirtyMutex);
 
-	for (int i = 0; i < m_dirtyObjects.size(); i++)
-	{
-		std::shared_ptr<FireRenderObject> ptr = m_dirtyObjects[i].lock();
-		if (ptr && ptr.get() == obj)
-			return;		// already in list
-	}
-
 	// Find the object in objects list
-	auto it = m_sceneObjects.find(obj->uuid());
-	if (it != m_sceneObjects.end())
 	{
-		std::shared_ptr<FireRenderObject> ptr = it->second;
-		m_dirtyObjects.push_back(ptr);
+		auto it = m_sceneObjects.find(obj->uuid());
+		if (it != m_sceneObjects.end())
+		{
+			std::shared_ptr<FireRenderObject> ptr = it->second;
+			m_dirtyObjects[obj] = ptr;
+		}
 	}
 }
 
@@ -1627,24 +1621,36 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 	bool changed = m_dirty;
 
-	while (m_dirtyObjects.size() > 0 &&
-		(state==FireRenderContext::StateRendering || state == FireRenderContext::StateUpdating))
+	for (auto it = m_dirtyObjects.begin(); it != m_dirtyObjects.end(); )
 	{
+		if ((state != FireRenderContext::StateRendering) && (state != FireRenderContext::StateUpdating))
+			break;
+
 		// Request the object with removal it from the dirty list. Use mutex to prevent list's modifications.
 		m_dirtyMutex.lock();
-		size_t pos = m_dirtyObjects.size() - 1;
-		std::shared_ptr<FireRenderObject> ptr = m_dirtyObjects[pos].lock();
-		m_dirtyObjects.erase(m_dirtyObjects.begin() + pos);
+		
+		std::shared_ptr<FireRenderObject> ptr = it->second.lock();
+
+		it = m_dirtyObjects.erase(it);
+
 		m_dirtyMutex.unlock();
 
-		// Now perform update, if object is still valid
+		// Now perform update
 		if (ptr)
 		{
+			DebugPrint("Freshing object");
+
 			ptr->Freshen();
 			changed = true;
 
 			if (cancelled())
+			{
 				return false;
+			}
+		}
+		else
+		{
+			DebugPrint("Cancelled freshing null object");
 		}
 	}
 
