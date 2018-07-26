@@ -455,11 +455,24 @@ void FireRenderNode::RestorePortalStates(bool iblPortals)
 
 MDagPath FireRenderNode::DagPath()
 {
+	MDagPath outPath;
+	bool found = context()->GetNodePath(outPath, GetUuid());
+
+	if (found)
+	{
+		return outPath;
+	}
+
 	MFnDagNode dagNode(Object());
 	MDagPathArray pathArray;
 	dagNode.getAllPaths(pathArray);
+
 	if (m.instance < pathArray.length())
+	{
+		context()->AddNodePath(pathArray[m.instance], GetUuid());
+		
 		return pathArray[m.instance];
+	}
 
 	return MDagPath();
 }
@@ -912,44 +925,32 @@ void FireRenderMesh::GetShapes(const MFnDagNode& meshNode, std::vector<frw::Shap
 {
 	FireRenderContext* context = this->context();
 
-	FireRenderMesh* mainMesh = nullptr;
+	const FireRenderMesh* mainMesh = nullptr;
+
 	if (meshNode.isInstanced())
 	{
-		MDagPathArray pathArray;
-		meshNode.getAllPaths(pathArray);
+		mainMesh = context->GetMainMesh(meshNode.object());
+	}
 
-		for (const MDagPath& path : pathArray)
+	if (mainMesh != nullptr)
+	{
+		const std::vector<FrElement>& elements = mainMesh->Elements();
+
+		outShapes.reserve(elements.size());
+
+		for (const FrElement& element : elements)
 		{
-			FireRenderMesh* mesh = context->getRenderObject<FireRenderMesh>(path);
-
-			// safety back-off
-			if (!mesh)
-				continue;
-
-			if (mesh->IsMainInstance())
-			{
-				mainMesh = mesh;
-				break;
-			}
+			outShapes.push_back(element.shape.CreateInstance(Context()));
 		}
 
-		if (mainMesh != nullptr)
-		{
-			const std::vector<FrElement>& elements = mainMesh->Elements();
-
-			for (const FrElement& element : elements)
-			{
-				outShapes.push_back(element.shape.CreateInstance(Context()));
-			}
-
-			m.isMainInstance = false;
-		}
+		m.isMainInstance = false;
 	}
 
 	if (mainMesh == nullptr)
 	{
 		outShapes = FireMaya::MeshTranslator::TranslateMesh(Context(), meshNode.object());
 		m.isMainInstance = true;
+		context->AddMainMesh(meshNode.object(), this);
 	}
 }
 

@@ -271,15 +271,60 @@ public:
 	bool AddSceneObject(FireRenderObject* ob);
 	bool AddSceneObject(const MDagPath& ob);
 
-	template <class T>
+	enum class NodeCachingOptions
+	{
+		AddPath,
+		DontAddPath
+	};
+
+	template <typename T, NodeCachingOptions>
+	struct CreateSceneObject_Impl
+	{
+		static T* call(const MDagPath& ob, FireRenderContext* context);
+	};
+
+	template <typename T, const NodeCachingOptions opt>
 	T* CreateSceneObject(const MDagPath& ob)
 	{
-		T* fr = new T(this, ob);
-		if (!AddSceneObject(fr))
-			DebugPrint("ERROR: Couldn't add object to scene.");
-		return fr;
+		return CreateSceneObject_Impl<T, opt>::call(ob, this);
 	}
 
+	template <typename T>
+	struct CreateSceneObject_Impl<typename T, NodeCachingOptions::AddPath>
+	{
+		static T* call(const MDagPath& ob, FireRenderContext* context)
+		{
+			T* fr = new T(context, ob);
+
+			if (context->AddSceneObject(fr))
+			{
+				// save node id and dagPath for future use
+				context->AddNodePath(ob, fr->GetUuid());
+			}
+			else
+			{
+				DebugPrint("ERROR: Couldn't add object to scene.");
+			}
+
+			return fr;
+		}
+	};
+
+	template <typename T>
+	struct CreateSceneObject_Impl<typename T, NodeCachingOptions::DontAddPath>
+	{
+		static T* call(const MDagPath& ob, FireRenderContext* context)
+		{
+			T* fr = new T(context, ob);
+
+			if (!context->AddSceneObject(fr))
+			{
+				DebugPrint("ERROR: Couldn't add object to scene.");
+			}
+
+			return fr;
+		}
+	};
 
 	// Attach all the global callbacks
 	// This function will remove current callbacks installed from current context and then attach new callbacks.
@@ -388,6 +433,53 @@ public:
 	frw::PostEffect normalization;
 	frw::PostEffect gamma_correction;
 
+	const FireRenderMesh* GetMainMesh(const MObject& shape) const 
+	{ 
+		std::string uuid = getNodeUUid(shape);
+
+		auto it = m_mainMeshesDictionary.find(uuid);
+
+		if (it != m_mainMeshesDictionary.end())
+		{
+			return it->second;
+		}
+
+		return nullptr;
+	}
+
+	void AddMainMesh(const MObject& shape, const FireRenderMesh* mainMesh)
+	{
+		const FireRenderMesh* alreadyHas = GetMainMesh(shape);
+		assert(!alreadyHas);
+
+		m_mainMeshesDictionary[getNodeUUid(shape)] = mainMesh;
+	}
+
+	bool GetNodePath(MDagPath& outPath, const std::string& uuid) const
+	{
+		auto it = m_nodePathCache.find(uuid);
+
+		if (it != m_nodePathCache.end())
+		{
+			outPath = it->second;
+			return true;
+		}
+
+		return false;
+	}
+
+	void AddNodePath(const MDagPath& path, const std::string& uuid)
+	{
+		MString tmpStr;
+		tmpStr = path.fullPathName();
+
+		MDagPath tmpPath;
+		bool alreadyHas = GetNodePath(tmpPath, uuid);
+		assert(!alreadyHas);
+
+		m_nodePathCache[uuid] = path;
+	}
+
 private:
 	struct CallbacksAttachmentHelper
 	{
@@ -489,7 +581,7 @@ private:
 	std::vector<MObject> m_removedNodes;
 
 	/** A list of objects which requires updating. Using weak_ptr to asynchronous allow removal of objects while they are waiting for update. */
-	std::vector<std::weak_ptr<FireRenderObject> > m_dirtyObjects;
+	std::map<FireRenderObject*, std::weak_ptr<FireRenderObject> > m_dirtyObjects;
 
 	/** Mutex used for disabling simultaneous access to dirty objects list. */
 	MMutexLock m_dirtyMutex;
@@ -526,6 +618,11 @@ private:
 		return nullptr;
 	}
 
+	/** map corresponds shape in Maya with main FireRenderMesh (used for instancing) **/
+	std::map<std::string, const FireRenderMesh*> m_mainMeshesDictionary;
+
+	/** map corresponding dag path of the node with the mode **/
+	std::map<std::string, MDagPath> m_nodePathCache;
 
 public:
 	FireRenderEnvLight *iblLight = nullptr;

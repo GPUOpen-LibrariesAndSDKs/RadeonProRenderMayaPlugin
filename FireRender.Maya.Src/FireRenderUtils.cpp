@@ -774,15 +774,11 @@ bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath)
 		return false;
 	}
 
-	MDagPathArray pathArrayToShape;
-	{
-		// get path to shape. node here is a shape
-		MFnDagNode shapeNode(pathArrayToTransform[0].node());
-		shapeNode.getAllPaths(pathArrayToShape);
-	}
+	MFnDagNode shapeNode(pathArrayToTransform[0].node());
+	bool isInstanced = shapeNode.isInstanced();
 	
 	// more than one reference to shape exist => shape is instanced
-	if (pathArrayToShape.length() > 1) 
+	if (isInstanced)
 	{
 		nodeDagPath = pathArrayToTransform[0];
 		return true;
@@ -991,14 +987,8 @@ MObject getNodeFromUUid(const std::string& uuid)
 std::string getNodeUUid(const MObject& node)
 {
 	MFnDependencyNode nodeFn(node);
-#ifndef MAYA2015
+
 	return nodeFn.uuid().asString().asChar();
-#else
-	auto ptr = reinterpret_cast<const int*>(&node);
-	char buf[64] = {};
-	sprintf(buf, "%08X%08X", ptr[1], ptr[0]);
-	return buf;
-#endif
 
 }
 
