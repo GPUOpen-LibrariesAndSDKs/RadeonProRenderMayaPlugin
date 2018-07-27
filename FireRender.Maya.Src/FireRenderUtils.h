@@ -564,6 +564,27 @@ inline T findPlugTryGetValue(const MFnDependencyNode& mfnDepNode, const MObject&
 	return result;
 }
 
+inline MColor getColorAttribute(const MFnDependencyNode& node, const MObject& attribute)
+{
+    MPlug plug = node.findPlug(attribute);
+
+    assert(!plug.isNull());
+
+    if (!plug.isNull())
+    {
+        float r, g, b;
+
+        plug.child(0).getValue(r);
+        plug.child(1).getValue(g);
+        plug.child(2).getValue(b);
+
+        return MColor(r, g, b);
+    }
+
+    return MColor::kOpaqueBlack;
+}
+
+
 inline MString operator "" _ms(const char * str, std::size_t len)
 {
 	return MString(str, static_cast<int>(len));
