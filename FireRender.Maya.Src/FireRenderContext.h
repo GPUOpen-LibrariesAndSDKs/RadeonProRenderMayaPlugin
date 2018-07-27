@@ -289,8 +289,7 @@ public:
 		return CreateSceneObject_Impl<T, opt>::call(ob, this);
 	}
 
-	template <typename T>
-	struct CreateSceneObject_Impl<typename T, NodeCachingOptions::AddPath>
+	template <typename T> struct CreateSceneObject_Impl<T, NodeCachingOptions::AddPath>
 	{
 		static T* call(const MDagPath& ob, FireRenderContext* context)
 		{
@@ -310,8 +309,7 @@ public:
 		}
 	};
 
-	template <typename T>
-	struct CreateSceneObject_Impl<typename T, NodeCachingOptions::DontAddPath>
+	template <typename T> struct CreateSceneObject_Impl<T, NodeCachingOptions::DontAddPath>
 	{
 		static T* call(const MDagPath& ob, FireRenderContext* context)
 		{
