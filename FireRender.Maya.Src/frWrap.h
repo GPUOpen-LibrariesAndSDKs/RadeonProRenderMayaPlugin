@@ -174,8 +174,10 @@ namespace frw
 		ContextParameterParameterCount = RPR_CONTEXT_PARAMETER_COUNT,
 		ContextParameterActivePlugin = RPR_CONTEXT_ACTIVE_PLUGIN,
 		ContextParameterScene = RPR_CONTEXT_SCENE,
+#if (RPR_API_VERSION < 0x010031000)
 		ContextParameterAACellSize = RPR_CONTEXT_AA_CELL_SIZE,
 		ContextParameterAASamples = RPR_CONTEXT_AA_SAMPLES,
+#endif
 		ContextParameterFilterType = RPR_CONTEXT_IMAGE_FILTER_TYPE,
 		ContextParameterFilterBoxRadius = RPR_CONTEXT_IMAGE_FILTER_BOX_RADIUS,
 		ContextParameterFilterGaussianRadius = RPR_CONTEXT_IMAGE_FILTER_GAUSSIAN_RADIUS,
@@ -2241,7 +2243,11 @@ namespace frw
 
 		void Resolve(FrameBuffer dest)
 		{
+#if (RPR_API_VERSION < 0x010031000)
 			auto status = rprContextResolveFrameBuffer(GetContext().Handle(), Handle(), dest.Handle());
+#else
+			auto status = rprContextResolveFrameBuffer(GetContext().Handle(), Handle(), dest.Handle(), FALSE);
+#endif
 			checkStatusThrow(status, "Unable to resolve frame buffer");
 		}
 

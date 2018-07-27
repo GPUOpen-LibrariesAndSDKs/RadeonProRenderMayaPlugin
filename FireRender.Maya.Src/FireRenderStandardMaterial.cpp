@@ -777,7 +777,9 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		// prevent crash in RPR (1.258) - "linked IOR" doesn't work when reflection mode set to "metallic"
 		if (GET_BOOL(reflectionMetalMaterial) || !GET_BOOL(reflectionEnable))
 			bLinkedIOR = false;
+#if (RPR_API_VERSION < 0x010031000)
 		material.xSetParameterU(RPRX_UBER_MATERIAL_REFRACTION_IOR_MODE, bLinkedIOR ? RPRX_UBER_MATERIAL_REFRACTION_MODE_LINKED : RPRX_UBER_MATERIAL_REFRACTION_MODE_SEPARATE);
+#endif
 		material.xSetParameterU(RPRX_UBER_MATERIAL_REFRACTION_THIN_SURFACE, bThinSurface ? RPR_TRUE : RPR_FALSE);
 	}
 	else
@@ -809,6 +811,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	if (GET_BOOL(sssEnable))
 	{
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_WEIGHT, sssWeight);
+#if (RPR_API_VERSION < 0x010031000)
 		if (GET_BOOL(sssUseDiffuseColor))
 		{
 			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SUBSURFACE_COLOR, diffuseColor);
@@ -817,6 +820,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		{
 			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SUBSURFACE_COLOR, sssColor);
 		}
+#endif
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_WEIGHT, sssWeight);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SCATTER_COLOR, volumeScatter);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SCATTER_DISTANCE, subsurfaceRadius);
@@ -839,7 +843,9 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		int type = value.GetNodeType();
 		if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
 		{
+#if (RPR_API_VERSION < 0x010031000)
 			material.xSetValue(RPRX_UBER_MATERIAL_NORMAL, value);
+#endif
 		}
 		else if (type >= 0)
 		{

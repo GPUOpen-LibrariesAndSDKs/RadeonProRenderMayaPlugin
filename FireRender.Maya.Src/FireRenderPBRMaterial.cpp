@@ -220,7 +220,9 @@ namespace FireMaya
 		int type = value.GetNodeType();
 		if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
 		{
+#if (RPR_API_VERSION < 0x010031000)
 			shader.xSetValue(RPRX_UBER_MATERIAL_NORMAL, value);
+#endif
 		}
 		else if (type >= 0)
 		{
