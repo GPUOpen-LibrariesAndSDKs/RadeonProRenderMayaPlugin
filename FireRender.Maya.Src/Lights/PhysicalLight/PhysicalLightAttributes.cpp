@@ -222,26 +222,6 @@ void PhysicalLightAttributes::CreateHiddenAttributes()
 	setAttribProps(tAttr, areaLightMeshSelectedName);
 }
 
-MColor GetColorAttribute(const MFnDependencyNode& node, const MObject& attribute)
-{
-	MPlug plug = node.findPlug(attribute);
-
-	assert(!plug.isNull());
-
-	if (!plug.isNull())
-	{
-		float r, g, b;
-
-		plug.child(0).getValue(r);
-		plug.child(1).getValue(g);
-		plug.child(2).getValue(b);
-
-		return MColor(r, g, b);
-	}
-
-	return MColor::kOpaqueBlack;
-}
-
 int GetIntAttribute(const MFnDependencyNode& node, const MObject& attribute)
 {
 	MPlug plug = node.findPlug(attribute);
@@ -308,12 +288,12 @@ PLColorMode PhysicalLightAttributes::GetColorMode(const MFnDependencyNode& node)
 // Get light color for non connected map case
 MColor PhysicalLightAttributes::GetColor(const MFnDependencyNode& node)
 {
-	return GetColorAttribute(node, PhysicalLightAttributes::colorPicker);
+	return getColorAttribute(node, PhysicalLightAttributes::colorPicker);
 }
 
 MColor PhysicalLightAttributes::GetTempreratureColor(const MFnDependencyNode& node)
 {
-	return GetColorAttribute(node, PhysicalLightAttributes::temperatureColor);
+	return getColorAttribute(node, PhysicalLightAttributes::temperatureColor);
 }
 
 float PhysicalLightAttributes::GetIntensity(const MFnDependencyNode& node)

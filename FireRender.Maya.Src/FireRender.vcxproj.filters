@@ -488,6 +488,9 @@
     <ClCompile Include="Translators\MeshTranslator.cpp">
       <Filter>Translators</Filter>
     </ClCompile>
+    <ClCompile Include="FireRenderAO.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -834,6 +837,9 @@
     </ClInclude>
     <ClInclude Include="Translators\MeshTranslator.h">
       <Filter>Translators</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderAO.h">
+      <Filter>Materials</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

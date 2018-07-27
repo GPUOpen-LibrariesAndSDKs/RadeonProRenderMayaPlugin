@@ -767,8 +767,6 @@ bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath)
 	// get shape (referenced by transform)
 	MStatus status = pathArrayToTransform[0].extendToShape();
 
-	assert(status == MStatus::kSuccess);
-
 	if (status != MStatus::kSuccess)
 	{
 		return false;

@@ -128,6 +128,7 @@ namespace frw
 		ValueTypeBlend = RPR_MATERIAL_NODE_BLEND_VALUE,
 		ValueTypeFresnelSchlick = RPR_MATERIAL_NODE_FRESNEL_SCHLICK,
 		ValueTypePassthrough = RPR_MATERIAL_NODE_PASSTHROUGH,
+        ValueTypeAOMap = RPR_MATERIAL_NODE_AO_MAP,
 	};
 
 	enum ShaderType
@@ -1625,7 +1626,6 @@ namespace frw
 		}
 	};
 
-
 	class BumpMapNode : public ValueNode
 	{
 	public:
@@ -1642,6 +1642,16 @@ namespace frw
 			}
 		}
 	};
+
+    class AOMapNode : public ValueNode
+    {
+    public:
+        explicit AOMapNode(const MaterialSystem& h, const Value& radius, const Value& side) : ValueNode(h, ValueTypeAOMap)
+        {
+            SetValue("radius", radius);
+            SetValue("side", side);
+        }
+    };
 
 	class MaterialSystem : public Object
 	{

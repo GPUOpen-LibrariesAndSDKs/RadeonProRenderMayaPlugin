@@ -205,6 +205,7 @@
     <ClCompile Include="DependencyNode.cpp" />
     <ClCompile Include="FileSystemUtils.cpp" />
     <ClCompile Include="FireMaya.cpp" />
+    <ClCompile Include="FireRenderAO.cpp" />
     <ClCompile Include="FireRenderAOV.cpp" />
     <ClCompile Include="FireRenderAOVDepth.cpp" />
     <ClCompile Include="FireRenderAOVs.cpp" />
@@ -322,6 +323,7 @@
     <ClInclude Include="DependencyNode.h" />
     <ClInclude Include="FileSystemUtils.h" />
     <ClInclude Include="FireMaya.h" />
+    <ClInclude Include="FireRenderAO.h" />
     <ClInclude Include="FireRenderAOV.h" />
     <ClInclude Include="FireRenderAOVDepth.h" />
     <ClInclude Include="FireRenderAOVs.h" />
