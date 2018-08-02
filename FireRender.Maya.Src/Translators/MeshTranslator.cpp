@@ -558,31 +558,30 @@ std::vector<frw::Shape> MeshTranslator::TranslateMesh(frw::Context context, cons
 		std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
 		LogPrint("Elapsed time: %d", elapsed);
 #endif
-
-		return elements;
 	}
-
-	// create mesh data container
-	std::vector<MeshIdxDictionary> shaderData;
-	shaderData.resize(elementCount);
-
-	// reserve space for indices and coordinates
-	ReserveShaderData(fnMesh, shaderData.data(), faceMaterialIndices, elementCount);
-
-	// iterate through mesh
-	for (MItMeshPolygon it = MItMeshPolygon(fnMesh.object()); !it.isDone(); it.next())
+	else
 	{
-		int shaderId = faceMaterialIndices[it.index()];
+		// create mesh data container
+		std::vector<MeshIdxDictionary> shaderData;
+		shaderData.resize(elementCount);
 
-		AddPolygon(it, meshPolygonData, shaderData[shaderId]);
+		// reserve space for indices and coordinates
+		ReserveShaderData(fnMesh, shaderData.data(), faceMaterialIndices, elementCount);
+
+		// iterate through mesh
+		for (MItMeshPolygon it = MItMeshPolygon(fnMesh.object()); !it.isDone(); it.next())
+		{
+			int shaderId = faceMaterialIndices[it.index()];
+
+			AddPolygon(it, meshPolygonData, shaderData[shaderId]);
+		}
+
+		// make UVCoords and UVIndices arrays have the same size (RPR crashes if they are not)
+		ChangeUVArrsSizes(shaderData.data(), elementCount, meshPolygonData.uvSetNames.length());
+
+		// export shader data to context
+		CreateRPRMeshes(elements, context, shaderData.data(), meshPolygonData.uvCoords, elementCount, meshPolygonData.uvSetNames.length());
 	}
-
-	// make UVCoords and UVIndices arrays have the same size (RPR crashes if they are not)
-	ChangeUVArrsSizes(shaderData.data(), elementCount, meshPolygonData.uvSetNames.length());
-
-	// export shader data to context
-	CreateRPRMeshes(elements, context, shaderData.data(), meshPolygonData.uvCoords, elementCount, meshPolygonData.uvSetNames.length());
-
 	// Now remove any temporary mesh we created.
 	if (!tessellated.isNull())
 	{
