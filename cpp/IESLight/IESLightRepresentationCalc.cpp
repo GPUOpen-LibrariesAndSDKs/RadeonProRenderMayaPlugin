@@ -17,15 +17,18 @@
 
 void Polar2XYZ(RadeonProRender::float3 &outPoint, double verticalAngle /*polar*/, double horizontalAngle /*azimuth*/, double dist)
 {
-	double XTheta = cos(verticalAngle * DEG2RAD);
-	double YTheta = sin(verticalAngle * DEG2RAD);
+	//VERTICAL_ANGLES aka polar angles aka theta
+	//HORIZONTAL_ANGLES aka azimuthal angles aka phi
 
-	double XPhi = cos(horizontalAngle * DEG2RAD);
-	double YPhi = sin(horizontalAngle * DEG2RAD);
+	// Theta is vertical angle
+	double theta = verticalAngle * DEG2RAD;
 
-	outPoint.x = XTheta * XPhi * dist;   // x
-	outPoint.y = YTheta * XPhi * dist;   // y
-	outPoint.z = YPhi * dist;            // z
+	// Phi is horizontal angle
+	double phi = horizontalAngle * DEG2RAD;
+
+	outPoint.x = dist * sin(theta) * cos(phi);
+	outPoint.y = dist * sin(theta) * sin(phi);
+	outPoint.z = dist * cos(theta);
 }
 
 // clones all edges in edges array, transforms cloned edges by matrTransform and inserts them to edges array
@@ -51,27 +54,27 @@ void MirrorEdges(std::vector<std::vector<RadeonProRender::float3>>& edges, const
 	if (data.IsAxiallySymmetric())
 	{
 		// mirror around xy plane
-		RadeonProRender::matrix matrMirrorXZ(
-			1.0, 0.0, 0.0, 0.0,
-			0.0, -1.0, 0.0, 0.0,
+		RadeonProRender::matrix matrMirrorYZ(
+			-1.0, 0.0, 0.0, 0.0,
+			0.0, 1.0, 0.0, 0.0,
 			0.0, 0.0, 1.0, 0.0,
 			0.0, 0.0, 0.0, 1.0
 		);
-		CloneAndTransform(edges, matrMirrorXZ);
+		CloneAndTransform(edges, matrMirrorYZ);
 
-		// rotate around x axis by 90 degrees
-		RadeonProRender::matrix matrRotateAroundX(
+		// rotate around z axis by 90 degrees
+		RadeonProRender::matrix matrRotateAroundZ(
+			0.0, -1.0, 0.0, 0.0,
 			1.0, 0.0, 0.0, 0.0,
-			0.0, 0.0, -1.0, 0.0,
-			0.0, 1.0, 0.0, 0.0,
+			0.0, 0.0, 1.0, 0.0,
 			0.0, 0.0, 0.0, 1.0
 		);
-		CloneAndTransform(edges, matrRotateAroundX);
+		CloneAndTransform(edges, matrRotateAroundZ);
 	}
 
 	else if (data.IsQuadrantSymmetric())
 	{
-		// mirror around xy plane
+		// mirror around xz plane
 		RadeonProRender::matrix matrMirrorXZ(
 			1.0, 0.0, 0.0, 0.0,
 			0.0, -1.0, 0.0, 0.0,
@@ -80,26 +83,26 @@ void MirrorEdges(std::vector<std::vector<RadeonProRender::float3>>& edges, const
 		);
 		CloneAndTransform(edges, matrMirrorXZ);
 
-		// mirror around xy plane
-		RadeonProRender::matrix matrMirrorXY(
-			1.0, 0.0, 0.0, 0.0,
+		// mirror around yz plane
+		RadeonProRender::matrix matrMirrorYZ(
+			-1.0, 0.0, 0.0, 0.0,
 			0.0, 1.0, 0.0, 0.0,
-			0.0, 0.0, -1.0, 0.0,
+			0.0, 0.0, 1.0, 0.0,
 			0.0, 0.0, 0.0, 1.0
 		);
-		CloneAndTransform(edges, matrMirrorXY);
+		CloneAndTransform(edges, matrMirrorYZ);
 	}
 
 	else if (data.IsPlaneSymmetric())
 	{
-		// mirror around xy plane
-		RadeonProRender::matrix matrMirrorXY(
+		// mirror around xz plane
+		RadeonProRender::matrix matrMirrorXZ(
 			1.0, 0.0, 0.0, 0.0,
-			0.0, 1.0, 0.0, 0.0,
-			0.0, 0.0, -1.0, 0.0,
+			0.0, -1.0, 0.0, 0.0,
+			0.0, 0.0, 1.0, 0.0,
 			0.0, 0.0, 0.0, 1.0
 		);
-		CloneAndTransform(edges, matrMirrorXY);
+		CloneAndTransform(edges, matrMirrorXZ);
 	}
 }
 
