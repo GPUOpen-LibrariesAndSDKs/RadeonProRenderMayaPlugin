@@ -2,6 +2,8 @@
 
 #include <intrin.h>
 
+inline bool bool_cast(int x) { return (x ? true : false); }
+
 PluginContext& PluginContext::instance()
 {
 	static PluginContext pluginContext;
@@ -36,11 +38,11 @@ bool PluginContext::CheckSSE41()
 		int f_1_ECX = cpuInfo[2];
 		int f_1_EDX = cpuInfo[3];
 
-		bool hasSSE = f_1_EDX & (1 << 25);
-		bool hasSSE2 = f_1_EDX & (1 << 26);
-		bool hasSSE3 = f_1_ECX & (1 << 0);
-		hasSSE41 = f_1_ECX & (1 << 19);
-		bool hasSSE42 = f_1_ECX & (1 << 20);
+		bool hasSSE = bool_cast(f_1_EDX & (1 << 25));
+		bool hasSSE2 = bool_cast(f_1_EDX & (1 << 26));
+		bool hasSSE3 = bool_cast(f_1_ECX & (1 << 0));
+		hasSSE41 = bool_cast(f_1_ECX & (1 << 19));
+		bool hasSSE42 = bool_cast(f_1_ECX & (1 << 20));
 	}
 
 	// another way to check

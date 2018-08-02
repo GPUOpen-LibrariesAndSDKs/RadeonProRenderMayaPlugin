@@ -17,8 +17,8 @@
 
 void Polar2XYZ(RadeonProRender::float3 &outPoint, double verticalAngle /*polar*/, double horizontalAngle /*azimuth*/, double dist)
 {
-	//VERTICAL_ANGLES aka polar angels aka theta
-	//HORIZONTAL_ANGLES aka azimythal angles aka phi
+	//VERTICAL_ANGLES aka polar angles aka theta
+	//HORIZONTAL_ANGLES aka azimuthal angles aka phi
 
 	// Theta is vertical angle
 	double theta = verticalAngle * DEG2RAD;

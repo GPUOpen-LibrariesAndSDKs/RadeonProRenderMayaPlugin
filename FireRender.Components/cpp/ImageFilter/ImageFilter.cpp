@@ -6,7 +6,7 @@
 #include <cassert>
 #include <exception>
 
-
+inline int int_cast(size_t x) { return (int)x; }
 
 ImageFilter::ImageFilter(const rpr_context rprContext, std::uint32_t width, std::uint32_t height) :
 	mWidth(width),
@@ -545,18 +545,18 @@ void RifFilterBilateral::AttachFilter(const RifContextWrapper* rifContext)
 		sigmas.push_back(input.second.mSigma);
 	}
 
-	rif_int rifStatus = rifImageFilterSetParameterImageArray(mRifImageFilterHandle, "inputs", &inputImages[0], inputImages.size());
+	rif_int rifStatus = rifImageFilterSetParameterImageArray(mRifImageFilterHandle, "inputs", &inputImages[0], int_cast(inputImages.size()));
 	assert(RIF_SUCCESS == rifStatus);
 
 	if (RIF_SUCCESS == rifStatus)
 	{
-		rifStatus = rifImageFilterSetParameterFloatArray(mRifImageFilterHandle, "sigmas", &sigmas[0], sigmas.size());
+		rifStatus = rifImageFilterSetParameterFloatArray(mRifImageFilterHandle, "sigmas", &sigmas[0], int_cast(sigmas.size()));
 		assert(RIF_SUCCESS == rifStatus);
 	}
 
 	if (RIF_SUCCESS == rifStatus)
 	{
-		rifStatus = rifImageFilterSetParameter1u(mRifImageFilterHandle, "inputsNum", inputImages.size());
+		rifStatus = rifImageFilterSetParameter1u(mRifImageFilterHandle, "inputsNum", int_cast(inputImages.size()));
 		assert(RIF_SUCCESS == rifStatus);
 	}
 
