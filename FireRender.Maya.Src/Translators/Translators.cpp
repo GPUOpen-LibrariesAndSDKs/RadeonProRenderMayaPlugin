@@ -28,7 +28,6 @@
 #include "FireMaya.h"
 #include "FireRenderObjects.h"
 #include "SkyBuilder.h"
-#include "SunPositionCalculator.h"
 #include "DependencyNode.h"
 #include "maya/MTransformationMatrix.h"
 #include "VRay.h"

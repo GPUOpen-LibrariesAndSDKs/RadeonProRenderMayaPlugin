@@ -196,6 +196,7 @@
     <None Include="Shelfs\shelf_Radeon_ProRender.mel" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\FireRender.Components\cpp\SunPosition\SPA.cpp" />
     <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.cpp" />
     <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESprocessor.cpp" />
     <ClCompile Include="..\FireRender.Components\cpp\ImageFilter\ImageFilter.cpp" />
@@ -289,12 +290,12 @@
     <ClCompile Include="SkyGen.cpp" />
     <ClCompile Include="SkyLocatorMesh.cpp" />
     <ClCompile Include="SubsurfaceMaterial.cpp" />
-    <ClCompile Include="SunPositionCalculator.cpp" />
     <ClCompile Include="Translators\MeshTranslator.cpp" />
     <ClCompile Include="Translators\Translators.cpp" />
     <ClCompile Include="VRay.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\FireRender.Components\cpp\SunPosition\SPA.h" />
     <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.h" />
     <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESprocessor.h" />
     <ClInclude Include="..\FireRender.Components\cpp\ImageFilter\ImageFilter.h" />
@@ -413,7 +414,6 @@
     <ClInclude Include="SkyGen.h" />
     <ClInclude Include="SkyLocatorMesh.h" />
     <ClInclude Include="SubsurfaceMaterial.h" />
-    <ClInclude Include="SunPositionCalculator.h" />
     <ClInclude Include="Translators\MeshTranslator.h" />
     <ClInclude Include="Translators\Translators.h" />
     <ClInclude Include="VRay.h" />

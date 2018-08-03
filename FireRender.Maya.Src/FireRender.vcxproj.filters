@@ -93,6 +93,9 @@
     <Filter Include="Translators">
       <UniqueIdentifier>{7f5c5908-8883-4630-8c8c-4b46eb28a428}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FireRender.Components\SunPosition">
+      <UniqueIdentifier>{2acf3efc-8879-4fd4-9dc0-433ef564c459}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="python\__init__.py">
@@ -383,9 +386,6 @@
     <ClCompile Include="SkyLocatorMesh.cpp">
       <Filter>Environment</Filter>
     </ClCompile>
-    <ClCompile Include="SunPositionCalculator.cpp">
-      <Filter>Environment</Filter>
-    </ClCompile>
     <ClCompile Include="FireRenderViewportOperation.cpp">
       <Filter>Viewport</Filter>
     </ClCompile>
@@ -490,6 +490,9 @@
     </ClCompile>
     <ClCompile Include="FireRenderAO.cpp">
       <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="..\FireRender.Components\cpp\SunPosition\SPA.cpp">
+      <Filter>FireRender.Components\SunPosition</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -709,9 +712,6 @@
     <ClInclude Include="SkyLocatorMesh.h">
       <Filter>Environment</Filter>
     </ClInclude>
-    <ClInclude Include="SunPositionCalculator.h">
-      <Filter>Environment</Filter>
-    </ClInclude>
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedDefinitions_GL.h">
       <Filter>RadeonProRender</Filter>
     </ClInclude>
@@ -840,6 +840,9 @@
     </ClInclude>
     <ClInclude Include="FireRenderAO.h">
       <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FireRender.Components\cpp\SunPosition\SPA.h">
+      <Filter>FireRender.Components\SunPosition</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
