@@ -7,6 +7,7 @@
 #include <maya/MFloatVector.h>
 #include <maya/MPlugArray.h>
 #include <maya/MDGModifier.h>
+#include <maya/MDistance.h>
 
 #include "FireMaya.h"
 
@@ -29,6 +30,11 @@ namespace
 #if USE_RPRX
 		MObject diffuseWeight;
 		MObject diffuseRoughness;
+		MObject useShaderNormal;
+		MObject diffuseNormal;
+		MObject backscatteringWeight;
+		MObject separateBackscatterColor;
+		MObject backscatteringColor;
 #endif
 
 		// Reflection
@@ -41,6 +47,8 @@ namespace
 		MObject reflectionAnisotropyRotation;
 		MObject reflectionMetalMaterial;
 		MObject reflectionMetalness;
+		MObject reflectUseShaderNormal;
+		MObject reflectNormal;
 #endif
 		MObject reflectionIOR;
 		MObject reflectionRoughnessX;	// used for upgrade v1 -> v2
@@ -58,6 +66,11 @@ namespace
 		MObject clearCoatRoughness;
 		MObject clearCoatMetalMaterial;
 		MObject clearCoatMetalness;
+		MObject coatUseShaderNormal;
+		MObject coatNormal;
+
+		MObject clearCoatThickness;
+		MObject clearCoatTransmissionColor;
 #endif
 
 		// Refraction
@@ -71,6 +84,8 @@ namespace
 #if USE_RPRX
 		MObject refractionLinkToReflection;
 		MObject refractionThinSurface;
+		MObject refractionAbsorptionDistance;
+		MObject refractionAllowCaustics;
 #endif
 
 		// Emissive
@@ -78,6 +93,7 @@ namespace
 		MObject emissiveEnable;
 		MObject emissiveColor;
 		MObject emissiveWeight;
+		MObject emissiveIntensity;
 		MObject emissiveDoubleSided;
 #endif
 
@@ -89,7 +105,14 @@ namespace
 		MObject normalMapEnable;
 
 		MObject transparencyEnable;
+
 		MObject displacementEnable;
+		MObject displacementMin;
+		MObject displacementMax;
+
+		MObject displacementSubdiv;
+		MObject displacementCreaseWeight;
+		MObject displacementBoundary;
 #endif
 #if !USE_RPRX
 		MObject transparencyColor;
@@ -98,7 +121,6 @@ namespace
 #if USE_RPRX
 		MObject sssEnable;
 		MObject sssUseDiffuseColor;
-		MObject sssColor;
 		MObject sssWeight;
 #endif
 		MObject volumeScatter;				// scatter color
@@ -320,7 +342,28 @@ MStatus FireMaya::StandardMaterial::initialize()
 	Attribute::diffuseRoughness = nAttr.create("diffuseRoughness", "dr", MFnNumericData::kFloat, 1.0);
 	MAKE_INPUT(nAttr);
 	///	CHECK_MSTATUS(nAttr.setDefault(1.0));
-	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
+	SET_MINMAX(nAttr, 0.0, 1.0);
+
+	Attribute::useShaderNormal = nAttr.create("useShaderNormal", "dun", MFnNumericData::kBoolean, 1);
+	MAKE_INPUT_CONST(nAttr);
+
+	Attribute::diffuseNormal = nAttr.create("diffuseNormal", "dn", MFnNumericData::k3Float);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
+	nAttr.setMin(0.0f, 0.0f, 0.0f);
+	nAttr.setMax(5.0f, 5.0f, 5.0f);
+
+	Attribute::backscatteringWeight = nAttr.create("backscatteringWeight", "dbw", MFnNumericData::kFloat, 0.0);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0);
+	nAttr.setSoftMax(1.0);
+
+	Attribute::separateBackscatterColor = nAttr.create("separateBackscatterColor", "dsb", MFnNumericData::kBoolean, 0);
+	MAKE_INPUT_CONST(nAttr);
+
+	Attribute::backscatteringColor = nAttr.createColor("backscatteringColor", "dbc");
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(nAttr.setDefault(0.5f, 0.5f, 0.5f));
 #endif
 
 	// Reflection
@@ -336,42 +379,51 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 1.0);
 
-	Attribute::reflectionRoughness = nAttr.create("reflectRoughness", "rr", MFnNumericData::kFloat, 0.5);
+	Attribute::reflectionRoughness = nAttr.create("reflectRoughness", "rr", MFnNumericData::kFloat, 0.25);
 	MAKE_INPUT(nAttr);
-	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
+	SET_MINMAX(nAttr, 0.0, 1.0);
 
 	Attribute::reflectionAnisotropy = nAttr.create("reflectAnisotropy", "ra", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
-	SET_SOFTMINMAX(nAttr, -1.0, 1.0);
+	SET_MINMAX(nAttr, -1.0, 1.0);
 
 	Attribute::reflectionAnisotropyRotation = nAttr.create("reflectAnisotropyRotation", "rar", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT_CONST(nAttr);
-	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
+	SET_MINMAX(nAttr, -1.0, 1.0);
 #endif
 
 #if !USE_RPRX
 	Attribute::reflectionRotation = nAttr.create("reflectRotation", "grr", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
 	nAttr.setSoftMin(0.0);
-#endif
 
 	Attribute::reflectionRoughnessX = nAttr.create("reflectRoughnessX", "grrx", MFnNumericData::kFloat, 0.1);
 	MAKE_INPUT(nAttr);
 	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
 	DEPRECATED_PARAM(nAttr);
+#endif
+
+#if USE_RPRX
+	Attribute::reflectUseShaderNormal = nAttr.create("reflectUseShaderNormal", "run", MFnNumericData::kBoolean, 0);
+	MAKE_INPUT_CONST(nAttr);
+
+	Attribute::reflectionNormal = nAttr.createColor("reflectNormal", "rn");
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
+#endif
 
 #if USE_RPRX
 	Attribute::reflectionMetalMaterial = nAttr.create("reflectMetalMaterial", "rm", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
 
-	Attribute::reflectionMetalness = nAttr.create("reflectMetalness", "rmet", MFnNumericData::kFloat, 1);
+	Attribute::reflectionMetalness = nAttr.create("reflectMetalness", "rmet", MFnNumericData::kFloat, 0);
 	MAKE_INPUT(nAttr);
-	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
+	SET_MINMAX(nAttr, 0.0, 1.0);
 #endif
 
 	Attribute::reflectionIOR = nAttr.create("reflectIOR", "grior", MFnNumericData::kFloat, 1.5);
 	MAKE_INPUT_CONST(nAttr);
-	SET_SOFTMINMAX(nAttr, 0.0, 2.0);
+	SET_MINMAX(nAttr, 0.0, 10.0);
 
 #if !USE_RPRX
 	Attribute::reflectionRoughnessY = nAttr.create("reflectRoughnessY", "grry", MFnNumericData::kFloat, 0.1);
@@ -395,19 +447,30 @@ MStatus FireMaya::StandardMaterial::initialize()
 
 	Attribute::clearCoatRoughness = nAttr.create("coatRoughness", "ccr", MFnNumericData::kFloat, 0.5);
 	MAKE_INPUT(nAttr);
-	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
-
-	Attribute::clearCoatMetalMaterial = nAttr.create("coatMetalMaterial", "ccm", MFnNumericData::kBoolean, 0);
-	MAKE_INPUT_CONST(nAttr);
-
-	Attribute::clearCoatMetalness = nAttr.create("coatMetalness", "ccmet", MFnNumericData::kFloat, 1);
-	MAKE_INPUT(nAttr);
-	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
+	SET_MINMAX(nAttr, 0.0, 1.0);
 #endif
 
-	Attribute::clearCoatIOR = nAttr.create("coatIOR", "ccior", MFnNumericData::kFloat, 1.5);
+	Attribute::clearCoatIOR = nAttr.create("coatIor", "ccior", MFnNumericData::kFloat, 1.5);
 	MAKE_INPUT_CONST(nAttr);
-	SET_SOFTMINMAX(nAttr, 0.1, 2.0);
+	SET_MINMAX(nAttr, 0.0, 10.0);
+
+#if USE_RPRX
+	Attribute::coatUseShaderNormal = nAttr.create("coatUseShaderNormal", "ccun", MFnNumericData::kBoolean, 0);
+	MAKE_INPUT_CONST(nAttr);
+
+	Attribute::coatNormal = nAttr.createColor("coatNormal", "ccn");
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
+
+	Attribute::clearCoatThickness = nAttr.create("coatThickness", "ccth", MFnNumericData::kFloat, 1.0);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0);
+	nAttr.setSoftMax(10.0);
+
+	Attribute::clearCoatTransmissionColor = nAttr.createColor("coatTransmissionColor", "cctc");
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
+#endif
 
 	// Refraction
 #if USE_RPRX
@@ -419,23 +482,30 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
 
-	Attribute::refractionWeight = nAttr.create("refractWeight", "refl", MFnNumericData::kFloat, 1.0);
+	Attribute::refractionWeight = nAttr.create("refractWeight", "refl", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 1.0);
 
-	Attribute::refractionRoughness = nAttr.create("refractRoughness", "refr", MFnNumericData::kFloat, 0.5);
+	Attribute::refractionRoughness = nAttr.create("refractRoughness", "refr", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
-	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
+	SET_MINMAX(nAttr, 0.0, 1.0);
 
-	Attribute::refractionIOR = nAttr.create("refractIOR", "refior", MFnNumericData::kFloat, 1.5);
+	Attribute::refractionIOR = nAttr.create("refractIor", "refior", MFnNumericData::kFloat, 1.5);
 	MAKE_INPUT_CONST(nAttr);
-	SET_SOFTMINMAX(nAttr, 0.0, 2.0);
+	SET_MINMAX(nAttr, 0.0, 10.0);
 
 #if USE_RPRX
 	Attribute::refractionLinkToReflection = nAttr.create("refractLinkToReflect", "reflink", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
 
 	Attribute::refractionThinSurface = nAttr.create("refractThinSurface", "refth", MFnNumericData::kBoolean, 0);
+	MAKE_INPUT_CONST(nAttr);
+
+	Attribute::refractionAbsorptionDistance = nAttr.create("refractAbsorptionDistance", "refad", MFnNumericData::kFloat, 0);
+	MAKE_INPUT_CONST(nAttr);
+	SET_MINMAX(nAttr, 0.0, 10.0);
+
+	Attribute::refractionAllowCaustics = nAttr.create("refractAllowCaustics", "refac", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
 #endif
 
@@ -448,9 +518,14 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
 
-	Attribute::emissiveWeight = nAttr.create("emissiveWeight", "emw", MFnNumericData::kFloat, 1.0);
+	Attribute::emissiveWeight = nAttr.create("emissiveWeight", "emw", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
-	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
+	SET_MINMAX(nAttr, 0.0, 1.0);
+
+	Attribute::emissiveIntensity = nAttr.create("emissiveIntensity", "emi", MFnNumericData::kFloat, 0.0);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0);
+	nAttr.setSoftMax(10.0);
 
 	Attribute::emissiveDoubleSided = nAttr.create("emissiveDoubleSided", "emds", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
@@ -459,7 +534,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	// Material parameters
 	Attribute::transparencyLevel = nAttr.create("transparencyLevel", "trl", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
-	SET_SOFTMINMAX(nAttr, 0.0, 1.0);
+	SET_MINMAX(nAttr, 0.0, 1.0);
 
 	Attribute::displacementMap = nAttr.createColor("displacementMap", "disp");
 	MAKE_INPUT(nAttr);
@@ -474,6 +549,27 @@ MStatus FireMaya::StandardMaterial::initialize()
 
 	Attribute::displacementEnable = nAttr.create("displacementEnable", "en", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
+
+	Attribute::displacementMin = nAttr.create("displacementMin", "dspmn", MFnNumericData::kFloat, 0.0);
+	MAKE_INPUT(nAttr);
+	SET_MINMAX(nAttr, 0.0, 100.0);
+
+	Attribute::displacementMax = nAttr.create("displacementMax", "dspmx", MFnNumericData::kFloat, 0.0);
+	MAKE_INPUT(nAttr);
+	SET_MINMAX(nAttr, 0.0, 100.0);
+
+	Attribute::displacementSubdiv = nAttr.create("displacementSubdiv", "dsps", MFnNumericData::kByte, 4);
+	MAKE_INPUT(nAttr);
+	SET_MINMAX(nAttr, 0, 8);
+
+	Attribute::displacementCreaseWeight = nAttr.create("displacementCreaseWeight", "dspcw", MFnNumericData::kFloat, 0.0);
+	MAKE_INPUT(nAttr);
+	SET_MINMAX(nAttr, 0.0, 100.0);
+
+	Attribute::displacementBoundary = eAttr.create("displacementBoundary", "disb", Displacement::kDisplacement_EdgeOnly);
+	eAttr.addField("Edge", Displacement::kDisplacement_EdgeOnly);
+	eAttr.addField("Edge And Corner", Displacement::kDisplacement_EdgeAndCorner);
+	MAKE_INPUT_CONST(eAttr);
 
 	Attribute::normalMapEnable = nAttr.create("normalMapEnable", "enm", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
@@ -491,10 +587,6 @@ MStatus FireMaya::StandardMaterial::initialize()
 	Attribute::sssEnable = nAttr.create("sssEnable", "enss", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
 
-	Attribute::sssColor = nAttr.createColor("sssColor", "sssc");
-	MAKE_INPUT(nAttr);
-	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
-
 	Attribute::sssWeight = nAttr.create("sssWeight", "sssw", MFnNumericData::kFloat, 1.0);
 	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 1.0);
@@ -505,17 +597,17 @@ MStatus FireMaya::StandardMaterial::initialize()
 
 	Attribute::volumeScatter = nAttr.createColor("volumeScatter", "vs");
 	MAKE_INPUT(nAttr);
-	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
+	CHECK_MSTATUS(nAttr.setDefault(0.436f, 0.227f, 0.131f));
 
 	Attribute::subsurfaceRadius = nAttr.create("subsurfaceRadius", "sssr", MFnNumericData::k3Float);
 	MAKE_INPUT(nAttr);
-	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
+	CHECK_MSTATUS(nAttr.setDefault(3.67f, 1.37f, 0.68f));
 	nAttr.setMin(0.0f, 0.0f, 0.0f);
-	nAttr.setMax(10.0f, 10.0f, 10.0f);
+	nAttr.setMax(1000.0f, 1000.0f, 1000.0f);
 
 	Attribute::volumeScatteringDirection = nAttr.create("scatteringDirection", "vsd", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
-	SET_SOFTMINMAX(nAttr, -1.0, 1.0);
+	SET_MINMAX(nAttr, -1.0, 1.0);
 
 	Attribute::volumeMultipleScattering = nAttr.create("multipleScattering", "vms", MFnNumericData::kBoolean, true);
 	MAKE_INPUT_CONST(nAttr);
@@ -529,6 +621,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	CHECK_MSTATUS(nAttr.setDefault(0.0f, 0.0f, 0.0f));
 #endif
 
+	/*
 	Attribute::diffuseBaseNormal = nAttr.createPoint("diffuseNormal", "nmap");
 	MAKE_INPUT(nAttr);
 	DEPRECATED_PARAM(nAttr);
@@ -544,6 +637,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	Attribute::refractionNormal = nAttr.createPoint("refNormal", "refnmap");
 	MAKE_INPUT(nAttr);
 	DEPRECATED_PARAM(nAttr);
+	*/
 
 	// output color
 	Attribute::output = nAttr.createColor("outColor", "oc");
@@ -569,6 +663,12 @@ MStatus FireMaya::StandardMaterial::initialize()
 #if USE_RPRX
 	ADD_ATTRIBUTE(Attribute::diffuseWeight);
 	ADD_ATTRIBUTE(Attribute::diffuseRoughness);
+	ADD_ATTRIBUTE(Attribute::useShaderNormal);
+	ADD_ATTRIBUTE(Attribute::diffuseNormal);
+	ADD_ATTRIBUTE(Attribute::backscatteringWeight);
+	ADD_ATTRIBUTE(Attribute::backscatteringColor);
+	ADD_ATTRIBUTE(Attribute::separateBackscatterColor);
+
 #endif
 
 	ADD_ATTRIBUTE(Attribute::reflectionEnable);
@@ -578,12 +678,14 @@ MStatus FireMaya::StandardMaterial::initialize()
 	ADD_ATTRIBUTE(Attribute::reflectionRoughness);
 	ADD_ATTRIBUTE(Attribute::reflectionAnisotropy);
 	ADD_ATTRIBUTE(Attribute::reflectionAnisotropyRotation);
+	ADD_ATTRIBUTE(Attribute::reflectUseShaderNormal);
+	ADD_ATTRIBUTE(Attribute::reflectNormal);
 	ADD_ATTRIBUTE(Attribute::reflectionMetalMaterial);
 	ADD_ATTRIBUTE(Attribute::reflectionMetalness);
 #endif
 	ADD_ATTRIBUTE(Attribute::reflectionIOR);
-	ADD_ATTRIBUTE(Attribute::reflectionRoughnessX);
 #if !USE_RPRX
+	ADD_ATTRIBUTE(Attribute::reflectionRoughnessX);
 	ADD_ATTRIBUTE(Attribute::reflectionRotation);
 	ADD_ATTRIBUTE(Attribute::reflectionRoughnessY);
 #endif
@@ -594,8 +696,10 @@ MStatus FireMaya::StandardMaterial::initialize()
 #if USE_RPRX
 	ADD_ATTRIBUTE(Attribute::clearCoatWeight);
 	ADD_ATTRIBUTE(Attribute::clearCoatRoughness);
-	ADD_ATTRIBUTE(Attribute::clearCoatMetalMaterial);
-	ADD_ATTRIBUTE(Attribute::clearCoatMetalness);
+	ADD_ATTRIBUTE(Attribute::coatUseShaderNormal);
+	ADD_ATTRIBUTE(Attribute::coatNormal);
+	ADD_ATTRIBUTE(Attribute::clearCoatThickness);
+	ADD_ATTRIBUTE(Attribute::clearCoatTransmissionColor);
 #endif
 
 #if USE_RPRX
@@ -608,23 +712,38 @@ MStatus FireMaya::StandardMaterial::initialize()
 #if USE_RPRX
 	ADD_ATTRIBUTE(Attribute::refractionLinkToReflection);
 	ADD_ATTRIBUTE(Attribute::refractionThinSurface);
+	ADD_ATTRIBUTE(Attribute::refractionAbsorptionDistance);
+	ADD_ATTRIBUTE(Attribute::refractionAllowCaustics);
 #endif
 
 #if USE_RPRX
 	ADD_ATTRIBUTE(Attribute::emissiveEnable);
 	ADD_ATTRIBUTE(Attribute::emissiveColor);
 	ADD_ATTRIBUTE(Attribute::emissiveWeight);
+	ADD_ATTRIBUTE(Attribute::emissiveIntensity);
 	ADD_ATTRIBUTE(Attribute::emissiveDoubleSided);
 #endif
 
 	ADD_ATTRIBUTE(Attribute::transparencyLevel);
+
 	ADD_ATTRIBUTE(Attribute::displacementMap);
+
+	ADD_ATTRIBUTE(Attribute::displacementBoundary);
+	/*MStatus isDisplBAdded = addAttribute(Attribute::displacementBoundary);
+	if (isDisplBAdded != MStatus::kSuccess)
+	{
+		MString errorMsg = isDisplBAdded.errorString();
+		int debugi = 1;
+	}*/
 #if USE_RPRX
 	ADD_ATTRIBUTE(Attribute::normalMap);
 	ADD_ATTRIBUTE(Attribute::normalMapEnable);
-
 	ADD_ATTRIBUTE(Attribute::transparencyEnable);
 	ADD_ATTRIBUTE(Attribute::displacementEnable);
+	ADD_ATTRIBUTE(Attribute::displacementMin);
+	ADD_ATTRIBUTE(Attribute::displacementMax);
+	ADD_ATTRIBUTE(Attribute::displacementSubdiv);
+	ADD_ATTRIBUTE(Attribute::displacementCreaseWeight);
 #endif
 #if !USE_RPRX
 	ADD_ATTRIBUTE(Attribute::transparencyColor);
@@ -633,7 +752,6 @@ MStatus FireMaya::StandardMaterial::initialize()
 #if USE_RPRX
 	ADD_ATTRIBUTE(Attribute::sssEnable);
 	ADD_ATTRIBUTE(Attribute::sssUseDiffuseColor);
-	ADD_ATTRIBUTE(Attribute::sssColor);
 	ADD_ATTRIBUTE(Attribute::sssWeight);
 #endif
 	ADD_ATTRIBUTE(Attribute::volumeScatter);
@@ -701,12 +819,50 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 #define SET_RPRX_VALUE(_param_, _attrib_) \
 	material.xSetValue(_param_, GET_VALUE(_attrib_));
 
+	MDistance::Unit sceneUnits = MDistance::uiUnit();
+	MDistance distance(1.0, sceneUnits);
+	float scale_multiplier = distance.asMeters();
+
 	// Diffuse
 	if (GET_BOOL(diffuseEnable))
 	{
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_DIFFUSE_COLOR, diffuseColor);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_DIFFUSE_WEIGHT, diffuseWeight);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_DIFFUSE_ROUGHNESS, diffuseRoughness);
+
+#if (RPR_API_VERSION > 0x010030400)
+		if (!GET_BOOL(useShaderNormal))
+		{
+			MFnDependencyNode shaderNode(thisMObject());
+			MPlug plug = shaderNode.findPlug(Attribute::diffuseNormal);
+			if (!plug.isNull())
+			{
+				MPlugArray shaderConnections;
+				plug.connectedTo(shaderConnections, true, false);
+				if (shaderConnections.length() != 0)
+				{
+					SET_RPRX_VALUE(RPRX_UBER_MATERIAL_DIFFUSE_NORMAL, diffuseNormal);
+				}
+			}
+		}
+		else
+		{
+			if (GET_BOOL(normalMapEnable))
+			{
+				frw::Value value = GET_VALUE(normalMap);
+				int type = value.GetNodeType();
+				if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
+				{
+					SET_RPRX_VALUE(RPRX_UBER_MATERIAL_DIFFUSE_NORMAL, normalMap);
+				}
+			}
+		}
+
+		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_BACKSCATTER_WEIGHT, backscatteringWeight);
+
+		if (GET_BOOL(separateBackscatterColor))
+			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_BACKSCATTER_COLOR, backscatteringWeight);
+#endif
 	}
 	else
 	{
@@ -734,6 +890,35 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 			material.xSetParameterU(RPRX_UBER_MATERIAL_REFLECTION_MODE, RPRX_UBER_MATERIAL_REFLECTION_MODE_PBR);
 			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFLECTION_IOR, reflectionIOR);
 		}
+
+#if (RPR_API_VERSION > 0x010030400)
+		if (!GET_BOOL(reflectUseShaderNormal))
+		{
+			MFnDependencyNode shaderNode(thisMObject());
+			MPlug plug = shaderNode.findPlug(Attribute::reflectNormal);
+			if (!plug.isNull())
+			{
+				MPlugArray shaderConnections;
+				plug.connectedTo(shaderConnections, true, false);
+				if (shaderConnections.length() != 0)
+				{
+					SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFLECTION_NORMAL, reflectNormal);
+				}
+			}
+		}
+		else
+		{
+			if (GET_BOOL(normalMapEnable))
+			{
+				frw::Value value = GET_VALUE(reflectNormal);
+				int type = value.GetNodeType();
+				if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
+				{
+					SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFLECTION_NORMAL, reflectNormal);
+				}
+			}
+		}
+#endif
 	}
 	else
 	{
@@ -746,19 +931,44 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_COLOR, clearCoatColor);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_WEIGHT, clearCoatWeight);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_ROUGHNESS, clearCoatRoughness);
-		// Metalness
-		if (GET_BOOL(clearCoatMetalMaterial))
+
+		// Metalness <= removed; Coating should always be PBR mode rather than metalness
+
+		material.xSetParameterU(RPRX_UBER_MATERIAL_COATING_MODE, RPRX_UBER_MATERIAL_COATING_MODE_PBR);
+		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_IOR, clearCoatIOR);
+
+#if (RPR_API_VERSION > 0x010030400)
+		if (GET_BOOL(coatUseShaderNormal))
 		{
-			// metallic material
-			material.xSetParameterU(RPRX_UBER_MATERIAL_COATING_MODE, RPRX_UBER_MATERIAL_COATING_MODE_METALNESS);
-			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_METALNESS, clearCoatMetalness);
+			MFnDependencyNode shaderNode(thisMObject());
+			MPlug plug = shaderNode.findPlug(Attribute::coatNormal);
+			if (!plug.isNull())
+			{
+				MPlugArray shaderConnections;
+				plug.connectedTo(shaderConnections, true, false);
+				if (shaderConnections.length() != 0)
+				{
+					SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_NORMAL, coatNormal);
+				}
+			}
+			else
+			{
+				if (GET_BOOL(normalMapEnable))
+				{
+					frw::Value value = GET_VALUE(normalMap);
+					int type = value.GetNodeType();
+					if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
+					{
+						SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_NORMAL, coatNormal);
+					}
+				}
+			}			
 		}
-		else
-		{
-			// PBR material
-			material.xSetParameterU(RPRX_UBER_MATERIAL_COATING_MODE, RPRX_UBER_MATERIAL_COATING_MODE_PBR);
-			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_IOR, clearCoatIOR);
-		}
+
+		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_THICKNESS, clearCoatThickness);
+		frw::Value clearCoatTransmissionColorInverse = frw::Value(1) - GET_VALUE(clearCoatTransmissionColor);
+		material.xSetValue(RPRX_UBER_MATERIAL_COATING_TRANSMISSION_COLOR, clearCoatTransmissionColorInverse);
+#endif
 	}
 	else
 	{
@@ -772,12 +982,21 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFRACTION_WEIGHT, refractionWeight);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFRACTION_ROUGHNESS, refractionRoughness);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFRACTION_IOR, refractionIOR);
+#if (RPR_API_VERSION > 0x010030400)
+		frw::Value valueRefractionAbsorptionDistance = GET_VALUE(refractionAbsorptionDistance) * scale_multiplier;
+		material.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_ABSORPTION_DISTANCE, valueRefractionAbsorptionDistance);
+
+		bool doAllowCaustics = GET_BOOL(refractionAllowCaustics);
+		material.xSetParameterU(RPRX_UBER_MATERIAL_REFRACTION_CAUSTICS, doAllowCaustics ? RPR_TRUE : RPR_FALSE);
+
+#endif
 		bool bThinSurface = GET_BOOL(refractionThinSurface);
 		bool bLinkedIOR = GET_BOOL(refractionLinkToReflection);
 		// prevent crash in RPR (1.258) - "linked IOR" doesn't work when reflection mode set to "metallic"
+#if (RPR_API_VERSION < 0x010031000)
 		if (GET_BOOL(reflectionMetalMaterial) || !GET_BOOL(reflectionEnable))
 			bLinkedIOR = false;
-#if (RPR_API_VERSION < 0x010031000)
+
 		material.xSetParameterU(RPRX_UBER_MATERIAL_REFRACTION_IOR_MODE, bLinkedIOR ? RPRX_UBER_MATERIAL_REFRACTION_MODE_LINKED : RPRX_UBER_MATERIAL_REFRACTION_MODE_SEPARATE);
 #endif
 		material.xSetParameterU(RPRX_UBER_MATERIAL_REFRACTION_THIN_SURFACE, bThinSurface ? RPR_TRUE : RPR_FALSE);
@@ -795,8 +1014,10 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 
 		frw::Value valueEmissiveColor = scope.GetValue(shaderNode.findPlug(Attribute::emissiveColor));
 
+		frw::Value valueEmissiveIntensity = scope.GetValue(shaderNode.findPlug(Attribute::emissiveIntensity));
+
 		const frw::MaterialSystem ms = scope.MaterialSystem();
-		valueEmissiveColor = ms.ValueMul(valueEmissiveColor, valueEmissiveWeight);
+		valueEmissiveColor = ms.ValueMul(valueEmissiveColor, valueEmissiveIntensity);		
 		material.xSetValue(RPRX_UBER_MATERIAL_EMISSION_COLOR, valueEmissiveColor);
 
 		bool bDoubleSided = GET_BOOL(emissiveDoubleSided);
@@ -811,19 +1032,20 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	if (GET_BOOL(sssEnable))
 	{
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_WEIGHT, sssWeight);
-#if (RPR_API_VERSION < 0x010031000)
+
 		if (GET_BOOL(sssUseDiffuseColor))
 		{
-			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SUBSURFACE_COLOR, diffuseColor);
+			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SCATTER_COLOR, diffuseColor);
 		}
 		else
 		{
-			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SUBSURFACE_COLOR, sssColor);
+			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SCATTER_COLOR, volumeScatter);
 		}
-#endif
+
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_WEIGHT, sssWeight);
-		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SCATTER_COLOR, volumeScatter);
-		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SCATTER_DISTANCE, subsurfaceRadius);
+
+		frw::Value valueSubsurfaceRadius = GET_VALUE(subsurfaceRadius) * scale_multiplier;
+		material.xSetValue(RPRX_UBER_MATERIAL_SSS_SCATTER_DISTANCE, valueSubsurfaceRadius);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_SSS_SCATTER_DIRECTION, volumeScatteringDirection);
 		material.xSetParameterU(RPRX_UBER_MATERIAL_SSS_MULTISCATTER, GET_BOOL(volumeMultipleScattering) ? RPR_TRUE : RPR_FALSE);
 	}
@@ -858,21 +1080,36 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	// doesn't have capabilities to set any displacement parameters except map image, so we're setting other
 	// parameters from FireRenderMesh. If we'll skip setting RPRX_UBER_MATERIAL_DISPLACEMENT parameter here,
 	// RPRX will reset displacement map in some unpredicted cases.
-	MObject displacementNode = GetDisplacementNode();
-	if (displacementNode != MObject::kNullObj)
+	if (GET_BOOL(displacementEnable))
 	{
-		MFnDependencyNode dispShaderNode(displacementNode);
-		FireMaya::Displacement* displacement = dynamic_cast<FireMaya::Displacement*>(dispShaderNode.userNode());
-		if (displacement)
+		MObject displacementNode = GetDisplacementNode();
+		if (displacementNode != MObject::kNullObj) // New Logic: if there is no displacement node we use data from uber material itself
 		{
-			float minHeight, maxHeight, creaseWeight;
-			int subdivision, boundary;
-			frw::Value mapValue;
-
-			bool haveDisplacement = displacement->getValues(mapValue, scope, minHeight, maxHeight, subdivision, creaseWeight, boundary);
-			if (haveDisplacement)
+			MFnDependencyNode dispShaderNode(displacementNode);
+			FireMaya::Displacement* displacement = dynamic_cast<FireMaya::Displacement*>(dispShaderNode.userNode());
+			if (displacement)
 			{
-				material.xSetValue(RPRX_UBER_MATERIAL_DISPLACEMENT, mapValue);
+				float minHeight, maxHeight, creaseWeight;
+				int subdivision, boundary;
+				frw::Value mapValue;
+
+				bool haveDisplacement = displacement->getValues(mapValue, scope, minHeight, maxHeight, subdivision, creaseWeight, boundary);
+
+				if (haveDisplacement)
+				{
+					material.xSetValue(RPRX_UBER_MATERIAL_DISPLACEMENT, mapValue);
+				}
+			}
+			else // try get displacement map from uber material itself
+			{
+				frw::Value mapValue;
+				mapValue = scope.GetConnectedValue(shaderNode.findPlug("displacementMap"));
+				bool haveMap = mapValue.IsNode();
+
+				if (haveMap)
+				{
+					material.xSetValue(RPRX_UBER_MATERIAL_DISPLACEMENT, mapValue);
+				}
 			}
 		}
 	}

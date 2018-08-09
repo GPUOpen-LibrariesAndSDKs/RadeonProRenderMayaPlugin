@@ -3,7 +3,169 @@ global proc AEUberCheckReflectMetalness(string $nodeName)
 	string $nodeAttr = $nodeName + ".reflectMetalMaterial";
 	int $value = `getAttr $nodeAttr`;
 	editorTemplate -dimControl $nodeName "reflectMetalness" ($value == 0);
-	editorTemplate -dimControl $nodeName "reflectIOR" ($value == 1);
+
+	string $nodeEnabledAttr = $nodeName + ".reflections";
+	int $enabled = `getAttr $nodeEnabledAttr`;
+
+	editorTemplate -dimControl $nodeName "reflectIOR" (($value == 1) || ($enabled == 0));
+}
+
+global proc AEUberCheckEnableDiffuse(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".diffuse";
+	int $value = `getAttr $nodeAttr`;
+	editorTemplate -dimControl $nodeName "diffuseColor" ($value == 0);
+	editorTemplate -dimControl $nodeName "diffuseWeight" ($value == 0);
+	editorTemplate -dimControl $nodeName "diffuseRoughness" ($value == 0);
+	editorTemplate -dimControl $nodeName "useShaderNormal" ($value == 0);
+	editorTemplate -dimControl $nodeName "diffuseNormal" ($value == 0);
+	editorTemplate -dimControl $nodeName "backscatteringWeight" ($value == 0);
+	editorTemplate -dimControl $nodeName "separateBackscatterColor" ($value == 0);
+	editorTemplate -dimControl $nodeName "backscatteringColor" ($value == 0);
+
+	AEUberCheckEnableDiffuseNormal($nodeName);
+}
+
+global proc AEUberCheckEnableDiffuseNormal(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".useShaderNormal";
+	int $value = `getAttr $nodeAttr`;
+
+	string $nodeEnabledAttr = $nodeName + ".diffuse";
+	int $enabled = `getAttr $nodeEnabledAttr`;
+
+	editorTemplate -dimControl $nodeName "diffuseNormal" (($value == 1) || ($enabled == 0));
+}
+
+global proc AEUberCheckEnableDiffuseBackscatter(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".separateBackscatterColor";
+	int $value = `getAttr $nodeAttr`;
+	editorTemplate -dimControl $nodeName "backscatteringColor" ($value == 0);
+}
+
+global proc AEUberCheckEnableReflection(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".reflections";
+	int $value = `getAttr $nodeAttr`;
+	editorTemplate -dimControl $nodeName "reflectColor" ($value == 0);
+	editorTemplate -dimControl $nodeName "reflectWeight" ($value == 0);
+	editorTemplate -dimControl $nodeName "reflectRoughness" ($value == 0);
+	editorTemplate -dimControl $nodeName "reflectAnisotropy" ($value == 0);
+	editorTemplate -dimControl $nodeName "reflectAnisotropyRotation" ($value == 0);
+	editorTemplate -dimControl $nodeName "reflectIOR" ($value == 0);
+	editorTemplate -dimControl $nodeName "reflectMetalness" ($value == 0);
+	editorTemplate -dimControl $nodeName "reflectMetalMaterial" ($value == 0);
+	editorTemplate -dimControl $nodeName "reflectUseShaderNormal" ($value == 0);
+
+	AEUberCheckReflectMetalness($nodeName);
+	AEUberCheckEnableReflectNormal($nodeName);
+}
+
+global proc AEUberCheckEnableReflectNormal(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".reflectUseShaderNormal";
+	int $value = `getAttr $nodeAttr`;
+
+	string $nodeEnabledAttr = $nodeName + ".reflections";
+	int $enabled = `getAttr $nodeEnabledAttr`;
+
+	editorTemplate -dimControl $nodeName "reflectNormal" (($value == 1) || ($enabled == 0));
+}
+
+global proc AEUberCheckEnableRefraction(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".refraction";
+	int $value = `getAttr $nodeAttr`;
+	editorTemplate -dimControl $nodeName "refractColor" ($value == 0);
+	editorTemplate -dimControl $nodeName "refractWeight" ($value == 0);
+	editorTemplate -dimControl $nodeName "refractRoughness" ($value == 0);
+	editorTemplate -dimControl $nodeName "refractIor" ($value == 0);
+	editorTemplate -dimControl $nodeName "refractLinkToReflect" ($value == 0);
+	editorTemplate -dimControl $nodeName "refractThinSurface" ($value == 0);
+	editorTemplate -dimControl $nodeName "refractAbsorptionDistance" ($value == 0);
+	editorTemplate -dimControl $nodeName "refractAllowCaustics" ($value == 0);
+
+	AEUberCheckLinkRefl($nodeName);
+}
+
+global proc AEUberCheckEnableCoating(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".clearCoat";
+	int $value = `getAttr $nodeAttr`;
+	editorTemplate -dimControl $nodeName "coatColor" ($value == 0);
+	editorTemplate -dimControl $nodeName "coatWeight" ($value == 0);
+	editorTemplate -dimControl $nodeName "coatRoughness" ($value == 0);
+	editorTemplate -dimControl $nodeName "coatIor" ($value == 0);
+	editorTemplate -dimControl $nodeName "coatUseShaderNormal" ($value == 0);
+	editorTemplate -dimControl $nodeName "coatNormal" ($value == 0);
+	editorTemplate -dimControl $nodeName "coatThickness" ($value == 0);
+	editorTemplate -dimControl $nodeName "coatTransmissionColor" ($value == 0);
+	AEUberCheckEnableCoatNormal($nodeName);
+}
+
+global proc AEUberCheckEnableCoatNormal(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".coatUseShaderNormal";
+	int $value = `getAttr $nodeAttr`;
+
+	string $nodeEnabledAttr = $nodeName + ".clearCoat";
+	int $enabled = `getAttr $nodeEnabledAttr`;
+
+	editorTemplate -dimControl $nodeName "coatNormal" (($value == 1) || ($enabled == 0));
+}
+
+global proc AEUberCheckEnableEmissive(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".emissive";
+	int $value = `getAttr $nodeAttr`;
+	editorTemplate -dimControl $nodeName "emissiveColor" ($value == 0);
+	editorTemplate -dimControl $nodeName "emissiveWeight" ($value == 0);
+	editorTemplate -dimControl $nodeName "emissiveIntensity" ($value == 0);
+	editorTemplate -dimControl $nodeName "emissiveDoubleSided" ($value == 0);
+}
+
+global proc AEUberCheckEnableSSS(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".sssEnable";
+	int $value = `getAttr $nodeAttr`;
+
+	string $nodeEnabledAttr = $nodeName + ".sssUseDiffuseColor";
+	int $enabled = `getAttr $nodeEnabledAttr`;
+
+	editorTemplate -dimControl $nodeName "volumeScatter" (($value == 0) || ($enabled == 1));
+
+	editorTemplate -dimControl $nodeName "sssUseDiffuseColor" ($value == 0);
+	editorTemplate -dimControl $nodeName "sssWeight" ($value == 0);
+	editorTemplate -dimControl $nodeName "subsurfaceRadius" ($value == 0);
+	editorTemplate -dimControl $nodeName "scatteringDirection" ($value == 0);
+	editorTemplate -dimControl $nodeName "multipleScattering" ($value == 0);
+}
+
+global proc AEUberCheckUseTransparency(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".transparencyEnable";
+	int $value = `getAttr $nodeAttr`;
+	editorTemplate -dimControl $nodeName "transparencyLevel" ($value == 0);
+}
+
+global proc AEUberCheckUseNormalMap(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".normalMapEnable";
+	int $value = `getAttr $nodeAttr`;
+	editorTemplate -dimControl $nodeName "normalMap" ($value == 0);
+}
+
+global proc AEUberCheckUseDisplacement(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".displacementEnable";
+	int $value = `getAttr $nodeAttr`;
+	editorTemplate -dimControl $nodeName "displacementMap" ($value == 0);
+	editorTemplate -dimControl $nodeName "displacementMin" ($value == 0);
+	editorTemplate -dimControl $nodeName "displacementMax" ($value == 0);
+	editorTemplate -dimControl $nodeName "displacementSubdiv" ($value == 0);
+	editorTemplate -dimControl $nodeName "displacementCreaseWeight" ($value == 0);
+	editorTemplate -dimControl $nodeName "displacementBoundary" ($value == 0);
 }
 
 global proc AEUberCheckCoatMetalness(string $nodeName)
@@ -18,8 +180,12 @@ global proc AEUberCheckLinkRefl(string $nodeName)
 {
 	string $nodeAttr = $nodeName + ".refractLinkToReflect";
 	int $value = `getAttr $nodeAttr`;
+
 	// disable refraction IOR control when needed
-	editorTemplate -dimControl $nodeName "refractIOR" ($value == 1);
+	string $nodeEnabledAttr = $nodeName + ".refraction";
+	int $enabled = `getAttr $nodeEnabledAttr`;
+	editorTemplate -dimControl $nodeName "refractIor" (($value == 1) || ($enabled == 0));
+
 	// when just enabling link, copy IOR from reflection to refraction
 	if ($value) AEUberCheckReflIOR($nodeName);
 }
@@ -33,7 +199,7 @@ global proc AEUberCheckReflIOR(string $nodeName)
 		// note: everything will work even without copying, this is just for more clean appearance
 		string $reflectIOR_attr = $nodeName + ".reflectIOR";
 		float $ior = `getAttr $reflectIOR_attr`;
-		setAttr ($nodeName + ".refractIOR") $ior;
+		setAttr ($nodeName + ".refractIor") $ior;
 	}
 }
 
@@ -41,8 +207,12 @@ global proc AEUberCheckUseSssDiffuse(string $nodeName)
 {
 	string $nodeAttr = $nodeName + ".sssUseDiffuseColor";
 	int $value = `getAttr $nodeAttr`;
+
+	string $nodeEnabledAttr = $nodeName + ".sssEnable";
+	int $enabled = `getAttr $nodeEnabledAttr`;
+
 	// disable refraction IOR control when needed
-	editorTemplate -dimControl $nodeName "sssColor" ($value == 1);
+	editorTemplate -dimControl $nodeName "volumeScatter" (($value == 1) || ($enabled == 0));
 }
 
 global proc AERPRUberMaterialTemplateNew(string $nodeName)
@@ -51,74 +221,89 @@ global proc AERPRUberMaterialTemplateNew(string $nodeName)
 	editorTemplate -beginScrollLayout;
 
 	editorTemplate -beginLayout "Diffuse" -collapse 0;
-		editorTemplate -label "Enable" -addControl "diffuse";
+		editorTemplate -label "Enable" -addControl "diffuse" "AEUberCheckEnableDiffuse";
 		editorTemplate -label "Color" -addControl "diffuseColor";
 		editorTemplate -label "Weight" -addControl "diffuseWeight";
 		editorTemplate -label "Roughness" -addControl "diffuseRoughness";
+		editorTemplate -label "Use Shader Normal" -addControl "useShaderNormal" "AEUberCheckEnableDiffuseNormal";
+		editorTemplate -label "Diffuse Normal" -addControl "diffuseNormal";
+		editorTemplate -label "Backscattering Weight" -addControl "backscatteringWeight";
+		editorTemplate -label "Separate Backscatter color" -addControl "separateBackscatterColor" "AEUberCheckEnableDiffuseBackscatter";
+		editorTemplate -label "Backscattering Color" -addControl "backscatteringColor";
 	editorTemplate -endLayout;
 
 	editorTemplate -beginLayout "Reflection" -collapse 0;
-		editorTemplate -label "Enable" -addControl "reflections";
+		editorTemplate -label "Enable" -addControl "reflections" "AEUberCheckEnableReflection";
 		editorTemplate -label "Color" -addControl "reflectColor";
 		editorTemplate -label "Weight" -addControl "reflectWeight";
 		editorTemplate -label "Roughness" -addControl "reflectRoughness";
 		editorTemplate -label "Anisotropy" -addControl "reflectAnisotropy";
 		editorTemplate -label "Anisotropy Rotation" -addControl "reflectAnisotropyRotation";
-		editorTemplate -beginLayout "Fresnel Reflection" -collapse 0;
+		editorTemplate -label "Use Shader Normal" -addControl "reflectUseShaderNormal" "AEUberCheckEnableReflectNormal";
+		editorTemplate -label "Reflection Normal" -addControl "reflectNormal";
+		editorTemplate -beginLayout "Reflection Fresnel" -collapse 0;
+			editorTemplate -label "Metal Material" -addControl "reflectMetalMaterial" "AEUberCheckReflectMetalness";
 			editorTemplate -label "IOR" -addControl "reflectIOR" "AEUberCheckReflIOR";
 			editorTemplate -label "Metalness" -addControl "reflectMetalness";
-			editorTemplate -label "Metal Material" -addControl "reflectMetalMaterial" "AEUberCheckReflectMetalness";
 		editorTemplate -endLayout;
 	editorTemplate -endLayout;
 
 	editorTemplate -beginLayout "Refraction" -collapse 0;
-		editorTemplate -label "Enable" -addControl "refraction";
+		editorTemplate -label "Enable" -addControl "refraction" "AEUberCheckEnableRefraction";
 		editorTemplate -label "Color" -addControl "refractColor";
 		editorTemplate -label "Weight" -addControl "refractWeight";
 		editorTemplate -label "Roughness" -addControl "refractRoughness";
-		editorTemplate -label "IOR" -addControl "refractIOR";
 		editorTemplate -label "Link to Reflection" -addControl "refractLinkToReflect" "AEUberCheckLinkRefl";
+		editorTemplate -label "IOR" -addControl "refractIor";
 		editorTemplate -label "Thin Surface" -addControl "refractThinSurface";
+		editorTemplate -label "Absorption Distance" -addControl "refractAbsorptionDistance";
+		editorTemplate -label "Allow Caustics" -addControl "refractAllowCaustics";
 	editorTemplate -endLayout;
 
 	editorTemplate -beginLayout "Coating" -collapse 0;
-		editorTemplate -label "Enable" -addControl "clearCoat";
+		editorTemplate -label "Enable" -addControl "clearCoat" "AEUberCheckEnableCoating";
 		editorTemplate -label "Color" -addControl "coatColor";
 		editorTemplate -label "Weight" -addControl "coatWeight";
 		editorTemplate -label "Roughness" -addControl "coatRoughness";
-		editorTemplate -beginLayout "Fresnel Refraction" -collapse 0;
-			editorTemplate -label "IOR" -addControl "coatIOR";
-			editorTemplate -label "Metalness" -addControl "coatMetalness";
-			editorTemplate -label "Metal Material" -addControl "coatMetalMaterial" "AEUberCheckCoatMetalness";
-		editorTemplate -endLayout;
+
+		editorTemplate -label "IOR" -addControl "coatIor";
+		editorTemplate -label "Use Shader Normal" -addControl "coatUseShaderNormal" "AEUberCheckEnableCoatNormal";
+		editorTemplate -label "Normal" -addControl "coatNormal";
+
+		editorTemplate -label "Thickness" -addControl "coatThickness";
+		editorTemplate -label "Transmission Color" -addControl "coatTransmissionColor";
 	editorTemplate -endLayout;
 
 	editorTemplate -beginLayout "Emissive" -collapse 0;
-		editorTemplate -label "Enable" -addControl "emissive";
-		editorTemplate -label "Color" -addControl "emissiveColor";
+		editorTemplate -label "Enable" -addControl "emissive" "AEUberCheckEnableEmissive";
 		editorTemplate -label "Weight" -addControl "emissiveWeight";
+		editorTemplate -label "Color" -addControl "emissiveColor";
+		editorTemplate -label "Intensity" -addControl "emissiveIntensity";
 		editorTemplate -label "Double Sided" -addControl "emissiveDoubleSided";
 	editorTemplate -endLayout;
 
 	editorTemplate -beginLayout "Subsurface" -collapse 0;
-		editorTemplate -label "Enable" -addControl "sssEnable";
-		editorTemplate -label "Subsurface Color" -addControl "sssColor";
-		editorTemplate -label "Use Diffuse Color" -addControl "sssUseDiffuseColor" "AEUberCheckUseSssDiffuse";
+		editorTemplate -label "Enable" -addControl "sssEnable" "AEUberCheckEnableSSS";
 		editorTemplate -label "Weight" -addControl "sssWeight";
-		
-		editorTemplate -label "Subsurface Scattering Color" -addControl "volumeScatter";
+		editorTemplate -label "Use Diffuse Color" -addControl "sssUseDiffuseColor" "AEUberCheckUseSssDiffuse";
+		editorTemplate -label "Scattering Color" -addControl "volumeScatter";
 		editorTemplate -addControl "subsurfaceRadius";
 		editorTemplate -addControl "scatteringDirection";
 		editorTemplate -addControl "multipleScattering";
 	editorTemplate -endLayout;
 
 	editorTemplate -beginLayout "Material Settings" -collapse 0;
-		editorTemplate -label "Use Transparency" -addControl "transparencyEnable";
+		editorTemplate -label "Use Transparency" -addControl "transparencyEnable" "AEUberCheckUseTransparency";
 		editorTemplate -label "Transparency" -addControl "transparencyLevel";
-		editorTemplate -label "Use Normal Map" -addControl "normalMapEnable";
+		editorTemplate -label "Use Normal Map" -addControl "normalMapEnable" "AEUberCheckUseNormalMap";
 		editorTemplate -label "Normal Map" -addControl "normalMap";
-		editorTemplate -label "Use Displacement" -addControl "displacementEnable";
+		editorTemplate -label "Use Displacement" -addControl "displacementEnable" "AEUberCheckUseDisplacement";
 		editorTemplate -label "Displacement Map" -addControl "displacementMap";
+		editorTemplate -label "Displacement min value" -addControl "displacementMin";
+		editorTemplate -label "Displacement max value" -addControl "displacementMax";
+		editorTemplate -label "Subdivision" -addControl "displacementSubdiv";
+		editorTemplate -label "Crease Weight" -addControl "displacementCreaseWeight";
+		editorTemplate -label "Boundary" -addControl "displacementBoundary";
 	editorTemplate -endLayout;
 
 //	editorTemplate -addControl "Caustics/Shadows";
@@ -159,7 +344,7 @@ global proc AERPRUberMaterialTemplateOld(string $nodeName)
 	editorTemplate -beginLayout "Refraction" -collapse 0;
 		editorTemplate -addControl "refractWeight";
 		editorTemplate -addControl "refractColor";
-		editorTemplate -addControl "refractIOR";
+		editorTemplate -addControl "refractIor";
 		editorTemplate -addControl "refractRoughness";
 		editorTemplate -addControl "refNormal";
 	editorTemplate -endLayout;

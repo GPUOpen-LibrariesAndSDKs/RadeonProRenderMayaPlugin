@@ -24,6 +24,7 @@ namespace FireMaya
 	static const MColor CavityColorDefault = MColor(0.0f, 0.0f, 0.0f);
 	static const MColor NormalMapColorDefault = MColor(1.0f, 1.0f, 1.0f);
 	static const MColor EmissiveColorDefault = MColor(0.5f, 0.5f, 0.5f);
+	static const MColor SSColourDefault = MColor(0.436f, 0.227f, 0.131f);
 
 	namespace
 	{
@@ -34,15 +35,17 @@ namespace FireMaya
 
 			MObject baseColor;
 			MObject roughness;
-			MObject invertRoughness;
 			MObject metalness;
-			MObject cavityMap;
-			MObject invertCavityMap;
+			MObject specular;
 			MObject normalMap;
-			MObject opacity;
-			MObject invertOpacityMap;
 			MObject emissiveColor;
 			MObject emissiveWeight;
+
+			MObject glass;
+			MObject glassIOR;
+			MObject subsurfaceWeight;
+			MObject subsurfaceColor;
+			MObject subsurfaceRadius;
 		}
 	}
 
@@ -113,15 +116,23 @@ namespace FireMaya
 		// as it done for i.e. Uber Material
 		AddColorAttribute(Attribute::baseColor, "color", "bc", true, BaseColorDefault);
 		AddFloatAttribute(Attribute::roughness, "roughness", "r", NormalizedMin, NormalizedMax, DefaultRoughness);
-		AddBoolAttribute(Attribute::invertRoughness, "invertRoughness", "ir", false);
 		AddFloatAttribute(Attribute::metalness, "metalness", "m", NormalizedMin, NormalizedMax, NormalizedMin);
-		AddColorAttribute(Attribute::cavityMap, "cavityMap", "cm", true, CavityColorDefault);
-		AddBoolAttribute(Attribute::invertCavityMap, "invertCavityMap", "icm", false);
+		AddFloatAttribute(Attribute::specular, "specular", "s", 0.0f, 1.0f, 1.0f);
 		AddColorAttribute(Attribute::normalMap, "normalMap", "nm", true,NormalMapColorDefault);
-		AddFloatAttribute(Attribute::opacity, "opacity", "o", NormalizedMin, NormalizedMax, NormalizedMax);
-		AddBoolAttribute(Attribute::invertOpacityMap, "invertOpacityMap", "iom", false);
 		AddColorAttribute(Attribute::emissiveColor, "emissiveColor", "ec", true, EmissiveColorDefault);
 		AddFloatAttribute(Attribute::emissiveWeight, "emissiveWeight", "ew", NormalizedMin, NormalizedMax, NormalizedMin);
+
+		AddFloatAttribute(Attribute::glass, "glass", "g", 0.0f, 1.0f, 0.0f);
+		AddFloatAttribute(Attribute::glassIOR, "glassIOR", "gi", 0.0f, 2.0f, 1.5f);
+		AddColorAttribute(Attribute::subsurfaceWeight, "subsurfaceWeight", "ssw", true, SSColourDefault);
+		AddColorAttribute(Attribute::subsurfaceColor, "subsurfaceColor", "ssc", true, SSColourDefault);
+
+		Attribute::subsurfaceRadius = nAttr.create("subsurfaceRadius", "ssr", MFnNumericData::k3Float);
+		MAKE_INPUT(nAttr);
+		CHECK_MSTATUS(nAttr.setDefault(3.67f, 1.37f, 0.68f));
+		nAttr.setMin(0.0f, 0.0f, 0.0f);
+		nAttr.setMax(5.0f, 5.0f, 5.0f);
+		CHECK_MSTATUS(addAttribute(Attribute::subsurfaceRadius));
 
 		return MS::kSuccess;
 	}
@@ -183,27 +194,12 @@ namespace FireMaya
 		shader.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_COLOR, value);
 
 		// Setting RPRX_UBER_MATERIAL_DIFFUSE_WEIGHT
-		value = scope.GetValue(shaderNode.findPlug(Attribute::cavityMap));
-		bool invertCavity = shaderNode.findPlug(Attribute::invertCavityMap).asBool();
-
-		// Use 1.0f instead of DiffuseMultiplier
-		// if invertCavity == true weight = 1.0f - (1.0f - value) == value
-		// if invertCavity == false weight = 1.0f - value
-		if (!invertCavity)
-		{
-			value = ms.ValueSub(1.0f, value);
-		}
+		value = scope.GetValue(shaderNode.findPlug(Attribute::specular));
 
 		shader.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_WEIGHT, value);
 
 		// Setting RPRX_UBER_MATERIAL_REFLECTION_ROUGHNESS
 		value = scope.GetValue(shaderNode.findPlug(Attribute::roughness));
-		bool invertRoughness = shaderNode.findPlug(Attribute::invertRoughness).asBool();
-
-		if (invertRoughness)
-		{
-			value = ms.ValueSub(1.0f, value);
-		}
 		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_ROUGHNESS, value);
 		
 		// Setting Metalness
@@ -228,17 +224,6 @@ namespace FireMaya
 		{
 			ErrorPrint("%s NormalMap: invalid node type %d\n", shaderNode.name().asChar(), value.GetNodeType());
 		}
-
-		// Setting Opacity
-		value = scope.GetValue(shaderNode.findPlug(Attribute::opacity));
-		bool invertOpacityMap = shaderNode.findPlug(Attribute::invertOpacityMap).asBool();
-
-		if (!invertOpacityMap)
-		{
-			value = ms.ValueSub(1.0f, value);
-		}
-		shader.xSetValue(RPRX_UBER_MATERIAL_TRANSPARENCY, value);
-
 		
 		// Setting Emissive
 		// Set EMISSION_COLOR as intensity. Use multiplier for that
@@ -252,6 +237,27 @@ namespace FireMaya
 		value = ms.ValueMul(emissiveWeightValue, value);
 		
 		shader.xSetValue(RPRX_UBER_MATERIAL_EMISSION_COLOR, value);
+
+		// Glass (refraction weight)
+		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_COLOR, diffuseColor);
+
+		value = scope.GetValue(shaderNode.findPlug(Attribute::glass));
+		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_WEIGHT, value);
+
+		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_ROUGHNESS, 0.0f);
+
+		value = scope.GetValue(shaderNode.findPlug(Attribute::glassIOR));
+		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_IOR, value);
+
+		// SSS
+		value = scope.GetValue(shaderNode.findPlug(Attribute::subsurfaceWeight));
+		shader.xSetValue(RPRX_UBER_MATERIAL_SSS_WEIGHT, value);
+
+		value = scope.GetValue(shaderNode.findPlug(Attribute::subsurfaceColor));
+		shader.xSetValue(RPRX_UBER_MATERIAL_SSS_SCATTER_COLOR, value);
+
+		value = scope.GetValue(shaderNode.findPlug(Attribute::subsurfaceRadius));
+		shader.xSetValue(RPRX_UBER_MATERIAL_SSS_SCATTER_DISTANCE, value);
 
 		return shader;
 	}
