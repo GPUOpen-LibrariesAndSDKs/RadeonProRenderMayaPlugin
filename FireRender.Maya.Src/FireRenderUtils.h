@@ -124,6 +124,12 @@ public:
 
 	// Max ray depth
 	short maxRayDepthProduction;
+	short maxRayDepthDiffuse;
+	short maxRayDepthGlossy;
+	short maxRayDepthRefraction;
+	short maxRayDepthGlossyRefraction;
+	short maxRayDepthShadow;
+
 	short maxRayDepthViewport;
 
 	// Command port

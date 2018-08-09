@@ -9,6 +9,7 @@
 #include "FireRenderAOVs.h"
 
 #include <string>
+#include <thread>
 
 #define DEFAULT_RENDER_STAMP "Radeon ProRender for Maya %b | %h | Time: %pt | Passes: %pp | Objects: %so | Lights: %sl"
 
@@ -31,7 +32,15 @@ namespace
 
 		MObject AASampleCountProduction;
 		MObject AACellSizeProduction;
+
+		// max depths
 		MObject MaxRayDepthProduction;
+
+		MObject MaxDepthDiffuse;
+		MObject MaxDepthGlossy;
+		MObject MaxDepthShadow;
+		MObject MaxDepthRefraction;
+		MObject MaxDepthRefractionGlossy;
 
 		MObject RaycastEpsilon;
 
@@ -248,10 +257,7 @@ MStatus FireRenderGlobals::initialize()
 	nAttr.setMin(1);
 	nAttr.setMax(10);
 
-	Attribute::MaxRayDepthProduction = nAttr.create("maxRayDepth", "mrd", MFnNumericData::kShort, 5, &status);
-	MAKE_INPUT(nAttr);
-	nAttr.setMin(0);
-	nAttr.setMax(50);
+	setupRayDepthParameters();
 
 	Attribute::RaycastEpsilon = nAttr.create("raycastEpsilon", "rce", MFnNumericData::kFloat, 0.02f, &status);
 	MAKE_INPUT(nAttr);
@@ -381,46 +387,7 @@ MStatus FireRenderGlobals::initialize()
 	FireRenderAOVs aovs;
 	aovs.registerAttributes();
 
-	auto deviceList = HardwareResources::GetCompatibleGPUs(false);
-
-	MStringArray oldList, newList;
-	MIntArray oldDriversCompatible, newDriversCompatible;
-
-	int allowUncertified;
-	int driversCompatibleExists;
-
-	MGlobal::executeCommand("optionVar -q RPR_DevicesName", oldList);
-	MGlobal::executeCommand("optionVar -q RPR_AllowUncertified", allowUncertified);
-	MGlobal::executeCommand("optionVar -q RPR_DriversCompatible", oldDriversCompatible);
-	MGlobal::executeCommand("optionVar -ex RPR_DriversCompatible", driversCompatibleExists);
-
-	MGlobal::executeCommand("optionVar -rm RPR_DevicesName");
-	MGlobal::executeCommand("optionVar -rm RPR_DevicesCertified");
-	MGlobal::executeCommand("optionVar -rm RPR_DriversCompatible");
-
-	for (auto device : deviceList)
-	{
-		MGlobal::executeCommand(MString("optionVar -sva RPR_DevicesName \"") + device.name.c_str() + "\"");
-		MGlobal::executeCommand(MString("optionVar -iva RPR_DevicesCertified ") + int(device.isCertified()));
-		MGlobal::executeCommand(MString("optionVar -iva RPR_DriversCompatible ") + int(device.isDriverCompatible));
-	}
-
-	MGlobal::executeCommand("optionVar -q RPR_DevicesName", newList);
-	MGlobal::executeCommand("optionVar -q RPR_DriversCompatible", newDriversCompatible);
-
-	// First time, or something has changed, so time to reset defaults.
-	if (!(oldList == newList) || !(oldDriversCompatible == newDriversCompatible) || !driversCompatibleExists)
-	{
-		MGlobal::executeCommand("optionVar -rm RPR_DevicesSelected");
-		int selectedCount = 0;
-		for (auto device : deviceList)
-		{
-			int selected = selectedCount < 1 && device.isCertified() && device.isDriverCompatible;
-			MGlobal::executeCommand(MString("optionVar -iva RPR_DevicesSelected ") + selected);
-			if (selected)
-				selectedCount++;
-		}
-	}
+	setupRenderDevices();
 
 	Attribute::qualityPresetsViewport = eAttr.create("qualityPresetsViewport", "qPsV", 0, &status);
 	eAttr.addField("Low", 0);
@@ -497,6 +464,144 @@ MStatus FireRenderGlobals::initialize()
 	createDenoiserAttributes();
 
 	return status;
+}
+
+void FireRenderGlobals::setupRayDepthParameters()
+{
+	int min = 0;
+	int softMin = 2;
+	int softMax = 50;
+
+	MFnNumericAttribute nAttr;
+	MStatus status;
+
+	Attribute::MaxRayDepthProduction = nAttr.create("maxRayDepth", "mrd", MFnNumericData::kShort, 8, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setSoftMin(softMin);
+	nAttr.setSoftMax(softMax);
+	CHECK_MSTATUS(addAttribute(Attribute::MaxRayDepthProduction));
+
+	Attribute::MaxDepthDiffuse = nAttr.create("maxDepthDiffuse", "mdd", MFnNumericData::kShort, 3, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setSoftMin(softMin);
+	nAttr.setSoftMax(softMax);
+	CHECK_MSTATUS(addAttribute(Attribute::MaxDepthDiffuse));
+
+	Attribute::MaxDepthGlossy = nAttr.create("maxDepthGlossy", "mdg", MFnNumericData::kShort, 5, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setSoftMin(softMin);
+	nAttr.setSoftMax(softMax);
+	CHECK_MSTATUS(addAttribute(Attribute::MaxDepthGlossy));
+
+	Attribute::MaxDepthRefraction = nAttr.create("maxDepthRefraction", "mdr", MFnNumericData::kShort, 5, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setSoftMin(softMin);
+	nAttr.setSoftMax(softMax);
+	CHECK_MSTATUS(addAttribute(Attribute::MaxDepthRefraction));
+
+	Attribute::MaxDepthRefractionGlossy = nAttr.create("maxDepthRefractionGlossy", "mdrg", MFnNumericData::kShort, 5, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setSoftMin(softMin);
+	nAttr.setSoftMax(softMax);
+	CHECK_MSTATUS(addAttribute(Attribute::MaxDepthRefractionGlossy));
+
+	Attribute::MaxDepthShadow = nAttr.create("maxDepthShadow", "mds", MFnNumericData::kShort, 5, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setSoftMin(softMin);
+	nAttr.setSoftMax(softMax);
+	CHECK_MSTATUS(addAttribute(Attribute::MaxDepthShadow));
+}
+
+void FireRenderGlobals::setupRenderDevices()
+{
+	auto deviceList = HardwareResources::GetCompatibleGPUs(false);
+
+	MStringArray oldList, newList;
+	MIntArray oldDriversCompatible, newDriversCompatible;
+
+	int allowUncertified;
+	int driversCompatibleExists;
+
+	MGlobal::executeCommand("optionVar -q RPR_DevicesName", oldList);
+	MGlobal::executeCommand("optionVar -q RPR_AllowUncertified", allowUncertified);
+	MGlobal::executeCommand("optionVar -q RPR_DriversCompatible", oldDriversCompatible);
+	MGlobal::executeCommand("optionVar -ex RPR_DriversCompatible", driversCompatibleExists);
+
+	MGlobal::executeCommand("optionVar -rm RPR_DevicesName");
+	MGlobal::executeCommand("optionVar -rm RPR_DevicesCertified");
+	MGlobal::executeCommand("optionVar -rm RPR_DriversCompatible");
+
+	for (auto device : deviceList)
+	{
+		MGlobal::executeCommand(MString("optionVar -sva RPR_DevicesName \"") + device.name.c_str() + "\"");
+		MGlobal::executeCommand(MString("optionVar -iva RPR_DevicesCertified ") + int(device.isCertified()));
+		MGlobal::executeCommand(MString("optionVar -iva RPR_DriversCompatible ") + int(device.isDriverCompatible));
+	}
+
+	MGlobal::executeCommand("optionVar -q RPR_DevicesName", newList);
+	MGlobal::executeCommand("optionVar -q RPR_DriversCompatible", newDriversCompatible);
+
+	// First time, or something has changed, so time to reset defaults.
+	if (!(oldList == newList) || !(oldDriversCompatible == newDriversCompatible) || !driversCompatibleExists)
+	{
+		MGlobal::executeCommand("optionVar -rm RPR_DevicesSelected");
+		int selectedCount = 0;
+		for (auto device : deviceList)
+		{
+			int selected = selectedCount < 1 && device.isCertified() && device.isDriverCompatible;
+			MGlobal::executeCommand(MString("optionVar -iva RPR_DevicesSelected ") + selected);
+			if (selected)
+				selectedCount++;
+		}
+	}
+
+	// setup hardware cpu cores count
+	unsigned concurentThreadsSupported = std::thread::hardware_concurrency();
+	if (concurentThreadsSupported == 0)
+	{
+		concurentThreadsSupported = 1;
+	}
+
+	if (!FireRenderGlobals::isOptionVarExist("RPR_CPUThreadCount"))
+	{
+		FireRenderGlobals::setOptionVarInt("RPR_CPUThreadCount", concurentThreadsSupported);
+	}
+
+	MGlobal::executeCommand(MString("optionVar -iv RPR_HardwareCoresCount ") + concurentThreadsSupported);
+}
+
+bool FireRenderGlobals::isOptionVarExist(std::string varName)
+{
+	int val;
+	MGlobal::executeCommand(MString("optionVar -ex ") + varName.c_str(), val);
+	return val > 0;
+}
+
+void FireRenderGlobals::setOptionVarInt(std::string varName, int val)
+{
+	MGlobal::executeCommand(MString("optionVar -iv ") + varName.c_str() + " " + std::to_string(val).c_str());
+}
+
+bool FireRenderGlobals::isOverrideThreadCount()
+{
+	int val;
+	MGlobal::executeCommand("optionVar -q RPR_OverrideCPUThreadCount", val);
+
+	return val > 0;
+}
+
+int FireRenderGlobals::getCPUThreadCount()
+{
+	int val;
+	MGlobal::executeCommand("optionVar -q RPR_CPUThreadCount", val);
+
+	return val;
 }
 
 void FireRenderGlobals::createDenoiserAttributes()

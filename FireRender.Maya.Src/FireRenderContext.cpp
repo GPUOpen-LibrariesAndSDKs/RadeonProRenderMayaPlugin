@@ -787,7 +787,7 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 #else
 		g_tahoePluginID = rprRegisterPlugin("Tahoe64.dll");
 #endif
-}
+	}
 
 	if (g_tahoePluginID == -1)
 	{
@@ -807,7 +807,19 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
     {
         createFlags = createFlags | RPR_CREATION_FLAGS_ENABLE_METAL;
     }
-	int res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, NULL, cachePath.asUTF8(), &context);
+
+	// setup CPU thread count
+	rpr_context_properties ctxProperties[3] = { 0 };
+
+	int cpuThreadCount = FireRenderGlobals::getCPUThreadCount();
+	if ((createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) && FireRenderGlobals::isOverrideThreadCount() && cpuThreadCount > 0)
+	{
+		ctxProperties[0] = (rpr_context_properties) RPR_CONTEXT_CREATEPROP_CPU_THREAD_LIMIT;
+		ctxProperties[1] = (rpr_context_properties) cpuThreadCount;
+		ctxProperties[2] = (rpr_context_properties) 0;
+	}
+
+	int res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, ctxProperties, cachePath.asUTF8(), &context);
 
 	if (pOutRes != nullptr)
 	{
