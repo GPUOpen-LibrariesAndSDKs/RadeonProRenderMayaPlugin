@@ -67,6 +67,11 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	filterType(0),
 	filterSize(2),
 	maxRayDepthProduction(2),
+	maxRayDepthDiffuse(2),
+	maxRayDepthGlossy(2),
+	maxRayDepthRefraction(2),
+	maxRayDepthGlossyRefraction(2),
+	maxRayDepthShadow(2),
 	maxRayDepthViewport(2),
 	commandPort(0),
 	useGround(false),
@@ -192,6 +197,26 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("maxRayDepth");
 		if (!plug.isNull())
 			maxRayDepthProduction = plug.asShort();
+
+		plug = frGlobalsNode.findPlug("maxDepthDiffuse");
+		if (!plug.isNull())
+			maxRayDepthDiffuse = plug.asShort();
+
+		plug = frGlobalsNode.findPlug("maxDepthGlossy");
+		if (!plug.isNull())
+			maxRayDepthGlossy = plug.asShort();
+
+		plug = frGlobalsNode.findPlug("maxDepthRefraction");
+		if (!plug.isNull())
+			maxRayDepthRefraction = plug.asShort();
+
+		plug = frGlobalsNode.findPlug("maxDepthRefractionGlossy");
+		if (!plug.isNull())
+			maxRayDepthGlossyRefraction = plug.asShort();
+
+		plug = frGlobalsNode.findPlug("maxDepthShadow");
+		if (!plug.isNull())
+			maxRayDepthShadow = plug.asShort();
 
 		// In UI raycast epsilon defined in millimeters, convert it to meters
 		plug = frGlobalsNode.findPlug("raycastEpsilon");
@@ -542,6 +567,21 @@ void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disa
 	frstatus = rprContextSetParameter1u(frcontext, "maxRecursion", getMaxRayDepth(inContext));
 	checkStatus(frstatus);
 
+	frstatus = rprContextSetParameter1u(frcontext, "maxdepth.diffuse", maxRayDepthDiffuse);
+	checkStatus(frstatus);
+
+	frstatus = rprContextSetParameter1u(frcontext, "maxdepth.glossy", maxRayDepthGlossy);
+	checkStatus(frstatus);
+
+	frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction", maxRayDepthRefraction);
+	checkStatus(frstatus);
+
+	frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction.glossy", maxRayDepthGlossyRefraction);
+	checkStatus(frstatus);
+
+	frstatus = rprContextSetParameter1u(frcontext, "maxdepth.shadow", maxRayDepthShadow);
+	checkStatus(frstatus);
+
 	frstatus = rprContextSetParameter1u(frcontext, "imagefilter.type", filterType);
 	checkStatus(frstatus);
 
@@ -658,15 +698,17 @@ int FireMaya::Options::GetContextDeviceFlags()
 		MIntArray devicesUsing;
 		MGlobal::executeCommand("optionVar -q RPR_DevicesSelected", devicesUsing);
 		auto allDevices = HardwareResources::GetAllDevices();
-		
+
 		for (auto i = 0u; i < devicesUsing.length(); i++)
 		{
 			if (devicesUsing[i] && i < allDevices.size())
 				ret |= allDevices[i].creationFlag;
 		}
 
-		if (!ret)
-			ret = RPR_CREATION_FLAGS_ENABLE_CPU;
+		if (!ret || (devicesUsing.length() > allDevices.size() && devicesUsing[allDevices.size()]))
+		{
+			ret |= RPR_CREATION_FLAGS_ENABLE_CPU;
+		}
 
 		return ret;
 	});

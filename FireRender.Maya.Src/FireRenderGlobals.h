@@ -93,6 +93,14 @@ public:
 
 	/** Return the FR camera mode that matches the given camera type. */
 	static frw::CameraMode getCameraModeForType(CameraType type, bool defaultIsOrtho = false);
+
+	// CPU Thread Count support
+	static bool isOverrideThreadCount();
+	static int getCPUThreadCount();
+
+	static bool isOptionVarExist(std::string varName);
+	static void setOptionVarInt(std::string varName, int val);
+
 	// Ground
 	static MObject m_useGround;
 	static MObject m_groundHeight;
@@ -106,6 +114,10 @@ public:
 	static MObject m_useRenderStamp;
 	static MObject m_renderStampText;
 	static MObject m_renderStampTextDefault; // default value for m_renderStampText
+
+private:
+	static void setupRenderDevices();
+	static void setupRayDepthParameters();
 
 private:
 	// _TODO Remove after fix in ImageProcLibrary

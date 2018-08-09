@@ -1,4 +1,5 @@
 source "fireRenderEnvironment.mel";
+source "optionVars.mel";
 
 // Description: Utility procedure used by other procedures in this file.
 //		Must be used to account for multiple instances of the same tab.
@@ -201,6 +202,71 @@ global proc createAboutFrame(string $parent)
 	setUITemplate -popTemplate;
 }
 
+global proc setOptionVarIntValue(string $varName, int $newVal)
+{
+    optionVar -iv $varName $newVal;
+}
+
+global proc int getOptionVarIntValue(string $varName, int $defaultVal)
+{
+    if (`optionVar -ex $varName`)
+    {
+        return `optionVar -q $varName`;
+    }
+
+    return $defaultVal;
+}
+
+global proc onOverrideCPUThreadCount()
+{
+    int $val = `checkBox -q -v checkBox_OverrideCPUThreadCount`;
+
+    global string $OPTION_VAR_OVERRIDE_CPU_THREAD;
+    setOptionVarIntValue($OPTION_VAR_OVERRIDE_CPU_THREAD, $val);
+
+    intSliderGrp -e -en $val intSliderGrp_ThreadCount;
+}
+
+global proc onCPUThreadCountChanged()
+{
+    global string $OPTION_VAR_CPU_THREADS_COUNT;
+
+    int $val = `intSliderGrp -q -v intSliderGrp_ThreadCount`;
+    setOptionVarIntValue($OPTION_VAR_CPU_THREADS_COUNT, $val);
+}
+
+proc setupThreadCount()
+{
+    global string $OPTION_VAR_CORES_COUNT;
+    global string $OPTION_VAR_CPU_THREADS_COUNT;
+    global string $OPTION_VAR_OVERRIDE_CPU_THREAD;
+
+    int $overrideEnable = getOptionVarIntValue($OPTION_VAR_OVERRIDE_CPU_THREAD, 0);
+    int $cpuCoresCount = getOptionVarIntValue($OPTION_VAR_CORES_COUNT, 2); // default should never happen here
+    int $cpuThreadCount = getOptionVarIntValue($OPTION_VAR_CPU_THREADS_COUNT, $cpuCoresCount);
+
+	checkBox
+		-label "Override CPU Thread Count"
+        -value $overrideEnable
+		-cc onOverrideCPUThreadCount
+		-ann "Override default count of CPU threads"
+		checkBox_OverrideCPUThreadCount
+		;
+
+    intSliderGrp
+        -label "CPU Thread Count"
+        -minValue 1
+        -maxValue $cpuCoresCount
+        -fieldMaxValue 128
+        -value $cpuCoresCount
+        -cc onCPUThreadCountChanged
+        intSliderGrp_ThreadCount
+        ;
+
+    // set initial "enabled/disabled" state of threadCount control
+    onOverrideCPUThreadCount();
+}
+
 global proc createRenderResourcesFrame(string $parent){
 	setUITemplate -pushTemplate attributeEditorTemplate;
 
@@ -250,6 +316,8 @@ global proc createRenderResourcesFrame(string $parent){
 		;
 
 	separator -height 5;
+
+    setupThreadCount();
 
 	setParent ..;
 
@@ -1018,7 +1086,7 @@ global proc createFireRenderQualityTab()
 	
 	// Render samples
 	attrControlGrp
-		 -label "Render samples"
+		 -label "Render Samples"
 		 -attribute "RadeonProRenderGlobals.samples";
 
 	// Filter
@@ -1028,13 +1096,33 @@ global proc createFireRenderQualityTab()
 
 	// Filter size
 	attrControlGrp
-		 -label "Filter size"
+		 -label "Filter Size"
 		 -attribute "RadeonProRenderGlobals.filterSize";
 
 	// Trace depth
 	attrControlGrp
-		 -label "Max ray depth"
+		 -label "Max Ray Depth"
 		 -attribute "RadeonProRenderGlobals.maxRayDepth";
+
+	attrControlGrp
+		 -label "Max Diffuse"
+		 -attribute "RadeonProRenderGlobals.maxDepthDiffuse";
+
+	attrControlGrp
+		 -label "Max Glossy"
+		 -attribute "RadeonProRenderGlobals.maxDepthGlossy";
+
+	attrControlGrp
+		 -label "Max Refraction"
+		 -attribute "RadeonProRenderGlobals.maxDepthRefraction";
+
+	attrControlGrp
+		 -label "Max Glossy Refraction"
+		 -attribute "RadeonProRenderGlobals.maxDepthRefractionGlossy";
+
+	attrControlGrp
+		 -label "Max Shadow"
+		 -attribute "RadeonProRenderGlobals.maxDepthShadow";
 
 	setParent ..;
 
@@ -1042,7 +1130,7 @@ global proc createFireRenderQualityTab()
 	frameLayout -label "Advanced Settings" -cll false -cl 0 fireRenderAdvancedFrame;
 
 	attrControlGrp
-		-label "Ray epsilon(mm)"
+		-label "Ray Epsilon(mm)"
 		-attribute "RadeonProRenderGlobals.raycastEpsilon";
 
 	setParent ..;
