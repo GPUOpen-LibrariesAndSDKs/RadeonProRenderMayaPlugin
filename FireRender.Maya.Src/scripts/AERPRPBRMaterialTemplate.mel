@@ -5,16 +5,17 @@ global proc AERPRPbrMaterialTemplate( string $nodeName )
 
 	editorTemplate -beginLayout "PBR" -collapse 0;
 		editorTemplate -addControl "color";
-		editorTemplate -addControl "roughness";
-		editorTemplate -addControl "invertRoughness";
 		editorTemplate -addControl "metalness";
-		editorTemplate -addControl "cavityMap";
-		editorTemplate -addControl "invertCavityMap";
+		editorTemplate -addControl "specular";
+		editorTemplate -addControl "roughness";
 		editorTemplate -addControl "normalMap";
-		editorTemplate -addControl "opacity";
-		editorTemplate -addControl "invertOpacityMap";
+		editorTemplate -addControl "glass";
+		editorTemplate -addControl "glassIOR";
 		editorTemplate -addControl "emissiveColor";
 		editorTemplate -addControl "emissiveWeight";
+		editorTemplate -addControl "subsurfaceWeight";
+		editorTemplate -addControl "subsurfaceColor";
+		editorTemplate -addControl "subsurfaceRadius";
 	editorTemplate -endLayout;
 
 	AEdependNodeTemplate $nodeName;

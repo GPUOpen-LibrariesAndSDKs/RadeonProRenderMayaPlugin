@@ -734,6 +734,77 @@ void FireRenderMesh::setupDisplacement(MObject shadingEngine, frw::Shape shape)
 			}
 		}
 
+		if (!displacement)
+		{
+			// try using uber material params (displacement)
+			MObject surfaceShader = getSurfaceShader(shadingEngine);
+			MFnDependencyNode shaderNode(surfaceShader);
+			MPlug plug = shaderNode.findPlug("displacementEnable");
+			if (!plug.isNull())
+			{
+				bool isDisplacementEnabled = false;
+				plug.getValue(isDisplacementEnabled);
+
+				if (isDisplacementEnabled)
+				{
+					float minHeight = 0;
+					float maxHeight = 0;
+					int subdivision = 0;
+					float creaseWeight = 0;
+					int boundary = RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_AND_CORNER;
+					frw::Value mapValue;
+
+					plug = shaderNode.findPlug("displacementMin");
+					if (!plug.isNull())
+						plug.getValue(minHeight);
+
+					plug = shaderNode.findPlug("displacementMax");
+					if (!plug.isNull())
+						plug.getValue(maxHeight);
+
+					plug = shaderNode.findPlug("displacementSubdiv");
+					if (!plug.isNull())
+						plug.getValue(subdivision);
+
+					plug = shaderNode.findPlug("displacementCreaseWeight");
+					if (!plug.isNull())
+						plug.getValue(creaseWeight);
+
+					auto scope = Scope();
+					mapValue = scope.GetConnectedValue(shaderNode.findPlug("displacementMap"));
+					bool haveMap = mapValue.IsNode();
+
+					plug = shaderNode.findPlug("displacementBoundary");
+					if (!plug.isNull())
+					{
+						int n = 0;
+						if (MStatus::kSuccess == plug.getValue(n))
+						{
+							FireMaya::Displacement::Type b = static_cast<FireMaya::Displacement::Type>(n);
+							if (b == FireMaya::Displacement::kDisplacement_EdgeAndCorner)
+							{
+								boundary = RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_AND_CORNER;
+							}
+							else
+							{
+								boundary = RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_ONLY;
+							}
+						}
+					}
+
+					if (haveMap)
+					{
+						shape.SetDisplacement(mapValue, minHeight, maxHeight);
+						shape.SetSubdivisionFactor(subdivision);
+						shape.SetSubdivisionCreaseWeight(creaseWeight);
+						shape.SetSubdivisionBoundaryInterop(boundary);
+
+						haveDisplacement = true;
+					}
+				}
+			}
+		}
+
 		if (displacement)
 		{
 			float minHeight = 0;
