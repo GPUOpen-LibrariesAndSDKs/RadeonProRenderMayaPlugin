@@ -861,6 +861,13 @@ namespace frw
 			checkStatus(res);
 #endif
 		}
+
+		void SetLightShapeVisibilityEx(bool visible)
+		{
+			auto res = rprShapeSetVisibilityEx(Handle(), "visible.light", visible);
+			checkStatus(res);
+		}
+
 		Shape CreateInstance(Context context) const;
 		void SetTransform(const float* tm, bool transpose = false)
 		{
