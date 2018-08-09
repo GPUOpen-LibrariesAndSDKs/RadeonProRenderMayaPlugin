@@ -1132,9 +1132,34 @@ void FireRenderContext::RemoveRenderObject(const MObject& ob)
 			auto dagPath = frNode->DagPath();
 			if (!dagPath.isValid() || dagPath.node() == ob || dagPath.transform() == ob)
 			{
+				// remove object from dag path cache
+				FireRenderObject* pRobj = getRenderObject(ob);
+				if (pRobj != nullptr)
+				{
+					MDagPath tmpPath;
+					bool found = GetNodePath(tmpPath, pRobj->GetUuid());
+
+					if (found)
+					{
+						m_nodePathCache.erase(pRobj->GetUuid());
+					}
+				}
+
+				// remove object from main meshes cache
+				std::string uuid = getNodeUUid(ob);
+
+				auto found = m_mainMeshesDictionary.find(uuid);
+
+				if (found != m_mainMeshesDictionary.end())
+				{
+					m_mainMeshesDictionary.erase(uuid);
+				}
+
+				// remove object from scene
 				frNode->detachFromScene();
 				it = m_sceneObjects.erase(it);
 				setDirty();
+
 				continue;
 			}
 		}
