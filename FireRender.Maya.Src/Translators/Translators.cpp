@@ -501,7 +501,7 @@ namespace FireMaya
 
 			frlight.areaLight.SetPrimaryVisibility(shapeVisibility);
 			frlight.areaLight.SetShadowFlag(shapeVisibility && areaLightData.shadowsEnabled);
-			frlight.areaLight.SetReflectionVisibility(shapeVisibility);
+			frlight.areaLight.SetLightShapeVisibilityEx(shapeVisibility);
 		}
 
 		return true;
