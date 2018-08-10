@@ -563,9 +563,17 @@ void FireRenderGlobals::setupRenderDevices()
 
 	// setup hardware cpu cores count
 	unsigned concurentThreadsSupported = std::thread::hardware_concurrency();
-	if (concurentThreadsSupported == 0)
+
+	int minThreadCount = 2;
+	int maxThreadCount = 128;
+
+	if (concurentThreadsSupported < minThreadCount)
 	{
-		concurentThreadsSupported = 1;
+		concurentThreadsSupported = minThreadCount;
+	}
+	else if (concurentThreadsSupported > maxThreadCount)
+	{
+		concurentThreadsSupported = maxThreadCount;
 	}
 
 	if (!FireRenderGlobals::isOptionVarExist("RPR_CPUThreadCount"))
@@ -598,6 +606,8 @@ bool FireRenderGlobals::isOverrideThreadCount()
 
 int FireRenderGlobals::getCPUThreadCount()
 {
+
+
 	int val;
 	MGlobal::executeCommand("optionVar -q RPR_CPUThreadCount", val);
 
