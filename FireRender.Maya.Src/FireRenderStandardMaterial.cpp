@@ -729,12 +729,6 @@ MStatus FireMaya::StandardMaterial::initialize()
 	ADD_ATTRIBUTE(Attribute::displacementMap);
 
 	ADD_ATTRIBUTE(Attribute::displacementBoundary);
-	/*MStatus isDisplBAdded = addAttribute(Attribute::displacementBoundary);
-	if (isDisplBAdded != MStatus::kSuccess)
-	{
-		MString errorMsg = isDisplBAdded.errorString();
-		int debugi = 1;
-	}*/
 #if USE_RPRX
 	ADD_ATTRIBUTE(Attribute::normalMap);
 	ADD_ATTRIBUTE(Attribute::normalMapEnable);

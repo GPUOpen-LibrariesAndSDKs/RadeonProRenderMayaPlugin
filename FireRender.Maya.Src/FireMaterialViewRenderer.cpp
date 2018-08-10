@@ -28,6 +28,8 @@ using namespace FireMaya;
 // FireRenderRenderData
 // ================================
 
+const unsigned int defaultMaterialViewRayDepth = 5;
+
 FireRenderRenderData::FireRenderRenderData() :
 	m_context(),
 	m_framebuffer(NULL),
@@ -90,7 +92,10 @@ FireMaterialViewRenderer::FireMaterialViewRenderer() :
 	m_numIteration(1),
 	m_threadCmd(0)
 {
-
+	FireRenderContext& inContext = m_renderData.m_context;
+	frw::Context context = inContext.GetContext();
+	rpr_context frcontext = context.Handle();
+	rprContextSetParameter1u(frcontext, "maxRecursion", defaultMaterialViewRayDepth);
 }
 
 FireMaterialViewRenderer::~FireMaterialViewRenderer()
