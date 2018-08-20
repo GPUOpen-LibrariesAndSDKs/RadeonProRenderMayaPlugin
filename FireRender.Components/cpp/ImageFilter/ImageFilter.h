@@ -113,7 +113,7 @@ public:
 
 class RifContextGPUMetal final : public RifContextWrapper
 {
-	const rif_processor_type rifProcessorType = RIF_PROCESSOR_CPU;
+	const rif_processor_type rifProcessorType = RIF_PROCESSOR_GPU;
 	const rif_backend_api_type rifBackendApiType = RIF_BACKEND_API_METAL;
     
 public:
