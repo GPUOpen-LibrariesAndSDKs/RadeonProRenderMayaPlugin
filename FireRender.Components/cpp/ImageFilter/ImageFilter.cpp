@@ -6,7 +6,19 @@
 #include <cassert>
 #include <exception>
 
-inline int int_cast(size_t x) { return (int)x; }
+static bool HasGpuContext(rpr_creation_flags contextFlags)
+{
+#define GPU(x) RPR_CREATION_FLAGS_ENABLE_GPU##x
+
+	rpr_creation_flags gpuMask = GPU(0) | GPU(1) | GPU(2) | GPU(3) | GPU(4) | GPU(5) | GPU(6) | GPU(7) |
+		GPU(8) | GPU(9) | GPU(10) | GPU(11) | GPU(12) | GPU(13) | GPU(14) | GPU(15);
+
+#undef GPU
+
+	bool hasGpuContext = (contextFlags & gpuMask) != 0;
+
+	return hasGpuContext;
+}
 
 ImageFilter::ImageFilter(const rpr_context rprContext, std::uint32_t width, std::uint32_t height) :
 	mWidth(width),
@@ -19,17 +31,17 @@ ImageFilter::ImageFilter(const rpr_context rprContext, std::uint32_t width, std:
 	if (RPR_SUCCESS != rprStatus)
 		throw std::runtime_error("RPR denoiser failed to get context parameters.");
 
-	if (contextFlags & RPR_CREATION_FLAGS_ENABLE_CPU)
-	{
-		mRifContext.reset( new RifContextCPU(rprContext) );
-	}
-	else if (contextFlags & RPR_CREATION_FLAGS_ENABLE_METAL)
+	if (contextFlags & RPR_CREATION_FLAGS_ENABLE_METAL)
 	{
 		mRifContext.reset( new RifContextGPUMetal(rprContext) );
 	}
+	else if (HasGpuContext(contextFlags))
+	{
+		mRifContext.reset(new RifContextGPU(rprContext));
+	}
 	else
 	{
-		mRifContext.reset( new RifContextGPU(rprContext) );
+		mRifContext.reset(new RifContextCPU(rprContext));
 	}
 
 	rif_image_desc desc = { mWidth, mHeight, 1, mWidth, mWidth * mHeight, 4, RIF_COMPONENT_TYPE_FLOAT32 };
@@ -545,18 +557,21 @@ void RifFilterBilateral::AttachFilter(const RifContextWrapper* rifContext)
 		sigmas.push_back(input.second.mSigma);
 	}
 
-	rif_int rifStatus = rifImageFilterSetParameterImageArray(mRifImageFilterHandle, "inputs", &inputImages[0], int_cast(inputImages.size()));
+	rif_int rifStatus = rifImageFilterSetParameterImageArray( mRifImageFilterHandle, "inputs", &inputImages[0],
+		static_cast<rif_int>( inputImages.size() ) );
 	assert(RIF_SUCCESS == rifStatus);
 
 	if (RIF_SUCCESS == rifStatus)
 	{
-		rifStatus = rifImageFilterSetParameterFloatArray(mRifImageFilterHandle, "sigmas", &sigmas[0], int_cast(sigmas.size()));
+		rifStatus = rifImageFilterSetParameterFloatArray( mRifImageFilterHandle, "sigmas", &sigmas[0],
+			static_cast<rif_int>( sigmas.size() ) );
 		assert(RIF_SUCCESS == rifStatus);
 	}
 
 	if (RIF_SUCCESS == rifStatus)
 	{
-		rifStatus = rifImageFilterSetParameter1u(mRifImageFilterHandle, "inputsNum", int_cast(inputImages.size()));
+		rifStatus = rifImageFilterSetParameter1u( mRifImageFilterHandle, "inputsNum",
+			static_cast<rif_int>( inputImages.size() ) );
 		assert(RIF_SUCCESS == rifStatus);
 	}
 
