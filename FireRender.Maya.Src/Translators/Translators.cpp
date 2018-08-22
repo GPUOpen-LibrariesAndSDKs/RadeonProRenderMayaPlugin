@@ -366,7 +366,7 @@ namespace FireMaya
 			physicalLightData.areaLength = 1.0f;
 
 			physicalLightData.shadowsEnabled = true;
-			physicalLightData.shadowsSoftness = 1.0f;
+			physicalLightData.shadowsSoftness = 0.0f;
 
 			assert(mstatus == MStatus::kSuccess);
 
