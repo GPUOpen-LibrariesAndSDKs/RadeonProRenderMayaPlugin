@@ -185,7 +185,8 @@ void FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 			int pixel_index = x + y * width;
 
 			float* pixel = pixels_for_oiio.data() + pixel_size * pixel_index;
-			for (int i = 0; i != RPR_AOV_MAX; ++i)
+
+			for (int i = 0; i != aovs.getNumberOfAOVs(); ++i)
 			{
 				FireRenderAOV& aov = aovs.getAOV(i);
 				int aov_component_count = aovs_component_count[i];
