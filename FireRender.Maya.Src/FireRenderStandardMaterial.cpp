@@ -482,7 +482,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
 
-	Attribute::refractionWeight = nAttr.create("refractWeight", "refl", MFnNumericData::kFloat, 0.0);
+	Attribute::refractionWeight = nAttr.create("refractWeight", "refl", MFnNumericData::kFloat, 1.0);
 	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 1.0);
 
@@ -518,11 +518,11 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
 
-	Attribute::emissiveWeight = nAttr.create("emissiveWeight", "emw", MFnNumericData::kFloat, 0.0);
+	Attribute::emissiveWeight = nAttr.create("emissiveWeight", "emw", MFnNumericData::kFloat, 1.0);
 	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 1.0);
 
-	Attribute::emissiveIntensity = nAttr.create("emissiveIntensity", "emi", MFnNumericData::kFloat, 0.0);
+	Attribute::emissiveIntensity = nAttr.create("emissiveIntensity", "emi", MFnNumericData::kFloat, 1.0);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0.0);
 	nAttr.setSoftMax(10.0);
@@ -532,7 +532,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 #endif
 
 	// Material parameters
-	Attribute::transparencyLevel = nAttr.create("transparencyLevel", "trl", MFnNumericData::kFloat, 0.0);
+	Attribute::transparencyLevel = nAttr.create("transparencyLevel", "trl", MFnNumericData::kFloat, 1.0);
 	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 1.0);
 
