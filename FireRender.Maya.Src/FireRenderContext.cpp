@@ -1141,7 +1141,14 @@ void FireRenderContext::RemoveRenderObject(const MObject& ob)
 	{
 		if (auto frNode = dynamic_cast<FireRenderNode*>(it->second.get()))
 		{
-			auto dagPath = frNode->DagPath();
+			MDagPath dagPath;
+
+			// it is unsafe to call DagPath for the object which has been just removed from scene (crash may occur)
+			if (frNode->Object() != ob)
+			{
+				dagPath = frNode->DagPath();
+			}
+
 			if (!dagPath.isValid() || dagPath.node() == ob || dagPath.transform() == ob)
 			{
 				// remove object from dag path cache
