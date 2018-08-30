@@ -63,7 +63,6 @@ global proc AERPRGlobalsTemplate( string $nodeName )
     editorTemplate -endLayout;
 	editorTemplate -beginLayout "Sampling" -collapse 0;
 		editorTemplate -addControl "samples";
-		editorTemplate -addControl "cellSize";
 	editorTemplate -endLayout;
 	editorTemplate -beginLayout "Filtering" -collapse 0;
 		editorTemplate -addControl "filter";

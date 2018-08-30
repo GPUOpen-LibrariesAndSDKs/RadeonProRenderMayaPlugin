@@ -56,8 +56,6 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	completionCriteriaSeconds(0),
 	completionCriteriaIterations(0),
 	textureCompression(false),
-	cellsizeProduction(1.0f),
-	cellsizeViewport(1.0f),
 	iterations(64),
 	mode(0),
 	giClampIrradiance(true),
@@ -177,14 +175,6 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("samplesViewport");
 		if (!plug.isNull())
 			samplesViewport = plug.asShort();
-
-		plug = frGlobalsNode.findPlug("cellSize");
-		if (!plug.isNull())
-			cellsizeProduction = plug.asFloat();
-
-		plug = frGlobalsNode.findPlug("cellSizeViewport");
-		if (!plug.isNull())
-			cellsizeViewport = plug.asFloat();
 
 		plug = frGlobalsNode.findPlug("filter");
 		if (!plug.isNull())
@@ -393,14 +383,6 @@ short FireRenderGlobalsData::getMaxRayDepth(const FireRenderContext& context) co
 		return maxRayDepthProduction;
 }
 
-rpr_uint FireRenderGlobalsData::getCellSize(const FireRenderContext& context) const
-{
-	if (context.isInteractive())
-		return static_cast<rpr_uint>(cellsizeViewport);
-	else
-		return static_cast<rpr_uint>(cellsizeProduction);
-}
-
 short FireRenderGlobalsData::getSamples(const FireRenderContext& context) const
 {
 	if (context.isInteractive())
@@ -585,10 +567,7 @@ void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disa
 	frstatus = rprContextSetParameter1u(frcontext, "imagefilter.type", filterType);
 	checkStatus(frstatus);
 
-	frstatus = rprContextSetParameter1u(frcontext, "aacellsize", getCellSize(inContext));
-	checkStatus(frstatus);
-
-	frstatus = rprContextSetParameter1u(frcontext, "aasamples", getSamples(inContext));
+	frstatus = rprContextSetParameter1u(frcontext, "iterations", getSamples(inContext));
 	checkStatus(frstatus);
 
 	frstatus = rprContextSetParameter1f(frcontext, "pdfthreshold", 0.0000f);

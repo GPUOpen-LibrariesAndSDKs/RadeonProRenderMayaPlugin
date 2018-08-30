@@ -31,7 +31,6 @@ namespace
 		MObject giClampIrradianceValue;
 
 		MObject AASampleCountProduction;
-		MObject AACellSizeProduction;
 
 		// max depths
 		MObject MaxRayDepthProduction;
@@ -45,7 +44,6 @@ namespace
 		MObject RaycastEpsilon;
 
 		MObject AASampleCountViewport;
-		MObject AACellSizeViewport;
 		MObject MaxRayDepthViewport;
 
 		MObject AAFilter;
@@ -238,11 +236,6 @@ MStatus FireRenderGlobals::initialize()
 	nAttr.setMin(1);
 	nAttr.setMax(32);
 
-	Attribute::AACellSizeProduction = nAttr.create("cellSize", "cs", MFnNumericData::kShort, 4, &status);
-	MAKE_INPUT(nAttr);
-	Attribute::AACellSizeViewport = nAttr.create("cellSizeViewport", "csV", MFnNumericData::kShort, 4, &status);
-	MAKE_INPUT(nAttr);
-
 	Attribute::AAFilter = eAttr.create("filter", "f", kMitchellFilter, &status);
 	eAttr.addField("Box", kBoxFilter);
 	eAttr.addField("Triangle", kTriangleFilter);
@@ -413,11 +406,9 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradiance));
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradianceValue));
 	CHECK_MSTATUS(addAttribute(Attribute::AASampleCountProduction));
-	CHECK_MSTATUS(addAttribute(Attribute::AACellSizeProduction));
 	CHECK_MSTATUS(addAttribute(Attribute::MaxRayDepthProduction));
 	CHECK_MSTATUS(addAttribute(Attribute::RaycastEpsilon));
 	CHECK_MSTATUS(addAttribute(Attribute::AASampleCountViewport));
-	CHECK_MSTATUS(addAttribute(Attribute::AACellSizeViewport));
 	CHECK_MSTATUS(addAttribute(Attribute::MaxRayDepthViewport));
 	CHECK_MSTATUS(addAttribute(Attribute::AAFilter));
 	CHECK_MSTATUS(addAttribute(Attribute::AAGridSize));

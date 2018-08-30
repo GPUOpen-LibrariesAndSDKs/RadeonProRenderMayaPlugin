@@ -78,22 +78,22 @@ def openDocumentation(data):
     mel.eval('launch -web \"https://radeon-prorender.github.io/maya/\";')
 
 def setRenderProductionQualityHigh(data):
-    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresets\" 2;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepth\" 25;\n\tsetAttr \"RadeonProRenderGlobals.samples\" 16;\n\tsetAttr \"RadeonProRenderGlobals.cellSize\" 8;\n}')
+    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresets\" 2;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepth\" 25;\n\tsetAttr \"RadeonProRenderGlobals.samples\" 16;}')
 
 def setRenderProductionQualityMedium(data):
-    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresets\" 1;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepth\" 15;\n\tsetAttr \"RadeonProRenderGlobals.samples\" 8;\n\tsetAttr \"RadeonProRenderGlobals.cellSize\" 4;\n}')
+    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresets\" 1;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepth\" 15;\n\tsetAttr \"RadeonProRenderGlobals.samples\" 8;}')
 
 def setRenderProductionQualityLow(data):
-    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresets\" 0;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepth\" 5;\n\tsetAttr \"RadeonProRenderGlobals.samples\" 1;\n\tsetAttr \"RadeonProRenderGlobals.cellSize\" 1;\n}')
+    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresets\" 0;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepth\" 5;\n\tsetAttr \"RadeonProRenderGlobals.samples\" 1;}')
 
 def setRenderViewportQualityHigh(data):
-    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresetsViewport\" 2;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepthViewport\" 25;\n\tsetAttr \"RadeonProRenderGlobals.samplesViewport\" 16;\n\tsetAttr \"RadeonProRenderGlobals.cellSizeViewport\" 8;\n}')
+    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresetsViewport\" 2;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepthViewport\" 25;\n\tsetAttr \"RadeonProRenderGlobals.samplesViewport\" 16;}')
 
 def setRenderViewportQualityMedium(data):
-    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresetsViewport\" 1;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepthViewport\" 15;\n\tsetAttr \"RadeonProRenderGlobals.samplesViewport\" 8;\n\tsetAttr \"RadeonProRenderGlobals.cellSizeViewport\" 4;\n}')
+    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresetsViewport\" 1;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepthViewport\" 15;\n\tsetAttr \"RadeonProRenderGlobals.samplesViewport\" 8;}')
 
 def setRenderViewportQualityLow(data):
-    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresetsViewport\" 0;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepthViewport\" 5;\n\tsetAttr \"RadeonProRenderGlobals.samplesViewport\" 1;\n\tsetAttr \"RadeonProRenderGlobals.cellSizeViewport\" 1;\n}')
+    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresetsViewport\" 0;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepthViewport\" 5;\n\tsetAttr \"RadeonProRenderGlobals.samplesViewport\" 1;}')
 
 def createFireRenderMenu():
     gMainWindow = "MayaWindow";

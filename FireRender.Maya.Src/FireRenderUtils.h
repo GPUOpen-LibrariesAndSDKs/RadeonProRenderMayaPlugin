@@ -98,10 +98,6 @@ public:
 
 	bool textureCompression;
 
-	// AA cell size
-	float cellsizeProduction;
-	float cellsizeViewport;
-
 	// Iterations
 	int iterations;
 
@@ -204,7 +200,6 @@ public:
 
 private:
 	short getMaxRayDepth(const FireRenderContext& context) const;
-	rpr_uint getCellSize(const FireRenderContext& context) const;
 	short getSamples(const FireRenderContext& context) const;
 
 	void readDenoiserParameters(const MFnDependencyNode& frGlobalsNode);
