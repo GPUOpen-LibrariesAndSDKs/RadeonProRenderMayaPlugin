@@ -434,15 +434,12 @@ global proc AERPRQualityPresetsViewport( ){
 	if ($preset == 0){
 		setAttr "RadeonProRenderGlobals.maxRayDepthViewport" 5;
 		setAttr "RadeonProRenderGlobals.samplesViewport" 1;
-		setAttr "RadeonProRenderGlobals.cellSizeViewport" 1;
 	}else if ($preset == 1){
 		setAttr "RadeonProRenderGlobals.maxRayDepthViewport" 15;
 		setAttr "RadeonProRenderGlobals.samplesViewport" 8;
-		setAttr "RadeonProRenderGlobals.cellSizeViewport" 4;
 	}else if ($preset == 2){
 		setAttr "RadeonProRenderGlobals.maxRayDepthViewport" 25;
 		setAttr "RadeonProRenderGlobals.samplesViewport" 16;
-		setAttr "RadeonProRenderGlobals.cellSizeViewport" 8;
 	}
 }
 
@@ -451,15 +448,12 @@ global proc AERPRQualityPresetsProduction( ){
 	if ($preset == 0){
 		setAttr "RadeonProRenderGlobals.maxRayDepth" 5;
 		setAttr "RadeonProRenderGlobals.samples" 1;
-		setAttr "RadeonProRenderGlobals.cellSize" 1;
 	}else if ($preset == 1){
 		setAttr "RadeonProRenderGlobals.maxRayDepth" 15;
 		setAttr "RadeonProRenderGlobals.samples" 8;
-		setAttr "RadeonProRenderGlobals.cellSize" 4;
 	}else if ($preset == 2){
 		setAttr "RadeonProRenderGlobals.maxRayDepth" 25;
 		setAttr "RadeonProRenderGlobals.samples" 16;
-		setAttr "RadeonProRenderGlobals.cellSize" 8;
 	}
 }
 
