@@ -11,6 +11,7 @@
 #include <maya/MColor.h>
 #include <maya/MDataHandle.h>
 #include <maya/MFloatVector.h>
+#include <maya/MDistance.h>
 
 #include "FireRenderPBRMaterial.h"
 
@@ -124,7 +125,7 @@ namespace FireMaya
 
 		AddFloatAttribute(Attribute::glass, "glass", "g", 0.0f, 1.0f, 0.0f);
 		AddFloatAttribute(Attribute::glassIOR, "glassIOR", "gi", 0.0f, 2.0f, 1.5f);
-		AddColorAttribute(Attribute::subsurfaceWeight, "subsurfaceWeight", "ssw", true, SSColourDefault);
+		AddFloatAttribute(Attribute::subsurfaceWeight, "subsurfaceWeight", "ssw", 0.0f, 1.0f, 0.0f);
 		AddColorAttribute(Attribute::subsurfaceColor, "subsurfaceColor", "ssc", true, SSColourDefault);
 
 		Attribute::subsurfaceRadius = nAttr.create("subsurfaceRadius", "ssr", MFnNumericData::k3Float);
@@ -186,68 +187,78 @@ namespace FireMaya
 
 		frw::Shader shader(scope.MaterialSystem(), scope.Context(), RPRX_MATERIAL_UBER);
 
+		MDistance::Unit sceneUnits = MDistance::uiUnit();
+		MDistance distance(1.0, sceneUnits);
+		float scale_multiplier = distance.asMeters();
+
 		auto ms = scope.MaterialSystem();
 
-		// Setting RPRX_UBER_MATERIAL_DIFFUSE_COLOR
+		// Diffuse (base color)
 		frw::Value value = scope.GetValue(shaderNode.findPlug(Attribute::baseColor));
 		frw::Value diffuseColor = value;
+		shader.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_WEIGHT, 1.0f);
 		shader.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_COLOR, value);
 
-		// Setting RPRX_UBER_MATERIAL_DIFFUSE_WEIGHT
-		value = scope.GetValue(shaderNode.findPlug(Attribute::specular));
-
-		shader.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_WEIGHT, value);
-
-		// Setting RPRX_UBER_MATERIAL_REFLECTION_ROUGHNESS
-		value = scope.GetValue(shaderNode.findPlug(Attribute::roughness));
-		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_ROUGHNESS, value);
-		
-		// Setting Metalness
+		// Metalness
 		value = scope.GetValue(shaderNode.findPlug(Attribute::metalness));
+		if (value.NonZero())
+		{
+			shader.xSetParameterU(RPRX_UBER_MATERIAL_REFLECTION_MODE, RPRX_UBER_MATERIAL_REFLECTION_MODE_METALNESS);
+			shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_METALNESS, value);
+		}
+		else
+		{
+			shader.xSetParameterU(RPRX_UBER_MATERIAL_REFLECTION_MODE, RPRX_UBER_MATERIAL_REFLECTION_MODE_PBR);
+			shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_IOR, 0.0f);
+		}
 
-		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_COLOR, diffuseColor);
-		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_WEIGHT, 1.0f);
-		shader.xSetParameterU(RPRX_UBER_MATERIAL_REFLECTION_MODE, RPRX_UBER_MATERIAL_REFLECTION_MODE_METALNESS);
-		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_METALNESS, value);
+		// Specular (reflection weight)
+		value = scope.GetValue(shaderNode.findPlug(Attribute::specular));
+		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_WEIGHT, value);
+		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_COLOR, frw::Value(1.0f, 1.0f, 1.0f));
 
-		// Setting Material Normal
+		// Roughness
+		value = scope.GetValue(shaderNode.findPlug(Attribute::roughness));
+		shader.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_ROUGHNESS, value);
+		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_ROUGHNESS, value);
+		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_ROUGHNESS, value);
+
+		// Normal
 		value = scope.GetValue(shaderNode.findPlug(Attribute::normalMap));
-
 		int type = value.GetNodeType();
 		if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
 		{
 #if (RPR_API_VERSION < 0x010031000)
 			shader.xSetValue(RPRX_UBER_MATERIAL_NORMAL, value);
+#else
+			shader.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_NORMAL, value);
+			shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_NORMAL, value);
 #endif
 		}
 		else if (type >= 0)
 		{
 			ErrorPrint("%s NormalMap: invalid node type %d\n", shaderNode.name().asChar(), value.GetNodeType());
 		}
-		
-		// Setting Emissive
-		// Set EMISSION_COLOR as intensity. Use multiplier for that
 
+		// Glass (refraction weight)
+		value = scope.GetValue(shaderNode.findPlug(Attribute::glass));
+		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_WEIGHT, value);
+		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_COLOR, frw::Value(1.0f, 1.0f, 1.0f));
+		//shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_ABSORPTION_COLOR, frw::Value(1.0f, 1.0f, 1.0f));
+
+		// Glass IOR (refraction IOR)
+		value = scope.GetValue(shaderNode.findPlug(Attribute::glassIOR));
+		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_IOR, value);
+		
+		// Emissive
+		// Set EMISSION_COLOR as intensity. Use multiplier for that
 		frw::Value emissiveWeightValue = scope.GetValue(shaderNode.findPlug(Attribute::emissiveWeight));
 		frw::Value clampedWeight = ms.ValueClamp(emissiveWeightValue);
-
 		shader.xSetValue(RPRX_UBER_MATERIAL_EMISSION_WEIGHT, clampedWeight);
 
 		value = scope.GetValue(shaderNode.findPlug(Attribute::emissiveColor));
-		value = ms.ValueMul(emissiveWeightValue, value);
-		
+		value = ms.ValueMul(emissiveWeightValue, value);		
 		shader.xSetValue(RPRX_UBER_MATERIAL_EMISSION_COLOR, value);
-
-		// Glass (refraction weight)
-		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_COLOR, diffuseColor);
-
-		value = scope.GetValue(shaderNode.findPlug(Attribute::glass));
-		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_WEIGHT, value);
-
-		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_ROUGHNESS, 0.0f);
-
-		value = scope.GetValue(shaderNode.findPlug(Attribute::glassIOR));
-		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_IOR, value);
 
 		// SSS
 		value = scope.GetValue(shaderNode.findPlug(Attribute::subsurfaceWeight));
@@ -256,8 +267,11 @@ namespace FireMaya
 		value = scope.GetValue(shaderNode.findPlug(Attribute::subsurfaceColor));
 		shader.xSetValue(RPRX_UBER_MATERIAL_SSS_SCATTER_COLOR, value);
 
-		value = scope.GetValue(shaderNode.findPlug(Attribute::subsurfaceRadius));
+		value = scope.GetValue(shaderNode.findPlug(Attribute::subsurfaceRadius)) * scale_multiplier;
 		shader.xSetValue(RPRX_UBER_MATERIAL_SSS_SCATTER_DISTANCE, value);
+
+		shader.xSetValue(RPRX_UBER_MATERIAL_SSS_SCATTER_DIRECTION, 0.0);
+		shader.xSetParameterU(RPRX_UBER_MATERIAL_SSS_MULTISCATTER, RPR_TRUE);
 
 		return shader;
 	}
