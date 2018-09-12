@@ -917,7 +917,9 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 
 	MFnDependencyNode shaderNode(node);
 
-	auto id = MayaValueId(shaderNode.typeId().id());
+	MTypeId mayaId = shaderNode.typeId();
+	unsigned int intId = mayaId.id();
+	auto id = MayaValueId(intId);
 	auto name = shaderNode.typeName();
 
 	// handle native fire render value nodes
@@ -1007,7 +1009,26 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 		frw::Value contrast = GetValue(shaderNode.findPlug("contrast"));
 
 		return materialSystem.ValueBlend(color2, color1, map); // Reverse blend to match tile alignment
-	}
+	}break;
+
+	case MayaReverseMap:
+	{
+		MPlugArray nodes;
+		shaderNode.getConnections(nodes);
+
+		for (unsigned int idx = 0; idx < nodes.length(); ++idx)
+		{
+			const MPlug& connection = nodes[idx];
+			const MString partialName = connection.partialName();
+
+			if (partialName == "i") // name of "input" of the node
+			{
+				frw::Value mapValue = GetValue(connection);
+				frw::Value invertedMapValue = frw::Value(1) - mapValue;
+				return invertedMapValue;
+			}
+		}
+	}break;
 
 	default:
 		if (FireMaya::TypeId::IsValidId(id))

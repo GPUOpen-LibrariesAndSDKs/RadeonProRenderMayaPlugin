@@ -103,6 +103,7 @@ namespace FireMaya
 		MayaBump2d = 0x5242554D,
 		MayaNodeRemapHSV = 0x524d4853,
 		MayaNodeGammaCorrect = 0x5247414d,
+		MayaReverseMap = 0x52525653,
 
 		// arithmetic
 		MayaAddDoubleLinear = 0x4441444c,
@@ -169,10 +170,12 @@ namespace FireMaya
 	{
 	public:
 		virtual frw::Shader GetShader(FireMaya::Scope& scope) = 0;
+
 		virtual frw::Shader GetVolumeShader( FireMaya::Scope& scope )	// most materials do not have volume shaders
 		{
 			return nullptr;
 		};
+
 		virtual MObject GetDisplacementNode()
 		{
 			return MObject::kNullObj;
