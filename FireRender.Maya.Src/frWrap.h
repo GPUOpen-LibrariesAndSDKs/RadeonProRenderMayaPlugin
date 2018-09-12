@@ -850,16 +850,24 @@ namespace frw
 		void SetPrimaryVisibility(bool visible)
 		{
 #if RPR_API_VERSION != 0x010000110
-			auto res = rprShapeSetVisibilityPrimaryOnly(Handle(), visible);
+			auto res = rprShapeSetVisibilityEx(Handle(), "visible.primary", visible);
 			checkStatus(res);
 #endif
 		}
 		void SetReflectionVisibility(bool visible)
 		{
-#if RPR_API_VERSION != 0x010000110	// AMDMAX-617
-			auto res = rprShapeSetVisibilityInSpecular(Handle(), visible);
+			auto res = rprShapeSetVisibilityEx(Handle(), "visible.reflection", visible);
 			checkStatus(res);
-#endif
+			res = rprShapeSetVisibilityEx(Handle(), "visible.reflection.glossy", visible);
+			checkStatus(res);
+		}
+
+		void setRefractionVisibility(bool visible)
+		{
+			auto res = rprShapeSetVisibilityEx(Handle(), "visible.refraction", visible);
+			checkStatus(res);
+			res = rprShapeSetVisibilityEx(Handle(), "visible.refraction.glossy", visible);
+			checkStatus(res);
 		}
 
 		void SetLightShapeVisibilityEx(bool visible)
@@ -904,7 +912,7 @@ namespace frw
 #endif
 		void SetShadowFlag(bool castsShadows)
 		{
-			auto res = rprShapeSetShadow(Handle(), castsShadows);
+			auto res = rprShapeSetVisibilityEx(Handle(), "visible.shadow", castsShadows);
 			checkStatus(res);
 		}
 
