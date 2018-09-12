@@ -275,6 +275,7 @@ public:
 	void setRenderStats(MDagPath dagPath);
 	void setVisibility(bool visibility);
 	void setReflectionVisibility(bool reflectionVisibility);
+	void setRefractionVisibility(bool refractionVisibility);
 	void setCastShadows(bool castShadow);
 	void setPrimaryVisibility(bool primaryVisibility);
 

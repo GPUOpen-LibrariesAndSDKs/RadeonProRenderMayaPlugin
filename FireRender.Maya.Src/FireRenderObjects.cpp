@@ -596,6 +596,10 @@ void FireRenderMesh::setRenderStats(MDagPath dagPath)
 	bool visibleInReflections;
 	visibleInReflectionsPlug.getValue(visibleInReflections);
 
+	MPlug visibleInRefractionsPlug = depNode.findPlug("visibleInRefractions");
+	bool visibleInRefractions;
+	visibleInRefractionsPlug.getValue(visibleInRefractions);
+
 	MPlug castsShadowsPlug = depNode.findPlug("castsShadows");
 	bool castsShadows;
 	castsShadowsPlug.getValue(castsShadows);
@@ -606,11 +610,12 @@ void FireRenderMesh::setRenderStats(MDagPath dagPath)
 
 	bool isVisisble = IsMeshVisible(dagPath, context());
 	setVisibility(isVisisble);
+
 	setPrimaryVisibility(primaryVisibility);
 
-	//TODO: doesn't seem to be working just right
-	//see also AMDMAX-617 and AMDMAX-588
-	//setReflectionVisibility(visibleInReflections);
+	setReflectionVisibility(visibleInReflections);
+
+	setRefractionVisibility(visibleInRefractions);
 
 	setCastShadows(castsShadows);
 }
@@ -658,6 +663,16 @@ void FireRenderMesh::setReflectionVisibility(bool reflectionVisibility)
 			shape.SetReflectionVisibility(reflectionVisibility);
 	}
 }
+
+void FireRenderMesh::setRefractionVisibility(bool refractionVisibility)
+{
+	for (auto element : m.elements)
+	{
+		if (auto shape = element.shape)
+			shape.setRefractionVisibility(refractionVisibility);
+	}
+}
+
 void FireRenderMesh::setCastShadows(bool castShadow)
 {
 	for (auto element : m.elements)
