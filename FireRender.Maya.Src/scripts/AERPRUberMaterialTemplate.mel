@@ -84,6 +84,7 @@ global proc AEUberCheckEnableRefraction(string $nodeName)
 	editorTemplate -dimControl $nodeName "refractLinkToReflect" ($value == 0);
 	editorTemplate -dimControl $nodeName "refractThinSurface" ($value == 0);
 	editorTemplate -dimControl $nodeName "refractAbsorptionDistance" ($value == 0);
+	editorTemplate -dimControl $nodeName "refractAbsorbColor" ($value == 0);
 	editorTemplate -dimControl $nodeName "refractAllowCaustics" ($value == 0);
 
 	AEUberCheckLinkRefl($nodeName);
@@ -257,6 +258,7 @@ global proc AERPRUberMaterialTemplateNew(string $nodeName)
 		editorTemplate -label "IOR" -addControl "refractIor";
 		editorTemplate -label "Thin Surface" -addControl "refractThinSurface";
 		editorTemplate -label "Absorption Distance" -addControl "refractAbsorptionDistance";
+		editorTemplate -label "Absorption Color" -addControl "refractAbsorbColor";
 		editorTemplate -label "Allow Caustics" -addControl "refractAllowCaustics";
 	editorTemplate -endLayout;
 

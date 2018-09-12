@@ -81,6 +81,7 @@ namespace
 		MObject refractionWeight;
 		MObject refractionRoughness;
 		MObject refractionIOR;
+		MObject refractionAbsorptionColor;
 #if USE_RPRX
 		MObject refractionLinkToReflection;
 		MObject refractionThinSurface;
@@ -482,7 +483,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
 
-	Attribute::refractionWeight = nAttr.create("refractWeight", "refl", MFnNumericData::kFloat, 1.0);
+	Attribute::refractionWeight = nAttr.create("refractWeight", "refw", MFnNumericData::kFloat, 1.0);
 	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 1.0);
 
@@ -495,17 +496,21 @@ MStatus FireMaya::StandardMaterial::initialize()
 	SET_MINMAX(nAttr, 0.0, 10.0);
 
 #if USE_RPRX
-	Attribute::refractionLinkToReflection = nAttr.create("refractLinkToReflect", "reflink", MFnNumericData::kBoolean, 0);
+	Attribute::refractionLinkToReflection = nAttr.create("refractLinkToReflect", "refl", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
 
 	Attribute::refractionThinSurface = nAttr.create("refractThinSurface", "refth", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
 
-	Attribute::refractionAbsorptionDistance = nAttr.create("refractAbsorptionDistance", "refad", MFnNumericData::kFloat, 0);
+	Attribute::refractionAbsorptionDistance = nAttr.create("refractAbsorptionDistance", "refd", MFnNumericData::kFloat, 0);
 	MAKE_INPUT_CONST(nAttr);
 	SET_MINMAX(nAttr, 0.0, 10.0);
 
-	Attribute::refractionAllowCaustics = nAttr.create("refractAllowCaustics", "refac", MFnNumericData::kBoolean, 0);
+	Attribute::refractionAbsorptionColor = nAttr.createColor("refractAbsorbColor", "refa");
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(nAttr.setDefault(0.0f, 0.0f, 0.0f));
+
+	Attribute::refractionAllowCaustics = nAttr.create("refractAllowCaustics", "reac", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
 #endif
 
@@ -713,6 +718,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	ADD_ATTRIBUTE(Attribute::refractionLinkToReflection);
 	ADD_ATTRIBUTE(Attribute::refractionThinSurface);
 	ADD_ATTRIBUTE(Attribute::refractionAbsorptionDistance);
+	ADD_ATTRIBUTE(Attribute::refractionAbsorptionColor);
 	ADD_ATTRIBUTE(Attribute::refractionAllowCaustics);
 #endif
 
@@ -976,6 +982,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFRACTION_WEIGHT, refractionWeight);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFRACTION_ROUGHNESS, refractionRoughness);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFRACTION_IOR, refractionIOR);
+		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFRACTION_ABSORPTION_COLOR, refractionAbsorptionColor);
 #if (RPR_API_VERSION > 0x010030400)
 		frw::Value valueRefractionAbsorptionDistance = GET_VALUE(refractionAbsorptionDistance) * scale_multiplier;
 		material.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_ABSORPTION_DISTANCE, valueRefractionAbsorptionDistance);
