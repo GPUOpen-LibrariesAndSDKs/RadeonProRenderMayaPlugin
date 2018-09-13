@@ -861,7 +861,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_BACKSCATTER_WEIGHT, backscatteringWeight);
 
 		if (GET_BOOL(separateBackscatterColor))
-			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_BACKSCATTER_COLOR, backscatteringWeight);
+			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_BACKSCATTER_COLOR, backscatteringColor);
 #endif
 	}
 	else
@@ -959,7 +959,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 					int type = value.GetNodeType();
 					if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
 					{
-						SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_NORMAL, coatNormal);
+						SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_NORMAL, normalMap);
 					}
 				}
 			}			
