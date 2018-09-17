@@ -100,6 +100,8 @@ private:
 	/** Process selection change. */
 	void CheckSelection();
 
+	/** Set up Out of Core textures parameters for context */
+	void SetupOOC(FireRenderGlobalsData& globals);
 
 private:
 

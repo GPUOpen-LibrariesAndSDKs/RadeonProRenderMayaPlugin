@@ -42,6 +42,8 @@ namespace
 		MObject MaxDepthRefractionGlossy;
 
 		MObject RaycastEpsilon;
+		MObject EnableOOC;
+		MObject TexCacheSize;
 
 		MObject AASampleCountViewport;
 		MObject MaxRayDepthViewport;
@@ -258,6 +260,16 @@ MStatus FireRenderGlobals::initialize()
 	nAttr.setSoftMax(2.0f);
 	nAttr.setMax(10.0f);
 
+	Attribute::EnableOOC = nAttr.create("enableOOC", "ooe", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setReadable(true);
+
+	Attribute::TexCacheSize = nAttr.create("textureCacheSize", "ooc", MFnNumericData::kInt, 512, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(256);
+	nAttr.setSoftMax(8192);
+	nAttr.setMax(100000);
+
 	Attribute::MaxRayDepthViewport = nAttr.create("maxRayDepthViewport", "mrdV", MFnNumericData::kShort, 5, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0);
@@ -408,6 +420,8 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::AASampleCountProduction));
 	CHECK_MSTATUS(addAttribute(Attribute::MaxRayDepthProduction));
 	CHECK_MSTATUS(addAttribute(Attribute::RaycastEpsilon));
+	CHECK_MSTATUS(addAttribute(Attribute::EnableOOC));
+	CHECK_MSTATUS(addAttribute(Attribute::TexCacheSize));
 	CHECK_MSTATUS(addAttribute(Attribute::AASampleCountViewport));
 	CHECK_MSTATUS(addAttribute(Attribute::MaxRayDepthViewport));
 	CHECK_MSTATUS(addAttribute(Attribute::AAFilter));

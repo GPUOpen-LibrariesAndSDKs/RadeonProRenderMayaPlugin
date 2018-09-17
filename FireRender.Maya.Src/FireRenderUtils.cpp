@@ -213,6 +213,14 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			raycastEpsilon = plug.asFloat() / 1000.f;
 
+		plug = frGlobalsNode.findPlug("enableOOC");
+		if (!plug.isNull())
+			enableOOC = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("textureCacheSize");
+		if (!plug.isNull())
+			oocTexCache = plug.asInt();
+
 		plug = frGlobalsNode.findPlug("maxRayDepthViewport");
 		if (!plug.isNull())
 			maxRayDepthViewport = plug.asShort();

@@ -196,6 +196,10 @@ public:
 	// Advanced settings
 	float raycastEpsilon;
 
+	// - out of core textures
+	bool enableOOC;
+	unsigned int oocTexCache;
+
 	DenoiserSettings denoiserSettings;
 
 private:
