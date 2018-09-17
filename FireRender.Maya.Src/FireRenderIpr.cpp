@@ -154,6 +154,8 @@ bool FireRenderIpr::start()
 			return false;
 		}
 
+		SetupOOC(globals);
+
 		m_needsContextRefresh = true;
 		m_context.setResolution(m_width, m_height, true);
 		m_context.setCamera(m_camera, true);
@@ -202,6 +204,24 @@ bool FireRenderIpr::start()
 	}
 
 	return ret;
+}
+
+// -----------------------------------------------------------------------------
+void FireRenderIpr::SetupOOC(FireRenderGlobalsData& globals)
+{
+	frw::Context context = m_context.GetContext();
+	rpr_context frcontext = context.Handle();
+
+	rpr_int frstatus = RPR_SUCCESS;
+
+	if (globals.enableOOC)
+	{
+		rprContextSetParameter1u(frcontext, "ooctexcache", globals.oocTexCache);
+	}
+	else
+	{
+		rprContextSetParameter1u(frcontext, "ooctexcache", 0);
+	}
 }
 
 // -----------------------------------------------------------------------------

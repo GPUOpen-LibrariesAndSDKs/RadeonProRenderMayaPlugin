@@ -883,6 +883,14 @@ global proc updateDenoiserUI()
 	control -edit -enable ($enabledEAW && $enabled) denoiserEAWFrame;
 }
 
+global proc updateOOCUI()
+{
+	int $enabled = `getAttr RadeonProRenderGlobals.enableOOC`;
+
+	// Lock controls and set it to ON state
+	control -edit -enable ($enabled > 0) textureCacheSize;
+}
+
 global proc createFireRenderCameraFrame(string $parent)
 {
 	setUITemplate -pushTemplate attributeEditorTemplate;
@@ -1125,6 +1133,17 @@ global proc createFireRenderQualityTab()
 	attrControlGrp
 		-label "Ray Epsilon(mm)"
 		-attribute "RadeonProRenderGlobals.raycastEpsilon";
+		
+	attrControlGrp
+		-label "Enable Out of Core Textures"
+		-attribute "RadeonProRenderGlobals.enableOOC"
+		-cc updateOOCUI;
+
+	attrControlGrp
+		-label "GPU texture cache (Mb)"
+		-attribute "RadeonProRenderGlobals.textureCacheSize"
+		-cc updateOOCUI
+		textureCacheSize;
 
 	setParent ..;
 
@@ -1135,6 +1154,8 @@ global proc createFireRenderQualityTab()
 		-af fireRenderGlobalsScrollLayout "left" 0
 		-af fireRenderGlobalsScrollLayout "right" 0
 		$parentForm;
+
+	updateOOCUI();
 }
 
 global proc createFireRenderGlobals2Tab()
