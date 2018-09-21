@@ -50,16 +50,12 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 
 	MArgDatabase argData(syntax(), args);
 
-
-
 	// for the moment, the LoadStore library of RPR only supports the export/import of all scene
 	if (  !argData.isFlagSet(kAllFlag)  )
 	{
 		MGlobal::displayError("This feature is not supported.");
 		return MS::kFailure;
 	}
-
-
 
 	MString filePath;
 	if (argData.isFlagSet(kFilePathFlag))
@@ -112,14 +108,13 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		return MS::kFailure;
 	}
 
-
 	if (argData.isFlagSet(kAllFlag))
 	{
 		//initialize
 		FireRenderContext context;
 		context.setCallbackCreationDisabled(true);
-		context.setResolution(36, 24, true);
 		context.buildScene();
+		context.setResolution(36, 24, true);
 
 		MDagPathArray cameras = getRenderableCameras();
 		if ( cameras.length() >= 1 )
@@ -136,6 +131,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			0,0,
 			0,0,
 			0,0);
+
 		if (statuExport != RPR_SUCCESS)
 		{
 			MGlobal::displayError("Unable to export fire render scene\n");
@@ -213,10 +209,6 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 
 		MGlobal::displayError("This feature is not supported.\n");
 		return MS::kFailure;
-
-
-
-		return MS::kSuccess;
 	}
 
 	return MS::kFailure;
