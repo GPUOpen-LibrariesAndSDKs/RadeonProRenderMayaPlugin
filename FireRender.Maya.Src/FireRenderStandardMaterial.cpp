@@ -910,11 +910,11 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		{
 			if (GET_BOOL(normalMapEnable))
 			{
-				frw::Value value = GET_VALUE(reflectNormal);
+				frw::Value value = GET_VALUE(normalMap);
 				int type = value.GetNodeType();
 				if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
 				{
-					SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFLECTION_NORMAL, reflectNormal);
+					SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFLECTION_NORMAL, normalMap);
 				}
 			}
 		}
@@ -938,7 +938,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_IOR, clearCoatIOR);
 
 #if (RPR_API_VERSION > 0x010030400)
-		if (GET_BOOL(coatUseShaderNormal))
+		if (!GET_BOOL(coatUseShaderNormal))
 		{
 			MFnDependencyNode shaderNode(thisMObject());
 			MPlug plug = shaderNode.findPlug(Attribute::coatNormal);
