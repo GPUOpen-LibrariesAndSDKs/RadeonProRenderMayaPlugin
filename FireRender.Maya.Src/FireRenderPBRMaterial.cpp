@@ -197,25 +197,17 @@ namespace FireMaya
 		frw::Value value = scope.GetValue(shaderNode.findPlug(Attribute::baseColor));
 		frw::Value diffuseColor = value;
 		shader.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_WEIGHT, 1.0f);
-		shader.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_COLOR, value);
+		shader.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_COLOR, diffuseColor);
 
 		// Metalness
 		value = scope.GetValue(shaderNode.findPlug(Attribute::metalness));
-		if (value.NonZero())
-		{
-			shader.xSetParameterU(RPRX_UBER_MATERIAL_REFLECTION_MODE, RPRX_UBER_MATERIAL_REFLECTION_MODE_METALNESS);
-			shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_METALNESS, value);
-		}
-		else
-		{
-			shader.xSetParameterU(RPRX_UBER_MATERIAL_REFLECTION_MODE, RPRX_UBER_MATERIAL_REFLECTION_MODE_PBR);
-			shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_IOR, 0.0f);
-		}
+		shader.xSetParameterU(RPRX_UBER_MATERIAL_REFLECTION_MODE, RPRX_UBER_MATERIAL_REFLECTION_MODE_METALNESS);
+		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_METALNESS, value);
 
 		// Specular (reflection weight)
 		value = scope.GetValue(shaderNode.findPlug(Attribute::specular));
 		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_WEIGHT, value);
-		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_COLOR, frw::Value(1.0f, 1.0f, 1.0f));
+		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_COLOR, diffuseColor);
 
 		// Roughness
 		value = scope.GetValue(shaderNode.findPlug(Attribute::roughness));
