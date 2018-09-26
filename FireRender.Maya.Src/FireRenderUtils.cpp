@@ -92,7 +92,8 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	motionBlur(false),
 	motionBlurCameraExposure(0.0f),
 	motionBlurScale(0.0f),
-	cameraType(0)
+	cameraType(0),
+	useMPS(false)
 {
 
 }
@@ -333,6 +334,11 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("cameraType");
 		if (!plug.isNull())
 			cameraType = plug.asShort();
+
+		// Use Metal Performance Shader for MacOS
+		plug = frGlobalsNode.findPlug("useMPS");
+		if (!plug.isNull())
+			useMPS = plug.asBool();
 
 		aovs.readFromGlobals(frGlobalsNode);
 
@@ -617,6 +623,11 @@ void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disa
 
 	frstatus = rprContextSetParameter1f(frcontext, filterAttrName.c_str(), filterSize);
 	checkStatus(frstatus);
+
+#if (RPR_API_VERSION >= 0x010031300)
+	frstatus = rprContextSetParameter1u(frcontext, "metalperformanceshader", useMPS ? 1 : 0);
+	checkStatus(frstatus);
+#endif
 
 	updateTonemapping(inContext, disableWhiteBalance);
 }

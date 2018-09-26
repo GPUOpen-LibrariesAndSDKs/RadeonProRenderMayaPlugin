@@ -78,6 +78,9 @@ namespace
 		MObject qualityPresetsViewport;
 		MObject qualityPresetsProduction;
 
+		// for MacOS only: "Use Metal Performance Shader"
+		MObject useMPS;
+
 		// Denoiser
 		MObject denoiserEnabled;
 		MObject denoiserType;
@@ -406,6 +409,9 @@ MStatus FireRenderGlobals::initialize()
 	eAttr.addField("High", 2);
 	MAKE_INPUT_CONST(eAttr);
 
+	Attribute::useMPS = nAttr.create("useMPS", "umps", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+
 	CHECK_MSTATUS(addAttribute(Attribute::completionCriteriaType));
 	CHECK_MSTATUS(addAttribute(Attribute::completionCriteriaHours));
 	CHECK_MSTATUS(addAttribute(Attribute::completionCriteriaMinutes));
@@ -453,6 +459,7 @@ MStatus FireRenderGlobals::initialize()
 
 	CHECK_MSTATUS(addAttribute(Attribute::qualityPresetsProduction));
 	CHECK_MSTATUS(addAttribute(Attribute::qualityPresetsViewport));
+	CHECK_MSTATUS(addAttribute(Attribute::useMPS));
 
 	CHECK_MSTATUS(addAttribute(m_useGround));
 	CHECK_MSTATUS(addAttribute(m_groundHeight));
