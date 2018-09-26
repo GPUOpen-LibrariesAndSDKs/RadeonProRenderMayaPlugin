@@ -202,6 +202,9 @@ public:
 
 	DenoiserSettings denoiserSettings;
 
+	// Use Metal Performance Shader for MacOS
+	bool useMPS;
+
 private:
 	short getMaxRayDepth(const FireRenderContext& context) const;
 	short getSamples(const FireRenderContext& context) const;
