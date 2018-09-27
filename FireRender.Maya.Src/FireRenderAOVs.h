@@ -60,7 +60,7 @@ public:
 	void readFrameBuffers(FireRenderContext& context, bool flip);
 
 	/** Write the active AOVs to file. */
-	void writeToFile(const MString& filePath, unsigned int imageFormat);
+	void writeToFile(const MString& filePath, unsigned int imageFormat, FireRenderAOV::FileWrittenCallback fileWrittenCallback = nullptr);
 
 	/** Setup render stamp */
 	void setRenderStamp(const MString& renderStamp);

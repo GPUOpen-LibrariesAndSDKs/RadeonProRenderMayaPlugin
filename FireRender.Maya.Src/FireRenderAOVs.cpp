@@ -258,7 +258,7 @@ void FireRenderAOVs::readFrameBuffers(FireRenderContext& context, bool flip)
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderAOVs::writeToFile(const MString& filePath, unsigned int imageFormat)
+void FireRenderAOVs::writeToFile(const MString& filePath, unsigned int imageFormat, FireRenderAOV::FileWrittenCallback fileWrittenCallback)
 {
 	// Check if only the color AOV is active.
 	bool colorOnly = getActiveAOVCount() == 1;
@@ -275,7 +275,9 @@ void FireRenderAOVs::writeToFile(const MString& filePath, unsigned int imageForm
 	else
 	{
 		for (auto& aov : m_aovs)
-			aov.second->writeToFile(filePath, colorOnly, imageFormat);
+		{
+			aov.second->writeToFile(filePath, colorOnly, imageFormat, fileWrittenCallback);
+		}
 	}
 }
 

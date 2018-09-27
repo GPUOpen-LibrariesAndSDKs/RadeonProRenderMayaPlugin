@@ -191,7 +191,14 @@ MStatus FireRenderCmd::renderFrame(const MArgDatabase& argData)
 		MString filePath = getOutputFilePath(settings, frame, cameraName, true);
 
 		// Write output files.
-		aovs->writeToFile(filePath, settings.imageFormat);
+		aovs->writeToFile(filePath, settings.imageFormat, [](const MString& path)
+		{
+			MString cmd;
+
+			// this command will output the following string: "\t[path]\n" to be executed via MEL
+			cmd.format("print(\"\\t^1s\\n\")", path);
+			MGlobal::executeCommand(cmd);
+		});
 
 		// Perform clean up operations.
 		MRenderView::endRender();
@@ -209,7 +216,8 @@ MStatus FireRenderCmd::renderFrame(const MArgDatabase& argData)
 
 	s_waitForIt = false;
 
-	return status;
+	// For sequence render we need to return non success to abort sequence render
+	return !s_production->isCancelled() ? MS::kSuccess : MS::kFailure;
 }
 
 // -----------------------------------------------------------------------------

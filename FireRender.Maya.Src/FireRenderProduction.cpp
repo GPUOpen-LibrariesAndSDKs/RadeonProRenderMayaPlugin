@@ -53,6 +53,11 @@ bool FireRenderProduction::isError()
 	return m_error.check();
 }
 
+bool FireRenderProduction::isCancelled() const
+{
+	return m_cancelled;
+}
+
 // -----------------------------------------------------------------------------
 void FireRenderProduction::updateRegion()
 {

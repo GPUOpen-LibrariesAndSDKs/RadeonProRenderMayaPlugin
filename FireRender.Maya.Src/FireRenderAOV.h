@@ -113,7 +113,8 @@ public:
 	void sendToRenderView();
 
 	/** Write the AOV to file. */
-	bool writeToFile(const MString& filePath, bool colorOnly, unsigned int imageFormat) const;
+	typedef void(*FileWrittenCallback)(const MString&);
+	bool writeToFile(const MString& filePath, bool colorOnly, unsigned int imageFormat, FileWrittenCallback fileWrittenCallback = nullptr) const;
 
 	/** Get an AOV output path for the given file path. */
 	MString getOutputFilePath( const MString& filePath ) const;
