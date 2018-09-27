@@ -39,6 +39,9 @@ public:
 	/** True if an error occurred. */
 	bool isError();
 
+	/** True if render is cancelled*/
+	bool isCancelled() const;
+
 	/** Start a threaded IPR render. */
 	bool start();
 

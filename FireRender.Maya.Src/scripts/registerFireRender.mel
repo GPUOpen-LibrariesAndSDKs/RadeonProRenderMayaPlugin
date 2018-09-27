@@ -43,6 +43,7 @@ global proc registerFireRender()
 			-refreshIprRenderProcedure   "fireRenderRefreshIpr"
 			-pauseIprRenderProcedure     "fireRenderPauseIprRender"
 			-changeIprRegionProcedure    "fireRenderChangeIprRegion"
+            -renderSequenceProcedure     "fireRenderSequence"
 			-commandRenderProcedure      "fireRenderCmdlineRender"
 			-batchRenderProcedure        "fireRenderBatchRender"
 			-batchRenderOptionsStringProcedure        "fireRenderBatchRenderOptionsString"

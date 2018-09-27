@@ -189,7 +189,7 @@ void FireRenderAOV::setRenderStamp(const MString& inRenderStamp)
 }
 
 // -----------------------------------------------------------------------------
-bool FireRenderAOV::writeToFile(const MString& filePath, bool colorOnly, unsigned int imageFormat) const
+bool FireRenderAOV::writeToFile(const MString& filePath, bool colorOnly, unsigned int imageFormat, FileWrittenCallback fileWrittenCallback) const
 {
 	// Check that the AOV is active and in a valid state.
 	if (!active || !pixels || m_region.isZeroArea())
@@ -202,11 +202,23 @@ bool FireRenderAOV::writeToFile(const MString& filePath, bool colorOnly, unsigne
 	// Save the pixels to file.
 	FireRenderImageUtil::save(path, m_region.getWidth(), m_region.getHeight(), pixels.get(), imageFormat);
 
+	if (fileWrittenCallback != nullptr)
+	{
+		fileWrittenCallback(path);
+	}
+
 	// For layered PSDs, also save the color AOV file to the
 	// base path, as this is where Maya will look for it when
 	// creating the PSD file during the post render operation.
 	if (id == RPR_AOV_COLOR && !colorOnly && imageFormat == 36)
+	{
 		FireRenderImageUtil::save(filePath, m_region.getWidth(), m_region.getHeight(), pixels.get(), imageFormat);
+
+		if (fileWrittenCallback != nullptr)
+		{
+			fileWrittenCallback(filePath);
+		}
+	}
 
 	return true;
 }
