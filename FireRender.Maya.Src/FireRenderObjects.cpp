@@ -1247,6 +1247,7 @@ void FireRenderLight::Freshen()
 void FireRenderLight::buildSwatchLight()
 {
 	m_light.light = Context().CreateDirectionalLight();
+
 	auto frstatus = rprDirectionalLightSetRadiantPower3f(m_light.light.Handle(), LIGHT_SCALE, LIGHT_SCALE, LIGHT_SCALE);
 	checkStatus(frstatus);
 

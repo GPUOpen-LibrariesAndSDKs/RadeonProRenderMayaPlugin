@@ -255,6 +255,7 @@
     <ClCompile Include="FireRenderSkyLocator.cpp" />
     <ClCompile Include="FireRenderStandardMaterial.cpp" />
     <ClCompile Include="FireRenderSurfaceOverride.cpp" />
+    <ClCompile Include="FireRenderSwatchInstance.cpp" />
     <ClCompile Include="FireRenderTexture.cpp" />
     <ClCompile Include="FireRenderTextureCache.cpp" />
     <ClCompile Include="FireRenderTransparentMaterial.cpp" />
@@ -373,6 +374,7 @@
     <ClInclude Include="FireRenderSkyLocator.h" />
     <ClInclude Include="FireRenderStandardMaterial.h" />
     <ClInclude Include="FireRenderSurfaceOverride.h" />
+    <ClInclude Include="FireRenderSwatchInstance.h" />
     <ClInclude Include="FireRenderTexture.h" />
     <ClInclude Include="FireRenderTextureCache.h" />
     <ClInclude Include="FireRenderTransparentMaterial.h" />

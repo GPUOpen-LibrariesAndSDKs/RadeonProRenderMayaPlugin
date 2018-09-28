@@ -1647,7 +1647,7 @@ FireMaya::Scope::Scope()
 
 FireMaya::Scope::~Scope()
 {
-	FireRenderThread::RunOnceProcAndWait([this]() { Reset(); });
+	Reset();
 }
 
 

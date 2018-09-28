@@ -385,6 +385,10 @@
 		8DB6234820755B4400841D10 /* FireRenderIESLight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB623282075582100841D10 /* FireRenderIESLight.cpp */; };
 		8DB699D31F9926F90040373F /* GLTFTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB699D11F9926F90040373F /* GLTFTranslator.cpp */; };
 		8DB699D41F9926F90040373F /* GLTFTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB699D21F9926F90040373F /* GLTFTranslator.h */; };
+		8DBC06F3215E68C0006ECC17 /* FireRenderSwatchInstance.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DBC06F1215E68BF006ECC17 /* FireRenderSwatchInstance.cpp */; };
+		8DBC06F4215E68C0006ECC17 /* FireRenderSwatchInstance.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DBC06F2215E68C0006ECC17 /* FireRenderSwatchInstance.h */; };
+		8DBC06F5215E6943006ECC17 /* FireRenderSwatchInstance.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DBC06F2215E68C0006ECC17 /* FireRenderSwatchInstance.h */; };
+		8DBC06F6215E6968006ECC17 /* FireRenderSwatchInstance.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DBC06F1215E68BF006ECC17 /* FireRenderSwatchInstance.cpp */; };
 		8DCBE5062072777400F79E06 /* libRadeonImageFilters64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DCBE5052072777400F79E06 /* libRadeonImageFilters64.dylib */; };
 		8DCBE5072072779300F79E06 /* libRadeonImageFilters64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DCBE5052072777400F79E06 /* libRadeonImageFilters64.dylib */; };
 		8DCBE50A2072780E00F79E06 /* ImageFilter.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DCBE5082072780E00F79E06 /* ImageFilter.h */; };
@@ -473,7 +477,7 @@
 		8D55909720C8743800567EEC /* MeshTranslator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MeshTranslator.cpp; path = ../../../FireRender.Maya.Src/Translators/MeshTranslator.cpp; sourceTree = "<group>"; };
 		8D55909820C8743800567EEC /* Translators.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Translators.h; path = ../../../FireRender.Maya.Src/Translators/Translators.h; sourceTree = "<group>"; };
 		8D55909920C8743800567EEC /* Translators.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Translators.cpp; path = ../../../FireRender.Maya.Src/Translators/Translators.cpp; sourceTree = "<group>"; };
-		8D595E4620372FE20031988A /* Maya2017 copy.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; name = "Maya2017 copy.bundle"; path = RadeonProRender.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D595E4620372FE20031988A /* RadeonProRender.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = RadeonProRender.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		8D742CD21F6B031900CB9364 /* FireRenderShadowCatcherMaterial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderShadowCatcherMaterial.cpp; path = ../../../FireRender.Maya.Src/FireRenderShadowCatcherMaterial.cpp; sourceTree = "<group>"; };
 		8D742CD31F6B031900CB9364 /* FireRenderShadowCatcherMaterial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderShadowCatcherMaterial.h; path = ../../../FireRender.Maya.Src/FireRenderShadowCatcherMaterial.h; sourceTree = "<group>"; };
 		8D77AE991F4360FA008E88FB /* FileSystemUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileSystemUtils.cpp; path = ../../../FireRender.Maya.Src/FileSystemUtils.cpp; sourceTree = "<group>"; };
@@ -552,6 +556,8 @@
 		8DB623382075583C00841D10 /* PhysicalLightGeometryUtility.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PhysicalLightGeometryUtility.cpp; path = ../../../FireRender.Maya.Src/Lights/PhysicalLight/PhysicalLightGeometryUtility.cpp; sourceTree = "<group>"; };
 		8DB699D11F9926F90040373F /* GLTFTranslator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GLTFTranslator.cpp; path = ../../../FireRender.Maya.Src/GLTFTranslator.cpp; sourceTree = "<group>"; };
 		8DB699D21F9926F90040373F /* GLTFTranslator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLTFTranslator.h; path = ../../../FireRender.Maya.Src/GLTFTranslator.h; sourceTree = "<group>"; };
+		8DBC06F1215E68BF006ECC17 /* FireRenderSwatchInstance.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderSwatchInstance.cpp; path = ../../../FireRender.Maya.Src/FireRenderSwatchInstance.cpp; sourceTree = "<group>"; };
+		8DBC06F2215E68C0006ECC17 /* FireRenderSwatchInstance.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderSwatchInstance.h; path = ../../../FireRender.Maya.Src/FireRenderSwatchInstance.h; sourceTree = "<group>"; };
 		8DCBE5052072777400F79E06 /* libRadeonImageFilters64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonImageFilters64.dylib; path = ../../../ThirdParty/RadeonProImageProcessing/Mac/lib/libRadeonImageFilters64.dylib; sourceTree = "<group>"; };
 		8DCBE5082072780E00F79E06 /* ImageFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ImageFilter.h; path = ../../../FireRender.Components/cpp/ImageFilter/ImageFilter.h; sourceTree = "<group>"; };
 		8DCBE5092072780E00F79E06 /* ImageFilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ImageFilter.cpp; path = ../../../FireRender.Components/cpp/ImageFilter/ImageFilter.cpp; sourceTree = "<group>"; };
@@ -707,6 +713,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				8DBC06F1215E68BF006ECC17 /* FireRenderSwatchInstance.cpp */,
+				8DBC06F2215E68C0006ECC17 /* FireRenderSwatchInstance.h */,
 				8DD65239211499E300DB2804 /* SPA.cpp */,
 				8DD65237211499D000DB2804 /* SPA.h */,
 				8D8F2C18210B52D5000DEBE6 /* FireRenderAO.cpp */,
@@ -907,7 +915,7 @@
 				4DE508621D995080009B2BD6 /* RadeonProRender.bundle */,
 				4DE508DC1D9950A1009B2BD6 /* RadeonProRender.bundle */,
 				4D6C22041DEBFAF500D745F8 /* RadeonProRender.bundle */,
-				8D595E4620372FE20031988A /* Maya2017 copy.bundle */,
+				8D595E4620372FE20031988A /* RadeonProRender.bundle */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -1066,6 +1074,7 @@
 				8DB699D41F9926F90040373F /* GLTFTranslator.h in Headers */,
 				4DE508861D9950A1009B2BD6 /* FireRenderBlendValue.h in Headers */,
 				8D8F06EF1F437B2D00A13D6B /* ArHosekSkyModelData_Spectral.h in Headers */,
+				8DBC06F4215E68C0006ECC17 /* FireRenderSwatchInstance.h in Headers */,
 				8D8CA4B620BC721300A90237 /* PhysicalLightData.h in Headers */,
 				4DE508871D9950A1009B2BD6 /* ShadersManager.h in Headers */,
 				4D1B139D1DA48D04007BDCCD /* FireRenderImageUtil.h in Headers */,
@@ -1104,6 +1113,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8DBC06F5215E6943006ECC17 /* FireRenderSwatchInstance.h in Headers */,
 				8DD6523B21149A9500DB2804 /* SPA.h in Headers */,
 				8D8F2C1B210B5327000DEBE6 /* FireRenderAO.h in Headers */,
 				8D55909F20C874BA00567EEC /* MeshTranslator.h in Headers */,
@@ -1235,7 +1245,7 @@
 			);
 			name = Maya2018;
 			productName = helloWorldCmdPlugin;
-			productReference = 8D595E4620372FE20031988A /* Maya2017 copy.bundle */;
+			productReference = 8D595E4620372FE20031988A /* RadeonProRender.bundle */;
 			productType = "com.apple.product-type.library.dynamic";
 		};
 /* End PBXNativeTarget section */
@@ -1323,6 +1333,7 @@
 				4DE508AB1D9950A1009B2BD6 /* FireRenderIBL.cpp in Sources */,
 				4DE508AC1D9950A1009B2BD6 /* FireRenderFresnel.cpp in Sources */,
 				4DE508AD1D9950A1009B2BD6 /* FireRenderTextureCache.cpp in Sources */,
+				8DBC06F3215E68C0006ECC17 /* FireRenderSwatchInstance.cpp in Sources */,
 				8D77AEDF1F436244008E88FB /* DependencyNode.cpp in Sources */,
 				4DE508AE1D9950A1009B2BD6 /* FireRenderBlendOverride.cpp in Sources */,
 				4DE508AF1D9950A1009B2BD6 /* FireRenderTexture.cpp in Sources */,
@@ -1381,6 +1392,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8DBC06F6215E6968006ECC17 /* FireRenderSwatchInstance.cpp in Sources */,
 				8D5106A821149ACE00EFAE31 /* SPA.cpp in Sources */,
 				8D8F2C1C210B535F000DEBE6 /* FireRenderAO.cpp in Sources */,
 				8D5590A220C874E600567EEC /* MeshTranslator.cpp in Sources */,

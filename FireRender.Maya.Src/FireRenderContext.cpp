@@ -502,7 +502,8 @@ void FireRenderContext::setRenderMode(RenderMode renderMode)
 
 void FireRenderContext::setPreview()
 {
-	GetContext().SetParameter("preview", m_interactive ? 1 : 0);
+	int preview = m_interactive || (m_RenderType == RenderType::Thumbnail);
+	GetContext().SetParameter("preview", preview);
 }
 
 void FireRenderContext::cleanScene()
@@ -563,41 +564,45 @@ void FireRenderContext::cleanSceneAsync(std::shared_ptr<FireRenderContext> refTo
 
 void FireRenderContext::initSwatchScene()
 {
-	FireRenderThread::RunOnceProcAndWait([this]()
+	DebugPrint("FireRenderContext::buildSwatchScene(...)");
+
+	auto createFlags = FireMaya::Options::GetContextDeviceFlags();
+
+	rpr_int res;
+	if (!createContextEtc(createFlags, true, false, &res))
 	{
-		DebugPrint("FireRenderContext::buildSwatchScene(...)");
+		MString msg;
+		FireRenderError errorToShow(res, msg, true);
 
-		auto createFlags = FireMaya::Options::GetContextDeviceFlags();
+		throw res;
+	}
 
-		rpr_int res;
-		if (!createContextEtc(createFlags, true, false, &res))
-		{
-			MString msg;
-			FireRenderError errorToShow(res, msg, true);
+	enableAOV(RPR_AOV_COLOR);
 
-			throw res;
-		}
+	FireRenderMesh* mesh = new FireRenderMesh(this, MDagPath());
+	mesh->buildSphere();
+	mesh->setVisibility(true);
+	m_sceneObjects["mesh"] = std::shared_ptr<FireRenderObject>(mesh);
 
-		enableAOV(RPR_AOV_COLOR);
+	if (mesh && mesh->Elements().size() > 0)
+	{
+		if (auto shader = GetShader(MObject()))
+			mesh->Element(0).shape.SetShader(shader);
+	}
 
-		FireRenderMesh* mesh = new FireRenderMesh(this, MDagPath());
-		mesh->buildSphere();
-		mesh->setVisibility(true);
-		m_sceneObjects["mesh"] = std::shared_ptr<FireRenderObject>(mesh);
+	m_camera.buildSwatchCamera();
 
-		if (mesh && mesh->Elements().size() > 0)
-		{
-			if (auto shader = GetShader(MObject()))
-				mesh->Element(0).shape.SetShader(shader);
-		}
+	FireRenderLight *light = new FireRenderLight(this, MDagPath());
+	light->buildSwatchLight();
+	light->attachToScene();
+	m_sceneObjects["light"] = std::shared_ptr<FireRenderObject>(light);
 
-		m_camera.buildSwatchCamera();
+	m_globals.readFromCurrentScene();
+	m_globals.setupContext(*this);
 
-		FireRenderLight *light = new FireRenderLight(this, MDagPath());
-		light->buildSwatchLight();
-		light->attachToScene();
-		m_sceneObjects["light"] = std::shared_ptr<FireRenderObject>(light);
-	});
+	// _TODO will be taken from settings after UI refactoring gets done
+	setCompletionCriteria(0, LONG_MAX, 32);
+	GetContext().SetParameter("preview", 1);
 }
 
 void FireRenderContext::updateSwatchSceneRenderLimits(const MObject& shaderObj)
@@ -609,7 +614,7 @@ void FireRenderContext::updateSwatchSceneRenderLimits(const MObject& shaderObj)
 	if (!iterationPlug.isNull())
 		setCompletionCriteria(0, LONG_MAX, iterationPlug.asInt());
 	else
-		setCompletionCriteria(0, LONG_MAX, 1);
+		setCompletionCriteria(0, LONG_MAX, 32);
 }
 
 // This method will "tweak" precision of the ray-cast renderer based on scene bounding box:
@@ -1836,12 +1841,14 @@ bool FireRenderContext::keepRenderRunning()
 	}
 }
 
-bool FireRenderContext::isFirstIterationAndShadersNOTCached() {
+bool FireRenderContext::isFirstIterationAndShadersNOTCached() 
+{
     if (isMetalOn())
     {
         // Metal does not cache shaders the way OCL does
         return false;
     }
+
 	if (m_currentIteration == 0)
     {
 		return !areShadersCached();
