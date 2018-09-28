@@ -160,6 +160,7 @@ enum
 {
 	VER_INITIAL = 1,
 	VER_RPRX_MATERIAL = 2,
+	VER_UBER3_MATERIAL = 3,
 
 	VER_CURRENT_PLUS_ONE,
 	VER_CURRENT = VER_CURRENT_PLUS_ONE - 1
@@ -231,7 +232,8 @@ void FireMaya::StandardMaterial::UpgradeMaterial()
 
 	MPlug plug = shaderNode.findPlug(Attribute::version);
 	int version = plug.asInt();
-	if (version < VER_CURRENT)
+
+	if (version < VER_CURRENT && version == VER_INITIAL)
 	{
 		LogPrint("UpgradeMaterial: %s from ver %d", shaderNode.name().asChar(), version);
 		//		CopyAttribute(shaderNode, Attribute::diffuseColor, Attribute::reflectionColor); -- this is for test: diffuse color will be copied to reflection color
@@ -347,12 +349,10 @@ MStatus FireMaya::StandardMaterial::initialize()
 
 	Attribute::useShaderNormal = nAttr.create("useShaderNormal", "dun", MFnNumericData::kBoolean, 1);
 	MAKE_INPUT_CONST(nAttr);
-
-	Attribute::diffuseNormal = nAttr.create("diffuseNormal", "dn", MFnNumericData::k3Float);
+	
+	Attribute::diffuseNormal = nAttr.createColor("diffuseNormal", "dn");
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
-	nAttr.setMin(0.0f, 0.0f, 0.0f);
-	nAttr.setMax(5.0f, 5.0f, 5.0f);
 
 	Attribute::backscatteringWeight = nAttr.create("backscatteringWeight", "dbw", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
@@ -408,12 +408,10 @@ MStatus FireMaya::StandardMaterial::initialize()
 	Attribute::reflectUseShaderNormal = nAttr.create("reflectUseShaderNormal", "run", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
 
-	Attribute::reflectionNormal = nAttr.createColor("reflectNormal", "rn");
+	Attribute::reflectNormal = nAttr.createColor("reflectNormal", "rn");
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
-#endif
 
-#if USE_RPRX
 	Attribute::reflectionMetalMaterial = nAttr.create("reflectMetalMaterial", "rm", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
 
@@ -763,10 +761,11 @@ MStatus FireMaya::StandardMaterial::initialize()
 	ADD_ATTRIBUTE(Attribute::volumeEmission);
 #endif
 
-	ADD_ATTRIBUTE(Attribute::diffuseBaseNormal);
+	// commented because these attributes aren't created
+	/*ADD_ATTRIBUTE(Attribute::diffuseBaseNormal);
 	ADD_ATTRIBUTE(Attribute::reflectionNormal);
 	ADD_ATTRIBUTE(Attribute::clearCoatNormal);
-	ADD_ATTRIBUTE(Attribute::refractionNormal);
+	ADD_ATTRIBUTE(Attribute::refractionNormal);*/
 
 	return MS::kSuccess;
 }
@@ -894,16 +893,11 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 #if (RPR_API_VERSION > 0x010030400)
 		if (!GET_BOOL(reflectUseShaderNormal))
 		{
-			MFnDependencyNode shaderNode(thisMObject());
-			MPlug plug = shaderNode.findPlug(Attribute::reflectNormal);
-			if (!plug.isNull())
+			frw::Value value = GET_VALUE(reflectNormal);
+			int type = value.GetNodeType();
+			if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
 			{
-				MPlugArray shaderConnections;
-				plug.connectedTo(shaderConnections, true, false);
-				if (shaderConnections.length() != 0)
-				{
-					SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFLECTION_NORMAL, reflectNormal);
-				}
+				SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFLECTION_NORMAL, reflectNormal);
 			}
 		}
 		else
