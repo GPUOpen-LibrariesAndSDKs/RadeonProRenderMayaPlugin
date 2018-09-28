@@ -688,6 +688,11 @@ MStatus initializePlugin(MObject obj)
 		FireMaya::Texture::initialize,
 		MPxNode::kDependNode, &UserTextureClassify));
 
+	// add rpr texture node paths to path editor
+	std::stringstream reg_command;
+	reg_command << "filePathEditor -registerType \"" << FIRE_RENDER_NODE_PREFIX << "Texture.filename\"" << " -typeLabel " << "\"RPRTextures\"";
+	MGlobal::executeCommand(reg_command.str().c_str());
+
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "FresnelSchlick", FireMaya::FresnelSchlick::FRTypeID(),
 		FireMaya::FresnelSchlick::creator,
 		FireMaya::FresnelSchlick::initialize,
@@ -804,6 +809,11 @@ MStatus uninitializePlugin(MObject obj)
 
 	CHECK_MSTATUS(MHWRender::MDrawRegistry::deregisterGeometryOverrideCreator(FireRenderIBL::drawDbClassification, FireRenderIBL::drawRegistrantId));
 	CHECK_MSTATUS(MHWRender::MDrawRegistry::deregisterGeometryOverrideCreator(FireRenderSkyLocator::drawDbClassification, FireRenderSkyLocator::drawRegistrantId));
+
+	// deregister from path editor
+	std::stringstream dereg_command;
+	dereg_command << "filePathEditor -deregisterType \"" << FIRE_RENDER_NODE_PREFIX << "Texture.filename\"";
+	MGlobal::executeCommand(dereg_command.str().c_str());
 
 	//
 	MString namePrefix(FIRE_RENDER_NODE_PREFIX);
