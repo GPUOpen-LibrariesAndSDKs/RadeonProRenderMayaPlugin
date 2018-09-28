@@ -19,6 +19,8 @@
 #include "FireRenderPBRMaterial.h"
 #include "FireRenderTransparentMaterial.h"
 #include "FireRenderMaterialSwatchRender.h"
+#include "FireRenderSwatchInstance.h"
+
 #include "FireRenderFresnel.h"
 #include "FireMaterialViewRenderer.h"
 #include "FireRenderGlobals.h"
@@ -182,13 +184,9 @@ void mayaExiting(void* data)
     // so we can't rely on ViewportManager destructor
     FireRenderViewportManager::instance().clear();
 
-	// instance() may force initialization with exception in case of context creation problems
-	try
+	if (!FireRenderSwatchInstance::IsCleaned())
 	{
 		FireRenderSwatchInstance::instance().cleanScene();
-	}
-	catch (int)
-	{
 	}
 
 	// We need to cleanup before terminating thread

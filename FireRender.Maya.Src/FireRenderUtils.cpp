@@ -1142,7 +1142,8 @@ std::string replaceStrChar(std::string str, const std::string& replace, char ch)
 	return str; // return our new string.
 }
 
-int areShadersCached() {
+int areShadersCached() 
+{
 	std::string temp = getShaderCachePath().asChar();
 	temp = replaceStrChar(temp, "\\", '/');
 	MString test = "source common.mel; getNumberOfCachedShaders(\"" + MString(temp.c_str()) + "\");";

@@ -124,6 +124,7 @@ public:
 		ProductionRender,
 		IPR,
 		ViewportRender,
+		Thumbnail
 	};
 
 	// Constructor
