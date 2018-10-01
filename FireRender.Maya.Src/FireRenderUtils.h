@@ -202,7 +202,7 @@ public:
 
 	DenoiserSettings denoiserSettings;
 
-	// Use Metal Performance Shader for MacOS
+	// Use Metal Performance Shaders for MacOS
 	bool useMPS;
 
 private:
