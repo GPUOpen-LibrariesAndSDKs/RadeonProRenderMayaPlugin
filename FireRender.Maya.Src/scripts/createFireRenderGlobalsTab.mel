@@ -1145,12 +1145,12 @@ global proc createFireRenderQualityTab()
 		-cc updateOOCUI
 		textureCacheSize;
 
-    if (isMPSOptionNeeded())
-    {
-        attrControlGrp
-            -label "Use Metal Performance Shader"
-            -attribute "RadeonProRenderGlobals.useMPS";
-    }
+	if (isMPSOptionNeeded())
+	{
+		attrControlGrp
+		    -label "Use Metal Performance Shaders"
+		    -attribute "RadeonProRenderGlobals.useMPS";
+	}
 
 	setParent ..;
 

@@ -335,7 +335,7 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			cameraType = plug.asShort();
 
-		// Use Metal Performance Shader for MacOS
+		// Use Metal Performance Shaders for MacOS
 		plug = frGlobalsNode.findPlug("useMPS");
 		if (!plug.isNull())
 			useMPS = plug.asBool();

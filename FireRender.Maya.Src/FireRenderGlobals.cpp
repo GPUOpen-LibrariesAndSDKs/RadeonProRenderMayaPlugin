@@ -78,7 +78,7 @@ namespace
 		MObject qualityPresetsViewport;
 		MObject qualityPresetsProduction;
 
-		// for MacOS only: "Use Metal Performance Shader"
+		// for MacOS only: "Use Metal Performance Shaders"
 		MObject useMPS;
 
 		// Denoiser
