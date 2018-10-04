@@ -803,6 +803,61 @@ MStatus FireMaya::StandardMaterial::compute(const MPlug& plug, MDataBlock& block
 	return MS::kSuccess;
 }
 
+bool FireMaya::StandardMaterial::IsNormalOrBumpMap(const MObject& attrNormal, NormalMapParams& params) const
+{
+	assert(params.IsValid());
+	if (!params.IsValid())
+		return false;
+
+	int type = params.scope.GetValue(params.shaderNode.findPlug(attrNormal)).GetNodeType();
+
+	if (type == frw::ValueTypeNormalMap)
+		return true;
+
+	if (type == frw::ValueTypeBumpMap)
+		return true;
+
+	return false;
+}
+
+void FireMaya::StandardMaterial::ApplyNormalMap(NormalMapParams& params)
+{
+	assert(params.IsValid());
+	if (!params.IsValid())
+		return;
+
+	MObject normalMapEnable = Attribute::normalMapEnable;
+	MObject attrNormal = Attribute::normalMap;
+
+	if (params.shaderNode.findPlug(params.attrUseCommonNormalMap).asBool())
+	{
+		if (params.shaderNode.findPlug(normalMapEnable).asBool() && IsNormalOrBumpMap(attrNormal, params))
+		{
+			frw::Value normalValue = params.scope.GetValue(params.shaderNode.findPlug(attrNormal));
+			params.material.xSetValue(params.param, normalValue);
+		}
+	}
+	else if (IsNormalOrBumpMap(params.mapPlug, params))
+	{
+		frw::Value normalValue = params.scope.GetValue(params.shaderNode.findPlug(params.mapPlug));
+		params.material.xSetValue(params.param, normalValue);
+	}
+}
+
+FireMaya::StandardMaterial::NormalMapParams::NormalMapParams(Scope& _scope, frw::Shader& _material, MFnDependencyNode& _shaderNode)
+	: scope(_scope)
+	, material(_material)
+	, param(MATERIAL_INVALID_PARAM)
+	, shaderNode(_shaderNode)
+	, attrUseCommonNormalMap()
+	, mapPlug()
+{}
+
+bool FireMaya::StandardMaterial::NormalMapParams::IsValid(void) const
+{
+	return !attrUseCommonNormalMap.isNull() && !mapPlug.isNull() && (param != MATERIAL_INVALID_PARAM);
+}
+
 frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 {
 #if USE_RPRX
@@ -814,6 +869,9 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 
 #define GET_VALUE(_attrib_) \
 	scope.GetValue(shaderNode.findPlug(Attribute::_attrib_))
+
+#define GET_TYPE(_attrib_) \
+	GET_VALUE(_attrib_).GetNodeType()
 
 #define SET_RPRX_VALUE(_param_, _attrib_) \
 	material.xSetValue(_param_, GET_VALUE(_attrib_));
@@ -830,32 +888,11 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_DIFFUSE_ROUGHNESS, diffuseRoughness);
 
 #if (RPR_API_VERSION > 0x010030400)
-		if (!GET_BOOL(useShaderNormal))
-		{
-			MFnDependencyNode shaderNode(thisMObject());
-			MPlug plug = shaderNode.findPlug(Attribute::diffuseNormal);
-			if (!plug.isNull())
-			{
-				MPlugArray shaderConnections;
-				plug.connectedTo(shaderConnections, true, false);
-				if (shaderConnections.length() != 0)
-				{
-					SET_RPRX_VALUE(RPRX_UBER_MATERIAL_DIFFUSE_NORMAL, diffuseNormal);
-				}
-			}
-		}
-		else
-		{
-			if (GET_BOOL(normalMapEnable))
-			{
-				frw::Value value = GET_VALUE(normalMap);
-				int type = value.GetNodeType();
-				if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
-				{
-					SET_RPRX_VALUE(RPRX_UBER_MATERIAL_DIFFUSE_NORMAL, normalMap);
-				}
-			}
-		}
+		NormalMapParams params(scope, material, shaderNode);
+		params.attrUseCommonNormalMap = Attribute::useShaderNormal;
+		params.mapPlug = Attribute::diffuseNormal;
+		params.param = RPRX_UBER_MATERIAL_DIFFUSE_NORMAL;
+		ApplyNormalMap(params);
 
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_BACKSCATTER_WEIGHT, backscatteringWeight);
 
@@ -891,27 +928,11 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		}
 
 #if (RPR_API_VERSION > 0x010030400)
-		if (!GET_BOOL(reflectUseShaderNormal))
-		{
-			frw::Value value = GET_VALUE(reflectNormal);
-			int type = value.GetNodeType();
-			if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
-			{
-				SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFLECTION_NORMAL, reflectNormal);
-			}
-		}
-		else
-		{
-			if (GET_BOOL(normalMapEnable))
-			{
-				frw::Value value = GET_VALUE(normalMap);
-				int type = value.GetNodeType();
-				if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
-				{
-					SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFLECTION_NORMAL, normalMap);
-				}
-			}
-		}
+		NormalMapParams params(scope, material, shaderNode);
+		params.attrUseCommonNormalMap = Attribute::reflectUseShaderNormal;
+		params.mapPlug = Attribute::reflectNormal;
+		params.param = RPRX_UBER_MATERIAL_REFLECTION_NORMAL;
+		ApplyNormalMap(params);
 #endif
 	}
 	else
@@ -932,32 +953,11 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_IOR, clearCoatIOR);
 
 #if (RPR_API_VERSION > 0x010030400)
-		if (!GET_BOOL(coatUseShaderNormal))
-		{
-			MFnDependencyNode shaderNode(thisMObject());
-			MPlug plug = shaderNode.findPlug(Attribute::coatNormal);
-			if (!plug.isNull())
-			{
-				MPlugArray shaderConnections;
-				plug.connectedTo(shaderConnections, true, false);
-				if (shaderConnections.length() != 0)
-				{
-					SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_NORMAL, coatNormal);
-				}
-			}
-			else
-			{
-				if (GET_BOOL(normalMapEnable))
-				{
-					frw::Value value = GET_VALUE(normalMap);
-					int type = value.GetNodeType();
-					if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
-					{
-						SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_NORMAL, normalMap);
-					}
-				}
-			}			
-		}
+		NormalMapParams params(scope, material, shaderNode);
+		params.attrUseCommonNormalMap = Attribute::coatUseShaderNormal;
+		params.mapPlug = Attribute::coatNormal;
+		params.param = RPRX_UBER_MATERIAL_COATING_NORMAL;
+		ApplyNormalMap(params);
 
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_THICKNESS, clearCoatThickness);
 		frw::Value clearCoatTransmissionColorInverse = frw::Value(1) - GET_VALUE(clearCoatTransmissionColor);
