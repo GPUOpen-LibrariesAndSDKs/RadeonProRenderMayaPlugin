@@ -372,6 +372,68 @@ bool CheckContextCreationProcedure()
 	return true;
 }
 
+MStatus registerNodesInPathEditor(void)
+{
+	MStatus status;
+
+	// add rpr texture node paths to path editor
+	{
+		std::stringstream reg_command;
+		reg_command << "filePathEditor -registerType \"" << FIRE_RENDER_NODE_PREFIX << "Texture.filename\"" << " -typeLabel " << "\"RPRTextures\"";
+		status = MGlobal::executeCommand(reg_command.str().c_str());
+		CHECK_MSTATUS(status);
+	}
+
+	// add rpr IBL paths to path editor
+	{
+		std::stringstream reg_command;
+		reg_command << "filePathEditor -registerType \"" << "RPRIBL.filePath\"" << " -typeLabel " << "\"RPR IBLs\"";
+		status = MGlobal::executeCommand(reg_command.str().c_str());
+		CHECK_MSTATUS(status);
+	}
+
+	// add rpr IES lights paths to path editor
+	{
+		std::stringstream reg_command;
+		reg_command << "filePathEditor -registerType \"" << "RPRIES.iesFile\"" << " -typeLabel " << "\"RPR IES Lights\"";
+		status = MGlobal::executeCommand(reg_command.str().c_str());
+		CHECK_MSTATUS(status);
+	}
+
+	return status;
+}
+
+MStatus deRegisterNodesInPathEditor(void)
+{
+	MStatus status;
+
+	// deregister IES from path editor
+	{
+		std::stringstream reg_command;
+		reg_command << "filePathEditor -deregisterType \"" << "RPRIES.iesFile\"";
+		status = MGlobal::executeCommand(reg_command.str().c_str());
+		CHECK_MSTATUS(status);
+	}
+
+	// deregister IBL from path editor
+	{
+		std::stringstream reg_command;
+		reg_command << "filePathEditor -deregisterType \"" << "RPRIBL.filePath\"";
+		status = MGlobal::executeCommand(reg_command.str().c_str());
+		CHECK_MSTATUS(status);
+	}
+
+	// deregister RPRTexture node from path editor
+	{
+		std::stringstream dereg_command;
+		dereg_command << "filePathEditor -deregisterType \"" << FIRE_RENDER_NODE_PREFIX << "Texture.filename\"";
+		status = MGlobal::executeCommand(dereg_command.str().c_str());
+		CHECK_MSTATUS(status);
+	}
+
+	return status;	
+}
+
 MStatus initializePlugin(MObject obj)
 //
 //	Description:
@@ -686,11 +748,6 @@ MStatus initializePlugin(MObject obj)
 		FireMaya::Texture::initialize,
 		MPxNode::kDependNode, &UserTextureClassify));
 
-	// add rpr texture node paths to path editor
-	std::stringstream reg_command;
-	reg_command << "filePathEditor -registerType \"" << FIRE_RENDER_NODE_PREFIX << "Texture.filename\"" << " -typeLabel " << "\"RPRTextures\"";
-	MGlobal::executeCommand(reg_command.str().c_str());
-
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "FresnelSchlick", FireMaya::FresnelSchlick::FRTypeID(),
 		FireMaya::FresnelSchlick::creator,
 		FireMaya::FresnelSchlick::initialize,
@@ -730,6 +787,7 @@ MStatus initializePlugin(MObject obj)
 		MGlobal::executePythonCommand("import fireRender.fireRenderMenu\nfireRender.fireRenderMenu.createFireRenderMenu()");
 	}
 
+	CHECK_MSTATUS(registerNodesInPathEditor());
 
 	//#define RPR_API_VERSION 0x010029200 
 	int mj = (RPR_API_VERSION & 0xFFFF00000) >> 28;
@@ -770,6 +828,8 @@ MStatus uninitializePlugin(MObject obj)
 	CHECK_MSTATUS(plugin.deregisterCommand("fireRenderImport"));
 	CHECK_MSTATUS(plugin.deregisterCommand("fireRenderConvertVRay"));
 
+	CHECK_MSTATUS(deRegisterNodesInPathEditor());
+
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::Material::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::BlendMaterial::FRTypeID()));
 
@@ -807,11 +867,6 @@ MStatus uninitializePlugin(MObject obj)
 
 	CHECK_MSTATUS(MHWRender::MDrawRegistry::deregisterGeometryOverrideCreator(FireRenderIBL::drawDbClassification, FireRenderIBL::drawRegistrantId));
 	CHECK_MSTATUS(MHWRender::MDrawRegistry::deregisterGeometryOverrideCreator(FireRenderSkyLocator::drawDbClassification, FireRenderSkyLocator::drawRegistrantId));
-
-	// deregister from path editor
-	std::stringstream dereg_command;
-	dereg_command << "filePathEditor -deregisterType \"" << FIRE_RENDER_NODE_PREFIX << "Texture.filename\"";
-	MGlobal::executeCommand(dereg_command.str().c_str());
 
 	//
 	MString namePrefix(FIRE_RENDER_NODE_PREFIX);
