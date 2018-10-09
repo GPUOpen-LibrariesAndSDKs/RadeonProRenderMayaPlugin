@@ -194,7 +194,8 @@ namespace FireMaya
 		auto ms = scope.MaterialSystem();
 
 		// Diffuse (base color)
-		frw::Value value = scope.GetValue(shaderNode.findPlug(Attribute::baseColor));
+		// apply purple 1x1 image in case we missed a texture file
+		frw::Value value = scope.GetValueForDiffuseColor(shaderNode.findPlug(Attribute::baseColor));
 		frw::Value diffuseColor = value;
 		shader.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_WEIGHT, 1.0f);
 		shader.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_COLOR, diffuseColor);

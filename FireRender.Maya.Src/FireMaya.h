@@ -285,6 +285,10 @@ namespace FireMaya
 		frw::Value GetValue(const MPlug& ob);
 		frw::Value GetValue(MObject ob, frw::Value orDefault) { return GetValue(ob) | orDefault; }
 		frw::Value GetValue(const MPlug& ob, frw::Value orDefault) { return GetValue(ob) | orDefault; }
+
+		// Returns 1x1 purple image node in case if something is connected to the plug but there is no valid map as output
+		frw::Value GetValueForDiffuseColor(const MPlug& ob);
+
 		frw::Value GetConnectedValue(const MPlug& ob);	// recommended for uv and normals, where constant value is undesired or invalid
 
 		frw::Value GetValueWithCheck(const MFnDependencyNode &node, const char * plugName);

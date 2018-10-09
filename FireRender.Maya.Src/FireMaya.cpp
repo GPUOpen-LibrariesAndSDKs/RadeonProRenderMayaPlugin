@@ -431,8 +431,6 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, bo
 
 		if (image)
 			m->imageCache[key] = image;
-		else
-			return frw::Image(m->context, 0.5, 0.5, 1);
 
 		return image;
 	});
@@ -688,8 +686,6 @@ frw::Image FireMaya::Scope::GetAdjustedImage(MString texturePath,
 
 		if (image)
 			m->imageCache[key] = image;
-		else
-			return frw::Image(m->context, 0.5, 0.5, 1);
 
 		return image;
 		});
@@ -1217,7 +1213,7 @@ frw::Value FireMaya::Scope::CosinePowerToRoughness(const frw::Value &power)
 
 frw::Shader FireMaya::Scope::convertMayaBlinn(const MFnDependencyNode &node)
 {
-	auto color = GetValueWithCheck(node, "color");
+	auto color = GetValueForDiffuseColor(node.findPlug("color"));
 	auto diffuse = GetValueWithCheck(node, "diffuse");
 	auto specularColor = GetValueWithCheck(node, "specularColor");
 	auto eccentricity = GetValueWithCheck(node, "eccentricity");
@@ -1252,7 +1248,7 @@ frw::Shader FireMaya::Scope::convertMayaBlinn(const MFnDependencyNode &node)
 
 frw::Shader FireMaya::Scope::convertMayaPhong(const MFnDependencyNode &node)
 {
-	auto color = GetValueWithCheck(node, "color");
+	auto color = GetValueForDiffuseColor(node.findPlug("color"));
 	auto diffuse = GetValueWithCheck(node, "diffuse");
 	auto cosinePower = GetValueWithCheck(node, "cosinePower");
 	auto specularColor = GetValueWithCheck(node, "specularColor");
@@ -1278,7 +1274,7 @@ frw::Shader FireMaya::Scope::convertMayaPhong(const MFnDependencyNode &node)
 
 frw::Shader FireMaya::Scope::convertMayaPhongE(const MFnDependencyNode &node)
 {
-	auto color = GetValueWithCheck(node, "color");
+	auto color = GetValueForDiffuseColor(node.findPlug("color"));
 	auto diffuse = GetValueWithCheck(node, "diffuse");
 	auto roughness = GetValueWithCheck(node, "roughness");
 	auto whiteness = GetValueWithCheck(node, "whiteness");
@@ -1416,7 +1412,7 @@ frw::Shader FireMaya::Scope::ParseShader(MObject node)
 		case MayaNodeLambert:
 		{
 			frw::DiffuseShader diffuseShader(materialSystem);
-			frw::Value color = GetValue(shaderNode.findPlug("color"));
+			frw::Value color = GetValueForDiffuseColor(shaderNode.findPlug("color"));
 			color = color * GetValue(shaderNode.findPlug("diffuse"), 1.);
 			diffuseShader.SetColor(color);
 			result = diffuseShader;
@@ -1780,6 +1776,27 @@ frw::Value FireMaya::Scope::GetValue(const MPlug& plug)
 	float v;
 	plug.getValue(v);
 	return frw::Value(v);
+}
+
+frw::Value FireMaya::Scope::GetValueForDiffuseColor(const MPlug& plug)
+{
+	assert(!plug.isNull());
+
+	frw::Value value = GetValue(plug);
+
+	if (value.GetNodeType() == -1)
+	{
+		MPlugArray shaderConnections;
+		plug.connectedTo(shaderConnections, true, false);
+		if (shaderConnections.length() != 0)
+		{
+			frw::ImageNode imageNode(MaterialSystem());
+			imageNode.SetMap(frw::Image(Context(), 0.5f, 0.5f, 1.0f));
+			value = imageNode;
+		}
+	}
+
+	return value;
 }
 
 frw::Value FireMaya::Scope::GetValueWithCheck(const MFnDependencyNode &node, const char * plugName)
