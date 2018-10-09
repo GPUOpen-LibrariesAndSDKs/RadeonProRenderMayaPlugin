@@ -235,8 +235,7 @@ namespace FireMaya
 		// Glass (refraction weight)
 		value = scope.GetValue(shaderNode.findPlug(Attribute::glass));
 		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_WEIGHT, value);
-		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_COLOR, frw::Value(1.0f, 1.0f, 1.0f));
-		//shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_ABSORPTION_COLOR, frw::Value(1.0f, 1.0f, 1.0f));
+		shader.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_COLOR, diffuseColor);
 
 		// Glass IOR (refraction IOR)
 		value = scope.GetValue(shaderNode.findPlug(Attribute::glassIOR));
@@ -255,6 +254,9 @@ namespace FireMaya
 		// SSS
 		value = scope.GetValue(shaderNode.findPlug(Attribute::subsurfaceWeight));
 		shader.xSetValue(RPRX_UBER_MATERIAL_SSS_WEIGHT, value);
+		shader.xSetValue(RPRX_UBER_MATERIAL_BACKSCATTER_WEIGHT, value);
+
+		shader.xSetValue(RPRX_UBER_MATERIAL_BACKSCATTER_COLOR, frw::Value(1.0, 1.0, 1.0, 1.0));
 
 		value = scope.GetValue(shaderNode.findPlug(Attribute::subsurfaceColor));
 		shader.xSetValue(RPRX_UBER_MATERIAL_SSS_SCATTER_COLOR, value);
