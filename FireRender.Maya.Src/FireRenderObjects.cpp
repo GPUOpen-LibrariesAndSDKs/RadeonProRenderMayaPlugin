@@ -862,7 +862,7 @@ void FireRenderMesh::Rebuild()
 	m.isEmissive = false;
 
 	// If there is just one shader and the number of shader is not changed then just update the shader
-	if (m.changed.mesh || (shadingEngines.length() != 1 || m.elements.size() != 1))
+	if (m.changed.mesh || (shadingEngines.length() != m.elements.size()))
 	{
 		// the number of shader is changed so reload the mesh
 

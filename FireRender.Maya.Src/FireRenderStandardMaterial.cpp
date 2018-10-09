@@ -879,11 +879,13 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	MDistance::Unit sceneUnits = MDistance::uiUnit();
 	MDistance distance(1.0, sceneUnits);
 	float scale_multiplier = distance.asMeters();
-
 	// Diffuse
 	if (GET_BOOL(diffuseEnable))
 	{
-		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_DIFFUSE_COLOR, diffuseColor);
+		// apply purple 1x1 image in case we missed a texture file
+		frw::Value value = scope.GetValueForDiffuseColor(shaderNode.findPlug(Attribute::diffuseColor));
+		material.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_COLOR, value);
+		
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_DIFFUSE_WEIGHT, diffuseWeight);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_DIFFUSE_ROUGHNESS, diffuseRoughness);
 
