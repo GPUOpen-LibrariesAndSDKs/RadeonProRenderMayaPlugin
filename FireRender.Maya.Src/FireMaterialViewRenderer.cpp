@@ -337,6 +337,10 @@ MStatus FireMaterialViewRenderer::translateShader(const MUuid& id, const MObject
 		if (m_renderData.m_shape && m_renderData.m_surfaceShader)
 		{
 			m_renderData.m_shape.SetShader(m_renderData.m_surfaceShader);
+		}
+
+		if (m_renderData.m_shape && m_renderData.m_volumeShader)
+		{
 			m_renderData.m_shape.SetVolumeShader(m_renderData.m_volumeShader);
 		}
 
@@ -478,6 +482,10 @@ MStatus FireMaterialViewRenderer::setShader(const MUuid& id, const MUuid& shader
 	if (m_renderData.m_shape && m_renderData.m_surfaceShader)
 	{
 		m_renderData.m_shape.SetShader(m_renderData.m_surfaceShader);
+	}
+
+	if (m_renderData.m_shape && m_renderData.m_volumeShader)
+	{
 		m_renderData.m_shape.SetVolumeShader(m_renderData.m_volumeShader);
 	}
 
