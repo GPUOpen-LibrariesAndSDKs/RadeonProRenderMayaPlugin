@@ -107,7 +107,7 @@ namespace
 				errorMessage << " (reason: " << errorDescription << ") ";
 			}
 
-			error.set("Parse error", errorMessage.str().c_str(), true, false);
+			error.set("Parse error", errorMessage.str().c_str(), false, false);
 		}
 
 		if (!error.check())
@@ -131,6 +131,7 @@ namespace
 
 		if (error.check())
 		{
+			// report failure
 			return false;
 		}
 
@@ -149,6 +150,7 @@ namespace
 			}
 		}
 
+		// report success
 		return true;
 	}
 
@@ -201,7 +203,6 @@ bool IESLightLocatorMeshBase::SetFilename(const MString filename, bool forcedUpd
 		return false;
 	}
 
-	bool changed = true;
 	const wchar_t* castedName = filename.asWChar();
 	std::wstring local = castedName;
 
@@ -212,13 +213,10 @@ bool IESLightLocatorMeshBase::SetFilename(const MString filename, bool forcedUpd
 	else
 	{
 		const size_t pointsPerPolyline = 32;
-		changed = GenerateIESRepresentation(castedName, pointsPerPolyline, IES_SCALE_MUL, m_vertices, m_indices);
+		bool isGenerated = GenerateIESRepresentation(castedName, pointsPerPolyline, IES_SCALE_MUL, m_vertices, m_indices);
 	}
 
-	if (changed)
-	{
-		m_filename = filename;
-	}
+	m_filename = filename;
 
 	return true;
 }
