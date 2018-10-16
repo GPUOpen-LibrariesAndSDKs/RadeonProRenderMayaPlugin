@@ -3,6 +3,7 @@
 #include "RadeonProRender_CL.h"
 #include "RadeonImageFilters_cl.h"
 
+#include <vector>
 #include <cassert>
 #include <exception>
 
@@ -18,6 +19,40 @@ static bool HasGpuContext(rpr_creation_flags contextFlags)
 	bool hasGpuContext = (contextFlags & gpuMask) != 0;
 
 	return hasGpuContext;
+}
+
+static rpr_int GpuDeviceIdUsed(rpr_creation_flags contextFlags)
+{
+#define GPU(x) RPR_CREATION_FLAGS_ENABLE_GPU##x
+
+	std::vector<rpr_int> gpu_ids;
+	gpu_ids.reserve(16);
+	gpu_ids.push_back(GPU(0));
+	gpu_ids.push_back(GPU(1));
+	gpu_ids.push_back(GPU(2));
+	gpu_ids.push_back(GPU(3));
+	gpu_ids.push_back(GPU(4));
+	gpu_ids.push_back(GPU(5));
+	gpu_ids.push_back(GPU(6));
+	gpu_ids.push_back(GPU(7));
+	gpu_ids.push_back(GPU(8));
+	gpu_ids.push_back(GPU(9));
+	gpu_ids.push_back(GPU(10));
+	gpu_ids.push_back(GPU(11));
+	gpu_ids.push_back(GPU(12));
+	gpu_ids.push_back(GPU(13));
+	gpu_ids.push_back(GPU(14));
+	gpu_ids.push_back(GPU(15));
+	
+#undef GPU
+
+	for (rpr_int i = 0; i < gpu_ids.size(); i++ )
+	{	
+		if ((contextFlags & gpu_ids[i]) != 0)
+			return i;
+	}
+	
+	return -1;
 }
 
 ImageFilter::ImageFilter(const rpr_context rprContext, std::uint32_t width, std::uint32_t height) :
@@ -359,7 +394,7 @@ void RifContextCPU::UpdateInputs(const RifFilterWrapper* rifFilter) const
 		rprStatus = rprFrameBufferGetInfo(inputData.mRprFrameBuffer, RPR_FRAMEBUFFER_DATA, fbSize, imageData, NULL);
 		assert(RPR_SUCCESS == rprStatus);
 
-		// try to unmap at first, then rise a possible error
+		// try to unmap at first, then raise a possible error
 
 		rifStatus = rifImageUnmap(inputData.mRifImage, imageData);
 		assert(RIF_SUCCESS == rifStatus);
@@ -383,10 +418,15 @@ RifContextGPUMetal::RifContextGPUMetal(const rpr_context rprContext)
 
 	if (RIF_SUCCESS != rifStatus || 0 == deviceCount)
 		throw std::runtime_error("RPR denoiser hasn't found compatible devices.");
+	
+	rpr_creation_flags contextFlags = 0;
+	rpr_int rprStatus = rprContextGetInfo(rprContext, RPR_CONTEXT_CREATION_FLAGS, sizeof(rpr_creation_flags), &contextFlags, nullptr);
+	assert(RPR_SUCCESS == rprStatus);
 
 	std::vector<rpr_char> path = GetRprCachePath(rprContext);
 
-	rifStatus = rifCreateContext(RIF_API_VERSION, rifBackendApiType, rifProcessorType, 0, path.data(), &mRifContextHandle);
+	// we find the active gpu from the rpr contextFlags and then use that to create the rif context
+	rifStatus = rifCreateContext(RIF_API_VERSION, rifBackendApiType, rifProcessorType, GpuDeviceIdUsed(contextFlags), path.data(), &mRifContextHandle);
 	assert(RIF_SUCCESS == rifStatus);
 
 	if (RIF_SUCCESS != rifStatus)
