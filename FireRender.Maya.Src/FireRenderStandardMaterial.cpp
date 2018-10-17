@@ -502,7 +502,8 @@ MStatus FireMaya::StandardMaterial::initialize()
 
 	Attribute::refractionAbsorptionDistance = nAttr.create("refractAbsorptionDistance", "refd", MFnNumericData::kFloat, 0);
 	MAKE_INPUT_CONST(nAttr);
-	SET_MINMAX(nAttr, 0.0, 10.0);
+	nAttr.setSoftMax(10.0);
+	SET_MINMAX(nAttr, 0.0, 500.0);
 
 	Attribute::refractionAbsorptionColor = nAttr.createColor("refractAbsorbColor", "refa");
 	MAKE_INPUT(nAttr);
