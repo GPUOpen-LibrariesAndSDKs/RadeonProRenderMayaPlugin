@@ -1514,10 +1514,6 @@ namespace frw
 
 		void Render()
 		{
-			void* h = Handle();
-			if (h == nullptr)
-				LogPrint("h == nullptr");
-
 			auto status = rprContextRender(Handle());
 #ifndef SHOW_EXTENDED_ERROR_MSG
 			checkStatusThrow(status, "Unable to render");
