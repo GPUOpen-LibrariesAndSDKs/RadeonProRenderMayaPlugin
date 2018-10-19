@@ -25,7 +25,7 @@
 #include <maya/MGlobal.h>
 
 //#define FRW_LOGGING 1
-
+#define SHOW_EXTENDED_ERROR_MSG
 
 #if FRW_LOGGING
 
@@ -850,29 +850,51 @@ namespace frw
 		void SetPrimaryVisibility(bool visible)
 		{
 #if RPR_API_VERSION != 0x010000110
+#if RPR_API_VERSION >= 0x010032000
+			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_PRIMARY_ONLY_FLAG, visible);
+#else
 			auto res = rprShapeSetVisibilityEx(Handle(), "visible.primary", visible);
+#endif
 			checkStatus(res);
 #endif
 		}
 		void SetReflectionVisibility(bool visible)
 		{
+#if RPR_API_VERSION >= 0x010032000
+			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_REFLECTION, visible);
+			checkStatus(res);
+			res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_GLOSSY_REFLECTION, visible);
+			checkStatus(res);
+#else
 			auto res = rprShapeSetVisibilityEx(Handle(), "visible.reflection", visible);
 			checkStatus(res);
 			res = rprShapeSetVisibilityEx(Handle(), "visible.reflection.glossy", visible);
 			checkStatus(res);
+#endif
 		}
 
 		void setRefractionVisibility(bool visible)
 		{
+#if RPR_API_VERSION >= 0x010032000
+			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_REFRACTION, visible);
+			checkStatus(res);
+			res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_GLOSSY_REFRACTION, visible);
+			checkStatus(res);
+#else
 			auto res = rprShapeSetVisibilityEx(Handle(), "visible.refraction", visible);
 			checkStatus(res);
 			res = rprShapeSetVisibilityEx(Handle(), "visible.refraction.glossy", visible);
 			checkStatus(res);
+#endif
 		}
 
 		void SetLightShapeVisibilityEx(bool visible)
 		{
+#if RPR_API_VERSION >= 0x010032000
+			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_LIGHT, visible);
+#else
 			auto res = rprShapeSetVisibilityEx(Handle(), "visible.light", visible);
+#endif
 			checkStatus(res);
 		}
 
@@ -912,7 +934,11 @@ namespace frw
 #endif
 		void SetShadowFlag(bool castsShadows)
 		{
+#if RPR_API_VERSION >= 0x010032000
+			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_SHADOW, castsShadows);
+#else
 			auto res = rprShapeSetVisibilityEx(Handle(), "visible.shadow", castsShadows);
+#endif
 			checkStatus(res);
 		}
 
@@ -1489,8 +1515,27 @@ namespace frw
 
 		void Render()
 		{
+			void* h = Handle();
+			if (h == nullptr)
+				LogPrint("h == nullptr");
+
 			auto status = rprContextRender(Handle());
+#ifndef SHOW_EXTENDED_ERROR_MSG
 			checkStatusThrow(status, "Unable to render");
+#else
+			if (status != RPR_SUCCESS)
+			{
+				size_t length;
+				auto status2 = rprContextGetInfo(Handle(), RPR_CONTEXT_LAST_ERROR_MESSAGE, sizeof(size_t), nullptr, &length);
+				std::vector<rpr_char> path(length);
+				auto status3 = rprContextGetInfo(Handle(), RPR_CONTEXT_LAST_ERROR_MESSAGE, path.size(), &path[0], nullptr);
+
+				std::string error_msg(path.begin(), path.end());
+				LogPrint(error_msg.c_str());
+
+				checkStatusThrow(status, error_msg.c_str());
+			}
+#endif
 		}
 
 		void RenderTile(int rxmin, int rxmax, int rymin, int rymax)
