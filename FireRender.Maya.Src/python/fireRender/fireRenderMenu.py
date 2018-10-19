@@ -5,13 +5,13 @@ import common
 import maya.mel as mel
 
 def exportFireRenderScene(data):
-    basicFilter = "*.frScene;;All Files (*.*)"
+    basicFilter = "*.rpr;;All Files (*.*)"
     filePath = maya.cmds.fileDialog2(fileFilter=basicFilter, dialogStyle=0)
     if filePath:
         maya.cmds.fireRenderExport(sc=1,file=filePath[0])
 
 def exportFireRenderSelection(data):
-    basicFilter = "*.frScene;;All Files (*.*)"
+    basicFilter = "*.rpr;;All Files (*.*)"
     filePath = maya.cmds.fileDialog2(fileFilter=basicFilter, dialogStyle=0)
     if filePath:
         maya.cmds.fireRenderExport(selection=1,file=filePath[0])
