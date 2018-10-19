@@ -25,7 +25,6 @@
 #include <maya/MGlobal.h>
 
 //#define FRW_LOGGING 1
-#define SHOW_EXTENDED_ERROR_MSG
 
 #if FRW_LOGGING
 
