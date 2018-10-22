@@ -162,7 +162,7 @@ void PhysicalLightAttributes::CreateIntensityAttributes()
 
 	CreateColor(colorPicker, "colorPicker", "cp");
 
-	CreateFloatAttribute(temperature, "temperature", "t", 0.0f, 40000.0f, 1.0f);
+	CreateFloatAttribute(temperature, "temperature", "t", 0.0f, 40000.0f, 6500.0f);
 
 	CreateColor(temperatureColor, "temperatureColor", "tc", true);
 }
@@ -200,7 +200,7 @@ void PhysicalLightAttributes::CreateShadowsAttrbutes()
 {
 	CreateBoolAttribute(shadowsEnabled, "shadowsEnabled", "se", true);
 
-	CreateFloatAttribute(shadowsSoftness, "shadowsSoftness", "ss", 0.0f, 1.0f, 0.5f);
+	CreateFloatAttribute(shadowsSoftness, "shadowsSoftness", "ss", 0.0f, 1.0f, 0.02f);
 	CreateFloatAttribute(shadowsTransparency, "shadowsTransparency", "st", 0.0f, 1.0f, 1.0f);
 }
 
