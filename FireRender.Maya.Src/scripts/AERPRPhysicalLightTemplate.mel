@@ -57,7 +57,7 @@ global proc AERPRPhysicalLightTemplate( string $nodeName )
 global proc intensityUnitsNew( string $attrName )
 {
 	rowLayout -columnAttach1 "left" -columnOffset1 60;
-		optionMenu -label "Intensity Units" -changeCommand "onIntensityUnitsChanged" RPR_IntensityUnitsControl;
+		optionMenu -label "Intensity Units" -changeCommand "onUpdateIntensityUnits" RPR_IntensityUnitsControl;
 		menuItem -label "Lumen" -data 0 RPR_LumenItem;
 		menuItem -label "Luminance" -data 1 RPR_LuminanceItem;
 		menuItem -label "Watts" -data 2 RPR_WattsItem;
@@ -74,7 +74,7 @@ global proc intensityUnitsReplace( string $attrName )
 	connectControl RPR_IntensityUnitsControl $attrName;
 }
 
-global proc onIntensityUnitsChanged()
+global proc onUpdateIntensityUnits()
 {
 	$attrName = `attrControlGrp -query -attribute RPR_IntensityUnitsControl`;
 
@@ -135,6 +135,9 @@ global proc onLightTypeChanged(string $nodeName)
 	menuItem -edit -enable $enables[1] RPR_LuminanceItem;
 	menuItem -edit -enable $enables[2] RPR_WattsItem;
 	menuItem -edit -enable $enables[3] RPR_RadianceItem;
+
+	// Need this call to update "luminous efficacy" enable status if we switch selection to something else and than back it to phys light node
+	onUpdateIntensityUnits();
 }
 
 
@@ -176,10 +179,7 @@ global proc enableAreaSection(string $nodeName, int $flag)
 {
 	$val = $flag == 0;
 	editorTemplate -dimControl $nodeName "areaLightVisible" $val;
-	editorTemplate -dimControl $nodeName "areaLightBidirectional" $val;
 	editorTemplate -dimControl $nodeName "areaLightShape" $val;
-//	editorTemplate -dimControl $nodeName "areaLightButton" $val;
-//	editorTemplate -dimControl $nodeName "areaLightIntensityNorm" $val;
 
 	editorTemplate -dimControl $nodeName "areaWidth" $val;
 	editorTemplate -dimControl $nodeName "areaLength" $val;
@@ -222,9 +222,9 @@ global proc dimUnsupportedAttributes(string $nodeName)
 	enableDecaySection($nodeName, 0);
 
 	editorTemplate -dimControl $nodeName "shadowsTransparency" 1;
-	editorTemplate -dimControl $nodeName "areaLightBidirectional" 1;
 	editorTemplate -dimControl $nodeName "spotLightVisible" 1;
 	editorTemplate -dimControl $nodeName "areaLightIntensityNorm" 1;
+	editorTemplate -dimControl $nodeName "areaLightBidirectional" 1;
 }
 
 global proc onColorModeChanged(string $nodeName)
