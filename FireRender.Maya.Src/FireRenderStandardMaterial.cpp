@@ -82,6 +82,12 @@ namespace
 		MObject refractionRoughness;
 		MObject refractionIOR;
 		MObject refractionAbsorptionColor;
+
+#if RPR_API_VERSION >= 0x010032000
+		MObject refractionUseShaderNormal;
+#endif
+		MObject refractionNormal;
+
 #if USE_RPRX
 		MObject refractionLinkToReflection;
 		MObject refractionThinSurface;
@@ -137,7 +143,6 @@ namespace
 		MObject diffuseBaseNormal;
 		MObject reflectionNormal;
 		MObject clearCoatNormal;
-		MObject refractionNormal;
 	}
 }
 
@@ -493,6 +498,15 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT_CONST(nAttr);
 	SET_MINMAX(nAttr, 0.0, 10.0);
 
+#if RPR_API_VERSION >= 0x010032000
+	Attribute::refractionUseShaderNormal = nAttr.create("refractUseShaderNormal", "refu", MFnNumericData::kBoolean, 0);
+	MAKE_INPUT_CONST(nAttr);
+
+	Attribute::refractionNormal = nAttr.createColor("refractNormal", "refn");
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
+#endif
+
 #if USE_RPRX
 	Attribute::refractionLinkToReflection = nAttr.create("refractLinkToReflect", "refl", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
@@ -713,6 +727,10 @@ MStatus FireMaya::StandardMaterial::initialize()
 	ADD_ATTRIBUTE(Attribute::refractionWeight);
 	ADD_ATTRIBUTE(Attribute::refractionRoughness);
 	ADD_ATTRIBUTE(Attribute::refractionIOR);
+#if RPR_API_VERSION >= 0x010032000
+	ADD_ATTRIBUTE(Attribute::refractionUseShaderNormal);
+	ADD_ATTRIBUTE(Attribute::refractionNormal);
+#endif
 #if USE_RPRX
 	ADD_ATTRIBUTE(Attribute::refractionLinkToReflection);
 	ADD_ATTRIBUTE(Attribute::refractionThinSurface);
@@ -998,6 +1016,14 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		material.xSetParameterU(RPRX_UBER_MATERIAL_REFRACTION_IOR_MODE, bLinkedIOR ? RPRX_UBER_MATERIAL_REFRACTION_MODE_LINKED : RPRX_UBER_MATERIAL_REFRACTION_MODE_SEPARATE);
 #endif
 		material.xSetParameterU(RPRX_UBER_MATERIAL_REFRACTION_THIN_SURFACE, bThinSurface ? RPR_TRUE : RPR_FALSE);
+
+#if RPR_API_VERSION >= 0x010032000
+		NormalMapParams params(scope, material, shaderNode);
+		params.attrUseCommonNormalMap = Attribute::refractionUseShaderNormal;
+		params.mapPlug = Attribute::refractionNormal;
+		params.param = RPRX_UBER_MATERIAL_REFRACTION_NORMAL;
+		ApplyNormalMap(params);
+#endif
 	}
 	else
 	{

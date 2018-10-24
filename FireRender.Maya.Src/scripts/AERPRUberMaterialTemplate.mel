@@ -86,8 +86,21 @@ global proc AEUberCheckEnableRefraction(string $nodeName)
 	editorTemplate -dimControl $nodeName "refractAbsorptionDistance" ($value == 0);
 	editorTemplate -dimControl $nodeName "refractAbsorbColor" ($value == 0);
 	editorTemplate -dimControl $nodeName "refractAllowCaustics" ($value == 0);
+	editorTemplate -dimControl $nodeName "refractUseShaderNormal" ($value == 0);
 
 	AEUberCheckLinkRefl($nodeName);
+	AEUberCheckEnableRefractNormal($nodeName);
+}
+
+global proc AEUberCheckEnableRefractNormal(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".refractUseShaderNormal";
+	int $value = `getAttr $nodeAttr`;
+
+	string $nodeEnabledAttr = $nodeName + ".refraction";
+	int $enabled = `getAttr $nodeEnabledAttr`;
+
+	editorTemplate -dimControl $nodeName "refractNormal" (($value == 1) || ($enabled == 0));
 }
 
 global proc AEUberCheckEnableCoating(string $nodeName)
@@ -254,6 +267,8 @@ global proc AERPRUberMaterialTemplateNew(string $nodeName)
 		editorTemplate -label "Color" -addControl "refractColor";
 		editorTemplate -label "Weight" -addControl "refractWeight";
 		editorTemplate -label "Roughness" -addControl "refractRoughness";
+		editorTemplate -label "Use Shader Normal" -addControl "refractUseShaderNormal" "AEUberCheckEnableRefractNormal";
+		editorTemplate -label "Refraction Normal" -addControl "refractNormal";
 		editorTemplate -label "Link to Reflection" -addControl "refractLinkToReflect" "AEUberCheckLinkRefl";
 		editorTemplate -label "IOR" -addControl "refractIor";
 		editorTemplate -label "Thin Surface" -addControl "refractThinSurface";
