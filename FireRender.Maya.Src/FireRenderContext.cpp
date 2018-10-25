@@ -1171,13 +1171,7 @@ void FireRenderContext::RemoveRenderObject(const MObject& ob)
 
 				// remove object from main meshes cache
 				std::string uuid = getNodeUUid(ob);
-
-				auto found = m_mainMeshesDictionary.find(uuid);
-
-				if (found != m_mainMeshesDictionary.end())
-				{
-					m_mainMeshesDictionary.erase(uuid);
-				}
+				RemoveMainMesh(uuid);
 
 				// remove object from scene
 				frNode->detachFromScene();

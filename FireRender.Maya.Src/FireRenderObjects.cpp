@@ -868,6 +868,12 @@ void FireRenderMesh::Rebuild()
 
 		MMatrix mMtx = meshPath.inclusiveMatrix();
 		setVisibility(false);
+
+		if (m.isMainInstance && m.elements.size() > 0)
+		{
+			context->RemoveMainMesh(getNodeUUid(node));
+		}
+
 		m.elements.clear();
 
 		MObjectArray shaderObjs;

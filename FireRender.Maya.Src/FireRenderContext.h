@@ -454,6 +454,16 @@ public:
 		m_mainMeshesDictionary[getNodeUUid(shape)] = mainMesh;
 	}
 
+	void RemoveMainMesh(const std::string& uuid)
+	{
+		auto found = m_mainMeshesDictionary.find(uuid);
+
+		if (found != m_mainMeshesDictionary.end())
+		{
+			m_mainMeshesDictionary.erase(uuid);
+		}
+	}
+
 	bool GetNodePath(MDagPath& outPath, const std::string& uuid) const
 	{
 		auto it = m_nodePathCache.find(uuid);
