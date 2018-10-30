@@ -11,6 +11,8 @@
 #include <maya/MGlobal.h>
 #include <maya/MStatus.h>
 #include <maya/MSceneMessage.h>
+#include <maya/MFileIO.h>
+
 #include "common.h"
 #include "FireRenderMaterial.h"
 #include "FireRenderBlendMaterial.h"
@@ -158,9 +160,8 @@ bool gExitingMaya = false;
 
 void checkFireRenderGlobals(void* data)
 {
-	MGlobal::executeCommand("if (!(`objExists RadeonProRenderGlobals`)){ createNode -n RadeonProRenderGlobals -ss RadeonProRenderGlobals; }");
+	MGlobal::executeCommand("source \"common.mel\"; checkRPRGlobalsNode();");
 }
-
 
 void swapToDefaultRenderOverride(void* data) {
 	int numberOf3dViews = M3dView::numberOf3dViews();
@@ -801,6 +802,12 @@ MStatus initializePlugin(MObject obj)
 	std::string commandStr = "setRprCoreVersion(\"" + versionStr + "\")";
 
 	MGlobal::executeCommand( commandStr.c_str() );
+
+	// If we in file open process we need to remove default RadeonProRenderGlobals node
+	if (MFileIO::isOpeningFile())
+	{
+		MGlobal::executeCommand("delete RadeonProRenderGlobals");
+	}
 
 	return status;
 }
