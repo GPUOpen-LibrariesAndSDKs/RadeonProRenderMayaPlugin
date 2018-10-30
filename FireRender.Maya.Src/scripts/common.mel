@@ -44,3 +44,14 @@ global proc int isRenderSelectedObjectsOnlyFlagSet()
 {
 	return `optionVar -q renderViewRenderSelectedObj`;
 }
+
+global proc checkRPRGlobalsNode()
+{
+    string $arr[] = `ls -type RadeonProRenderGlobals`;
+    $count = size($arr);
+
+    if ($count == 0)
+    { 
+        createNode -n RadeonProRenderGlobals -ss RadeonProRenderGlobals; 
+    } 
+}
