@@ -36,6 +36,14 @@ void RprComposite::SetInputC(const char *inputName, rpr_composite input)
 	checkStatus(status);
 }
 
+void RprComposite::SetInput1U(const char *inputName, rpr_composite_type type)
+{
+	RPR_THREAD_ONLY;
+
+	rpr_int status = rprCompositeSetInput1u(mData, inputName, type);
+	checkStatus(status);
+}
+
 void RprComposite::SetInputFb(const char *inputName, rpr_framebuffer input)
 {
 	RPR_THREAD_ONLY;
