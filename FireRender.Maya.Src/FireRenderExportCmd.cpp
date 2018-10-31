@@ -10,6 +10,8 @@
 #include <maya/MArgList.h>
 #include <maya/MStatus.h>
 #include <maya/MDagPathArray.h>
+#include <maya/MTime.h>
+#include <maya/MAnimControl.h>
 #include <fstream>
 
 #ifdef __linux__
@@ -40,6 +42,7 @@ MSyntax FireRenderExportCmd::newSyntax()
 	CHECK_MSTATUS(syntax.addFlag(kFilePathFlag, kFilePathFlagLong, MSyntax::kString));
 	CHECK_MSTATUS(syntax.addFlag(kSelectionFlag, kSelectionFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kAllFlag, kAllFlagLong, MSyntax::kNoArg));
+	CHECK_MSTATUS(syntax.addFlag(kFramesFlag, kFramesFlagLong, MSyntax::kBoolean, MSyntax::kLong, MSyntax::kLong));
 
 	return syntax;
 }
@@ -108,9 +111,19 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		return MS::kFailure;
 	}
 
+	bool isSequenceExportEnabled = false;
+	int firstFrame = 1;
+	int lastFrame = 1;
+	if (argData.isFlagSet(kFramesFlag))
+	{
+		argData.getFlagArgument(kFramesFlag, 0, isSequenceExportEnabled);
+		argData.getFlagArgument(kFramesFlag, 1, firstFrame);
+		argData.getFlagArgument(kFramesFlag, 2, lastFrame);
+	}
+
 	if (argData.isFlagSet(kAllFlag))
 	{
-		//initialize
+		// initialize
 		FireRenderContext context;
 		context.setCallbackCreationDisabled(true);
 		context.buildScene();
@@ -122,20 +135,74 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			context.setCamera(cameras[0]);
 		}
 
-		context.Freshen();
-
-		rpr_int statuExport = rprsExport(
-			filePath.asChar(),
-			context.context(),
-			context.scene(),
-			0,0,
-			0,0,
-			0,0);
-
-		if (statuExport != RPR_SUCCESS)
+		// setup frame ranges
+		if (!isSequenceExportEnabled)
 		{
-			MGlobal::displayError("Unable to export fire render scene\n");
-			return MS::kFailure;
+			firstFrame = lastFrame = 1;
+		}
+
+		// process file path
+		MString name;
+		MString ext;
+
+		int pos = filePath.rindexW(L".");
+		if (pos == -1)
+		{
+			name = filePath;
+			ext = ".rpr";
+		}
+		else
+		{
+			name = filePath.substringW(0, pos - 1);
+			ext = filePath.substringW(pos, filePath.length() - 1);
+
+			if (ext != ".rpr")
+			{
+				name += ext;
+				ext = ".rpr";
+			}
+		}
+
+		// process each frame
+		for (int frame = firstFrame; frame <= lastFrame; ++frame)
+		{
+			// Move the animation to the next frame.
+			MTime time;
+			time.setValue(static_cast<double>(frame));
+			MAnimControl::setCurrentTime(time);
+
+			// Refresh the context so it matches the
+			// current animation state and start the render.
+			context.Freshen();
+
+			// update file path
+			MString newFilePath;
+			if (isSequenceExportEnabled)
+			{
+				newFilePath = name;
+				newFilePath += "_";
+				newFilePath += frame;
+				newFilePath += ext;
+			}
+			else
+			{
+				newFilePath = filePath;
+			}
+
+			// launch export
+			rpr_int statuExport = rprsExport(
+				newFilePath.asChar(),
+				context.context(),
+				context.scene(),
+				0, 0,
+				0, 0,
+				0, 0);
+
+			if (statuExport != RPR_SUCCESS)
+			{
+				MGlobal::displayError("Unable to export fire render scene\n");
+				return MS::kFailure;
+			}
 		}
 
 		return MS::kSuccess;

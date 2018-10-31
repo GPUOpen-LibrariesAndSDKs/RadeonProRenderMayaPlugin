@@ -23,6 +23,8 @@
 #define kAllFlagLong "-scene"
 #define kFilePathFlag "-f"
 #define kFilePathFlagLong "-file"
+#define kFramesFlag "-fr"
+#define kFramesFlagLong "-frames"
 
 class FireRenderExportCmd : public MPxCommand
 {
