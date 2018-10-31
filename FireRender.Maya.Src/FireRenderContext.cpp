@@ -2109,9 +2109,6 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	RprComposite compositeShadowCatcher(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
 	compositeShadowCatcher.SetInputFb("framebuffer.input", shadowCatcherFrameBuffer);
 
-	RprComposite compositeOne(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	compositeOne.SetInput4f("constant.input", 1.0f, 0.0f, 0.0f, 0.0f);
-
 	//Find first shadow catcher shader
 	frw::Shader shadowCatcherShader = scope.GetShadowCatcherShader();
 	assert(shadowCatcherShader);
@@ -2134,7 +2131,7 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 
 	RprComposite compositeShadowCatcherNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
 	compositeShadowCatcherNorm.SetInputC("normalize.color", compositeShadowCatcher);
-	compositeShadowCatcherNorm.SetInputC("normalize.shadowcatcher", compositeOne);
+	compositeShadowCatcherNorm.SetInput1U("normalize.aovtype", RPR_AOV_SHADOW_CATCHER);
 	
 	RprComposite compositeSCWeight(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
 	compositeSCWeight.SetInputC("arithmetic.color0", compositeShadowCatcherNorm);
