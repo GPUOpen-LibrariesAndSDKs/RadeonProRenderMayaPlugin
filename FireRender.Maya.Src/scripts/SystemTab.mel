@@ -1,0 +1,232 @@
+global proc FinalRender_onTileRenderChanged()
+{
+    $enabled = `getAttr RadeonProRenderGlobals.tileRenderEnabled`;
+
+    attrControlGrp -e -en $enabled tileRenderX;
+    attrControlGrp -e -en $enabled tileRenderY;
+}
+
+global proc onSystemPreferencesModeChanged()
+{
+    if (`menuItem -q -label RPR_FinalRenderRM` == `optionMenuGrp -q -v RPR_SystemTabRM`)
+    {
+        columnLayout -e -visible 1 finalRenderSettings;
+        columnLayout -e -visible 0 viewportSettings;
+    }
+    else
+    {
+        columnLayout -e -visible 0 finalRenderSettings;
+        columnLayout -e -visible 1 viewportSettings;
+    }
+}
+
+global proc createSystemTab()
+{
+    setUITemplate -pushTemplate attributeEditorTemplate;
+
+    string $parentForm = `setParent -query`;
+    scrollLayout -w 375 -horizontalScrollBarThickness 0 FinalRenderScrollLayout;
+    columnLayout -w 375 -adjustableColumn true FinalRenderTabColumn;
+
+    // About
+    //
+    frameLayout -label "About Radeon ProRender" -cll false -cl 0 fireRenderAbout;
+    createAboutFrame ("fireRenderAbout");
+    setParent ..;
+
+    separator -height 10;
+
+    optionMenuGrp -label "Preferences for: " -changeCommand "onSystemPreferencesModeChanged" RPR_SystemTabRM;
+		menuItem -label "Final Render" -data 1 RPR_FinalRenderRM;
+        menuItem -label "Viewport & Thumbnail" -data 0 RPR_ViewportThumbnailRM;
+
+    columnLayout finalRenderSettings;
+    createFinalRenderPart();
+    setParent ..;
+
+    columnLayout viewportSettings;
+    createViewportRenderPart();
+    setParent ..;
+
+    setParent ..;
+    setParent ..;
+
+    onSystemPreferencesModeChanged();
+
+    formLayout
+	    -edit
+	    -af FinalRenderScrollLayout "top" 0
+	    -af FinalRenderScrollLayout "bottom" 0
+	    -af FinalRenderScrollLayout "left" 0
+	    -af FinalRenderScrollLayout "right" 0
+	    $parentForm;
+
+    setUITemplate -popTemplate;
+}
+
+global proc createAboutFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+//	setParentToFireRenderTab();
+	setParent $parent;
+
+	columnLayout
+		-adjustableColumn true
+		-columnAttach "both" 5
+		-columnWidth 250
+		-columnAlign "center"
+		-rowSpacing 5;
+
+		separator -style "none";
+
+		image
+			-width 250
+			-image "RadeonProRenderLogo.png";
+
+		frameLayout
+			-marginHeight 8
+			-labelVisible false
+			-borderVisible true
+			-collapsable false
+			-collapse false;
+
+			string $name = "Radeon ProRender for Maya(R) " + getRPRPluginVersion() + " (core " + getRprCoreVersion() + ")\n" +
+							"Copyright (C) 2016 Advanced Micro Devices, Inc. (AMD).\n" +
+							"Portions of this software are created and copyrighted\n" +
+							"to other third parties.";
+			button -label $name -height 64 -command "showMoreAbout()";
+
+		setParent..;
+
+		canvas -height 1 -enableBackground false;
+
+		flowLayout -columnSpacing 8 -wrap true -height 60;
+
+			canvas -width 20 -height 1 -enableBackground false;
+			button -label "Main Site" -height 19 -command "showRPRUrl(\"http://pro.radeon.com/en-us/software/prorender/\")";
+			button -label "Documentation" -height 19 -command "showRPRUrl(\"http://pro.radeon.com/en-us/software/prorender/\")";
+			button -label "Downloads" -height 19 -command "showRPRUrl(\"https://pro.radeon.com/en/software/prorender/maya/\")";
+			button -label "Community" -height 19 -command "showRPRUrl(\"https://community.amd.com/community/prorender/\")";
+			canvas -width 20 -height 1 -enableBackground false;
+			button -label "Bug Reports" -height 19 -command "showRPRUrl(\"https://community.amd.com/community/prorender/maya/\")";
+
+		setParent..;
+
+	setParent ..;
+
+	setUITemplate -popTemplate;
+}
+
+global proc createFinalRenderPart()
+{
+    frameLayout -label "Render Setup" -cll false -cl 0 finalRenderSetup;
+    createRenderResourcesFrame ("finalRenderSetup", 1);
+    setParent ..;
+
+    frameLayout -label "Other Settings" -cll false -cl 0 finalRenderOtherSettings;
+    columnLayout -cat left 20;
+
+    attrFieldSliderGrp
+    	-label "Samples Per View Update"
+        -attribute "RadeonProRenderGlobals.samplesBetweenRenderUpdate"
+    ;
+
+    separator -height 5;
+
+    attrControlGrp
+    	-label "Tile Render Enabled"
+		-attribute "RadeonProRenderGlobals.tileRenderEnabled"
+        -cc FinalRender_onTileRenderChanged
+        tileRenderEnabled
+	;  
+
+    attrControlGrp
+    	-label "Tile X"
+		-attribute "RadeonProRenderGlobals.tileRenderX"
+        tileRenderX
+	;
+
+    attrControlGrp
+    	-label "Tile Y"
+		-attribute "RadeonProRenderGlobals.tileRenderY"
+        tileRenderY
+	;
+
+    if (isMPSOptionNeeded())
+    {
+        separator -height 10;
+
+        attrControlGrp
+            -label "Use Metal Performance Shaders"
+            -attribute "RadeonProRenderGlobals.useMPS";
+    }
+
+    FinalRender_onTileRenderChanged();
+
+    setParent ..;
+    setParent ..;
+}
+
+global proc int isMPSOptionNeeded()
+{
+    if (`about -mac`)
+    {
+        string $ver = `about -osv`;
+        if (`match "10.14" $ver` != "")
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+global proc updateSystemTab()
+{
+}
+
+
+// viewport
+
+global proc createViewportRenderPart()
+{
+    frameLayout -label "Render Setup" -cll false -cl 0 ViewportRenderSetup;
+    createRenderResourcesFrame ("ViewportRenderSetup", 0);
+    setParent ..;
+
+    frameLayout -label "Other Settings" -cll false -cl 0 ViewportOtherCCSettings;
+    columnLayout -cat left 20;
+
+	attrFieldSliderGrp
+		-label "Thumbnail\nIterations Count"
+		-attribute "RadeonProRenderGlobals.thumbnailIterationCount";
+
+    separator -height 5;
+
+	attrControlGrp
+		-label "Render Mode"
+		-attribute "RadeonProRenderGlobals.renderMode";
+
+    separator -height 5;
+
+	attrControlGrp
+		-label "Max Ray Depth"
+		-attribute "RadeonProRenderGlobals.maxRayDepthViewport";
+
+	attrControlGrp
+		-label "Max Diffuse Ray Depth"
+		-attribute "RadeonProRenderGlobals.maxDepthDiffuseViewport";
+
+	attrControlGrp
+		-label "Max Reflection Ray Depth"
+		-attribute "RadeonProRenderGlobals.maxDepthGlossyViewport";
+
+    separator -height 5;
+
+	attrControlGrp
+		-label "Viewport Motion Blur"
+		-attribute "RadeonProRenderGlobals.motionBlurViewport";
+
+    setParent ..;
+    setParent ..;
+}

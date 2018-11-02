@@ -1,0 +1,124 @@
+proc createFireRenderQualityPresetsFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	setParent $parent;
+
+	columnLayout -adjustableColumn true;
+
+	attrControlGrp
+		-label "Production Preset"
+		-cc AERPRQualityPresetsProduction
+		-attribute "RadeonProRenderGlobals.qualityPresets";
+
+	setParent ..;
+	setUITemplate -popTemplate;
+}
+
+proc createFinalRenderQualityPart()
+{
+	// Quality Presets
+	//
+//	frameLayout -label "Quality Presets" -cll false -cl 0 fireRenderQualityPresetsFrame;
+
+//	createFireRenderQualityPresetsFrame ("fireRenderQualityPresetsFrame");
+//	setParent ..;
+
+	// Render Resources section
+	//
+	frameLayout -label "Final Render Ray Depths" -cll false -cl 0 fireRenderQualityFrame;
+
+	// Trace depth
+	attrControlGrp
+		 -label "Max Ray Depth"
+		 -attribute "RadeonProRenderGlobals.maxRayDepth";
+
+	attrControlGrp
+		 -label "Max Diffuse"
+		 -attribute "RadeonProRenderGlobals.maxDepthDiffuse";
+
+	attrControlGrp
+		 -label "Max Glossy"
+		 -attribute "RadeonProRenderGlobals.maxDepthGlossy";
+
+	attrControlGrp
+		 -label "Max Refraction"
+		 -attribute "RadeonProRenderGlobals.maxDepthRefraction";
+
+	attrControlGrp
+		 -label "Max Glossy Refraction"
+		 -attribute "RadeonProRenderGlobals.maxDepthRefractionGlossy";
+
+	attrControlGrp
+		 -label "Max Shadow"
+		 -attribute "RadeonProRenderGlobals.maxDepthShadow";
+
+	setParent ..;
+
+	// Advanced settings section
+	frameLayout -label "Final Render Advanced Settings" -cll false -cl 0 fireRenderQualityAdvancedFrame;
+
+	attrControlGrp
+		-label "Ray Epsilon(mm)"
+		-attribute "RadeonProRenderGlobals.raycastEpsilon";
+
+        attrControlGrp
+            -label "Enable Out of Core Textures"
+            -attribute "RadeonProRenderGlobals.enableOOC"
+            -cc updateOOCUIProduction;
+
+    attrControlGrp
+        -label "GPU texture cache (Mb)"
+        -attribute "RadeonProRenderGlobals.textureCacheSize"
+        -cc updateOOCUI
+        textureCacheSize;
+
+	// Clamp irradiance
+	attrControlGrp
+		 -label "Clamp Irradiance"
+		 -attribute "RadeonProRenderGlobals.giClampIrradiance";
+
+	// Clamp irradiance value
+	attrControlGrp
+		 -label "Clamp Irradiance Value"
+		 -attribute "RadeonProRenderGlobals.giClampIrradianceValue";
+
+	attrControlGrp
+		 -label "Texture Compression"
+		 -attribute "RadeonProRenderGlobals.textureCompression";
+
+	setParent ..;
+}
+
+
+global proc createQualityTab()
+{
+	string $parentForm = `setParent -query`;
+	scrollLayout -w 375 -horizontalScrollBarThickness 0 fireRenderQualityScrollLayout;
+	columnLayout -w 375 -adjustableColumn true fireRenderTabColumn;
+
+        createFinalRenderQualityPart();
+
+	formLayout
+		-edit
+		-af fireRenderQualityScrollLayout "top" 0
+		-af fireRenderQualityScrollLayout "bottom" 0
+		-af fireRenderQualityScrollLayout "left" 0
+		-af fireRenderQualityScrollLayout "right" 0
+		$parentForm;
+
+        updateOOCUIProduction();
+}
+
+global proc updateOOCUIProduction()
+{
+	int $enabled = `getAttr RadeonProRenderGlobals.enableOOC`;
+
+	// Lock controls and set it to ON state
+	control -edit -enable ($enabled > 0) textureCacheSize;
+}
+
+global proc updateQualityTab()
+{
+
+}

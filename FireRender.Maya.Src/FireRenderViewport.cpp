@@ -53,6 +53,8 @@ FireRenderViewport::FireRenderViewport(const MString& panelName) :
 	m_closeDialogNeeded(false),
 	m_createFailed(false)
 {
+	m_context.m_RenderType = RenderType::ViewportRender;
+
 	// Initialize.
 	if (!initialize())
 		m_createFailed = true;
@@ -64,8 +66,6 @@ FireRenderViewport::FireRenderViewport(const MString& panelName) :
         m_widget = m_view.widget();
     else
         m_widget = nullptr;
-
-	m_context.m_RenderType = FireRenderContext::RenderType::ViewportRender;
 
 	// Add the RPR panel menu.
 	addMenu();
@@ -203,8 +203,8 @@ bool FireRenderViewport::RunOnViewportThread()
 	case FireRenderContext::StateRendering:
 	{
 		// Check if a render is required. Note that this code will be executed
-		if (m_context.cameraAttributeChanged() ||	// camera changed
-			m_context.needsRedraw() ||				// context needs redrawing
+		if (m_context.needsRedraw() ||				// context needs redrawing
+			m_context.cameraAttributeChanged() ||	// camera changed
 			m_context.keepRenderRunning())			// or we must render just because rendering is not yet completed
 		{
 			try
@@ -452,7 +452,6 @@ bool FireRenderViewport::initialize()
 			//enable AOV-COLOR so that it can be resolved and used properly
 			m_context.enableAOV(RPR_AOV_COLOR);
 
-			m_context.setInteractive(true);
 			if (!m_context.buildScene(animating, true, glViewport))
 				return false;
 		}

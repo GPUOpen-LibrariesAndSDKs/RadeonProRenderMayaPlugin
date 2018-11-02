@@ -26,7 +26,7 @@ void FireRenderSwatchInstance::initScene()
 	}
 
 	context.setCallbackCreationDisabled(true);
-	context.m_RenderType = FireRenderContext::RenderType::Thumbnail;
+	context.m_RenderType = RenderType::Thumbnail;
 	context.initSwatchScene();
 	context.Freshen();
 	sceneIsCleaned = false;

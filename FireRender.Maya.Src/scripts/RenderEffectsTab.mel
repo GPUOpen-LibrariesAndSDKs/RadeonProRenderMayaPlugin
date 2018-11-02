@@ -1,0 +1,462 @@
+global proc createRenderEffectsTab()
+{
+	string $parentForm = `setParent -query`;
+	scrollLayout -w 375 -horizontalScrollBarThickness 0 fireRenderEffectsScrollLayout;
+	columnLayout -w 375 -adjustableColumn true fireRenderEffectsTabColumn;
+
+	// Motion Blur
+	//
+	frameLayout -label "Motion Blur" -cll true -cl 0 fireRenderMotionBlurFrame;
+
+	createFireRenderMotionBlurFrame ("fireRenderMotionBlurFrame");
+	setParent ..;
+
+	// Denoiser
+	//
+	frameLayout -label "Denoiser (IPR and Production Renderer)" -cll true -cl true fireRenderDenoiserFrame;
+
+	createFireRenderDenoiserFrame ("fireRenderDenoiserFrame");
+	setParent ..;
+
+	// Cameras
+	//
+	frameLayout -label "Camera" -cll true -cl 0 fireRenderCameraFrame;
+	createFireRenderCameraFrame ("fireRenderCameraFrame");
+	setParent ..;
+
+	// Render stamp
+	//
+	frameLayout -label "Render Stamp" -cll true -cl 0 fireRenderRenderStampFrame;
+	createRenderStampFrame fireRenderRenderStampFrame;
+	setParent ..;
+
+	// Environment
+	//
+	frameLayout -label "Environment" -cll true -cl 0 fireRenderEnvironmentFrame;
+	createEnvironmentFrame2 fireRenderEnvironmentFrame;
+	setParent ..;
+
+	frameLayout -label "Tone Mapping" -cll true -cl 1 fireRenderTonemappingFrame;
+	createFireRenderToneMappingFrame fireRenderTonemappingFrame;
+	setParent ..;
+
+	setParent ..;
+
+	formLayout
+		-edit
+		-af fireRenderEffectsScrollLayout "top" 0
+		-af fireRenderEffectsScrollLayout "bottom" 0
+		-af fireRenderEffectsScrollLayout "left" 0
+		-af fireRenderEffectsScrollLayout "right" 0
+		$parentForm;
+}
+
+global proc createFireRenderMotionBlurFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	//setParentToFireRenderTab();
+	setParent $parent;
+
+	columnLayout -adjustableColumn true;
+
+	attrControlGrp
+		 -label "Enable"
+		 -attribute "RadeonProRenderGlobals.motionBlur";
+	attrControlGrp
+		 -label "Camera Exposure"
+		 -attribute "RadeonProRenderGlobals.motionBlurCameraExposure";
+	attrControlGrp
+		 -label "Scale"
+		 -attribute "RadeonProRenderGlobals.motionBlurScale";
+
+	setParent ..;
+	setUITemplate -popTemplate;
+}
+
+global proc createFireRenderDenoiserFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	//setParentToFireRenderTab();
+	setParent $parent;
+
+	columnLayout -adjustableColumn true;
+
+	attrControlGrp
+		 -label "Enable"
+		 -attribute "RadeonProRenderGlobals.denoiserEnabled"
+		 -cc updateDenoiserUI;
+
+	attrControlGrp
+		 -label "Type"
+		 -attribute "RadeonProRenderGlobals.denoiserType"
+		 -cc updateDenoiserUI
+		 denoiserTypeCombobox;
+
+	// Bilateral
+	frameLayout -label "Bilateral" -cll 0 -li 30 denoiserBilateralFrame;
+		attrControlGrp
+			 -label "Radius"
+			 -attribute "RadeonProRenderGlobals.denoiserRadius";
+	setParent ..;
+	
+	// Local Weighted Regression
+	frameLayout -label "Local Weighted Regression" -cll 0 -li 30 denoiserLWRFrame;
+		attrControlGrp
+			 -label "Samples"
+			 -attribute "RadeonProRenderGlobals.denoiserSamples";
+
+		attrControlGrp
+			 -label "Filter Radius"
+			 -attribute "RadeonProRenderGlobals.denoiserFilterRadius";
+
+		attrControlGrp
+			 -label "Bandwidth"
+			 -attribute "RadeonProRenderGlobals.denoiserBandwidth";
+	setParent ..;
+
+	// Edge Avoiding Wavelets
+	frameLayout -label "Edge Avoiding Wavelets" -cll 0 -li 30 denoiserEAWFrame;
+		attrControlGrp
+			 -label "Color"
+			 -attribute "RadeonProRenderGlobals.denoiserColor";
+
+		attrControlGrp
+			 -label "Depth"
+			 -attribute "RadeonProRenderGlobals.denoiserDepth";
+
+		attrControlGrp
+			 -label "Normal"
+			 -attribute "RadeonProRenderGlobals.denoiserNormal";
+
+		attrControlGrp
+			 -label "Trans"
+			 -attribute "RadeonProRenderGlobals.denoiserTrans";
+	setParent ..;
+
+	setParent ..;	// columnLayout ends
+	setUITemplate -popTemplate;
+
+	updateDenoiserUI();
+}
+
+global proc updateDenoiserUI()
+{
+	int $enabled = `getAttr RadeonProRenderGlobals.denoiserEnabled`;
+	int $type = `getAttr RadeonProRenderGlobals.denoiserType`;
+	int $enabledBilateral = $type == 0;
+	int $enabledLWR = $type == 1;
+	int $enabledEAW = $type == 2;
+
+	// Lock controls and set it to ON state
+	control -edit -enable ($enabled > 0) denoiserTypeCombobox;
+
+	frameLayout -edit -visible ($enabledBilateral && $enabled) denoiserBilateralFrame;
+	frameLayout -edit -visible ($enabledLWR && $enabled) denoiserLWRFrame;
+	frameLayout -edit -visible ($enabledEAW && $enabled) denoiserEAWFrame;
+}
+
+global proc createFireRenderCameraFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	//setParentToFireRenderTab();
+	setParent $parent;
+
+	columnLayout -adjustableColumn true;
+
+	attrControlGrp
+		 -label "Type"
+		 -attribute "RadeonProRenderGlobals.cameraType";
+
+	setParent ..;
+	setUITemplate -popTemplate;
+}
+
+global proc resetRenderStampText()
+{
+	string $res = `confirmDialog -title "Warning" -message "Would you like to reset Render Stamp text to default value?"
+		-button "Yes" -button "No" -defaultButton "Yes" -cancelButton "No" -icon "question"`;
+	if ($res == "Yes")
+	{
+		string $v = `getAttr RadeonProRenderGlobals.renderStampTextDefault`;
+		setAttr -type "string" RadeonProRenderGlobals.renderStampText $v;
+	}
+}
+
+global proc showRenderStampHelp()
+{
+	confirmDialog -title "Information" -button "OK" -icon "information" -message
+		("Special symbols:\n\n" +
+		"%pt \t total elapsed time\n" +
+		"%pp \t passes\n" +
+		"%sl \t number of lights\n" +
+		"%so \t number of objects\n" +
+		"%i  \t computer name\n" +
+		"%c  \t CPU name\n" +
+		"%g  \t used GPU name\n" +
+		"%h  \t used hardware (mix of %c and %g)\n" +
+		"%r  \t render device type (CPU, GPU, both)\n" +
+		"%d  \t current date and time\n" +
+		"%b  \t RadeonPro Renderer version number");
+}
+
+global proc createRenderStampFrame(string $parent)
+{
+	//setParentToFireRenderTab();
+	setParent $parent;
+
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	rowLayout -numberOfColumns 4 -adjustableColumn 2 -cw 1 60 -cw 3 20 -cw 4 20;
+		checkBox -label "Use" chkboxCtl;
+		textField textCtl;
+		button -label "R" -annotation "Reset RenderStamp to default value" -command "resetRenderStampText";
+		button -label "?" -annotation "Display tokens which could be used in RenderStamp" -command "showRenderStampHelp";
+	setParent ..;
+
+	connectControl chkboxCtl "RadeonProRenderGlobals.useRenderStamp";
+	connectControl textCtl "RadeonProRenderGlobals.renderStampText";
+}
+
+//==================================================================
+// Description: This procedure is called to create the
+//		Environment frame.
+//
+global proc createEnvironmentFrame2(string $parent)
+{
+	//setParentToFireRenderTab();
+	setParent $parent;
+
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	columnLayout -adjustableColumn true miEnvironmentLayout;
+
+	rowLayout -numberOfColumns 4 -cw 2 130 -cw 4 60 miIblLayout;
+		text -label "Image Based Lighting";
+		button -label "Create"
+			-command "createIBLNodeRPR"
+				frCreateIblButton;
+		symbolButton -image "inArrow.png"
+			-command "showIBLEditorRPR"
+				frOpenIblButton;
+		checkBox -label "Flip" -changeCommand flipIBLValueChanged chkboxCtl;
+	setParent ..;
+
+	connectControl chkboxCtl "RadeonProRenderGlobals.flipIBL";
+
+	updateIBLInterfaceRPR();
+
+	rowLayout -numberOfColumns 3 -cw 2 130 miSkyLayout;
+		text -label "Sky";
+		button -label "Create"
+			-command "createSkyNodeRPR"
+				frCreateSkyButton;
+		symbolButton -image "inArrow.png"
+			-command "showSkyEditorRPR"
+				frOpenSkyButton;
+	setParent ..;
+
+	// Listen for selection change so the interface
+	// can be updated if the IBL or Sky node is manually
+	// deleted from the scene (it will also be deselected).
+	scriptJob -p miIblLayout -rp
+		-e "SelectionChanged" updateEnvironmentInterfaceRPR;
+
+	updateSkyInterfaceRPR();
+
+	setParent ..;
+	setUITemplate -popTemplate;
+}
+
+global proc flipIBLValueChanged()
+{
+	$flip = `getAttr RadeonProRenderGlobals.flipIBL`;
+
+	if (hasIBLNodeRPR())
+	{
+		$node = getIBLNodeRPR();
+		setAttr ($node + ".flipIBL") $flip;
+	}
+}
+
+global proc createFireRenderToneMappingFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	//setParentToFireRenderTab();
+	setParent $parent;
+
+	columnLayout -adjustableColumn true;
+
+	attrControlGrp -label "Type" -cc toneMappingTypeChangedUI -attribute "RadeonProRenderGlobals.toneMappingType";
+
+	attrControlGrp -label "Apply Gamma To Maya Views" -attribute "RadeonProRenderGlobals.applyGammaToMayaViews";
+	attrControlGrp -label "Display Gamma" -attribute "RadeonProRenderGlobals.displayGamma";
+	attrControlGrp -label "Texture Gamma" -attribute "RadeonProRenderGlobals.textureGamma";
+
+	frameLayout -label "Linear" -cll false linearFrameLayout;
+		columnLayout -adjustableColumn true;
+			attrControlGrp -label "Scale" -attribute "RadeonProRenderGlobals.toneMappingLinearScale" toneMapLinScaleGrp;
+		setParent ..;
+	setParent ..;
+	frameLayout -label "Photolinear" -cll false photolinearFrameLayout;
+		columnLayout -adjustableColumn true;
+			attrControlGrp -label "Sensitivity" -attribute "RadeonProRenderGlobals.toneMappingPhotolinearSensitivity" toneMapPhotoSensGrp;
+			attrControlGrp -label "Exposure" -attribute "RadeonProRenderGlobals.toneMappingPhotolinearExposure" toneMapPhotoExpGrp;
+			attrControlGrp -label "Fstop" -attribute "RadeonProRenderGlobals.toneMappingPhotolinearFstop" toneMapPhotoFstopGrp;
+		setParent ..;
+	setParent ..;
+	frameLayout -label "Reinhard02" -cll false reinhard02FrameLayout;
+		columnLayout -adjustableColumn true;
+			attrControlGrp -label "Pre Scale" -attribute "RadeonProRenderGlobals.toneMappingReinhard02Prescale" toneMapReinPreScaleGrp;
+			attrControlGrp -label "Post Scale" -attribute "RadeonProRenderGlobals.toneMappingReinhard02Postscale" toneMapReinProstScaleGrp;
+			attrControlGrp -label "Burn" -attribute "RadeonProRenderGlobals.toneMappingReinhard02Burn" toneMapReinBurnGrp;
+		setParent ..;
+	setParent ..;
+
+	frameLayout -label "White-Balance" -cll false;
+		columnLayout -adjustableColumn true toneMappingWhiteBalanceLayout;
+			attrControlGrp -label "Enabled" -attribute "RadeonProRenderGlobals.toneMappingWhiteBalanceEnabled" toneMappingWhiteBalanceEnabled;
+
+			rowLayout -numberOfColumns 2;
+				text -label "Color";
+				button -backgroundColor 1 1 1 -enable 0 -label "" toneMappingWhiteBalanceColor;
+			setParent ..;
+
+			floatSliderGrp -min 1000 -max 12000 -field true -precision 0 -changeCommand "updateWhiteBalanceValue" toneMappingWhiteBalanceValue;
+			connectControl toneMappingWhiteBalanceValue RadeonProRenderGlobals.toneMappingWhiteBalanceValue;
+
+		setParent ..;
+
+		scriptJob -parent toneMappingWhiteBalanceLayout -replacePrevious
+			-attributeChange "RadeonProRenderGlobals.toneMappingWhiteBalanceValue"
+			"updateWhiteBalanceDisplayedColorValue";
+	setParent ..;
+
+	setParent ..;
+
+	setUITemplate -popTemplate;
+
+	toneMappingTypeChangedUI();
+
+	updateWhiteBalanceDisplayedColorValue();
+}
+
+global proc toneMappingTypeChangedUI()
+{
+	int $enable[];
+	int $type = `getAttr ("RadeonProRenderGlobals.toneMappingType")`;
+
+	int $linearVisibility = 0;
+	int $photolinearVisibility = 0;
+	int $reinhard2Visibility = 0;
+
+	if ($type == 0) 
+	{	// None
+		$enable = {0, 0, 0, 0, 0, 0, 0};
+	} 
+	else if ($type == 1) 
+	{	// linear
+		$linearVisibility = 1;
+	} 
+	else if ($type == 2) 
+	{	// photolinear
+		$photolinearVisibility = 1;
+	} 
+	else if ($type == 5) 
+	{	// reinhard02
+		$reinhard2Visibility = 1;
+	}
+
+	frameLayout -edit -visible $linearVisibility linearFrameLayout;
+	frameLayout -edit -visible $photolinearVisibility photolinearFrameLayout;
+	frameLayout -edit -visible $reinhard2Visibility reinhard02FrameLayout;
+}
+
+
+global proc float[] kelvin2Color(float $kelvin)
+{
+	//Temperature must fall between 1000 and 40000 degrees
+	if ($kelvin < 1000)
+		$kelvin = 1000;
+
+	if ($kelvin > 40000)
+		$kelvin = 40000;
+	$kelvin = $kelvin *= 0.01;
+
+	float $r, $g, $b;
+	// Red
+	if ($kelvin <= 66)
+		$r = 1;
+	else
+	{
+		float $tmp = $kelvin - 60;
+		$tmp = 329.698727446 * (pow($tmp, -0.1332047592));
+		$r = $tmp * 1 / 255;
+		if ($r < 0) $r = 0;
+		if ($r > 1) $r = 1;
+	}
+
+	// Green
+	if ($kelvin <= 66)
+	{
+		float $tmp = $kelvin;
+		$tmp = 99.4708025861 * log($tmp) - 161.1195681661;
+		$g = $tmp * 1 / 255;
+		if ($g < 0) $g = 0;
+		if ($g > 1) $g = 1;
+	}
+	else
+	{
+		float $tmp = $kelvin - 60;
+		$tmp = 288.1221695283 * (pow($tmp, -0.0755148492));
+		$g = $tmp * 1 / 255;
+		if ($g < 0) $g = 0;
+		if ($g > 1) $g = 1;
+	}
+
+	// Blue
+	if ($kelvin >= 66)
+		$b = 1;
+	else if ($kelvin <= 19)
+		$b = 0;
+	else
+	{
+		float $tmp = $kelvin - 10;
+		$tmp = 138.5177312231 * log($tmp) - 305.0447927307;
+		$b = $tmp * 1 / 255;
+		if ($b < 0) $b = 0;
+		if ($b > 1) $b = 1;
+	}
+
+	float $result[3];
+	$result[0] = $r;
+	$result[1] = $g;
+	$result[2] = $b;
+
+	return $result;
+}
+
+global proc updateWhiteBalanceDisplayedColorValue()
+{
+	float $v = `getAttr RadeonProRenderGlobals.toneMappingWhiteBalanceValue`;
+
+	// Invert the temperature so the resulting
+	// color matches the effect on the image.
+	$v = 12000 - ($v - 800);
+
+	float $c[] = kelvin2Color($v);
+	button -edit -backgroundColor $c[0] $c[1] $c[2] toneMappingWhiteBalanceColor;
+}
+
+global proc updateWhiteBalanceValue()
+{
+
+}
+
+
+global proc updateRenderEffectsTab()
+{
+
+}

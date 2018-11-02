@@ -279,6 +279,7 @@
     <ClCompile Include="Lights\PhysicalLight\PhysicalLightAttributes.cpp" />
     <ClCompile Include="Lights\PhysicalLight\PhysicalLightGeometryUtility.cpp" />
     <ClCompile Include="MaterialLoader.cpp" />
+    <ClCompile Include="OptionVarHelpers.cpp" />
     <ClCompile Include="pluginMain.cpp" />
     <ClCompile Include="FireRenderMaterial.cpp" />
     <ClCompile Include="RenderCacheWarningDialog.cpp" />
@@ -319,6 +320,7 @@
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedFunctions_GL.h" />
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.h" />
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.h" />
+    <ClInclude Include="attributeNames.h" />
     <ClInclude Include="AutoLock.h" />
     <ClInclude Include="base_mesh.h" />
     <ClInclude Include="common.h" />
@@ -404,6 +406,7 @@
     <ClInclude Include="Lights\PhysicalLight\PhysicalLightGeometryUtility.h" />
     <ClInclude Include="Logger.h" />
     <ClInclude Include="MaterialLoader.h" />
+    <ClInclude Include="OptionVarHelpers.h" />
     <ClInclude Include="RenderCacheWarningDialog.h" />
     <ClInclude Include="RenderProgressBars.h" />
     <ClInclude Include="RenderRegion.h" />

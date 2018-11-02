@@ -63,6 +63,33 @@ struct DenoiserSettings
 	float trans;
 };
 
+struct CompletionCriteriaParams
+{
+	CompletionCriteriaParams()
+	{
+		completionCriteriaType = 0;
+		completionCriteriaHours = 0;
+		completionCriteriaMinutes = 0;
+		completionCriteriaSeconds = 0;
+		completionCriteriaIterations = 0;
+	}
+
+	short completionCriteriaType;
+	int completionCriteriaHours;
+	int completionCriteriaMinutes;
+	int completionCriteriaSeconds;
+	int completionCriteriaIterations;
+};
+
+enum class RenderType
+{
+	Undefined = 0,
+	ProductionRender,
+	IPR,
+	ViewportRender,
+	Thumbnail
+};
+
 class FireRenderGlobalsData
 {
 public:
@@ -87,14 +114,14 @@ public:
 
 	// Checks if name is one of the options are denoiser options
 	static bool isDenoiser(MString name);
+
+	static void getCPUThreadSetup(bool& overriden, int& cpuThreadCount, RenderType renderType);
+	static int getThumbnailIterCount();
 public:
 
 	// Completion criteria.
-	short completionCriteriaType;
-	int completionCriteriaHours;
-	int completionCriteriaMinutes;
-	int completionCriteriaSeconds;
-	int completionCriteriaIterations;
+	CompletionCriteriaParams completionCriteriaFinalRender;
+	CompletionCriteriaParams completionCriteriaViewport;
 
 	bool textureCompression;
 
@@ -103,6 +130,8 @@ public:
 
 	// Render Mode
 	short mode;
+
+	int viewportRenderMode;
 
 	// Global Illumination
 	bool giClampIrradiance;
@@ -119,14 +148,17 @@ public:
 	short filterSize;
 
 	// Max ray depth
-	short maxRayDepthProduction;
-	short maxRayDepthDiffuse;
-	short maxRayDepthGlossy;
-	short maxRayDepthRefraction;
-	short maxRayDepthGlossyRefraction;
-	short maxRayDepthShadow;
+	int maxRayDepth;
+	int maxRayDepthDiffuse;
+	int maxRayDepthGlossy;
+	int maxRayDepthRefraction;
+	int maxRayDepthGlossyRefraction;
+	int maxRayDepthShadow;
 
-	short maxRayDepthViewport;
+	// for viewport
+	int viewportMaxRayDepth;
+	int viewportMaxDiffuseRayDepth;
+	int viewportMaxReflectionRayDepth;
 
 	// Command port
 	int commandPort;
@@ -217,7 +249,7 @@ namespace FireMaya
 	class Options
 	{
 	public:
-		static int GetContextDeviceFlags();
+		static int GetContextDeviceFlags(RenderType renderType = RenderType::ProductionRender);
 	};
 }
 
@@ -591,7 +623,6 @@ inline MColor getColorAttribute(const MFnDependencyNode& node, const MObject& at
 
     return MColor::kOpaqueBlack;
 }
-
 
 inline MString operator "" _ms(const char * str, std::size_t len)
 {

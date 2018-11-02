@@ -491,6 +491,9 @@
     <ClCompile Include="FireRenderAO.cpp">
       <Filter>Materials</Filter>
     </ClCompile>
+    <ClCompile Include="OptionVarHelpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\FireRender.Components\cpp\SunPosition\SPA.cpp">
       <Filter>FireRender.Components\SunPosition</Filter>
     </ClCompile>
@@ -844,8 +847,14 @@
     <ClInclude Include="FireRenderAO.h">
       <Filter>Materials</Filter>
     </ClInclude>
+    <ClInclude Include="OptionVarHelpers.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\FireRender.Components\cpp\SunPosition\SPA.h">
       <Filter>FireRender.Components\SunPosition</Filter>
+    </ClInclude>
+    <ClInclude Include="attributeNames.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FireRenderSwatchInstance.h">
       <Filter>Header Files</Filter>

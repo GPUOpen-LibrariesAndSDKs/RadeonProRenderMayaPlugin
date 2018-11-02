@@ -296,6 +296,10 @@
 		8D595E3F20372FE20031988A /* libTahoe64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FA69E331D58D8AD00E218C8 /* libTahoe64.dylib */; };
 		8D595E4020372FE20031988A /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FA69E301D58D89B00E218C8 /* OpenCL.framework */; };
 		8D595E4220372FE20031988A /* RadeonProRender.bundle in Copy Files (copy product to plug-ins) */ = {isa = PBXBuildFile; fileRef = 4DE508DC1D9950A1009B2BD6 /* RadeonProRender.bundle */; };
+		8D65D2BF2176253A005D4E7F /* OptionVarHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D65D2BC2176253A005D4E7F /* OptionVarHelpers.cpp */; };
+		8D65D2C02176253A005D4E7F /* OptionVarHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D65D2BE2176253A005D4E7F /* OptionVarHelpers.h */; };
+		8D65D2C1217625AC005D4E7F /* OptionVarHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D65D2BE2176253A005D4E7F /* OptionVarHelpers.h */; };
+		8D65D2C2217625B9005D4E7F /* OptionVarHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D65D2BC2176253A005D4E7F /* OptionVarHelpers.cpp */; };
 		8D742CD41F6B031900CB9364 /* FireRenderShadowCatcherMaterial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D742CD21F6B031900CB9364 /* FireRenderShadowCatcherMaterial.cpp */; };
 		8D742CD51F6B031900CB9364 /* FireRenderShadowCatcherMaterial.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D742CD31F6B031900CB9364 /* FireRenderShadowCatcherMaterial.h */; };
 		8D77AE9B1F4360FA008E88FB /* FileSystemUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D77AE991F4360FA008E88FB /* FileSystemUtils.cpp */; };
@@ -478,6 +482,8 @@
 		8D55909820C8743800567EEC /* Translators.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Translators.h; path = ../../../FireRender.Maya.Src/Translators/Translators.h; sourceTree = "<group>"; };
 		8D55909920C8743800567EEC /* Translators.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Translators.cpp; path = ../../../FireRender.Maya.Src/Translators/Translators.cpp; sourceTree = "<group>"; };
 		8D595E4620372FE20031988A /* RadeonProRender.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = RadeonProRender.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		8D65D2BC2176253A005D4E7F /* OptionVarHelpers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionVarHelpers.cpp; path = ../../../FireRender.Maya.Src/OptionVarHelpers.cpp; sourceTree = "<group>"; };
+		8D65D2BE2176253A005D4E7F /* OptionVarHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OptionVarHelpers.h; path = ../../../FireRender.Maya.Src/OptionVarHelpers.h; sourceTree = "<group>"; };
 		8D742CD21F6B031900CB9364 /* FireRenderShadowCatcherMaterial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderShadowCatcherMaterial.cpp; path = ../../../FireRender.Maya.Src/FireRenderShadowCatcherMaterial.cpp; sourceTree = "<group>"; };
 		8D742CD31F6B031900CB9364 /* FireRenderShadowCatcherMaterial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderShadowCatcherMaterial.h; path = ../../../FireRender.Maya.Src/FireRenderShadowCatcherMaterial.h; sourceTree = "<group>"; };
 		8D77AE991F4360FA008E88FB /* FileSystemUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FileSystemUtils.cpp; path = ../../../FireRender.Maya.Src/FileSystemUtils.cpp; sourceTree = "<group>"; };
@@ -713,6 +719,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				8D65D2BC2176253A005D4E7F /* OptionVarHelpers.cpp */,
+				8D65D2BE2176253A005D4E7F /* OptionVarHelpers.h */,
 				8DBC06F1215E68BF006ECC17 /* FireRenderSwatchInstance.cpp */,
 				8DBC06F2215E68C0006ECC17 /* FireRenderSwatchInstance.h */,
 				8DD65239211499E300DB2804 /* SPA.cpp */,
@@ -1054,6 +1062,7 @@
 				4DE5087F1D9950A1009B2BD6 /* resource.h in Headers */,
 				8DD65238211499D000DB2804 /* SPA.h in Headers */,
 				4DE508801D9950A1009B2BD6 /* FireRenderMaterial.h in Headers */,
+				8D65D2C02176253A005D4E7F /* OptionVarHelpers.h in Headers */,
 				4DE508811D9950A1009B2BD6 /* FireRenderSkyLocator.h in Headers */,
 				8DB6232D2075582100841D10 /* FireRenderIESLight.h in Headers */,
 				8D77AE9C1F4360FA008E88FB /* FileSystemUtils.h in Headers */,
@@ -1113,6 +1122,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D65D2C1217625AC005D4E7F /* OptionVarHelpers.h in Headers */,
 				8DBC06F5215E6943006ECC17 /* FireRenderSwatchInstance.h in Headers */,
 				8DD6523B21149A9500DB2804 /* SPA.h in Headers */,
 				8D8F2C1B210B5327000DEBE6 /* FireRenderAO.h in Headers */,
@@ -1296,6 +1306,7 @@
 			files = (
 				4DE508991D9950A1009B2BD6 /* FireRenderGlobals.cpp in Sources */,
 				4DE5089A1D9950A1009B2BD6 /* FireRenderMaterial.cpp in Sources */,
+				8D65D2BF2176253A005D4E7F /* OptionVarHelpers.cpp in Sources */,
 				8D742CD41F6B031900CB9364 /* FireRenderShadowCatcherMaterial.cpp in Sources */,
 				8D55909B20C8743900567EEC /* MeshTranslator.cpp in Sources */,
 				4DE5089B1D9950A1009B2BD6 /* FireRenderUtils.cpp in Sources */,
@@ -1392,6 +1403,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D65D2C2217625B9005D4E7F /* OptionVarHelpers.cpp in Sources */,
 				8DBC06F6215E6968006ECC17 /* FireRenderSwatchInstance.cpp in Sources */,
 				8D5106A821149ACE00EFAE31 /* SPA.cpp in Sources */,
 				8D8F2C1C210B535F000DEBE6 /* FireRenderAO.cpp in Sources */,

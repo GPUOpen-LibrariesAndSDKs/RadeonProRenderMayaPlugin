@@ -107,7 +107,7 @@ int FireRenderContext::initializeContext()
 
 	LOCKMUTEX(this);
 
-	auto createFlags = FireMaya::Options::GetContextDeviceFlags();
+	auto createFlags = FireMaya::Options::GetContextDeviceFlags(m_RenderType);
 
 	rpr_int res;
 	createContextEtc(createFlags, true, false, &res);
@@ -155,7 +155,8 @@ void FireRenderContext::InitBuffersForAOV(frw::Context& context, int index, rpr_
 	m.framebufferAOV[index].Reset();
 	m.framebufferAOV_resolved[index].Reset();
 
-	if (aovEnabled[index]) {
+	if (aovEnabled[index]) 
+    {
 		m.framebufferAOV[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
 		m.framebufferAOV[index].Clear();
 		context.SetAOV(m.framebufferAOV[index], index);
@@ -163,10 +164,13 @@ void FireRenderContext::InitBuffersForAOV(frw::Context& context, int index, rpr_
 		// Create an OpenGL interop resolved frame buffer if
 		// required, otherwise, create a standard frame buffer.
 		if (m_glInteropActive && glTexture)
+        { 
 			m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, glTexture);
-		else 
-			m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
-		
+        }
+        else
+        {
+            m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
+        }
 
 		m.framebufferAOV_resolved[index].Clear();
 	}
@@ -200,17 +204,18 @@ void FireRenderContext::updateLimits(bool animation)
 
 void FireRenderContext::updateLimitsFromGlobalData(const FireRenderGlobalsData & globalData, bool animation, bool batch)
 {
+	const CompletionCriteriaParams& params = isInteractive() ? globalData.completionCriteriaViewport : globalData.completionCriteriaFinalRender;
 	// Get completion type.
-	short type = globalData.completionCriteriaType;
+	short type = params.completionCriteriaType;
 
 	// Get total render time.
 	int seconds =
-		globalData.completionCriteriaHours * 3600 +
-		globalData.completionCriteriaMinutes * 60 +
-		globalData.completionCriteriaSeconds;
+		params.completionCriteriaHours * 3600 +
+		params.completionCriteriaMinutes * 60 +
+		params.completionCriteriaSeconds;
 
 	// Get render iterations.
-	int iterations = globalData.completionCriteriaIterations;
+	int iterations = params.completionCriteriaIterations;
 
 	// Set to a single iteration for animations.
 	if (animation)
@@ -240,7 +245,7 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 		turnOnAOVsForDenoiser();
 	}
 
-	auto createFlags = FireMaya::Options::GetContextDeviceFlags();
+	auto createFlags = FireMaya::Options::GetContextDeviceFlags(m_RenderType);
 
 	{
 		LOCKMUTEX(this);
@@ -573,7 +578,6 @@ void FireRenderContext::initSwatchScene()
 	{
 		MString msg;
 		FireRenderError errorToShow(res, msg, true);
-
 		throw res;
 	}
 
@@ -816,11 +820,11 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 	// setup CPU thread count
 	rpr_context_properties ctxProperties[3] = { 0 };
 
-	int cpuThreadCount = FireRenderGlobals::getCPUThreadCount();
-	if ((createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) && FireRenderGlobals::isOverrideThreadCount() && cpuThreadCount > 0)
+	int threadCountToOverride = getThreadCountToOverride();
+	if ((createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) && threadCountToOverride > 0)
 	{
 		ctxProperties[0] = (rpr_context_properties) RPR_CONTEXT_CREATEPROP_CPU_THREAD_LIMIT;
-		ctxProperties[1] = (rpr_context_properties) cpuThreadCount;
+		ctxProperties[1] = (rpr_context_properties) threadCountToOverride;
 		ctxProperties[2] = (rpr_context_properties) 0;
 	}
 
@@ -848,6 +852,23 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 	return false;
 }
 
+int FireRenderContext::getThreadCountToOverride() const
+{
+	bool useViewportParams = isInteractive();
+
+	bool isOverriden;
+	int cpuThreadCount;
+
+	FireRenderGlobalsData::getCPUThreadSetup(isOverriden, cpuThreadCount, m_RenderType);
+
+	if (isOverriden)
+	{
+		return cpuThreadCount;
+	}
+
+	// means we dont want to override cpu thread count
+	return 0;
+}
 
 bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete, bool glViewport, int* pOutRes)
 {
@@ -1473,14 +1494,9 @@ void FireRenderContext::setMotionBlur(bool doBlur)
 	}
 }
 
-void FireRenderContext::setInteractive(bool interactive)
-{
-	m_interactive = interactive;
-}
-
 bool FireRenderContext::isInteractive() const
 {
-	return m_interactive;
+	return (m_RenderType == RenderType::IPR) || (m_RenderType == RenderType::ViewportRender);
 }
 
 bool FireRenderContext::isGLInteropActive() const
@@ -1593,7 +1609,7 @@ bool FireRenderContext::needsRedraw(bool setToFalseOnExit)
 	bool value = m_needRedraw;
 
 	if (setToFalseOnExit)
-		m_needRedraw = setToFalseOnExit;
+		m_needRedraw = false;
 
 	return value;
 }

@@ -75,22 +75,22 @@ def openDocumentation(data):
     mel.eval('launch -web \"https://radeon-prorender.github.io/maya/\";')
 
 def setRenderProductionQualityHigh(data):
-    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresets\" 2;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepth\" 25;\n\tsetAttr \"RadeonProRenderGlobals.samples\" 16;}')
+    mel.eval('source \"presets.mel\";\n\nSetProdQualityPreset(2);')
 
 def setRenderProductionQualityMedium(data):
-    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresets\" 1;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepth\" 15;\n\tsetAttr \"RadeonProRenderGlobals.samples\" 8;}')
+    mel.eval('source \"presets.mel\";\n\nSetProdQualityPreset(1);')
 
 def setRenderProductionQualityLow(data):
-    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresets\" 0;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepth\" 5;\n\tsetAttr \"RadeonProRenderGlobals.samples\" 1;}')
+    mel.eval('source \"presets.mel\";\n\nSetProdQualityPreset(0);')
 
 def setRenderViewportQualityHigh(data):
-    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresetsViewport\" 2;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepthViewport\" 25;\n\tsetAttr \"RadeonProRenderGlobals.samplesViewport\" 16;}')
+    mel.eval('source \"presets.mel\";\n\nSetViewportQualityPreset(2);')
 
 def setRenderViewportQualityMedium(data):
-    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresetsViewport\" 1;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepthViewport\" 15;\n\tsetAttr \"RadeonProRenderGlobals.samplesViewport\" 8;}')
+    mel.eval('source \"presets.mel\";\n\nSetViewportQualityPreset(1);')
 
 def setRenderViewportQualityLow(data):
-    mel.eval('source \"createFireRenderGlobalsTab.mel\";\n\nif (size(`ls RadeonProRenderGlobals`)){\n\tsetAttr \"RadeonProRenderGlobals.qualityPresetsViewport\" 0;\n\tsetAttr \"RadeonProRenderGlobals.maxRayDepthViewport\" 5;\n\tsetAttr \"RadeonProRenderGlobals.samplesViewport\" 1;}')
+    mel.eval('source \"presets.mel\";\n\nSetViewportQualityPreset(0);')
 
 def createFireRenderMenu():
     gMainWindow = "MayaWindow";

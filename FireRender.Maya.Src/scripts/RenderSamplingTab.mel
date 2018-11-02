@@ -1,0 +1,137 @@
+global proc completionCriteriaTypeChanged()
+{
+	int $type = `getAttr("RadeonProRenderGlobals.completionCriteriaType")`;
+
+	int $enable[];
+	if ($type == 0)
+		$enable = {1, 0, 0, 0};
+	if ($type == 1)
+		$enable = {0, 1, 1, 1};
+	if ($type == 2)
+		$enable = {0, 0, 0, 0};
+
+	attrControlGrp -e -en $enable[0] completionCriteriaIterations;
+	attrControlGrp -e -en $enable[1] completionCriteriaHours;
+	attrControlGrp -e -en $enable[2] completionCriteriaMinutes;
+	attrControlGrp -e -en $enable[3] completionCriteriaSeconds;
+}
+
+global proc viewportCompletionCriteriaTypeChanged()
+{
+	int $type = `getAttr("RadeonProRenderGlobals.completionCriteriaTypeViewport")`;
+
+	int $enable[];
+	if ($type == 0)
+		$enable = {1, 0, 0, 0};
+	if ($type == 1)
+		$enable = {0, 1, 1, 1};
+	if ($type == 2)
+		$enable = {0, 0, 0, 0};
+
+	attrControlGrp -e -en $enable[0] viewportCompletionCriteriaIterations;
+	attrControlGrp -e -en $enable[1] viewportCompletionCriteriaHours;
+	attrControlGrp -e -en $enable[2] viewportCompletionCriteriaMinutes;
+	attrControlGrp -e -en $enable[3] viewportCompletionCriteriaSeconds;
+}
+
+global proc createRenderSamplingTab()
+{
+    setUITemplate -pushTemplate attributeEditorTemplate;
+
+    string $parentForm = `setParent -query`;
+    scrollLayout -w 375 -horizontalScrollBarThickness 0 RenderSamplingScrollLayout;
+    columnLayout -w 375 -adjustableColumn true RenderSamplingTabColumn;
+
+    frameLayout -label "Anti-Aliasing" -cll false -cl 0 RenderSamplingAASettings;
+    columnLayout -cat left 20;
+
+	// Filter
+	attrControlGrp
+		 -label "Filter"
+		 -attribute "RadeonProRenderGlobals.filter";
+
+	// Filter size
+	attrControlGrp
+		 -label "Filter Size"
+		 -attribute "RadeonProRenderGlobals.filterSize";
+
+    setParent ..;
+    setParent ..;
+
+
+    frameLayout -label "Final Render Completion Criteria" -cll false -cl 0 RenderSamplingCCSettings;
+    columnLayout -cat left 20;
+
+    attrControlGrp
+		-label "Type"
+		-cc completionCriteriaTypeChanged
+		-attribute "RadeonProRenderGlobals.completionCriteriaType";
+
+	attrControlGrp
+		-label "Iterations"
+		-attribute "RadeonProRenderGlobals.completionCriteriaIterations" completionCriteriaIterations;
+
+	attrControlGrp
+		-label "Hours"
+		-attribute "RadeonProRenderGlobals.completionCriteriaHours" completionCriteriaHours;
+
+	attrControlGrp
+		-label "Minutes"
+		-attribute "RadeonProRenderGlobals.completionCriteriaMinutes" completionCriteriaMinutes;
+
+	attrControlGrp
+		-label "Seconds"
+		-attribute "RadeonProRenderGlobals.completionCriteriaSeconds" completionCriteriaSeconds;
+
+    completionCriteriaTypeChanged();
+
+    setParent ..;
+    setParent ..;
+
+	//viewport compeltion criteria
+    frameLayout -label "Viewport Completion Criteria" -cll false -cl 0 ViewportRenderCCSettings;
+    columnLayout -cat left 20;
+
+    attrControlGrp
+		-label "Type"
+		-cc viewportCompletionCriteriaTypeChanged
+		-attribute "RadeonProRenderGlobals.completionCriteriaTypeViewport";
+
+	attrControlGrp
+		-label "Iterations"
+		-attribute "RadeonProRenderGlobals.completionCriteriaIterationsViewport" viewportCompletionCriteriaIterations;
+
+	attrControlGrp
+		-label "Hours"
+		-attribute "RadeonProRenderGlobals.completionCriteriaHoursViewport" viewportCompletionCriteriaHours;
+
+	attrControlGrp
+		-label "Minutes"
+		-attribute "RadeonProRenderGlobals.completionCriteriaMinutesViewport" viewportCompletionCriteriaMinutes;
+
+	attrControlGrp
+		-label "Seconds"
+		-attribute "RadeonProRenderGlobals.completionCriteriaSecondsViewport" viewportCompletionCriteriaSeconds;
+
+    viewportCompletionCriteriaTypeChanged();
+
+    setParent ..;
+    setParent ..;
+
+    setParent ..;
+    setParent ..;
+
+    formLayout
+		-edit
+		-af RenderSamplingScrollLayout "top" 0
+		-af RenderSamplingScrollLayout "bottom" 0
+		-af RenderSamplingScrollLayout "left" 0
+		-af RenderSamplingScrollLayout "right" 0
+		$parentForm;
+
+	setUITemplate -popTemplate;
+}
+
+global proc updateRenderSamplingTab()
+{
+} 
