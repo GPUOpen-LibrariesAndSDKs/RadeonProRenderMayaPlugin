@@ -1,29 +1,5 @@
-proc createFireRenderQualityPresetsFrame(string $parent)
-{
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-	setParent $parent;
-
-	columnLayout -adjustableColumn true;
-
-	attrControlGrp
-		-label "Production Preset"
-		-cc AERPRQualityPresetsProduction
-		-attribute "RadeonProRenderGlobals.qualityPresets";
-
-	setParent ..;
-	setUITemplate -popTemplate;
-}
-
 proc createFinalRenderQualityPart()
 {
-	// Quality Presets
-	//
-//	frameLayout -label "Quality Presets" -cll false -cl 0 fireRenderQualityPresetsFrame;
-
-//	createFireRenderQualityPresetsFrame ("fireRenderQualityPresetsFrame");
-//	setParent ..;
-
 	// Render Resources section
 	//
 	frameLayout -label "Final Render Ray Depths" -cll false -cl 0 fireRenderQualityFrame;
@@ -68,7 +44,7 @@ proc createFinalRenderQualityPart()
             -cc updateOOCUIProduction;
 
     attrControlGrp
-        -label "GPU texture cache (Mb)"
+        -label "GPU texture cache (MB)"
         -attribute "RadeonProRenderGlobals.textureCacheSize"
         -cc updateOOCUI
         textureCacheSize;
