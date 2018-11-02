@@ -74,24 +74,6 @@ def openAbout(data):
 def openDocumentation(data):
     mel.eval('launch -web \"https://radeon-prorender.github.io/maya/\";')
 
-def setRenderProductionQualityHigh(data):
-    mel.eval('source \"presets.mel\";\n\nSetProdQualityPreset(2);')
-
-def setRenderProductionQualityMedium(data):
-    mel.eval('source \"presets.mel\";\n\nSetProdQualityPreset(1);')
-
-def setRenderProductionQualityLow(data):
-    mel.eval('source \"presets.mel\";\n\nSetProdQualityPreset(0);')
-
-def setRenderViewportQualityHigh(data):
-    mel.eval('source \"presets.mel\";\n\nSetViewportQualityPreset(2);')
-
-def setRenderViewportQualityMedium(data):
-    mel.eval('source \"presets.mel\";\n\nSetViewportQualityPreset(1);')
-
-def setRenderViewportQualityLow(data):
-    mel.eval('source \"presets.mel\";\n\nSetViewportQualityPreset(0);')
-
 def createFireRenderMenu():
     gMainWindow = "MayaWindow";
     if not maya.cmds.menu("showFireRenderMenuCtrl", exists=1):
@@ -102,18 +84,6 @@ def createFireRenderMenu():
         maya.cmds.menuItem("FrStartRendering", label="Start a Production Render", p=frRenderMenu, c=startProductionRender)
 
         maya.cmds.menuItem( divider=True, p=frRenderMenu )
-
-        frRenderProductionMenu = maya.cmds.menuItem("frRenderProductionMenu", subMenu=True, label="Production Quality", p=frRenderMenu)
-        maya.cmds.radioMenuItemCollection(p=frRenderProductionMenu)
-        maya.cmds.menuItem("frRenderProductionMenuLow", label="Low", p=frRenderProductionMenu, rb=(maya.cmds.getAttr('RadeonProRenderGlobals.qualityPresets')==0), c=setRenderProductionQualityLow)
-        maya.cmds.menuItem("frRenderProductionMenuMedium", label="Medium", p=frRenderProductionMenu, rb=(maya.cmds.getAttr('RadeonProRenderGlobals.qualityPresets')==1), c=setRenderProductionQualityMedium)
-        maya.cmds.menuItem("frRenderProductionMenuHigh", label="High", p=frRenderProductionMenu, rb=(maya.cmds.getAttr('RadeonProRenderGlobals.qualityPresets')==2), c=setRenderProductionQualityHigh)
-
-        frRenderViewportMenu = maya.cmds.menuItem("frRenderViewportMenu", subMenu=True, label="Viewport Quality", p=frRenderMenu)
-        maya.cmds.radioMenuItemCollection(p=frRenderViewportMenu)
-        maya.cmds.menuItem("frRenderViewportMenuLow", label="Low", p=frRenderViewportMenu, rb=(maya.cmds.getAttr('RadeonProRenderGlobals.qualityPresetsViewport')==0), c=setRenderViewportQualityLow)
-        maya.cmds.menuItem("frRenderViewportMenuMedium", label="Medium", p=frRenderViewportMenu, rb=(maya.cmds.getAttr('RadeonProRenderGlobals.qualityPresetsViewport')==1), c=setRenderViewportQualityMedium)
-        maya.cmds.menuItem("frRenderViewportMenuHigh", label="High", p=frRenderViewportMenu, rb=(maya.cmds.getAttr('RadeonProRenderGlobals.qualityPresetsViewport')==2), c=setRenderViewportQualityHigh)
 
         maya.cmds.menuItem( divider=True, p=showFireRenderMenuCtrl )
 

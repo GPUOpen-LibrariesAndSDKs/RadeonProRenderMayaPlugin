@@ -55,7 +55,6 @@ global proc createFireRenderMotionBlurFrame(string $parent)
 {
 	setUITemplate -pushTemplate attributeEditorTemplate;
 
-	//setParentToFireRenderTab();
 	setParent $parent;
 
 	columnLayout -adjustableColumn true;
@@ -78,7 +77,6 @@ global proc createFireRenderDenoiserFrame(string $parent)
 {
 	setUITemplate -pushTemplate attributeEditorTemplate;
 
-	//setParentToFireRenderTab();
 	setParent $parent;
 
 	columnLayout -adjustableColumn true;
@@ -161,7 +159,6 @@ global proc createFireRenderCameraFrame(string $parent)
 {
 	setUITemplate -pushTemplate attributeEditorTemplate;
 
-	//setParentToFireRenderTab();
 	setParent $parent;
 
 	columnLayout -adjustableColumn true;
@@ -204,7 +201,6 @@ global proc showRenderStampHelp()
 
 global proc createRenderStampFrame(string $parent)
 {
-	//setParentToFireRenderTab();
 	setParent $parent;
 
 	setUITemplate -pushTemplate attributeEditorTemplate;
@@ -226,7 +222,6 @@ global proc createRenderStampFrame(string $parent)
 //
 global proc createEnvironmentFrame2(string $parent)
 {
-	//setParentToFireRenderTab();
 	setParent $parent;
 
 	setUITemplate -pushTemplate attributeEditorTemplate;

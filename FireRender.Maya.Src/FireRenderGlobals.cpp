@@ -103,9 +103,6 @@ namespace
 
     struct RenderingDeviceAttributes
     {
-        //MObject useGPU;
-        //std::vector<MObject> gpuToUse;
-
         MObject cpuThreadCount;
         MObject overrideCpuThreadCount; // bool
     };
@@ -263,15 +260,6 @@ MStatus FireRenderGlobals::initialize()
 	nAttr.setMin(1.0);
 	nAttr.setSoftMax(100.0f);
 	nAttr.setMax(999999.f);
-
-	/*Attribute::AASampleCountProduction = nAttr.create("samples", "s", MFnNumericData::kShort, 1, &status);
-	MAKE_INPUT(nAttr);
-	nAttr.setMin(1);
-	nAttr.setMax(32);
-	Attribute::AASampleCountViewport = nAttr.create("samplesViewport", "sV", MFnNumericData::kShort, 1, &status);
-	MAKE_INPUT(nAttr);
-	nAttr.setMin(1);
-	nAttr.setMax(32);*/
 
 	Attribute::AAFilter = eAttr.create("filter", "f", kMitchellFilter, &status);
 	eAttr.addField("Box", kBoxFilter);
@@ -432,12 +420,10 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::renderMode));
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradiance));
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradianceValue));
-//	CHECK_MSTATUS(addAttribute(Attribute::AASampleCountProduction));
 	CHECK_MSTATUS(addAttribute(Attribute::MaxRayDepthProduction));
 	CHECK_MSTATUS(addAttribute(Attribute::RaycastEpsilon));
 	CHECK_MSTATUS(addAttribute(Attribute::EnableOOC));
 	CHECK_MSTATUS(addAttribute(Attribute::TexCacheSize));
-//	CHECK_MSTATUS(addAttribute(Attribute::AASampleCountViewport));
 	CHECK_MSTATUS(addAttribute(Attribute::AAFilter));
 	CHECK_MSTATUS(addAttribute(Attribute::AAGridSize));
 	CHECK_MSTATUS(addAttribute(Attribute::ibl));
@@ -548,7 +534,7 @@ void FireRenderGlobals::setupRenderDevices()
 	MGlobal::executeCommand("optionVar -rm RPR_DevicesCertified");
 	MGlobal::executeCommand("optionVar -rm RPR_DriversCompatible");
 
-	for (auto device : deviceList)
+	for (const HardwareResources::Device& device : deviceList)
 	{
 		MGlobal::executeCommand(MString("optionVar -sva RPR_DevicesName \"") + device.name.c_str() + "\"");
 		MGlobal::executeCommand(MString("optionVar -iva RPR_DevicesCertified ") + int(device.isCertified()));
@@ -560,17 +546,17 @@ void FireRenderGlobals::setupRenderDevices()
 
 	std::vector<std::string> attrNames = { FINAL_RENDER_DEVICES_USING_PARAM_NAME, VIEWPORT_DEVICES_USING_PARAM_NAME };
 
-	for (std::string name : attrNames)
+	for (const std::string& name : attrNames)
 	{
-		bool hardwareChanged = !(oldList == newList) || !(oldDriversCompatible == newDriversCompatible) || !driversCompatibleExists;
+		bool hardwareSetupChanged = !(oldList == newList) || !(oldDriversCompatible == newDriversCompatible) || !driversCompatibleExists;
 		// First time, or something has changed, so time to reset defaults.
 		int varExists = false;
 		MGlobal::executeCommand(("optionVar -ex " + name).c_str(), varExists);
-		if (hardwareChanged || !varExists)
+		if (hardwareSetupChanged || !varExists)
 		{
 			MGlobal::executeCommand(("optionVar -rm " + name).c_str());
 			int selectedCount = 0;
-			for (auto device : deviceList)
+			for (const HardwareResources::Device& device : deviceList)
 			{
 				int selected = selectedCount < 1 && device.isCertified() && device.isDriverCompatible;
 				MGlobal::executeCommand(MString("optionVar -iva ") + name.c_str() + " " + selected);
@@ -878,7 +864,7 @@ void FireRenderGlobals::syncGlobalAttributeValues()
 
 	MFnDependencyNode depNode(obj);
 
-	for (MObject attrObj : m_globalAttributesList)
+	for (const MObject& attrObj : m_globalAttributesList)
 	{
 		int exist = 0;
 
