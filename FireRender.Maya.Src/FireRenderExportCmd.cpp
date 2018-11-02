@@ -169,7 +169,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			MTime time;
 			time.setValue(static_cast<double>(frame));
 			MStatus isTimeSet = MAnimControl::setCurrentTime(time);
-			CHECK_MSTATUS(status);
+			CHECK_MSTATUS(isTimeSet);
 
 			// Refresh the context so it matches the
 			// current animation state and start the render.
