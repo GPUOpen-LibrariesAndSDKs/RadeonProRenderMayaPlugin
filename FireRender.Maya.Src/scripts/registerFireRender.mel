@@ -6,8 +6,12 @@ source "createFireRenderGlobalsTab.mel";
 source "fireRenderIpr.mel";
 source "fireRenderBatch.mel";
 source "fireRenderUpdateAE.mel";
-source "fireRenderEnvironment.mel";
 source "common.mel";
+source "presets.mel";
+source "SystemTab.mel";
+source "RenderSamplingTab.mel";
+source "RenderQualityTab.mel";
+source "RenderEffectsTab.mel";
 
 // Override Maya's default implementation for setting up render
 // settings tabs. This is required because Maya does not automatically
@@ -58,10 +62,10 @@ global proc registerFireRender()
 	renderer -edit -addGlobalsNode "defaultResolution" FireRender;
 
 	renderer -edit -addGlobalsTab "Common" "createFireRenderCommonGlobalsTab" "updateFireRenderCommonGlobalsTab" FireRender;
-	renderer -edit -addGlobalsTab  $currentRendererName "createFireRenderGlobalsTab" "updateFireRenderGlobalsTab" FireRender;
-	renderer -edit -addGlobalsTab  "Quality" "createFireRenderQualityTab" "updateFireRenderGlobalsTab" FireRender;
-	renderer -edit -addGlobalsTab  "Globals" "createFireRenderGlobals2Tab" "updateFireRenderGlobalsTab" FireRender;
-	renderer -edit -addGlobalsTab  "Tone Mapping" "createFireRenderToneMappingTab" "updateFireRenderGlobalsTab" FireRender;
+	renderer -edit -addGlobalsTab  "System" "createSystemTab" "updateSystemTab" FireRender;
+	renderer -edit -addGlobalsTab  "Sampling" "createRenderSamplingTab" "updateRenderSamplingTab" FireRender;
+	renderer -edit -addGlobalsTab  "Quality" "createQualityTab" "updateQualityTab" FireRender;
+	renderer -edit -addGlobalsTab  "Effects" "createRenderEffectsTab" "updateRenderEffectsTab" FireRender;
 	renderer -edit -addGlobalsTab  "AOVs" "createFireRenderAOVsTab" "updateFireRenderGlobalsTab" FireRender;
 
 	// These will update Attribute Editor when the selection is changed.

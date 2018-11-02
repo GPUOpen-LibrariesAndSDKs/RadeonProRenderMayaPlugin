@@ -1,135 +1,83 @@
-source "fireRenderEnvironment.mel";
-source "optionVars.mel";
-
-// Description: Utility procedure used by other procedures in this file.
-//		Must be used to account for multiple instances of the same tab.
-//
-global proc setParentToFireRenderTab()
+proc string getPrefixForType(int $isFinalRender)
 {
-	// First set the parent to the correct tab layout.
-	// Account for the special "all renderers" master layer layout
-	// when we are using render layers
-	global string $gMasterLayerRendererName;
-	string $renderer = isDisplayingAllRendererTabs() ? $gMasterLayerRendererName : `currentRenderer`;
-	string $tabLayout = rendererTabLayoutName($renderer);
-	setParent $tabLayout;
-
-	// Now set the parent to the correct column layout
-	setParent fireRenderTabColumn;
+    if ($isFinalRender > 0)
+        return "FinalRender";
+    else
+        return "Viewport";
 }
 
-// _TODO Remove this code after it will be fixed in ImageProcessingLibrary
-global proc int isLimitBileteralRadius()
-{
-	$devices = `optionVar -q RPR_DevicesName`;
-	int $deviceCount = size($devices);
+proc string getDevicesUsingVarName(int $isFinalRender)
+{   
+    if ($isFinalRender)
+    {
+        return "RPR_DevicesSelected"; // for backward compatibility
+    }
 
-	// We need to disable bileteral radius more than 6 for system with NVidia
-	// Because it does not work at the moment even on CPU mode
-	int $isAMDSelected = false;
-	int $isNVidiaPresent = false;
-	int $isNVidiaSelected = false;
-
-	$devicesSelected = `optionVar -q RPR_DevicesSelected`;
-	
-	for ($i = 0; $i < $deviceCount; $i++)
-	{
-		string $device_name = $devices[$i];
-
-		string $res = `match "GeForce" $device_name`;
-		if ($res != "")
-		{
-			$isNVidiaPresent = 1;
-			if ($devicesSelected[$i] != 0)
-			{
-				$isNVidiaSelected = 1;
-				break;
-			}
-		}
-
-		$res = `match "Radeon" $device_name`;
-		if ($res != "" && $devicesSelected[$i] != 0)
-		{
-			$isAMDSelected = 1;
-		}
-	}
-
-	return $isNVidiaSelected || ($isNVidiaPresent && !$isAMDSelected);
+    return "RPR_ViewportDevicesSelected";
 }
 
+// control names handling
+proc string getDeviceCheckBoxCtrlName(int $isFinalRender, int $index, int $isGPU)
+{
+    if ($isGPU > 0)
+    {
+        return getPrefixForType($isFinalRender) + "checkBox_Device" + $index;
+    }
+    else
+    {
+        return getPrefixForType($isFinalRender) + "checkBox_ResourcesCPU";
+    }
+}
 
-global proc deviceTypeChangedUI()
+global proc onOverrideThreadCountChanged(int $isFinalRender)
+{
+    string $prefix = getPrefixForType($isFinalRender);
+
+    int $override = `getAttr ("RadeonProRenderGlobals.overrideCpuThreadCount" + $prefix)`;
+
+    $ctrlName = $prefix + "CpuThreadCount_Ctrl";
+    attrControlGrp -edit -enable $override $ctrlName;
+}
+
+global proc deviceTypeChangedUI(int $isFinalRender)
 {
 	$devices = `optionVar -q RPR_DevicesName`;
-	$allowUncertified = `checkBox -q -v ctrlAllowUncertified`;
-	$enabledList = `optionVar -q RPR_DevicesCertified`;
 
-	optionVar -rm RPR_DevicesSelected;
+    string $selectedDevicesVarName = getDevicesUsingVarName($isFinalRender);
+
+	optionVar -rm $selectedDevicesVarName;
 	int $devicesInUse = 0;
 
-	int $deviceCount = size($devices);
+	int $deviceCount = size($devices); // gpu devices
 	for ($i = 0; $i < $deviceCount; $i++)
 	{
-		string $ctrlName = "checkBox_Device" + $i;
-		$enabled = $enabledList[$i] || $allowUncertified;
-		checkBox
-			-e
-			-en $enabled
-			$ctrlName
-			;
-		int $checked = `checkBox -q -v $ctrlName`;
+		$ctrlName = getDeviceCheckBoxCtrlName($isFinalRender, $i, 1);
+
+		int $checked = `checkBoxGrp -q -v1 $ctrlName`;
 		if ($checked)
 		{
-			if ($enabled){
-				// store it
-				$devicesInUse++;
-			}
-			else	// uncheck it!
-			{
-				$checked = 0;
-				checkBox
-					-e
-					-v 0
-					$ctrlName
-					;
-			}
+    		$devicesInUse++;
 		}
 
-		optionVar -iva RPR_DevicesSelected ($checked);
+		optionVar -iva $selectedDevicesVarName ($checked);
 	}
-
-	optionVar -iv RPR_AllowUncertified `checkBox -q -v ctrlAllowUncertified`;
 
 	int $forceUseCPU = ($devicesInUse == 0);
 
+    string $cpuCtrlName = getDeviceCheckBoxCtrlName($isFinalRender, 0, 0);
 	if($forceUseCPU)
 	{
-		checkBox
+		checkBoxGrp
 			-e
-			-v $forceUseCPU
-			checkBox_ResourcesCPU
+			-v1 1
+			$cpuCtrlName
 			;
 	}
 
-	int $useCPU = `checkBox -q -v checkBox_ResourcesCPU`;
+	int $useCPU = `checkBoxGrp -q -v1 $cpuCtrlName`;
 
-	optionVar -iva RPR_DevicesSelected ($useCPU);
-
-
-	// _TODO Remove this code after it will be fixed in ImageProcessingLibrary
-	if (isLimitBileteralRadius())
-	{		
-		// We cannot use editAttrLimits here because attbute has been created from C++ code, it wont work from MEL in this case
-		setAttr "RadeonProRenderGlobals.limitDenoiserRadius" 1;
-	}
-	else
-	{
-		setAttr "RadeonProRenderGlobals.limitDenoiserRadius" 0;
-	}
-	//////////
-
+	optionVar -iva $selectedDevicesVarName ($useCPU);
 }
-
 
 // Open a browser window and display the specified URL.
 global proc showRPRUrl(string $url)
@@ -148,247 +96,86 @@ global proc showMoreAbout()
 	showHelp -absolute $fullPath;
 }
 
-global proc createAboutFrame(string $parent)
+global proc createRenderResourcesFrame(string $parent, int $isFinalRender)
 {
 	setUITemplate -pushTemplate attributeEditorTemplate;
-	setParentToFireRenderTab();
-	setParent $parent;
 
-	columnLayout
-		-adjustableColumn true
-		-columnAttach "both" 5
-		-columnWidth 250
-		-columnAlign "center"
-		-rowSpacing 5;
-
-		separator -style "none";
-
-		image
-			-width 250
-			-image "RadeonProRenderLogo.png";
-
-		frameLayout
-			-marginHeight 8
-			-labelVisible false
-			-borderVisible true
-			-collapsable false
-			-collapse false;
-
-			string $name = "Radeon ProRender for Maya(R) " + getRPRPluginVersion() + " (core " + getRprCoreVersion() + ")\n" +
-							"Copyright (C) 2016 Advanced Micro Devices, Inc. (AMD).\n" +
-							"Portions of this software are created and copyrighted\n" +
-							"to other third parties.";
-			button -label $name -height 64 -command "showMoreAbout()";
-
-		setParent..;
-
-		canvas -height 1 -enableBackground false;
-
-		flowLayout -columnSpacing 8 -wrap true -height 60;
-
-			canvas -width 20 -height 1 -enableBackground false;
-			button -label "Main Site" -height 19 -command "showRPRUrl(\"http://pro.radeon.com/en-us/software/prorender/\")";
-			button -label "Documentation" -height 19 -command "showRPRUrl(\"http://pro.radeon.com/en-us/software/prorender/\")";
-			button -label "Downloads" -height 19 -command "showRPRUrl(\"https://pro.radeon.com/en/software/prorender/maya/\")";
-			button -label "Community" -height 19 -command "showRPRUrl(\"https://community.amd.com/community/prorender/\")";
-			canvas -width 20 -height 1 -enableBackground false;
-			button -label "Bug Reports" -height 19 -command "showRPRUrl(\"https://community.amd.com/community/prorender/maya/\")";
-
-		setParent..;
-
-	setParent ..;
-
-	setUITemplate -popTemplate;
-}
-
-global proc setOptionVarIntValue(string $varName, int $newVal)
-{
-    optionVar -iv $varName $newVal;
-}
-
-global proc int getOptionVarIntValue(string $varName, int $defaultVal)
-{
-    if (`optionVar -ex $varName`)
-    {
-        return `optionVar -q $varName`;
-    }
-
-    return $defaultVal;
-}
-
-global proc onOverrideCPUThreadCount()
-{
-    int $val = `checkBox -q -v checkBox_OverrideCPUThreadCount`;
-
-    global string $OPTION_VAR_OVERRIDE_CPU_THREAD;
-    setOptionVarIntValue($OPTION_VAR_OVERRIDE_CPU_THREAD, $val);
-
-    intSliderGrp -e -en $val intSliderGrp_ThreadCount;
-}
-
-global proc onCPUThreadCountChanged()
-{
-    global string $OPTION_VAR_CPU_THREADS_COUNT;
-
-    int $val = `intSliderGrp -q -v intSliderGrp_ThreadCount`;
-    setOptionVarIntValue($OPTION_VAR_CPU_THREADS_COUNT, $val);
-}
-
-proc setupThreadCount()
-{
-    global string $OPTION_VAR_CORES_COUNT;
-    global string $OPTION_VAR_CPU_THREADS_COUNT;
-    global string $OPTION_VAR_OVERRIDE_CPU_THREAD;
-
-    int $overrideEnable = getOptionVarIntValue($OPTION_VAR_OVERRIDE_CPU_THREAD, 0);
-    int $cpuCoresCount = getOptionVarIntValue($OPTION_VAR_CORES_COUNT, 2); // default should never happen here
-    int $cpuThreadCount = getOptionVarIntValue($OPTION_VAR_CPU_THREADS_COUNT, $cpuCoresCount);
-
-	checkBox
-		-label "Override CPU Thread Count"
-        -value $overrideEnable
-		-cc onOverrideCPUThreadCount
-		-ann "Override default count of CPU threads"
-		checkBox_OverrideCPUThreadCount
-		;
-
-    intSliderGrp
-        -label "CPU Thread Count"
-        -minValue 2
-        -maxValue $cpuCoresCount
-        -fieldMaxValue 128
-        -value $cpuCoresCount
-        -cc onCPUThreadCountChanged
-        intSliderGrp_ThreadCount
-        ;
-
-    // set initial "enabled/disabled" state of threadCount control
-    onOverrideCPUThreadCount();
-}
-
-global proc createRenderResourcesFrame(string $parent){
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-	setParentToFireRenderTab();
 	setParent $parent;
 
 	text
 		-label "These settings will not affect currently active viewports.";
 
 	columnLayout -cat left 20;
-	checkBox
-		-label "Allow Uncertified Devices"
-		-cc deviceTypeChangedUI
-		-v `optionVar -q RPR_AllowUncertified`
-		-ann "Uncertified devices may not function correctly, use with caution."
-		ctrlAllowUncertified;
-
-	columnLayout -cat left 20;
 
 	$devices = `optionVar -q RPR_DevicesName`;
-	$devicesUsing = `optionVar -q RPR_DevicesSelected`;
 	$devicesCertified = `optionVar -q RPR_DevicesCertified`;
 	$driversCompatible = `optionVar -q RPR_DriversCompatible`;
 
+    string $selectedDevicesVarName = getDevicesUsingVarName($isFinalRender);
+    string $changeCommand = "deviceTypeChangedUI(" + $isFinalRender + ")";
+
+    $devicesUsing = `optionVar -q $selectedDevicesVarName`;
+
 	for ($i = 0; $i < size($devices); $i++)
 	{
-		// string $attr = "RadeonProRenderGlobals.usingDevice" + $i;
-		$ctrlName = "checkBox_Device" + $i;
+		$ctrlName = getDeviceCheckBoxCtrlName($isFinalRender, $i, 1);
 		int $checked = $i < size($devicesUsing) ? $devicesUsing[$i] : 0;
 		$label = $devices[$i] + ($devicesCertified[$i] ? "" : " (Uncertified)");
 		$label += $driversCompatible[$i] ? "" : " (Incompatible driver)";
-		checkBox
-			-label $label
-			-cc deviceTypeChangedUI
-			-v $checked
+		checkBoxGrp
+			-label1 $label
+			-cc $changeCommand
+			-v1 $checked
 			-ann ($devicesCertified[$i] ? "This device is certified compatible with Radeon ProRender" : "This device has not been certified for use with Radeon ProRender")
 			$ctrlName
 			;
 	}
 
-	checkBox
-		-label "CPU"
-		-cc deviceTypeChangedUI
+    $checked = size($devices) < size($devicesUsing) ? $devicesUsing[size($devicesUsing) - 1] : 0;
+    $ctrlName = getDeviceCheckBoxCtrlName($isFinalRender, 0, 0);
+	checkBoxGrp
+		-label1 "CPU"
+		-cc $changeCommand
+        -v1 $checked
 		-en 1
 		-ann "CPU will be used when no GPU devices are active"
-		checkBox_ResourcesCPU
+		$ctrlName
 		;
 
-	separator -height 5;
+	separator -height 10;
 
-    setupThreadCount();
+    string $prefix = getPrefixForType($isFinalRender);
+   
+    $ctrlName = ($prefix + "OverrideCpuThreadCount_Ctrl");
 
-	setParent ..;
+    attrControlGrp
+        -attribute ("RadeonProRenderGlobals.overrideCpuThreadCount" + $prefix)
+		-label "Override Thread Count"
+        -cc ("onOverrideThreadCountChanged(" + $isFinalRender + ")")
+        $ctrlName
+    ;
 
-	columnLayout -cat left -150;
+    $ctrlName = ($prefix + "CpuThreadCount_Ctrl");
+    attrControlGrp
+        -attribute ("RadeonProRenderGlobals.cpuThreadCount" + $prefix)
+		-label "CPU Thread Count"
+        $ctrlName
+    ;
 
-	attrControlGrp -label "Texture Compression" -attribute "RadeonProRenderGlobals.textureCompression";
+    onOverrideThreadCountChanged($isFinalRender);
 
 	setParent ..;
 
 	setUITemplate -popTemplate;
 
-	deviceTypeChangedUI;
-}
-
-global proc createFireRenderCompletionCriteriaFrame(string $parent){
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-	setParentToFireRenderTab();
-	setParent $parent;
-
-	columnLayout -adjustableColumn true;
-
-	attrControlGrp
-		-label "Type"
-		-cc completionCriteriaTypeChanged
-		-attribute "RadeonProRenderGlobals.completionCriteriaType";
-
-	attrControlGrp
-		-label "Iterations"
-		-attribute "RadeonProRenderGlobals.completionCriteriaIterations" completionCriteriaIterations;
-
-	attrControlGrp
-		-label "Hours"
-		-attribute "RadeonProRenderGlobals.completionCriteriaHours" completionCriteriaHours;
-
-	attrControlGrp
-		-label "Minutes"
-		-attribute "RadeonProRenderGlobals.completionCriteriaMinutes" completionCriteriaMinutes;
-
-	attrControlGrp
-		-label "Seconds"
-		-attribute "RadeonProRenderGlobals.completionCriteriaSeconds" completionCriteriaSeconds;
-
-	setParent ..;
-	setUITemplate -popTemplate;
-
-	completionCriteriaTypeChanged();
-}
-
-global proc completionCriteriaTypeChanged()
-{
-	int $type = `getAttr("RadeonProRenderGlobals.completionCriteriaType")`;
-
-	int $enable[];
-	if ($type == 0)
-		$enable = {1, 0, 0, 0};
-	if ($type == 1)
-		$enable = {0, 1, 1, 1};
-	if ($type == 2)
-		$enable = {0, 0, 0, 0};
-
-	attrControlGrp -e -en $enable[0] completionCriteriaIterations;
-	attrControlGrp -e -en $enable[1] completionCriteriaHours;
-	attrControlGrp -e -en $enable[2] completionCriteriaMinutes;
-	attrControlGrp -e -en $enable[3] completionCriteriaSeconds;
+	deviceTypeChangedUI($isFinalRender);
 }
 
 global proc createFireRenderGlobalsFrame(string $parent)
 {
 	setUITemplate -pushTemplate attributeEditorTemplate;
 
-	setParentToFireRenderTab();
+	//setParentToFireRenderTab();
 	setParent $parent;
 
 	columnLayout -adjustableColumn true;
@@ -396,513 +183,6 @@ global proc createFireRenderGlobalsFrame(string $parent)
 	attrControlGrp
 		 -label "Mode"
 		 -attribute "RadeonProRenderGlobals.renderMode";
-
-	setParent ..;
-	setUITemplate -popTemplate;
-}
-
-global proc createFireRenderGlobalIlluminationFrame(string $parent)
-{
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-	setParentToFireRenderTab();
-	setParent $parent;
-
-	columnLayout -adjustableColumn true;
-
-	// Render mode
-	attrControlGrp
-		 -label "Mode"
-		 -attribute "RadeonProRenderGlobals.renderMode";
-
-	// Clamp irradiance
-	attrControlGrp
-		 -label "Clamp Irradiance"
-		 -attribute "RadeonProRenderGlobals.giClampIrradiance";
-
-	// Clamp irradiance value
-	attrControlGrp
-		 -label "Clamp Irradiance Value"
-		 -attribute "RadeonProRenderGlobals.giClampIrradianceValue";
-
-	setParent ..;
-	setUITemplate -popTemplate;
-}
-
-global proc AERPRQualityPresetsViewport( ){
-	int $preset = `getAttr "RadeonProRenderGlobals.qualityPresetsViewport"`;
-	if ($preset == 0){
-		setAttr "RadeonProRenderGlobals.maxRayDepthViewport" 5;
-		setAttr "RadeonProRenderGlobals.samplesViewport" 1;
-	}else if ($preset == 1){
-		setAttr "RadeonProRenderGlobals.maxRayDepthViewport" 15;
-		setAttr "RadeonProRenderGlobals.samplesViewport" 8;
-	}else if ($preset == 2){
-		setAttr "RadeonProRenderGlobals.maxRayDepthViewport" 25;
-		setAttr "RadeonProRenderGlobals.samplesViewport" 16;
-	}
-}
-
-global proc AERPRQualityPresetsProduction( ){
-	int $preset = `getAttr "RadeonProRenderGlobals.qualityPresets"`;
-	if ($preset == 0){
-		setAttr "RadeonProRenderGlobals.maxRayDepth" 5;
-		setAttr "RadeonProRenderGlobals.samples" 1;
-	}else if ($preset == 1){
-		setAttr "RadeonProRenderGlobals.maxRayDepth" 15;
-		setAttr "RadeonProRenderGlobals.samples" 8;
-	}else if ($preset == 2){
-		setAttr "RadeonProRenderGlobals.maxRayDepth" 25;
-		setAttr "RadeonProRenderGlobals.samples" 16;
-	}
-}
-
-global proc createFireRenderQualityPresetsFrame(string $parent)
-{
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-	setParentToFireRenderTab();
-	setParent $parent;
-
-	columnLayout -adjustableColumn true;
-
-
-	attrControlGrp
-		-label "Production Preset"
-		-cc AERPRQualityPresetsProduction
-		-attribute "RadeonProRenderGlobals.qualityPresets";
-
-   attrControlGrp
-		-label "Viewport Preset"
-		-cc AERPRQualityPresetsViewport
-		-attribute "RadeonProRenderGlobals.qualityPresetsViewport";
-
-
-	setParent ..;
-	setUITemplate -popTemplate;
-}
-
-global proc toneMappingTypeChangedUI()
-{
-	int $enable[];
-	int $type = `getAttr ("RadeonProRenderGlobals.toneMappingType")`;
-	if ($type == 0) {			// None
-		$enable = {0, 0, 0, 0, 0, 0, 0};
-	} else if ($type == 1) {	// linear
-		$enable = {1, 0, 0, 0, 0, 0, 0};
-	} else if ($type == 2) {	// photolinear
-		$enable = {0, 1, 1, 1, 0, 0, 0};
-	} else if ($type == 3) {	// autolinear
-		$enable = {0, 0, 0, 0, 0, 0, 0};
-	} else if ($type == 4) {	// maxwhite
-		$enable = {0, 0, 0, 0, 0, 0, 0};
-	} else if ($type == 5) {	// reinhard02
-		$enable = {0, 0, 0, 0, 1, 1, 1};
-	}
-
-	attrControlGrp -e -en $enable[0] toneMapLinScaleGrp;
-	attrControlGrp -e -en $enable[1] toneMapPhotoSensGrp;
-	attrControlGrp -e -en $enable[2] toneMapPhotoExpGrp;
-	attrControlGrp -e -en $enable[3] toneMapPhotoFstopGrp;
-	attrControlGrp -e -en $enable[4] toneMapReinPreScaleGrp;
-	attrControlGrp -e -en $enable[5] toneMapReinProstScaleGrp;
-	attrControlGrp -e -en $enable[6] toneMapReinBurnGrp;
-}
-
-global proc createFireRenderToneMappingFrame(string $parent)
-{
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-	setParentToFireRenderTab();
-	setParent $parent;
-
-	columnLayout -adjustableColumn true;
-
-	attrControlGrp -label "Type" -cc toneMappingTypeChangedUI -attribute "RadeonProRenderGlobals.toneMappingType";
-
-	attrControlGrp -label "Apply Gamma To Maya Views" -attribute "RadeonProRenderGlobals.applyGammaToMayaViews";
-	attrControlGrp -label "Display Gamma" -attribute "RadeonProRenderGlobals.displayGamma";
-	attrControlGrp -label "Texture Gamma" -attribute "RadeonProRenderGlobals.textureGamma";
-
-	frameLayout -label "Linear" -cll false;
-		columnLayout -adjustableColumn true;
-			attrControlGrp -label "Scale" -attribute "RadeonProRenderGlobals.toneMappingLinearScale" toneMapLinScaleGrp;
-		setParent ..;
-	setParent ..;
-	frameLayout -label "Photolinear" -cll false;
-		columnLayout -adjustableColumn true;
-			attrControlGrp -label "Sensitivity" -attribute "RadeonProRenderGlobals.toneMappingPhotolinearSensitivity" toneMapPhotoSensGrp;
-			attrControlGrp -label "Exposure" -attribute "RadeonProRenderGlobals.toneMappingPhotolinearExposure" toneMapPhotoExpGrp;
-			attrControlGrp -label "Fstop" -attribute "RadeonProRenderGlobals.toneMappingPhotolinearFstop" toneMapPhotoFstopGrp;
-		setParent ..;
-	setParent ..;
-	frameLayout -label "Reinhard02" -cll false;
-		columnLayout -adjustableColumn true;
-			attrControlGrp -label "Pre Scale" -attribute "RadeonProRenderGlobals.toneMappingReinhard02Prescale" toneMapReinPreScaleGrp;
-			attrControlGrp -label "Post Scale" -attribute "RadeonProRenderGlobals.toneMappingReinhard02Postscale" toneMapReinProstScaleGrp;
-			attrControlGrp -label "Burn" -attribute "RadeonProRenderGlobals.toneMappingReinhard02Burn" toneMapReinBurnGrp;
-		setParent ..;
-	setParent ..;
-
-	frameLayout -label "White-balance" -cll false;
-		columnLayout -adjustableColumn true toneMappingWhiteBalanceLayout;
-			attrControlGrp -label "Enabled" -attribute "RadeonProRenderGlobals.toneMappingWhiteBalanceEnabled" toneMappingWhiteBalanceEnabled;
-
-			rowLayout -numberOfColumns 2;
-				text -label "Color";
-				button -backgroundColor 1 1 1 -enable 0 -label "" toneMappingWhiteBalanceColor;
-			setParent ..;
-
-			floatSliderGrp -min 1000 -max 12000 -field true -precision 0 -changeCommand "updateWhiteBalanceValue" toneMappingWhiteBalanceValue;
-			connectControl toneMappingWhiteBalanceValue RadeonProRenderGlobals.toneMappingWhiteBalanceValue;
-
-		setParent ..;
-
-		scriptJob -parent toneMappingWhiteBalanceLayout -replacePrevious
-			-attributeChange "RadeonProRenderGlobals.toneMappingWhiteBalanceValue"
-			"updateWhiteBalanceDisplayedColorValue";
-	setParent ..;
-
-	setParent ..;
-
-	setUITemplate -popTemplate;
-
-	toneMappingTypeChangedUI();
-
-	updateWhiteBalanceDisplayedColorValue();
-}
-
-global proc float[] kelvin2Color(float $kelvin){
-	//Temperature must fall between 1000 and 40000 degrees
-	if ($kelvin < 1000)
-		$kelvin = 1000;
-
-	if ($kelvin > 40000)
-		$kelvin = 40000;
-	$kelvin = $kelvin *= 0.01;
-
-	float $r, $g, $b;
-	// Red
-	if ($kelvin <= 66)
-		$r = 1;
-	else
-	{
-		float $tmp = $kelvin - 60;
-		$tmp = 329.698727446 * (pow($tmp, -0.1332047592));
-		$r = $tmp * 1 / 255;
-		if ($r < 0) $r = 0;
-		if ($r > 1) $r = 1;
-	}
-
-	// Green
-	if ($kelvin <= 66)
-	{
-		float $tmp = $kelvin;
-		$tmp = 99.4708025861 * log($tmp) - 161.1195681661;
-		$g = $tmp * 1 / 255;
-		if ($g < 0) $g = 0;
-		if ($g > 1) $g = 1;
-	}
-	else
-	{
-		float $tmp = $kelvin - 60;
-		$tmp = 288.1221695283 * (pow($tmp, -0.0755148492));
-		$g = $tmp * 1 / 255;
-		if ($g < 0) $g = 0;
-		if ($g > 1) $g = 1;
-	}
-
-	// Blue
-	if ($kelvin >= 66)
-		$b = 1;
-	else if ($kelvin <= 19)
-		$b = 0;
-	else
-	{
-		float $tmp = $kelvin - 10;
-		$tmp = 138.5177312231 * log($tmp) - 305.0447927307;
-		$b = $tmp * 1 / 255;
-		if ($b < 0) $b = 0;
-		if ($b > 1) $b = 1;
-	}
-
-	float $result[3];
-	$result[0] = $r;
-	$result[1] = $g;
-	$result[2] = $b;
-
-	return $result;
-}
-
-global proc updateWhiteBalanceDisplayedColorValue(){
-	float $v = `getAttr RadeonProRenderGlobals.toneMappingWhiteBalanceValue`;
-
-	// Invert the temperature so the resulting
-	// color matches the effect on the image.
-	$v = 12000 - ($v - 800);
-
-	float $c[] = kelvin2Color($v);
-	button -edit -backgroundColor $c[0] $c[1] $c[2] toneMappingWhiteBalanceColor;
-};
-
-global proc updateWhiteBalanceValue(){
-
-}
-
-global proc resetRenderStampText()
-{
-	string $res = `confirmDialog -title "Warning" -message "Would you like to reset Render Stamp text to default value?"
-		-button "Yes" -button "No" -defaultButton "Yes" -cancelButton "No" -icon "question"`;
-	if ($res == "Yes")
-	{
-		string $v = `getAttr RadeonProRenderGlobals.renderStampTextDefault`;
-		setAttr -type "string" RadeonProRenderGlobals.renderStampText $v;
-	}
-}
-
-global proc showRenderStampHelp()
-{
-	confirmDialog -title "Information" -button "OK" -icon "information" -message
-		("Special symbols:\n\n" +
-		"%pt \t total elapsed time\n" +
-		"%pp \t passes\n" +
-		"%sl \t number of lights\n" +
-		"%so \t number of objects\n" +
-		"%i  \t computer name\n" +
-		"%c  \t CPU name\n" +
-		"%g  \t used GPU name\n" +
-		"%h  \t used hardware (mix of %c and %g)\n" +
-		"%r  \t render device type (CPU, GPU, both)\n" +
-		"%d  \t current date and time\n" +
-		"%b  \t RadeonPro Renderer version number");
-}
-
-global proc createRenderStampFrame(string $parent)
-{
-	setParentToFireRenderTab();
-	setParent $parent;
-
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-	rowLayout -numberOfColumns 4 -adjustableColumn 2 -cw 1 60 -cw 3 20 -cw 4 20;
-		checkBox -label "Use" chkboxCtl;
-		textField textCtl;
-		button -label "R" -annotation "Reset RenderStamp to default value" -command "resetRenderStampText";
-		button -label "?" -annotation "Display tokens which could be used in RenderStamp" -command "showRenderStampHelp";
-	setParent ..;
-
-	connectControl chkboxCtl "RadeonProRenderGlobals.useRenderStamp";
-	connectControl textCtl "RadeonProRenderGlobals.renderStampText";
-}
-
-//==================================================================
-// Description: This procedure is called to create the
-//		Environment frame.
-//
-global proc createEnvironmentFrame(string $parent)
-{
-	setParentToFireRenderTab();
-	setParent $parent;
-
-	setUITemplate -pushTemplate attributeEditorTemplate;
-	columnLayout -adjustableColumn true miEnvironmentLayout;
-
-	rowLayout -numberOfColumns 4 -cw 2 130 -cw 4 60 miIblLayout;
-		text -label "Image Based Lighting";
-		button -label "Create"
-			-command "createIBLNodeRPR"
-				frCreateIblButton;
-		symbolButton -image "inArrow.png"
-			-command "showIBLEditorRPR"
-				frOpenIblButton;
-		checkBox -label "Flip" -changeCommand flipIBLValueChanged chkboxCtl;
-	setParent ..;
-
-	connectControl chkboxCtl "RadeonProRenderGlobals.flipIBL";
-
-	updateIBLInterfaceRPR();
-
-	rowLayout -numberOfColumns 3 -cw 2 130 miSkyLayout;
-		text -label "Sky";
-		button -label "Create"
-			-command "createSkyNodeRPR"
-				frCreateSkyButton;
-		symbolButton -image "inArrow.png"
-			-command "showSkyEditorRPR"
-				frOpenSkyButton;
-	setParent ..;
-
-	// Listen for selection change so the interface
-	// can be updated if the IBL or Sky node is manually
-	// deleted from the scene (it will also be deselected).
-	scriptJob -p miIblLayout -rp
-		-e "SelectionChanged" updateEnvironmentInterfaceRPR;
-
-	updateSkyInterfaceRPR();
-
-	setParent ..;
-	setUITemplate -popTemplate;
-}
-
-global proc flipIBLValueChanged()
-{
-	$flip = `getAttr RadeonProRenderGlobals.flipIBL`;
-
-	if (hasIBLNodeRPR())
-	{
-		$node = getIBLNodeRPR();
-		setAttr ($node + ".flipIBL") $flip;
-	}
-}
-
-global proc createGroundFrame(string $parent)
-{
-	setParentToFireRenderTab();
-	setParent $parent;
-
-
-	setUITemplate -pushTemplate attributeEditorTemplate;
-	columnLayout -adjustableColumn true miGroundLayout;
-
-	attrControlGrp -label "Use Ground" -attribute "RadeonProRenderGlobals.useGround";
-	attrControlGrp -label "Ground Height" -attribute "RadeonProRenderGlobals.groundHeight";
-	attrControlGrp -label "Ground Radius" -attribute "RadeonProRenderGlobals.groundRadius";
-	attrControlGrp -label "Shadows" -attribute "RadeonProRenderGlobals.shadows";
-	attrControlGrp -label "Reflections" -attribute "RadeonProRenderGlobals.reflections";
-	attrControlGrp -label "Strength" -attribute "RadeonProRenderGlobals.strength";
-	attrControlGrp -label "Roughness" -attribute "RadeonProRenderGlobals.roughness";
-
-	setParent ..;
-	setUITemplate -popTemplate;
-
-}
-
-global proc createFireRenderMotionBlurFrame(string $parent)
-{
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-	setParentToFireRenderTab();
-	setParent $parent;
-
-	columnLayout -adjustableColumn true;
-
-	attrControlGrp
-		 -label "Enable"
-		 -attribute "RadeonProRenderGlobals.motionBlur";
-	attrControlGrp
-		 -label "Camera Exposure"
-		 -attribute "RadeonProRenderGlobals.motionBlurCameraExposure";
-	attrControlGrp
-		 -label "Scale"
-		 -attribute "RadeonProRenderGlobals.motionBlurScale";
-
-	setParent ..;
-	setUITemplate -popTemplate;
-}
-
-global proc createFireRenderDenoiserFrame(string $parent)
-{
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-	setParentToFireRenderTab();
-	setParent $parent;
-
-	columnLayout -adjustableColumn true;
-
-	attrControlGrp
-		 -label "Enable"
-		 -attribute "RadeonProRenderGlobals.denoiserEnabled"
-		 -cc updateDenoiserUI;
-
-	attrControlGrp
-		 -label "Type"
-		 -attribute "RadeonProRenderGlobals.denoiserType"
-		 -cc updateDenoiserUI
-		 denoiserTypeCombobox;
-
-	// Bilateral
-	frameLayout -label "Bilateral" -cll 0 -li 30 denoiserBilateralFrame;
-		attrControlGrp
-			 -label "Radius"
-			 -attribute "RadeonProRenderGlobals.denoiserRadius";
-	setParent ..;
-	
-	// Local Weighted Regression
-	frameLayout -label "Local Weighted Regression" -cll 0 -li 30 denoiserLWRFrame;
-		attrControlGrp
-			 -label "Samples"
-			 -attribute "RadeonProRenderGlobals.denoiserSamples";
-
-		attrControlGrp
-			 -label "Filter Radius"
-			 -attribute "RadeonProRenderGlobals.denoiserFilterRadius";
-
-		attrControlGrp
-			 -label "Bandwidth"
-			 -attribute "RadeonProRenderGlobals.denoiserBandwidth";
-	setParent ..;
-
-	// Edge Avoiding Wavelets
-	frameLayout -label "Edge Avoiding Wavelets" -cll 0 -li 30 denoiserEAWFrame;
-		attrControlGrp
-			 -label "Color"
-			 -attribute "RadeonProRenderGlobals.denoiserColor";
-
-		attrControlGrp
-			 -label "Depth"
-			 -attribute "RadeonProRenderGlobals.denoiserDepth";
-
-		attrControlGrp
-			 -label "Normal"
-			 -attribute "RadeonProRenderGlobals.denoiserNormal";
-
-		attrControlGrp
-			 -label "Trans"
-			 -attribute "RadeonProRenderGlobals.denoiserTrans";
-	setParent ..;
-
-	setParent ..;	// columnLayout ends
-	setUITemplate -popTemplate;
-
-	updateDenoiserUI();
-}
-
-global proc updateDenoiserUI()
-{
-	int $enabled = `getAttr RadeonProRenderGlobals.denoiserEnabled`;
-	int $type = `getAttr RadeonProRenderGlobals.denoiserType`;
-	int $enabledBilateral = $type == 0;
-	int $enabledLWR = $type == 1;
-	int $enabledEAW = $type == 2;
-
-	// Lock controls and set it to ON state
-	control -edit -enable ($enabled > 0) denoiserTypeCombobox;
-
-	control -edit -enable ($enabledBilateral && $enabled) denoiserBilateralFrame;
-	control -edit -enable ($enabledLWR && $enabled) denoiserLWRFrame;
-	control -edit -enable ($enabledEAW && $enabled) denoiserEAWFrame;
-}
-
-global proc updateOOCUI()
-{
-	int $enabled = `getAttr RadeonProRenderGlobals.enableOOC`;
-
-	// Lock controls and set it to ON state
-	control -edit -enable ($enabled > 0) textureCacheSize;
-}
-
-global proc createFireRenderCameraFrame(string $parent)
-{
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-	setParentToFireRenderTab();
-	setParent $parent;
-
-	columnLayout -adjustableColumn true;
-
-	attrControlGrp
-		 -label "Type"
-		 -attribute "RadeonProRenderGlobals.cameraType";
 
 	setParent ..;
 	setUITemplate -popTemplate;
@@ -920,7 +200,6 @@ global proc frAddAOV(string $name)
 	}
 }
 
-
 global proc frConnectOpacityPassRenderable()
 {
 
@@ -930,13 +209,11 @@ global proc frConnectOpacityPassRenderable()
 	}
 }
 
-
 global proc frEnsureOpacityPass()
 {
 	frAddAOV("opacity");
 	textField -edit -en 1 frOpacityPassName;
 }
-
 
 global proc string frFramebufferName (string $default_name)
 {
@@ -984,7 +261,6 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 {
 	setUITemplate -pushTemplate attributeEditorTemplate;
 
-	setParentToFireRenderTab();
 	setParent $parent;
 
 	columnLayout -adjustableColumn true;
@@ -1017,236 +293,6 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 
 	setParent ..;
 	setUITemplate -popTemplate;
-}
-
-// Description: This procedure is called to create the FireRender
-//      tab for the unified render globals window.
-//
-global proc createFireRenderGlobalsTab()
-{
-	string $parentForm = `setParent -query`;
-	scrollLayout -w 375 -horizontalScrollBarThickness 0 fireRenderGlobalsScrollLayout;
-	columnLayout -w 375 -adjustableColumn true fireRenderTabColumn;
-
-	// About
-	//
-	frameLayout -label "About Radeon ProRender" -cll false -cl 0 fireRenderAbout;
-	createAboutFrame ("fireRenderAbout");
-	setParent ..;
-
-	// Render Resources
-	//
-	frameLayout -label "Render Resources" -cll false -cl 0 fireRenderResources;
-	createRenderResourcesFrame ("fireRenderResources");
-	setParent ..;
-
-	// Completion criteria section
-	//
-	frameLayout -label "Completion Criteria" -cll false -cl 0 fireRenderCompletionCriteriaFrame;
-
-	createFireRenderCompletionCriteriaFrame ("fireRenderCompletionCriteriaFrame");
-	setParent ..;
-
-	setParent ..;
-	setParent ..;
-
-	formLayout
-		-edit
-		-af fireRenderGlobalsScrollLayout "top" 0
-		-af fireRenderGlobalsScrollLayout "bottom" 0
-		-af fireRenderGlobalsScrollLayout "left" 0
-		-af fireRenderGlobalsScrollLayout "right" 0
-		$parentForm;
-}
-
-global proc updateFireRenderGlobalsTab()
-{
-	string $oldParent = `setParent -query`;
-	setParentToFireRenderTab();
-
-	setParent $oldParent;
-}
-
-global proc createFireRenderQualityTab()
-{
-	string $parentForm = `setParent -query`;
-	scrollLayout -w 375 -horizontalScrollBarThickness 0 fireRenderGlobalsScrollLayout;
-	columnLayout -w 375 -adjustableColumn true fireRenderTabColumn;
-
-	// Quality Presets
-	//
-	frameLayout -label "Quality Presets" -cll false -cl 0 fireRenderQualityPresetsFrame;
-
-	createFireRenderQualityPresetsFrame ("fireRenderQualityPresetsFrame");
-	setParent ..;
-
-	// Render Resources section
-	//
-	frameLayout -label "Render Sampling" -cll false -cl 0 fireRenderSamplingFrame;
-
-	
-	// Render samples
-	attrControlGrp
-		 -label "Render Samples"
-		 -attribute "RadeonProRenderGlobals.samples";
-
-	// Filter
-	attrControlGrp
-		 -label "Filter"
-		 -attribute "RadeonProRenderGlobals.filter";
-
-	// Filter size
-	attrControlGrp
-		 -label "Filter Size"
-		 -attribute "RadeonProRenderGlobals.filterSize";
-
-	// Trace depth
-	attrControlGrp
-		 -label "Max Ray Depth"
-		 -attribute "RadeonProRenderGlobals.maxRayDepth";
-
-	attrControlGrp
-		 -label "Max Diffuse"
-		 -attribute "RadeonProRenderGlobals.maxDepthDiffuse";
-
-	attrControlGrp
-		 -label "Max Glossy"
-		 -attribute "RadeonProRenderGlobals.maxDepthGlossy";
-
-	attrControlGrp
-		 -label "Max Refraction"
-		 -attribute "RadeonProRenderGlobals.maxDepthRefraction";
-
-	attrControlGrp
-		 -label "Max Glossy Refraction"
-		 -attribute "RadeonProRenderGlobals.maxDepthRefractionGlossy";
-
-	attrControlGrp
-		 -label "Max Shadow"
-		 -attribute "RadeonProRenderGlobals.maxDepthShadow";
-
-	setParent ..;
-
-	// Advanced settings section
-	frameLayout -label "Advanced Settings" -cll false -cl 0 fireRenderAdvancedFrame;
-
-	attrControlGrp
-		-label "Ray Epsilon(mm)"
-		-attribute "RadeonProRenderGlobals.raycastEpsilon";
-		
-	attrControlGrp
-		-label "Enable Out of Core Textures"
-		-attribute "RadeonProRenderGlobals.enableOOC"
-		-cc updateOOCUI;
-
-	attrControlGrp
-		-label "GPU texture cache (Mb)"
-		-attribute "RadeonProRenderGlobals.textureCacheSize"
-		-cc updateOOCUI
-		textureCacheSize;
-
-	if (isMPSOptionNeeded())
-	{
-		attrControlGrp
-		    -label "Use Metal Performance Shaders"
-		    -attribute "RadeonProRenderGlobals.useMPS";
-	}
-
-	setParent ..;
-
-	formLayout
-		-edit
-		-af fireRenderGlobalsScrollLayout "top" 0
-		-af fireRenderGlobalsScrollLayout "bottom" 0
-		-af fireRenderGlobalsScrollLayout "left" 0
-		-af fireRenderGlobalsScrollLayout "right" 0
-		$parentForm;
-
-	updateOOCUI();
-}
-
-global proc int isMPSOptionNeeded()
-{
-    if (`about -mac`)
-    {
-        string $ver = `about -osv`;
-        if (`match "10.14" $ver` != "")
-        {
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
-global proc createFireRenderGlobals2Tab()
-{
-	string $parentForm = `setParent -query`;
-	scrollLayout -w 375 -horizontalScrollBarThickness 0 fireRenderGlobalsScrollLayout;
-	columnLayout -w 375 -adjustableColumn true fireRenderTabColumn;
-
-	// Globals section
-	//
-	//frameLayout -label "Globals" -cll true -cl 0 fireRenderGlobalsFrame;
-
-	// Global Illumination section
-	//
-	frameLayout -label "Global Illumination" -cll true fireRenderGlobalIlluminationFrame;
-
-	createFireRenderGlobalIlluminationFrame ("fireRenderGlobalIlluminationFrame");
-	setParent ..;
-
-	// Motion Blur
-	//
-	frameLayout -label "Motion Blur" -cll true -cl 0 fireRenderMotionBlurFrame;
-
-	createFireRenderMotionBlurFrame ("fireRenderMotionBlurFrame");
-	setParent ..;
-
-	// Denoiser
-	//
-	frameLayout -label "Denoiser (IPR and Production Renderer)" -cll true -cl true fireRenderDenoiserFrame;
-
-	createFireRenderDenoiserFrame ("fireRenderDenoiserFrame");
-	setParent ..;
-
-	// Cameras
-	//
-	frameLayout -label "Camera" -cll true -cl 0 fireRenderCameraFrame;
-
-	createFireRenderCameraFrame ("fireRenderCameraFrame");
-	setParent ..;
-
-	// Render stamp
-	//
-	frameLayout -label "Render stamp" -cll true -cl 0 fireRenderRenderStampFrame;
-	createRenderStampFrame fireRenderRenderStampFrame;
-	setParent ..;
-
-	// Environment
-	//
-	frameLayout -label "Environment" -cll true -cl 0 fireRenderEnvironmentFrame;
-
-	createEnvironmentFrame fireRenderEnvironmentFrame;
-	setParent ..;
-
-	// Ground
-	//
-	frameLayout -label "Ground" -cll true -cl 0 fireRenderGroundFrame;
-
-	createGroundFrame fireRenderGroundFrame;
-	setParent ..;
-
-	setParent ..;
-	setParent ..;
-
-	formLayout
-		-edit
-		-af fireRenderGlobalsScrollLayout "top" 0
-		-af fireRenderGlobalsScrollLayout "bottom" 0
-		-af fireRenderGlobalsScrollLayout "left" 0
-		-af fireRenderGlobalsScrollLayout "right" 0
-		$parentForm;
 }
 
 global proc createFireRenderAOVsTab()
@@ -1313,7 +359,7 @@ global proc createFireRenderDepthParams(string $parent)
 {
 	setUITemplate -pushTemplate attributeEditorTemplate;
 
-	setParentToFireRenderTab();
+//	setParentToFireRenderTab();
 	setParent $parent;
 
 	columnLayout;
@@ -1342,30 +388,4 @@ global proc createFireRenderDepthParams(string $parent)
 
 	// Update state
 	aovDepthAutoNormaliseChanged();
-}
-
-
-global proc createFireRenderToneMappingTab()
-{
-	string $parentForm = `setParent -query`;
-	scrollLayout -w 375 -horizontalScrollBarThickness 0 fireRenderGlobalsScrollLayout;
-	columnLayout -w 375 -adjustableColumn true fireRenderTabColumn;
-
-	// Tone mapping
-	//
-	frameLayout -label "Tone Mapping" -cll false -cl 0 fireRenderToneMappingFrame;
-
-	createFireRenderToneMappingFrame ("fireRenderToneMappingFrame");
-	setParent ..;
-
-	setParent ..;
-	setParent ..;
-
-	formLayout
-		-edit
-		-af fireRenderGlobalsScrollLayout "top" 0
-		-af fireRenderGlobalsScrollLayout "bottom" 0
-		-af fireRenderGlobalsScrollLayout "left" 0
-		-af fireRenderGlobalsScrollLayout "right" 0
-		$parentForm;
 }

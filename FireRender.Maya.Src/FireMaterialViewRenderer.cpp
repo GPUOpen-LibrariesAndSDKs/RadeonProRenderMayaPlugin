@@ -39,7 +39,7 @@ FireRenderRenderData::FireRenderRenderData() :
 {
 	m_context.setCallbackCreationDisabled(true);
 
-	auto createFlags = FireMaya::Options::GetContextDeviceFlags();
+	auto createFlags = FireMaya::Options::GetContextDeviceFlags(RenderType::ViewportRender);
 
 	rpr_int res;
 	if (!m_context.createContextEtc(createFlags, true, false, &res))
@@ -608,7 +608,7 @@ void FireMaterialViewRenderer::render()
 	parameters.data = m_renderData.m_pixels;
 	refresh(parameters);
 
-	if (m_numIteration > 100)
+	if (m_numIteration > FireRenderGlobalsData::getThumbnailIterCount())
 	{
 		ProgressParams params;
 		params.progress = 1.0;

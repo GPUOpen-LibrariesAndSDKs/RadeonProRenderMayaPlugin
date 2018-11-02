@@ -19,6 +19,8 @@
 #include <cassert>
 #include <vector>
 
+#include "attributeNames.h"
+#include "OptionVarHelpers.h"
 #include "FireRenderContext.h"
 #include "FireRenderGlobals.h"
 #include "FireRenderThread.h"
@@ -50,11 +52,6 @@
 #pragma comment(lib, "wbemuuid.lib")
 
 FireRenderGlobalsData::FireRenderGlobalsData() :
-	completionCriteriaType(0),
-	completionCriteriaHours(0),
-	completionCriteriaMinutes(0),
-	completionCriteriaSeconds(0),
-	completionCriteriaIterations(0),
 	textureCompression(false),
 	iterations(64),
 	mode(0),
@@ -64,13 +61,16 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	samplesViewport(2),
 	filterType(0),
 	filterSize(2),
-	maxRayDepthProduction(2),
+	maxRayDepth(2),
 	maxRayDepthDiffuse(2),
 	maxRayDepthGlossy(2),
 	maxRayDepthRefraction(2),
 	maxRayDepthGlossyRefraction(2),
 	maxRayDepthShadow(2),
-	maxRayDepthViewport(2),
+	viewportMaxRayDepth(2),
+	viewportMaxDiffuseRayDepth(2),
+	viewportMaxReflectionRayDepth(2),
+	viewportRenderMode(0),
 	commandPort(0),
 	useGround(false),
 	groundHeight(0.0f),
@@ -134,33 +134,55 @@ void FireRenderGlobalsData::readFromCurrentScene()
 
 		plug = frGlobalsNode.findPlug("completionCriteriaType");
 		if (!plug.isNull())
-			completionCriteriaType = plug.asShort();
+			completionCriteriaFinalRender.completionCriteriaType = plug.asShort();
 
 		plug = frGlobalsNode.findPlug("completionCriteriaHours");
 		if (!plug.isNull())
-			completionCriteriaHours = plug.asInt();
+			completionCriteriaFinalRender.completionCriteriaHours = plug.asInt();
 
 		plug = frGlobalsNode.findPlug("completionCriteriaMinutes");
 		if (!plug.isNull())
-			completionCriteriaMinutes = plug.asInt();
+			completionCriteriaFinalRender.completionCriteriaMinutes = plug.asInt();
 
 		plug = frGlobalsNode.findPlug("completionCriteriaSeconds");
 		if (!plug.isNull())
-			completionCriteriaSeconds = plug.asInt();
+			completionCriteriaFinalRender.completionCriteriaSeconds = plug.asInt();
 
 		plug = frGlobalsNode.findPlug("completionCriteriaIterations");
 		if (!plug.isNull())
-			completionCriteriaIterations = plug.asInt();
+			completionCriteriaFinalRender.completionCriteriaIterations = plug.asInt();
 
+		plug = frGlobalsNode.findPlug("completionCriteriaTypeViewport");
+		if (!plug.isNull())
+			completionCriteriaViewport.completionCriteriaType = plug.asShort();
+
+		plug = frGlobalsNode.findPlug("completionCriteriaHoursViewport");
+		if (!plug.isNull())
+			completionCriteriaViewport.completionCriteriaHours = plug.asInt();
+
+		plug = frGlobalsNode.findPlug("completionCriteriaMinutesViewport");
+		if (!plug.isNull())
+			completionCriteriaViewport.completionCriteriaMinutes = plug.asInt();
+
+		plug = frGlobalsNode.findPlug("completionCriteriaSecondsViewport");
+		if (!plug.isNull())
+			completionCriteriaViewport.completionCriteriaSeconds = plug.asInt();
+
+		plug = frGlobalsNode.findPlug("completionCriteriaIterationsViewport");
+		if (!plug.isNull())
+			completionCriteriaViewport.completionCriteriaIterations = plug.asInt();
 
 		plug = frGlobalsNode.findPlug("textureCompression");
 		if (!plug.isNull())
 			textureCompression = plug.asBool();
 
-
 		plug = frGlobalsNode.findPlug("renderMode");
 		if (!plug.isNull())
-			mode = plug.asShort();
+			mode = plug.asInt();
+
+		plug = frGlobalsNode.findPlug("viewportRenderMode");
+		if (!plug.isNull())
+			viewportRenderMode = plug.asInt();
 
 		plug = frGlobalsNode.findPlug("giClampIrradiance");
 		if (!plug.isNull())
@@ -187,7 +209,7 @@ void FireRenderGlobalsData::readFromCurrentScene()
 
 		plug = frGlobalsNode.findPlug("maxRayDepth");
 		if (!plug.isNull())
-			maxRayDepthProduction = plug.asShort();
+			maxRayDepth = plug.asShort();
 
 		plug = frGlobalsNode.findPlug("maxDepthDiffuse");
 		if (!plug.isNull())
@@ -209,6 +231,20 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			maxRayDepthShadow = plug.asShort();
 
+		plug = frGlobalsNode.findPlug("maxRayDepthViewport");
+		if (!plug.isNull())
+			viewportMaxRayDepth = plug.asShort();
+
+		plug = frGlobalsNode.findPlug("maxDepthDiffuseViewport");
+		if (!plug.isNull())
+			viewportMaxDiffuseRayDepth = plug.asShort();
+
+		plug = frGlobalsNode.findPlug("maxDepthGlossyViewport");
+		if (!plug.isNull())
+			viewportMaxReflectionRayDepth = plug.asShort();
+
+
+
 		// In UI raycast epsilon defined in millimeters, convert it to meters
 		plug = frGlobalsNode.findPlug("raycastEpsilon");
 		if (!plug.isNull())
@@ -222,9 +258,9 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			oocTexCache = plug.asInt();
 
-		plug = frGlobalsNode.findPlug("maxRayDepthViewport");
+/*		plug = frGlobalsNode.findPlug("maxRayDepthViewport");
 		if (!plug.isNull())
-			maxRayDepthViewport = plug.asShort();
+			maxRayDepthViewport = plug.asShort();*/
 
 		plug = frGlobalsNode.findPlug("commandPort");
 		if (!plug.isNull())
@@ -346,6 +382,23 @@ void FireRenderGlobalsData::readFromCurrentScene()
 	});
 }
 
+int FireRenderGlobalsData::getThumbnailIterCount()
+{
+	MObject fireRenderGlobals;
+	GetRadeonProRenderGlobals(fireRenderGlobals);
+
+	// Get Fire render globals attributes
+	MFnDependencyNode frGlobalsNode(fireRenderGlobals);
+
+	MPlug plug = frGlobalsNode.findPlug("thumbnailIterationCount");
+	if (!plug.isNull())
+	{
+		return plug.asInt();
+	}
+
+	return 0;
+}
+
 void FireRenderGlobalsData::readDenoiserParameters(const MFnDependencyNode& frGlobalsNode)
 {
 	MPlug plug = frGlobalsNode.findPlug("denoiserEnabled");
@@ -387,22 +440,6 @@ void FireRenderGlobalsData::readDenoiserParameters(const MFnDependencyNode& frGl
 	plug = frGlobalsNode.findPlug("denoiserTrans");
 	if (!plug.isNull())
 		denoiserSettings.trans = plug.asFloat();
-}
-
-short FireRenderGlobalsData::getMaxRayDepth(const FireRenderContext& context) const
-{
-	if (context.isInteractive())
-		return maxRayDepthViewport;
-	else
-		return maxRayDepthProduction;
-}
-
-short FireRenderGlobalsData::getSamples(const FireRenderContext& context) const
-{
-	if (context.isInteractive())
-		return samplesViewport;
-	else
-		return samplesProduction;
 }
 
 void FireRenderGlobalsData::updateTonemapping(FireRenderContext& inContext, bool disableWhiteBalance)
@@ -560,28 +597,48 @@ void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disa
 	frstatus = rprContextSetParameter1f(frcontext, "radianceclamp", giClampIrradiance ? giClampIrradianceValue : FLT_MAX);
 	checkStatus(frstatus);
 
-	frstatus = rprContextSetParameter1u(frcontext, "maxRecursion", getMaxRayDepth(inContext));
-	checkStatus(frstatus);
+	if (!inContext.isInteractive())
+	{
+		frstatus = rprContextSetParameter1u(frcontext, "maxRecursion", maxRayDepth);
+		checkStatus(frstatus);
 
-	frstatus = rprContextSetParameter1u(frcontext, "maxdepth.diffuse", maxRayDepthDiffuse);
-	checkStatus(frstatus);
+		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.diffuse", maxRayDepthDiffuse);
+		checkStatus(frstatus);
 
-	frstatus = rprContextSetParameter1u(frcontext, "maxdepth.glossy", maxRayDepthGlossy);
-	checkStatus(frstatus);
+		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.glossy", maxRayDepthGlossy);
+		checkStatus(frstatus);
 
-	frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction", maxRayDepthRefraction);
-	checkStatus(frstatus);
+		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction", maxRayDepthRefraction);
+		checkStatus(frstatus);
 
-	frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction.glossy", maxRayDepthGlossyRefraction);
-	checkStatus(frstatus);
+		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction.glossy", maxRayDepthGlossyRefraction);
+		checkStatus(frstatus);
 
-	frstatus = rprContextSetParameter1u(frcontext, "maxdepth.shadow", maxRayDepthShadow);
-	checkStatus(frstatus);
+		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.shadow", maxRayDepthShadow);
+		checkStatus(frstatus);
+	}
+	else
+	{
+		frstatus = rprContextSetParameter1u(frcontext, "maxRecursion", viewportMaxRayDepth);
+		checkStatus(frstatus);
+
+		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.diffuse", viewportMaxDiffuseRayDepth);
+		checkStatus(frstatus);
+
+		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.glossy", viewportMaxReflectionRayDepth);
+		checkStatus(frstatus);
+
+		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction", viewportMaxReflectionRayDepth);
+		checkStatus(frstatus);
+
+		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction.glossy", viewportMaxReflectionRayDepth);
+		checkStatus(frstatus);
+
+		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.shadow", viewportMaxDiffuseRayDepth);
+		checkStatus(frstatus);
+	}
 
 	frstatus = rprContextSetParameter1u(frcontext, "imagefilter.type", filterType);
-	checkStatus(frstatus);
-
-	frstatus = rprContextSetParameter1u(frcontext, "iterations", getSamples(inContext));
 	checkStatus(frstatus);
 
 	frstatus = rprContextSetParameter1f(frcontext, "pdfthreshold", 0.0000f);
@@ -688,13 +745,51 @@ bool FireRenderGlobalsData::isDenoiser(MString name)
 	return false;
 }
 
-int FireMaya::Options::GetContextDeviceFlags()
+void FireRenderGlobalsData::getCPUThreadSetup(bool& overriden, int& cpuThreadCount, RenderType renderType)
 {
-	int ret = FireRenderThread::RunOnMainThread<int>([]
+	// Apply defaults in case if global node isn't created yet
+	overriden = false;
+	cpuThreadCount = 0;
+
+	MObject fireRenderGlobals;
+	GetRadeonProRenderGlobals(fireRenderGlobals);
+	// Get Fire render globals attributes
+	MFnDependencyNode frGlobalsNode(fireRenderGlobals);
+
+	MString overrideName = "overrideCpuThreadCountFinalRender";
+	MString threadCountName = "cpuThreadCountFinalRender";
+
+	if (renderType != RenderType::ProductionRender)
+	{
+		overrideName = "overrideCpuThreadCountViewport";
+		threadCountName = "cpuThreadCountViewport";
+	}
+
+	MPlug plug = frGlobalsNode.findPlug(overrideName);
+	if (!plug.isNull())
+	{
+		overriden = plug.asBool();
+	}
+
+	plug = frGlobalsNode.findPlug(threadCountName);
+	if (!plug.isNull())
+	{
+		cpuThreadCount = plug.asInt();
+	}
+}
+
+int FireMaya::Options::GetContextDeviceFlags(RenderType renderType)
+{
+	int ret = FireRenderThread::RunOnMainThread<int>([=]
 	{
 		int ret = 0;
 		MIntArray devicesUsing;
-		MGlobal::executeCommand("optionVar -q RPR_DevicesSelected", devicesUsing);
+
+		// currently we support only 2 sets of settings. finalRender and viewport (IPR)
+		MString cmd = getOptionVarMelCommand("-q", renderType == RenderType::ProductionRender ?
+			FINAL_RENDER_DEVICES_USING_PARAM_NAME : VIEWPORT_DEVICES_USING_PARAM_NAME, "");
+
+		MGlobal::executeCommand(cmd, devicesUsing);
 		auto allDevices = HardwareResources::GetAllDevices();
 
 		for (auto i = 0u; i < devicesUsing.length(); i++)

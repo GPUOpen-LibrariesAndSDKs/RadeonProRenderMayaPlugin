@@ -96,7 +96,7 @@ public:
 class FireRenderContext
 {
 public:
-	static bool createContext(rpr_creation_flags createFlags, rpr_context& result, int* pOutRes = nullptr);
+	bool createContext(rpr_creation_flags createFlags, rpr_context& result, int* pOutRes = nullptr);
 
 	enum RenderMode {
 		kGlobalIllumination = 1,
@@ -116,15 +116,6 @@ public:
 		StatePaused = 1,
 		StateRendering = 2,
 		StateUpdating = 3,
-	};
-
-	enum class RenderType 
-	{
-		Undefined = 0,
-		ProductionRender,
-		IPR,
-		ViewportRender,
-		Thumbnail
 	};
 
 	// Constructor
@@ -151,9 +142,6 @@ public:
 
 	// Setup the motion blur
 	void setMotionBlur(bool doBlur);
-
-	/** Set to true for interactive renders (Viewport or IPR). */
-	void setInteractive(bool interactive);
 
 	/** Return true if the render is interactive (Viewport or IPR). */
 	bool isInteractive() const;
@@ -520,6 +508,10 @@ private:
 
 	// Tweaks precision of the ray-cast system, based on scene bounding box size:
 	void CheckSetRayCastEpsilon();
+
+	int getThreadCountToOverride() const;
+
+private:
 
 	float m_lastRayCastEpsilon;
 

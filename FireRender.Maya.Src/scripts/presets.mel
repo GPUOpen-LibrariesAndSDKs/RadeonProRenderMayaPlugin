@@ -1,0 +1,58 @@
+global proc AERPRQualityPresetsProduction( )
+{
+	int $preset = `getAttr "RadeonProRenderGlobals.qualityPresets"`;
+	if ($preset == 0)
+	{
+		setAttr "RadeonProRenderGlobals.maxRayDepth" 5;
+		setAttr "RadeonProRenderGlobals.samples" 1;
+	}
+	else if ($preset == 1)
+	{
+		setAttr "RadeonProRenderGlobals.maxRayDepth" 15;
+		setAttr "RadeonProRenderGlobals.samples" 8;
+	}
+	else if ($preset == 2)
+	{
+		setAttr "RadeonProRenderGlobals.maxRayDepth" 25;
+		setAttr "RadeonProRenderGlobals.samples" 16;
+	}
+}
+
+global proc AERPRQualityPresetsViewport( )
+{
+	int $preset = `getAttr "RadeonProRenderGlobals.qualityPresetsViewport"`;
+	if ($preset == 0)
+	{
+		setAttr "RadeonProRenderGlobals.maxRayDepthViewport" 5;
+		setAttr "RadeonProRenderGlobals.samplesViewport" 1;
+	}
+	else if ($preset == 1)
+	{
+		setAttr "RadeonProRenderGlobals.maxRayDepthViewport" 15;
+		setAttr "RadeonProRenderGlobals.samplesViewport" 8;
+	}
+	else if ($preset == 2)
+	{
+		setAttr "RadeonProRenderGlobals.maxRayDepthViewport" 25;
+		setAttr "RadeonProRenderGlobals.samplesViewport" 16;
+	}
+}
+
+global proc SetProdQualityPreset(int $preset)
+{
+	if (size(`ls RadeonProRenderGlobals`))
+	{
+		setAttr "RadeonProRenderGlobals.qualityPresets" $preset;
+		AERPRQualityPresetsProduction();
+	}
+}
+
+global proc SetViewportQualityPreset(int $preset)
+{
+	if (size(`ls RadeonProRenderGlobals`))
+	{
+		setAttr "RadeonProRenderGlobals.qualityPresetsViewport" $preset;
+		AERPRQualityPresetsViewport();
+	}
+}
+ 

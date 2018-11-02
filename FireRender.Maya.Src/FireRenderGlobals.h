@@ -9,14 +9,15 @@
 // Created by Alan Stanzione.
 //
 
-#include <maya/MPxNode.h>
 #include "frWrap.h"
 #include "FireMaya.h"
+
+#include <maya/MPxNode.h>
+#include <maya/MFnEnumAttribute.h>
 
 class FireRenderGlobals : public MPxNode
 {
 public:
-
 	enum CompletionCriteriaType
 	{
 		kIterations = 0,
@@ -78,6 +79,8 @@ public:
 
 	virtual ~FireRenderGlobals();
 
+	void postConstructor() override;
+
 	virtual MStatus compute(const MPlug& plug, MDataBlock& data);
 
 	static MTypeId FRTypeID() { return FireMaya::TypeId::FireRenderGlobals; }
@@ -88,27 +91,12 @@ public:
 
 	static void createDenoiserAttributes();
 
-	// _TODO Remove after fix in ImageProcLibrary
-	static void onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
+    static void createFinalRenderAttributes();
+	static void createViewportAttributes();
+	static MObject createRenderModeAttr(const char* attrName, const char* attrNameShort, MFnEnumAttribute& eAttr);
 
 	/** Return the FR camera mode that matches the given camera type. */
 	static frw::CameraMode getCameraModeForType(CameraType type, bool defaultIsOrtho = false);
-
-	// CPU Thread Count support
-	static bool isOverrideThreadCount();
-	static int getCPUThreadCount();
-
-	static bool isOptionVarExist(std::string varName);
-	static void setOptionVarInt(std::string varName, int val);
-
-	// Ground
-	static MObject m_useGround;
-	static MObject m_groundHeight;
-	static MObject m_groundRadius;
-	static MObject m_groundShadows;
-	static MObject m_groundReflections;
-	static MObject m_groundStrength;
-	static MObject m_groundRoughness;
 
 	// Render stamp
 	static MObject m_useRenderStamp;
@@ -116,10 +104,18 @@ public:
 	static MObject m_renderStampTextDefault; // default value for m_renderStampText
 
 private:
+	static void onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
+	static void addAsGlobalAttribute(MFnAttribute& attr);
+
+	static void setupProductionRayDepthParameters();
 	static void setupRenderDevices();
-	static void setupRayDepthParameters();
+
+	void syncGlobalAttributeValues();
 
 private:
-	// _TODO Remove after fix in ImageProcLibrary
-	static MCallbackId m_attributeChangedCallback;
+	// attributes which will be serialized via optionVar commands instead of usual node's attribute serialization
+	typedef std::list<MObject> GlobalAttributesList;
+	static GlobalAttributesList m_globalAttributesList;
+
+	MCallbackId m_attributeChangedCallback;
 };

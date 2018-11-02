@@ -1,3 +1,0 @@
-global string $OPTION_VAR_CORES_COUNT = "RPR_HardwareCoresCount";
-global string $OPTION_VAR_CPU_THREADS_COUNT = "RPR_CPUThreadCount";
-global string $OPTION_VAR_OVERRIDE_CPU_THREAD = "RPR_OverrideCPUThreadCount";

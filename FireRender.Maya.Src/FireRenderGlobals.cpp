@@ -7,7 +7,10 @@
 #include "FireMaya.h"
 #include "FireRenderUtils.h"
 #include "FireRenderAOVs.h"
+#include "OptionVarHelpers.h"
+#include "attributeNames.h"
 
+#include <thread>
 #include <string>
 #include <thread>
 
@@ -30,8 +33,6 @@ namespace
 		MObject giClampIrradiance;
 		MObject giClampIrradianceValue;
 
-		MObject AASampleCountProduction;
-
 		// max depths
 		MObject MaxRayDepthProduction;
 
@@ -44,9 +45,6 @@ namespace
 		MObject RaycastEpsilon;
 		MObject EnableOOC;
 		MObject TexCacheSize;
-
-		MObject AASampleCountViewport;
-		MObject MaxRayDepthViewport;
 
 		MObject AAFilter;
 		MObject AAGridSize;
@@ -103,6 +101,45 @@ namespace
 		MObject denoiserTrans;
 	}
 
+    struct RenderingDeviceAttributes
+    {
+        //MObject useGPU;
+        //std::vector<MObject> gpuToUse;
+
+        MObject cpuThreadCount;
+        MObject overrideCpuThreadCount; // bool
+    };
+
+    namespace FinalRenderAttributes
+    {
+        RenderingDeviceAttributes renderingDevices;
+
+        MObject samplesBetweenRenderUpdate;
+        MObject tileRenderEnabled;
+        MObject tileRenderX;
+        MObject tileRenderY;
+    }
+
+	namespace ViewportRenderAttributes
+	{
+		// System tab (will be kept with Maya's preferences)
+		RenderingDeviceAttributes renderingDevices;
+		MObject maxRayDepth;
+		MObject maxDiffuseRayDepth;
+		MObject maxDepthGlossy;
+
+		MObject thumbnailIterCount;
+		MObject renderMode;
+		MObject motionBlur;
+
+		// Other tabs
+		MObject completionCriteriaType;
+		MObject completionCriteriaHours;
+		MObject completionCriteriaMinutes;
+		MObject completionCriteriaSeconds;
+		MObject completionCriteriaIterations;
+	}
+
 	bool operator==(const MStringArray& a, const MStringArray& b)
 	{
 		if (a.length() != b.length())
@@ -130,25 +167,16 @@ namespace
 	}
 }
 
-
-MObject FireRenderGlobals::m_useGround;
-MObject FireRenderGlobals::m_groundHeight;
-MObject FireRenderGlobals::m_groundRadius;
-MObject FireRenderGlobals::m_groundShadows;
-MObject FireRenderGlobals::m_groundReflections;
-MObject FireRenderGlobals::m_groundStrength;
-MObject FireRenderGlobals::m_groundRoughness;
-
 MObject FireRenderGlobals::m_useRenderStamp;
 MObject FireRenderGlobals::m_renderStampText;
 MObject FireRenderGlobals::m_renderStampTextDefault;
 
-// _TODO Remove after fix in ImageProcLibrary
-MCallbackId FireRenderGlobals::m_attributeChangedCallback;
+FireRenderGlobals::GlobalAttributesList FireRenderGlobals::m_globalAttributesList;
 
-FireRenderGlobals::FireRenderGlobals()
+
+FireRenderGlobals::FireRenderGlobals() : 
+	m_attributeChangedCallback(0)
 {
-	m_attributeChangedCallback = 0;
 }
 
 FireRenderGlobals::~FireRenderGlobals()
@@ -158,6 +186,18 @@ FireRenderGlobals::~FireRenderGlobals()
 	{
 		MNodeMessage::removeCallback(m_attributeChangedCallback);
 	}
+}
+
+void FireRenderGlobals::postConstructor()
+{
+	MStatus status;
+
+	syncGlobalAttributeValues();
+
+	MObject obj = thisMObject();
+	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(obj, FireRenderGlobals::onAttributeChanged, nullptr, &status);
+
+	CHECK_MSTATUS(status);
 }
 
 MStatus FireRenderGlobals::compute(const MPlug & plug, MDataBlock & data)
@@ -178,6 +218,9 @@ MStatus FireRenderGlobals::initialize()
 	MFnMessageAttribute mAttr;
 	MFnTypedAttribute tAttr;
 	MFnStringData sData;
+
+	createFinalRenderAttributes();
+	createViewportAttributes();
 
 	Attribute::completionCriteriaType = eAttr.create("completionCriteriaType", "cctp", kIterations, &status);
 	eAttr.addField("Iterations", kIterations);
@@ -207,21 +250,10 @@ MStatus FireRenderGlobals::initialize()
 	nAttr.setSoftMax(1000);
 	nAttr.setMax(INT_MAX);
 
-
 	Attribute::textureCompression = nAttr.create("textureCompression", "texC", MFnNumericData::kBoolean, false, &status);
 	MAKE_INPUT(nAttr);
 
-	Attribute::renderMode = eAttr.create("renderMode", "rm", kGlobalIllumination, &status);
-	eAttr.addField("globalIllumination", kGlobalIllumination);
-	eAttr.addField("directIllumination", kDirectIllumination);
-	eAttr.addField("directIlluminationNoShadow", kDirectIlluminationNoShadow);
-	eAttr.addField("wireframe", kWireframe);
-	eAttr.addField("materialId", kMaterialId);
-	eAttr.addField("position", kPosition);
-	eAttr.addField("normal", kNormal);
-	eAttr.addField("texcoord", kTexcoord);
-	eAttr.addField("ambientOcclusion", kAmbientOcclusion);
-	MAKE_INPUT_CONST(eAttr);
+	Attribute::renderMode = createRenderModeAttr("renderMode", "rm", eAttr);
 
 	Attribute::giClampIrradiance = nAttr.create("giClampIrradiance", "gici", MFnNumericData::kBoolean, true, &status);
 	MAKE_INPUT(nAttr);
@@ -232,14 +264,14 @@ MStatus FireRenderGlobals::initialize()
 	nAttr.setSoftMax(100.0f);
 	nAttr.setMax(999999.f);
 
-	Attribute::AASampleCountProduction = nAttr.create("samples", "s", MFnNumericData::kShort, 1, &status);
+	/*Attribute::AASampleCountProduction = nAttr.create("samples", "s", MFnNumericData::kShort, 1, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(1);
 	nAttr.setMax(32);
 	Attribute::AASampleCountViewport = nAttr.create("samplesViewport", "sV", MFnNumericData::kShort, 1, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(1);
-	nAttr.setMax(32);
+	nAttr.setMax(32);*/
 
 	Attribute::AAFilter = eAttr.create("filter", "f", kMitchellFilter, &status);
 	eAttr.addField("Box", kBoxFilter);
@@ -255,7 +287,7 @@ MStatus FireRenderGlobals::initialize()
 	nAttr.setMin(1);
 	nAttr.setMax(10);
 
-	setupRayDepthParameters();
+	setupProductionRayDepthParameters();
 
 	Attribute::RaycastEpsilon = nAttr.create("raycastEpsilon", "rce", MFnNumericData::kFloat, 0.02f, &status);
 	MAKE_INPUT(nAttr);
@@ -273,11 +305,6 @@ MStatus FireRenderGlobals::initialize()
 	nAttr.setSoftMax(8192);
 	nAttr.setMax(100000);
 
-	Attribute::MaxRayDepthViewport = nAttr.create("maxRayDepthViewport", "mrdV", MFnNumericData::kShort, 5, &status);
-	MAKE_INPUT(nAttr);
-	nAttr.setMin(0);
-	nAttr.setMax(50);
-
 	Attribute::ibl = mAttr.create("imageBasedLighting", "ibl");
 	MAKE_INPUT(mAttr);
 
@@ -293,37 +320,19 @@ MStatus FireRenderGlobals::initialize()
 	nAttr.setStorable(false);
 
 	Attribute::applyGammaToMayaViews = nAttr.create("applyGammaToMayaViews", "agtmv", MFnNumericData::kBoolean, false, &status);
-	m_useGround = nAttr.create("useGround", "gru", MFnNumericData::kBoolean, false, &status);
-	MAKE_INPUT(nAttr);
-	m_groundHeight = nAttr.create("groundHeight", "grh", MFnNumericData::kFloat, 0.0f, &status);
-	MAKE_INPUT(nAttr);
-	m_groundRadius = nAttr.create("groundRadius", "grr", MFnNumericData::kFloat, 1000.0f, &status);
-	nAttr.setMin(0.0);
 
 	m_useRenderStamp = nAttr.create("useRenderStamp", "rsu", MFnNumericData::kBoolean, false, &status);
 	MAKE_INPUT(nAttr);
+
 	MObject defaultRenderStamp = sData.create(DEFAULT_RENDER_STAMP);
+
 	m_renderStampText = tAttr.create("renderStampText", "rs", MFnData::kString, defaultRenderStamp);
 	MAKE_INPUT(tAttr);
+
 	m_renderStampTextDefault = tAttr.create("renderStampTextDefault", "rsd", MFnData::kString, defaultRenderStamp);
 	tAttr.setStorable(false); // not saved to file
 	tAttr.setHidden(true);    // invisible in UI
 	tAttr.setWritable(false);
-
-	MAKE_INPUT(nAttr);
-	m_groundShadows = nAttr.create("shadows", "grs", MFnNumericData::kBoolean, true, &status);
-	MAKE_INPUT(nAttr);
-	m_groundReflections = nAttr.create("reflections", "grref", MFnNumericData::kBoolean, false, &status);
-	MAKE_INPUT(nAttr);
-	m_groundStrength = nAttr.create("strength", "grstr", MFnNumericData::kFloat, 0.5f, &status);
-	nAttr.setMin(0.0);
-	nAttr.setMax(1.0);
-	MAKE_INPUT(nAttr);
-	m_groundRoughness = nAttr.create("roughness", "grro", MFnNumericData::kFloat, 0.001f, &status);
-	nAttr.setMin(0.0);
-	MAKE_INPUT(nAttr);
-
-	MAKE_INPUT(nAttr);
 
 	Attribute::displayGamma = nAttr.create("displayGamma", "dg", MFnNumericData::kFloat, 2.2, &status);
 	MAKE_INPUT(nAttr);
@@ -395,7 +404,7 @@ MStatus FireRenderGlobals::initialize()
 	FireRenderAOVs aovs;
 	aovs.registerAttributes();
 
-	setupRenderDevices();
+    setupRenderDevices();
 
 	Attribute::qualityPresetsViewport = eAttr.create("qualityPresetsViewport", "qPsV", 0, &status);
 	eAttr.addField("Low", 0);
@@ -423,13 +432,12 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::renderMode));
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradiance));
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradianceValue));
-	CHECK_MSTATUS(addAttribute(Attribute::AASampleCountProduction));
+//	CHECK_MSTATUS(addAttribute(Attribute::AASampleCountProduction));
 	CHECK_MSTATUS(addAttribute(Attribute::MaxRayDepthProduction));
 	CHECK_MSTATUS(addAttribute(Attribute::RaycastEpsilon));
 	CHECK_MSTATUS(addAttribute(Attribute::EnableOOC));
 	CHECK_MSTATUS(addAttribute(Attribute::TexCacheSize));
-	CHECK_MSTATUS(addAttribute(Attribute::AASampleCountViewport));
-	CHECK_MSTATUS(addAttribute(Attribute::MaxRayDepthViewport));
+//	CHECK_MSTATUS(addAttribute(Attribute::AASampleCountViewport));
 	CHECK_MSTATUS(addAttribute(Attribute::AAFilter));
 	CHECK_MSTATUS(addAttribute(Attribute::AAGridSize));
 	CHECK_MSTATUS(addAttribute(Attribute::ibl));
@@ -461,14 +469,6 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::qualityPresetsViewport));
 	CHECK_MSTATUS(addAttribute(Attribute::useMPS));
 
-	CHECK_MSTATUS(addAttribute(m_useGround));
-	CHECK_MSTATUS(addAttribute(m_groundHeight));
-	CHECK_MSTATUS(addAttribute(m_groundRadius));
-	CHECK_MSTATUS(addAttribute(m_groundShadows));
-	CHECK_MSTATUS(addAttribute(m_groundReflections));
-	CHECK_MSTATUS(addAttribute(m_groundStrength));
-	CHECK_MSTATUS(addAttribute(m_groundRoughness));
-
 	CHECK_MSTATUS(addAttribute(m_useRenderStamp));
 	CHECK_MSTATUS(addAttribute(m_renderStampText));
 	CHECK_MSTATUS(addAttribute(m_renderStampTextDefault));
@@ -478,7 +478,7 @@ MStatus FireRenderGlobals::initialize()
 	return status;
 }
 
-void FireRenderGlobals::setupRayDepthParameters()
+void FireRenderGlobals::setupProductionRayDepthParameters()
 {
 	int min = 0;
 	int softMin = 2;
@@ -487,42 +487,42 @@ void FireRenderGlobals::setupRayDepthParameters()
 	MFnNumericAttribute nAttr;
 	MStatus status;
 
-	Attribute::MaxRayDepthProduction = nAttr.create("maxRayDepth", "mrd", MFnNumericData::kShort, 8, &status);
+	Attribute::MaxRayDepthProduction = nAttr.create("maxRayDepth", "mrd", MFnNumericData::kInt, 8, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0);
 	nAttr.setSoftMin(softMin);
 	nAttr.setSoftMax(softMax);
 	CHECK_MSTATUS(addAttribute(Attribute::MaxRayDepthProduction));
 
-	Attribute::MaxDepthDiffuse = nAttr.create("maxDepthDiffuse", "mdd", MFnNumericData::kShort, 3, &status);
+	Attribute::MaxDepthDiffuse = nAttr.create("maxDepthDiffuse", "mdd", MFnNumericData::kInt, 3, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0);
 	nAttr.setSoftMin(softMin);
 	nAttr.setSoftMax(softMax);
 	CHECK_MSTATUS(addAttribute(Attribute::MaxDepthDiffuse));
 
-	Attribute::MaxDepthGlossy = nAttr.create("maxDepthGlossy", "mdg", MFnNumericData::kShort, 5, &status);
+	Attribute::MaxDepthGlossy = nAttr.create("maxDepthGlossy", "mdg", MFnNumericData::kInt, 5, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0);
 	nAttr.setSoftMin(softMin);
 	nAttr.setSoftMax(softMax);
 	CHECK_MSTATUS(addAttribute(Attribute::MaxDepthGlossy));
 
-	Attribute::MaxDepthRefraction = nAttr.create("maxDepthRefraction", "mdr", MFnNumericData::kShort, 5, &status);
+	Attribute::MaxDepthRefraction = nAttr.create("maxDepthRefraction", "mdr", MFnNumericData::kInt, 5, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0);
 	nAttr.setSoftMin(softMin);
 	nAttr.setSoftMax(softMax);
 	CHECK_MSTATUS(addAttribute(Attribute::MaxDepthRefraction));
 
-	Attribute::MaxDepthRefractionGlossy = nAttr.create("maxDepthRefractionGlossy", "mdrg", MFnNumericData::kShort, 5, &status);
+	Attribute::MaxDepthRefractionGlossy = nAttr.create("maxDepthRefractionGlossy", "mdrg", MFnNumericData::kInt, 5, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0);
 	nAttr.setSoftMin(softMin);
 	nAttr.setSoftMax(softMax);
 	CHECK_MSTATUS(addAttribute(Attribute::MaxDepthRefractionGlossy));
 
-	Attribute::MaxDepthShadow = nAttr.create("maxDepthShadow", "mds", MFnNumericData::kShort, 5, &status);
+	Attribute::MaxDepthShadow = nAttr.create("maxDepthShadow", "mds", MFnNumericData::kInt, 5, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0);
 	nAttr.setSoftMin(softMin);
@@ -537,11 +537,10 @@ void FireRenderGlobals::setupRenderDevices()
 	MStringArray oldList, newList;
 	MIntArray oldDriversCompatible, newDriversCompatible;
 
-	int allowUncertified;
 	int driversCompatibleExists;
 
+	// _TODO Refactor names, make const strings
 	MGlobal::executeCommand("optionVar -q RPR_DevicesName", oldList);
-	MGlobal::executeCommand("optionVar -q RPR_AllowUncertified", allowUncertified);
 	MGlobal::executeCommand("optionVar -q RPR_DriversCompatible", oldDriversCompatible);
 	MGlobal::executeCommand("optionVar -ex RPR_DriversCompatible", driversCompatibleExists);
 
@@ -559,71 +558,27 @@ void FireRenderGlobals::setupRenderDevices()
 	MGlobal::executeCommand("optionVar -q RPR_DevicesName", newList);
 	MGlobal::executeCommand("optionVar -q RPR_DriversCompatible", newDriversCompatible);
 
-	// First time, or something has changed, so time to reset defaults.
-	if (!(oldList == newList) || !(oldDriversCompatible == newDriversCompatible) || !driversCompatibleExists)
+	std::vector<std::string> attrNames = { FINAL_RENDER_DEVICES_USING_PARAM_NAME, VIEWPORT_DEVICES_USING_PARAM_NAME };
+
+	for (std::string name : attrNames)
 	{
-		MGlobal::executeCommand("optionVar -rm RPR_DevicesSelected");
-		int selectedCount = 0;
-		for (auto device : deviceList)
+		bool hardwareChanged = !(oldList == newList) || !(oldDriversCompatible == newDriversCompatible) || !driversCompatibleExists;
+		// First time, or something has changed, so time to reset defaults.
+		int varExists = false;
+		MGlobal::executeCommand(("optionVar -ex " + name).c_str(), varExists);
+		if (hardwareChanged || !varExists)
 		{
-			int selected = selectedCount < 1 && device.isCertified() && device.isDriverCompatible;
-			MGlobal::executeCommand(MString("optionVar -iva RPR_DevicesSelected ") + selected);
-			if (selected)
-				selectedCount++;
+			MGlobal::executeCommand(("optionVar -rm " + name).c_str());
+			int selectedCount = 0;
+			for (auto device : deviceList)
+			{
+				int selected = selectedCount < 1 && device.isCertified() && device.isDriverCompatible;
+				MGlobal::executeCommand(MString("optionVar -iva ") + name.c_str() + " " + selected);
+				if (selected)
+					selectedCount++;
+			}
 		}
 	}
-
-	// setup hardware cpu cores count
-	unsigned concurentThreadsSupported = std::thread::hardware_concurrency();
-
-	int minThreadCount = 2;
-	int maxThreadCount = 128;
-
-	if (concurentThreadsSupported < minThreadCount)
-	{
-		concurentThreadsSupported = minThreadCount;
-	}
-	else if (concurentThreadsSupported > maxThreadCount)
-	{
-		concurentThreadsSupported = maxThreadCount;
-	}
-
-	if (!FireRenderGlobals::isOptionVarExist("RPR_CPUThreadCount"))
-	{
-		FireRenderGlobals::setOptionVarInt("RPR_CPUThreadCount", concurentThreadsSupported);
-	}
-
-	MGlobal::executeCommand(MString("optionVar -iv RPR_HardwareCoresCount ") + concurentThreadsSupported);
-}
-
-bool FireRenderGlobals::isOptionVarExist(std::string varName)
-{
-	int val;
-	MGlobal::executeCommand(MString("optionVar -ex ") + varName.c_str(), val);
-	return val > 0;
-}
-
-void FireRenderGlobals::setOptionVarInt(std::string varName, int val)
-{
-	MGlobal::executeCommand(MString("optionVar -iv ") + varName.c_str() + " " + std::to_string(val).c_str());
-}
-
-bool FireRenderGlobals::isOverrideThreadCount()
-{
-	int val;
-	MGlobal::executeCommand("optionVar -q RPR_OverrideCPUThreadCount", val);
-
-	return val > 0;
-}
-
-int FireRenderGlobals::getCPUThreadCount()
-{
-
-
-	int val;
-	MGlobal::executeCommand("optionVar -q RPR_CPUThreadCount", val);
-
-	return val;
 }
 
 void FireRenderGlobals::createDenoiserAttributes()
@@ -645,41 +600,12 @@ void FireRenderGlobals::createDenoiserAttributes()
 	nAttr.setReadable(true);
 	CHECK_MSTATUS(addAttribute(Attribute::denoiserType));
 
-	// Radio buttons attributes
-	/*Attribute::denoiserIsBilateral = nAttr.create("denoiserIsBilateral", "dib", MFnNumericData::kBoolean, true, &status);
-	MAKE_INPUT(nAttr);
-	CHECK_MSTATUS(addAttribute(Attribute::denoiserIsBilateral));
-
-	Attribute::denoiserIsLWR = nAttr.create("denoiserIsLWR", "dil", MFnNumericData::kBoolean, false, &status);
-	MAKE_INPUT(nAttr);
-	CHECK_MSTATUS(addAttribute(Attribute::denoiserIsLWR));
-
-	Attribute::denoiserIsEAW = nAttr.create("denoiserIsEAW", "die", MFnNumericData::kBoolean, false, &status);
-	MAKE_INPUT(nAttr);
-	CHECK_MSTATUS(addAttribute(Attribute::denoiserIsEAW));
-	// Radio buttons end*/
-
-
-	//_TODO Will be removed after ImageProcLibrary would be fixed
-	int limit = 0;
-	status = MGlobal::executeCommand("source \"createFireRenderGlobalsTab.mel\"; isLimitBileteralRadius()", limit);
-
 	// Bilateral
 	Attribute::denoiserRadius = nAttr.create("denoiserRadius", "dr", MFnNumericData::kInt, 1, &status);
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(addAttribute(Attribute::denoiserRadius));
 	nAttr.setMin(1);
-	nAttr.setMax(limit ? 6 : 10);
-
-	//_TODO Will be removed after ImageProcLibrary would be fixed
-	Attribute::limitDenoiserRadius = nAttr.create("limitDenoiserRadius", "ldr", MFnNumericData::kBoolean, 0, &status);
-	MAKE_INPUT(nAttr);
-	CHECK_MSTATUS(addAttribute(Attribute::limitDenoiserRadius));
-	MObject obj;
-	GetRadeonProRenderGlobals(obj);
-	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(obj, FireRenderGlobals::onAttributeChanged, nullptr, &status);
-	CHECK_MSTATUS(status);
-	////////
+	nAttr.setMax(10);
 
 	//LWR
 	Attribute::denoiserSamples = nAttr.create("denoiserSamples", "ds", MFnNumericData::kInt, 2, &status);
@@ -727,18 +653,180 @@ void FireRenderGlobals::createDenoiserAttributes()
 	nAttr.setMax(1.0f);
 }
 
-void FireRenderGlobals::onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
+void FireRenderGlobals::addAsGlobalAttribute(MFnAttribute& attr)
 {
-	if (plug.name() == "RadeonProRenderGlobals.limitDenoiserRadius")
-	{
-		bool limit = false;
-		if (plug.getValue(limit) == MStatus::kSuccess)
-		{
-			MFnNumericAttribute(Attribute::denoiserRadius).setMax(limit ? 6 : 10);
-		}
-	}
+	MObject attrObj = attr.object();
+	
+	attr.setStorable(false);
+	attr.setConnectable(false);
+	CHECK_MSTATUS(addAttribute(attrObj));
+
+	m_globalAttributesList.push_back(attrObj);
 }
 
+void getMinMaxCpuThreads(int& min, int& max, int& softMax)
+{
+	// setup hardware cpu cores count
+	unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
+
+	unsigned int minThreadCount = 2;
+	unsigned int maxThreadCount = 128;
+
+	if (concurentThreadsSupported < minThreadCount)
+	{
+		concurentThreadsSupported = minThreadCount;
+	}
+	else if (concurentThreadsSupported > maxThreadCount)
+	{
+		concurentThreadsSupported = maxThreadCount;
+	}
+
+	min = minThreadCount;
+	max = maxThreadCount;
+	softMax = concurentThreadsSupported;
+}
+
+void FireRenderGlobals::createFinalRenderAttributes()
+{
+    MStatus status;
+    MFnNumericAttribute nAttr;
+
+	int minThreadCount, maxThreadCount, concurentThreadsSupported;
+	getMinMaxCpuThreads(minThreadCount, maxThreadCount, concurentThreadsSupported);
+
+	FinalRenderAttributes::renderingDevices.cpuThreadCount = nAttr.create("cpuThreadCountFinalRender", "fctc", MFnNumericData::kInt, minThreadCount);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(minThreadCount);
+	nAttr.setMax(maxThreadCount);
+	nAttr.setSoftMax(concurentThreadsSupported);
+	addAsGlobalAttribute(nAttr);
+
+	FinalRenderAttributes::renderingDevices.overrideCpuThreadCount = nAttr.create("overrideCpuThreadCountFinalRender", "fotc", MFnNumericData::kBoolean, false);
+	MAKE_INPUT(nAttr);
+	addAsGlobalAttribute(nAttr);
+
+    FinalRenderAttributes::samplesBetweenRenderUpdate = nAttr.create("samplesBetweenRenderUpdate", "sbr", MFnNumericData::kFloat, 10.0, &status);
+    MAKE_INPUT(nAttr);
+    nAttr.setMin(0.1f);
+    nAttr.setSoftMax(100.0f);
+	addAsGlobalAttribute(nAttr);
+
+    FinalRenderAttributes::tileRenderEnabled = nAttr.create("tileRenderEnabled", "tre", MFnNumericData::kBoolean, false, &status);
+    MAKE_INPUT(nAttr);
+	addAsGlobalAttribute(nAttr);
+
+    const int tileDefaultSize = 128;
+    const int tileDefaultSizeMin = 16;
+    const int tileDefaultSizeMax = 512;
+
+    FinalRenderAttributes::tileRenderX = nAttr.create("tileRenderX", "trx", MFnNumericData::kInt, tileDefaultSize, &status);
+    MAKE_INPUT(nAttr);
+    nAttr.setMin(tileDefaultSizeMin);
+    nAttr.setSoftMax(tileDefaultSizeMax);
+	nAttr.setStorable(false);
+	nAttr.setConnectable(false);
+	addAsGlobalAttribute(nAttr);
+
+    FinalRenderAttributes::tileRenderY = nAttr.create("tileRenderY", "try", MFnNumericData::kInt, tileDefaultSize, &status);
+    MAKE_INPUT(nAttr);
+    nAttr.setMin(tileDefaultSizeMin);
+    nAttr.setSoftMax(tileDefaultSizeMax);
+	addAsGlobalAttribute(nAttr);
+}
+
+void FireRenderGlobals::createViewportAttributes()
+{
+	MStatus status;
+	MFnNumericAttribute nAttr;
+
+	int minThreadCount, maxThreadCount, concurentThreadsSupported;
+	getMinMaxCpuThreads(minThreadCount, maxThreadCount, concurentThreadsSupported);
+
+	ViewportRenderAttributes::renderingDevices.cpuThreadCount = nAttr.create("cpuThreadCountViewport", "vctc", MFnNumericData::kInt, minThreadCount);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(minThreadCount);
+	nAttr.setMax(maxThreadCount);
+	nAttr.setSoftMax(concurentThreadsSupported);
+	addAsGlobalAttribute(nAttr);
+
+	ViewportRenderAttributes::renderingDevices.overrideCpuThreadCount = nAttr.create("overrideCpuThreadCountViewport", "votc", MFnNumericData::kBoolean, false);
+	MAKE_INPUT(nAttr);
+	addAsGlobalAttribute(nAttr);
+
+	// completion criteria
+	MFnEnumAttribute eAttr;
+
+	ViewportRenderAttributes::completionCriteriaType = eAttr.create("completionCriteriaTypeViewport", "vcct", kIterations, &status);
+	eAttr.addField("Iterations", kIterations);
+	eAttr.addField("Time", kTime);
+	eAttr.addField("Unlimited", kUnlimited);
+	MAKE_INPUT_CONST(eAttr);
+	addAsGlobalAttribute(eAttr);
+
+	ViewportRenderAttributes::completionCriteriaHours = nAttr.create("completionCriteriaHoursViewport", "vcch", MFnNumericData::kInt, 0, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0);
+	nAttr.setSoftMax(24.0);
+	nAttr.setMax(INT_MAX);
+	addAsGlobalAttribute(nAttr);
+
+	ViewportRenderAttributes::completionCriteriaMinutes = nAttr.create("completionCriteriaMinutesViewport", "vccm", MFnNumericData::kInt, 0, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0);
+	nAttr.setMax(59.0);
+	addAsGlobalAttribute(nAttr);
+
+	ViewportRenderAttributes::completionCriteriaSeconds = nAttr.create("completionCriteriaSecondsViewport", "vccs", MFnNumericData::kInt, 10, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(1.0);
+	nAttr.setMax(59.0);
+	addAsGlobalAttribute(nAttr);
+
+	ViewportRenderAttributes::completionCriteriaIterations = nAttr.create("completionCriteriaIterationsViewport", "vcci", MFnNumericData::kInt, 100, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(1.0);
+	nAttr.setSoftMax(1000);
+	nAttr.setMax(INT_MAX);
+	addAsGlobalAttribute(nAttr);
+
+	ViewportRenderAttributes::thumbnailIterCount = nAttr.create("thumbnailIterationCount", "tic", MFnNumericData::kInt, 50, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(1);
+	nAttr.setSoftMax(100);
+	nAttr.setMax(INT_MAX);
+	addAsGlobalAttribute(nAttr);
+
+	ViewportRenderAttributes::renderMode = createRenderModeAttr("renderModeViewport", "vrm", eAttr);
+	addAsGlobalAttribute(eAttr);
+
+	int softMin = 2;
+	int softMax = 50;
+
+	ViewportRenderAttributes::maxRayDepth = nAttr.create("maxRayDepthViewport", "vmrd", MFnNumericData::kInt, 8, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(softMin);
+	nAttr.setSoftMin(softMin);
+	nAttr.setSoftMax(softMax);
+	addAsGlobalAttribute(nAttr);
+
+	ViewportRenderAttributes::maxDiffuseRayDepth = nAttr.create("maxDepthDiffuseViewport", "mddv", MFnNumericData::kInt, 3, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(softMin);
+	nAttr.setSoftMin(softMin);
+	nAttr.setSoftMax(softMax);
+	addAsGlobalAttribute(nAttr);
+
+	ViewportRenderAttributes::maxDepthGlossy = nAttr.create("maxDepthGlossyViewport", "mdgv", MFnNumericData::kInt, 5, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(softMin);
+	nAttr.setSoftMin(softMin);
+	nAttr.setSoftMax(softMax);
+	addAsGlobalAttribute(nAttr);
+
+	ViewportRenderAttributes::motionBlur = nAttr.create("motionBlurViewport", "vmb", MFnNumericData::kBoolean, false);
+	MAKE_INPUT(nAttr);
+	addAsGlobalAttribute(nAttr);
+}
 
 /** Return the FR camera mode that matches the given camera type. */
 frw::CameraMode FireRenderGlobals::getCameraModeForType(CameraType type, bool defaultIsOrtho)
@@ -757,4 +845,75 @@ frw::CameraMode FireRenderGlobals::getCameraModeForType(CameraType type, bool de
 	default:
 		return defaultIsOrtho ? frw::CameraModeOrthographic : frw::CameraModePerspective;
 	}
+}
+
+void FireRenderGlobals::onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
+{
+	if ((msg & MNodeMessage::kAttributeSet) == 0)
+	{
+		return;
+	}
+
+	MObject attrObj = plug.attribute();
+
+	bool exists = false;
+	for (MObject obj : m_globalAttributesList)
+	{
+		if (obj == attrObj)
+		{
+			exists = true;
+			break;
+		}
+	}
+
+	if (exists)
+	{		
+		updateCorrespondingOptionVar(plug);
+	}
+}
+
+void FireRenderGlobals::syncGlobalAttributeValues()
+{
+	MObject obj = thisMObject();
+
+	MFnDependencyNode depNode(obj);
+
+	for (MObject attrObj : m_globalAttributesList)
+	{
+		int exist = 0;
+
+		MString varName = getOptionVarNameForAttributeName(MFnAttribute(attrObj).name());
+
+		MGlobal::executeCommand(getOptionVarMelCommand("-exists", varName, ""), exist);
+
+		MPlug plug = depNode.findPlug(attrObj);
+		if (exist > 0)
+		{
+			updateAttributeFromOptionVar(plug, varName);
+		}
+		else
+		{
+			// if optionVar variable does not exist set it to default from attribute
+			updateCorrespondingOptionVar(plug);
+		}
+	}
+}
+
+MObject FireRenderGlobals::createRenderModeAttr(const char* attrName, const char* attrNameShort, MFnEnumAttribute& eAttr)
+{
+	MStatus status;
+
+	MObject objAttr = eAttr.create(attrName, attrNameShort, kGlobalIllumination, &status);
+	eAttr.addField("globalIllumination", kGlobalIllumination);
+	eAttr.addField("directIllumination", kDirectIllumination);
+	eAttr.addField("directIlluminationNoShadow", kDirectIlluminationNoShadow);
+	eAttr.addField("wireframe", kWireframe);
+	eAttr.addField("materialId", kMaterialId);
+	eAttr.addField("position", kPosition);
+	eAttr.addField("normal", kNormal);
+	eAttr.addField("texcoord", kTexcoord);
+	eAttr.addField("ambientOcclusion", kAmbientOcclusion);
+	MAKE_INPUT_CONST(eAttr);
+
+	return objAttr;
 }

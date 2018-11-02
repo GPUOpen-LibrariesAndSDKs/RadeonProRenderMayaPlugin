@@ -29,7 +29,7 @@ FireRenderIpr::FireRenderIpr() :
 	m_previousSelectionList()
 {
 	m_renderViewUpdateScheduled = false;
-	m_context.m_RenderType = FireRenderContext::RenderType::IPR;
+	m_context.m_RenderType = RenderType::IPR;
 }
 
 // -----------------------------------------------------------------------------
@@ -148,7 +148,6 @@ bool FireRenderIpr::start()
 		if (globals.aovs.getAOV(RPR_AOV_SHADOW_CATCHER).active)
 			m_context.enableAOV(RPR_AOV_SHADOW_CATCHER);
 		
-		m_context.setInteractive(true);
 		if (!m_context.buildScene(false, false, false, false))
 		{
 			return false;
@@ -278,7 +277,7 @@ bool FireRenderIpr::RunOnViewportThread()
 		// The context is rendering.
 	case FireRenderContext::StateRendering:
 	{
-		if (m_needsContextRefresh)
+		if (m_needsContextRefresh || m_context.m_cameraDirty)
 		{
 			FireRenderThread::RunProcOnMainThread([this]() {refreshContext(); });
 			
@@ -286,8 +285,8 @@ bool FireRenderIpr::RunOnViewportThread()
 		}
 
 		// Check if a render is required.
-		if (m_context.cameraAttributeChanged() ||
-			m_context.needsRedraw() ||
+		if (m_context.needsRedraw() ||
+			m_context.cameraAttributeChanged() ||
 			m_context.keepRenderRunning())
 		{
 			try
