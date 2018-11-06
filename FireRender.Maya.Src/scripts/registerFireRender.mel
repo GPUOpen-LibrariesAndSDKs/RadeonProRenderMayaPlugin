@@ -7,7 +7,6 @@ source "fireRenderIpr.mel";
 source "fireRenderBatch.mel";
 source "fireRenderUpdateAE.mel";
 source "common.mel";
-source "presets.mel";
 source "SystemTab.mel";
 source "RenderSamplingTab.mel";
 source "RenderQualityTab.mel";
