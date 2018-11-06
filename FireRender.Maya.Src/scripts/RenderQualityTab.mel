@@ -46,7 +46,6 @@ proc createFinalRenderQualityPart()
     attrControlGrp
         -label "GPU texture cache (MB)"
         -attribute "RadeonProRenderGlobals.textureCacheSize"
-        -cc updateOOCUI
         textureCacheSize;
 
 	// Clamp irradiance
