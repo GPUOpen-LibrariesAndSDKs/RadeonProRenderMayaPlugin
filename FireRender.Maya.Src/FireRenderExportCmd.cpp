@@ -125,7 +125,6 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 	{
 		// initialize
 		FireRenderContext context;
-		context.setCallbackCreationDisabled(true);
 		context.buildScene();
 		context.setResolution(36, 24, true);
 
@@ -169,7 +168,8 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			// Move the animation to the next frame.
 			MTime time;
 			time.setValue(static_cast<double>(frame));
-			MAnimControl::setCurrentTime(time);
+			MStatus isTimeSet = MAnimControl::setCurrentTime(time);
+			CHECK_MSTATUS(isTimeSet);
 
 			// Refresh the context so it matches the
 			// current animation state and start the render.
