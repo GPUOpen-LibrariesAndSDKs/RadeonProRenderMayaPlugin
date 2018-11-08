@@ -1407,6 +1407,10 @@ MObjectArray GetShadingEngines(MFnDagNode& mesh, uint instanceNum)
 
 int GetFaceMaterials(MFnMesh& mesh, MIntArray& faceList)
 {
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+#endif
+
 	MPlug iog = mesh.findPlug("instObjGroups");
 	MPlug ogrp = iog.elementByPhysicalIndex(0);
 
@@ -1455,6 +1459,12 @@ int GetFaceMaterials(MFnMesh& mesh, MIntArray& faceList)
 			}
 		}
 	}
+
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
+	std::chrono::microseconds elapsed = std::chrono::duration_cast<std::chrono::microseconds>(fin - start);
+	FireRenderContext::inGetFaceMaterials += elapsed.count();
+#endif
 
 	//if no shaders encountered then consider it 1
 	return shadingEngines ? shadingEngines : 1;

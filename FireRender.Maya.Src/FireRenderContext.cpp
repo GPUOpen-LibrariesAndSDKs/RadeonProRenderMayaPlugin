@@ -32,6 +32,10 @@
 
 #include "FireRenderThread.h"
 
+#ifdef OPTIMIZATION_CLOCK
+	#include <chrono>
+#endif
+
 using namespace RPR;
 using namespace FireMaya;
 
@@ -58,6 +62,18 @@ std::map<FireRenderContext*,FireRenderContext::Lock::frcinfo> FireRenderContext:
 #include <maya/MFnRenderLayer.h>
 
 rpr_int g_tahoePluginID = -1;
+
+#ifdef OPTIMIZATION_CLOCK
+	int FireRenderContext::timeInInnerAddPolygon;
+	int FireRenderContext::overallAddPolygon;
+	int FireRenderContext::overallCreateMeshEx;
+	unsigned long long FireRenderContext::timeGetDataFromMaya;
+	unsigned long long FireRenderContext::translateData;
+	int FireRenderContext::inTranslateMesh;
+	int FireRenderContext::inGetFaceMaterials;
+	int FireRenderContext::getTessellatedObj;
+	int FireRenderContext::deleteNodes;
+#endif
 
 FireRenderContext::FireRenderContext() :
 	m_transparent(NULL),
@@ -1680,6 +1696,21 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 	bool changed = m_dirty;
 
+#ifdef OPTIMIZATION_CLOCK
+	int overallFreshen = 0;
+	timeInInnerAddPolygon = 0;
+	overallAddPolygon = 0;
+	overallCreateMeshEx = 0;
+	timeGetDataFromMaya = 0;
+	translateData = 0;
+	inTranslateMesh = 0;
+	inGetFaceMaterials = 0;
+	getTessellatedObj = 0;
+	deleteNodes = 0;
+
+	auto start = std::chrono::steady_clock::now();
+#endif
+
 	for (auto it = m_dirtyObjects.begin(); it != m_dirtyObjects.end(); )
 	{
 		if ((state != FireRenderContext::StateRendering) && (state != FireRenderContext::StateUpdating))
@@ -1697,10 +1728,21 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		// Now perform update
 		if (ptr)
 		{
+#ifdef OPTIMIZATION_CLOCK
+			auto start_iter = std::chrono::steady_clock::now();
+#endif
+
 			DebugPrint("Freshing object");
 
 			ptr->Freshen();
 			changed = true;
+
+#ifdef OPTIMIZATION_CLOCK
+			auto end_iter = std::chrono::steady_clock::now();
+			auto elapsed_iter = std::chrono::duration_cast<std::chrono::milliseconds>(end_iter - start_iter);
+			int ms_iter = elapsed_iter.count();
+			overallFreshen += ms_iter;
+#endif
 
 			if (cancelled())
 			{
@@ -1713,7 +1755,19 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		}
 	}
 
+#ifdef OPTIMIZATION_CLOCK
+	auto end = std::chrono::steady_clock::now();
+	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+	int ms = elapsed.count();
+	LogPrint("time spent in Freshen = %d ms", overallFreshen);
+#endif
+
 	scope.CommitShaders();
+
+#ifdef OPTIMIZATION_CLOCK
+	auto after_commit_shd = std::chrono::steady_clock::now();
+	LogPrint("time spent in CommitShaders = %d ms", std::chrono::duration_cast<std::chrono::milliseconds>(after_commit_shd - end));
+#endif
 
 	if (m_cameraDirty)
 	{
@@ -1739,6 +1793,20 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 	auto hash = GetStateHash();
 	DebugPrint("Hash Value: %08X", int(hash));
+
+#ifdef OPTIMIZATION_CLOCK
+	auto total_end = std::chrono::steady_clock::now();
+	LogPrint("time spent in after CommitShaders till end = %d ms", std::chrono::duration_cast<std::chrono::milliseconds>(total_end - after_commit_shd));
+	LogPrint("Elapsed time in Translate Mesh: %d ms", inTranslateMesh);
+	LogPrint("Elapsed time in AddPolygon: %d ms", overallAddPolygon);
+	LogPrint("Elapsed time in CreateMeshEx: %d ms", overallCreateMeshEx);
+	LogPrint("Elapsed time in timeGetDataFromMaya: %llu nanoS", timeGetDataFromMaya);
+	LogPrint("Elapsed time in innerAddPolygon: %d microS", timeInInnerAddPolygon);
+	LogPrint("Elapsed time in translateData: %llu nanoS", translateData);
+	LogPrint("Elapsed time in inGetFaceMaterials: %d microS", inGetFaceMaterials);
+	LogPrint("Elapsed time in getTessellatedObj: %d microS", getTessellatedObj);
+	LogPrint("Elapsed time in deleteNodes: %d microS", deleteNodes);
+#endif
 
 	m_inRefresh = false;
 

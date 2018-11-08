@@ -12,6 +12,10 @@
 #include "FireRenderGlobals.h"
 #include "FireRenderUtils.h"
 
+#ifdef OPTIMIZATION_CLOCK
+	#include <chrono>
+#endif
+
 using namespace std;
 using namespace std::chrono;
 using namespace RPR;
@@ -557,6 +561,10 @@ bool FireRenderProduction::mainThreadPump()
 // -----------------------------------------------------------------------------
 void FireRenderProduction::refreshContext()
 {
+#ifdef OPTIMIZATION_CLOCK
+	auto start = std::chrono::steady_clock::now();
+#endif
+
 	if (!m_context->isDirty())
 		return;
 
@@ -574,4 +582,11 @@ void FireRenderProduction::refreshContext()
 		m_isRunning = false;
 		m_error.set(current_exception());
 	}
+
+#ifdef OPTIMIZATION_CLOCK
+	auto end = std::chrono::steady_clock::now();
+	auto elapsed = duration_cast<milliseconds>(end - start);
+	int ms = elapsed.count();
+	LogPrint("time spent in refreshContext() = %d ms", ms);
+#endif
 }

@@ -15,6 +15,8 @@
 
 #include <unordered_map>
 
+#include "FireRenderContext.h"
+
 #ifdef OPTIMIZATION_CLOCK
 	#include <chrono>
 #endif
@@ -92,6 +94,9 @@ MObject MeshTranslator::TessellateNurbsSurface(const MObject& object, const MObj
 
 MObject MeshTranslator::GetTesselatedObjectIfNecessary(const MObject& originalObject, MStatus& mstatus)
 {
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+#endif
 	MFnDagNode node(originalObject);
 
 	DebugPrint("TranslateMesh: %s", node.fullPathName().asUTF8());
@@ -126,6 +131,13 @@ MObject MeshTranslator::GetTesselatedObjectIfNecessary(const MObject& originalOb
 			mstatus.perror("MFnSubd::tessellate");
 		}
 	}
+
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
+	std::chrono::microseconds elapsed = std::chrono::duration_cast<std::chrono::microseconds>(fin - start);
+
+	FireRenderContext::getTessellatedObj += elapsed.count();
+#endif
 
 	return tessellated;
 }
@@ -233,6 +245,10 @@ inline void CreateRPRMeshes(std::vector<frw::Shape>& elements,
 	const int elementCount, 
 	const unsigned int uvSetCount)
 {
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+#endif
+
 	for (int shaderId = 0; shaderId < elementCount; shaderId++)
 	{
 		const MeshIdxDictionary& currShaderData = shaderData[shaderId];
@@ -279,6 +295,12 @@ inline void CreateRPRMeshes(std::vector<frw::Shape>& elements,
 			num_face_vertices.data(), num_faces
 		);
 	}
+
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
+	std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
+	//LogPrint("Elapsed time in CreateMeshEx: %d", elapsed);
+#endif
 }
 
 struct MeshPolygonData
@@ -338,6 +360,10 @@ inline void AddPolygon(MItMeshPolygon& it,
 {
 	MStatus mstatus;
 
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point start_Vtx = std::chrono::steady_clock::now();
+#endif
+
 	unsigned int uvSetCount = uvSetNames.length();
 	// get indices of vertexes of polygon
 	// - these are indices of verts of polygon, not triangles!!!
@@ -351,6 +377,12 @@ inline void AddPolygon(MItMeshPolygon& it,
 	MPointArray points;
 	mstatus = it.getTriangles(points, vertexList);
 	assert(MStatus::kSuccess == mstatus);
+
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point fin_1GetData = std::chrono::steady_clock::now();
+	std::chrono::nanoseconds elapsed_1GetData = std::chrono::duration_cast<std::chrono::nanoseconds>(fin_1GetData - start_Vtx);
+	FireRenderContext::timeGetDataFromMaya += elapsed_1GetData.count();
+#endif
 
 	// write indices of triangles in mesh into output triangle indices array
 	for (unsigned int idx = 0; idx < vertexList.length(); ++idx)
@@ -372,7 +404,18 @@ inline void AddPolygon(MItMeshPolygon& it,
 	{
 		std::map<int, int>::iterator localNormalIdxIt = vertexIdxGlobalToLocal.find(vertexList[idx]);
 		assert(localNormalIdxIt != vertexIdxGlobalToLocal.end());
-		normalIndices.push_back(it.normalIndex(localNormalIdxIt->second));
+
+#ifdef OPTIMIZATION_CLOCK
+		std::chrono::steady_clock::time_point start_2GetData = std::chrono::steady_clock::now();
+#endif
+		unsigned int normal_idx = it.normalIndex(localNormalIdxIt->second);
+#ifdef OPTIMIZATION_CLOCK
+		std::chrono::steady_clock::time_point fin_2GetData = std::chrono::steady_clock::now();
+		std::chrono::nanoseconds elapsed_2GetData = std::chrono::duration_cast<std::chrono::nanoseconds>(fin_2GetData - start_2GetData);
+		FireRenderContext::timeGetDataFromMaya += elapsed_2GetData.count();
+#endif
+
+		normalIndices.push_back(normal_idx);
 	}
 
 	// up to 2 UV channels is supported
@@ -388,8 +431,17 @@ inline void AddPolygon(MItMeshPolygon& it,
 
 			assert(localUVIdxIt != vertexIdxGlobalToLocal.end());
 
-			MString name = uvSetNames[currUVCHannel];
+			const MString& name = uvSetNames[currUVCHannel];
+
+#ifdef OPTIMIZATION_CLOCK
+			std::chrono::steady_clock::time_point start_3GetData = std::chrono::steady_clock::now();
+#endif
 			mstatus = it.getUVIndex(localUVIdxIt->second, uvIdx, &name);
+#ifdef OPTIMIZATION_CLOCK
+			std::chrono::steady_clock::time_point fin_3GetData = std::chrono::steady_clock::now();
+			std::chrono::nanoseconds elapsed_3GetData = std::chrono::duration_cast<std::chrono::nanoseconds>(fin_3GetData - start_3GetData);
+			FireRenderContext::timeGetDataFromMaya += elapsed_3GetData.count();
+#endif
 
 			if (mstatus == MStatus::kSuccess)
 			{
@@ -402,6 +454,13 @@ inline void AddPolygon(MItMeshPolygon& it,
 			}
 		}
 	}
+
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point fin_Vtx = std::chrono::steady_clock::now();
+	std::chrono::nanoseconds elapsed_Vtxp = std::chrono::duration_cast<std::chrono::nanoseconds>(fin_Vtx - start_Vtx);
+
+	FireRenderContext::translateData += elapsed_Vtxp.count();
+#endif
 }
 
 void TranslateMeshSingleShader(frw::Context context, 
@@ -429,10 +488,31 @@ void TranslateMeshSingleShader(frw::Context context,
 	}
 
 	// iterate through mesh
+
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point start_AddPolygon = std::chrono::steady_clock::now();
+#endif
 	for (auto it = MItMeshPolygon(fnMesh.object()); !it.isDone(); it.next())
 	{
+#ifdef OPTIMIZATION_CLOCK
+		std::chrono::steady_clock::time_point start_inner_AddPolygon = std::chrono::steady_clock::now();
+#endif
+
 		AddPolygon(it, meshPolygonData.uvSetNames, vertexIndices, normalIndices, uvIndices);
+		
+#ifdef OPTIMIZATION_CLOCK
+		std::chrono::steady_clock::time_point fin_inner_AddPolygon = std::chrono::steady_clock::now();
+		std::chrono::microseconds elapsed_inner_AddPolygon = std::chrono::duration_cast<std::chrono::microseconds>(fin_inner_AddPolygon - start_inner_AddPolygon);
+
+		FireRenderContext::timeInInnerAddPolygon += elapsed_inner_AddPolygon.count();
+#endif
 	}
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point fin_AddPolygon = std::chrono::steady_clock::now();
+	std::chrono::milliseconds elapsed_AddPolygon = std::chrono::duration_cast<std::chrono::milliseconds>(fin_AddPolygon - start_AddPolygon);
+	FireRenderContext::overallAddPolygon += elapsed_AddPolygon.count();
+	
+#endif
 
 	// auxiliary array for passing data to RPR
 	std::vector<const rpr_int*>	puvIndices;
@@ -452,6 +532,10 @@ void TranslateMeshSingleShader(frw::Context context,
 	}
 
 	// create mesh in RPR
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+#endif
+
 	elements[0] = context.CreateMeshEx(
 		meshPolygonData.pVertices, meshPolygonData.countVertices, sizeof(Float3),
 		meshPolygonData.pNormals, meshPolygonData.countNormals, sizeof(Float3),
@@ -461,6 +545,12 @@ void TranslateMeshSingleShader(frw::Context context,
 		normalIndices.data(), sizeof(rpr_int),
 		puvIndices.data(), texIndexStride.data(),
 		std::vector<int>(vertexIndices.size() / 3, 3).data(), vertexIndices.size() / 3);
+
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
+	std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
+	FireRenderContext::overallCreateMeshEx += elapsed.count();
+#endif
 }
 
 const size_t coordsPerPolygon = 12;
@@ -503,6 +593,11 @@ std::vector<frw::Shape> MeshTranslator::TranslateMesh(frw::Context context, cons
 {
 	MAIN_THREAD_ONLY;
 
+
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+#endif
+
 	std::vector<frw::Shape> elements;
 	MStatus mstatus;
 	MString errMsg;
@@ -535,10 +630,6 @@ std::vector<frw::Shape> MeshTranslator::TranslateMesh(frw::Context context, cons
 		return elements;
 	}
 
-#ifdef OPTIMIZATION_CLOCK
-	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-#endif
-
 	// get number of submeshes in mesh (number of materials used in this mesh)
 	MIntArray faceMaterialIndices;
 	int elementCount = GetFaceMaterials(fnMesh, faceMaterialIndices);
@@ -556,7 +647,6 @@ std::vector<frw::Shape> MeshTranslator::TranslateMesh(frw::Context context, cons
 #ifdef OPTIMIZATION_CLOCK
 		std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
 		std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
-		LogPrint("Elapsed time: %d", elapsed);
 #endif
 	}
 	else
@@ -587,6 +677,9 @@ std::vector<frw::Shape> MeshTranslator::TranslateMesh(frw::Context context, cons
 	{
 		FireRenderThread::RunProcOnMainThread([&]
 		{
+#ifdef OPTIMIZATION_CLOCK
+			std::chrono::steady_clock::time_point start_del = std::chrono::steady_clock::now();
+#endif
 			MFnDagNode parentNode(parent, &mstatus);
 			if (MStatus::kSuccess == mstatus)
 			{
@@ -597,13 +690,19 @@ std::vector<frw::Shape> MeshTranslator::TranslateMesh(frw::Context context, cons
 
 			if (!tessellated.isNull()) // double-check if node hasn't already been removed
 				MGlobal::deleteNode(tessellated);
+
+#ifdef OPTIMIZATION_CLOCK
+			std::chrono::steady_clock::time_point fin_del = std::chrono::steady_clock::now();
+			std::chrono::microseconds elapsed_del = std::chrono::duration_cast<std::chrono::microseconds>(fin_del - start_del);
+			FireRenderContext::deleteNodes += elapsed_del.count();
+#endif
 		});
 	}
 
 #ifdef OPTIMIZATION_CLOCK
 	std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
 	std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
-	LogPrint("Elapsed time: %d", elapsed);
+	FireRenderContext::inTranslateMesh += elapsed.count();
 #endif
 
 	return elements;

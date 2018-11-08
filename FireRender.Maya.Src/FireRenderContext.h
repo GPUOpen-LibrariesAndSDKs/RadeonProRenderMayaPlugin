@@ -96,6 +96,19 @@ public:
 class FireRenderContext
 {
 public:
+
+#ifdef OPTIMIZATION_CLOCK
+	static int timeInInnerAddPolygon;
+	static int overallAddPolygon;
+	static int overallCreateMeshEx;
+	static unsigned long long timeGetDataFromMaya;
+	static unsigned long long translateData;
+	static int inTranslateMesh;
+	static int inGetFaceMaterials;
+	static int getTessellatedObj;
+	static int deleteNodes;
+#endif
+
 	bool createContext(rpr_creation_flags createFlags, rpr_context& result, int* pOutRes = nullptr);
 
 	enum RenderMode {
