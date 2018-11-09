@@ -28,13 +28,11 @@ namespace
 
 		MObject textureCompression;
 
-		MObject renderMode;
-
 		MObject giClampIrradiance;
 		MObject giClampIrradianceValue;
 
 		// max depths
-		MObject MaxRayDepthProduction;
+		MObject MaxRayDepth;
 
 		MObject MaxDepthDiffuse;
 		MObject MaxDepthGlossy;
@@ -73,9 +71,6 @@ namespace
 		MObject motionBlurScale;
 		MObject cameraType;
 
-		MObject qualityPresetsViewport;
-		MObject qualityPresetsProduction;
-
 		// for MacOS only: "Use Metal Performance Shaders"
 		MObject useMPS;
 
@@ -111,7 +106,7 @@ namespace
     {
         RenderingDeviceAttributes renderingDevices;
 
-        MObject samplesBetweenRenderUpdate;
+        MObject samplesPerUpdate;
         MObject tileRenderEnabled;
         MObject tileRenderX;
         MObject tileRenderY;
@@ -162,6 +157,14 @@ namespace
 		}
 		return true;
 	}
+
+	const int rayDepthParameterMin = 1;
+	const int rayDepthParameterSoftMin = 2;
+	const int rayDepthParameterSoftMax = 50;
+	const int rayDepthParameterMax = 256;
+
+	const int samplesPerUpdateMin = 1;
+	const int samplesPerUpdateMax = 512;
 }
 
 MObject FireRenderGlobals::m_useRenderStamp;
@@ -249,8 +252,6 @@ MStatus FireRenderGlobals::initialize()
 
 	Attribute::textureCompression = nAttr.create("textureCompression", "texC", MFnNumericData::kBoolean, false, &status);
 	MAKE_INPUT(nAttr);
-
-	Attribute::renderMode = createRenderModeAttr("renderMode", "rm", eAttr);
 
 	Attribute::giClampIrradiance = nAttr.create("giClampIrradiance", "gici", MFnNumericData::kBoolean, true, &status);
 	MAKE_INPUT(nAttr);
@@ -394,18 +395,6 @@ MStatus FireRenderGlobals::initialize()
 
     setupRenderDevices();
 
-	Attribute::qualityPresetsViewport = eAttr.create("qualityPresetsViewport", "qPsV", 0, &status);
-	eAttr.addField("Low", 0);
-	eAttr.addField("Medium", 1);
-	eAttr.addField("High", 2);
-	MAKE_INPUT_CONST(eAttr);
-
-	Attribute::qualityPresetsProduction = eAttr.create("qualityPresets", "qPs", 0, &status);
-	eAttr.addField("Low", 0);
-	eAttr.addField("Medium", 1);
-	eAttr.addField("High", 2);
-	MAKE_INPUT_CONST(eAttr);
-
 	Attribute::useMPS = nAttr.create("useMPS", "umps", MFnNumericData::kBoolean, 0, &status);
 	MAKE_INPUT(nAttr);
 
@@ -417,10 +406,8 @@ MStatus FireRenderGlobals::initialize()
 
 	CHECK_MSTATUS(addAttribute(Attribute::textureCompression));
 
-	CHECK_MSTATUS(addAttribute(Attribute::renderMode));
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradiance));
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradianceValue));
-	CHECK_MSTATUS(addAttribute(Attribute::MaxRayDepthProduction));
 	CHECK_MSTATUS(addAttribute(Attribute::RaycastEpsilon));
 	CHECK_MSTATUS(addAttribute(Attribute::EnableOOC));
 	CHECK_MSTATUS(addAttribute(Attribute::TexCacheSize));
@@ -451,8 +438,6 @@ MStatus FireRenderGlobals::initialize()
 
 	CHECK_MSTATUS(addAttribute(Attribute::cameraType));
 
-	CHECK_MSTATUS(addAttribute(Attribute::qualityPresetsProduction));
-	CHECK_MSTATUS(addAttribute(Attribute::qualityPresetsViewport));
 	CHECK_MSTATUS(addAttribute(Attribute::useMPS));
 
 	CHECK_MSTATUS(addAttribute(m_useRenderStamp));
@@ -461,58 +446,125 @@ MStatus FireRenderGlobals::initialize()
 
 	createDenoiserAttributes();
 
+	// create legacy attributes to avoid errors in mel while opening old scenes
+	createLegacyAttributes();
+
 	return status;
+}
+
+void FireRenderGlobals::createLegacyAttributes()
+{
+	MFnEnumAttribute eAttr;
+	MFnNumericAttribute nAttr;
+	MStatus status;
+
+	MObject attrObj = nAttr.create("samples", "s", MFnNumericData::kShort, 1, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(1);
+	nAttr.setMax(32);
+	CHECK_MSTATUS(addAttribute(attrObj));
+
+	attrObj = nAttr.create("samplesViewport", "sV", MFnNumericData::kShort, 1, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(1);
+	nAttr.setMax(32);
+	nAttr.setMax(32);
+	CHECK_MSTATUS(addAttribute(attrObj));
+
+	attrObj = eAttr.create("qualityPresetsViewport", "qPsV", 0, &status);
+	eAttr.addField("Low", 0);
+	eAttr.addField("Medium", 1);
+	eAttr.addField("High", 2);
+	MAKE_INPUT_CONST(eAttr);
+	CHECK_MSTATUS(addAttribute(attrObj));
+
+	attrObj = eAttr.create("qualityPresets", "qPs", 0, &status);
+	eAttr.addField("Low", 0);
+	eAttr.addField("Medium", 1);
+	eAttr.addField("High", 2);
+	MAKE_INPUT_CONST(eAttr);
+	CHECK_MSTATUS(addAttribute(attrObj));
+
+	// this is production render mode which is not exposed to user. Used in AutoTests on CIS
+	attrObj = createRenderModeAttr("renderMode", "rm", eAttr);
+	CHECK_MSTATUS(addAttribute(attrObj));
+
+	attrObj = nAttr.create("limitDenoiserRadius", "ldr", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(attrObj));
+
+	// legacy ground attributes
+	attrObj = nAttr.create("shadows", "grs", MFnNumericData::kBoolean, true, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(attrObj));
+
+	attrObj = nAttr.create("reflections", "grref", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(attrObj));
+
+	attrObj = nAttr.create("strength", "grstr", MFnNumericData::kFloat, 0.5f, &status);
+	nAttr.setMin(0.0);
+	nAttr.setMax(1.0);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(attrObj));
+
+	attrObj = nAttr.create("roughness", "grro", MFnNumericData::kFloat, 0.001f, &status);
+	CHECK_MSTATUS(addAttribute(attrObj));
 }
 
 void FireRenderGlobals::setupProductionRayDepthParameters()
 {
 	int min = 0;
-	int softMin = 2;
-	int softMax = 50;
 
 	MFnNumericAttribute nAttr;
 	MStatus status;
 
-	Attribute::MaxRayDepthProduction = nAttr.create("maxRayDepth", "mrd", MFnNumericData::kInt, 8, &status);
+	Attribute::MaxRayDepth = nAttr.create("maxRayDepth", "mrd", MFnNumericData::kInt, 8, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(0);
-	nAttr.setSoftMin(softMin);
-	nAttr.setSoftMax(softMax);
-	CHECK_MSTATUS(addAttribute(Attribute::MaxRayDepthProduction));
+	nAttr.setMin(rayDepthParameterMin);
+	nAttr.setSoftMin(rayDepthParameterSoftMin);
+	nAttr.setSoftMax(rayDepthParameterSoftMax);
+	nAttr.setMax(rayDepthParameterMax);
+	CHECK_MSTATUS(addAttribute(Attribute::MaxRayDepth));
 
 	Attribute::MaxDepthDiffuse = nAttr.create("maxDepthDiffuse", "mdd", MFnNumericData::kInt, 3, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(0);
-	nAttr.setSoftMin(softMin);
-	nAttr.setSoftMax(softMax);
+	nAttr.setMin(rayDepthParameterMin);
+	nAttr.setSoftMin(rayDepthParameterSoftMin);
+	nAttr.setSoftMax(rayDepthParameterSoftMax);
+	nAttr.setMax(rayDepthParameterMax);
 	CHECK_MSTATUS(addAttribute(Attribute::MaxDepthDiffuse));
 
 	Attribute::MaxDepthGlossy = nAttr.create("maxDepthGlossy", "mdg", MFnNumericData::kInt, 5, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(0);
-	nAttr.setSoftMin(softMin);
-	nAttr.setSoftMax(softMax);
+	nAttr.setMin(rayDepthParameterMin);
+	nAttr.setSoftMin(rayDepthParameterSoftMin);
+	nAttr.setSoftMax(rayDepthParameterSoftMax);
+	nAttr.setMax(rayDepthParameterMax);
 	CHECK_MSTATUS(addAttribute(Attribute::MaxDepthGlossy));
 
 	Attribute::MaxDepthRefraction = nAttr.create("maxDepthRefraction", "mdr", MFnNumericData::kInt, 5, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(0);
-	nAttr.setSoftMin(softMin);
-	nAttr.setSoftMax(softMax);
+	nAttr.setMin(rayDepthParameterMin);
+	nAttr.setSoftMin(rayDepthParameterSoftMin);
+	nAttr.setSoftMax(rayDepthParameterSoftMax);
+	nAttr.setMax(rayDepthParameterMax);
 	CHECK_MSTATUS(addAttribute(Attribute::MaxDepthRefraction));
 
 	Attribute::MaxDepthRefractionGlossy = nAttr.create("maxDepthRefractionGlossy", "mdrg", MFnNumericData::kInt, 5, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(0);
-	nAttr.setSoftMin(softMin);
-	nAttr.setSoftMax(softMax);
+	nAttr.setMin(rayDepthParameterMin);
+	nAttr.setSoftMin(rayDepthParameterSoftMin);
+	nAttr.setSoftMax(rayDepthParameterSoftMax);
+	nAttr.setMax(rayDepthParameterMax);
 	CHECK_MSTATUS(addAttribute(Attribute::MaxDepthRefractionGlossy));
 
 	Attribute::MaxDepthShadow = nAttr.create("maxDepthShadow", "mds", MFnNumericData::kInt, 5, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(0);
-	nAttr.setSoftMin(softMin);
-	nAttr.setSoftMax(softMax);
+	nAttr.setMin(rayDepthParameterMin);
+	nAttr.setSoftMin(rayDepthParameterSoftMin);
+	nAttr.setSoftMax(rayDepthParameterSoftMax);
+	nAttr.setMax(rayDepthParameterMax);
 	CHECK_MSTATUS(addAttribute(Attribute::MaxDepthShadow));
 }
 
@@ -691,10 +743,11 @@ void FireRenderGlobals::createFinalRenderAttributes()
 	MAKE_INPUT(nAttr);
 	addAsGlobalAttribute(nAttr);
 
-    FinalRenderAttributes::samplesBetweenRenderUpdate = nAttr.create("samplesBetweenRenderUpdate", "sbr", MFnNumericData::kFloat, 10.0, &status);
+    FinalRenderAttributes::samplesPerUpdate = nAttr.create("samplesPerUpdate", "spu", MFnNumericData::kInt, 10, &status);
     MAKE_INPUT(nAttr);
-    nAttr.setMin(0.1f);
-    nAttr.setSoftMax(100.0f);
+    nAttr.setMin(samplesPerUpdateMin);
+	nAttr.setMax(samplesPerUpdateMax / 4);
+    nAttr.setMax(samplesPerUpdateMax);
 	addAsGlobalAttribute(nAttr);
 
     FinalRenderAttributes::tileRenderEnabled = nAttr.create("tileRenderEnabled", "tre", MFnNumericData::kBoolean, false, &status);
@@ -779,34 +832,35 @@ void FireRenderGlobals::createViewportAttributes()
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(1);
 	nAttr.setSoftMax(100);
+	nAttr.setSoftMax(1000);
 	nAttr.setMax(INT_MAX);
 	addAsGlobalAttribute(nAttr);
 
 	ViewportRenderAttributes::renderMode = createRenderModeAttr("renderModeViewport", "vrm", eAttr);
 	addAsGlobalAttribute(eAttr);
 
-	int softMin = 2;
-	int softMax = 50;
-
 	ViewportRenderAttributes::maxRayDepth = nAttr.create("maxRayDepthViewport", "vmrd", MFnNumericData::kInt, 8, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(softMin);
-	nAttr.setSoftMin(softMin);
-	nAttr.setSoftMax(softMax);
+	nAttr.setMin(rayDepthParameterMin);
+	nAttr.setSoftMin(rayDepthParameterSoftMin);
+	nAttr.setSoftMax(rayDepthParameterSoftMax);
+	nAttr.setMax(rayDepthParameterMax);
 	addAsGlobalAttribute(nAttr);
 
 	ViewportRenderAttributes::maxDiffuseRayDepth = nAttr.create("maxDepthDiffuseViewport", "mddv", MFnNumericData::kInt, 3, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(softMin);
-	nAttr.setSoftMin(softMin);
-	nAttr.setSoftMax(softMax);
+	nAttr.setMin(rayDepthParameterMin);
+	nAttr.setSoftMin(rayDepthParameterSoftMin);
+	nAttr.setSoftMax(rayDepthParameterSoftMax);
+	nAttr.setMax(rayDepthParameterMax);
 	addAsGlobalAttribute(nAttr);
 
 	ViewportRenderAttributes::maxDepthGlossy = nAttr.create("maxDepthGlossyViewport", "mdgv", MFnNumericData::kInt, 5, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(softMin);
-	nAttr.setSoftMin(softMin);
-	nAttr.setSoftMax(softMax);
+	nAttr.setMin(rayDepthParameterMin);
+	nAttr.setSoftMin(rayDepthParameterSoftMin);
+	nAttr.setSoftMax(rayDepthParameterSoftMax);
+	nAttr.setMax(rayDepthParameterMax);
 	addAsGlobalAttribute(nAttr);
 
 	ViewportRenderAttributes::motionBlur = nAttr.create("motionBlurViewport", "vmb", MFnNumericData::kBoolean, false);

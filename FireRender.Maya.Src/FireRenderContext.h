@@ -166,7 +166,6 @@ public:
 	// The scene is composed by a poly-sphere and a single light
 	// \param shaderObj Shader used to render the sphere
 	void initSwatchScene();
-	void updateSwatchSceneRenderLimits(const MObject& shaderObj);
 
 	// Sets the resolution and perform an initial render and frame buffer resolve.
 	void resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
@@ -419,8 +418,6 @@ public:
 	void setRenderMode(RenderMode renderMode);
 
 	void setPreview();
-
-	void UpdateGround(const FireRenderGlobalsData& data);
 
 	bool hasTonemappingChanged() const { return m_tonemappingChanged; }
 
@@ -701,6 +698,7 @@ public:
 	clock_t		m_startTime;
 	short		m_completionType;
 	long		m_completionIterations;
+	int			m_iterationStep;
 	int			m_completionTime;
 	int			m_currentIteration;
 	int			m_progress;
@@ -711,7 +709,7 @@ public:
 	// render type information
 	RenderType m_RenderType;
 
-	void setCompletionCriteria(short type, long seconds, int iterations);
+	void setCompletionCriteria(short type, long seconds, int iterations, int iterationStep = 1);
 	bool isUnlimited();
 	void setStartedRendering();
 	bool keepRenderRunning();
@@ -719,6 +717,8 @@ public:
 	void updateProgress();
 	int	getProgress();
 	bool updateOutput();
+
+	RenderType GetRenderType() const { return m_RenderType; }
     
 
 	class Lock
