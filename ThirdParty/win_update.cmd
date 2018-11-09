@@ -16,7 +16,6 @@ if exist %ThirdPartyDir% (
     rd /S /Q RadeonProImageProcessing
     rd /S /Q "RadeonProRender SDK"
     rd /S /Q RadeonProRender-GLTF
-    rd /S /Q json
     rd /S /Q oiio
     rd /S /Q glew
 
@@ -26,7 +25,6 @@ if exist %ThirdPartyDir% (
     xcopy /S /Y /I %ThirdPartyDir%\RadeonProImageProcessing\* RadeonProImageProcessing
     xcopy /S /Y /I "%ThirdPartyDir%\RadeonProRender SDK\*" "RadeonProRender SDK"
     xcopy /S /Y /I %ThirdPartyDir%\RadeonProRender-GLTF\* RadeonProRender-GLTF
-    xcopy /S /Y /I %ThirdPartyDir%\json\* json
     xcopy /S /Y /I %ThirdPartyDir%\oiio\* oiio
     xcopy /S /Y /I %ThirdPartyDir%\glew\* glew
 
