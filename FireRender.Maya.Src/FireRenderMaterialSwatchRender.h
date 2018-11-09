@@ -45,6 +45,7 @@ private:
 	bool doIterationForNonFRNode();
 	bool finalizeRendering();
 
+	bool IsFRNode() const;
 	bool setupFRNode();
 
 private:

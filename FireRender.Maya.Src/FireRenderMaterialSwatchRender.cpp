@@ -51,10 +51,7 @@ bool FireRenderMaterialSwatchRender::doIteration()
 		if (m_runningAsyncRender)
 			return false;
 
-		MFnDependencyNode nodeFn(node());
-		FireMaya::Node* fireMayaNode = dynamic_cast<FireMaya::Node*>(nodeFn.userNode());
-
-		if (fireMayaNode)
+		if (IsFRNode())
 		{
 			setupFRNode();	
 			getSwatchInstance().enqueSwatch(this);
@@ -72,6 +69,14 @@ bool FireRenderMaterialSwatchRender::doIteration()
 	}
 
 	return false;
+}
+
+bool FireRenderMaterialSwatchRender::IsFRNode() const
+{
+	MFnDependencyNode nodeFn(node());
+	FireMaya::Node* fireMayaNode = dynamic_cast<FireMaya::Node*>(nodeFn.userNode());
+
+	return fireMayaNode != nullptr;
 }
 
 bool FireRenderMaterialSwatchRender::setupFRNode()
@@ -187,18 +192,15 @@ bool FireRenderMaterialSwatchRender::doIterationForNonFRNode()
 			img.resize(res, res, false);
 			img.verticalFlip();
 
-			finishParallelRender();
 			return true;
 		}
-	}
-
-	if (auto node = dynamic_cast<FireRenderSkyLocator*>(nodeFn.userNode()))
+	} 
+	else if (auto node = dynamic_cast<FireRenderSkyLocator*>(nodeFn.userNode()))
 	{
 		SkyBuilder skyBuilder(fObjToRender, res, res);
 		skyBuilder.refresh();
 		skyBuilder.updateSampleImage(img);
 
-		finishParallelRender();
 		return true;
 	}
 
@@ -208,7 +210,6 @@ bool FireRenderMaterialSwatchRender::doIterationForNonFRNode()
 	{
 		img.resize(res, res, false);
 
-		finishParallelRender();
 		return true;
 	}
 
@@ -218,7 +219,6 @@ bool FireRenderMaterialSwatchRender::doIterationForNonFRNode()
 	{
 		img.resize(res, res, false);
 
-		finishParallelRender();
 		return true;
 	}
 
@@ -234,7 +234,9 @@ MSwatchRenderBase* FireRenderMaterialSwatchRender::creator(MObject dependNode, M
 
 bool FireRenderMaterialSwatchRender::renderParallel()
 {
-	return true;
+	// Render parallel in case we render material which is required many passes
+	// If we render IBL or any othe non-material type of node we need just one pass and does not require parallel rendering
+	return IsFRNode();
 }
 
 void FireRenderMaterialSwatchRender::cancelParallelRendering()
