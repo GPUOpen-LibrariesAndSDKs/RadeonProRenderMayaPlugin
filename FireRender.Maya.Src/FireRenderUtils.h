@@ -125,21 +125,15 @@ public:
 
 	bool textureCompression;
 
-	// Iterations
-	int iterations;
-
-	// Render Mode
-	short mode;
-
 	int viewportRenderMode;
+	int renderMode;
 
 	// Global Illumination
 	bool giClampIrradiance;
 	float giClampIrradianceValue;
 
-	// AA Samples
-	short samplesProduction;
-	short samplesViewport;
+	// (iterations, legacy name "aasamples")
+	int samplesPerUpdate;
 
 	// Filter type
 	short filterType;
@@ -173,15 +167,6 @@ public:
 
 	// Texture gamma.
 	float textureGamma = 1;
-
-	//ground
-	bool useGround;
-	float groundHeight;
-	float groundRadius;
-	bool shadows;
-	bool reflections;
-	float strength;
-	float roughness;
 
 	// Render stamp
 	bool useRenderStamp;

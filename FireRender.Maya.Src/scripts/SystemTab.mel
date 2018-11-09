@@ -127,8 +127,8 @@ global proc createFinalRenderPart()
     columnLayout -cat left 20;
 
     attrFieldSliderGrp
-    	-label "Samples Per View Update"
-        -attribute "RadeonProRenderGlobals.samplesBetweenRenderUpdate"
+    	-label "Samples Per Update"
+        -attribute "RadeonProRenderGlobals.samplesPerUpdate"
     ;
 
     separator -height 5;
@@ -205,7 +205,7 @@ global proc createViewportRenderPart()
 
 	attrControlGrp
 		-label "Render Mode"
-		-attribute "RadeonProRenderGlobals.renderMode";
+		-attribute "RadeonProRenderGlobals.renderModeViewport";
 
     separator -height 5;
 

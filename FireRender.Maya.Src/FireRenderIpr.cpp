@@ -277,7 +277,7 @@ bool FireRenderIpr::RunOnViewportThread()
 		// The context is rendering.
 	case FireRenderContext::StateRendering:
 	{
-		if (m_needsContextRefresh || m_context.m_cameraDirty)
+		if (m_needsContextRefresh || m_context.isDirty())
 		{
 			FireRenderThread::RunProcOnMainThread([this]() {refreshContext(); });
 			

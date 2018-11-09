@@ -85,6 +85,7 @@ FireRenderContext::FireRenderContext() :
 	m_startTime(0),
 	m_completionType(0),
 	m_completionIterations(0),
+	m_iterationStep(1),
 	m_completionTime(0),
 	m_currentIteration(0),
 	m_progress(0),
@@ -245,8 +246,15 @@ void FireRenderContext::updateLimitsFromGlobalData(const FireRenderGlobalsData &
 	if (batch && type > 1)
 		type = 0;
 
+	int iterationStep = 1;
+
+	if (!isInteractive())
+	{
+		iterationStep = m_globals.samplesPerUpdate;
+	}
+
 	// Update completion criteria.
-	setCompletionCriteria(type, seconds, iterations);
+	setCompletionCriteria(type, seconds, iterations, iterationStep);
 }
 
 bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewport, bool freshen)
@@ -302,8 +310,9 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 		m_transparent = frw::TransparentShader(GetMaterialSystem());
 		m_transparent.SetValue("color", 1.0f);
 
-		m_globals.setupContext(*this);
 		updateLimitsFromGlobalData(m_globals);
+		m_globals.setupContext(*this);
+
 		setMotionBlur(m_globals.motionBlur);
 
 		// Update render selected objects only flag
@@ -329,8 +338,6 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 
 			AddSceneObject(dagPath);
 		}
-
-		UpdateGround(m_globals);
 
 		attachCallbacks();
 	}
@@ -621,20 +628,9 @@ void FireRenderContext::initSwatchScene()
 	m_globals.setupContext(*this);
 
 	// _TODO will be taken from settings after UI refactoring gets done
-	setCompletionCriteria(0, LONG_MAX, 32);
-	GetContext().SetParameter("preview", 1);
-}
+	setCompletionCriteria(0, LONG_MAX, FireRenderGlobalsData::getThumbnailIterCount());
 
-void FireRenderContext::updateSwatchSceneRenderLimits(const MObject& shaderObj)
-{
-	RPR_THREAD_ONLY;
-	MFnDependencyNode nodeFn(shaderObj);
-
-	MPlug iterationPlug = nodeFn.findPlug("swatchIterations");
-	if (!iterationPlug.isNull())
-		setCompletionCriteria(0, LONG_MAX, iterationPlug.asInt());
-	else
-		setCompletionCriteria(0, LONG_MAX, 32);
+	setPreview();
 }
 
 // This method will "tweak" precision of the ray-cast renderer based on scene bounding box:
@@ -693,7 +689,7 @@ void FireRenderContext::render(bool lock)
 		DebugPrint("RPR GPU Memory used: %dMB", context.GetMemoryUsage() >> 20);
 	}
 
-	m_currentIteration++;
+	m_currentIteration += m_iterationStep;
 
 	m_cameraAttributeChanged = false;
 }
@@ -1424,7 +1420,6 @@ void FireRenderContext::updateFromGlobals(bool applyLock)
 
 	updateLimitsFromGlobalData(m_globals);
 	setMotionBlur(m_globals.motionBlur);
-	UpdateGround(m_globals);
 
 	m_camera.setType(m_globals.cameraType);
 
@@ -1873,10 +1868,12 @@ void FireRenderContext::setCameraAttributeChanged(bool value)
 		m_restartRender = true;
 }
 
-void FireRenderContext::setCompletionCriteria(short type, long seconds, int iterations)
+void FireRenderContext::setCompletionCriteria(short type, long seconds, int iterations, int iterationStep)
 {
 	m_completionType = type;
 	m_completionIterations = iterations;
+	m_iterationStep = iterationStep;
+
 	m_completionTime = seconds;
 }
 
@@ -1985,164 +1982,6 @@ bool FireRenderContext::updateOutput()
 	}
 	else {
 		return false;
-	}
-}
-
-
-void FireRenderContext::UpdateGround(const FireRenderGlobalsData & data)
-{
-	MAIN_THREAD_ONLY;
-
-	auto context = GetContext();
-	auto scene = GetScene();
-	auto ms = GetMaterialSystem();
-
-	if (m.ground.light)
-	{
-		scene.Detach(m.ground.light);
-		m.ground.light = nullptr;
-	}
-	if (m.ground.reflections)
-	{
-		scene.Detach(m.ground.reflections);
-		m.ground.reflections = nullptr;
-	}
-	if (m.ground.shadows)
-	{
-		scene.Detach(m.ground.shadows);
-		m.ground.shadows = nullptr;
-	}
-
-	if (!data.useGround)
-		return;
-
-	MStatus status;
-	MItDag itDag(MItDag::kDepthFirst, MFn::kDagNode, &status);
-	bool is_sky_or_ibl = false;
-	for (; !itDag.isDone(); itDag.next())
-	{
-		MDagPath dagPath;
-		status = itDag.getPath(dagPath);
-		if (MStatus::kSuccess != status)
-		{
-			break;
-		}
-
-		auto node = dagPath.node();
-
-		if (node.hasFn(MFn::kDagNode))
-		{
-			MFnDagNode dagNode(node);
-			if (dagNode.typeId() == FireMaya::TypeId::FireRenderIBL ||
-				dagNode.typeName() == "ambientLight" ||
-				dagNode.typeId() == FireMaya::TypeId::FireRenderEnvironmentLight)
-			{
-				is_sky_or_ibl = true;
-				break;
-			}
-			else if (dagNode.typeId() == FireMaya::TypeId::FireRenderSkyLocator)
-			{
-				is_sky_or_ibl = true;
-				break;
-			}
-		}
-	}
-
-	float width = data.groundRadius*2.0f;
-	float length = data.groundRadius*2.0f;
-	float w2 = width * 0.5f;
-	float h2 = length * 0.5f;
-
-	float z = data.groundHeight;
-
-	float points[12] = {
-		-w2, z, -h2,
-		w2, z,-h2,
-		w2, z,h2,
-		-w2, z,h2
-	};
-
-	float points2[12] = {
-		-w2, z - 0.0001f, -h2,
-		w2, z - 0.0001f, -h2,
-		w2, z - 0.0001f, h2,
-		-w2, z - 0.0001f, h2
-	};
-
-	float normals[6] = {
-		0.f, 1.f, 0.f,
-		0.f, -1.f, 0.f
-	};
-
-	rpr_int indices[] = {
-		2, 1, 0,
-		3, 2, 0
-	};
-
-	rpr_int normal_indices[] = {
-		0, 0, 0,
-		0, 0, 0
-	};
-
-	rpr_int num_face_vertices[] = { 3, 3, 3, 3 };
-
-
-	if (data.shadows || data.reflections)
-	{
-		MMatrix tm;
-		tm.setToIdentity();
-		float mfloats[4][4];
-		tm.get(mfloats);
-
-		if (data.reflections)
-		{
-			m.ground.reflections = context.CreateMesh(
-				points, 4, sizeof(float) * 3,
-				normals, 2, sizeof(float) * 3,
-				nullptr, 0, 0,
-				indices, sizeof(rpr_int),
-				normal_indices, sizeof(rpr_int),
-				nullptr, 0,
-				num_face_vertices, 2);
-			m.ground.reflections.SetTransform((rpr_float*)mfloats);
-
-			frw::Shader shader(ms, frw::ShaderTypeMicrofacet);
-			shader.SetValue("color", data.strength * 2);
-			shader.SetValue("roughness", data.roughness);	// plain zero seems to fail
-
-			frw::TransparentShader transparency(ms);
-			transparency.SetColor(2);
-
-			shader = ms.ShaderBlend(transparency, shader, 0.5);
-
-			m.ground.reflections.SetShader(shader);
-			m.ground.reflections.SetShadowFlag(false);
-
-			scene.Attach(m.ground.reflections);
-		}
-
-		if (data.shadows)
-		{
-			m.ground.shadows = context.CreateMesh(
-				points2, 4, sizeof(float) * 3,
-				normals, 2, sizeof(float) * 3,
-				nullptr, 0, 0,
-				indices, sizeof(rpr_int),
-				normal_indices, sizeof(rpr_int),
-				nullptr, 0,
-				num_face_vertices, 2);
-
-			m.ground.shadows.SetTransform((rpr_float*)mfloats);
-
-			frw::Shader shader(ms, frw::ShaderTypeDiffuse);
-			shader.SetValue("color", 0.);
-			shader = ms.ShaderBlend(frw::TransparentShader(ms), shader, data.strength);
-
-			m.ground.shadows.SetShader(shader);
-			m.ground.shadows.SetShadowFlag(false);
-			m.ground.shadows.SetShadowCatcherFlag(true);
-			scene.Attach(m.ground.shadows);
-		}
 	}
 }
 

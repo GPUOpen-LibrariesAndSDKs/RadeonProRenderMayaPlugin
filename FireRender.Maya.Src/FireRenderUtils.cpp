@@ -53,12 +53,9 @@
 
 FireRenderGlobalsData::FireRenderGlobalsData() :
 	textureCompression(false),
-	iterations(64),
-	mode(0),
 	giClampIrradiance(true),
 	giClampIrradianceValue(1.0),
-	samplesProduction(2),
-	samplesViewport(2),
+	samplesPerUpdate(5),
 	filterType(0),
 	filterSize(2),
 	maxRayDepth(2),
@@ -70,17 +67,11 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	viewportMaxRayDepth(2),
 	viewportMaxDiffuseRayDepth(2),
 	viewportMaxReflectionRayDepth(2),
-	viewportRenderMode(0),
+	viewportRenderMode(FireRenderGlobals::kGlobalIllumination),
+	renderMode(FireRenderGlobals::kGlobalIllumination),
 	commandPort(0),
-	useGround(false),
-	groundHeight(0.0f),
-	groundRadius(1.0f),
 	useRenderStamp(false),
 	renderStampText(""),
-	shadows(false),
-	reflections(false),
-	strength(0.5f),
-	roughness(0.0f),
 	toneMappingType(0),
 	toneMappingLinearScale(1.0f),
 	toneMappingPhotolinearSensitivity(1.0f),
@@ -127,12 +118,8 @@ void FireRenderGlobalsData::readFromCurrentScene()
 
 		// Get Fire render globals attributes
 		MFnDependencyNode frGlobalsNode(fireRenderGlobals);
-		MPlug plug = frGlobalsNode.findPlug("iterations");
-		if (!plug.isNull())
-			iterations = plug.asInt();
 
-
-		plug = frGlobalsNode.findPlug("completionCriteriaType");
+		MPlug plug = frGlobalsNode.findPlug("completionCriteriaType");
 		if (!plug.isNull())
 			completionCriteriaFinalRender.completionCriteriaType = plug.asShort();
 
@@ -176,13 +163,13 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			textureCompression = plug.asBool();
 
-		plug = frGlobalsNode.findPlug("renderMode");
-		if (!plug.isNull())
-			mode = plug.asInt();
-
-		plug = frGlobalsNode.findPlug("viewportRenderMode");
+		plug = frGlobalsNode.findPlug("renderModeViewport");
 		if (!plug.isNull())
 			viewportRenderMode = plug.asInt();
+
+		plug = frGlobalsNode.findPlug("renderMode");
+		if (!plug.isNull())
+			renderMode = plug.asInt();
 
 		plug = frGlobalsNode.findPlug("giClampIrradiance");
 		if (!plug.isNull())
@@ -191,13 +178,9 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			giClampIrradianceValue = plug.asFloat();
 
-		plug = frGlobalsNode.findPlug("samples");
+		plug = frGlobalsNode.findPlug("samplesPerUpdate");
 		if (!plug.isNull())
-			samplesProduction = plug.asShort();
-
-		plug = frGlobalsNode.findPlug("samplesViewport");
-		if (!plug.isNull())
-			samplesViewport = plug.asShort();
+			samplesPerUpdate = plug.asInt();
 
 		plug = frGlobalsNode.findPlug("filter");
 		if (!plug.isNull())
@@ -274,40 +257,12 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			displayGamma = plug.asFloat();
 
-		plug = frGlobalsNode.findPlug("useGround");
-		if (!plug.isNull())
-			useGround = plug.asBool();
-
-		plug = frGlobalsNode.findPlug("groundHeight");
-		if (!plug.isNull())
-			groundHeight = plug.asFloat();
-
-		plug = frGlobalsNode.findPlug("groundRadius");
-		if (!plug.isNull())
-			groundRadius = plug.asFloat();
-
 		plug = frGlobalsNode.findPlug("useRenderStamp");
 		if (!plug.isNull())
 			useRenderStamp = plug.asBool();
 		plug = frGlobalsNode.findPlug("renderStampText");
 		if (!plug.isNull())
 			renderStampText = plug.asString();
-
-		plug = frGlobalsNode.findPlug("shadows");
-		if (!plug.isNull())
-			shadows = plug.asBool();
-
-		plug = frGlobalsNode.findPlug("reflections");
-		if (!plug.isNull())
-			reflections = plug.asBool();
-
-		plug = frGlobalsNode.findPlug("strength");
-		if (!plug.isNull())
-			strength = plug.asFloat();
-
-		plug = frGlobalsNode.findPlug("roughness");
-		if (!plug.isNull())
-			roughness = plug.asFloat();
 
 		plug = frGlobalsNode.findPlug("textureGamma");
 		if (!plug.isNull())
@@ -588,17 +543,36 @@ void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disa
 
 	rpr_int frstatus = RPR_SUCCESS;
 
-	frstatus = rprContextSetParameter1u(frcontext, "texturecompression", textureCompression);
+	frstatus = rprContextSetParameter1f(frcontext, "pdfthreshold", 0.0000f);
 	checkStatus(frstatus);
 
-	frstatus = rprContextSetParameter1u(frcontext, "rendermode", mode);
-	checkStatus(frstatus);
+	if (inContext.GetRenderType() == RenderType::Thumbnail)
+	{
+		updateTonemapping(inContext, disableWhiteBalance);
+		return;
+	}
 
 	frstatus = rprContextSetParameter1f(frcontext, "radianceclamp", giClampIrradiance ? giClampIrradianceValue : FLT_MAX);
 	checkStatus(frstatus);
 
-	if (!inContext.isInteractive())
+	frstatus = rprContextSetParameter1u(frcontext, "texturecompression", textureCompression);
+	checkStatus(frstatus);
+
+	if (inContext.GetRenderType() == RenderType::ProductionRender) // production (final) rendering
 	{
+		frstatus = rprContextSetParameter1u(frcontext, "rendermode", renderMode);
+		checkStatus(frstatus);
+
+		int iterations = samplesPerUpdate;
+
+		if (inContext.m_completionType == FireRenderGlobals::CompletionCriteriaType::kIterations && iterations > inContext.m_completionIterations)
+		{
+			iterations = inContext.m_completionIterations;
+		}
+
+		frstatus = rprContextSetParameter1u(frcontext, "iterations", iterations);
+		checkStatus(frstatus);
+
 		frstatus = rprContextSetParameter1u(frcontext, "maxRecursion", maxRayDepth);
 		checkStatus(frstatus);
 
@@ -617,8 +591,11 @@ void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disa
 		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.shadow", maxRayDepthShadow);
 		checkStatus(frstatus);
 	}
-	else
+	else if (inContext.isInteractive())
 	{
+		frstatus = rprContextSetParameter1u(frcontext, "rendermode", viewportRenderMode);
+		checkStatus(frstatus);
+
 		frstatus = rprContextSetParameter1u(frcontext, "maxRecursion", viewportMaxRayDepth);
 		checkStatus(frstatus);
 
@@ -639,9 +616,6 @@ void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disa
 	}
 
 	frstatus = rprContextSetParameter1u(frcontext, "imagefilter.type", filterType);
-	checkStatus(frstatus);
-
-	frstatus = rprContextSetParameter1f(frcontext, "pdfthreshold", 0.0000f);
 	checkStatus(frstatus);
 
 	//
