@@ -510,6 +510,10 @@ void FireRenderGlobals::createLegacyAttributes()
 
 	attrObj = nAttr.create("roughness", "grro", MFnNumericData::kFloat, 0.001f, &status);
 	CHECK_MSTATUS(addAttribute(attrObj));
+
+	attrObj = nAttr.create("cellSize", "cs", MFnNumericData::kShort, 4, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(attrObj));
 }
 
 void FireRenderGlobals::setupProductionRayDepthParameters()
@@ -839,7 +843,7 @@ void FireRenderGlobals::createViewportAttributes()
 	ViewportRenderAttributes::renderMode = createRenderModeAttr("renderModeViewport", "vrm", eAttr);
 	addAsGlobalAttribute(eAttr);
 
-	ViewportRenderAttributes::maxRayDepth = nAttr.create("maxRayDepthViewport", "vmrd", MFnNumericData::kInt, 8, &status);
+	ViewportRenderAttributes::maxRayDepth = nAttr.create("maxRayDepthViewport", "mrdV", MFnNumericData::kInt, 8, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(rayDepthParameterMin);
 	nAttr.setSoftMin(rayDepthParameterSoftMin);
