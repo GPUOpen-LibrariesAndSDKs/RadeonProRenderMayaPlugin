@@ -41,14 +41,15 @@ void FireRenderImageUtil::save(MString filePath, unsigned int width, unsigned in
 	auto comments = "Created with "s + FIRE_RENDER_NAME + " "s + PLUGIN_VERSION;
 	imgSpec.attribute("ImageDescription", comments.c_str());
 
+	bool saveSuccessful = false;
 	// Try to open and write to the file.
 	if (output->open(fileName, imgSpec))
 	{
-		output->write_image(TypeDesc::FLOAT, reinterpret_cast<uint8_t*>(pixels));
+		saveSuccessful = output->write_image(TypeDesc::FLOAT, reinterpret_cast<uint8_t*>(pixels));
 		output->close();
 	}
-
-	else
+	
+	if (!saveSuccessful)
 	{
 		int extDot = filePath.rindex('.');
 		int len = filePath.length();
