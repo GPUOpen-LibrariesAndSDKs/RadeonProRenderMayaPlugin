@@ -238,6 +238,7 @@
     <ClCompile Include="FireRenderImageUtil.cpp" />
     <ClCompile Include="FireRenderImportCmd.cpp" />
     <ClCompile Include="FireRenderImportExportXML.cpp" />
+    <ClCompile Include="FireRenderImportXML.cpp" />
     <ClCompile Include="FireRenderIpr.cpp" />
     <ClCompile Include="FireRenderLocationCmd.cpp" />
     <ClCompile Include="FireRenderLookup.cpp" />

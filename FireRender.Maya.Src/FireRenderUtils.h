@@ -703,3 +703,8 @@ MObject findDependNode(MString name);
 //
 bool isMetalOn();
 
+/**
+* Disconnect everything connected to Plug
+* Returns true if successfull
+*/
+bool DisconnectFromPlug(MPlug& plug);

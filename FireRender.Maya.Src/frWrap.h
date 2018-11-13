@@ -1515,6 +1515,7 @@ namespace frw
 		void Render()
 		{
 			auto status = rprContextRender(Handle());
+
 #ifndef SHOW_EXTENDED_ERROR_MSG
 			checkStatusThrow(status, "Unable to render");
 #else
