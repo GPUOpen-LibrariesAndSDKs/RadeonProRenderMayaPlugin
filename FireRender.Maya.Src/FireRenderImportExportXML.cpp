@@ -328,8 +328,8 @@ MStatus FireRenderAxfDLLExists::doIt(const MArgList& args) {
 	return MS::kSuccess;
 }
 
-FireRenderXmlImportCmd::FireRenderXmlImportCmd() :
-	m_importImages(false)
+FireRenderXmlImportCmd::FireRenderXmlImportCmd()
+	: m_importImages(false)
 {
 }
 
@@ -355,6 +355,7 @@ MSyntax FireRenderXmlImportCmd::newSyntax()
 	return syntax;
 }
 
+#ifndef useNewImport
 MStatus FireRenderXmlImportCmd::doIt(const MArgList & args)
 {
 	nodeGroup.clear();
@@ -464,6 +465,79 @@ MStatus FireRenderXmlImportCmd::doIt(const MArgList & args)
 
 	return MS::kSuccess;
 }
+#endif
+
+#ifdef useNewImport
+MStatus FireRenderXmlImportCmd::doIt(const MArgList & args)
+{
+	MStatus result = MS::kSuccess;
+
+	// Get path to file describing material
+	MString filePath;
+	MArgDatabase argData(syntax(), args);
+	std::tie(result, filePath) = GetFilePath(argData);
+	if (MS::kSuccess != result)
+		return result;
+
+	// Get directory name
+	std::string directory = getDirectory(filePath.asChar());
+	m_directoryPath = MString(directory.c_str());
+
+	// Get Material Name
+	std::string userDefinedMaterialName;
+	if (argData.isFlagSet(kMaterialNameFlag))
+	{
+		MString temp;
+		argData.getFlagArgument(kMaterialNameFlag, 0, temp);
+		userDefinedMaterialName = temp.asChar();
+	}
+
+	// Import textures if required.
+	if (argData.isFlagSet(kImportImages))
+		argData.getFlagArgument(kImportImages, 0, m_importImages);
+
+	// Read nodes from .xml
+	std::string materialName;
+	nodeGroup.clear();
+	result = ImportMaterials(filePath.asChar(), nodeGroup, materialName) ? MS::kSuccess : MS::kFailure;
+	if (MS::kSuccess != result)
+		return result;
+
+	// Get root node
+	// - get node containing Uber Material data
+	auto it = nodeGroup.begin();
+	for (; it != nodeGroup.end() && !it->second.IsUber(); it++) {}
+	if (nodeGroup.end() == it)
+	{
+		// no uber node found => maybe its blend or diffuse or reflective material
+		for (it = nodeGroup.begin(); it != nodeGroup.end() && !it->second.IsSupportedMaterial(); it++) {}
+		if (nodeGroup.end() == it)
+		{
+			// not a blend => ivalid .xml then
+			nodeGroup.clear();
+			return MS::kFailure;
+		}
+	}
+	MaterialNode& rootNode = it->second;
+
+	// Set material name
+	if (userDefinedMaterialName.length() == 0)
+	{
+		rootNode.name = materialName;
+	}
+	else
+	{
+		rootNode.name = userDefinedMaterialName;
+	}
+
+	// Parse nodes
+	// - should traverse the node graph starting from root (Uber material node)
+	parseMaterialNode(rootNode);
+
+	// Success!
+	return MS::kSuccess;
+}
+#endif
 
 int FireRenderXmlImportCmd::getAttrType(std::string attrTypeStr) {
 	//FR_MATERIAL_NODE_INPUT_TYPE_FLOAT4 0x1
@@ -472,7 +546,7 @@ int FireRenderXmlImportCmd::getAttrType(std::string attrTypeStr) {
 	//FR_MATERIAL_NODE_INPUT_TYPE_IMAGE 0x4
 	//
 	int attrType = -1;
-	if (attrTypeStr == "float4") { attrType = RPR_MATERIAL_NODE_INPUT_TYPE_FLOAT4; }
+	if ((attrTypeStr == "float4") || (attrTypeStr == "float") ) { attrType = RPR_MATERIAL_NODE_INPUT_TYPE_FLOAT4; }
 	else if (attrTypeStr == "uint") { attrType = RPR_MATERIAL_NODE_INPUT_TYPE_UINT; }
 	else if (attrTypeStr == "connection") { attrType = RPR_MATERIAL_NODE_INPUT_TYPE_NODE; }
 	else if (attrTypeStr == "file_path") { attrType = RPR_MATERIAL_NODE_INPUT_TYPE_IMAGE; }
@@ -493,149 +567,343 @@ void parseFloat4(std::string data, float fvalue[4]) {
 	}
 }
 
-void FireRenderXmlImportCmd::parseAttributeParam(MObject shaderNode, std::map<std::string, std::string> &attributeMapper, std::string attrName, Param &attrParam) {
+void enableMaterialFlagByAttr(const std::string& plugName, MFnDependencyNode& nodeFn, bool isMap, float* floatData)
+{
+	if (!isMap && floatData == nullptr)
+		return;
+
+	bool isAttrSet = isMap;
+
+	if (!isMap)
+	{
+		const float* fvalue = static_cast<const float*>(floatData);
+		isAttrSet = fvalue[0] + fvalue[1] + fvalue[2] > 0.0f;
+	}
+
+	if (isAttrSet)
+	{
+		MPlug enablePlug = nodeFn.findPlug(plugName.c_str());
+		enablePlug.setValue(true);
+	}
+	else
+	{
+		MPlug enablePlug = nodeFn.findPlug(plugName.c_str());
+		enablePlug.setValue(false);
+	}
+}
+
+void disableMaterialFlagByAttr(const std::string& plugName, MFnDependencyNode& nodeFn, bool isMap, void* floatData)
+{
+	if (!isMap && floatData == nullptr)
+		return;
+
+	bool isAttrSet = isMap;
+
+	if (!isMap)
+	{
+		const float* fvalue = static_cast<const float*>(floatData);
+		isAttrSet = fvalue[0] + fvalue[1] + fvalue[2] > 0.0f;
+	}
+
+	if (isAttrSet)
+	{
+		MPlug enablePlug = nodeFn.findPlug(plugName.c_str());
+		enablePlug.setValue(false);
+	}
+	else
+	{
+		MPlug enablePlug = nodeFn.findPlug(plugName.c_str());
+		enablePlug.setValue(true);
+	}
+}
+
+void setMetallness(const std::string& plugName, MFnDependencyNode& nodeFn, bool, void* floatData)
+{
+	if (floatData == nullptr)
+		return;
+
+	const float* fvalue = static_cast<const float*>(floatData);
+		
+	MPlug metallnessPlug = nodeFn.findPlug(plugName.c_str());
+	metallnessPlug.setValue(fvalue[0]);
+}
+
+using setter_func = std::function<void(const std::string&, MFnDependencyNode&, bool isMap, float* data)>;
+
+static const std::map<std::string, std::tuple<std::string /*plugName*/, setter_func /*func*/>> AttrsSpecialCases =
+{
+	{"diffuse.weight",		{"diffuse",					enableMaterialFlagByAttr	} },
+	{"reflection.weight",	{"reflections",				enableMaterialFlagByAttr	} },
+	{"refraction.weight",	{"refraction",				enableMaterialFlagByAttr	} },
+	{"coating.weight",		{"clearCoat",				enableMaterialFlagByAttr	} },
+	{"emission.weight",		{"emissive",				enableMaterialFlagByAttr	} },
+	{"sss.weight",			{"sssEnable",				enableMaterialFlagByAttr	} },
+	{"transparency",		{"transparencyEnable",		enableMaterialFlagByAttr	} },
+	{"displacement",		{"displacementEnable",		enableMaterialFlagByAttr	} },
+	{"diffuse.normal",		{"useShaderNormal",			disableMaterialFlagByAttr	} },
+	{"reflection.normal",	{"reflectUseShaderNormal",	disableMaterialFlagByAttr	} },
+	{"coating.normal",		{"coatUseShaderNormal",		disableMaterialFlagByAttr	} },
+	{"reflection.ior",		{"reflectMetalness",		setMetallness				} }
+};
+
+void ConnectPlugToAttribute(MPlug& outPlug, MPlug& attributePlug, std::string& attrValue)
+{
+	const int outChildNumber = outPlug.numChildren();
+	const int attributeChildNumber = attributePlug.numChildren();
+
+	if (outChildNumber == attributeChildNumber)
+	{
+		MDGModifier modifier;
+		MStatus result = modifier.connect(outPlug, attributePlug);
+		if (result != MS::kSuccess)
+		{
+			// report failure
+			MGlobal::displayError("Error while trying to connect " + MString(attrValue.c_str()) + " value");
+			return;
+		}
+		modifier.doIt();
+	}
+
+	else
+	{
+		const int connectionNumber = (outChildNumber > attributeChildNumber) ? attributeChildNumber : outChildNumber;
+
+		if (connectionNumber == 0)
+		{
+			MPlug out_valueChildPlug = outPlug.child(0);
+			MDGModifier modifier;
+			MStatus result = modifier.connect(out_valueChildPlug, attributePlug);
+			if (result != MS::kSuccess)
+			{
+				// report failure
+				MGlobal::displayError("Error while trying to connect " + MString(attrValue.c_str()) + " value");
+				return;
+			}
+			modifier.doIt();
+		}
+		else
+		{
+			MDGModifier modifier;
+			for (size_t i = 0; i < connectionNumber; i++)
+			{
+				MPlug attr_valueChildPlug = attributePlug.child((unsigned int)i);
+				MPlug out_valueChildPlug = outPlug.child((unsigned int)i);
+
+				MStatus result = modifier.connect(out_valueChildPlug, attr_valueChildPlug);
+				if (result != MS::kSuccess)
+				{
+					// report failure
+					MGlobal::displayError("Error while trying to connect " + MString(attrValue.c_str()) + " value");
+					return;
+				}
+			}
+			modifier.doIt();
+		}
+	}
+}
+
+void FireRenderXmlImportCmd::parseAttributeParam(MObject shaderNode, 
+	std::map<const std::string, std::string> &attributeMapper, 
+	const std::string attrName, 
+	const Param &attrParam) 
+{
 	MFnDependencyNode nodeFn(shaderNode);
 
-	//
 	std::string		attrT = attrParam.type;
 	int				attrType = getAttrType(attrT);
 	std::string		attrValue = attrParam.value;
-	//
 
 	MPlug attributePlug = nodeFn.findPlug(attributeMapper[attrName].c_str());
-
+	if (attributePlug.isNull())
+	{
+		// report failure
+#ifdef _DEBUG
+		MGlobal::displayError("Can't find parameter '" + MString(attrName.c_str()) + "' in created Node");
+#endif
+		return;
+	}
 
 	switch (attrType)
 	{
-	case RPR_MATERIAL_NODE_INPUT_TYPE_FLOAT4:
-	{
-		float fvalue[4] = { 0.f, 0.f, 0.f, 0.f };
-		parseFloat4(attrValue, fvalue);
-
-		if (attrName.find("color") != std::string::npos)
+		case RPR_MATERIAL_NODE_INPUT_TYPE_FLOAT4:
 		{
-			float multiplier = 1.0;
-			MPlug redPlug = attributePlug.child(0);
-			MPlug bluePlug = attributePlug.child(1);
-			MPlug greenPlug = attributePlug.child(2);
+			float fvalue[4] = { 0.f, 0.f, 0.f, 0.f };
+			parseFloat4(attrValue, fvalue);
 
-			redPlug.setValue(fvalue[0] * multiplier);
-			bluePlug.setValue(fvalue[1] * multiplier);
-			greenPlug.setValue(fvalue[2] * multiplier);
-		}
-		else
-		{
-			attributePlug.setValue(fvalue[0]);
-		}
-		break;
-	}
-	case RPR_MATERIAL_NODE_INPUT_TYPE_UINT:
-	{
-		int value = std::stoi(attrValue);
-		attributePlug.setValue(value);
-		break;
-	}
-	case RPR_MATERIAL_NODE_INPUT_TYPE_NODE:
-	{
-		MaterialNode node = nodeGroup[attrValue];
-		MObject inputShader = parseMaterialNode(node);
+			bool isColorValue = (attrName.find("color") != std::string::npos)
+				|| (attrName.find("Color") != std::string::npos)
+				|| (attrName == "sss.scatterDistance")
+				|| (attrName == "sss.scatterColor");
 
-		MFnDependencyNode inputNodeFn(inputShader);
-		MPlug outPlug = inputNodeFn.findPlug("out");
-		if (outPlug.isNull())
-		{
-			outPlug = inputNodeFn.findPlug("outColor");
-		}
-		if (outPlug.isNull())
-		{
-			outPlug = inputNodeFn.findPlug("output");
-		}
-
-
-		if (outPlug.isNull())
-		{
-			MGlobal::displayError("Error while reading " + MString(attrValue.c_str()) + " value");
-			return;
-		}
-
-		int outChildNumber = outPlug.numChildren();
-		int attributeChildNumber = attributePlug.numChildren();
-
-		if (outChildNumber == attributeChildNumber) {
-			MDGModifier modifier;
-			modifier.connect(outPlug, attributePlug);
-			modifier.doIt();
-		}
-		else {
-			int connectionNumber = (outChildNumber > attributeChildNumber) ? attributeChildNumber : outChildNumber;
-
-			if (connectionNumber == 0)
+			if (isColorValue)
 			{
-				MPlug out_valueChildPlug = outPlug.child(0);
-				MDGModifier modifier;
-				modifier.connect(out_valueChildPlug, attributePlug);
-				modifier.doIt();
-			}
-			else {
-				MDGModifier modifier;
-				for (size_t i = 0; i < connectionNumber; i++)
+				MPlug redPlug = attributePlug.child(0);
+				MPlug bluePlug = attributePlug.child(1);
+				MPlug greenPlug = attributePlug.child(2);
+
+				if (attrName != "coating.transmissionColor")
 				{
-					MPlug attr_valueChildPlug = attributePlug.child((unsigned int)i);
-					MPlug out_valueChildPlug = outPlug.child((unsigned int)i);
-
-					modifier.connect(out_valueChildPlug, attr_valueChildPlug);
+					redPlug.setValue(fvalue[0]);
+					bluePlug.setValue(fvalue[1]);
+					greenPlug.setValue(fvalue[2]);
 				}
-				modifier.doIt();
+				else
+				{
+					redPlug.setValue(1.0f - fvalue[0]);
+					bluePlug.setValue(1.0f - fvalue[1]);
+					greenPlug.setValue(1.0f - fvalue[2]);
+				}
+				
+			}
+			else
+			{
+				attributePlug.setValue(fvalue[0]);
 			}
 
-
-		}
-		break;
-	}
-	case RPR_MATERIAL_NODE_INPUT_TYPE_IMAGE:
-	{
-		MString newImage = directoryPath + MString(attrValue.c_str());
-
-		MFileObject fileObject;
-		fileObject.setRawFullName(newImage);
-
-		// Locate the image - either in the material
-		// directory, or in the shared maps directory.
-		if (!fileObject.exists())
-		{
-			newImage = directoryPath + "../" + MString(attrValue.c_str());
-			fileObject.setRawFullName(newImage);
-
-			if (!fileObject.exists())
+			// handle special case (for uber)
+			auto it = AttrsSpecialCases.find(attrName);
+			if (it != AttrsSpecialCases.end())
 			{
-				// The image was not found in either location.
-				MGlobal::displayError("Unable to find image " + newImage);
+				std::string plugName;
+				setter_func func;
+				std::tie(plugName, func) = it->second;
+				func(plugName, nodeFn, false, fvalue);
+			}
+
+			break;
+		}
+		case RPR_MATERIAL_NODE_INPUT_TYPE_UINT:
+		{
+			int value = std::stoi(attrValue);
+
+			// handle special case (for uber)
+			if (attrName == "reflection.mode")
+			{
+				if (value == RPRX_UBER_MATERIAL_REFLECTION_MODE_PBR)
+				{
+					MPlug metallnessPlug = nodeFn.findPlug("reflectMetalness");
+					if (!metallnessPlug.isNull())
+					{
+						DisconnectFromPlug(metallnessPlug);
+					}
+
+					attributePlug.setValue(false);
+				}
+				else if (value == RPRX_UBER_MATERIAL_REFLECTION_MODE_METALNESS)
+				{
+					MPlug iorPlug = nodeFn.findPlug("reflectIOR");
+					if (!iorPlug.isNull())
+					{
+						DisconnectFromPlug(iorPlug);
+					}
+
+					attributePlug.setValue(true);
+				}
+
+				break;
+			}
+			else if (attrName == "emission.mode")
+			{
+				if (value == RPRX_UBER_MATERIAL_EMISSION_MODE_SINGLESIDED)
+					attributePlug.setValue(false);
+				else if (value == RPRX_UBER_MATERIAL_EMISSION_MODE_DOUBLESIDED)
+					attributePlug.setValue(true);
+			}
+			else
+			{
+				attributePlug.setValue(value);
+			}
+
+			break;
+		}
+		case RPR_MATERIAL_NODE_INPUT_TYPE_NODE:
+		{
+			MaterialNode& node = nodeGroup[attrValue];
+
+			MObject inputShader = parseMaterialNode(node); // may return null if trying to parse fake lookUp node
+
+			MFnDependencyNode inputNodeFn(inputShader);
+			MPlug outPlug = inputNodeFn.findPlug("out");
+			if (outPlug.isNull())
+			{
+				outPlug = inputNodeFn.findPlug("outColor");
+			}
+			if (outPlug.isNull())
+			{
+				outPlug = inputNodeFn.findPlug("output");
+			}
+
+			if (outPlug.isNull())
+			{
+#ifdef _DEBUG
+				MGlobal::displayError("Error while reading " + MString(attrValue.c_str()) + " value");
+#endif
 				return;
 			}
-		}
 
-		// Import the image if required, or reference it directly
-		// at the location where the material library is installed.
-		if (m_importImages)
+			// handle special case for metalness
+			if (attrName == "reflection.ior")
+			{
+				MPlug metallnessPlug = nodeFn.findPlug("reflectMetalness");
+				ConnectPlugToAttribute(outPlug, metallnessPlug, attrValue);
+			}
+
+			ConnectPlugToAttribute(outPlug, attributePlug, attrValue);
+
+			// handle special case (for uber)
+			auto it = AttrsSpecialCases.find(attrName);
+			if (it != AttrsSpecialCases.end())
+			{
+				std::string plugName;
+				setter_func func;
+				std::tie(plugName, func) = it->second;
+				func(plugName, nodeFn, true, nullptr);
+			}
+
+			break;
+		}
+		case RPR_MATERIAL_NODE_INPUT_TYPE_IMAGE:
 		{
-			MString path = importImageFile(fileObject);
-			attributePlug.setValue(path);
-		}
-		else
-			attributePlug.setValue(newImage);
+			MString newImage = m_directoryPath + MString(attrValue.c_str());
 
-		break;
-	}
-	default:
-	{
-		if (attrName.compare("gamma") != 0) {
-			//gamma is known, just not supported in Maya as of yet.
-			MGlobal::displayError("Unknown shader attribute type");
-		}
+			MFileObject fileObject;
+			fileObject.setRawFullName(newImage);
 
-		return;
-		break;
-	}
+			// Locate the image - either in the material
+			// directory, or in the shared maps directory.
+			if (!fileObject.exists())
+			{
+				newImage = m_directoryPath + "../" + MString(attrValue.c_str());
+				fileObject.setRawFullName(newImage);
+
+				if (!fileObject.exists())
+				{
+					// The image was not found in either location.
+					MGlobal::displayError("Unable to find image " + newImage);
+					return;
+				}
+			}
+
+			// Import the image if required, or reference it directly
+			// at the location where the material library is installed.
+			if (m_importImages)
+			{
+				MString path = importImageFile(fileObject);
+				attributePlug.setValue(path);
+			}
+			else
+				attributePlug.setValue(newImage);
+
+			break;
+		}
+		default:
+		{
+			if (attrName.compare("gamma") != 0) {
+				//gamma is known, just not supported in Maya as of yet.
+				MGlobal::displayError("Unknown shader attribute type");
+			}
+			break;
+		}
 	}
 }
 
@@ -694,20 +962,43 @@ MString FireRenderXmlImportCmd::getSourceImagesDirectory(const MString& filePath
 	return sourceImagesDirectory;
 }
 
-void FireRenderXmlImportCmd::attachToPlace2dTextureNode(MObject objectToConnectTo)
+void FireRenderXmlImportCmd::attachToPlace2dTextureNode(MObject objectToConnectTo, const std::map<std::string, Param>& paramsToParse)
 {
+	// 2 cases: need to edit placement node params ans don't need
+	auto it = paramsToParse.find("tiling_u");
+	if (it != paramsToParse.end())
+	{
+		// - when need => create new placement node and fill it with parameters
+		std::map<const std::string, std::string> attributeMapper;
+		attributeMapper["tiling_u"] = "repeatU";
+		attributeMapper["tiling_v"] = "repeatV";
+
+		MObject parsedPlacementNode = createPlace2dTextureNode("Placement2dTexture");
+		for (auto param : paramsToParse)
+		{
+			parseAttributeParam(parsedPlacementNode, attributeMapper, param.first, param.second);
+		}
+
+		connectPlace2dTextureNodeTo(parsedPlacementNode, objectToConnectTo);
+
+		return;
+	}
+
+	// - when don't need => proceed
 	MaterialNode& placementNode = nodeGroup[Place2dNodeName];
+
 	if (!placementNode.parsed)
 	{
 		placementNode.parsedObject = createPlace2dTextureNode(placementNode.name);
 		placementNode.parsed = true;
 	}
+
 	connectPlace2dTextureNodeTo(placementNode.parsedObject, objectToConnectTo);
 }
 
 MObject FireRenderXmlImportCmd::createPlace2dTextureNode(std::string name)
 {
-	MString executeCommand = "shadingNode place2dTexture  -asUtility -n \""_ms + name.c_str() + "\""_ms;
+	MString executeCommand = "shadingNode place2dTexture  -asUtility -n " + MString(name.c_str());
 
 	MString shaderName = MGlobal::executeCommandStringResult(executeCommand);
 	MSelectionList sList;
@@ -727,7 +1018,7 @@ void FireRenderXmlImportCmd::connectPlace2dTextureNodeTo(MObject place2dTextureN
 {
 	MFnDependencyNode outputNodeFn(place2dTextureNode);
 	MFnDependencyNode inputNodeFn(objectToConnectTo);
-
+	
 	MPlug outPlug = outputNodeFn.findPlug("o");
 	if (outPlug.isNull())
 	{
@@ -751,12 +1042,18 @@ void FireRenderXmlImportCmd::connectPlace2dTextureNodeTo(MObject place2dTextureN
 	}
 
 	MDGModifier modifier;
-	modifier.connect(outPlug, uvInputPlug);
+	MStatus result = modifier.connect(outPlug, uvInputPlug);
+	if (result != MS::kSuccess)
+	{
+		// report failure
+		MGlobal::displayError("Error while trying to connect nodes value");
+		return;
+	}
 	modifier.doIt();
 
 }
 
-MObject FireRenderXmlImportCmd::createShadingNode(MString materialName, std::map<std::string, std::string> &attributeMapper, std::map<std::string, Param> &params, ShadingNodeType shadingNodeType, frw::ShaderType shaderType)
+MObject FireRenderXmlImportCmd::createShadingNode(MString materialName, std::map<const std::string, std::string> &attributeMapper, std::map<std::string, Param> &params, ShadingNodeType shadingNodeType, frw::ShaderType shaderType)
 {
 	MString as;
 	switch (shadingNodeType)
@@ -795,6 +1092,15 @@ MObject FireRenderXmlImportCmd::createShadingNode(MString materialName, std::map
 	}
 
 	MFnDependencyNode nodeFn(shaderNode);
+	MPlugArray arr;
+	nodeFn.getConnections(arr);
+	std::vector<std::string> names_plugs;
+	size_t len = arr.length();
+	for (int idx = 0; idx < len; ++idx)
+	{
+		const MPlug& tplug = arr[idx];
+		names_plugs.push_back(std::string(tplug.name().asChar()));
+	}
 
 	if (shaderType != frw::ShaderTypeInvalid)
 	{
@@ -852,7 +1158,7 @@ MObject FireRenderXmlImportCmd::createShadingNode(MString materialName, std::map
 
 MObject FireRenderXmlImportCmd::loadFireRenderMaterialShader(frw::ShaderType shaderType, std::map<std::string, Param> &params)
 {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 	attributeMapper["color"] = "color";
 	attributeMapper["normal"] = "normalMap";
 	attributeMapper["roughness"] = "roughness";
@@ -869,7 +1175,7 @@ MObject FireRenderXmlImportCmd::loadFireRenderMaterialShader(frw::ShaderType sha
 }
 
 MObject FireRenderXmlImportCmd::loadFireRenderAddMaterial(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 	attributeMapper["color0"] = "color0";
 	attributeMapper["color1"] = "color1";
 
@@ -879,7 +1185,7 @@ MObject FireRenderXmlImportCmd::loadFireRenderAddMaterial(std::map<std::string, 
 }
 
 MObject FireRenderXmlImportCmd::loadFireRenderBlendMaterial(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 	attributeMapper["color0"] = "color0";
 	attributeMapper["color1"] = "color1";
 	attributeMapper["weight"] = "weight";
@@ -891,32 +1197,82 @@ MObject FireRenderXmlImportCmd::loadFireRenderBlendMaterial(std::map<std::string
 
 MObject FireRenderXmlImportCmd::loadFireRenderStandardMaterial(std::map<std::string, Param> &params)
 {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 
 	attributeMapper["diffuse.color"] = "diffuseColor";
+	attributeMapper["diffuse.weight"] = "diffuseWeight";
 	attributeMapper["diffuse.normal"] = "diffuseNormal";
+	attributeMapper["diffuse.roughness"] = "diffuseRoughness";
+
+	attributeMapper["reflection.color"] = "reflectColor";
+	attributeMapper["reflection.weight"] = "reflectWeight";
+	attributeMapper["reflection.roughness"] = "reflectRoughness";
+	attributeMapper["reflection.anisotropy"] = "reflectAnisotropy";
+	attributeMapper["reflection.anistropyRotation"] = "reflectAnisotropyRotation";
+	attributeMapper["reflection.mode"] = "reflectMetalMaterial";
+	attributeMapper["reflection.ior"] = "reflectIOR"; // OR "reflectMetalness"
+	attributeMapper["reflection.normal"] = "reflectNormal";
+
 	attributeMapper["weights.glossy2diffuse"] = "reflectIOR";
 	attributeMapper["glossy.color"] = "reflectColor";
 	attributeMapper["glossy.roughness_x"] = "reflectRoughnessX";
 	attributeMapper["glossy.roughness_y"] = "reflectRoughnessY";
 	attributeMapper["glossy.normal"] = "reflectNormal";
+
 	attributeMapper["weights.clearcoat2glossy"] = "coatIOR";
 	attributeMapper["clearcoat.color"] = "coatColor";
 	attributeMapper["clearcoat.normal"] = "coatNormal";
+
+	attributeMapper["coating.color"] = "coatColor";
+	attributeMapper["coating.weight"] = "coatWeight";
+	attributeMapper["coating.roughness"] = "coatRoughness";
+	attributeMapper["coating.mode"] = "coatMode";
+	attributeMapper["coating.ior"] = "coatIor";
+	attributeMapper["coating.metalness"] = "coatMetalness";
+	attributeMapper["coating.normal"] = "coatNormal";
+	attributeMapper["coating.transmissionColor"] = "coatTransmissionColor";
+	attributeMapper["coating.thickness"] = "coatThickness";
+
 	attributeMapper["refraction.color"] = "refractColor";
+	attributeMapper["refraction.weight"] = "refractWeight";
 	attributeMapper["refraction.normal"] = "refNormal";
-	attributeMapper["refraction.ior"] = "refractIOR";
+	attributeMapper["refraction.ior"] = "refractIor";
 	attributeMapper["refraction.roughness"] = "refractRoughness";
+	attributeMapper["refraction.thinSurface"] = "refractThinSurface";
+	attributeMapper["refraction.absorptionColor"] = "refractAbsorbColor";
+	attributeMapper["refraction.absorptionDistance"] = "refractAbsorptionDistance";
+	attributeMapper["refraction.caustics"] = "refractAllowCaustics";
 	attributeMapper["weights.diffuse2refraction"] = "refraction";
+
+	attributeMapper["sheen"] = "sheen";
+	attributeMapper["sheen.tint"] = "sheenTint";
+	attributeMapper["sheen.weight"] = "sheenWeight";
+
+	attributeMapper["emission.color"] = "emissiveColor";
+	attributeMapper["emission.weight"] = "emissiveWeight";
+	attributeMapper["emission.intensity"] = "emissiveIntensity";
+	attributeMapper["emission.mode"] = "emissiveDoubleSided";
+
+	attributeMapper["displacement"] = "displacementMap";
+
+	attributeMapper["transparency"] = "transparencyLevel";
 	attributeMapper["transparency.color"] = "transparencyColor";
 	attributeMapper["weights.transparency"] = "transparencyLevel";
 
-	MString materialName = MString(FIRE_RENDER_NODE_PREFIX) + "StandardMaterial";
+	attributeMapper["sss.scatterColor"] = "volumeScatter";
+	attributeMapper["sss.scatterDistance"] = "subsurfaceRadius";
+	attributeMapper["sss.scatterDirection"] = "scatteringDirection";
+	attributeMapper["sss.weight"] = "sssWeight";
+	attributeMapper["sss.multiscatter"] = "multipleScattering";
+	attributeMapper["backscatter.weight"] = "backscatteringWeight";
+	attributeMapper["backscatter.color"] = "backscatteringColor";
+
+	MString materialName = MString(FIRE_RENDER_NODE_PREFIX) + "UberMaterial";
 
 	return createShadingNode(materialName, attributeMapper, params, ShadingNodeType::asShader);
 }
 MObject FireRenderXmlImportCmd::loadFireRenderArithmeticMaterial(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 	attributeMapper["color0"] = "inputA";
 	attributeMapper["color1"] = "inputB";
 	attributeMapper["op"] = "operation";
@@ -927,7 +1283,7 @@ MObject FireRenderXmlImportCmd::loadFireRenderArithmeticMaterial(std::map<std::s
 }
 
 MObject FireRenderXmlImportCmd::loadFireRenderFresnel(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 	attributeMapper["ior"] = "ior";
 	attributeMapper["invec"] = "inVec";
 	attributeMapper["normal"] = "normalMap";
@@ -939,7 +1295,7 @@ MObject FireRenderXmlImportCmd::loadFireRenderFresnel(std::map<std::string, Para
 }
 
 MObject FireRenderXmlImportCmd::loadFireRenderFresnelSchlick(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 	attributeMapper["reflectance"] = "reflectance";
 	attributeMapper["normal"] = "normalMap";
 	attributeMapper["n"] = "normalMap";
@@ -951,10 +1307,11 @@ MObject FireRenderXmlImportCmd::loadFireRenderFresnelSchlick(std::map<std::strin
 }
 
 MObject FireRenderXmlImportCmd::loadFireRenderNormal(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 
 	attributeMapper["data"] = "color";
 	attributeMapper["bumpscale"] = "strength";
+	attributeMapper["color"] = "color";
 
 	MString materialName = MString(FIRE_RENDER_NODE_PREFIX) + "Normal";
 
@@ -962,7 +1319,7 @@ MObject FireRenderXmlImportCmd::loadFireRenderNormal(std::map<std::string, Param
 }
 
 MObject FireRenderXmlImportCmd::loadFireRenderImageTextureNode(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 	//TODO: UVCOORD: CHECK-Test IT
 	attributeMapper["uv"] = "uvCoord";
 	attributeMapper["path"] = "filename";
@@ -973,7 +1330,7 @@ MObject FireRenderXmlImportCmd::loadFireRenderImageTextureNode(std::map<std::str
 }
 
 MObject FireRenderXmlImportCmd::loadFireRenderNoiseNode(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 	//TODO: UVCOORD: CHECK-Test IT
 	attributeMapper["uv"] = "uvCoord";
 	attributeMapper["color"] = "color";
@@ -984,7 +1341,7 @@ MObject FireRenderXmlImportCmd::loadFireRenderNoiseNode(std::map<std::string, Pa
 }
 
 MObject FireRenderXmlImportCmd::loadFireRenderDotNode(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 	//TODO: UVCOORD: CHECK-Test IT
 	attributeMapper["uv"] = "uvCoord";
 	//range is actually not supported in export:
@@ -998,7 +1355,7 @@ MObject FireRenderXmlImportCmd::loadFireRenderDotNode(std::map<std::string, Para
 }
 
 MObject FireRenderXmlImportCmd::loadFireRenderGradientNode(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 	//TODO: UVCOORD: CHECK-Test IT
 	attributeMapper["uv"] = "uvCoord";
 	attributeMapper["color0"] = "color0";
@@ -1010,7 +1367,7 @@ MObject FireRenderXmlImportCmd::loadFireRenderGradientNode(std::map<std::string,
 }
 
 MObject FireRenderXmlImportCmd::loadFireRenderCheckerNode(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 	//TODO: UVCOORD: CHECK-Test IT
 	attributeMapper["uv"] = "uvCoord";
 
@@ -1019,17 +1376,23 @@ MObject FireRenderXmlImportCmd::loadFireRenderCheckerNode(std::map<std::string, 
 	return createShadingNode(materialName, attributeMapper, params, ShadingNodeType::asTexture);
 }
 
-MObject FireRenderXmlImportCmd::loadFireRenderLookupNode(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+MObject FireRenderXmlImportCmd::loadFireRenderLookupNode(std::map<std::string, Param> &params) 
+{
+	std::map<const std::string, std::string> attributeMapper;
 	attributeMapper["value"] = "type";
 
+	// ensure that look up node is not fake
+	if (params["value"].value == "0")
+		return MObject();
+
+	// proceed creating lookup node
 	MString materialName = MString(FIRE_RENDER_NODE_PREFIX) + "Lookup";
 
 	return createShadingNode(materialName, attributeMapper, params, ShadingNodeType::asUtility);
 }
 
 MObject FireRenderXmlImportCmd::loadFireRenderBlendValueNode(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 	attributeMapper["color0"] = "inputA";
 	attributeMapper["color1"] = "inputB";
 	attributeMapper["weight"] = "weight";
@@ -1040,7 +1403,7 @@ MObject FireRenderXmlImportCmd::loadFireRenderBlendValueNode(std::map<std::strin
 }
 
 MObject FireRenderXmlImportCmd::loadFireRenderPassthroughNode(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 	attributeMapper["color"] = "color";
 
 	MString materialName = MString(FIRE_RENDER_NODE_PREFIX) + "Passthrough";
@@ -1049,9 +1412,10 @@ MObject FireRenderXmlImportCmd::loadFireRenderPassthroughNode(std::map<std::stri
 }
 
 MObject FireRenderXmlImportCmd::loadFireRenderBumpNode(std::map<std::string, Param> &params) {
-	std::map<std::string, std::string> attributeMapper;
+	std::map<const std::string, std::string> attributeMapper;
 
 	attributeMapper["data"] = "color";
+	attributeMapper["color"] = "color";
 	attributeMapper["bumpscale"] = "strength";
 
 	MString materialName = MString(FIRE_RENDER_NODE_PREFIX) + "Bump";
@@ -1091,6 +1455,8 @@ int FireRenderXmlImportCmd::getMatType(std::string materialType) {
 	else if (materialType == "DIFFUSE_REFRACTION") { matType = RPR_MATERIAL_NODE_DIFFUSE_REFRACTION; }
 	else if (materialType == "BUMP_MAP") { matType = RPR_MATERIAL_NODE_BUMP_MAP; }
 
+	else if (materialType == "UBER") { matType = RPR_MATERIAL_NODE_STANDARD; }
+
 	return matType;
 }
 
@@ -1102,7 +1468,7 @@ MObject FireRenderXmlImportCmd::parseMaterialNode(MaterialNode &matNode)
 		matNode.parsed = true;
 		matNode.parsedObject = parseShader(matType, matNode.params);
 		MFnDependencyNode node(matNode.parsedObject);
-		node.setName(matNode.name.c_str());
+		node.setName(matNode.GetName().c_str());
 	}
 	return matNode.parsedObject;
 }
@@ -1159,36 +1525,50 @@ MObject FireRenderXmlImportCmd::parseShader(int &matType, std::map<std::string, 
 	}
 	case RPR_MATERIAL_NODE_IMAGE_TEXTURE:
 	{
-		if (params.find("data") == params.end()) {
+		if (params.find("data") == params.end()) 
+		{
+			// this is INPUT_TEXTURE. do not want to create a node
+			// SHOULDN'T BE HERE!
+
 			//xml file has the image node separated into two levels
 			//this use case has it one level, due to changes done to normal map,
 			//hence we don't need to grab the data from the second level ("level below")
 			shaderNode = loadFireRenderImageTextureNode(params);
-
-			attachToPlace2dTextureNode(shaderNode);
+			std::map<std::string, Param> params;
+			attachToPlace2dTextureNode(shaderNode, params);
 		}
-		else {
+		else 
+		{
+			// this is IMAGE_TEXTURE
 			Param tempParam = params["data"];
 			MaterialNode textureNode = nodeGroup[tempParam.value];
 
+			// combine nodes to avoid creating "fake" nodes
 			std::map<std::string, Param> paramsToParse;
-			for (auto param : params)
+			for (auto it = params.begin(); it != params.end(); ++it)
 			{
-				if (param.first != "data")
+				if (it->first == "data")
 				{
-					paramsToParse[param.first] = param.second;
+					std::string connectedNodeName = it->second.value;
+					MaterialNode connectedNode = nodeGroup[connectedNodeName];
+
+					for (auto it2 = connectedNode.params.begin(); it2 != connectedNode.params.end(); ++it2)
+					{
+						paramsToParse[it2->first] = it2->second;
+					}
+
+					continue;
 				}
-			}
-			for (auto param : textureNode.params)
-			{
-				paramsToParse[param.first] = param.second;
+
+				paramsToParse[it->first] = it->second;
 			}
 
 			shaderNode = loadFireRenderImageTextureNode(paramsToParse);
+
 			textureNode.parsed = true;
 			textureNode.parsedObject = shaderNode;
 
-			attachToPlace2dTextureNode(shaderNode);
+			attachToPlace2dTextureNode(shaderNode, paramsToParse);
 		}
 
 		break;
@@ -1197,14 +1577,14 @@ MObject FireRenderXmlImportCmd::parseShader(int &matType, std::map<std::string, 
 	{
 		shaderNode = loadFireRenderNoiseNode(params);
 
-		attachToPlace2dTextureNode(shaderNode);
+		attachToPlace2dTextureNode(shaderNode, params);
 		break;
 	}
 	case RPR_MATERIAL_NODE_DOT_TEXTURE:
 	{
 		shaderNode = loadFireRenderDotNode(params);
 
-		attachToPlace2dTextureNode(shaderNode);
+		attachToPlace2dTextureNode(shaderNode, params);
 
 		break;
 	}
@@ -1212,7 +1592,7 @@ MObject FireRenderXmlImportCmd::parseShader(int &matType, std::map<std::string, 
 	{
 		shaderNode = loadFireRenderGradientNode(params);
 
-		attachToPlace2dTextureNode(shaderNode);
+		attachToPlace2dTextureNode(shaderNode, params);
 
 		break;
 	}
@@ -1220,7 +1600,7 @@ MObject FireRenderXmlImportCmd::parseShader(int &matType, std::map<std::string, 
 	{
 		shaderNode = loadFireRenderCheckerNode(params);
 
-		attachToPlace2dTextureNode(shaderNode);
+		attachToPlace2dTextureNode(shaderNode, params);
 
 		break;
 	}

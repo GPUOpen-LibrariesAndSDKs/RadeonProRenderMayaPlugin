@@ -497,6 +497,9 @@
     <ClCompile Include="..\FireRender.Components\cpp\SunPosition\SPA.cpp">
       <Filter>FireRender.Components\SunPosition</Filter>
     </ClCompile>
+    <ClCompile Include="FireRenderImportXML.cpp">
+      <Filter>Commands</Filter>
+    </ClCompile>
     <ClCompile Include="FireRenderSwatchInstance.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

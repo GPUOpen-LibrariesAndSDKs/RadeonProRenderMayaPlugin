@@ -12,6 +12,7 @@
 
 #include "frWrap.h"
 #include "FileSystemUtils.h"
+#include "FireRenderImportExportXML.h"
 
 using namespace std;
 
@@ -588,7 +589,7 @@ void ExportMaterials(const std::string& filename, rpr_material_node* materials, 
 	}
 }
 
-bool ImportMaterials(const std::string& filename, std::map<std::string, MaterialNode> &nodes)
+bool ImportMaterials(const std::string& filename, std::map<std::string, MaterialNode> &nodes, std::string& materialName)
 {
 	XmlReader read(filename);
 	if (!read.isOpen())
@@ -649,11 +650,13 @@ bool ImportMaterials(const std::string& filename, std::map<std::string, Material
 				else if (node.name == "material")
 				{
 					std::stringstream version_stream;
-					version_stream << std::hex << node.atts.at("version");
+					version_stream << std::hex << node.atts.at("version_rpr");
 					int version;
 					version_stream >> version;
 					if (version != kVersion)
 						std::cout << "Warning: Invalid API version. Expected " << hex << kVersion << "." << std::endl;
+
+					materialName = node.atts.at("name");
 				}
 			}
 			read.next();
@@ -665,4 +668,40 @@ bool ImportMaterials(const std::string& filename, std::map<std::string, Material
 		return false;
 	}
 	return true;
+}
+
+static const std::map<const std::string, std::string> NodeNamesTable =
+{
+	{"BUMP_MAP", "RPR Bump"},
+	{"NORMAL_MAP", "RPR Normal"},
+	{"IMAGE_TEXTURE", "RPR Texture"},
+	{"ARITHMETIC", "RPR Arithmetic"},
+	{"INPUT_LOOKUP", "RPR Lookup"},
+	{"BLEND_VALUE", "RPR Blend"}
+};
+
+std::string MaterialNode::GetName(void) const
+{
+	// return name of material for Uber material node
+	if (IsUber())
+		return name;
+
+	// generate name for other types
+	auto it = NodeNamesTable.find(type);
+	if (it != NodeNamesTable.end())
+		return it->second;
+
+	// default case
+	return name;
+}
+
+MaterialNode::ConnectionsList MaterialNode::GetConnections(void) const
+{
+	ConnectionsList list;
+
+	for (auto it = params.begin(); it != params.end(); it++)
+		if (it->second.type == "connection")
+			list.push_back(std::pair<std::string, std::string>(it->first, it->second.value));
+
+	return list;
 }

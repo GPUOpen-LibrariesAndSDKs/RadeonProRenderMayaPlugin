@@ -4,8 +4,10 @@
 #include <maya/MSyntax.h>
 #include <maya/MArgDatabase.h>
 #include <maya/MObject.h>
-
+#include <tuple>
 #include "MaterialLoader.h"
+#include <maya/MStatus.h>
+#include <maya/MString.h>
 
 #define kMaterialNameFlag "-mn"
 #define kMaterialNameFlagLong "-materialName"
@@ -54,6 +56,8 @@ public:
 	MStatus doIt(const MArgList& args);
 };
 
+#define useNewImport
+
 class FireRenderXmlImportCmd : public MPxCommand
 {
 	enum ShadingNodeType
@@ -77,12 +81,16 @@ public:
 	static MSyntax  newSyntax();
 
 	MStatus doIt(const MArgList& args);
+	typedef std::map<const std::string, std::string> AttributeMapper;
+	std::tuple<const AttributeMapper*, ShadingNodeType, MString> GetAttributeMapper(int matType) const;
+
+	std::tuple<MStatus, MString> GetFilePath(const MArgDatabase& argData);
 
 	int getAttrType(std::string attrType);
-	MObject createShadingNode(MString materialName, std::map<std::string, std::string> &attributeMapper, std::map<std::string, Param> &params, ShadingNodeType shadingNodeType, frw::ShaderType shaderType = frw::ShaderTypeInvalid);
-	void parseAttributeParam(MObject shaderNode, std::map<std::string, std::string> &attributeMapper, std::string attrName, Param &attrParam);
+	MObject createShadingNode(MString materialName, std::map<const std::string, std::string> &attributeMapper, std::map<std::string, Param> &params, ShadingNodeType shadingNodeType, frw::ShaderType shaderType = frw::ShaderTypeInvalid);
+	void parseAttributeParam(MObject shaderNode, std::map<const std::string, std::string> &attributeMapper, const std::string attrName, const Param &attrParam);
 
-	void attachToPlace2dTextureNode(MObject objectToConnectTo);
+	void attachToPlace2dTextureNode(MObject objectToConnectTo, const std::map<std::string, Param>& paramsToParse);
 	MObject createPlace2dTextureNode(std::string name);
 	void connectPlace2dTextureNodeTo(MObject place2dTextureNode, MObject objectToConnectTo);
 
@@ -120,6 +128,6 @@ public:
 
 private:
 	std::map<std::string, MaterialNode> nodeGroup;
-	MString directoryPath;
+	MString m_directoryPath;
 	bool m_importImages;
 };

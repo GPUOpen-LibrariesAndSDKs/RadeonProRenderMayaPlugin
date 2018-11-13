@@ -426,7 +426,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 #endif
 
 	Attribute::reflectionIOR = nAttr.create("reflectIOR", "grior", MFnNumericData::kFloat, 1.5);
-	MAKE_INPUT_CONST(nAttr);
+	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 10.0);
 
 #if !USE_RPRX
@@ -455,7 +455,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 #endif
 
 	Attribute::clearCoatIOR = nAttr.create("coatIor", "ccior", MFnNumericData::kFloat, 1.5);
-	MAKE_INPUT_CONST(nAttr);
+	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 10.0);
 
 #if USE_RPRX
@@ -495,7 +495,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	SET_MINMAX(nAttr, 0.0, 1.0);
 
 	Attribute::refractionIOR = nAttr.create("refractIor", "refior", MFnNumericData::kFloat, 1.5);
-	MAKE_INPUT_CONST(nAttr);
+	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 10.0);
 
 #if RPR_API_VERSION >= 0x010032000
@@ -515,7 +515,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT_CONST(nAttr);
 
 	Attribute::refractionAbsorptionDistance = nAttr.create("refractAbsorptionDistance", "refd", MFnNumericData::kFloat, 0);
-	MAKE_INPUT_CONST(nAttr);
+	MAKE_INPUT(nAttr);
 	nAttr.setSoftMax(10.0);
 	SET_MINMAX(nAttr, 0.0, 500.0);
 
@@ -572,7 +572,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 100.0);
 
-	Attribute::displacementMax = nAttr.create("displacementMax", "dspmx", MFnNumericData::kFloat, 0.0);
+	Attribute::displacementMax = nAttr.create("displacementMax", "dspmx", MFnNumericData::kFloat, 0.01);
 	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 100.0);
 

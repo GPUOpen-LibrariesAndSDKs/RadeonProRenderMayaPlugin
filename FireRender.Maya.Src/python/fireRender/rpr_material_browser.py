@@ -62,7 +62,7 @@ class RPRMaterialBrowser(object) :
 
             # Open the key.
             try:
-                key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "SOFTWARE\\AMD\\RadeonProRender\\Maya")
+                key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\AMD\\RadeonProRender\\MaterialLibrary\\Maya")
 
                 # Read the value.
                 result = _winreg.QueryValueEx(key, "MaterialLibraryPath")
@@ -74,7 +74,18 @@ class RPRMaterialBrowser(object) :
                 return result[0]
 
             except Exception:
-                pass
+                try:
+                    key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "SOFTWARE\\AMD\\RadeonProRender\\Maya")
+
+                    # Read the value.
+                    result = _winreg.QueryValueEx(key, "MaterialLibraryPath")
+                    # Close the key.
+                    _winreg.CloseKey(key)
+                    # Return value from the resulting tuple.		
+                    return result[0]
+
+                except Exception:
+                    pass
 
         # Otherwise, use an environment variable.
         return mel.eval("getenv(\"RPR_MATERIAL_LIBRARY_PATH\")")
@@ -587,7 +598,7 @@ class RPRMaterialBrowser(object) :
         # Add materials for the selected category.
         for material in self.materials :
             fileName = material["fileName"]
-            imageFileName = self.libraryPath + "/" + fileName + "/" + fileName + "_Icon.jpg"
+            imageFileName = self.libraryPath + "/" + fileName + "/" + fileName + ".jpg"
 
             materialName = material["name"]
 

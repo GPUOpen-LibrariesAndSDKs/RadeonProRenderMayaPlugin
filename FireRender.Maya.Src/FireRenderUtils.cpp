@@ -2006,3 +2006,28 @@ bool isMetalOn()
     return false;
 #endif
 }
+
+bool DisconnectFromPlug(MPlug& plug)
+{
+	if (plug.isNull())
+		return false;
+
+	MPlugArray connections;
+	plug.connectedTo(connections, true, false);
+
+	if (connections.length())
+	{
+		MDGModifier modifier;
+		for (unsigned int i = 0; i < connections.length(); i++)
+		{
+			MStatus result = modifier.disconnect(connections[i], plug);
+
+			if (result != MS::kSuccess)
+				return false;
+
+			modifier.doIt();
+		}
+	}
+
+	return true;
+}
