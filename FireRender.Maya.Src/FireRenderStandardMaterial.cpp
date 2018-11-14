@@ -117,6 +117,8 @@ namespace
 		MObject displacementMin;
 		MObject displacementMax;
 
+		MObject displacementEnableAdaptiveSubdiv;
+		MObject displacementASubdivFactor;
 		MObject displacementSubdiv;
 		MObject displacementCreaseWeight;
 		MObject displacementBoundary;
@@ -589,6 +591,14 @@ MStatus FireMaya::StandardMaterial::initialize()
 	eAttr.addField("Edge And Corner", Displacement::kDisplacement_EdgeAndCorner);
 	MAKE_INPUT_CONST(eAttr);
 
+	Attribute::displacementEnableAdaptiveSubdiv = nAttr.create("displacementEnableAdaptiveSubdiv", "daen", MFnNumericData::kBoolean, 0);
+	MAKE_INPUT_CONST(nAttr);
+
+	Attribute::displacementASubdivFactor = nAttr.create("displacementASubdivFactor", "dasf", MFnNumericData::kFloat, 1.0f);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.001);
+	nAttr.setSoftMax(10.0);
+
 	Attribute::normalMapEnable = nAttr.create("normalMapEnable", "enm", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
 
@@ -761,6 +771,8 @@ MStatus FireMaya::StandardMaterial::initialize()
 	ADD_ATTRIBUTE(Attribute::displacementMax);
 	ADD_ATTRIBUTE(Attribute::displacementSubdiv);
 	ADD_ATTRIBUTE(Attribute::displacementCreaseWeight);
+	ADD_ATTRIBUTE(Attribute::displacementEnableAdaptiveSubdiv);
+	ADD_ATTRIBUTE(Attribute::displacementASubdivFactor);
 #endif
 #if !USE_RPRX
 	ADD_ATTRIBUTE(Attribute::transparencyColor);
@@ -1113,15 +1125,13 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 			FireMaya::Displacement* displacement = dynamic_cast<FireMaya::Displacement*>(dispShaderNode.userNode());
 			if (displacement)
 			{
-				float minHeight, maxHeight, creaseWeight;
-				int subdivision, boundary;
-				frw::Value mapValue;
+				Displacement::DisplacementParams params;
 
-				bool haveDisplacement = displacement->getValues(mapValue, scope, minHeight, maxHeight, subdivision, creaseWeight, boundary);
+				bool haveDisplacement = displacement->getValues(scope, params);
 
 				if (haveDisplacement)
 				{
-					material.xSetValue(RPRX_UBER_MATERIAL_DISPLACEMENT, mapValue);
+					material.xSetValue(RPRX_UBER_MATERIAL_DISPLACEMENT, params.map);
 				}
 			}
 			else // try get displacement map from uber material itself

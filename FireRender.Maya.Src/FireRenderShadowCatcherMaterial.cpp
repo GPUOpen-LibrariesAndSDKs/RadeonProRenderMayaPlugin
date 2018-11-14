@@ -178,14 +178,12 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 		FireMaya::Displacement* displacement = dynamic_cast<FireMaya::Displacement*>(dispShaderNode.userNode());
 		if (displacement)
 		{
-			float minHeight, maxHeight, creaseWeight;
-			int subdivision, boundary;
-			frw::Value mapValue;
+			Displacement::DisplacementParams params;
 
-			bool haveDisplacement = displacement->getValues(mapValue, scope, minHeight, maxHeight, subdivision, creaseWeight, boundary);
+			bool haveDisplacement = displacement->getValues(scope, params);
 			if (haveDisplacement)
 			{
-				shader.xSetValue(RPRX_UBER_MATERIAL_DISPLACEMENT, mapValue);
+				shader.xSetValue(RPRX_UBER_MATERIAL_DISPLACEMENT, params.map);
 			}
 		}
 	}

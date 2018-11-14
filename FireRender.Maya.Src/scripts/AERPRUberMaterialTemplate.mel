@@ -177,9 +177,24 @@ global proc AEUberCheckUseDisplacement(string $nodeName)
 	editorTemplate -dimControl $nodeName "displacementMap" ($value == 0);
 	editorTemplate -dimControl $nodeName "displacementMin" ($value == 0);
 	editorTemplate -dimControl $nodeName "displacementMax" ($value == 0);
+	editorTemplate -dimControl $nodeName "displacementEnableAdaptiveSubdiv" ($value == 0);
 	editorTemplate -dimControl $nodeName "displacementSubdiv" ($value == 0);
+	editorTemplate -dimControl $nodeName "displacementASubdivFactor" ($value == 0);
 	editorTemplate -dimControl $nodeName "displacementCreaseWeight" ($value == 0);
 	editorTemplate -dimControl $nodeName "displacementBoundary" ($value == 0);
+	AEUberCheckUseAdaptiveSubdiv($nodeName);
+}
+
+global proc AEUberCheckUseAdaptiveSubdiv(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".displacementEnableAdaptiveSubdiv";
+	int $value = `getAttr $nodeAttr`;
+
+	string $nodeEnabledAttr = $nodeName + ".displacementEnable";
+	int $enabled = `getAttr $nodeEnabledAttr`;
+
+	editorTemplate -dimControl $nodeName "displacementASubdivFactor" (($value == 0) || ($enabled == 0)); 
+	editorTemplate -dimControl $nodeName "displacementSubdiv" (($value == 1) || ($enabled == 0));
 }
 
 global proc AEUberCheckCoatMetalness(string $nodeName)
@@ -318,7 +333,9 @@ global proc AERPRUberMaterialTemplateNew(string $nodeName)
 		editorTemplate -label "Displacement Map" -addControl "displacementMap";
 		editorTemplate -label "Displacement min value" -addControl "displacementMin";
 		editorTemplate -label "Displacement max value" -addControl "displacementMax";
+		editorTemplate -label "Use Adaptive Subdivision" -addControl "displacementEnableAdaptiveSubdiv" "AEUberCheckUseAdaptiveSubdiv";
 		editorTemplate -label "Subdivision" -addControl "displacementSubdiv";
+		editorTemplate -label "Adaptive Subdiv Factor" -addControl "displacementASubdivFactor";
 		editorTemplate -label "Crease Weight" -addControl "displacementCreaseWeight";
 		editorTemplate -label "Boundary" -addControl "displacementBoundary";
 	editorTemplate -endLayout;
