@@ -4,7 +4,6 @@
 #include "base_mesh.h"
 #include "FireRenderDisplacement.h"
 #include "SkyBuilder.h"
-
 #include <float.h>
 
 #include <maya/MFnLight.h>
@@ -768,6 +767,8 @@ void FireRenderMesh::setupDisplacement(MObject shadingEngine, frw::Shape shape)
 					float creaseWeight = 0;
 					int boundary = RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_AND_CORNER;
 					frw::Value mapValue;
+					bool isAdaptive = false;
+					float adaptiveFactor = 0.0f;
 
 					plug = shaderNode.findPlug("displacementMin");
 					if (!plug.isNull())
@@ -807,10 +808,30 @@ void FireRenderMesh::setupDisplacement(MObject shadingEngine, frw::Shape shape)
 						}
 					}
 
+					plug = shaderNode.findPlug("displacementEnableAdaptiveSubdiv");
+					if (!plug.isNull())
+						plug.getValue(isAdaptive);
+
+					plug = shaderNode.findPlug("displacementASubdivFactor");
+					if (!plug.isNull())
+						plug.getValue(adaptiveFactor);
+
 					if (haveMap)
 					{
 						shape.SetDisplacement(mapValue, minHeight, maxHeight);
-						shape.SetSubdivisionFactor(subdivision);
+						if (!isAdaptive)
+						{
+							shape.SetSubdivisionFactor(subdivision);
+						}
+						else
+						{
+							FireRenderContext *ctx = this->context();
+							frw::Scene scn = ctx->GetScene();
+							frw::Camera cam = scn.GetCamera();
+							frw::Context ctx2 = scn.GetContext();
+							rpr_framebuffer fb = ctx->frameBufferAOV(RPR_AOV_COLOR);
+							shape.SetAdaptiveSubdivisionFactor(adaptiveFactor, cam.Handle(), fb);
+						}
 						shape.SetSubdivisionCreaseWeight(creaseWeight);
 						shape.SetSubdivisionBoundaryInterop(boundary);
 
@@ -822,22 +843,17 @@ void FireRenderMesh::setupDisplacement(MObject shadingEngine, frw::Shape shape)
 
 		if (displacement)
 		{
-			float minHeight = 0;
-			float maxHeight = 0;
-			int subdivision = 0;
-			float creaseWeight = 0;
-			int boundary = 0;
-			frw::Value mapValue;
+			FireMaya::Displacement::DisplacementParams params;
 
 			auto scope = Scope();
-			haveDisplacement = displacement->getValues(mapValue, scope, minHeight, maxHeight, subdivision, creaseWeight, boundary);
+			haveDisplacement = displacement->getValues(scope, params);
 
 			if (haveDisplacement)
 			{
-				shape.SetDisplacement(mapValue, minHeight, maxHeight);
-				shape.SetSubdivisionFactor(subdivision);
-				shape.SetSubdivisionCreaseWeight(creaseWeight);
-				shape.SetSubdivisionBoundaryInterop(boundary);
+				shape.SetDisplacement(params.map, params.minHeight, params.maxHeight);
+				shape.SetSubdivisionFactor(params.subdivision);
+				shape.SetSubdivisionCreaseWeight(params.creaseWeight);
+				shape.SetSubdivisionBoundaryInterop(params.boundary);
 			}
 		}
 	}

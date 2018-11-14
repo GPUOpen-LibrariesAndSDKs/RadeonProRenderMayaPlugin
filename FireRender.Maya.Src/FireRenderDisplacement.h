@@ -19,6 +19,28 @@ namespace FireMaya
 
 		frw::Shader GetShader(Scope& scope) override;
 
-		bool getValues(frw::Value &map, Scope &scope, float &minHeight, float &maxHeight, int &subdivision, float &creaseWeight, int &boundary);
+		struct DisplacementParams
+		{
+			frw::Value map;
+			float minHeight;
+			float maxHeight;
+			int subdivision;
+			float creaseWeight;
+			int boundary;
+			bool isAdaptive;
+			float adaptiveFactor;
+
+			DisplacementParams()
+				: minHeight(0.0f)
+				, maxHeight(0.0f)
+				, subdivision(1)
+				, creaseWeight(0.0f)
+				, boundary(RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_ONLY)
+				, isAdaptive(false)
+				, adaptiveFactor(1.0f)
+			{}
+		};
+
+		bool getValues(Scope& scope, DisplacementParams& params);
 	};
 }

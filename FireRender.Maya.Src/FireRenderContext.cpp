@@ -1691,6 +1691,13 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 	bool changed = m_dirty;
 
+	if (m_cameraDirty)
+	{
+		m_cameraDirty = false;
+		m_camera.Freshen();
+		changed = true;
+	}
+
 #ifdef OPTIMIZATION_CLOCK
 	int overallFreshen = 0;
 	timeInInnerAddPolygon = 0;
@@ -1763,13 +1770,6 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 	auto after_commit_shd = std::chrono::steady_clock::now();
 	LogPrint("time spent in CommitShaders = %d ms", std::chrono::duration_cast<std::chrono::milliseconds>(after_commit_shd - end));
 #endif
-
-	if (m_cameraDirty)
-	{
-		m_cameraDirty = false;
-		m_camera.Freshen();
-		changed = true;
-	}
 
 	if (changed)
 	{

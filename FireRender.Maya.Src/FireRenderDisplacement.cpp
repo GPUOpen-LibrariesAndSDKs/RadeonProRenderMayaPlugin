@@ -99,29 +99,33 @@ frw::Shader FireMaya::Displacement::GetShader(Scope& scope)
 	return 0;
 }
 
-bool FireMaya::Displacement::getValues(frw::Value &map, Scope &scope, float &minHeight, float &maxHeight, int &subdivision, float &creaseWeight, int &boundary)
+bool FireMaya::Displacement::getValues(Scope &scope, DisplacementParams& params)
 {
 	MFnDependencyNode shaderNode(thisMObject());
 	frw::Value color = scope.GetConnectedValue(shaderNode.findPlug(Attribute::map));
 
-	map = color;
+	params.map = color;
 	bool haveMap = color.IsNode();
 
 	MPlug plug = shaderNode.findPlug("minHeight");
+
 	if (!plug.isNull())
-		plug.getValue(minHeight);
+		plug.getValue(params.minHeight);
 
 	plug = shaderNode.findPlug("maxHeight");
+
 	if (!plug.isNull())
-		plug.getValue(maxHeight);
+		plug.getValue(params.maxHeight);
 
 	plug = shaderNode.findPlug("subdivision");
+
 	if (!plug.isNull())
-		plug.getValue(subdivision);
+		plug.getValue(params.subdivision);
 
 	plug = shaderNode.findPlug("creaseWeight");
+
 	if (!plug.isNull())
-		plug.getValue(creaseWeight);
+		plug.getValue(params.creaseWeight);
 
 	plug = shaderNode.findPlug("boundary");
 	if (!plug.isNull())
@@ -132,14 +136,24 @@ bool FireMaya::Displacement::getValues(frw::Value &map, Scope &scope, float &min
 			Type b = static_cast<Type>(n);
 			if (b == kDisplacement_EdgeAndCorner)
 			{
-				boundary = RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_AND_CORNER;
+				params.boundary = RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_AND_CORNER;
 			}
 			else
 			{
-				boundary = RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_ONLY;
+				params.boundary = RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_ONLY;
 			}
 		}
 	}
+
+	plug = shaderNode.findPlug("enableAdaptiveSubdiv");
+
+	if (!plug.isNull())
+		plug.getValue(params.isAdaptive);
+
+	plug = shaderNode.findPlug("aSubdivFactor");
+
+	if (!plug.isNull())
+		plug.getValue(params.adaptiveFactor);
 
 	return haveMap;
 }
