@@ -159,7 +159,7 @@ void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool rende
 	}
 
 	// Here we have buffers setup with proper size, lets setup denoiser if needed
-	if (m_globals.denoiserSettings.enabled)
+	if (m_globals.denoiserSettings.enabled && ((m_RenderType == RenderType::ProductionRender) || (m_RenderType == RenderType::IPR)))
 	{
 		setupDenoiser();
 	}
