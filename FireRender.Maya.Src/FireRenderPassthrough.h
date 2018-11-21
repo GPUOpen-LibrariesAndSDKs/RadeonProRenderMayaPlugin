@@ -4,7 +4,7 @@
 
 namespace FireMaya
 {
-	class Passthrough : public ValueNode
+	class Passthrough : public ShaderNode
 	{
 	public:
 		// initialize and type info
@@ -12,7 +12,7 @@ namespace FireMaya
 		static void* creator();
 		static MStatus initialize();
 
-		frw::Value GetValue(Scope& scope) override;
+		frw::Shader GetShader(Scope& scope) override;
 	};
 }
 

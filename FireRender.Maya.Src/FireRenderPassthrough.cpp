@@ -20,9 +20,10 @@ MStatus FireMaya::Passthrough::initialize()
 	MFnNumericAttribute nAttr;
 
 	Attribute::color = nAttr.createColor("color", "c");
+	nAttr.setDefault(1.0f, 1.0f, 1.0f);
 	MAKE_INPUT(nAttr);
 
-	Attribute::output = nAttr.createColor("out", "o");
+	Attribute::output = nAttr.createColor("outColor", "oc");
 	MAKE_OUTPUT(nAttr);
 
 	CHECK_MSTATUS(addAttribute(Attribute::color));
@@ -33,12 +34,12 @@ MStatus FireMaya::Passthrough::initialize()
 	return MS::kSuccess;
 }
 
-frw::Value FireMaya::Passthrough::GetValue(Scope& scope)
+frw::Shader FireMaya::Passthrough::GetShader(Scope& scope)
 {
 	MFnDependencyNode shaderNode(thisMObject());
 
-	frw::ValueNode valueNode(scope.MaterialSystem(), frw::ValueTypePassthrough);
-	valueNode.SetValue("color", scope.GetValue(shaderNode.findPlug(Attribute::color)));
+	frw::Shader shader(scope.MaterialSystem(), frw::ShaderTypeFlatColor);
+	shader.SetValue("color", scope.GetValue(shaderNode.findPlug(Attribute::color)));
 
-	return valueNode;
+	return shader;
 }

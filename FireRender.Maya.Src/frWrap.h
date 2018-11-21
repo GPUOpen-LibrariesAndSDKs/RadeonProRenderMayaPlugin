@@ -126,7 +126,7 @@ namespace frw
 		ValueTypeLookup = RPR_MATERIAL_NODE_INPUT_LOOKUP,
 		ValueTypeBlend = RPR_MATERIAL_NODE_BLEND_VALUE,
 		ValueTypeFresnelSchlick = RPR_MATERIAL_NODE_FRESNEL_SCHLICK,
-		ValueTypePassthrough = RPR_MATERIAL_NODE_PASSTHROUGH,
+		ValueTypePassthrough = RPR_MATERIAL_NODE_PASSTHROUGH, // legacy, substituted with flat color shader
         ValueTypeAOMap = RPR_MATERIAL_NODE_AO_MAP,
 	};
 
@@ -149,6 +149,7 @@ namespace frw
 		ShaderTypeDiffuseRefraction = RPR_MATERIAL_NODE_DIFFUSE_REFRACTION,
 		ShaderTypeAdd = RPR_MATERIAL_NODE_ADD,
 		ShaderTypeVolume = RPR_MATERIAL_NODE_VOLUME,
+		ShaderTypeFlatColor = RPR_MATERIAL_NODE_PASSTHROUGH
 	};
 
 	enum ContextParameterType

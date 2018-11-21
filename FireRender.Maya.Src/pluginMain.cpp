@@ -678,6 +678,11 @@ MStatus initializePlugin(MObject obj)
 		FireMaya::FireRenderPBRMaterial::initialize,
 		MPxNode::kDependNode, &UserClassify));
 
+	// Flat Color (pass through) shader
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "FlatColorMaterial", FireMaya::Passthrough::FRTypeID(),
+		FireMaya::Passthrough::creator,
+		FireMaya::Passthrough::initialize,
+		MPxNode::kDependNode, &UserClassify));
 
 	static const MString FireRenderUberDrawDBClassification("drawdb/shader/surface/" + namePrefix + "UberMaterial");
 	static const MString FireRenderUberRegistrantId(namePrefix + "UberMaterialRegistrantId");
@@ -757,11 +762,6 @@ MStatus initializePlugin(MObject obj)
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "Noise", FireMaya::Noise::FRTypeID(),
 		FireMaya::Noise::creator,
 		FireMaya::Noise::initialize,
-		MPxNode::kDependNode, &UserUtilityClassify));
-
-	CHECK_MSTATUS(plugin.registerNode(namePrefix + "Passthrough", FireMaya::Passthrough::FRTypeID(),
-		FireMaya::Passthrough::creator,
-		FireMaya::Passthrough::initialize,
 		MPxNode::kDependNode, &UserUtilityClassify));
 
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "Bump", FireMaya::Bump::FRTypeID(),
