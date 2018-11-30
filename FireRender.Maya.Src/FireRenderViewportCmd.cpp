@@ -31,6 +31,7 @@ MSyntax FireRenderViewportCmd::newSyntax()
 	CHECK_MSTATUS(syntax.addFlag(kActiveCacheFlag, kActiveCacheFlagLong, MSyntax::kBoolean));
 	CHECK_MSTATUS(syntax.addFlag(kViewportModeFlag, kViewportModeFlagLong, MSyntax::kString));
 	CHECK_MSTATUS(syntax.addFlag(kRefreshFlag, kRefreshFlagLong, MSyntax::kNoArg));
+	CHECK_MSTATUS(syntax.addFlag(kViewportAOVFlag, kViewportAOVFlagLong, MSyntax::kLong));
 
 	return syntax;
 }
@@ -106,7 +107,18 @@ MStatus FireRenderViewportCmd::doIt(const MArgList & args)
 
 			viewportActions.push_back([=](FireRenderViewport* viewport)
 			{
-				viewport->setViewportRenderModel(viewportMode);
+				viewport->setViewportRenderMode(viewportMode);
+			});
+		}
+
+		if (argData.isFlagSet(kViewportAOVFlag))
+		{
+			int aovIndex;
+			argData.getFlagArgument(kViewportAOVFlag, 0, aovIndex);
+
+			viewportActions.push_back([=](FireRenderViewport* viewport)
+			{
+				viewport->setCurrentAOV(aovIndex);
 			});
 		}
 

@@ -24,6 +24,9 @@
 #define kViewportModeFlag "-vm"
 #define kViewportModeFlagLong "-viewportMode"
 
+#define kViewportAOVFlag "-va"
+#define kViewportAOVFlagLong "-viewportAOV"
+
 #define kRefreshFlag "-rf"
 #define kRefreshFlagLong "-refresh"
 
