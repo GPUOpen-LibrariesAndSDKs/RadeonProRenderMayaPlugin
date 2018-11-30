@@ -39,7 +39,7 @@ FireRenderAOVs::FireRenderAOVs() :
 	AddAOV(RPR_AOV_SHADING_NORMAL, "aovShadingNormal", "Shading Normal", "shading_normal",
 		{ { "X", "Y", "Z" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::NORMAL } });
 
-	AddAOV(RPR_AOV_DEPTH, "aovDepth", "Depth", "depth", 
+	AddAOV<FireRenderAOVDepth>(RPR_AOV_DEPTH, "aovDepth", "Depth", "depth",
 		{ { "Z" },{ TypeDesc::FLOAT } });
 
 	AddAOV(RPR_AOV_OBJECT_ID, "aovObjectId", "Object ID", "object_id",
@@ -94,13 +94,14 @@ FireRenderAOVs::~FireRenderAOVs()
 	freePixels();
 }
 
+template<class T>
 void FireRenderAOVs::AddAOV(unsigned int id, 
 							const MString& attribute, 
 							const MString& name,
 							const MString& folder, 
 							AOVDescription description)
 {
-	FireRenderAOV* aov = new FireRenderAOV(id, attribute, name, folder, description);
+	FireRenderAOV* aov = new T(id, attribute, name, folder, description);
 
 	m_aovs[id] = std::shared_ptr<FireRenderAOV>(aov);
 }

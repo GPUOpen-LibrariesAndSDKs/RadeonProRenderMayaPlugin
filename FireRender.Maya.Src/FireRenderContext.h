@@ -167,14 +167,19 @@ public:
 	// \param shaderObj Shader used to render the sphere
 	void initSwatchScene();
 
+	// It resets frame buffer and reinitialize it if particular aov is enabled
+	void resetAOV(int index, rpr_GLuint* glTexture);
+
+	void enableAOVAndReset(int index, bool flag);
+
 	// Sets the resolution and perform an initial render and frame buffer resolve.
 	void resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
 
 	// Set the frame buffer resolution
 	void setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
 
-	void enableAOV(int aov){
-		aovEnabled[aov] = true;
+	void enableAOV(int aov, bool flag = true){
+		aovEnabled[aov] = flag;
 	}
 	bool isAOVEnabled(int aov){
 		return aovEnabled[aov];
@@ -511,7 +516,7 @@ private:
 		return bool(white_balance) || bool(simple_tonemap) || bool(tonemap) || bool(normalization) || bool(gamma_correction);
 	}
 
-	void InitBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture = nullptr);
+	void initBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture = nullptr);
 
 	void turnOnAOVsForDenoiser(bool allocBuffer = false);
 	void setupDenoiser();

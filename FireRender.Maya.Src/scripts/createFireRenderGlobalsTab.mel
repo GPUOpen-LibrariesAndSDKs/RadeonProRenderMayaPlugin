@@ -365,7 +365,7 @@ global proc createFireRenderDepthParams(string $parent)
 	columnLayout;
 
 	attrControlGrp
-		 -label "AutoNormalise"
+		 -label "AutoNormalize"
 		 -attribute "RadeonProRenderGlobals.aovDepthAutoNormalise"
 		 -changeCommand aovDepthAutoNormaliseChanged;
 

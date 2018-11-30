@@ -155,7 +155,7 @@ void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool rende
 
 	for (int i = 0; i != RPR_AOV_MAX; ++i)
 	{
-		InitBuffersForAOV(context, i, glTexture);
+		initBuffersForAOV(context, i, glTexture);
 	}
 
 	// Here we have buffers setup with proper size, lets setup denoiser if needed
@@ -165,7 +165,20 @@ void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool rende
 	}
 }
 
-void FireRenderContext::InitBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture)
+void FireRenderContext::resetAOV(int index, rpr_GLuint* glTexture)
+{
+	auto context = scope.Context();
+
+	initBuffersForAOV(context, index, glTexture);
+}
+
+void FireRenderContext::enableAOVAndReset(int index, bool flag)
+{
+	enableAOV(index, flag);
+	resetAOV(index, nullptr);
+}
+
+void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture)
 {
 	rpr_framebuffer_format fmt = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
 
@@ -190,6 +203,10 @@ void FireRenderContext::InitBuffersForAOV(frw::Context& context, int index, rpr_
         }
 
 		m.framebufferAOV_resolved[index].Clear();
+	}
+	else
+	{
+		context.SetAOV(nullptr, index);
 	}
 }
 
@@ -364,7 +381,7 @@ void FireRenderContext::turnOnAOVsForDenoiser(bool allocBuffer)
 			if (allocBuffer)
 			{
                 auto ctx = scope.Context();
-				InitBuffersForAOV(ctx, aov);
+				initBuffersForAOV(ctx, aov);
 			}
 		}
 	}

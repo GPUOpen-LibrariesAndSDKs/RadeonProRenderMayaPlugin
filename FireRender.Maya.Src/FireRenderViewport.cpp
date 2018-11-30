@@ -51,7 +51,8 @@ FireRenderViewport::FireRenderViewport(const MString& panelName) :
 	m_textureChanged(false),
 	m_showDialogNeeded(false),
 	m_closeDialogNeeded(false),
-	m_createFailed(false)
+	m_createFailed(false),
+	m_currentAOV(RPR_AOV_COLOR)
 {
 	m_context.m_RenderType = RenderType::ViewportRender;
 
@@ -103,7 +104,7 @@ MStatus FireRenderViewport::setup()
 
 	// Check if updating viewport's texture is required.
 	// No action is required if GL interop is active: the shared OpenGL frame buffer is rendered directly.
-	if (!m_context.isGLInteropActive() && m_pixelsUpdated)
+	if (!m_context.isGLInteropActive() && m_pixelsUpdated || (m_currentAOV != RPR_AOV_COLOR))
 	{
 		// Acquire the pixels lock.
 		AutoMutexLock pixelsLock(m_pixelsLock);
@@ -343,7 +344,7 @@ void FireRenderViewport::setUseAnimationCache(bool value)
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderViewport::setViewportRenderModel(int renderMode)
+void FireRenderViewport::setViewportRenderMode(int renderMode)
 {
 	FireRenderThread::RunOnceProcAndWait([this, renderMode]()
 	{
@@ -451,6 +452,9 @@ bool FireRenderViewport::initialize()
 
 			//enable AOV-COLOR so that it can be resolved and used properly
 			m_context.enableAOV(RPR_AOV_COLOR);
+
+			if (m_currentAOV != RPR_AOV_COLOR)
+				m_context.enableAOV(m_currentAOV);
 
 			if (!m_context.buildScene(animating, true, glViewport))
 				return false;
@@ -685,7 +689,7 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 {
 	// The resolved frame buffer is shared with the Maya viewport
 	// when GL interop is active, so only the resolve step is required.
-	if (m_context.isGLInteropActive())
+	if (m_currentAOV == RPR_AOV_COLOR && m_context.isGLInteropActive())
 	{
 		m_context.frameBufferAOV_Resolved(RPR_AOV_COLOR);
 		return;
@@ -698,13 +702,14 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 	if (storedFrame)
 	{
 		m_context.readFrameBuffer(reinterpret_cast<RV_PIXEL*>(storedFrame->data()),
-			RPR_AOV_COLOR, m_context.width(), m_context.height(), region, false);
+			m_currentAOV, m_context.width(), m_context.height(), region, false);
 	}
 
 	// Otherwise, read to a temporary buffer.
 	else
 	{
-		m_context.readFrameBuffer(m_pixels.data(), RPR_AOV_COLOR, m_context.width(), m_context.height(), region, false);
+		//m_context.enableAOV
+		m_context.readFrameBuffer(m_pixels.data(), m_currentAOV, m_context.width(), m_context.height(), region, false);
 
 		// Flag as updated so the pixels will
 		// be copied to the viewport texture.
@@ -781,6 +786,48 @@ bool FireRenderViewport::hasTextureChanged()
 	return changed;
 }
 
+void FireRenderViewport::enableNecessaryAOVs(int index, bool flag)
+{
+	static const std::vector<int> scaov = { RPR_AOV_BACKGROUND, RPR_AOV_OPACITY };
+
+	m_context.enableAOVAndReset(index, flag);
+
+	if (index == RPR_AOV_SHADOW_CATCHER)
+	{
+		for (int index : scaov)
+		{
+			m_context.enableAOVAndReset(index, flag);
+		}
+	}
+}
+
+void FireRenderViewport::setCurrentAOV(int aov)
+{
+	if (m_currentAOV == aov)
+	{
+		return;
+	}
+
+	AutoMutexLock contextLock(m_contextLock);
+
+	// turning off previous selected aov if it is not color
+	if (m_currentAOV != RPR_AOV_COLOR)
+	{
+		enableNecessaryAOVs(m_currentAOV, false);
+	}
+
+	// turning on newly selected aov(s)
+	if (aov != RPR_AOV_COLOR)
+	{
+		enableNecessaryAOVs(aov, true);
+	}
+
+	m_context.setDirty();
+	refreshContext();
+
+	m_currentAOV = aov;
+}
+
 // -----------------------------------------------------------------------------
 void FireRenderViewport::addMenu()
 {
@@ -818,6 +865,27 @@ def setFireViewportMode_texcoord(checked=True):
 def setFireViewportMode_ambientOcclusion(checked=True):
 	maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportMode="ambientOcclusion")
 
+def createAOVsMenu(frMenu):
+	def setFireViewportAOV(aov):
+		maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportAOV=aov)
+
+	frSubMenu = frMenu.addMenu("AOV")
+
+	aovs = ["Color", "Opacity", "World Corrdinate", "UV", "Material Idx", "Geometric Normal", "Shading Normal", "Depth", "Object ID", "Object Group ID"]
+	aovs.extend(["Shadow Catcher", "Background", "Emission", "Velocity", "Direct Illumination", "Indirect Illumination", "AO", "Direct Diffuse"])
+	aovs.extend(["Direct Reflect", "Indirect Diffuse", "Indirect Reflect", "Refract", "Volume"])
+
+	ag = QtWidgets.QActionGroup(frSubMenu)
+	count = 0
+	for aov in aovs:
+		action = frSubMenu.addAction(aov)
+		action.triggered.connect( lambda index = count: setFireViewportAOV(index))
+		action.setActionGroup(ag)
+		action.setCheckable(True)
+		if count == 0 :
+			action.setChecked(True)
+		count = count + 1
+
 ptr = omu.MQtUtil.findControl("m_panelName", long(omu.MQtUtil.mainWindow()))
 w = shiboken2.wrapInstance(long(ptr), QtWidgets.QWidget)
 menuBar = w.findChildren(QtWidgets.QMenuBar)[0]
@@ -834,6 +902,7 @@ if not frExist:
 	action = frMenu.addAction("Clear animation cache")
 	action.triggered.connect(clearFireRenderCache)
 
+	createAOVsMenu(frMenu)
 
 	frSubMenu = frMenu.addMenu("Viewport Mode")
 	ag = QtWidgets.QActionGroup(frSubMenu)

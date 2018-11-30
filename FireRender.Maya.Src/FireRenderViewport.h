@@ -54,7 +54,10 @@ public:
 	void setUseAnimationCache(bool value);
 
 	/** Set to rendering mode to use */
-	void setViewportRenderModel(int renderMode);
+	void setViewportRenderMode(int renderMode);
+
+	/** Set current AOV to be visible */
+	void setCurrentAOV(int aov);
 
 	/** Return true if caching animation frames. */
 	bool useAnimationCache();
@@ -187,6 +190,9 @@ private:
 	/** Remove the menu from the Maya panel. */
 	void removeMenu();
 
+	void enableNecessaryAOVs(int index, bool flag);
+
+	int m_currentAOV;
 
 	/** Warning Dialog for Shader Caching. */
 	RenderCacheWarningDialog rcWarningDialog;
