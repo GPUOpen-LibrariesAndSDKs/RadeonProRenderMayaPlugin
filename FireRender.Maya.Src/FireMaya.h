@@ -270,7 +270,7 @@ namespace FireMaya
 		frw::Shader GetVolumeShader( MObject ob, bool forceUpdate = false );
 		frw::Shader GetVolumeShader( MPlug ob );
 
-		frw::Image  GetImage(MString path, MString colorSpace, bool flipX = false);
+		frw::Image  GetImage(MString path, MString colorSpace, const MString& ownerNodeName, bool flipX = false);
 		frw::Image  GetAdjustedImage(MString texturePath,
 			int viewWidth, int viewHeight,
 			FitType fit, double contrast, double brightness,

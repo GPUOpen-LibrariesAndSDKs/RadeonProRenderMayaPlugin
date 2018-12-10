@@ -192,7 +192,7 @@ void convertColorSpace(MString colorSpace, rpr_image_format format, rpr_image_de
 #endif
 }
 
-frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, bool flipX)
+frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, const MString& ownerNodeName, bool flipX)
 {
 	if (texturePath.length() == 0)
 	{
@@ -205,7 +205,7 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, bo
 	if (it != m->imageCache.end())
 		return it->second;
 
-	frw::Image retImage = FireRenderThread::RunOnMainThread<frw::Image>([this, flipX, texturePath, key, colorSpace]() -> frw::Image
+	frw::Image retImage = FireRenderThread::RunOnMainThread<frw::Image>([this, flipX, texturePath, key, colorSpace, ownerNodeName]() -> frw::Image
 	{
 		MAIN_THREAD_ONLY; // MTextureManager will not work in other threads
 		DebugPrint("Loading Image: %s in colorSpace: %s", texturePath.asUTF8(), colorSpace.asUTF8());
@@ -224,7 +224,7 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, bo
 				{
 					try
 					{
-						if (auto texture = textureManager->acquireTexture(texturePath))
+						if (auto texture = textureManager->acquireTexture(texturePath, ownerNodeName))
 						{
 							MHWRender::MTextureDescription desc = {};
 							texture->textureDescription(desc);
@@ -359,7 +359,7 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, bo
 									tempBuffer.resize(width * height * channels);
 									for (auto y = 0u; y < height; y++)
 									{
-										auto src = static_cast<const half *>(srcData) + y * (width * channels);
+										auto src = static_cast<const half *>(srcData) + y * rowPitch / sizeof(half);
 										auto dst = tempBuffer.data() + y * (width * channels);
 										for (auto x = 0u; x < width * channels; x++)
 										{
@@ -984,7 +984,7 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 		MString colorSpace;
 		if (!colorSpacePlug.isNull())
 			colorSpace = colorSpacePlug.asString();
-		if (auto image = GetImage(texturePath, colorSpace))
+		if (auto image = GetImage(texturePath, colorSpace, shaderNode.name()))
 		{
 			frw::ImageNode imageNode(materialSystem);
 			image.SetGamma(colorSpace2Gamma(colorSpace));

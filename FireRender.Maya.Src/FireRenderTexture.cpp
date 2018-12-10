@@ -67,7 +67,8 @@ namespace FireMaya
 
 		MPlug texturePlug = shaderNode.findPlug(Attribute::source);
 		MString texturePath = texturePlug.asString();
-		if (auto image = scope.GetImage(texturePath, ""))
+		MString nodeName = shaderNode.name();
+		if (auto image = scope.GetImage(texturePath, "", nodeName))
 		{
 			frw::ImageNode imageNode(scope.MaterialSystem());
 			imageNode.SetMap(image);

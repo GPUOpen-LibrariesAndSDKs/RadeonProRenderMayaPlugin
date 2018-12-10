@@ -782,7 +782,7 @@ namespace FireMaya
 					{
 						MString filePath = data.texutre;
 						if (filePath.length())
-							frImage = scope.GetImage(filePath.asUTF8(), "");
+							frImage = scope.GetImage(filePath.asUTF8(), "", nodeFn.name());
 					}
 				}
 
