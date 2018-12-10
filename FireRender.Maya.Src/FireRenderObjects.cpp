@@ -1442,7 +1442,8 @@ void FireRenderEnvLight::Freshen()
 				// Initially we have IBL flipped, due to fact that texture is being placed 
 				// from external side of the sphere, but we look from inside sphere
 				// That's why pass true if IBL flip parameter is false and vice versa
-				m.image = context()->GetScope().GetImage(filePath, colorSpace, !IsFlipIBL());
+
+				m.image = context()->GetScope().GetImage(filePath, colorSpace, dagPath.partialPathName(), !IsFlipIBL());
 			}
 		}
 
