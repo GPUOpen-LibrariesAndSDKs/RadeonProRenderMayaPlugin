@@ -92,7 +92,6 @@ FireRenderContext::FireRenderContext() :
 	m_lastIterationTime(0),
 	m_timeIntervalForOutputUpdate(0.1),
 	m_interactive(false),
-	m_lastRayCastEpsilon(0),
 	m_camera(this, MDagPath()),
 	m_glInteropActive(false),
 	m_globalsChanged(false),
@@ -358,8 +357,6 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 
 		attachCallbacks();
 	}
-
-	m_lastRayCastEpsilon = 0;	// Force recalculation on first render pass
 
 	if(freshen)
 		Freshen();
@@ -650,19 +647,6 @@ void FireRenderContext::initSwatchScene()
 	setPreview();
 }
 
-// This method will "tweak" precision of the ray-cast renderer based on scene bounding box:
-void FireRenderContext::CheckSetRayCastEpsilon()
-{
-	RPR_THREAD_ONLY;
-
-	if (fabs(m_lastRayCastEpsilon - m_globals.raycastEpsilon) > FLT_EPSILON)
-	{
-		scope.Context().SetParameter("raycastepsilon", m_globals.raycastEpsilon);
-
-		m_lastRayCastEpsilon = m_globals.raycastEpsilon;
-	}
-}
-
 void FireRenderContext::render(bool lock)
 {
 	RPR_THREAD_ONLY;
@@ -672,8 +656,6 @@ void FireRenderContext::render(bool lock)
 
 	if (!context)
 		return;
-
-	CheckSetRayCastEpsilon();
 
 	if (m_restartRender)
 	{

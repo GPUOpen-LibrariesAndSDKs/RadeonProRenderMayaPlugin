@@ -521,15 +521,9 @@ private:
 	void turnOnAOVsForDenoiser(bool allocBuffer = false);
 	void setupDenoiser();
 
-	// Tweaks precision of the ray-cast system, based on scene bounding box size:
-	void CheckSetRayCastEpsilon();
-
 	int getThreadCountToOverride() const;
 
 private:
-
-	float m_lastRayCastEpsilon;
-
 	std::shared_ptr<ImageFilter> m_denoiserFilter;
 
 	frw::DirectionalLight m_defaultLight;
