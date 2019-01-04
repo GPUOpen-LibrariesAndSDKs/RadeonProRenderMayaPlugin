@@ -125,6 +125,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 	{
 		// initialize
 		FireRenderContext context;
+		context.m_RenderType = RenderType::ProductionRender;
 		context.buildScene();
 		context.setResolution(36, 24, true);
 
@@ -214,7 +215,6 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		FireRenderContext context;
 		context.setCallbackCreationDisabled(true);
 		context.buildScene();
-
 
 		MDagPathArray cameras = getRenderableCameras();
 		if ( cameras.length() >= 1 )

@@ -615,6 +615,9 @@ void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disa
 		checkStatus(frstatus);
 	}
 
+	frstatus = rprContextSetParameter1f(frcontext, "raycastepsilon", raycastEpsilon);
+	checkStatus(frstatus);
+
 	frstatus = rprContextSetParameter1u(frcontext, "imagefilter.type", filterType);
 	checkStatus(frstatus);
 
