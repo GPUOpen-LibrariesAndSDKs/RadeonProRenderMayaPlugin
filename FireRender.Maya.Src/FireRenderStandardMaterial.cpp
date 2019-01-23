@@ -1138,7 +1138,16 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 			{
 				frw::Value mapValue;
 				mapValue = scope.GetConnectedValue(shaderNode.findPlug("displacementMap"));
-				bool haveMap = mapValue.IsNode();
+
+				bool haveMap = false;
+				bool isNode = mapValue.IsNode();
+
+				if (isNode)
+				{
+					frw::Node node = mapValue.GetNode();
+					int type = node.GetType();
+					haveMap = type == RPR_MATERIAL_NODE_IMAGE_TEXTURE;
+				}
 
 				if (haveMap)
 				{
