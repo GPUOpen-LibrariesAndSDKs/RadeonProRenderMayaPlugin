@@ -12,6 +12,9 @@
 #include <maya/MDagPathArray.h>
 #include <maya/MTime.h>
 #include <maya/MAnimControl.h>
+#include <maya/MRenderUtil.h>
+#include <maya/MCommonRenderSettingsData.h>
+
 #include <fstream>
 
 #ifdef __linux__
@@ -124,15 +127,23 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 	if (argData.isFlagSet(kAllFlag))
 	{
 		// initialize
+		MCommonRenderSettingsData settings;
+		MRenderUtil::getCommonRenderSettings(settings);
+
 		FireRenderContext context;
 		context.m_RenderType = RenderType::ProductionRender;
 		context.buildScene();
-		context.setResolution(36, 24, true);
+
+		context.setResolution(settings.width, settings.height, true);
 
 		MDagPathArray cameras = getRenderableCameras();
 		if ( cameras.length() >= 1 )
 		{
 			context.setCamera(cameras[0]);
+		}
+		else
+		{
+			MGlobal::displayError("Renderable cameras haven't been found !");
 		}
 
 		// setup frame ranges
