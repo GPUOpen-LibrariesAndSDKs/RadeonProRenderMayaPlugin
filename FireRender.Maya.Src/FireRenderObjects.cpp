@@ -1518,7 +1518,8 @@ void FireRenderCamera::Freshen()
 		int viewWidth = context()->width();
 		int viewHeight = context()->height();
 
-		FireMaya::translateCamera(m_camera, node, camMtx, context()->isRenderView(), float(viewWidth) / float(viewHeight), true, m_type);
+		FireMaya::translateCamera(m_camera, node, camMtx, context()->isRenderView(), 
+									float(viewWidth) / float(viewHeight), true, m_type);
 
 		frw::Image image;
 
