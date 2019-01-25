@@ -202,13 +202,13 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			}
 
 			// launch export
-			rpr_int statuExport = rprsExport(
-				newFilePath.asChar(),
-				context.context(),
-				context.scene(),
-				0, 0,
-				0, 0,
-				0, 0);
+#if (RPR_API_VERSION >= 0x010032400)
+			rpr_int statuExport = rprsExport(newFilePath.asChar(), context.context(), context.scene(),
+				0, 0, 0, 0, 0, 0, 0);
+#else
+			rpr_int statuExport = rprsExport(newFilePath.asChar(), context.context(), context.scene(),
+				0, 0, 0, 0, 0, 0);
+#endif
 
 			if (statuExport != RPR_SUCCESS)
 			{
