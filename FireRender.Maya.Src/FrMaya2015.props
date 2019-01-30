@@ -6,13 +6,13 @@
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup>
-    <Link>
-      <AdditionalLibraryDirectories>$(MAYA_x64_2015)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-    </Link>
     <ClCompile>
       <PreprocessorDefinitions>MAYA2015;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(MAYA_x64_2015)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MAYA_x64_2015)\include;$(MAYA_X64_2015)\plug-ins\xgen\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(MAYA_x64_2015)\lib;$(MAYA_X64_2015)\plug-ins\xgen\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <BuildMacro Include="FR_MAYA_VERSION">

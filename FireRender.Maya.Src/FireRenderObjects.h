@@ -537,4 +537,46 @@ private:
 	bool m_initialized = false;
 };
 
+// Fire render mesh
+// Bridge class between a Maya hair physical shader node and a frw::Curve
+class FireRenderHair : public FireRenderNode
+{
+public:	
+	// Constructor
+	FireRenderHair(FireRenderContext* context, const MDagPath& dagPath);
+
+	// Destructor
+	virtual ~FireRenderHair();
+
+	// Refresh the curves
+	virtual void Freshen() override;
+
+	// clear
+	virtual void clear() override;
+
+	// detach from the scene
+	virtual void detachFromScene() override;
+
+	// attach to the scene
+	virtual void attachToScene() override;
+
+private:
+	// applies transform to node
+	void ApplyTransform(void);
+
+	// applies material connected to hair shader to Curves
+	// returns false if no such material was found
+	bool ApplyMaterial(void);
+
+	// tries to load curves data and creates rpr curve (batch) if succesfull
+	// returns false if failed to create curves
+	bool CreateCurves(void);
+
+	// transform matrix
+	MMatrix m_matrix;
+
+	// curves
+	std::vector<frw::Curve> m_Curves;
+};
+
 

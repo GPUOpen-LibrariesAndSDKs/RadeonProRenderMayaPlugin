@@ -1654,6 +1654,7 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, bool forceUpdate)
 
 	auto shaderId = getNodeUUid(node);
 	auto shader = GetCachedShader(shaderId);
+
 	if (forceUpdate || !shader || shader.IsDirty())
 	{
 		if (!shader)	// register callbacks if one doesn't already exist

@@ -1134,6 +1134,31 @@ namespace frw
 		}
 	};
 
+	class Curve : public Object
+	{
+		friend class Shader;
+
+		DECLARE_OBJECT(Curve, Object);
+		class Data : public Object::Data
+		{
+			DECLARE_OBJECT_DATA
+		public:
+			Object shader;
+			virtual ~Data();
+		};
+
+	public:
+		Curve(rpr_curve h, const Context &context) : Object(h, context, true, new Data()) {}
+
+		void SetShader(Shader shader);
+		Shader GetShader() const;
+		void SetTransform(rpr_bool transpose, rpr_float const * transform)
+		{
+			rpr_int res = rprCurveSetTransform(Handle(), transpose, transform);
+			checkStatus(res);
+		}
+	};
+
 	class Camera : public Object
 	{
 		DECLARE_OBJECT(Camera, Object);
@@ -1194,6 +1219,12 @@ namespace frw
 
 			data().mLightCount++;
 		}
+		void Attach(Curve crv)
+		{
+			AddReference(crv);
+			auto res = rprSceneAttachCurve(Handle(), crv.Handle());
+			checkStatus(res);
+		}
 		void Detach(Shape v)
 		{
 			RemoveReference(v);
@@ -1211,7 +1242,12 @@ namespace frw
 
 			data().mLightCount--;
 		}
-
+		void Detach(Curve crv)
+		{
+			RemoveReference(crv);
+			auto res = rprSceneDetachCurve(Handle(), crv.Handle());
+			checkStatus(res);
+		}
 		void SetCamera(Camera v)
 		{
 			auto res = rprSceneSetCamera(Handle(), v.Handle());
@@ -1496,6 +1532,44 @@ namespace frw
 			checkStatusThrow(status, "Unable to create IES light");
 
 			return IESLight(h, *this);
+		}
+
+		Curve CreateCurve(size_t num_controlPoints, rpr_float * controlPointsData, 
+			rpr_int controlPointsStride, size_t num_indices, 
+			rpr_uint curveCount, rpr_uint const * indicesData, 
+			rpr_float const * radiuses, rpr_float const * textureCoordUV, 
+			rpr_int * segmentsPerCurve)
+		{
+			FRW_PRINT_DEBUG("CreateCurve()");
+
+			// Ensure correct points count
+			size_t totalSegmentsCount = 0;
+
+			for (size_t idx = 0; idx < curveCount; ++idx)
+			{
+				totalSegmentsCount += segmentsPerCurve[idx];
+			}
+
+			// Segment of RPR curve should always be composed of 4 3D points
+			const unsigned int pointsPerSegment = 4;
+
+			if (num_indices != (totalSegmentsCount * pointsPerSegment))
+			{
+				checkStatusThrow(FR_ERROR_INVALID_PARAMETER, "Unable to create Hair Curve - invalid indices data!");
+			}
+
+			// create curve
+			rpr_curve h = 0;
+			auto status = rprContextCreateCurve(Handle(), &h,
+				num_controlPoints, controlPointsData,
+				controlPointsStride, num_indices,
+				curveCount, indicesData,
+				radiuses, textureCoordUV,
+				segmentsPerCurve);
+
+			checkStatusThrow(status, "Unable to create Hair Curve");
+
+			return Curve(h, *this);
 		}
 
 		// context state
@@ -2502,6 +2576,47 @@ namespace frw
 			}
 		}
 
+		void AttachToCurve(frw::Curve::Data& crv)
+		{
+			Data& d = data();
+			d.numAttachedShapes++;
+
+			if (d.material)
+			{
+				FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX x_material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.material);
+				rpr_int res;
+				res = rprxCurveAttachMaterial(d.context, crv.Handle(), d.material);
+				checkStatus(res);
+			}
+			else
+			{
+				FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX material=0x%016llX", d, d.numAttachedShapes, shape.Handle(), d.Handle());
+				rpr_int res;
+				res = rprCurveSetMaterial(crv.Handle(), d.material);
+				checkStatus(res);
+			}
+		}
+
+		void DetachFromCurve(frw::Curve::Data& crv)
+		{
+			Data& d = data();
+			d.numAttachedShapes--;
+			FRW_PRINT_DEBUG("\tShape.DetachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX, material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.material);
+
+			if (d.material)
+			{
+				rpr_int res;
+				res = rprxCurveDetachMaterial(d.context, crv.Handle(), d.material);
+				checkStatus(res);
+			}
+
+			{
+				rpr_int res;
+				res = rprCurveSetMaterial(crv.Handle(), nullptr);
+				checkStatus(res);
+			}
+		}
+
 		void Commit()
 		{
 			Data& d = data();
@@ -3153,6 +3268,36 @@ namespace frw
 		auto y = ValueSelectY(a);
 
 		return ValueCombine(x * cosb - y * sinb, x * sinb + y * cosb);
+	}
+	
+	inline void Curve::SetShader(Shader shader)
+	{
+		if (Shader old = GetShader())
+		{
+			if (old == shader)	// no change?
+				return;
+
+			RemoveReference(old);
+			old.DetachFromCurve(data());
+		}
+
+		AddReference(shader);
+		data().shader = shader;
+		shader.AttachToCurve(data());
+	}
+
+	inline Shader Curve::GetShader() const
+	{
+		return data().shader.As<Shader>();
+	}
+
+	inline Curve::Data::~Data()
+	{
+		Shader sh = shader.As<Shader>();
+		if (sh.IsValid())
+		{
+			sh.DetachFromCurve(*this);
+		}
 	}
 
 }
