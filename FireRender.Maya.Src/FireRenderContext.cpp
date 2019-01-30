@@ -1592,7 +1592,15 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		}
 		else
 		{
-			DebugPrint("Ignoring %s: %s", dagNode.typeName().asUTF8(), dagNode.name().asUTF8());
+			MTypeId type_id = dagNode.typeId();
+			if (dagNode.typeName() == "xgmSplineDescription")
+			{
+				ob = CreateSceneObject<FireRenderHair, NodeCachingOptions::AddPath>(dagPath);
+			}
+			else
+			{
+				DebugPrint("Ignoring %s: %s", dagNode.typeName().asUTF8(), dagNode.name().asUTF8());
+			}
 		}
 	}
 	else

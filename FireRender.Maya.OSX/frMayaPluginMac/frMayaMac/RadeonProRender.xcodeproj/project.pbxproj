@@ -351,6 +351,8 @@
 		8D843D6E1F98F5470068CB2D /* IESLightRepresentationCalc.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D843D6A1F98F5460068CB2D /* IESLightRepresentationCalc.h */; };
 		8D843D6F1F98F5470068CB2D /* IESprocessor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D843D6B1F98F5470068CB2D /* IESprocessor.cpp */; };
 		8D843D701F98F5470068CB2D /* IESprocessor.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D843D6C1F98F5470068CB2D /* IESprocessor.h */; };
+		8D8613C021EE273F009DF99F /* libAdskXGen.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D8613BF21EE273F009DF99F /* libAdskXGen.dylib */; };
+		8D8613C221EE2764009DF99F /* libAdskXGen.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D8613C121EE2764009DF99F /* libAdskXGen.dylib */; };
 		8D8CA4B520BC721300A90237 /* PhysicalLightData.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D8CA4B320BC721300A90237 /* PhysicalLightData.cpp */; };
 		8D8CA4B620BC721300A90237 /* PhysicalLightData.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D8CA4B420BC721300A90237 /* PhysicalLightData.h */; };
 		8D8CA4B720BC729D00A90237 /* PhysicalLightData.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D8CA4B420BC721300A90237 /* PhysicalLightData.h */; };
@@ -537,6 +539,8 @@
 		8D843D6A1F98F5460068CB2D /* IESLightRepresentationCalc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IESLightRepresentationCalc.h; path = ../../../FireRender.Components/cpp/IESLight/IESLightRepresentationCalc.h; sourceTree = "<group>"; };
 		8D843D6B1F98F5470068CB2D /* IESprocessor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IESprocessor.cpp; path = ../../../FireRender.Components/cpp/IESLight/IESprocessor.cpp; sourceTree = "<group>"; };
 		8D843D6C1F98F5470068CB2D /* IESprocessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IESprocessor.h; path = ../../../FireRender.Components/cpp/IESLight/IESprocessor.h; sourceTree = "<group>"; };
+		8D8613BF21EE273F009DF99F /* libAdskXGen.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libAdskXGen.dylib; path = "../../../../../../../../../Applications/Autodesk/maya2018/plug-ins/xgen/lib/libAdskXGen.dylib"; sourceTree = "<group>"; };
+		8D8613C121EE2764009DF99F /* libAdskXGen.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libAdskXGen.dylib; path = "../../../../../../../../../Applications/Autodesk/maya2017/plug-ins/xgen/lib/libAdskXGen.dylib"; sourceTree = "<group>"; };
 		8D8CA4B320BC721300A90237 /* PhysicalLightData.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PhysicalLightData.cpp; path = ../../../FireRender.Maya.Src/Lights/PhysicalLight/PhysicalLightData.cpp; sourceTree = "<group>"; };
 		8D8CA4B420BC721300A90237 /* PhysicalLightData.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = PhysicalLightData.h; path = ../../../FireRender.Maya.Src/Lights/PhysicalLight/PhysicalLightData.h; sourceTree = "<group>"; };
 		8D8F06E61F437B2D00A13D6B /* ArHosekSkyModel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ArHosekSkyModel.cpp; path = ../../../FireRender.Maya.Src/Hosek/ArHosekSkyModel.cpp; sourceTree = "<group>"; };
@@ -677,6 +681,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D8613C221EE2764009DF99F /* libAdskXGen.dylib in Frameworks */,
 				8DCBE5062072777400F79E06 /* libRadeonImageFilters64.dylib in Frameworks */,
 				8D1135891F45D6B300E58A52 /* libRprLoadStore64.dylib in Frameworks */,
 				8D1135861F45D4F900E58A52 /* libRprSupport64.dylib in Frameworks */,
@@ -691,6 +696,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8D8613C021EE273F009DF99F /* libAdskXGen.dylib in Frameworks */,
 				8DCBE5072072779300F79E06 /* libRadeonImageFilters64.dylib in Frameworks */,
 				8D595E3B20372FE20031988A /* libRprLoadStore64.dylib in Frameworks */,
 				8D595E3C20372FE20031988A /* libRprSupport64.dylib in Frameworks */,
@@ -974,6 +980,8 @@
 		4DE645121DA349C10076E6A7 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				8D8613BF21EE273F009DF99F /* libAdskXGen.dylib */,
+				8D8613C121EE2764009DF99F /* libAdskXGen.dylib */,
 				8DCBE5052072777400F79E06 /* libRadeonImageFilters64.dylib */,
 				8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */,
 				8D1135851F45D4F900E58A52 /* libRprSupport64.dylib */,
@@ -1534,12 +1542,15 @@
 					../../../FireRender.Components/cpp,
 					"$(MAYA_DIRECTORY)/devkit/include",
 					../../../ThirdParty/RadeonProImageProcessing/Mac/inc,
+					"$(MAYA_DIRECTORY)/plug-ins/xgen/include",
 				);
 				INSTALL_PATH = /usr/local/lib;
+				"LD_RUNPATH_SEARCH_PATHS[arch=*]" = "/Applications/Autodesk/maya2017/plug-ins/xgen/lib";
 				LIBRARY_SEARCH_PATHS = (
 					"\"../../../ThirdParty/RadeonProRender SDK/Mac/lib\"",
 					"$(MAYA_DIRECTORY)/Maya.app/Contents/MacOS",
 					../../../ThirdParty/RadeonProImageProcessing/Mac/lib,
+					"$(MAYA_DIRECTORY)/plug-ins/xgen/lib",
 				);
 				LIBRARY_STYLE = BUNDLE;
 				MACH_O_TYPE = mh_bundle;
@@ -1591,12 +1602,15 @@
 					../../../FireRender.Components/cpp,
 					"$(MAYA_DIRECTORY)/devkit/include",
 					../../../ThirdParty/RadeonProImageProcessing/Mac/inc,
+					"$(MAYA_DIRECTORY)/plug-ins/xgen/include",
 				);
 				INSTALL_PATH = /usr/local/lib;
+				"LD_RUNPATH_SEARCH_PATHS[arch=*]" = "/Applications/Autodesk/maya2017/plug-ins/xgen/lib";
 				LIBRARY_SEARCH_PATHS = (
 					"\"../../../ThirdParty/RadeonProRender SDK/Mac/lib\"",
 					"$(MAYA_DIRECTORY)/Maya.app/Contents/MacOS",
 					../../../ThirdParty/RadeonProImageProcessing/Mac/lib,
+					"$(MAYA_DIRECTORY)/plug-ins/xgen/lib",
 				);
 				LIBRARY_STYLE = BUNDLE;
 				MACH_O_TYPE = mh_bundle;
@@ -1727,12 +1741,15 @@
 					../../../FireRender.Components/cpp,
 					"$(MAYA_DIRECTORY)/include",
 					../../../ThirdParty/RadeonProImageProcessing/Mac/inc,
+					"$(MAYA_DIRECTORY)/plug-ins/xgen/include",
 				);
 				INSTALL_PATH = /usr/local/lib;
+				"LD_RUNPATH_SEARCH_PATHS[arch=*]" = "/Applications/Autodesk/maya2018/plug-ins/xgen/lib";
 				LIBRARY_SEARCH_PATHS = (
 					"\"../../../ThirdParty/RadeonProRender SDK/Mac/lib\"",
 					"$(MAYA_DIRECTORY)/Maya.app/Contents/MacOS",
 					../../../ThirdParty/RadeonProImageProcessing/Mac/lib,
+					"$(MAYA_DIRECTORY)/plug-ins/xgen/lib",
 				);
 				LIBRARY_STYLE = BUNDLE;
 				MACH_O_TYPE = mh_bundle;
@@ -1785,12 +1802,15 @@
 					../../../FireRender.Components/cpp,
 					"$(MAYA_DIRECTORY)/include",
 					../../../ThirdParty/RadeonProImageProcessing/Mac/inc,
+					"$(MAYA_DIRECTORY)/plug-ins/xgen/include",
 				);
 				INSTALL_PATH = /usr/local/lib;
+				"LD_RUNPATH_SEARCH_PATHS[arch=*]" = "/Applications/Autodesk/maya2018/plug-ins/xgen/lib";
 				LIBRARY_SEARCH_PATHS = (
 					"\"../../../ThirdParty/RadeonProRender SDK/Mac/lib\"",
 					"$(MAYA_DIRECTORY)/Maya.app/Contents/MacOS",
 					../../../ThirdParty/RadeonProImageProcessing/Mac/lib,
+					"$(MAYA_DIRECTORY)/plug-ins/xgen/lib",
 				);
 				LIBRARY_STYLE = BUNDLE;
 				MACH_O_TYPE = mh_bundle;

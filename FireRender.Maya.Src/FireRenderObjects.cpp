@@ -23,6 +23,14 @@
 #include <maya/MQuaternion.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MSelectionList.h>
+#include <maya/MFnPluginData.h> 
+#include <maya/MPxData.h>
+#include <istream>
+#include <ostream>
+#include <sstream>
+#if !defined(MAYA2015) && !defined(MAYA2016)
+	#include <XGen/XgSplineAPI.h>
+#endif
 
 #ifndef MAYA2015
 #include <maya/MUuid.h>
@@ -1956,4 +1964,284 @@ void FireRenderSky::attachToScene()
 	}
 }
 
+//===================
+// Hair shader
+//===================
+FireRenderHair::FireRenderHair(FireRenderContext* context, const MDagPath& dagPath) 
+	: FireRenderNode(context, dagPath)
+	, m_matrix()
+	, m_Curves()
+{}
+
+FireRenderHair::~FireRenderHair()
+{
+	m_matrix = MMatrix();
+	clear();
+}
+
+bool FireRenderHair::ApplyMaterial(void)
+{
+	if (m_Curves.empty())
+		return false;
+
+	auto node = Object();
+	MDagPath path = MDagPath::getAPathTo(node);
+
+	// get hair shader node
+	MObjectArray shdrs = getConnectedShaders(path);
+
+	if (shdrs.length() == 0)
+		return false;
+
+	MObject surfaceShader = shdrs[0];
+	MFnDependencyNode shaderNode(surfaceShader);
+
+	MString shaderName = shaderNode.name();
+	MString shaderType = shaderNode.typeName();
+
+	// get ambientColor connection (this attribute is used as input for the material for the curve)
+	MPlug materialPlug = shaderNode.findPlug("ambientColor");
+	if (materialPlug.isNull())
+		return false;
+
+	// try to get UberMaterial node
+	MPlugArray shaderConnections;
+	materialPlug.connectedTo(shaderConnections, true, false);
+	if (shaderConnections.length() == 0)
+		return false;
+
+	// try to get shader from found node
+	MObject uberMObj = shaderConnections[0].node();
+
+	MFnDependencyNode uberFNode(uberMObj);
+	MString ubershaderName = uberFNode.name();
+	MString ubershaderType = uberFNode.typeName();
+
+	frw::Shader shader = m.context->GetShader(uberMObj);
+	if (!shader.IsValid())
+		return false;
+
+	// apply Uber material to Curves
+	for (frw::Curve& curve : m_Curves)
+	{
+		if (curve.IsValid())
+			curve.SetShader(shader);
+	}
+
+	return true;
+}
+
+void FireRenderHair::ApplyTransform(void)
+{
+	if (m_Curves.empty())
+		return;
+
+	const MObject& node = Object();
+	MFnDagNode fnDagNode(node);
+	MDagPath path = MDagPath::getAPathTo(node);
+
+	// get transform
+	MMatrix matrix = path.inclusiveMatrix();
+	m_matrix = matrix;
+
+	// convert Maya mesh in cm to m
+	MMatrix scaleM;
+	scaleM.setToIdentity();
+	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+	matrix *= scaleM;
+	float mfloats[4][4];
+	matrix.get(mfloats);
+
+	// apply transform to curves
+	for (frw::Curve& curve : m_Curves)
+	{
+		if (curve.IsValid())
+			curve.SetTransform(false, *mfloats);
+	}
+}
+
+bool FireRenderHair::CreateCurves()
+{
+#if !defined(MAYA2015) && !defined(MAYA2016)
+	MObject node = Object();
+	MFnDagNode fnDagNode(node);
+
+	// Stream out the spline data
+	std::string data;
+	MPlug       outPlug = fnDagNode.findPlug("outRenderData");
+	MObject     outObj = outPlug.asMObject();
+	MPxData*    outData = MFnPluginData(outObj).data();
+
+	if (!outData)
+		return false;
+
+	// Data found
+	std::stringstream opaqueStrm;
+	outData->writeBinary(opaqueStrm);
+	data = opaqueStrm.str();
+
+	// Compute the padding bytes and number of array elements
+	const unsigned int tail = data.size() % sizeof(unsigned int);
+	const unsigned int padding = (tail > 0) ? sizeof(unsigned int) - tail : 0;
+	const unsigned int nelements = data.size() / sizeof(unsigned int) + (tail > 0 ? 1 : 0);
+
+	XGenSplineAPI::XgFnSpline splines;
+	size_t sampleSize = nelements * sizeof(unsigned int) - padding;
+	float sampleTime = 0.0f;
+
+	// get splines
+	if (!splines.load(opaqueStrm, sampleSize, sampleTime))
+		return false;
+
+	// Count the number of curves and the number of points
+	unsigned int curveCount = 0;
+	unsigned int pointCount = 0;
+	unsigned int pointInterpoCount = 0;
+	for (XGenSplineAPI::XgItSpline splineIt = splines.iterator(); !splineIt.isDone(); splineIt.next())
+	{
+		curveCount += splineIt.primitiveCount();
+		pointCount += splineIt.vertexCount();
+		pointInterpoCount += splineIt.vertexCount() + splineIt.primitiveCount() * 2;
+	}
+
+	// Get the number of motion samples
+	const unsigned int steps = splines.sampleCount();
+
+	// for each primitive batch
+	for (XGenSplineAPI::XgItSpline splineIt = splines.iterator(); !splineIt.isDone(); splineIt.next())
+	{
+		const unsigned int  stride = splineIt.primitiveInfoStride();
+		const unsigned int  curveCount = splineIt.primitiveCount();
+		const unsigned int* primitiveInfos = splineIt.primitiveInfos();
+		const SgVec3f*      positions = splineIt.positions(0);
+
+		const float*        width = splineIt.width();
+		const SgVec2f*      texcoords = splineIt.texcoords();
+		const SgVec2f*      patchUVs = splineIt.patchUVs();
+
+		// create data buffers
+		std::vector<rpr_uint> indicesData; indicesData.reserve(pointCount);
+		std::vector<int> numPoints; numPoints.reserve(curveCount);
+		std::vector<SgVec3f> points; points.reserve(pointInterpoCount);
+		std::vector<float> radiuses; radiuses.reserve(pointCount);
+		std::vector<float> uvCoord; uvCoord.reserve(2 * curveCount);
+		std::vector<float> wCoord; wCoord.reserve(pointInterpoCount);
+
+		// for each primitive
+		for (unsigned int p = 0; p < curveCount; p++)
+		{
+			const unsigned int offset = primitiveInfos[p * stride];
+			const unsigned int length = primitiveInfos[p * stride + 1];
+
+			/* from RadeonProRender.h :
+			    *  A rpr_curve is a set of curves
+				*  A curve is a set of segments
+				*  A segment is always composed of 4 3D points
+			*/
+			const unsigned int pointsPerSegment = 4;
+
+			// Number of points
+			unsigned int tail = length % pointsPerSegment;
+			if (tail != 0)
+				tail = 4 - tail;
+
+			const unsigned int pointsInCurve = length + tail;
+			const unsigned int segmentsInCurve = pointsInCurve / pointsPerSegment;
+			numPoints.push_back(segmentsInCurve);
+
+			// Texcoord using the patch UV from the root point
+			uvCoord.push_back(patchUVs[offset][0]);
+			uvCoord.push_back(patchUVs[offset][1]);
+
+			// Copy varying data
+			for (unsigned int i = 0; i < length; i++)
+			{
+				indicesData.push_back(points.size());
+				points.push_back(positions[offset + i]);
+
+				radiuses.push_back(width[offset + i] * 0.5f);
+				wCoord.push_back(texcoords[offset + i][1]);
+			}
+
+			// Extend data indices array if necessary 
+			// Segment of RPR curve should always be composed of 4 3D points
+			for (unsigned int i = 0; i < tail; i++)
+			{
+				indicesData.push_back(indicesData.back());
+			}
+		}
+
+		// create RPR curve
+		frw::Curve crv = Context().CreateCurve(points.size(), &points.data()[0][0],
+			sizeof(float) * 3, indicesData.size(), curveCount, indicesData.data(),
+			radiuses.data(), uvCoord.data(), numPoints.data());
+		m_Curves.push_back(crv);
+
+		// apply transform to curves
+		ApplyTransform();
+
+		// apply material to curves
+		ApplyMaterial();
+	}
+
+	return (m_Curves.size() > 0);
+#else
+	return false;
+#endif
+}
+
+void FireRenderHair::Freshen()
+{
+	clear();
+
+	auto node = Object();
+	MFnDagNode fnDagNode(node);
+	MString name = fnDagNode.name();
+
+	bool haveCurves = CreateCurves();
+
+	if (haveCurves)
+	{
+		MDagPath path = MDagPath::getAPathTo(node);
+		if (path.isVisible())
+			attachToScene();
+	}
+
+	FireRenderNode::Freshen();
+}
+
+void FireRenderHair::clear()
+{
+	m_Curves.clear();
+
+	FireRenderObject::clear();
+}
+
+void FireRenderHair::attachToScene()
+{
+	if (m_isVisible)
+		return;
+
+	if (auto scene = context()->GetScene())
+	{
+		for (frw::Curve& curve : m_Curves)
+			scene.Attach(curve);
+
+		m_isVisible = true;
+	}
+}
+
+void FireRenderHair::detachFromScene()
+{
+	if (!m_isVisible)
+		return;
+
+	if (auto scene = context()->GetScene())
+	{
+		for (frw::Curve& curve : m_Curves)
+			scene.Detach(curve);
+	}
+
+	m_isVisible = false;
+}
 
