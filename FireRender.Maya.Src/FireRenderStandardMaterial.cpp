@@ -412,7 +412,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 #endif
 
 #if USE_RPRX
-	Attribute::reflectUseShaderNormal = nAttr.create("reflectUseShaderNormal", "run", MFnNumericData::kBoolean, 0);
+	Attribute::reflectUseShaderNormal = nAttr.create("reflectUseShaderNormal", "run", MFnNumericData::kBoolean, 1);
 	MAKE_INPUT_CONST(nAttr);
 
 	Attribute::reflectNormal = nAttr.createColor("reflectNormal", "rn");
@@ -461,7 +461,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	SET_MINMAX(nAttr, 0.0, 10.0);
 
 #if USE_RPRX
-	Attribute::coatUseShaderNormal = nAttr.create("coatUseShaderNormal", "ccun", MFnNumericData::kBoolean, 0);
+	Attribute::coatUseShaderNormal = nAttr.create("coatUseShaderNormal", "ccun", MFnNumericData::kBoolean, 1);
 	MAKE_INPUT_CONST(nAttr);
 
 	Attribute::coatNormal = nAttr.createColor("coatNormal", "ccn");
@@ -501,7 +501,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	SET_MINMAX(nAttr, 0.0, 10.0);
 
 #if RPR_API_VERSION >= 0x010032000
-	Attribute::refractionUseShaderNormal = nAttr.create("refractUseShaderNormal", "refu", MFnNumericData::kBoolean, 0);
+	Attribute::refractionUseShaderNormal = nAttr.create("refractUseShaderNormal", "refu", MFnNumericData::kBoolean, 1);
 	MAKE_INPUT_CONST(nAttr);
 
 	Attribute::refractionNormal = nAttr.createColor("refractNormal", "refn");
@@ -599,7 +599,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	nAttr.setMin(0.001);
 	nAttr.setSoftMax(10.0);
 
-	Attribute::normalMapEnable = nAttr.create("normalMapEnable", "enm", MFnNumericData::kBoolean, 0);
+	Attribute::normalMapEnable = nAttr.create("normalMapEnable", "enm", MFnNumericData::kBoolean, 1);
 	MAKE_INPUT_CONST(nAttr);
 
 #endif
