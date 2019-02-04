@@ -1592,6 +1592,7 @@ namespace frw
 		{
 			auto status = rprContextRender(Handle());
 
+#define SHOW_EXTENDED_ERROR_MSG
 #ifndef SHOW_EXTENDED_ERROR_MSG
 			checkStatusThrow(status, "Unable to render");
 #else
