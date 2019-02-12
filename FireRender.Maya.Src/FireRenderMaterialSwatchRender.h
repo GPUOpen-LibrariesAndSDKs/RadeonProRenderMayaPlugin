@@ -21,6 +21,8 @@ class FireRenderSwatchInstance;
 class FireRenderMaterialSwatchRender : public MSwatchRenderBase
 {
 public:
+	static const unsigned int MaterialSwatchPreviewTextureSize = 64;
+
 	// Constructor
 	FireRenderMaterialSwatchRender(MObject obj, MObject renderObj, int res);
 

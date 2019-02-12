@@ -87,7 +87,7 @@ enum class RenderType
 	ProductionRender,
 	IPR,
 	ViewportRender,
-	Thumbnail
+	Thumbnail // swatch
 };
 
 class FireRenderGlobalsData

@@ -344,6 +344,7 @@
     <ClInclude Include="FireRenderBump.h" />
     <ClInclude Include="FireRenderChecker.h" />
     <ClInclude Include="FireRenderContext.h" />
+    <ClInclude Include="FireRenderContextIFace.h" />
     <ClInclude Include="FireRenderConvertVRayCmd.h" />
     <ClInclude Include="FireRenderDisplacement.h" />
     <ClInclude Include="FireRenderDot.h" />

@@ -10,7 +10,7 @@
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MNodeMessage.h>
-
+#include "FireRenderContextIFace.h"
 
 namespace FireMaya
 {
@@ -207,10 +207,11 @@ namespace FireMaya
 
 		void RegisterCallback(MObject node);
 
+		IFireRenderContextInfo* m_pContextInfo; // Scope can not exist without a context, thus using raw pointer here is safe
+
 		// callbacks
 	public:
 		void NodeDirtyCallback(MObject& node);
-		void CommitShaders(void);
 
 	private:
 		static void NodeDirtyCallback(MObject& node, void* clientData);
@@ -226,6 +227,9 @@ namespace FireMaya
 
 		frw::Value GetCachedValue(const NodeId& str) const;
 		void SetCachedValue(const NodeId& str, frw::Value shader);
+
+		frw::Image GetCachedImage(const MString& key) const;
+		void SetCachedImage(const MString& key, frw::Image img);
 
 		frw::Shader ParseVolumeShader( MObject ob );
 		frw::Shader ParseShader(MObject ob);
@@ -299,6 +303,10 @@ namespace FireMaya
 
 		void Reset();
 		void Init(rpr_context handle, bool destroyMaterialSystemOnDelete = true);
+		void CommitShaders(void);
+
+		void SetContextInfo (IFireRenderContextInfo* pCtxInfo);
+		const IFireRenderContextInfo* GetContextInfo (void) const;
 	};
 
 #ifdef DEBUG

@@ -862,6 +862,9 @@
     <ClInclude Include="FireRenderSwatchInstance.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FireRenderContextIFace.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="scripts\registerFireRender.mel">
