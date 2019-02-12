@@ -153,6 +153,8 @@ void FireMaya::StandardMaterial::postConstructor()
 {
 	ShaderNode::postConstructor();
 	setMPSafe(true);
+	MStatus status = setExistWithoutInConnections(true);
+	CHECK_MSTATUS(status);
 }
 
 void FireMaya::StandardMaterial::OnFileLoaded()
