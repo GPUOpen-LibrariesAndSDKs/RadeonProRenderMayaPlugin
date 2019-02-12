@@ -1781,10 +1781,11 @@ namespace frw
     class AOMapNode : public ValueNode
     {
     public:
-        explicit AOMapNode(const MaterialSystem& h, const Value& radius, const Value& side) : ValueNode(h, ValueTypeAOMap)
+        explicit AOMapNode(const MaterialSystem& h, const Value& radius, const Value& side, const Value& samplesCount) : ValueNode(h, ValueTypeAOMap)
         {
             SetValue("radius", radius);
             SetValue("side", side);
+			SetValue("aoraycount", samplesCount);
         }
     };
 

@@ -25,6 +25,7 @@ namespace FireMaya
         static MObject m_occludedColorAttr;
         static MObject m_unoccludedColorAttr;
         static MObject m_outputAttr;
+		static MObject m_samplesAttr;
     };
 }
 

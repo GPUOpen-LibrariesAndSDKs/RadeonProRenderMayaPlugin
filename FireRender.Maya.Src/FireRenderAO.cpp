@@ -13,6 +13,7 @@ MObject FireRenderAO::m_sideAttr;
 MObject FireRenderAO::m_occludedColorAttr;
 MObject FireRenderAO::m_unoccludedColorAttr;
 MObject FireRenderAO::m_outputAttr;
+MObject FireRenderAO::m_samplesAttr;
 
 MStatus FireRenderAO::initialize()
 {
@@ -40,11 +41,17 @@ MStatus FireRenderAO::initialize()
     m_outputAttr = nAttr.createColor("output", "o");
     MAKE_OUTPUT(nAttr);
 
+	m_samplesAttr = nAttr.create("samples", "sam", MFnNumericData::kInt, 1);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setSoftMax(10);
+
     CHECK_MSTATUS(addAttribute(m_sideAttr));
     CHECK_MSTATUS(addAttribute(m_radiusAttr));
     CHECK_MSTATUS(addAttribute(m_occludedColorAttr));
     CHECK_MSTATUS(addAttribute(m_unoccludedColorAttr));
-    CHECK_MSTATUS(addAttribute(m_outputAttr));
+	CHECK_MSTATUS(addAttribute(m_outputAttr));
+	CHECK_MSTATUS(addAttribute(m_samplesAttr));
 
     CHECK_MSTATUS(attributeAffects(m_sideAttr, m_outputAttr));
     CHECK_MSTATUS(attributeAffects(m_radiusAttr, m_outputAttr));
@@ -91,8 +98,9 @@ frw::Value FireRenderAO::GetValue(Scope& scope)
 
     frw::Value occColor = scope.GetValue(shaderNode.findPlug(m_occludedColorAttr));
     frw::Value unoccColor = scope.GetValue(shaderNode.findPlug(m_unoccludedColorAttr));
+	frw::Value samplesCount = scope.GetValue(shaderNode.findPlug(m_samplesAttr));
 
-    return scope.MaterialSystem().ValueBlend(occColor, unoccColor, frw::AOMapNode(scope.MaterialSystem(), radiusValue, sideValue));
+    return scope.MaterialSystem().ValueBlend(occColor, unoccColor, frw::AOMapNode(scope.MaterialSystem(), radiusValue, sideValue, samplesCount));
 }
 
 } // FireMaya
