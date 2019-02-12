@@ -31,6 +31,7 @@
 #include "RprComposite.h"
 
 #include "FireRenderThread.h"
+#include "FireRenderMaterialSwatchRender.h"
 
 #ifdef OPTIMIZATION_CLOCK
 	#include <chrono>
@@ -2106,5 +2107,28 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	}
 
 	rprObjectDelete(frameBufferComposite);
+}
+
+RenderType FireRenderContext::GetRenderType() const
+{
+	return m_RenderType;
+}
+
+bool FireRenderContext::ShouldResizeTexture(unsigned int& max_width, unsigned int& max_height) const
+{
+	if (GetRenderType() == RenderType::Thumbnail)
+	{
+		max_width = FireRenderMaterialSwatchRender::MaterialSwatchPreviewTextureSize;
+		max_height = FireRenderMaterialSwatchRender::MaterialSwatchPreviewTextureSize;
+		return true;
+	}
+
+	return false;
+}
+
+frw::Shader FireRenderContext::GetShader(MObject ob, bool forceUpdate)
+{ 
+	scope.SetContextInfo(this);
+	return scope.GetShader(ob, forceUpdate); 
 }
 

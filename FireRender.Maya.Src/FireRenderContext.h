@@ -33,6 +33,7 @@
 #include <future>
 
 #include "FireRenderUtils.h"
+#include "FireRenderContextIFace.h"
 
 // Forward declarations.
 class FireRenderViewport;
@@ -85,7 +86,6 @@ public:
 	int flags;
 };
 
-
 // FireRender Context
 //
 // This is the main class that wrap the main rpr_context
@@ -93,7 +93,7 @@ public:
 // from the viewport renderer, to the swatch renderer etc...
 // It also manage all the global callbacks connected to the current scene
 // and the Maya session
-class FireRenderContext
+class FireRenderContext : public IFireRenderContextInfo
 {
 public:
 
@@ -492,6 +492,10 @@ public:
 		m_nodePathCache[uuid] = path;
 	}
 
+	virtual RenderType GetRenderType(void) const;
+
+	virtual bool ShouldResizeTexture(unsigned int& max_width, unsigned int& max_height) const;
+
 private:
 	struct CallbacksAttachmentHelper
 	{
@@ -645,7 +649,7 @@ public:
 	frw::Scene GetScene() { return scope.Scene(); }
 	frw::Context GetContext() { return scope.Context(); }
 	frw::MaterialSystem GetMaterialSystem() { return scope.MaterialSystem(); }
-	frw::Shader GetShader(MObject ob, bool forceUpdate = false) { return scope.GetShader(ob, forceUpdate); }
+	frw::Shader GetShader(MObject ob, bool forceUpdate = false); // { return scope.GetShader(ob, forceUpdate); }
 	frw::Shader GetVolumeShader(MObject ob, bool forceUpdate = false) { return scope.GetVolumeShader(ob, forceUpdate); }
 
 
@@ -716,8 +720,6 @@ public:
 	void updateProgress();
 	int	getProgress();
 	bool updateOutput();
-
-	RenderType GetRenderType() const { return m_RenderType; }
     
 
 	class Lock

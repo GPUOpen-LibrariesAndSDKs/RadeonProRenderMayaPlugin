@@ -3,6 +3,7 @@
 #include "../ThirdParty/RadeonProRender SDK/Win/inc/Math/half.h"
 #include "FireRenderThread.h"
 #include "VRay.h"
+#include "FireRenderContext.h"
 
 #include <maya/MImage.h>
 #include <maya/MPlugArray.h>
@@ -10,6 +11,7 @@
 #include <maya/MFileIO.h>
 #include <maya/MSceneMessage.h>
 #include <maya/MFnTypedAttribute.h>
+#include <maya/MUuid.h>
 
 #include <exception>
 
@@ -1123,17 +1125,44 @@ bool FireMaya::Scope::FindFileNodeRecursive(MObject objectNode, int& width, int&
 
 frw::Value FireMaya::Scope::createImageFromShaderNode(MObject node, MString plugName, int width, int height)
 {
+	unsigned int max_width = 1;
+	unsigned int max_height = 1;
+	bool shouldResize = GetContextInfo() && GetContextInfo()->ShouldResizeTexture(max_width, max_height);
+
 	return FireRenderThread::RunOnMainThread<frw::Value>([&]()
 	{
+		if (shouldResize)
+		{
+			width = max_width;
+			height = max_height;
+		}
+
 		frw::Value ret;
 
 		MAIN_THREAD_ONLY; // MTextureManager will not work in other threads
+
+		MFnDependencyNode shaderNode(node);
+		MUuid uid = shaderNode.uuid();
+		MString uid_str = uid.asString();
+
+		// try get resized image from cache
+		if (shouldResize)
+		{
+			frw::Image cachedImage = GetCachedImage(uid_str);
+			if (cachedImage.IsValid())
+			{
+				frw::ImageNode imageNode(m->materialSystem);
+				imageNode.SetMap(cachedImage);
+				ret = imageNode; // need to return frv::value
+				return ret;
+			}
+		}
+
+		// not in cache => create new image
 		if (auto renderer = MHWRender::MRenderer::theRenderer())
 		{
 			if (auto textureManager = renderer->getTextureManager())
 			{
-				MFnDependencyNode shaderNode(node);
-
 				// Get first output connection to cover such cases as outputColor, outputValue etc.
 			
 				MPlug outColorPlug = shaderNode.findPlug(plugName);
@@ -1175,16 +1204,19 @@ frw::Value FireMaya::Scope::createImageFromShaderNode(MObject node, MString plug
 						//we are not setting UV input because it is already baked into image.
 
 						ret = imageNode;
+
+						SetCachedImage(uid, image);
 #ifndef MAYA2015
 						texture->freeRawData((void*)pixelData);
 #else
 						free((void*)pixelData);
 #endif
 					}
+
 					textureManager->releaseTexture(texture);
-					}
 				}
 			}
+		}
 
 		if (!ret)
 			DebugPrint("WARNING: Can't create image from ShaderNode");
@@ -1637,7 +1669,26 @@ void FireMaya::Scope::SetCachedValue(const NodeId& id, frw::Value v)
 		m->valueMap[id] = v;
 }
 
+frw::Image FireMaya::Scope::GetCachedImage(const MString& key) const
+{
+	auto it = m->imageCache.find(std::string(key.asChar()));
+
+	if (it != m->imageCache.end())
+		return it->second;
+
+	return nullptr;
+}
+
+void FireMaya::Scope::SetCachedImage(const MString& key, frw::Image img)
+{
+	if (!img)
+		m->imageCache.erase(std::string(key.asChar()));
+	else
+		m->imageCache[std::string(key.asChar())] = img;
+}
+
 FireMaya::Scope::Scope()
+	: m_pContextInfo(nullptr)
 {
 }
 
@@ -1874,6 +1925,19 @@ void FireMaya::Scope::Init(rpr_context handle, bool destroyMaterialSystemOnDelet
 	m->materialSystem = frw::MaterialSystem(m->context, nullptr, destroyMaterialSystemOnDelete);
 	m->scene = m->context.CreateScene();
 	m->scene.SetActive();
+}
+
+void FireMaya::Scope::SetContextInfo(IFireRenderContextInfo* pCtxInfo)
+{
+	if (pCtxInfo == nullptr)
+		return;
+
+	m_pContextInfo = pCtxInfo;
+}
+
+const IFireRenderContextInfo* FireMaya::Scope::GetContextInfo(void) const
+{
+	return m_pContextInfo;
 }
 
 void FireMaya::Node::postConstructor()
