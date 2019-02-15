@@ -59,6 +59,7 @@ MStatus FireMaya::Material::initialize()
 	eAttr.addField("Ward", kWard);
 	eAttr.addField("Oren-Nayar", kOrenNayar);
 	eAttr.addField("Diffuse Refraction", kDiffuseRefraction);
+	eAttr.addField("Pass Through", kPassThrough);
 	MAKE_INPUT_CONST(eAttr);
 
 	Attribute::color = nAttr.createColor("color", "c");
@@ -222,7 +223,8 @@ frw::Shader FireMaya::Material::GetShader(Scope& scope)
 		{ kEmissive, frw::ShaderTypeEmissive },
 		{ kWard, frw::ShaderTypeWard },
 		{ kOrenNayar, frw::ShaderTypeOrenNayer },
-		{ kDiffuseRefraction, frw::ShaderTypeDiffuseRefraction }
+		{ kDiffuseRefraction, frw::ShaderTypeDiffuseRefraction },
+		{ kPassThrough, frw::ShaderTypeFlatColor }
 	};
 
 	auto shaderType = frw::ShaderTypeDiffuse;

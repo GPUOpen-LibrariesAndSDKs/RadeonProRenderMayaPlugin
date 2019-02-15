@@ -23,6 +23,7 @@ namespace FireMaya
 			kWard,
 			kOrenNayar,
 			kDiffuseRefraction,	// 1.7.16
+			kPassThrough,
 		};
 
 
