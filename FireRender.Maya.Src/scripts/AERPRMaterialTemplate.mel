@@ -22,7 +22,10 @@ global proc AERPRMaterialType(string $nodeName)
 		$disable = {0, 0, 1, 1, 0, 1, 1, 1};
 	} else if ($type == 9) {    // diffuse refraction
 		$disable = {0, 0, 1, 1, 0, 1, 1, 1};
+	} else if ($type == 10) {    // passthrough
+		$disable = {0, 1, 1, 1, 1, 1, 1, 1};
 	}
+
 	editorTemplate -dimControl $nodeName "color"            $disable[0];
 	editorTemplate -dimControl $nodeName "roughness"        $disable[1];
 	editorTemplate -dimControl $nodeName "refractiveIndex"  $disable[2];
