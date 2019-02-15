@@ -1778,17 +1778,6 @@ namespace frw
 		}
 	};
 
-    class AOMapNode : public ValueNode
-    {
-    public:
-        explicit AOMapNode(const MaterialSystem& h, const Value& radius, const Value& side, const Value& samplesCount) : ValueNode(h, ValueTypeAOMap)
-        {
-            SetValue("radius", radius);
-            SetValue("side", side);
-			SetValue("aoraycount", samplesCount);
-        }
-    };
-
 	class MaterialSystem : public Object
 	{
 		static const bool allowShortcuts = true;
@@ -2328,6 +2317,22 @@ namespace frw
 		Shader ShaderBlend(const Shader& a, const Shader& b, const Value& t);
 		Shader ShaderAdd(const Shader& a, const Shader& b);
 	};
+
+    class AOMapNode : public ValueNode
+    {
+    public:
+        explicit AOMapNode(const MaterialSystem& h, const Value& radius, const Value& side, const Value& samplesCount) : ValueNode(h, ValueTypeAOMap)
+        {
+            SetValue("radius", radius);
+            SetValue("side", side);
+
+			// set node value is temporarily commented out, because at the moment (core 1325) number of samples for ao is a parameter of context instead of parameter of node
+			// this was discussed with Takahiro
+			//SetValueInt("aoraycount", samplesCount.GetInt());
+			Context ctx = h.GetContext();
+			ctx.SetParameter("aoraycount", samplesCount.GetInt());
+        }
+    };
 
 	class PostEffect : public Object
 	{
