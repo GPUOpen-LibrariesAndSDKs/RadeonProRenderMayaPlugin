@@ -1148,7 +1148,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 				{
 					frw::Node node = mapValue.GetNode();
 					int type = node.GetType();
-					haveMap = type == RPR_MATERIAL_NODE_IMAGE_TEXTURE;
+					haveMap = (type == RPR_MATERIAL_NODE_IMAGE_TEXTURE) || (type == RPR_MATERIAL_NODE_BLEND_VALUE);
 				}
 
 				if (haveMap)
