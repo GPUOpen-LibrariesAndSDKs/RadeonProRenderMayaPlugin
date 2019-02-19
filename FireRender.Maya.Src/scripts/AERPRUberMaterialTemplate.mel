@@ -35,6 +35,36 @@ global proc AEUberCheckEnableDiffuseNormal(string $nodeName)
 	int $enabled = `getAttr $nodeEnabledAttr`;
 
 	editorTemplate -dimControl $nodeName "diffuseNormal" (($value == 1) || ($enabled == 0));
+
+	AEUberCheckEnableMasterNormal($nodeName);
+}
+
+global proc AEUberCheckEnableMasterNormal(string $nodeName)
+{
+	string $diffuseNormalEnable = $nodeName + ".useShaderNormal";
+	int $denabled = `getAttr $diffuseNormalEnable`;
+	string $diffuseOn = $nodeName + ".diffuse";
+	int $dOn = `getAttr $diffuseOn`;
+	string $reflectNormalEnable = $nodeName + ".reflectUseShaderNormal";
+	int $rlenabled = `getAttr $reflectNormalEnable`;
+	string $reflectOn = $nodeName + ".reflections";
+	int $rlon = `getAttr $reflectOn`;
+	string $refractNormalEnable = $nodeName + ".refractUseShaderNormal";
+	int $rfenabled = `getAttr $refractNormalEnable`;
+	string $refractOn = $nodeName + ".refraction";
+	int $rfon = `getAttr $refractOn`;
+	string $coatNormalEnable = $nodeName + ".coatUseShaderNormal";
+	int $cenabled = `getAttr $coatNormalEnable`;
+	string $coatOn = $nodeName + ".clearCoat";
+	int $cton = `getAttr $coatOn`;
+
+	int $diffuseDontUseMasterNormal = (($dOn == 0) || ($denabled == 0)); // .diffuse || .useShaderNormal
+	int $reflectionDontUseMasterNormal = (($rlon == 0) || ($rlenabled == 0)); // .reflections || .reflectUseShaderNormal
+	int $refractionDontUseMasterNormal = (($rfon == 0) || ($rfenabled == 0)); // .refraction || .refractUseShaderNormal
+	int $coatingUseDontMasterNormal = (($cton == 0) || ($cenabled == 0 )); // .clearCoat || .coatUseShaderNormal
+	int $shouldGrey = ($diffuseDontUseMasterNormal && $reflectionDontUseMasterNormal && $refractionDontUseMasterNormal && $coatingUseDontMasterNormal);
+	editorTemplate -dimControl $nodeName "normalMapEnable" $shouldGrey;
+	editorTemplate -dimControl $nodeName "normalMap" $shouldGrey;
 }
 
 global proc AEUberCheckEnableDiffuseBackscatter(string $nodeName)
@@ -71,6 +101,8 @@ global proc AEUberCheckEnableReflectNormal(string $nodeName)
 	int $enabled = `getAttr $nodeEnabledAttr`;
 
 	editorTemplate -dimControl $nodeName "reflectNormal" (($value == 1) || ($enabled == 0));
+
+	AEUberCheckEnableMasterNormal($nodeName);
 }
 
 global proc AEUberCheckEnableRefraction(string $nodeName)
@@ -101,6 +133,8 @@ global proc AEUberCheckEnableRefractNormal(string $nodeName)
 	int $enabled = `getAttr $nodeEnabledAttr`;
 
 	editorTemplate -dimControl $nodeName "refractNormal" (($value == 1) || ($enabled == 0));
+
+	AEUberCheckEnableMasterNormal($nodeName);
 }
 
 global proc AEUberCheckEnableCoating(string $nodeName)
@@ -127,6 +161,8 @@ global proc AEUberCheckEnableCoatNormal(string $nodeName)
 	int $enabled = `getAttr $nodeEnabledAttr`;
 
 	editorTemplate -dimControl $nodeName "coatNormal" (($value == 1) || ($enabled == 0));
+
+	AEUberCheckEnableMasterNormal($nodeName);
 }
 
 global proc AEUberCheckEnableEmissive(string $nodeName)
