@@ -23,6 +23,7 @@
 #include "FireRenderError.h"
 
 #include <maya/MGlobal.h>
+#include <maya/MDistance.h>
 
 //#define FRW_LOGGING 1
 
@@ -2989,6 +2990,12 @@ namespace frw
 			data().displacementShader = n;
 			auto res = rprShapeSetDisplacementMaterial(Handle(), n.Handle());
 			checkStatus(res);
+
+			MDistance::Unit sceneUnits = MDistance::uiUnit();
+			MDistance distance(1.0, sceneUnits);
+			float scale_multiplier = (float) distance.asMeters() * 100;
+			minscale *= scale_multiplier;
+			maxscale *= scale_multiplier;
 
 			if (minscale > maxscale)
 			{
