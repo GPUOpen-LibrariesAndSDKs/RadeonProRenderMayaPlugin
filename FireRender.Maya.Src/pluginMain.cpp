@@ -809,6 +809,20 @@ MStatus initializePlugin(MObject obj)
 		MGlobal::executeCommand("delete RadeonProRenderGlobals");
 	}
 
+	// Reload Hypershade window
+	// - After plugin is loaded if Hypershade window was open, it becomes bugged,
+	// - so we close and then open Hypershade (if Hypershade window was opened)
+	{
+		MString command =
+			"string $panels[] = `getPanel - vis`;\n"
+			"if (stringArrayContains(\"hyperShadePanel1\", $panels)) {\n"
+			"deleteUI -panel \"hyperShadePanel1\";\n"
+			"HypershadeWindow;\n"
+			"} \n";
+		status = MGlobal::executeCommandOnIdle(command);
+		CHECK_MSTATUS(status);
+	}
+
 	return status;
 }
 
