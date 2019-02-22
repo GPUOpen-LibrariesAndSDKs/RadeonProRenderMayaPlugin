@@ -163,6 +163,14 @@ namespace FireMaya
 	{
 	public:
 		virtual frw::Value GetValue(FireMaya::Scope& scope) = 0;
+
+		virtual void postConstructor()
+		{
+			Node::postConstructor();
+
+			MStatus status = setExistWithoutInConnections(true);
+			CHECK_MSTATUS(status);
+		}
 	};
 
 	// shader classes are the physical materials themselves, eg lambert, emissive, refractive etc
@@ -179,6 +187,14 @@ namespace FireMaya
 		virtual MObject GetDisplacementNode()
 		{
 			return MObject::kNullObj;
+		}
+
+		virtual void postConstructor()
+		{
+			Node::postConstructor();
+
+			MStatus status = setExistWithoutInConnections(true);
+			CHECK_MSTATUS(status);
 		}
 	};
 
