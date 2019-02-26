@@ -691,6 +691,16 @@ void FireRenderContext::render(bool lock)
 
 	m_currentIteration += m_iterationStep;
 
+	// may need to change iteration step
+	{
+		int remainingIterations = m_completionIterations - m_currentIteration;
+		if (remainingIterations < m_iterationStep)
+		{
+			m_iterationStep = remainingIterations;
+			context.SetParameter("iterations", m_iterationStep);
+		}
+	}
+
 	m_cameraAttributeChanged = false;
 }
 
