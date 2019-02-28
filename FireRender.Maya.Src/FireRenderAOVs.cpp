@@ -86,6 +86,9 @@ FireRenderAOVs::FireRenderAOVs() :
 
 	AddAOV(RPR_AOV_VOLUME, "aovVolume", "Volume", "volume",
 		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
+
+	AddAOV(RPR_AOV_DIFFUSE_ALBEDO, "aovAlbedo", "Albedo", "albedo",
+		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
 }
 
 // -----------------------------------------------------------------------------
