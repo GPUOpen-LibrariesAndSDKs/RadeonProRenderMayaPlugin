@@ -2507,6 +2507,16 @@ namespace frw
 			return data().material != nullptr;
 		}
 
+		rprx_material GetHandleRPRXmaterial() const
+		{
+			return data().material;
+		}
+
+		rprx_context GetHandleRPRXcontext() const
+		{
+			return data().context;
+		}
+
 		void SetDirty()
 		{
 			data().bDirty = true;

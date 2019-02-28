@@ -18,6 +18,7 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <regex>
 #ifdef _WIN32
 #include <tchar.h>
 #else
@@ -35,6 +36,8 @@
 
 #include "FileSystemUtils.h"
 #include "FireRenderError.h"
+
+#include "XMLMaterialExport/XMLMaterialExportCommon.h"
 
 #ifdef _WIN32
 #define PATH_SEPARATOR "\\"
@@ -137,6 +140,14 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 		return MS::kFailure;
 	}
 
+	std::string folder = "";
+	std::string filename(filePath.asChar());
+	std::string::size_type pos = filename.find_last_of('\\');
+	if (pos == std::string::npos)
+		pos = filename.find_last_of('/');
+	if (pos != std::string::npos)
+		folder = filename.substr(0, pos + 1);
+
 	MSelectionList sList;
 
 	if (argData.isFlagSet(kMaterialFlag))
@@ -185,6 +196,7 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 
 	std::map<std::string, int> namesUsed;
 	std::set<frw::Shader> objectsProcessed;
+	InitParamList();
 
 	for (uint i = 0; i < sList.length(); i++)
 	{
@@ -198,7 +210,7 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 
 		MFnDependencyNode depNode(node);
 
-		auto shader = context.GetShader(node);
+		frw::Shader shader = context.GetShader(node);
 
 		if (!shader)
 		{
@@ -209,60 +221,77 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 		if (objectsProcessed.count(shader))
 			continue;	// already handled
 
+		shader.Commit();
+
 		objectsProcessed.insert(shader);
 
+		rprx_context mat_rprx_context = nullptr;
+		std::set<rpr_material_node> nodeList;
+		std::set<rprx_material> nodeListX;
+		std::unordered_map<rpr_image, RPR_MATERIAL_XML_EXPORT_TEXTURE_PARAM> textureParameter;
+		void* closureNode = nullptr;
 
-		///
-		std::set<rpr_material_node> nodes_to_check;
-		std::vector<rpr_material_node> nodes_to_save;
-		nodes_to_check.insert(shader.Handle());
-		//look for all required by sh material nodes
-		while (!nodes_to_check.empty())
+		std::string material_name = std::regex_replace(filePath.asChar(), std::regex("^.*[\\\\/]"), ""); // cut path
+		material_name = std::regex_replace(material_name, std::regex("[.].*"), ""); // cut extension
+
+		bool exportImageUV = false; // ignore UV for IMAGE_TEXTURE nodes.  Because UV is exported with "tiling_u" & "tiling_v" in XML
+
+		bool isiRprx = shader.IsRprxMaterial();
+		if (isiRprx)
 		{
-			rpr_material_node mat = *nodes_to_check.begin(); nodes_to_check.erase(mat);
-			nodes_to_save.push_back(mat);
+			rprx_material mat_rprx_material = shader.GetHandleRPRXmaterial();
+			mat_rprx_context = shader.GetHandleRPRXcontext();
+			closureNode = mat_rprx_material;
 
-			size_t input_count = 0;
-			rprMaterialNodeGetInfo(mat, RPR_MATERIAL_NODE_INPUT_COUNT, sizeof(size_t), &input_count, nullptr);
-			for (uint j = 0; j < input_count; ++j)
-			{
-				rpr_int in_type;
-				rprMaterialNodeGetInputInfo(mat, j, RPR_MATERIAL_NODE_INPUT_TYPE, sizeof(in_type), &in_type, nullptr);
-				if (in_type == RPR_MATERIAL_NODE_INPUT_TYPE_NODE)
-				{
-					rpr_material_node ref_node = nullptr;
-					rprMaterialNodeGetInputInfo(mat, j, RPR_MATERIAL_NODE_INPUT_VALUE, sizeof(ref_node), &ref_node, nullptr);
-					//if node is not null and it's not duplicated
-					if (ref_node && std::find(nodes_to_save.begin(), nodes_to_save.end(), ref_node) == nodes_to_save.end())
-					{
-						nodes_to_check.insert(ref_node);
-					}
-				}
-			}
-		}
+			bool success = ParseRPRX(
+				mat_rprx_material,
+				mat_rprx_context,
+				nodeList,
+				nodeListX,
+				folder,
+				textureParameter,
+				material_name,
+				exportImageUV);
 
-		auto niceName = SanitizeNameForFile(depNode.name().asUTF8());
-		if (namesUsed.find(niceName) != namesUsed.end())
-		{
-			niceName += "(";
-			niceName += ++namesUsed[niceName];
-			niceName += ")";
+			if (!success)
+				return MStatus::kFailure;
 		}
 		else
-			namesUsed[niceName] = 0;
+		{
+			closureNode = shader.Handle();
 
-		std::string pathName = ParentFolder(filePath.asUTF8())
-			+ PATH_SEPARATOR
-			+ niceName
-			+ ".xml"
-			;
+			bool success = ParseRPR(
+				shader.Handle(),
+				nodeList,
+				nodeListX,
+				folder,
+				false,
+				textureParameter,
+				material_name,
+				exportImageUV);
 
-		ExportMaterials(pathName, nodes_to_save.data(), (int)nodes_to_save.size());
-		///
+			if (!success)
+				return MStatus::kFailure;
+		}
+
+		std::map<rpr_image, EXTRA_IMAGE_DATA> extraImageData;
+		ExportMaterials(
+			filename,
+			nodeList, 
+			nodeListX,
+			GetRPRXParamList(),
+			mat_rprx_context,
+			textureParameter,
+			closureNode,
+			material_name,
+			extraImageData,
+			exportImageUV
+		);
 	}
 
 	return MS::kSuccess;
 }
+
 
 ////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////
@@ -878,9 +907,16 @@ void FireRenderXmlImportCmd::parseAttributeParam(MObject shaderNode,
 
 				if (!fileObject.exists())
 				{
-					// The image was not found in either location.
-					MGlobal::displayError("Unable to find image " + newImage);
-					return;
+					// Try find image by exact input path
+					newImage = MString(attrValue.c_str());
+					fileObject.setRawFullName(newImage);
+
+					if (!fileObject.exists())
+					{
+						// The image was not found in either location.
+						MGlobal::displayError("Unable to find image " + newImage);
+						return;
+					}
 				}
 			}
 
