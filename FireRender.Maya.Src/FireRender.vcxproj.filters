@@ -96,6 +96,9 @@
     <Filter Include="FireRender.Components\SunPosition">
       <UniqueIdentifier>{2acf3efc-8879-4fd4-9dc0-433ef564c459}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FireRender.Components\XMLExport">
+      <UniqueIdentifier>{ebf1f528-6976-43ce-90f5-e1f600942a2a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="python\__init__.py">
@@ -503,6 +506,9 @@
     <ClCompile Include="FireRenderSwatchInstance.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\FireRender.Components\cpp\XMLMaterialExport\XMLMaterialExportCommon.cpp">
+      <Filter>FireRender.Components\XMLExport</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -864,6 +870,9 @@
     </ClInclude>
     <ClInclude Include="FireRenderContextIFace.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FireRender.Components\cpp\XMLMaterialExport\XMLMaterialExportCommon.h">
+      <Filter>FireRender.Components\XMLExport</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
