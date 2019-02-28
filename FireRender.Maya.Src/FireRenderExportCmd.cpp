@@ -137,13 +137,18 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		context.setResolution(settings.width, settings.height, true);
 
 		MDagPathArray cameras = getRenderableCameras();
-		if ( cameras.length() >= 1 )
+
+		if (cameras.length() == 0)
+		{
+			MGlobal::displayError("Renderable cameras haven't been found! Using default camera!");
+
+			MDagPath cameraPath = getDefaultCamera();
+			MString cameraName = getNameByDagPath(cameraPath);
+			context.setCamera(cameraPath);
+		}
+		else  // (cameras.length() >= 1)
 		{
 			context.setCamera(cameras[0]);
-		}
-		else
-		{
-			MGlobal::displayError("Renderable cameras haven't been found !");
 		}
 
 		// setup frame ranges

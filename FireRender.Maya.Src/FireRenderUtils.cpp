@@ -1447,6 +1447,50 @@ int GetFaceMaterials(MFnMesh& mesh, MIntArray& faceList)
 	return shadingEngines ? shadingEngines : 1;
 }
 
+MString getNameByDagPath(const MDagPath& cameraPath)
+{
+	MDagPath path = cameraPath;
+	path.extendToShape();
+	MObject transform = path.transform();
+	MFnDependencyNode transfNode(transform);
+	return transfNode.name();
+}
+
+MDagPath getDefaultCamera()
+{
+	MDagPath result;
+	MStatus status;
+
+	MItDag itDag(MItDag::kDepthFirst, MFn::kCamera, &status);
+	if (MStatus::kFailure == status) 
+	{
+		MGlobal::displayError("getDefaultCamera: no cameras in te scene!");
+		return result;
+	}
+
+	for (; !itDag.isDone(); itDag.next())
+	{
+		MDagPath dagPath;
+		status = itDag.getPath(dagPath);
+		if (MStatus::kSuccess != status) 
+		{
+			MGlobal::displayError("getDefaultCamera: traverse failed");
+			continue;
+		}
+
+		MFnDagNode cameraNode(dagPath);
+		std::string cameraName = cameraNode.fullPathName().asChar();
+		if (cameraName.find("|persp|") != std::string::npos) // "persp" is the name that is hardcoded in PR command script at the moment; if we will change PR script we should change this code as well
+		{
+			result = dagPath;
+			return result;
+		}
+	}
+
+	MGlobal::displayError("getDefaultCamera: failed to find persp camera!");
+	return result;
+}
+
 MDagPathArray getRenderableCameras()
 {
 	MDagPathArray cameras;
