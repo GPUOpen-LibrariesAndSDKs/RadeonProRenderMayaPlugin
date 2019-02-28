@@ -300,6 +300,12 @@ int GetFaceMaterials(MFnMesh& mesh, MIntArray& faceList);
 // Get render-able cameras
 MDagPathArray getRenderableCameras();
 
+// get shape name by dag path
+MString getNameByDagPath(const MDagPath& cameraPath);
+
+// Get camera that is used by production render if no camera is selected
+MDagPath getDefaultCamera();
+
 // Get RadeonProRenderGlobals node
 MStatus GetRadeonProRenderGlobals(MObject& outGlobalsNode);
 
