@@ -679,6 +679,16 @@ void FireRenderContext::render(bool lock)
 		m_currentIteration = 0;
 	}
 
+	// may need to change iteration step
+	int tempIterationStep = m_iterationStep;
+
+	int remainingIterations = m_completionIterations - m_currentIteration;
+	if (remainingIterations < m_iterationStep)
+	{
+		tempIterationStep = remainingIterations;
+		context.SetParameter("iterations", tempIterationStep);
+	}
+
 	if (m_useRegion)
 		context.RenderTile(m_region.left, m_region.right, m_height - m_region.top - 1, m_height - m_region.bottom - 1);
 	else
@@ -689,17 +699,7 @@ void FireRenderContext::render(bool lock)
 		DebugPrint("RPR GPU Memory used: %dMB", context.GetMemoryUsage() >> 20);
 	}
 
-	m_currentIteration += m_iterationStep;
-
-	// may need to change iteration step
-	{
-		int remainingIterations = m_completionIterations - m_currentIteration;
-		if (remainingIterations < m_iterationStep)
-		{
-			m_iterationStep = remainingIterations;
-			context.SetParameter("iterations", m_iterationStep);
-		}
-	}
+	m_currentIteration += tempIterationStep;
 
 	m_cameraAttributeChanged = false;
 }
