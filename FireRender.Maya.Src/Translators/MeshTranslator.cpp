@@ -29,15 +29,32 @@ namespace MeshTranslator
 MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus& status)
 {
 	MFnMesh mesh(object);
+	status = MStatus::kSuccess;
+
+	int in_numUVSets = mesh.numUVSets();
+	if (in_numUVSets != 1)
+		return MObject::kNullObj; // temporary workaround of bug of generateSmoothMesh loosing UV data
 
 	DependencyNode attributes(object);
 
 	bool smoothPreview = attributes.getBool("displaySmoothMesh");
 
-	//for non smooth preview case:
-	status = MStatus::kSuccess;
+	{ // same; generateSmoothMesh is loosing material data if more then 1 material is present
+		MIntArray materialIndices;
+		MObjectArray shaders;
+		unsigned int instanceNumber = 0;
+		MStatus tmpRes = mesh.getConnectedShaders(instanceNumber, shaders, materialIndices);
+		int countShaders = shaders.length();
 
-	return (smoothPreview) ? mesh.generateSmoothMesh(parent, 0, &status) : MObject::kNullObj;
+		if (smoothPreview && (countShaders > 1))
+			return MObject::kNullObj;
+	}
+
+	if (!smoothPreview)
+		return MObject::kNullObj;
+
+	// for non smooth preview case:
+	return mesh.generateSmoothMesh(parent, NULL, &status);
 }
 
 MObject MeshTranslator::TessellateNurbsSurface(const MObject& object, const MObject& parent, MStatus& status)
