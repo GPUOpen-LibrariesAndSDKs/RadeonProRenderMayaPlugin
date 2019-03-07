@@ -8,17 +8,15 @@
 
 /**
 * The RPR Physical Light locator contains the
-* system attributes and is responsible for
-* drawing the viewport representation.
+* system attributes.
 */
 
 class FireRenderPhysicalLightLocator : public MPxLocatorNode
 {
 public:
-	FireRenderPhysicalLightLocator() {};
-	virtual ~FireRenderPhysicalLightLocator() {};
+	FireRenderPhysicalLightLocator();
+	virtual ~FireRenderPhysicalLightLocator();
 
-public:
 	virtual MStatus compute(const MPlug& plug, MDataBlock& data) override;
 
 	virtual void draw(
@@ -33,10 +31,23 @@ public:
 
 	static void* creator();
 
+	void postConstructor() override;
+
 	static MStatus initialize();
 
 public:
 	static MTypeId	id;
 	static MString drawDbClassification;
 	static MString drawRegistrantId;
+
+private:
+	MCallbackId m_attributeChangedCallback;
+	MCallbackId m_selectionChangedCallback;
+
+private:
+	void SubscribeSelectionChangedEvent(bool subscribe = true);
+	void MakeSelectedMeshAsLight();
+
+	static void onSelectionChanged(void *clientData);
+	static void onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
 };

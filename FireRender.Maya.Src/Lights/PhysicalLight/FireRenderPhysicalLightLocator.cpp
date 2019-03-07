@@ -1,6 +1,14 @@
 #include <maya/MFnEnumAttribute.h>
 #include <maya/MFnNumericAttribute.h>
 
+#include <maya/MSelectionList.h>
+#include <maya/MDagModifier.h>
+#include <maya/MFnMesh.h>
+#include <maya/MFloatPointArray.h>
+#include <maya/MFnTransform.h>
+#include <maya/MEventMessage.h>
+#include <maya/MHWGeometryUtilities.h>
+
 #include "FireRenderPhysicalLightLocator.h"
 #include "PhysicalLightAttributes.h"
 #include "FireMaya.h"
@@ -8,6 +16,30 @@
 MTypeId FireRenderPhysicalLightLocator::id(FireMaya::TypeId::FireRenderPhysicalLightLocator);
 MString FireRenderPhysicalLightLocator::drawDbClassification("drawdb/geometry/FireRenderPhysicalLightLocator");
 MString FireRenderPhysicalLightLocator::drawRegistrantId("FireRenderPhysicalLightNode");
+
+FireRenderPhysicalLightLocator::FireRenderPhysicalLightLocator() :
+	m_attributeChangedCallback(0),
+	m_selectionChangedCallback(0)
+{
+}
+
+FireRenderPhysicalLightLocator::~FireRenderPhysicalLightLocator()
+{
+	if (m_attributeChangedCallback != 0)
+	{
+		MNodeMessage::removeCallback(m_attributeChangedCallback);
+	}
+
+	SubscribeSelectionChangedEvent(false);
+}
+
+void FireRenderPhysicalLightLocator::postConstructor()
+{
+	MStatus status;
+	MObject mobj = thisMObject();
+	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(mobj, FireRenderPhysicalLightLocator::onAttributeChanged, this, &status);
+	assert(status == MStatus::kSuccess);
+}
 
 MStatus FireRenderPhysicalLightLocator::compute(const MPlug& plug, MDataBlock& data)
 {
@@ -46,4 +78,123 @@ MBoundingBox FireRenderPhysicalLightLocator::boundingBox() const
 void* FireRenderPhysicalLightLocator::creator()
 {
 	return new FireRenderPhysicalLightLocator();
+}
+
+void FireRenderPhysicalLightLocator::onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
+{
+	FireRenderPhysicalLightLocator* physicalLightLocatorNode = static_cast<FireRenderPhysicalLightLocator*> (clientData);
+
+	if (! (msg | MNodeMessage::AttributeMessage::kAttributeSet) )
+	{
+		return;
+	}
+
+	if (plug == PhysicalLightAttributes::areaLightSelectingMesh)
+	{
+		physicalLightLocatorNode->SubscribeSelectionChangedEvent();
+	}
+}
+
+void FireRenderPhysicalLightLocator::onSelectionChanged(void *clientData)
+{
+	FireRenderPhysicalLightLocator* physicalLightLocatorNode = static_cast<FireRenderPhysicalLightLocator*> (clientData);
+
+	physicalLightLocatorNode->MakeSelectedMeshAsLight();
+	physicalLightLocatorNode->SubscribeSelectionChangedEvent(false);
+}
+
+void FireRenderPhysicalLightLocator::SubscribeSelectionChangedEvent(bool subscribe)
+{
+	if (subscribe)
+	{
+		if (m_selectionChangedCallback == 0)
+		{
+			m_selectionChangedCallback = MEventMessage::addEventCallback("SelectionChanged", onSelectionChanged, this);
+		}
+	}
+	else
+	{
+		if (m_selectionChangedCallback != 0)
+		{
+			MNodeMessage::removeCallback(m_selectionChangedCallback);
+		}
+
+		m_selectionChangedCallback = 0;
+	}
+}
+
+void FireRenderPhysicalLightLocator::MakeSelectedMeshAsLight()
+{
+	MSelectionList sList;
+
+	MGlobal::getActiveSelectionList(sList);
+
+	MObject nodeObject = thisMObject();
+
+	bool changed = false;
+	for (unsigned int i = 0; i < sList.length(); i++)
+	{
+		MDagPath path;
+
+		sList.getDagPath(i, path);
+
+		if (!path.node().hasFn(MFn::kTransform))
+		{
+			continue;
+		}
+
+		MObject newParent = path.node();
+		path.extendToShape();
+
+		MHWRender::DisplayStatus displayStatus = MHWRender::MGeometryUtilities::displayStatus(path);
+
+		if ((displayStatus == MHWRender::kLead) && path.node().hasFn(MFn::kMesh))
+		{
+			MObject shapeObject = path.node();
+			MDagModifier dagModifier;
+
+			// reparent light to mesh
+			MFnDagNode lightDagNode(nodeObject);
+			MObject lightTransformObj = lightDagNode.parent(0);
+
+			dagModifier.reparentNode(nodeObject, newParent);
+
+			dagModifier.doIt();
+
+			MDGModifier dgModifier;
+			MFnTransform lightTransform(lightTransformObj);
+			if (lightTransform.childCount() == 0)
+			{
+				dgModifier.deleteNode(lightTransformObj);
+				dgModifier.doIt();
+			}
+
+			MFnMesh meshNode(shapeObject);
+
+			MPlug plugMeshVisibility = meshNode.findPlug("visibility");
+			if (!plugMeshVisibility.isNull())
+			{
+				plugMeshVisibility.setBool(false);
+			}
+
+			MFnDependencyNode thisDepNode(nodeObject);
+			MPlug plug = thisDepNode.findPlug(PhysicalLightAttributes::areaLightMeshSelectedName);
+
+			assert(!plug.isNull());
+
+			MString strPath = path.fullPathName();
+			plug.setString(strPath);
+
+			changed = true;
+
+			break;
+		}
+	}
+
+	SubscribeSelectionChangedEvent(false);
+
+	if (!changed)
+	{
+		MGlobal::displayWarning("Please select a mesh");
+	}
 }

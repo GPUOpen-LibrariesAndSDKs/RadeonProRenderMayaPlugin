@@ -352,6 +352,11 @@ float PhysicalLightAttributes::GetShadowsSoftness(const MFnDependencyNode& node)
 	return GetFloatAttribute(node, PhysicalLightAttributes::shadowsSoftness);
 }
 
+MString PhysicalLightAttributes::GetAreaLightMeshSelectedName(const MFnDependencyNode& node)
+{
+	return GetStringAttribute(node, PhysicalLightAttributes::areaLightMeshSelectedName);
+}
+
 void PhysicalLightAttributes::FillPhysicalLightData(PhysicalLightData& physicalLightData, const MObject& node, FireMaya::Scope* scope)
 {
 	physicalLightData.enabled = PhysicalLightAttributes::GetEnabled(node);

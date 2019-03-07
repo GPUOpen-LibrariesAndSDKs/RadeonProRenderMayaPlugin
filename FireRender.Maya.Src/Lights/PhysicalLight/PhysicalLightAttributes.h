@@ -30,10 +30,11 @@ public:
 	static float GetLuminousEfficacy(const MFnDependencyNode& node);
 	static PLIntensityUnit GetIntensityUnits(const MFnDependencyNode& node);
 
-	static void GetSpotLightSettings(const MFnDependencyNode& node, float& outerAngle, float& falloff);
+	static void GetSpotLightSettings(const MFnDependencyNode& node, float& innerAngle, float& outerfalloff);
 
 	static bool GetShadowsEnabled(const MFnDependencyNode& node);
 	static float GetShadowsSoftness(const MFnDependencyNode& node);
+	static MString GetAreaLightMeshSelectedName(const MFnDependencyNode& node);
 
 public:
 	// General
