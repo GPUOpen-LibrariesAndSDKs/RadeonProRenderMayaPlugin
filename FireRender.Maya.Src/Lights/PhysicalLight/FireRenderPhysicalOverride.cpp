@@ -6,12 +6,6 @@
 #include <maya/MHWGeometry.h>
 #include <maya/MShaderManager.h>
 #include <maya/MHWGeometryUtilities.h>
-#include <maya/MEventMessage.h>
-#include <maya/MSelectionList.h>
-#include <maya/MDagModifier.h>
-#include <maya/MFnMesh.h>
-#include <maya/MFloatPointArray.h>
-#include <maya/MFnTransform.h>
 #include <vector>
 
 // ================================
@@ -25,137 +19,17 @@ MColor FireRenderPhysicalOverride::m_Color(0.3f, 0.0f, 0.0f);
 
 FireRenderPhysicalOverride::FireRenderPhysicalOverride(const MObject& obj)
 	: MPxGeometryOverride(obj),
-	m_attributeChangedCallback(0),
-	m_selectionChangedCallback(0),
 	m_depNodeObj(obj),
 	m_changed(true)
 {
-	MStatus status;
-    MObject mobj = m_depNodeObj.object();
-	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(mobj, FireRenderPhysicalOverride::onImportantAttributeChanged, this, &status);
-	assert(status == MStatus::kSuccess);
+	m_currentTrackedValues.areaLightShape = PLAreaLightShape::PLARectangle;
+	m_currentTrackedValues.lightType = PLType::PLTArea;
+	m_currentTrackedValues.spotLightInnerConeAngle = 0.0f;
+	m_currentTrackedValues.spotLightOuterConeFalloff = 0.0f;
 }
 
 FireRenderPhysicalOverride::~FireRenderPhysicalOverride()
 {
-	if (m_attributeChangedCallback != 0)
-	{
-		MNodeMessage::removeCallback(m_attributeChangedCallback);
-	}
-
-	SubscribeSelectionChangedEvent(false);
-}
-
-void FireRenderPhysicalOverride::onImportantAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
-{
-	FireRenderPhysicalOverride* physicalLightGeomNode = static_cast<FireRenderPhysicalOverride*> (clientData);
-
-	if (plug == PhysicalLightAttributes::lightType ||
-		plug == PhysicalLightAttributes::areaLightShape ||
-		plug == PhysicalLightAttributes::spotLightInnerConeAngle ||
-		plug == PhysicalLightAttributes::spotLightOuterConeFalloff)
-	{
-		physicalLightGeomNode->m_changed = true;
-	}
-
-	if (plug == PhysicalLightAttributes::areaLightSelectingMesh)
-	{
-		physicalLightGeomNode->SubscribeSelectionChangedEvent();
-	}
-}
-
-void FireRenderPhysicalOverride::onSelectionChanged(void *clientData)
-{
-	FireRenderPhysicalOverride* physicalLightGeomNode = static_cast<FireRenderPhysicalOverride*> (clientData);
-
-	physicalLightGeomNode->MakeSelectedMeshAsLight();
-	physicalLightGeomNode->SubscribeSelectionChangedEvent(false);
-}
-
-void FireRenderPhysicalOverride::SubscribeSelectionChangedEvent(bool subscribe)
-{
-	if (subscribe)
-	{
-		if (m_selectionChangedCallback == 0)
-		{
-			m_selectionChangedCallback = MEventMessage::addEventCallback("SelectionChanged", onSelectionChanged, this);
-		}
-	}
-	else
-	{
-		if (m_selectionChangedCallback != 0)
-		{
-			MNodeMessage::removeCallback(m_selectionChangedCallback);
-		}
-
-		m_selectionChangedCallback = 0;
-	}
-}
-
-
-void FireRenderPhysicalOverride::MakeSelectedMeshAsLight()
-{
-	MSelectionList sList;
-
-	MGlobal::getActiveSelectionList(sList);
-
-	for (unsigned int i = 0; i < sList.length(); i++)
-	{
-		MDagPath path;
-
-		sList.getDagPath(i, path);
-
-		if (!path.node().hasFn(MFn::kTransform))
-		{
-			continue;
-		}
-
-		MObject newParent = path.node();
-		path.extendToShape();
-
-		MHWRender::DisplayStatus displayStatus = MHWRender::MGeometryUtilities::displayStatus(path);
-
-		if ((displayStatus == MHWRender::kLead) && path.node().hasFn(MFn::kMesh))
-		{
-			MObject shapeObject = path.node();
-			MDagModifier dagModifier;
-
-			// reparent light to mesh
-			MFnDagNode lightDagNode(m_depNodeObj.object());
-			MObject lightTransformObj = lightDagNode.parent(0);
-
-			dagModifier.reparentNode(m_depNodeObj.object(), newParent);
-
-			dagModifier.doIt();
-
-			MDGModifier dgModifier;
-			MFnTransform lightTransform(lightTransformObj);
-			if (lightTransform.childCount() == 0)
-			{
-				dgModifier.deleteNode(lightTransformObj);
-				dgModifier.doIt();
-			}
-
-			MFnMesh meshNode(shapeObject);
-
-			MPlug plugMeshVisibility = meshNode.findPlug("visibility");
-			if (!plugMeshVisibility.isNull())
-			{
-				plugMeshVisibility.setBool(false);
-			}
-
-			m_changed = true;
-
-			break;
-		}
-	}
-
-	SubscribeSelectionChangedEvent(false);
-
-	if (!m_changed)
-	{
-		MGlobal::displayWarning("Mesh hasn't been selected!");
-	}
 }
 
 DrawAPI FireRenderPhysicalOverride::supportedDrawAPIs() const
@@ -167,7 +41,42 @@ const MString shapeWires = "shapeWires";
 
 void FireRenderPhysicalOverride::updateDG()
 {
-	
+	PLType lightType = PhysicalLightAttributes::GetLightType(m_depNodeObj.object());
+
+	if (m_currentTrackedValues.lightType != lightType)
+	{
+		m_currentTrackedValues.lightType = lightType;
+		m_changed = true;
+	}
+
+	PLAreaLightShape areaLightShape = PhysicalLightAttributes::GetAreaLightShape(m_depNodeObj.object());
+
+	if (m_currentTrackedValues.areaLightShape != areaLightShape)
+	{
+		m_currentTrackedValues.areaLightShape = areaLightShape;
+		m_changed = true;
+	}
+
+	float spotLightInnerConeAngle;
+	float spotLightOuterConeFalloff;
+
+	PhysicalLightAttributes::GetSpotLightSettings(m_depNodeObj.object(), spotLightInnerConeAngle, spotLightOuterConeFalloff);
+
+	if (m_currentTrackedValues.spotLightInnerConeAngle != spotLightInnerConeAngle ||
+		m_currentTrackedValues.spotLightOuterConeFalloff != spotLightOuterConeFalloff)
+	{
+		m_currentTrackedValues.spotLightInnerConeAngle = spotLightInnerConeAngle;
+		m_currentTrackedValues.spotLightOuterConeFalloff = spotLightOuterConeFalloff;
+		m_changed = true;
+	}
+
+	MString attachedMeshName = PhysicalLightAttributes::GetAreaLightMeshSelectedName(m_depNodeObj.object());
+
+	if (m_currentTrackedValues.attachedMeshName != attachedMeshName)
+	{
+		m_currentTrackedValues.attachedMeshName = attachedMeshName;
+		m_changed = true;
+	}
 }
 
 bool FireRenderPhysicalOverride::IsPointLight() const

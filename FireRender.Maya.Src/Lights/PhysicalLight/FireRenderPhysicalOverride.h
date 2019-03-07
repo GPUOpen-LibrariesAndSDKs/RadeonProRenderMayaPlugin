@@ -48,21 +48,21 @@ private:
 	void FillWithWireframeForMesh(GizmoVertexVector& vertexVector, IndexVector& indexVector, const MDagPath& dagPath);
 	MColor GetColor(const MDagPath& path);
 
-	void SubscribeSelectionChangedEvent(bool subscribe = true);
-
-	static void onSelectionChanged(void *clientData);
-	static void onImportantAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
-
-	void MakeSelectedMeshAsLight();
-
 	bool IsPointLight() const;
 	bool IsAreaMeshLight() const;
 	bool HasNoGeomOverride() const;
 
 private:
+	struct CurrentValues
+	{
+		PLType lightType;
+		PLAreaLightShape areaLightShape;
+		float spotLightInnerConeAngle;
+		float spotLightOuterConeFalloff;
+		MString attachedMeshName;
+	} m_currentTrackedValues;
+
 	MFnDependencyNode m_depNodeObj;
-	MCallbackId m_attributeChangedCallback;
-	MCallbackId m_selectionChangedCallback;
 
 	bool m_changed;
 
