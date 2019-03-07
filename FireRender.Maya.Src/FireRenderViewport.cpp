@@ -873,13 +873,16 @@ def createAOVsMenu(frMenu):
 
 	aovs = ["Color", "Opacity", "World Corrdinate", "UV", "Material Idx", "Geometric Normal", "Shading Normal", "Depth", "Object ID", "Object Group ID"]
 	aovs.extend(["Shadow Catcher", "Background", "Emission", "Velocity", "Direct Illumination", "Indirect Illumination", "AO", "Direct Diffuse"])
-	aovs.extend(["Direct Reflect", "Indirect Diffuse", "Indirect Reflect", "Refract", "Volume"])
+	aovs.extend(["Direct Reflect", "Indirect Diffuse", "Indirect Reflect", "Refract", "Volume", "Albedo"])
+
+	# numbers in the following arrays are IDs of RPR AOVs that are declared in RadeonProRender.h
+	aov_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18, 20, 21, 22, 27]
 
 	ag = QtWidgets.QActionGroup(frSubMenu)
 	count = 0
 	for aov in aovs:
 		action = frSubMenu.addAction(aov)
-		action.triggered.connect( lambda index = count: setFireViewportAOV(index))
+		action.triggered.connect( lambda index = count: setFireViewportAOV(aov_ids[index]))
 		action.setActionGroup(ag)
 		action.setCheckable(True)
 		if count == 0 :
