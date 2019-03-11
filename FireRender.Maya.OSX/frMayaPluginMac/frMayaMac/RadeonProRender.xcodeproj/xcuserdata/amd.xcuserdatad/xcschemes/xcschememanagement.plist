@@ -19,15 +19,25 @@
 			<key>orderHint</key>
 			<integer>2</integer>
 		</dict>
-		<key>Release 2017.xcscheme_^#shared#^_</key>
+		<key>Debug 2019.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>3</integer>
 		</dict>
-		<key>Release 2018.xcscheme_^#shared#^_</key>
+		<key>Release 2017.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>4</integer>
+		</dict>
+		<key>Release 2018.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>5</integer>
+		</dict>
+		<key>Release 2019.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>6</integer>
 		</dict>
 	</dict>
 	<key>SuppressBuildableAutocreation</key>
@@ -48,6 +58,11 @@
 			<true/>
 		</dict>
 		<key>8D595D8B20372FE20031988A</key>
+		<dict>
+			<key>primary</key>
+			<true/>
+		</dict>
+		<key>8DBCC29B22304666003EE361</key>
 		<dict>
 			<key>primary</key>
 			<true/>

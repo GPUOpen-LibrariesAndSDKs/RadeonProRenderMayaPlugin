@@ -1,6 +1,6 @@
 @echo off
 
-set mayaVersions=2016 2016_5 2017 2018
+set mayaVersions=2017 2018 2019
 
 setlocal enabledelayedexpansion
 

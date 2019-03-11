@@ -29,7 +29,11 @@
 #include <ostream>
 #include <sstream>
 #if !defined(MAYA2015) && !defined(MAYA2016)
+#if defined(MAYA2019)
+	#include <Xgen/src/xgsculptcore/api/XgSplineAPI.h>
+#else
 	#include <XGen/XgSplineAPI.h>
+#endif
 #endif
 
 #ifndef MAYA2015

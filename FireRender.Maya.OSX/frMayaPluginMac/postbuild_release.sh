@@ -17,6 +17,7 @@ cp "$PROJECT_DIR/../rpr2016.mod" "/Users/Shared/RadeonProRender/modules/rpr2016.
 cp "$PROJECT_DIR/../rpr2016.5.mod" "/Users/Shared/RadeonProRender/modules/rpr2016.5.mod"
 cp "$PROJECT_DIR/../rpr2017.mod" "/Users/Shared/RadeonProRender/modules/rpr2017.mod"
 cp "$PROJECT_DIR/../rpr2018.mod" "/Users/Shared/RadeonProRender/modules/rpr2018.mod"
+cp "$PROJECT_DIR/../rpr2019.mod" "/Users/Shared/RadeonProRender/modules/rpr2019.mod"
 
 # copy module files
 
@@ -32,6 +33,9 @@ fi
 if [ -d "/Users/Shared/Autodesk/modules/maya/2018/" ]; then
 cp "$PROJECT_DIR/../rpr2018.mod" "/Users/Shared/Autodesk/modules/maya/2018/rpr.mod"
 fi
+if [ -d "/Users/Shared/Autodesk/modules/maya/2019/" ]; then
+cp "$PROJECT_DIR/../rpr2019.mod" "/Users/Shared/Autodesk/modules/maya/2019/rpr.mod"
+fi
 
 localUsers=$( dscl . list /Users UniqueID | awk '$2 >= 501 {print $1}' | grep -v admin )
 for userName in $localUsers; do
@@ -46,6 +50,9 @@ cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/shelfs/" "/Users/$userName/Libr
 fi
 if [ -d "/Users/$userName/Library/Preferences/Autodesk/maya/2018/prefs/shelves/" ]; then
 cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/shelfs/" "/Users/$userName/Library/Preferences/Autodesk/maya/2018/prefs/shelves/"
+fi
+if [ -d "/Users/$userName/Library/Preferences/Autodesk/maya/2019/prefs/shelves/" ]; then
+cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/shelfs/" "/Users/$userName/Library/Preferences/Autodesk/maya/2019/prefs/shelves/"
 fi
 
 done
