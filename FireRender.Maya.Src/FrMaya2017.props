@@ -11,6 +11,7 @@
       <AdditionalIncludeDirectories>$(MAYA_SDK_2017)\include;$(MAYA_X64_2017)\plug-ins\xgen\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
+	  <AdditionalDependencies>libAdskXGen.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(MAYA_X64_2017)\lib;$(MAYA_X64_2017)\plug-ins\xgen\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
