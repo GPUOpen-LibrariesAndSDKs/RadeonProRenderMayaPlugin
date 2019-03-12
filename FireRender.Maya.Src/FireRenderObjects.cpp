@@ -1983,6 +1983,44 @@ FireRenderHair::~FireRenderHair()
 	clear();
 }
 
+// returns true and valid MObject if UberMaterial was found
+std::tuple<bool, MObject> GetUberMaterialFromHairShader(MObject& surfaceShader)
+{
+	if (surfaceShader.isNull())
+		return std::make_tuple(false, MObject::kNullObj);
+
+	MFnDependencyNode shaderNode(surfaceShader);
+	MString shaderName = shaderNode.name();
+	MString shaderType = shaderNode.typeName();
+
+	if (shaderType == "RPRUberMaterial") // this node is Uber
+		return std::make_tuple(true, surfaceShader);
+
+	// try find connected Uber
+	// get ambientColor connection (this attribute can be used as input for the material for the curve)
+	MPlug materialPlug = shaderNode.findPlug("ambientColor");
+	if (materialPlug.isNull())
+		return std::make_tuple(false, MObject::kNullObj);
+
+	// try to get UberMaterial node
+	MPlugArray shaderConnections;
+	materialPlug.connectedTo(shaderConnections, true, false);
+	if (shaderConnections.length() == 0)
+		return std::make_tuple(false, MObject::kNullObj);
+
+	// try to get shader from found node
+	MObject uberMObj = shaderConnections[0].node();
+
+	MFnDependencyNode uberFNode(uberMObj);
+	MString ubershaderName = uberFNode.name();
+	MString ubershaderType = uberFNode.typeName();
+
+	if (ubershaderType == "RPRUberMaterial") // found node is Uber
+		return std::make_tuple(true, uberMObj);
+
+	return std::make_tuple(false, MObject::kNullObj);
+}
+
 bool FireRenderHair::ApplyMaterial(void)
 {
 	if (m_Curves.empty())
@@ -2003,23 +2041,11 @@ bool FireRenderHair::ApplyMaterial(void)
 	MString shaderName = shaderNode.name();
 	MString shaderType = shaderNode.typeName();
 
-	// get ambientColor connection (this attribute is used as input for the material for the curve)
-	MPlug materialPlug = shaderNode.findPlug("ambientColor");
-	if (materialPlug.isNull())
+	MObject uberMObj;
+	bool uberMaterrialFound = false;
+	std::tie(uberMaterrialFound, uberMObj) = GetUberMaterialFromHairShader(surfaceShader);
+	if (!uberMaterrialFound)
 		return false;
-
-	// try to get UberMaterial node
-	MPlugArray shaderConnections;
-	materialPlug.connectedTo(shaderConnections, true, false);
-	if (shaderConnections.length() == 0)
-		return false;
-
-	// try to get shader from found node
-	MObject uberMObj = shaderConnections[0].node();
-
-	MFnDependencyNode uberFNode(uberMObj);
-	MString ubershaderName = uberFNode.name();
-	MString ubershaderType = uberFNode.typeName();
 
 	frw::Shader shader = m.context->GetShader(uberMObj);
 	if (!shader.IsValid())
