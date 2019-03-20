@@ -194,7 +194,7 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 
 	context.setCallbackCreationDisabled(true);
 
-	std::map<std::string, int> namesUsed;
+	std::vector<std::string> namesUsed;
 	std::set<frw::Shader> objectsProcessed;
 	InitParamList();
 
@@ -274,9 +274,26 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 				return MStatus::kFailure;
 		}
 
+		std::string curr_filename;
+		if (std::find(namesUsed.begin(), namesUsed.end(), filename) == namesUsed.end())
+		{
+			namesUsed.push_back(filename);
+			curr_filename = filename;
+		}
+		else
+		{
+			curr_filename = filename;
+
+			std::string fileExtension = ".xml";
+			curr_filename.resize(curr_filename.size() - fileExtension.length());
+			curr_filename += "_";
+			curr_filename += std::to_string(i);
+			curr_filename += fileExtension;
+		}
+
 		std::map<rpr_image, EXTRA_IMAGE_DATA> extraImageData;
 		ExportMaterials(
-			filename,
+			curr_filename,
 			nodeList, 
 			nodeListX,
 			GetRPRXParamList(),
