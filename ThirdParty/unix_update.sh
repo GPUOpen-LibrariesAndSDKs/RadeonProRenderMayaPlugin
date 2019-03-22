@@ -17,9 +17,6 @@ if [ -d "$ThirdPartyDir" ]; then
     cp -r $ThirdPartyDir/glew glew
     cp -r $ThirdPartyDir/oiio-mac oiio-mac
 	
-	cp $ThirdPartyDir/SceneConvertionScripts/convertAI2RPR.py ../FireRender.Maya.Src/python/fireRender/convertAI2RPR.py
-	cp $ThirdPartyDir/SceneConvertionScripts/convertRS2RPR.py ../FireRender.Maya.Src/python/fireRender/convertRS2RPR.py
-	
     echo ===============================================================
     pushd $ThirdPartyDir 
     git remote update
