@@ -3,6 +3,8 @@ import maya.mel
 import os
 import common
 import maya.mel as mel
+import convertAI2RPR as aiconvert
+import convertRS2RPR as rsconvert
 
 def exportFireRenderScene(data):
     mel.eval('source shelfCommands.mel; exportSceneRPR();')
@@ -68,6 +70,12 @@ def startProductionRender(data):
 def convertVRayToRPR(data):
     mel.eval('source shelfCommands.mel; convertVRayObjects();')
 
+def convertArnoldToRPR(data):
+    aiconvert.manual_launch()
+
+def convertRedshiftToRPR(data):
+    rsconvert.manual_launch()
+
 def openAbout(data):
     mel.eval('source shelfCommands.mel; openPluginInfoRPR();')
 
@@ -105,6 +113,8 @@ def createFireRenderMenu():
 
         frRPRConvert = maya.cmds.menuItem("frRPRConvert", subMenu=True, label="Convert", p=showFireRenderMenuCtrl)
         maya.cmds.menuItem("FrConvertVRay", label="Convert VRay Scene to RPR", p=frRPRConvert, c=convertVRayToRPR)
+        maya.cmds.menuItem("FrConvertArnold", label="Convert Arnold Scene to RPR", p=frRPRConvert, c=convertArnoldToRPR)
+        maya.cmds.menuItem("FrConvertRedshift", label="Convert Redshift Scene to RPR", p=frRPRConvert, c=convertRedshiftToRPR)
 
         frRPRSettings = maya.cmds.menuItem("frRPRSettings", label="Settings", p=showFireRenderMenuCtrl, c=showRPRSettings)
 
