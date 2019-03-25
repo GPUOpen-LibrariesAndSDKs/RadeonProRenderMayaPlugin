@@ -3,8 +3,6 @@ import maya.mel
 import os
 import common
 import maya.mel as mel
-import convertAI2RPR as aiconvert
-import convertRS2RPR as rsconvert
 
 def exportFireRenderScene(data):
     mel.eval('source shelfCommands.mel; exportSceneRPR();')
@@ -71,9 +69,11 @@ def convertVRayToRPR(data):
     mel.eval('source shelfCommands.mel; convertVRayObjects();')
 
 def convertArnoldToRPR(data):
+    from . import convertAI2RPR as aiconvert
     aiconvert.manual_launch()
 
 def convertRedshiftToRPR(data):
+    from . import convertRS2RPR as rsconvert
     rsconvert.manual_launch()
 
 def openAbout(data):
