@@ -140,14 +140,6 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 		return MS::kFailure;
 	}
 
-	std::string folder = "";
-	std::string filename(filePath.asChar());
-	std::string::size_type pos = filename.find_last_of('\\');
-	if (pos == std::string::npos)
-		pos = filename.find_last_of('/');
-	if (pos != std::string::npos)
-		folder = filename.substr(0, pos + 1);
-
 	MSelectionList sList;
 
 	if (argData.isFlagSet(kMaterialFlag))
@@ -209,6 +201,7 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 			node = getSurfaceShader(node);
 
 		MFnDependencyNode depNode(node);
+		std::string material_name ( depNode.name().asChar() );
 
 		frw::Shader shader = context.GetShader(node);
 
@@ -231,13 +224,13 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 		std::unordered_map<rpr_image, RPR_MATERIAL_XML_EXPORT_TEXTURE_PARAM> textureParameter;
 		void* closureNode = nullptr;
 
-		std::string material_name = std::regex_replace(filePath.asChar(), std::regex("^.*[\\\\/]"), ""); // cut path
-		material_name = std::regex_replace(material_name, std::regex("[.].*"), ""); // cut extension
+		std::string folderpath(filePath.asChar());
+		folderpath += "/";
 
 		bool exportImageUV = false; // ignore UV for IMAGE_TEXTURE nodes.  Because UV is exported with "tiling_u" & "tiling_v" in XML
 
-		bool isiRprx = shader.IsRprxMaterial();
-		if (isiRprx)
+		bool isitRprx = shader.IsRprxMaterial();
+		if (isitRprx)
 		{
 			rprx_material mat_rprx_material = shader.GetHandleRPRXmaterial();
 			mat_rprx_context = shader.GetHandleRPRXcontext();
@@ -248,7 +241,7 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 				mat_rprx_context,
 				nodeList,
 				nodeListX,
-				folder,
+				folderpath,
 				textureParameter,
 				material_name,
 				exportImageUV);
@@ -264,7 +257,7 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 				shader.Handle(),
 				nodeList,
 				nodeListX,
-				folder,
+				folderpath,
 				false,
 				textureParameter,
 				material_name,
@@ -274,26 +267,24 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 				return MStatus::kFailure;
 		}
 
-		std::string curr_filename;
-		if (std::find(namesUsed.begin(), namesUsed.end(), filename) == namesUsed.end())
+		std::string curr_material_name;
+		if (std::find(namesUsed.begin(), namesUsed.end(), material_name) == namesUsed.end())
 		{
-			namesUsed.push_back(filename);
-			curr_filename = filename;
+			namesUsed.push_back(material_name);
+			curr_material_name = material_name;
 		}
 		else
 		{
-			curr_filename = filename;
-
-			std::string fileExtension = ".xml";
-			curr_filename.resize(curr_filename.size() - fileExtension.length());
-			curr_filename += "_";
-			curr_filename += std::to_string(i);
-			curr_filename += fileExtension;
+			curr_material_name = material_name;
+			curr_material_name += "_";
+			curr_material_name += std::to_string(i);
 		}
 
+		std::string fileExtension = ".xml";
+		std::string res_filename = folderpath + curr_material_name + fileExtension;
 		std::map<rpr_image, EXTRA_IMAGE_DATA> extraImageData;
 		ExportMaterials(
-			curr_filename,
+			res_filename,
 			nodeList, 
 			nodeListX,
 			GetRPRXParamList(),
