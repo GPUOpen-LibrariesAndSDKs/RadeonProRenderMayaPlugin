@@ -12,7 +12,8 @@ enum class RifFilterType
 {
 	BilateralDenoise,
 	LwrDenoise,
-	EawDenoise
+	EawDenoise,
+	MlDenoise
 };
 
 enum RifFilterInput
@@ -23,6 +24,7 @@ enum RifFilterInput
 	RifWorldCoordinate,
 	RifObjectId,
 	RifTrans,
+	RifAlbedo,
 	RifMaxInput
 };
 
@@ -55,9 +57,11 @@ class ImageFilter final
 
 	std::uint32_t mWidth;
 	std::uint32_t mHeight;
+	std::string mModelsPath;
 
 public:
-	explicit ImageFilter(const rpr_context rprContext, std::uint32_t width, std::uint32_t height);
+	explicit ImageFilter(const rpr_context rprContext, std::uint32_t width, std::uint32_t height,
+		const std::string& modelsPath = std::string());
 	~ImageFilter();
 
 	void CreateFilter(RifFilterType rifFilteType);
@@ -100,7 +104,6 @@ protected:
 
 class RifContextGPU final : public RifContextWrapper
 {
-	const rif_processor_type rifProcessorType = RIF_PROCESSOR_GPU;
 	const rif_backend_api_type rifBackendApiType = RIF_BACKEND_API_OPENCL;
 
 public:
@@ -113,7 +116,6 @@ public:
 
 class RifContextGPUMetal final : public RifContextWrapper
 {
-	const rif_processor_type rifProcessorType = RIF_PROCESSOR_GPU;
 	const rif_backend_api_type rifBackendApiType = RIF_BACKEND_API_METAL;
     
 public:
@@ -126,7 +128,6 @@ public:
 
 class RifContextCPU final : public RifContextWrapper
 {
-	const rif_processor_type rifProcessorType = RIF_PROCESSOR_CPU;
 	const rif_backend_api_type rifBackendApiType = RIF_BACKEND_API_OPENCL;
 
 public:
@@ -234,6 +235,21 @@ class RifFilterEaw final : public RifFilterWrapper
 public:
 	explicit RifFilterEaw(const RifContextWrapper* rifContext, std::uint32_t width, std::uint32_t height);
 	virtual ~RifFilterEaw();
+
+	virtual void AttachFilter(const RifContextWrapper* rifContext) override;
+};
+
+class RifFilterMl final : public RifFilterWrapper
+{
+	rif_image mMlOutputRifImage = nullptr;
+
+	rif_image_filter mNormalsRemapFilter = nullptr;
+	rif_image_filter mDepthRemapFilter = nullptr;
+	rif_image_filter mOutputResampleFilter = nullptr;
+
+public:
+	explicit RifFilterMl(const RifContextWrapper* rifContext, std::uint32_t width, std::uint32_t height, const std::string& modelsPath);
+	virtual ~RifFilterMl();
 
 	virtual void AttachFilter(const RifContextWrapper* rifContext) override;
 };
