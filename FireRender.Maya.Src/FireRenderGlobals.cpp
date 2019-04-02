@@ -635,6 +635,7 @@ void FireRenderGlobals::createDenoiserAttributes()
 	CHECK_MSTATUS(addAttribute(Attribute::denoiserEnabled));
 
 	Attribute::denoiserType = eAttr.create("denoiserType", "dt", kBilateral, &status);
+	eAttr.addField("Machine Learning", kML);
 	eAttr.addField("Bilateral", kBilateral);
 	eAttr.addField("LWR", kLWR);
 	eAttr.addField("EAW", kEAW);

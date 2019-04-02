@@ -28,8 +28,8 @@ if exist %ThirdPartyDir% (
     xcopy /S /Y /I %ThirdPartyDir%\oiio\* oiio
     xcopy /S /Y /I %ThirdPartyDir%\glew\* glew
 	
-	xcopy /S /Y /I %ThirdPartyDir%\SceneConvertionScripts\convertAI2RPR.py ..\FireRender.Maya.Src\python\fireRender\convertAI2RPR.py*
-	xcopy /S /Y /I %ThirdPartyDir%\SceneConvertionScripts\convertRS2RPR.py ..\FireRender.Maya.Src\python\fireRender\convertRS2RPR.py*
+	xcopy /S /Y /I %ThirdPartyDir%\SceneConvertionScripts\convertAI2RPR.py ..\FireRender.Maya.Src\python\fireRender\convertAI2RPR.py
+	xcopy /S /Y /I %ThirdPartyDir%\SceneConvertionScripts\convertRS2RPR.py ..\FireRender.Maya.Src\python\fireRender\convertRS2RPR.py
 
 ) else ( 
     echo Cannot update as %ThirdPartyDir% missing

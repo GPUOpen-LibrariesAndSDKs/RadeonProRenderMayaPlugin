@@ -72,7 +72,8 @@ public:
 	enum DenoiserType {
 		kBilateral,
 		kLWR,
-		kEAW
+		kEAW,
+		kML
 	};
 
 	FireRenderGlobals();

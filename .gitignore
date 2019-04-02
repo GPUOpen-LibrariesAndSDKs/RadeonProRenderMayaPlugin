@@ -16,3 +16,6 @@ tahoe.log
 
 FireRender.Maya.OSX/frMayaPluginMac/frMayaMac/RadeonProRender.xcodeproj/project.xcworkspace/xcuserdata/amd.xcuserdatad/UserInterfaceState.xcuserstate
 *.xcuserstate
+
+FireRender.Maya.Src/python/fireRender/convertAI2RPR.py
+FireRender.Maya.Src/python/fireRender/convertRS2RPR.py
