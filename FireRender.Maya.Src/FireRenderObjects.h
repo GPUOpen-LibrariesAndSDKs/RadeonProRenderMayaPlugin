@@ -66,7 +66,6 @@ public:
 	}
 };
 
-
 // FireRenderObject
 // Base class for each translated object
 class FireRenderObject
@@ -268,7 +267,6 @@ public:
 
 	virtual void Freshen() override;
 
-
 	// build a sphere
 	void buildSphere();
 
@@ -285,13 +283,13 @@ public:
 	void Rebuild();
 	void RebuildTransforms();
 
-
 	// Mesh bits (each one may have separate shading engine)
 	std::vector<FrElement>& Elements() { return m.elements; }
 	const std::vector<FrElement>& Elements() const { return m.elements; }
 	FrElement& Element(int i) { return m.elements[i]; }
 
 	bool IsMainInstance() const { return m.isMainInstance; }
+
 private:
 	bool IsSelected(const MDagPath& dagPath) const;
 	bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;

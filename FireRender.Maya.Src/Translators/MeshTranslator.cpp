@@ -689,6 +689,13 @@ std::vector<frw::Shape> MeshTranslator::TranslateMesh(frw::Context context, cons
 		// export shader data to context
 		CreateRPRMeshes(elements, context, shaderData.data(), meshPolygonData.uvCoords, elementCount, meshPolygonData.uvSetNames.length());
 	}
+
+	// Export shape names
+	for (size_t i = 0; i < elements.size(); i++)
+	{
+		elements[i].SetName((std::string(node.name().asChar()) + "_" + std::to_string(i)).c_str());
+	}
+
 	// Now remove any temporary mesh we created.
 	if (!tessellated.isNull())
 	{

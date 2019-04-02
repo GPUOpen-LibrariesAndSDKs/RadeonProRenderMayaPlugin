@@ -714,3 +714,5 @@ bool isMetalOn();
 * Returns true if successfull
 */
 bool DisconnectFromPlug(MPlug& plug);
+
+void SetCameraLookatForMatrix(rpr_camera camera, const MMatrix& matrix);

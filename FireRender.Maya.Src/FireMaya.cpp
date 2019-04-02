@@ -410,6 +410,7 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 
 								convertColorSpace(colorSpace, format, img_desc, buffer);
 								image = frw::Image(m->context, format, img_desc, buffer.data());
+								image.SetName(texturePath.asChar());
 #ifndef MAYA2015
 								texture->freeRawData(rawData_to_free);
 #else

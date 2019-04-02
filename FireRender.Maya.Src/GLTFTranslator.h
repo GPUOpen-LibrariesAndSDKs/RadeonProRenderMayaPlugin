@@ -3,6 +3,8 @@
 #include "FireRenderContext.h"
 #include <maya/MPxFileTranslator.h>
 
+#include <maya/MFnAnimCurve.h>
+
 namespace FireMaya
 {
 	// Probably we should move cleanScene call in the destructor of FireRenderContext
@@ -41,5 +43,44 @@ namespace FireMaya
 
 		//We can't open/import GLTF files
 		virtual bool canBeOpened() const { return false; }
+
+	private:
+		struct GLTFAnimationDataHolderStruct
+		{
+			std::vector<float> m_timePoints;
+			std::vector<float> m_values;
+			MString groupName;
+		};
+
+		typedef std::vector<GLTFAnimationDataHolderStruct> GLTFAnimationDataHolderVector;
+		typedef std::vector<frw::Camera> CameraVector;
+
+		struct GLTFDataHolderStruct
+		{
+			GLTFAnimationDataHolderVector animationDataVector;
+			CameraVector cameraVector;
+			MDagPathArray* inputRenderableCameras = nullptr;
+		};
+
+		MString getGroupNameForDagPath(MDagPath dagPath, int pop = 0);
+		void addGLTFAnimations(GLTFDataHolderStruct& dataHolder, FireRenderContext& context);
+		void animateGLTFGroups(GLTFAnimationDataHolderVector& dataHolder);
+		MString getGLTFAttributeNameById(int id);
+
+		void setGLTFTransformationForNode(MObject transform, const char* groupName);
+
+		void assignCameras(GLTFDataHolderStruct& dataHolder, FireRenderContext& context);
+		void assignMeshes(FireRenderContext& context);
+		
+		// addAdditionalKeys param means that we need to add additional keys for Rotation, 
+		void addTimesFromCurve(const MFnAnimCurve& curve, std::set<MTime>& outUniqueTimeKeySet, bool addAdditionalKeys = false);
+
+		int getOutputComponentCount(int attrId);
+		inline float getValueForTime(const MPlug& plug, const MFnAnimCurve& curve, const MTime& time);
+		void addAnimationToGLTFRPR(GLTFAnimationDataHolderStruct& gltfDataHolderStruct, int attrId);
+		void applyGLTFAnimationForTransform(const MDagPath& dagPath, GLTFAnimationDataHolderVector& gltfDataHolder);
+		void reportGLTFExportError(MString strPath);
+
+		bool isNeedToSetANameForTransform(const MDagPath& dagPath);
 	};
 }

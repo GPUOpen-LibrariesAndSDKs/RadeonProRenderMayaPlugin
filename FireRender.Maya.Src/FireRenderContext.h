@@ -492,8 +492,10 @@ public:
 		m_nodePathCache[uuid] = path;
 	}
 
-	virtual RenderType GetRenderType(void) const;
+	typedef std::map<std::string, std::shared_ptr<FireRenderObject> > FireRenderObjectMap;
+	FireRenderObjectMap& GetSceneObjects() { return m_sceneObjects; }
 
+	virtual RenderType GetRenderType(void) const;
 	virtual bool ShouldResizeTexture(unsigned int& max_width, unsigned int& max_height) const;
 
 private:
@@ -536,7 +538,7 @@ private:
 	FireRenderCamera m_camera;
 
 	// map containing all the objects converted
-	std::map<std::string, std::shared_ptr<FireRenderObject> > m_sceneObjects;
+	FireRenderObjectMap m_sceneObjects;
 
 	// Main mutex
 	MMutexLock m_mutex;
