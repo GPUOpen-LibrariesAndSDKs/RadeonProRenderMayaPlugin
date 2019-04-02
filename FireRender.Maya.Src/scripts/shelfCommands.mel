@@ -98,7 +98,7 @@ global proc exportMaterialRPR()
 	if ($res == "Cancel")
 		return;
 
-	string $filename[] = `fileDialog2 -fileMode 0 -caption "Export Radeon ProRender Material" -fileFilter "XML Material Files (*.xml);;All Files (*.*)"`;
+	string $filename[] = `fileDialog2 -fileMode 3 -caption "Export Radeon ProRender Material" `;
 
 	for ($i = 0; $i < `size($filename)`; $i++)
 	{
