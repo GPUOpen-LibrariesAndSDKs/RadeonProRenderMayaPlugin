@@ -364,7 +364,8 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 
 void FireRenderContext::turnOnAOVsForDenoiser(bool allocBuffer)
 {
-	static const std::vector<int> aovsToAdd = { RPR_AOV_SHADING_NORMAL, RPR_AOV_WORLD_COORDINATE, RPR_AOV_OBJECT_ID, RPR_AOV_DEPTH };
+	static const std::vector<int> aovsToAdd = { RPR_AOV_SHADING_NORMAL, RPR_AOV_WORLD_COORDINATE,
+		RPR_AOV_OBJECT_ID, RPR_AOV_DEPTH, RPR_AOV_DIFFUSE_ALBEDO };
 
 	// Turn on necessary AOVs
 	for (const int aov : aovsToAdd)
@@ -390,10 +391,15 @@ void FireRenderContext::setupDenoiser()
 	const rpr_framebuffer fbWorldCoord = m.framebufferAOV[RPR_AOV_WORLD_COORDINATE].Handle();
 	const rpr_framebuffer fbObjectId = m.framebufferAOV[RPR_AOV_OBJECT_ID].Handle();
 	const rpr_framebuffer fbTrans = fbObjectId;
+	const rpr_framebuffer fbDiffuseAlbedo = m.framebufferAOV_resolved[RPR_AOV_DIFFUSE_ALBEDO].Handle();
 
 	try
 	{
-		m_denoiserFilter = std::shared_ptr<ImageFilter>(new ImageFilter(context(), m_width, m_height));
+		MString path;
+		MStatus s = MGlobal::executeCommand("getModulePath -moduleName RadeonProRender", path);
+		MString mlModelsFolder = path + "/data/models";
+
+		m_denoiserFilter = std::shared_ptr<ImageFilter>(new ImageFilter(context(), m_width, m_height, mlModelsFolder.asChar()));
 
 		RifParam p;
 
@@ -437,6 +443,14 @@ void FireRenderContext::setupDenoiser()
 			m_denoiserFilter->AddInput(RifTrans, fbTrans, m_globals.denoiserSettings.trans);
 			m_denoiserFilter->AddInput(RifWorldCoordinate, fbWorldCoord, 0.1f);
 			m_denoiserFilter->AddInput(RifObjectId, fbObjectId, 0.1f);
+			break;
+
+		case FireRenderGlobals::kML:
+			m_denoiserFilter->CreateFilter(RifFilterType::MlDenoise);
+			m_denoiserFilter->AddInput(RifColor, fbColor, 0.0f);
+			m_denoiserFilter->AddInput(RifNormal, fbShadingNormal, 0.0f);
+			m_denoiserFilter->AddInput(RifDepth, fbDepth, 0.0f);
+			m_denoiserFilter->AddInput(RifAlbedo, fbDiffuseAlbedo, 0.0f);
 			break;
 
 		default:

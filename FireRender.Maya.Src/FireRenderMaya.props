@@ -5,10 +5,10 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>.;..\ThirdParty\RadeonProRender SDK\Win\inc;..\ThirdParty\glew\include;..\ThirdParty\OpenCL\include;..\ThirdParty\oiio\include;..\ThirdParty\AxfPackage\AxfInclude\;..\ThirdParty\AxfPackage\include\;..\ThirdParty\json\include\;..\ThirdParty\RadeonProRender-GLTF\Win\inc\;..\FireRender.Components\cpp\;Lights\PhysicalLight\;..\FireRender.Components\cpp\ImageFilter\;..\ThirdParty\RadeonProImageProcessing\Win\inc\</AdditionalIncludeDirectories>    <PreprocessorDefinitions>MAYA_PLUGIN;GL_INTEROP;WIN32;_WINDOWS;_USRDLL;NT_PLUGIN;_HAS_ITERATOR_DEBUGGING=0;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;__TBB_LIB_NAME=tbb.lib;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;..\ThirdParty\RadeonProRender SDK\Win\inc;..\ThirdParty\glew\include;..\ThirdParty\OpenCL\include;..\ThirdParty\oiio\include;..\ThirdParty\AxfPackage\AxfInclude\;..\ThirdParty\AxfPackage\include\;..\ThirdParty\json\include\;..\ThirdParty\RadeonProRender-GLTF\Win\inc\;..\FireRender.Components\cpp\;Lights\PhysicalLight\;..\FireRender.Components\cpp\ImageFilter\;..\ThirdParty\RadeonProImageProcessing\Windows\inc\</AdditionalIncludeDirectories>    <PreprocessorDefinitions>MAYA_PLUGIN;GL_INTEROP;WIN32;_WINDOWS;_USRDLL;NT_PLUGIN;_HAS_ITERATOR_DEBUGGING=0;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;__TBB_LIB_NAME=tbb.lib;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>..\ThirdParty\glew\lib\x64;..\ThirdParty\oiio\lib;..\ThirdParty\RadeonProRender SDK\Win\lib;..\ThirdParty\RadeonProRender-GLTF\Win\lib\;..\ThirdParty\RadeonProImageProcessing\Win\lib\%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\ThirdParty\glew\lib\x64;..\ThirdParty\oiio\lib;..\ThirdParty\RadeonProRender SDK\Win\lib;..\ThirdParty\RadeonProRender-GLTF\Win\lib\;..\ThirdParty\RadeonProImageProcessing\Windows\lib\%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>RadeonProRender64.lib;RprSupport64.lib;RprLoadStore64.lib;ProRenderGLTF.lib;RadeonImageFilters64.lib;OpenImageIO_RPR.lib;Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaRender.lib;Image.lib;glew.lib;glu32.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
       <DelayLoadDLLs>RadeonProRender64.dll;RprSupport64.dll</DelayLoadDLLs>
@@ -36,8 +36,14 @@ XCOPY /E /Y $(ProjectDir)\icons\* $(SolutionDir)dist\icons\
 COPY $(ProjectDir)\shaders\* $(SolutionDir)dist\shaders\ /Y
 
 COPY $(ProjectDir)\renderDesc\* $(SolutionDir)dist\renderDesc\ /Y
+
 COPY "$(SolutionDir)ThirdParty\RadeonProRender SDK\Win\bin\*.dll" $(SolutionDir)dist\bin\ /Y
-COPY "$(SolutionDir)ThirdParty\RadeonProImageProcessing\Win\lib\RadeonImageFilters64.dll" $(SolutionDir)dist\bin\RadeonImageFilters64.dll /Y
+COPY "$(SolutionDir)ThirdParty\RadeonProImageProcessing\Windows\lib\RadeonImageFilters64.dll" $(SolutionDir)dist\bin\RadeonImageFilters64.dll /Y
+COPY "$(SolutionDir)ThirdParty\RadeonProImageProcessing\Windows\lib\RadeonProML.dll" $(SolutionDir)dist\bin\RadeonProML.dll /Y
+COPY "$(SolutionDir)ThirdParty\RadeonProImageProcessing\Windows\lib\MIOpen.dll" $(SolutionDir)dist\bin\MIOpen.dll /Y
+COPY "$(SolutionDir)ThirdParty\RadeonProImageProcessing\Windows\lib\libcrypto-1_1-x64.dll" $(SolutionDir)dist\bin\libcrypto-1_1-x64.dll /Y
+XCOPY /S /Y /I "$(SolutionDir)ThirdParty\RadeonProImageProcessing\models" $(SolutionDir)dist\data\models
+
 COPY $(SolutionDir)ThirdParty\glew\bin\x64\*.dll $(SolutionDir)dist\bin\ /Y
 IF EXIST "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)\prefs\shelves\" COPY $(ProjectDir)\Shelfs\* "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)\prefs\shelves\" /Y
 
