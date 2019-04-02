@@ -147,6 +147,7 @@ void FillArrayWithScaledMMatrixData(std::array<float, 16>& arr, float coeff = 0.
 
 void GLTFTranslator::assignCameras(GLTFDataHolderStruct& dataHolder, FireRenderContext& context)
 {
+#if !defined(OSMac_)
 	MDagPathArray& renderableCameras = *dataHolder.inputRenderableCameras;
 	bool mainCameraSet = false;
 
@@ -185,10 +186,12 @@ void GLTFTranslator::assignCameras(GLTFDataHolderStruct& dataHolder, FireRenderC
 		// set rpr name
 		rprObjectSetName(rprCamera, dagPath.partialPathName().asChar());
 	}
+#endif
 }
 
 void GLTFTranslator::assignMeshes(FireRenderContext& context)
 {
+#if !defined(OSMac_)
 	FireRenderContext::FireRenderObjectMap& sceneObjects = context.GetSceneObjects();
 	// set gltf group name for meshes
 	for (FireRenderContext::FireRenderObjectMap::iterator it = sceneObjects.begin(); it != sceneObjects.end(); ++it)
@@ -219,6 +222,7 @@ void GLTFTranslator::assignMeshes(FireRenderContext& context)
 			element.shape.SetTransform(arr.data());
 		}
 	}
+#endif
 }
 
 void GLTFTranslator::addGLTFAnimations(GLTFDataHolderStruct& dataHolder, FireRenderContext& context)
@@ -245,6 +249,7 @@ bool GLTFTranslator::isNeedToSetANameForTransform(const MDagPath& dagPath)
 
 void GLTFTranslator::setGLTFTransformationForNode(MObject transform, const char* groupName)
 {
+#if !defined(OSMac_)
 	MFnDependencyNode fnTransform(transform);
 
 	MPlug matrixPlug = fnTransform.findPlug("matrix");
@@ -286,10 +291,12 @@ void GLTFTranslator::setGLTFTransformationForNode(MObject transform, const char*
 	}
 
 	rprGLTF_SetTransformGroup(groupName, arr.data());
+#endif
 }
 
 void GLTFTranslator::animateGLTFGroups(GLTFAnimationDataHolderVector& dataHolder)
 {
+#if !defined(OSMac_)
 	MStatus status;
 
 	MItDag itDag(MItDag::kDepthFirst, MFn::kDagNode, &status);
@@ -338,10 +345,12 @@ void GLTFTranslator::animateGLTFGroups(GLTFAnimationDataHolderVector& dataHolder
 
 		applyGLTFAnimationForTransform(dagPath, dataHolder);
 	}
+#endif
 }
 
 MString GLTFTranslator::getGLTFAttributeNameById(int id)
 {
+#if !defined(OSMac_)
 	switch (id)
 	{
 	case RPRGLTF_ANIMATION_MOVEMENTTYPE_TRANSLATION:
@@ -351,13 +360,15 @@ MString GLTFTranslator::getGLTFAttributeNameById(int id)
 	case RPRGLTF_ANIMATION_MOVEMENTTYPE_SCALE:
 		return "scale";
 	}
-
+#endif
+    
 	assert(false);
 	return "";
 }
 
 int GLTFTranslator::getOutputComponentCount(int attrId)
 {
+#if !defined(OSMac_)
 	switch (attrId)
 	{
 	case RPRGLTF_ANIMATION_MOVEMENTTYPE_TRANSLATION:
@@ -367,7 +378,8 @@ int GLTFTranslator::getOutputComponentCount(int attrId)
 	case RPRGLTF_ANIMATION_MOVEMENTTYPE_ROTATION:
 		return COMPONENT_COUNT_ROTATION;
 	}
-
+#endif
+    
 	assert(false);
 	return 0;
 }
@@ -416,6 +428,7 @@ inline float GLTFTranslator::getValueForTime(const MPlug& plug, const MFnAnimCur
 
 void GLTFTranslator::addAnimationToGLTFRPR(GLTFAnimationDataHolderStruct& gltfDataHolderStruct, int attrId)
 {
+#if !defined(OSMac_)
 	size_t keyCount = gltfDataHolderStruct.m_timePoints.size();
 
 	rprgltf_animation gltfAnimData;
@@ -435,10 +448,12 @@ void GLTFTranslator::addAnimationToGLTFRPR(GLTFAnimationDataHolderStruct& gltfDa
 	{
 		MGlobal::displayError("rprGLTF_AddAnimation returned error: ");
 	}
+#endif
 }
 
 void GLTFTranslator::applyGLTFAnimationForTransform(const MDagPath& dagPath, GLTFAnimationDataHolderVector& gltfDataHolder)
 {
+#if !defined(OSMac_)
 	// do not change order
 	const int attrCount = 3;
 	int attrIds[attrCount] = { RPRGLTF_ANIMATION_MOVEMENTTYPE_TRANSLATION,
@@ -548,6 +563,7 @@ void GLTFTranslator::applyGLTFAnimationForTransform(const MDagPath& dagPath, GLT
 		gltfDataHolderStruct.groupName = groupName;
 		addAnimationToGLTFRPR(gltfDataHolderStruct, attributeId);
 	}
+#endif
 }
 
 void GLTFTranslator::reportGLTFExportError(MString strPath)
