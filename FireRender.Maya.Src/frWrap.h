@@ -525,6 +525,17 @@ namespace frw
 		explicit operator bool() const { return m->IsValid(); }
 		bool IsValid() const { return m->IsValid(); }
 
+		bool SetName(const char* name)
+		{
+			if (!IsValid())
+			{
+				return false;
+			}
+
+			rpr_int status = rprObjectSetName(Handle(), name);
+			return status == RPR_SUCCESS;
+		}
+
 		// TODO: object's data has type-info, so can use faster code avoiding use of dynamic_cast
 		template <class T>
 		T As()
@@ -2505,6 +2516,18 @@ namespace frw
 		bool IsRprxMaterial() const
 		{
 			return data().material != nullptr;
+		}
+
+		void SetMaterialName(const char* name)
+		{
+			if (IsRprxMaterial())
+			{
+				rprxMaterialSetName(data().context, data().material, name);
+			}
+			else
+			{
+				SetName(name);
+			}
 		}
 
 		rprx_material GetHandleRPRXmaterial() const

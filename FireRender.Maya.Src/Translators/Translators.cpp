@@ -168,6 +168,7 @@ namespace FireMaya
 		// convert from inch to mm
 		float apertureWidth = static_cast<float>(fnCamera.horizontalFilmAperture(&mstatus)) * 25.4f;
 		float apertureHeight = static_cast<float>(fnCamera.verticalFilmAperture(&mstatus)) * 25.4f;
+		assert(mstatus == MStatus::kSuccess);
 
 		apertureWidth *= overscan;
 		apertureHeight *= overscan;
@@ -215,20 +216,7 @@ namespace FireMaya
 
 		checkStatus(frstatus);
 
-		// set transformation matrix
-		assert(mstatus == MStatus::kSuccess);
-		MPoint eye = MPoint(0, 0, 0, 1) * matrix;
-		// convert eye and lookat from cm to m
-		eye = eye * cmToMCoefficient;
-		MVector viewDir = MVector::zNegAxis * matrix;
-		MVector upDir = MVector::yAxis * matrix;
-		MPoint  lookat = eye + viewDir;
-		frstatus = rprCameraLookAt(frcamera,
-			static_cast<float>(eye.x), static_cast<float>(eye.y), static_cast<float>(eye.z),
-			static_cast<float>(lookat.x), static_cast<float>(lookat.y), static_cast<float>(lookat.z),
-			static_cast<float>(upDir.x), static_cast<float>(upDir.y), static_cast<float>(upDir.z));
-
-		checkStatus(frstatus);
+		SetCameraLookatForMatrix(frcamera, matrix);
 
 		//Check aperture and blades
 		MPlug bladesPlug = fnCamera.findPlug("fireRenderApertureBlades");

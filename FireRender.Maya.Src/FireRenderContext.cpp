@@ -16,14 +16,10 @@
 #include <maya/MItDag.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFnDagNode.h>
-#include <maya/MFnTransform.h>
 #include <maya/MPlug.h>
-#include <maya/MPlugArray.h>
 #include <maya/MItDependencyNodes.h>
-#include <maya/MAnimControl.h>
-#include <maya/MFnMatrixData.h>
-#include <maya/MQuaternion.h>
 #include <maya/MUserEventMessage.h>
+
 #include "AutoLock.h"
 #include "VRay.h"
 #include "ImageFilter/ImageFilter.h"
@@ -347,6 +343,7 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 		{
 			MDagPath dagPath;
 			status = itDag.getPath(dagPath);
+
 			if (MStatus::kSuccess != status)
 			{
 				MGlobal::displayError("MDagPath::getPath");
@@ -2139,6 +2136,12 @@ bool FireRenderContext::ShouldResizeTexture(unsigned int& max_width, unsigned in
 frw::Shader FireRenderContext::GetShader(MObject ob, bool forceUpdate)
 { 
 	scope.SetContextInfo(this);
-	return scope.GetShader(ob, forceUpdate); 
-}
 
+	MFnDependencyNode node(ob);
+
+	frw::Shader shader = scope.GetShader(ob, forceUpdate); 
+
+	shader.SetMaterialName(node.name().asChar());
+
+	return shader;
+}

@@ -2078,3 +2078,19 @@ bool DisconnectFromPlug(MPlug& plug)
 
 	return true;
 }
+
+void SetCameraLookatForMatrix(rpr_camera camera, const MMatrix& matrix)
+{
+	MPoint eye = MPoint(0, 0, 0, 1) * matrix;
+	// convert eye and lookat from cm to m
+	eye = eye * 0.01;
+	MVector viewDir = MVector::zNegAxis * matrix;
+	MVector upDir = MVector::yAxis * matrix;
+	MPoint  lookat = eye + viewDir;
+	rpr_int frStatus = rprCameraLookAt(camera,
+		static_cast<float>(eye.x), static_cast<float>(eye.y), static_cast<float>(eye.z),
+		static_cast<float>(lookat.x), static_cast<float>(lookat.y), static_cast<float>(lookat.z),
+		static_cast<float>(upDir.x), static_cast<float>(upDir.y), static_cast<float>(upDir.z));
+
+	checkStatus(frStatus);
+}
