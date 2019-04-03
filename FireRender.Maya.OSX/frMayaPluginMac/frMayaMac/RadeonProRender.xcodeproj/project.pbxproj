@@ -395,6 +395,14 @@
 		8DB6234820755B4400841D10 /* FireRenderIESLight.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB623282075582100841D10 /* FireRenderIESLight.cpp */; };
 		8DB699D31F9926F90040373F /* GLTFTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB699D11F9926F90040373F /* GLTFTranslator.cpp */; };
 		8DB699D41F9926F90040373F /* GLTFTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB699D21F9926F90040373F /* GLTFTranslator.h */; };
+		8DB9AE952255519100543147 /* FastNoise.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE922255519000543147 /* FastNoise.h */; };
+		8DB9AE962255519100543147 /* FastNoise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB9AE942255519100543147 /* FastNoise.cpp */; };
+		8DB9AE9D225551B400543147 /* FireRenderVolumeLocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB9AE97225551B300543147 /* FireRenderVolumeLocator.cpp */; };
+		8DB9AE9E225551B400543147 /* FireRenderVolumeLocator.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE98225551B300543147 /* FireRenderVolumeLocator.h */; };
+		8DB9AE9F225551B400543147 /* FireRenderVolumeOverride.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB9AE99225551B300543147 /* FireRenderVolumeOverride.cpp */; };
+		8DB9AEA0225551B400543147 /* VolumeAttributes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB9AE9A225551B400543147 /* VolumeAttributes.cpp */; };
+		8DB9AEA1225551B400543147 /* FireRenderVolumeOverride.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE9B225551B400543147 /* FireRenderVolumeOverride.h */; };
+		8DB9AEA2225551B400543147 /* VolumeAttributes.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE9C225551B400543147 /* VolumeAttributes.h */; };
 		8DBC06F3215E68C0006ECC17 /* FireRenderSwatchInstance.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DBC06F1215E68BF006ECC17 /* FireRenderSwatchInstance.cpp */; };
 		8DBC06F4215E68C0006ECC17 /* FireRenderSwatchInstance.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DBC06F2215E68C0006ECC17 /* FireRenderSwatchInstance.h */; };
 		8DBC06F5215E6943006ECC17 /* FireRenderSwatchInstance.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DBC06F2215E68C0006ECC17 /* FireRenderSwatchInstance.h */; };
@@ -783,6 +791,14 @@
 		8DB623382075583C00841D10 /* PhysicalLightGeometryUtility.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = PhysicalLightGeometryUtility.cpp; path = ../../../FireRender.Maya.Src/Lights/PhysicalLight/PhysicalLightGeometryUtility.cpp; sourceTree = "<group>"; };
 		8DB699D11F9926F90040373F /* GLTFTranslator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GLTFTranslator.cpp; path = ../../../FireRender.Maya.Src/GLTFTranslator.cpp; sourceTree = "<group>"; };
 		8DB699D21F9926F90040373F /* GLTFTranslator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GLTFTranslator.h; path = ../../../FireRender.Maya.Src/GLTFTranslator.h; sourceTree = "<group>"; };
+		8DB9AE922255519000543147 /* FastNoise.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FastNoise.h; path = ../../../FireRender.Maya.Src/FastNoise.h; sourceTree = "<group>"; };
+		8DB9AE942255519100543147 /* FastNoise.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FastNoise.cpp; path = ../../../FireRender.Maya.Src/FastNoise.cpp; sourceTree = "<group>"; };
+		8DB9AE97225551B300543147 /* FireRenderVolumeLocator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderVolumeLocator.cpp; path = ../../../FireRender.Maya.Src/Volumes/FireRenderVolumeLocator.cpp; sourceTree = "<group>"; };
+		8DB9AE98225551B300543147 /* FireRenderVolumeLocator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderVolumeLocator.h; path = ../../../FireRender.Maya.Src/Volumes/FireRenderVolumeLocator.h; sourceTree = "<group>"; };
+		8DB9AE99225551B300543147 /* FireRenderVolumeOverride.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderVolumeOverride.cpp; path = ../../../FireRender.Maya.Src/Volumes/FireRenderVolumeOverride.cpp; sourceTree = "<group>"; };
+		8DB9AE9A225551B400543147 /* VolumeAttributes.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VolumeAttributes.cpp; path = ../../../FireRender.Maya.Src/Volumes/VolumeAttributes.cpp; sourceTree = "<group>"; };
+		8DB9AE9B225551B400543147 /* FireRenderVolumeOverride.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderVolumeOverride.h; path = ../../../FireRender.Maya.Src/Volumes/FireRenderVolumeOverride.h; sourceTree = "<group>"; };
+		8DB9AE9C225551B400543147 /* VolumeAttributes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VolumeAttributes.h; path = ../../../FireRender.Maya.Src/Volumes/VolumeAttributes.h; sourceTree = "<group>"; };
 		8DBC06F1215E68BF006ECC17 /* FireRenderSwatchInstance.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderSwatchInstance.cpp; path = ../../../FireRender.Maya.Src/FireRenderSwatchInstance.cpp; sourceTree = "<group>"; };
 		8DBC06F2215E68C0006ECC17 /* FireRenderSwatchInstance.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderSwatchInstance.h; path = ../../../FireRender.Maya.Src/FireRenderSwatchInstance.h; sourceTree = "<group>"; };
 		8DBCC36922304666003EE361 /* Maya2018 copy.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; name = "Maya2018 copy.bundle"; path = RadeonProRender.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -959,6 +975,14 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				8DB9AE97225551B300543147 /* FireRenderVolumeLocator.cpp */,
+				8DB9AE98225551B300543147 /* FireRenderVolumeLocator.h */,
+				8DB9AE99225551B300543147 /* FireRenderVolumeOverride.cpp */,
+				8DB9AE9B225551B400543147 /* FireRenderVolumeOverride.h */,
+				8DB9AE9A225551B400543147 /* VolumeAttributes.cpp */,
+				8DB9AE9C225551B400543147 /* VolumeAttributes.h */,
+				8DB9AE942255519100543147 /* FastNoise.cpp */,
+				8DB9AE922255519000543147 /* FastNoise.h */,
 				8D91169A222584450083881D /* XMLMaterialExportCommon.cpp */,
 				8D91169C222584460083881D /* XMLMaterialExportCommon.h */,
 				8D2837292199D6C90004852B /* OptionVarHelpers.cpp */,
@@ -1274,6 +1298,7 @@
 				4DE508701D9950A1009B2BD6 /* FireRenderBlendOverride.h in Headers */,
 				8D91169E222584460083881D /* XMLMaterialExportCommon.h in Headers */,
 				8D77AEE21F436244008E88FB /* FireRenderConvertVRayCmd.h in Headers */,
+				8DB9AE9E225551B400543147 /* FireRenderVolumeLocator.h in Headers */,
 				4DE508721D9950A1009B2BD6 /* FireRenderExportCmd.h in Headers */,
 				8D77AEB41F4361E2008E88FB /* SubsurfaceMaterial.h in Headers */,
 				8DB6232F2075582100841D10 /* IESLightLocatorMesh.h in Headers */,
@@ -1284,10 +1309,13 @@
 				4DE508771D9950A1009B2BD6 /* FireRenderNoise.h in Headers */,
 				8D8F2C19210B52D5000DEBE6 /* FireRenderAO.h in Headers */,
 				4DE508781D9950A1009B2BD6 /* FireRenderLookup.h in Headers */,
+				8DB9AEA1225551B400543147 /* FireRenderVolumeOverride.h in Headers */,
 				8D77AEF31F436244008E88FB /* FireRenderThread.h in Headers */,
 				8D77AEFB1F436244008E88FB /* FireRenderVolumeMaterial.h in Headers */,
 				8D77AEF91F436244008E88FB /* FireRenderViewportUI.h in Headers */,
 				8DCD6D661FCC61B400960342 /* FireRenderAOVDepth.h in Headers */,
+				8DB9AE952255519100543147 /* FastNoise.h in Headers */,
+				8DB9AEA2225551B400543147 /* VolumeAttributes.h in Headers */,
 				4DE508791D9950A1009B2BD6 /* FireRenderTextureCache.h in Headers */,
 				4DE5087A1D9950A1009B2BD6 /* FireRenderImportExportXML.h in Headers */,
 				8D8F06EC1F437B2D00A13D6B /* ArHosekSkyModel.h in Headers */,
@@ -1721,12 +1749,14 @@
 				8D77AE9B1F4360FA008E88FB /* FileSystemUtils.cpp in Sources */,
 				4DE508B01D9950A1009B2BD6 /* FireRenderOverride.cpp in Sources */,
 				8D77AEE51F436244008E88FB /* FireRenderEnvironmentLight.cpp in Sources */,
+				8DB9AEA0225551B400543147 /* VolumeAttributes.cpp in Sources */,
 				8D77AEF21F436244008E88FB /* FireRenderThread.cpp in Sources */,
 				8D77AEE11F436244008E88FB /* FireRenderConvertVRayCmd.cpp in Sources */,
 				8D77AEB71F4361E2008E88FB /* VRay.cpp in Sources */,
 				8DD6523A211499E300DB2804 /* SPA.cpp in Sources */,
 				8DB623412075583C00841D10 /* PhysicalLightGeometryUtility.cpp in Sources */,
 				8DB6233B2075583C00841D10 /* PhysicalLightAttributes.cpp in Sources */,
+				8DB9AE962255519100543147 /* FastNoise.cpp in Sources */,
 				8D77AEF01F436244008E88FB /* FireRenderProduction.cpp in Sources */,
 				4DE508B11D9950A1009B2BD6 /* pluginMain.cpp in Sources */,
 				8DB623392075583C00841D10 /* FireRenderPhysicalLightLocator.cpp in Sources */,
@@ -1734,6 +1764,7 @@
 				4D6C220D1DEBFE8F00D745F8 /* FireRenderError.cpp in Sources */,
 				4DE508B31D9950A1009B2BD6 /* FireRenderCmd.cpp in Sources */,
 				4DE508B41D9950A1009B2BD6 /* FireRenderObjects.cpp in Sources */,
+				8DB9AE9D225551B400543147 /* FireRenderVolumeLocator.cpp in Sources */,
 				8D77AEF81F436244008E88FB /* FireRenderViewportUI.cpp in Sources */,
 				8D843D6F1F98F5470068CB2D /* IESprocessor.cpp in Sources */,
 				8D91169D222584460083881D /* XMLMaterialExportCommon.cpp in Sources */,
@@ -1743,6 +1774,7 @@
 				8D77AEB31F4361E2008E88FB /* SubsurfaceMaterial.cpp in Sources */,
 				8D77AEF61F436244008E88FB /* FireRenderViewportOperation.cpp in Sources */,
 				8D77AEFA1F436244008E88FB /* FireRenderVolumeMaterial.cpp in Sources */,
+				8DB9AE9F225551B400543147 /* FireRenderVolumeOverride.cpp in Sources */,
 				8DB699D31F9926F90040373F /* GLTFTranslator.cpp in Sources */,
 				4D55F2541DDB1EFC00FD945D /* FireRenderViewportBlit.cpp in Sources */,
 				4DE508B91D9950A1009B2BD6 /* MaterialLoader.cpp in Sources */,
