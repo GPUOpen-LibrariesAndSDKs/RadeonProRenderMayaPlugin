@@ -145,6 +145,11 @@ bool FireRenderProduction::start()
 			m_context->m_RenderType = RenderType::ProductionRender;
 		}
 
+		if (m_globals.adaptiveThreshold > 0.0f)
+		{
+			m_context->enableAOV(RPR_AOV_VARIANCE);
+		}
+
 		m_aovs->applyToContext(*m_context);
 
 		// Stop before restarting if already running.

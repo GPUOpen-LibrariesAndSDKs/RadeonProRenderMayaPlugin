@@ -94,6 +94,8 @@ public:
 
     static void createFinalRenderAttributes();
 	static void createViewportAttributes();
+	static void createCompletionCriteriaAttributes();
+
 	static MObject createRenderModeAttr(const char* attrName, const char* attrNameShort, MFnEnumAttribute& eAttr);
 
 	/** Return the FR camera mode that matches the given camera type. */

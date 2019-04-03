@@ -1,39 +1,3 @@
-global proc completionCriteriaTypeChanged()
-{
-	int $type = `getAttr("RadeonProRenderGlobals.completionCriteriaType")`;
-
-	int $enable[];
-	if ($type == 0)
-		$enable = {1, 0, 0, 0};
-	if ($type == 1)
-		$enable = {0, 1, 1, 1};
-	if ($type == 2)
-		$enable = {0, 0, 0, 0};
-
-	attrControlGrp -e -en $enable[0] completionCriteriaIterations;
-	attrControlGrp -e -en $enable[1] completionCriteriaHours;
-	attrControlGrp -e -en $enable[2] completionCriteriaMinutes;
-	attrControlGrp -e -en $enable[3] completionCriteriaSeconds;
-}
-
-global proc viewportCompletionCriteriaTypeChanged()
-{
-	int $type = `getAttr("RadeonProRenderGlobals.completionCriteriaTypeViewport")`;
-
-	int $enable[];
-	if ($type == 0)
-		$enable = {1, 0, 0, 0};
-	if ($type == 1)
-		$enable = {0, 1, 1, 1};
-	if ($type == 2)
-		$enable = {0, 0, 0, 0};
-
-	attrControlGrp -e -en $enable[0] viewportCompletionCriteriaIterations;
-	attrControlGrp -e -en $enable[1] viewportCompletionCriteriaHours;
-	attrControlGrp -e -en $enable[2] viewportCompletionCriteriaMinutes;
-	attrControlGrp -e -en $enable[3] viewportCompletionCriteriaSeconds;
-}
-
 global proc createRenderSamplingTab()
 {
     setUITemplate -pushTemplate attributeEditorTemplate;
@@ -58,32 +22,35 @@ global proc createRenderSamplingTab()
     setParent ..;
     setParent ..;
 
+    frameLayout -label "Adaptive Sampling" -cll false -cl 0 AdaptiveSamplingCCSettings;
+	attrControlGrp
+		-label "Threshold"
+		-attribute "RadeonProRenderGlobals.adaptiveThreshold" adaptiveThreshold;
+    setParent ..;	
 
     frameLayout -label "Final Render Completion Criteria" -cll false -cl 0 RenderSamplingCCSettings;
     columnLayout -cat left 20;
 
-    attrControlGrp
-		-label "Type"
-		-cc completionCriteriaTypeChanged
-		-attribute "RadeonProRenderGlobals.completionCriteriaType";
+	attrControlGrp
+		-label "Max Iterations"
+		-attribute "RadeonProRenderGlobals.completionCriteriaIterations" completionCriteriaMaxIterations;
 
 	attrControlGrp
-		-label "Iterations"
-		-attribute "RadeonProRenderGlobals.completionCriteriaIterations" completionCriteriaIterations;
+		-label "Min Iterations"
+		-attribute "RadeonProRenderGlobals.completionCriteriaMinIterations" completionCriteriaMinIterations;
 
 	attrControlGrp
-		-label "Hours"
+		-label "Max Time Hours"
 		-attribute "RadeonProRenderGlobals.completionCriteriaHours" completionCriteriaHours;
 
 	attrControlGrp
-		-label "Minutes"
+		-label "Max Time Minutes"
 		-attribute "RadeonProRenderGlobals.completionCriteriaMinutes" completionCriteriaMinutes;
 
 	attrControlGrp
-		-label "Seconds"
+		-label "Max Time Seconds"
 		-attribute "RadeonProRenderGlobals.completionCriteriaSeconds" completionCriteriaSeconds;
 
-    completionCriteriaTypeChanged();
 
     setParent ..;
     setParent ..;
@@ -92,28 +59,22 @@ global proc createRenderSamplingTab()
     frameLayout -label "Viewport Completion Criteria" -cll false -cl 0 ViewportRenderCCSettings;
     columnLayout -cat left 20;
 
-    attrControlGrp
-		-label "Type"
-		-cc viewportCompletionCriteriaTypeChanged
-		-attribute "RadeonProRenderGlobals.completionCriteriaTypeViewport";
+	attrControlGrp
+		-label "Max Iterations"
+		-attribute "RadeonProRenderGlobals.completionCriteriaIterationsViewport" viewportCompletionCriteriaMaxIterations;
 
 	attrControlGrp
-		-label "Iterations"
-		-attribute "RadeonProRenderGlobals.completionCriteriaIterationsViewport" viewportCompletionCriteriaIterations;
-
-	attrControlGrp
-		-label "Hours"
+		-label "Max Time Hours"
 		-attribute "RadeonProRenderGlobals.completionCriteriaHoursViewport" viewportCompletionCriteriaHours;
 
 	attrControlGrp
-		-label "Minutes"
+		-label "Max Time Minutes"
 		-attribute "RadeonProRenderGlobals.completionCriteriaMinutesViewport" viewportCompletionCriteriaMinutes;
 
 	attrControlGrp
-		-label "Seconds"
+		-label "Max Time Seconds"
 		-attribute "RadeonProRenderGlobals.completionCriteriaSecondsViewport" viewportCompletionCriteriaSeconds;
 
-    viewportCompletionCriteriaTypeChanged();
 
     setParent ..;
     setParent ..;

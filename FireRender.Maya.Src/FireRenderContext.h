@@ -640,6 +640,8 @@ private:
 	/** map corresponding dag path of the node with the mode **/
 	std::map<std::string, MDagPath> m_nodePathCache;
 
+	int	m_samplesPerUpdate;
+
 public:
 	FireRenderEnvLight *iblLight = nullptr;
 	MObject iblTransformObject = MObject();
@@ -692,21 +694,18 @@ public:
 	// Callbacks disabled flag
 	bool m_callbackCreationDisabled = false;
 
-
 	// Camera changed flag
 	bool m_cameraAttributeChanged;
 
 	bool m_restartRender;
 
-
 	//completion criteria sections:
 	clock_t		m_startTime;
-	short		m_completionType;
-	long		m_completionIterations;
-	int			m_iterationStep;
-	int			m_completionTime;
-	int			m_currentIteration;
-	int			m_progress;
+
+	CompletionCriteriaParams m_completionCriteriaParams;
+
+	int	m_currentIteration;
+	int	m_progress;
 
 	double		m_timeIntervalForOutputUpdate;//in sec, TODO: check for Linux/Mac
 	clock_t		m_lastIterationTime;
@@ -714,7 +713,7 @@ public:
 	// render type information
 	RenderType m_RenderType;
 
-	void setCompletionCriteria(short type, long seconds, int iterations, int iterationStep = 1);
+	void setCompletionCriteria(const CompletionCriteriaParams& completionCriteriaParams);
 	bool isUnlimited();
 	void setStartedRendering();
 	bool keepRenderRunning();
@@ -722,8 +721,9 @@ public:
 	void updateProgress();
 	int	getProgress();
 	bool updateOutput();
-    
 
+	void setSamplesPerUpdate(int samplesPerUpdate);
+    
 	class Lock
 	{
 		FireRenderContext* context;

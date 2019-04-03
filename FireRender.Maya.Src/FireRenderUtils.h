@@ -67,18 +67,46 @@ struct CompletionCriteriaParams
 {
 	CompletionCriteriaParams()
 	{
-		completionCriteriaType = 0;
+		makeInfiniteTime();
+
+		completionCriteriaMaxIterations = 0;
+		completionCriteriaMinIterations = 1; // should not be zero
+	}
+
+	int getTotalSecondsCount()
+	{
+		return completionCriteriaHours * 3600 + completionCriteriaMinutes * 60 + completionCriteriaSeconds;
+	}
+
+	void makeInfiniteTime()
+	{
 		completionCriteriaHours = 0;
 		completionCriteriaMinutes = 0;
 		completionCriteriaSeconds = 0;
-		completionCriteriaIterations = 0;
 	}
 
-	short completionCriteriaType;
+	bool isUnlimitedTime() const
+	{
+		return completionCriteriaHours == 0 && completionCriteriaMinutes == 0 && completionCriteriaSeconds == 0;
+	}
+
+	bool isUnlimitedIterations() const
+	{
+		return completionCriteriaMaxIterations == 0;
+	}
+
+	bool isUnlimited() const
+	{
+		return isUnlimitedTime() && isUnlimitedIterations();
+	}
+
+	//short completionCriteriaType;
 	int completionCriteriaHours;
 	int completionCriteriaMinutes;
 	int completionCriteriaSeconds;
-	int completionCriteriaIterations;
+
+	int completionCriteriaMaxIterations;
+	int completionCriteriaMinIterations;
 };
 
 enum class RenderType
@@ -122,6 +150,9 @@ public:
 	// Completion criteria.
 	CompletionCriteriaParams completionCriteriaFinalRender;
 	CompletionCriteriaParams completionCriteriaViewport;
+
+	int adaptiveTileSize;
+	float adaptiveThreshold;
 
 	bool textureCompression;
 
