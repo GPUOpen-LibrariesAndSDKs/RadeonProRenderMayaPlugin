@@ -20,6 +20,8 @@
 
 #include <thread>
 
+#include <float.h>
+
 #ifdef OPAQUE
 #undef OPAQUE
 #include "ProRenderGLTF.h"

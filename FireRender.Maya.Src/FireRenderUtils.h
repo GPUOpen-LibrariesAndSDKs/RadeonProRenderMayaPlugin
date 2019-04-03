@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <iterator>
 #include <array>
+#include <float.h>
 
 // FireRenderGlobals
 // Utility class used to read attributes form the render global node

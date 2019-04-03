@@ -25,7 +25,7 @@
 #include "FireRenderGlobals.h"
 #include "FireRenderThread.h"
 #include "Logger.h"
-#include "Volumes\VolumeAttributes.h"
+#include "Volumes/VolumeAttributes.h"
 
 #ifdef WIN32
 #include <ShlObj.h>
@@ -2218,7 +2218,7 @@ void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals
 
 float GetDistanceBetweenPoints(
 	float x, float y, float z,
-	std::array<float, 3>& point)
+	std::array<float, 3> point)
 {
 	return sqrt((point[0] - x)*(point[0] - x) + (point[1] - y)*(point[1] - y) + (point[2] - z)*(point[2] - z));
 }
