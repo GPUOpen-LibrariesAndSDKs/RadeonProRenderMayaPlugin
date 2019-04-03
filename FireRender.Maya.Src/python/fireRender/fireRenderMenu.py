@@ -111,6 +111,9 @@ def createFireRenderMenu():
         frRPRLights = maya.cmds.menuItem("frRPRLights", subMenu=True, label="Lights", p=showFireRenderMenuCtrl)
         mel.eval('source shelfCommands.mel; createLightsSubmenuItems("frRPRLights");')
 
+        #frRPRVolumes = maya.cmds.menuItem("frRPRVolumes", subMenu=True, label="Volumes", p=showFireRenderMenuCtrl)
+        #mel.eval('source shelfCommands.mel; createVolumesSubmenuItems("frRPRVolumes");')
+
         frRPRConvert = maya.cmds.menuItem("frRPRConvert", subMenu=True, label="Convert", p=showFireRenderMenuCtrl)
         maya.cmds.menuItem("FrConvertVRay", label="Convert VRay Scene to RPR", p=frRPRConvert, c=convertVRayToRPR)
         maya.cmds.menuItem("FrConvertArnold", label="Convert Arnold Scene to RPR", p=frRPRConvert, c=convertArnoldToRPR)

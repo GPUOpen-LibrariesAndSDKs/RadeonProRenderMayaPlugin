@@ -1609,6 +1609,14 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			ob = CreateSceneObject<FireRenderSky, NodeCachingOptions::AddPath>(dagPath);
 		}
+		else if (dagNode.typeName() == "fluidShape")
+		{
+			ob = CreateSceneObject<FireRenderVolume, NodeCachingOptions::AddPath>(dagPath);
+		}
+		else if (dagNode.typeName() == "RPRVolume")
+		{
+			ob = CreateSceneObject<FireRenderRPRVolume, NodeCachingOptions::AddPath>(dagPath);
+		}
 		else
 		{
 			MTypeId type_id = dagNode.typeId();

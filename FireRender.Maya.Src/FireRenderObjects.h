@@ -535,7 +535,81 @@ private:
 	bool m_initialized = false;
 };
 
-// Fire render mesh
+// Fire render volume
+// Bridge class between a Maya Volume node and frw::Volume
+class MFnFluid; // forward declaration of maya class
+struct VolumeData; // forward declaration of RPR data wrapper class
+class FireRenderVolume : public FireRenderNode
+{
+public:
+	// Constructor
+	FireRenderVolume(FireRenderContext* context, const MDagPath& dagPath);
+
+	// Destructor
+	virtual ~FireRenderVolume();
+
+	// Refresh the curves
+	virtual void Freshen() override;
+
+	// clear
+	virtual void clear() override;
+
+	// detach from the scene
+	virtual void detachFromScene() override;
+
+	// attach to the scene
+	virtual void attachToScene() override;
+
+protected:
+	// create volume from maya fluid node
+	virtual bool TranslateVolume(void);
+
+	// read data from fluid object and/or volume shader to rpr volume data container
+	bool TranslateGeneralVolumeData(VolumeData* pVolumeData, MFnFluid& fnFluid);
+	bool TranslateDensity(VolumeData* pVolumeData, MFnFluid& fnFluid, MFnDependencyNode& shaderNode);
+	bool TranslateAlbedo(VolumeData* pVolumeData, MFnFluid& fnFluid, MFnDependencyNode& shaderNode);
+	bool TranslateEmission(VolumeData* pVolumeData, MFnFluid& fnFluid, MFnDependencyNode& shaderNode);
+	bool ReadDensityIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues);
+	bool ReadTemperatureIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues);
+	bool ReadFuelIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues);
+	bool ReadPressureIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues);
+
+	// apply noise to channel
+	bool ApplyNoise(std::vector<float>& channelValues);
+	
+	// applies transform to node
+	virtual void ApplyTransform(void);
+
+	// create shape for bounding box
+	virtual bool SetBBox(double Xdim, double Ydim, double Zdim);
+
+	// transform matrix
+	MMatrix m_matrix;
+	MMatrix m_bboxScale;
+
+	// volume
+	frw::Volume m_volume;
+
+	// fake mesh
+	frw::Shape m_boundingBoxMesh;
+};
+
+// Bridge class between RPR Volume node and frw::Volume
+class FireRenderRPRVolume : public FireRenderVolume
+{
+public:
+	// Constructor
+	FireRenderRPRVolume(FireRenderContext* context, const MDagPath& dagPath);
+
+	// Destructor
+	virtual ~FireRenderRPRVolume();
+
+protected:
+	// create volume from maya fluid node
+	virtual bool TranslateVolume(void) override;
+};
+
+// Fire render hair
 // Bridge class between a Maya hair physical shader node and a frw::Curve
 class FireRenderHair : public FireRenderNode
 {
@@ -566,6 +640,14 @@ private:
 	// returns false if no such material was found
 	bool ApplyMaterial(void);
 
+	// set albedo
+	// NIY
+
+	// set emission
+	// NIY
+
+	// set filter
+	// NIY
 	// tries to load curves data and creates rpr curve (batch) if succesfull
 	// returns false if failed to create curves
 	bool CreateCurves(void);

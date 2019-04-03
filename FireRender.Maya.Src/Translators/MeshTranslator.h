@@ -16,8 +16,24 @@ namespace FireMaya
 		std::vector<frw::Shape> TranslateMesh(frw::Context context, const MObject& originalObject);
 
 	//private:
+		struct MeshPolygonData
+		{
+			MStringArray uvSetNames;
+			std::vector<std::vector<Float2> > uvCoords;
+			std::vector<const float*> puvCoords;
+			std::vector<size_t> sizeCoords;
+			const float* pVertices;
+			int countVertices;
+			const float* pNormals;
+			int countNormals;
+			int numIndices;
+
+			MeshPolygonData();
+
+			void Initialize(MFnMesh& fnMesh);
+		};
+
 		// forward declaration of data structures used in auxiliary functions
-		struct MeshPolygonData;
 		struct MeshIdxDictionary;
 
 		/** TranslateMesh optimized for meshes with 1 submesh*/

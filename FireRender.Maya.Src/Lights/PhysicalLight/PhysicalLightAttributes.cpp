@@ -48,17 +48,6 @@ MObject PhysicalLightAttributes::shadowsTransparency;
 // Volume
 MObject PhysicalLightAttributes::volumeScale;
 
-
-void setAttribProps(MFnAttribute& attr, const MObject& attrObj)
-{
-	CHECK_MSTATUS(attr.setKeyable(true));
-	CHECK_MSTATUS(attr.setStorable(true));
-	CHECK_MSTATUS(attr.setReadable(true));
-	CHECK_MSTATUS(attr.setWritable(true));
-
-	CHECK_MSTATUS(MPxNode::addAttribute(attrObj));
-}
-
 void CreateIntAttribute(MObject& propObject, const char* name, const char* shortName, int minVal, int maxVal, int defaultVal)
 {
 	MFnNumericAttribute nAttr;

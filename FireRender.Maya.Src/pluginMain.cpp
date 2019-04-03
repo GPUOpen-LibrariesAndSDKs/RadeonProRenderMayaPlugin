@@ -33,6 +33,8 @@
 #include "Lights/IES/FireRenderIESLight.h"
 #include "Lights/PhysicalLight/FireRenderPhysicalLightLocator.h"
 #include "Lights/PhysicalLight/FireRenderPhysicalOverride.h"
+#include "Volumes/FireRenderVolumeLocator.h"
+#include "Volumes/FireRenderVolumeOverride.h"
 #include "FireRenderEnvironmentLight.h"
 #include "FireRenderOverride.h"
 #include "FireRenderViewport.h"
@@ -528,6 +530,7 @@ MStatus initializePlugin(MObject obj)
 	MString iesClassification = FireRenderIESLightLocator::drawDbClassification;
 	MString physicalClassification = FireRenderPhysicalLightLocator::drawDbClassification;
 	MString envLightClassification = FireRenderEnvironmentLight::drawDbClassification;
+	MString volumeClassification = FireRenderVolumeLocator::drawDbClassification;
 
 	if (!CheckContextCreationProcedure())
 	{
@@ -608,10 +611,18 @@ MStatus initializePlugin(MObject obj)
 		FireRenderPhysicalLightLocator::drawRegistrantId,
 		FireRenderPhysicalOverride::Creator));
 
-
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "EnvLight", FireRenderEnvironmentLight::id,
 		FireRenderEnvironmentLight::creator, FireRenderEnvironmentLight::initialize,
 		MPxNode::kLocatorNode, &envLightClassification));
+
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "Volume", FireRenderVolumeLocator::id,
+		FireRenderVolumeLocator::creator, FireRenderVolumeLocator::initialize,
+		MPxNode::kLocatorNode, &volumeClassification));
+
+	CHECK_MSTATUS(MHWRender::MDrawRegistry::registerGeometryOverrideCreator(
+		FireRenderVolumeLocator::drawDbClassification,
+		FireRenderVolumeLocator::drawRegistrantId,
+		FireRenderVolumeOverride::Creator));
 
 	MString renderPassClassification("rendernode/firerender/renderpass");
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "RenderPass", FireRenderRenderPass::id,

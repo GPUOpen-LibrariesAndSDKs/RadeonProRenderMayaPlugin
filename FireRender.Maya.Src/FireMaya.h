@@ -76,6 +76,7 @@ namespace FireMaya
 			FireRenderPBRMaterial,
 			FireRenderPhysicalLightLocator,
             FireRenderAONode,
+			FireRenderVolumeLocator,
 
 			// ^ always add new ids to end of list (max 128 entries here)
 			FireRenderNodeIdEndCurrent, // <- this value is allowed to change, it marks the end of current list
@@ -235,9 +236,6 @@ namespace FireMaya
 		void NodeDirtyPlugCallback(MObject& node, MPlug &plug);
 		static void NodeDirtyPlugCallback(MObject& node, MPlug& plug, void* clientData);
 
-		frw::Shader GetCachedShader(const NodeId& str) const;
-		void SetCachedShader(const NodeId& str, frw::Shader shader);
-
 		frw::Shader GetCachedVolumeShader( const NodeId& str ) const;
 		void SetCachedVolumeShader( const NodeId& str, frw::Shader shader );
 
@@ -316,6 +314,9 @@ namespace FireMaya
 		frw::Context Context() const { return m->context; }
 		frw::MaterialSystem MaterialSystem() const { return m->materialSystem; }
 		frw::Scene Scene() const { return m->scene; }
+
+		frw::Shader GetCachedShader(const NodeId& str) const;
+		void SetCachedShader(const NodeId& str, frw::Shader shader);
 
 		void Reset();
 		void Init(rpr_context handle, bool destroyMaterialSystemOnDelete = true);
