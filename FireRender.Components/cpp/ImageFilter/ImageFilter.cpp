@@ -443,6 +443,7 @@ RifContextGPUMetal::~RifContextGPUMetal()
 rif_image RifContextGPUMetal::CreateRifImage(const rpr_framebuffer rprFrameBuffer, const rif_image_desc& desc) const
 {
 	rif_image rifImage = nullptr;
+#if defined(__APPLE__)
 	rpr_cl_mem clMem = nullptr;
 
 	rpr_int rprStatus = rprFrameBufferGetInfo(rprFrameBuffer, RPR_CL_MEM_OBJECT, sizeof(rpr_cl_mem), &clMem, nullptr);
@@ -464,7 +465,7 @@ rif_image RifContextGPUMetal::CreateRifImage(const rpr_framebuffer rprFrameBuffe
 
 	if (RIF_SUCCESS != rifStatus)
 		throw std::runtime_error("RPR denoiser failed to get frame buffer info.");
-
+#endif
 	return rifImage;
 }
 
