@@ -453,7 +453,7 @@ rif_image RifContextGPUMetal::CreateRifImage(const rpr_framebuffer rprFrameBuffe
 
 	
 	size_t fbSize;
-	rpr_int rprStatus = rprFrameBufferGetInfo(rprFrameBuffer, RPR_FRAMEBUFFER_DATA, 0, NULL, &fbSize);
+	rprStatus = rprFrameBufferGetInfo(rprFrameBuffer, RPR_FRAMEBUFFER_DATA, 0, NULL, &fbSize);
 	assert(RPR_SUCCESS == rprStatus);
 
 	if (RPR_SUCCESS != rprStatus)
