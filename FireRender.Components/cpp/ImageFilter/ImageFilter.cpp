@@ -2,6 +2,7 @@
 
 #include "RadeonProRender_CL.h"
 #include "RadeonImageFilters_cl.h"
+#include "RadeonImageFilters_metal.h"
 
 #include <vector>
 #include <cassert>
@@ -450,7 +451,15 @@ rif_image RifContextGPUMetal::CreateRifImage(const rpr_framebuffer rprFrameBuffe
 	if (RPR_SUCCESS != rprStatus)
 		throw std::runtime_error("RPR denoiser failed to get frame buffer info.");
 
-	rif_int rifStatus = rifContextCreateImageFromOpenClMemory(mRifContextHandle , &desc, clMem, false, &rifImage);
+	
+	size_t fbSize;
+	rpr_int rprStatus = rprFrameBufferGetInfo(rprFrameBuffer, RPR_FRAMEBUFFER_DATA, 0, NULL, &fbSize);
+	assert(RPR_SUCCESS == rprStatus);
+
+	if (RPR_SUCCESS != rprStatus)
+		throw std::runtime_error("RPR denoiser failed to acquire frame buffer info.");
+
+	rif_int rifStatus = rifContextCreateImageFromMetalMemory(mRifContextHandle , &desc, clMem, fbSize, &rifImage);
 	assert(RIF_SUCCESS == rifStatus);
 
 	if (RIF_SUCCESS != rifStatus)
