@@ -52,6 +52,8 @@
 #pragma comment(lib, "wbemuuid.lib")
 
 FireRenderGlobalsData::FireRenderGlobalsData() :
+	adaptiveTileSize(1),
+	adaptiveThreshold(0.0f),
 	textureCompression(false),
 	giClampIrradiance(true),
 	giClampIrradianceValue(1.0),
@@ -119,11 +121,11 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		// Get Fire render globals attributes
 		MFnDependencyNode frGlobalsNode(fireRenderGlobals);
 
-		MPlug plug = frGlobalsNode.findPlug("completionCriteriaType");
+/*		MPlug plug = frGlobalsNode.findPlug("completionCriteriaType");
 		if (!plug.isNull())
-			completionCriteriaFinalRender.completionCriteriaType = plug.asShort();
+			completionCriteriaFinalRender.completionCriteriaType = plug.asShort();*/
 
-		plug = frGlobalsNode.findPlug("completionCriteriaHours");
+		MPlug plug = frGlobalsNode.findPlug("completionCriteriaHours");
 		if (!plug.isNull())
 			completionCriteriaFinalRender.completionCriteriaHours = plug.asInt();
 
@@ -137,11 +139,16 @@ void FireRenderGlobalsData::readFromCurrentScene()
 
 		plug = frGlobalsNode.findPlug("completionCriteriaIterations");
 		if (!plug.isNull())
-			completionCriteriaFinalRender.completionCriteriaIterations = plug.asInt();
+			completionCriteriaFinalRender.completionCriteriaMaxIterations = plug.asInt();
 
-		plug = frGlobalsNode.findPlug("completionCriteriaTypeViewport");
+		plug = frGlobalsNode.findPlug("completionCriteriaMinIterations");
 		if (!plug.isNull())
-			completionCriteriaViewport.completionCriteriaType = plug.asShort();
+			completionCriteriaFinalRender.completionCriteriaMinIterations = plug.asInt();
+
+
+		/*plug = frGlobalsNode.findPlug("completionCriteriaTypeViewport");
+		if (!plug.isNull())
+			completionCriteriaViewport.completionCriteriaType = plug.asShort();*/
 
 		plug = frGlobalsNode.findPlug("completionCriteriaHoursViewport");
 		if (!plug.isNull())
@@ -157,7 +164,20 @@ void FireRenderGlobalsData::readFromCurrentScene()
 
 		plug = frGlobalsNode.findPlug("completionCriteriaIterationsViewport");
 		if (!plug.isNull())
-			completionCriteriaViewport.completionCriteriaIterations = plug.asInt();
+			completionCriteriaViewport.completionCriteriaMaxIterations = plug.asInt();
+
+		plug = frGlobalsNode.findPlug("completionCriteriaMinIterationsViewport");
+		if (!plug.isNull())
+			completionCriteriaViewport.completionCriteriaMinIterations = plug.asInt();
+
+
+		plug = frGlobalsNode.findPlug("adaptiveTileSize");
+		if (!plug.isNull())
+			adaptiveTileSize = plug.asInt();
+
+		plug = frGlobalsNode.findPlug("adaptiveThreshold");
+		if (!plug.isNull())
+			adaptiveThreshold = plug.asFloat();
 
 		plug = frGlobalsNode.findPlug("textureCompression");
 		if (!plug.isNull())
@@ -558,20 +578,18 @@ void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disa
 	frstatus = rprContextSetParameter1u(frcontext, "texturecompression", textureCompression);
 	checkStatus(frstatus);
 
+	frstatus = rprContextSetParameter1u(frcontext, "as.tilesize", adaptiveTileSize);
+	checkStatus(frstatus);
+
+	frstatus = rprContextSetParameter1f(frcontext, "as.threshold", adaptiveThreshold);
+	checkStatus(frstatus);
+
 	if (inContext.GetRenderType() == RenderType::ProductionRender) // production (final) rendering
 	{
 		frstatus = rprContextSetParameter1u(frcontext, "rendermode", renderMode);
 		checkStatus(frstatus);
 
-		int iterations = samplesPerUpdate;
-
-		if (inContext.m_completionType == FireRenderGlobals::CompletionCriteriaType::kIterations && iterations > inContext.m_completionIterations)
-		{
-			iterations = inContext.m_completionIterations;
-		}
-
-		frstatus = rprContextSetParameter1u(frcontext, "iterations", iterations);
-		checkStatus(frstatus);
+		inContext.setSamplesPerUpdate(samplesPerUpdate);
 
 		frstatus = rprContextSetParameter1u(frcontext, "maxRecursion", maxRayDepth);
 		checkStatus(frstatus);
@@ -590,9 +608,14 @@ void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disa
 
 		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.shadow", maxRayDepthShadow);
 		checkStatus(frstatus);
+
+		frstatus = rprContextSetParameter1u(frcontext, "as.minspp", completionCriteriaFinalRender.completionCriteriaMinIterations);
+		checkStatus(frstatus);
 	}
 	else if (inContext.isInteractive())
 	{
+		inContext.setSamplesPerUpdate(1);
+
 		frstatus = rprContextSetParameter1u(frcontext, "rendermode", viewportRenderMode);
 		checkStatus(frstatus);
 
@@ -612,6 +635,9 @@ void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disa
 		checkStatus(frstatus);
 
 		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.shadow", viewportMaxDiffuseRayDepth);
+		checkStatus(frstatus);
+
+		frstatus = rprContextSetParameter1u(frcontext, "as.minspp", completionCriteriaViewport.completionCriteriaMinIterations);
 		checkStatus(frstatus);
 	}
 

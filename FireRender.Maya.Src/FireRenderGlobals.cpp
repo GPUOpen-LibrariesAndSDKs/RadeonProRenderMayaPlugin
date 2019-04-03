@@ -20,11 +20,15 @@ namespace
 {
 	namespace Attribute
 	{
-		MObject completionCriteriaType;
 		MObject completionCriteriaHours;
 		MObject completionCriteriaMinutes;
 		MObject completionCriteriaSeconds;
-		MObject completionCriteriaIterations;
+
+		MObject completionCriteriaMaxIterations;
+		MObject completionCriteriaMinIterations;
+
+		MObject adaptiveThreshold;
+		MObject adaptiveTileSize; //hidden attribute
 
 		MObject textureCompression;
 
@@ -125,11 +129,11 @@ namespace
 		MObject motionBlur;
 
 		// Other tabs
-		MObject completionCriteriaType;
 		MObject completionCriteriaHours;
 		MObject completionCriteriaMinutes;
 		MObject completionCriteriaSeconds;
-		MObject completionCriteriaIterations;
+		MObject completionCriteriaMaxIterations;
+		MObject completionCriteriaMinIterations;
 	}
 
 	bool operator==(const MStringArray& a, const MStringArray& b)
@@ -221,34 +225,7 @@ MStatus FireRenderGlobals::initialize()
 
 	createFinalRenderAttributes();
 	createViewportAttributes();
-
-	Attribute::completionCriteriaType = eAttr.create("completionCriteriaType", "cctp", kIterations, &status);
-	eAttr.addField("Iterations", kIterations);
-	eAttr.addField("Time", kTime);
-	eAttr.addField("Unlimited", kUnlimited);
-	MAKE_INPUT_CONST(eAttr);
-
-	Attribute::completionCriteriaHours = nAttr.create("completionCriteriaHours", "cchr", MFnNumericData::kInt, 0, &status);
-	MAKE_INPUT(nAttr);
-	nAttr.setMin(0.0);
-	nAttr.setSoftMax(24.0);
-	nAttr.setMax(INT_MAX);
-
-	Attribute::completionCriteriaMinutes = nAttr.create("completionCriteriaMinutes", "ccmn", MFnNumericData::kInt, 0, &status);
-	MAKE_INPUT(nAttr);
-	nAttr.setMin(0.0);
-	nAttr.setMax(59.0);
-
-	Attribute::completionCriteriaSeconds = nAttr.create("completionCriteriaSeconds", "ccsc", MFnNumericData::kInt, 10, &status);
-	MAKE_INPUT(nAttr);
-	nAttr.setMin(1.0);
-	nAttr.setMax(59.0);
-
-	Attribute::completionCriteriaIterations = nAttr.create("completionCriteriaIterations", "ccit", MFnNumericData::kInt, 100, &status);
-	MAKE_INPUT(nAttr);
-	nAttr.setMin(1.0);
-	nAttr.setSoftMax(1000);
-	nAttr.setMax(INT_MAX);
+	createCompletionCriteriaAttributes();
 
 	Attribute::textureCompression = nAttr.create("textureCompression", "texC", MFnNumericData::kBoolean, false, &status);
 	MAKE_INPUT(nAttr);
@@ -259,8 +236,8 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::giClampIrradianceValue = nAttr.create("giClampIrradianceValue", "giciv", MFnNumericData::kFloat, 1.0, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(1.0);
-	nAttr.setSoftMax(100.0f);
-	nAttr.setMax(999999.f);
+	nAttr.setSoftMax(100.0);
+	nAttr.setMax(999999.);
 
 	Attribute::AAFilter = eAttr.create("filter", "f", kMitchellFilter, &status);
 	eAttr.addField("Box", kBoxFilter);
@@ -398,12 +375,6 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::useMPS = nAttr.create("useMPS", "umps", MFnNumericData::kBoolean, 0, &status);
 	MAKE_INPUT(nAttr);
 
-	CHECK_MSTATUS(addAttribute(Attribute::completionCriteriaType));
-	CHECK_MSTATUS(addAttribute(Attribute::completionCriteriaHours));
-	CHECK_MSTATUS(addAttribute(Attribute::completionCriteriaMinutes));
-	CHECK_MSTATUS(addAttribute(Attribute::completionCriteriaSeconds));
-	CHECK_MSTATUS(addAttribute(Attribute::completionCriteriaIterations));
-
 	CHECK_MSTATUS(addAttribute(Attribute::textureCompression));
 
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradiance));
@@ -450,6 +421,59 @@ MStatus FireRenderGlobals::initialize()
 	createLegacyAttributes();
 
 	return status;
+}
+
+void FireRenderGlobals::createCompletionCriteriaAttributes()
+{
+	MFnNumericAttribute nAttr;
+	MStatus status;
+
+	Attribute::completionCriteriaHours = nAttr.create("completionCriteriaHours", "cchr", MFnNumericData::kInt, 0, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setSoftMax(24);
+	nAttr.setMax(INT_MAX);
+
+	Attribute::completionCriteriaMinutes = nAttr.create("completionCriteriaMinutes", "ccmn", MFnNumericData::kInt, 0, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setMax(59);
+
+	Attribute::completionCriteriaSeconds = nAttr.create("completionCriteriaSeconds", "ccsc", MFnNumericData::kInt, 10, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setMax(59);
+
+	Attribute::completionCriteriaMaxIterations = nAttr.create("completionCriteriaIterations", "ccit", MFnNumericData::kInt, 100, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setSoftMax(1000);
+	nAttr.setMax(INT_MAX);
+
+	Attribute::completionCriteriaMinIterations = nAttr.create("completionCriteriaMinIterations", "ccmt", MFnNumericData::kInt, 16, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(16);
+	nAttr.setSoftMax(100);
+	nAttr.setMax(INT_MAX);
+
+	Attribute::adaptiveThreshold = nAttr.create("adaptiveThreshold", "at", MFnNumericData::kFloat, 0.05, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0);
+	nAttr.setMax(1.0);
+
+	Attribute::adaptiveTileSize = nAttr.create("adaptiveTileSize", "ats", MFnNumericData::kInt, 16, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setHidden(true);
+	nAttr.setMin(1);
+	nAttr.setMax(64);
+
+	CHECK_MSTATUS(addAttribute(Attribute::completionCriteriaHours));
+	CHECK_MSTATUS(addAttribute(Attribute::completionCriteriaMinutes));
+	CHECK_MSTATUS(addAttribute(Attribute::completionCriteriaSeconds));
+	CHECK_MSTATUS(addAttribute(Attribute::completionCriteriaMaxIterations));
+	CHECK_MSTATUS(addAttribute(Attribute::completionCriteriaMinIterations));
+	CHECK_MSTATUS(addAttribute(Attribute::adaptiveThreshold));
+	CHECK_MSTATUS(addAttribute(Attribute::adaptiveTileSize));	
 }
 
 void FireRenderGlobals::createLegacyAttributes()
@@ -513,6 +537,23 @@ void FireRenderGlobals::createLegacyAttributes()
 
 	attrObj = nAttr.create("cellSize", "cs", MFnNumericData::kShort, 4, &status);
 	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(attrObj));
+
+	//legacy attribute for completion criteria
+	attrObj = eAttr.create("completionCriteriaType", "cctp", kIterations, &status);
+	eAttr.addField("Iterations", kIterations);
+	eAttr.addField("Time", kTime);
+	eAttr.addField("Unlimited", kUnlimited);
+	MAKE_INPUT_CONST(eAttr);
+
+	attrObj = eAttr.create("completionCriteriaTypeViewport", "vcct", kIterations, &status);
+	eAttr.addField("Iterations", kIterations);
+	eAttr.addField("Time", kTime);
+	eAttr.addField("Unlimited", kUnlimited);
+	MAKE_INPUT_CONST(eAttr);
+	addAsGlobalAttribute(eAttr);
+
+
 	CHECK_MSTATUS(addAttribute(attrObj));
 }
 
@@ -800,36 +841,36 @@ void FireRenderGlobals::createViewportAttributes()
 	// completion criteria
 	MFnEnumAttribute eAttr;
 
-	ViewportRenderAttributes::completionCriteriaType = eAttr.create("completionCriteriaTypeViewport", "vcct", kIterations, &status);
-	eAttr.addField("Iterations", kIterations);
-	eAttr.addField("Time", kTime);
-	eAttr.addField("Unlimited", kUnlimited);
-	MAKE_INPUT_CONST(eAttr);
-	addAsGlobalAttribute(eAttr);
-
 	ViewportRenderAttributes::completionCriteriaHours = nAttr.create("completionCriteriaHoursViewport", "vcch", MFnNumericData::kInt, 0, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0.0);
-	nAttr.setSoftMax(24.0);
+	nAttr.setSoftMax(24);
 	nAttr.setMax(INT_MAX);
 	addAsGlobalAttribute(nAttr);
 
 	ViewportRenderAttributes::completionCriteriaMinutes = nAttr.create("completionCriteriaMinutesViewport", "vccm", MFnNumericData::kInt, 0, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(0.0);
-	nAttr.setMax(59.0);
+	nAttr.setMin(0);
+	nAttr.setMax(59);
 	addAsGlobalAttribute(nAttr);
 
 	ViewportRenderAttributes::completionCriteriaSeconds = nAttr.create("completionCriteriaSecondsViewport", "vccs", MFnNumericData::kInt, 10, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(1.0);
-	nAttr.setMax(59.0);
+	nAttr.setMin(0);
+	nAttr.setMax(59);
 	addAsGlobalAttribute(nAttr);
 
-	ViewportRenderAttributes::completionCriteriaIterations = nAttr.create("completionCriteriaIterationsViewport", "vcci", MFnNumericData::kInt, 100, &status);
+	ViewportRenderAttributes::completionCriteriaMaxIterations = nAttr.create("completionCriteriaIterationsViewport", "vcci", MFnNumericData::kInt, 100, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(1.0);
+	nAttr.setMin(0);
 	nAttr.setSoftMax(1000);
+	nAttr.setMax(INT_MAX);
+	addAsGlobalAttribute(nAttr);
+																			  
+	ViewportRenderAttributes::completionCriteriaMinIterations = nAttr.create("completionCriteriaMinIterationsViewport", "vcmi", MFnNumericData::kInt, 16, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(16);
+	nAttr.setSoftMax(100);
 	nAttr.setMax(INT_MAX);
 	addAsGlobalAttribute(nAttr);
 

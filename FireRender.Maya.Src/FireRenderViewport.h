@@ -141,6 +141,15 @@ private:
 
     QWidget* m_widget;
 
+	int m_currentAOV;
+
+	std::vector<int> m_alwaysEnabledAOVs;
+
+	/** Warning Dialog for Shader Caching. */
+	RenderCacheWarningDialog rcWarningDialog;
+	bool m_showDialogNeeded;
+	bool m_closeDialogNeeded;
+
 
 	// Private Methods
 	// -----------------------------------------------------------------------------
@@ -192,10 +201,5 @@ private:
 
 	void enableNecessaryAOVs(int index, bool flag);
 
-	int m_currentAOV;
-
-	/** Warning Dialog for Shader Caching. */
-	RenderCacheWarningDialog rcWarningDialog;
-	bool m_showDialogNeeded;
-	bool m_closeDialogNeeded;
+	bool isAOVShouldBeAlwaysEnabled(int aov);
 };

@@ -134,8 +134,9 @@ bool FireRenderIpr::start()
 		if (m_width == 0 || m_height == 0)
 			return false;
 
-		//enable AOV-COLOR so that it can be resolved and used properly
+		//enable AOV-COLOR and Variance so that it can be resolved and used properly
 		m_context.enableAOV(RPR_AOV_COLOR);
+		m_context.enableAOV(RPR_AOV_VARIANCE);
 
 		// Enable SC related AOVs if they was turned on
 		FireRenderGlobalsData globals;

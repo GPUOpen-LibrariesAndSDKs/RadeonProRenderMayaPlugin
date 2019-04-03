@@ -80,10 +80,7 @@ FireRenderContext::FireRenderContext() :
 	m_motionBlur(false),
 	m_cameraAttributeChanged(false),
 	m_startTime(0),
-	m_completionType(0),
-	m_completionIterations(0),
-	m_iterationStep(1),
-	m_completionTime(0),
+	m_samplesPerUpdate(1),
 	m_currentIteration(0),
 	m_progress(0),
 	m_lastIterationTime(0),
@@ -99,6 +96,7 @@ FireRenderContext::FireRenderContext() :
 	m_RenderType(RenderType::Undefined)
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
+
 	state = StateUpdating;
 	m_dirty = false;
 }
@@ -234,40 +232,19 @@ void FireRenderContext::updateLimits(bool animation)
 
 void FireRenderContext::updateLimitsFromGlobalData(const FireRenderGlobalsData & globalData, bool animation, bool batch)
 {
-	const CompletionCriteriaParams& params = isInteractive() ? globalData.completionCriteriaViewport : globalData.completionCriteriaFinalRender;
-	// Get completion type.
-	short type = params.completionCriteriaType;
-
-	// Get total render time.
-	int seconds =
-		params.completionCriteriaHours * 3600 +
-		params.completionCriteriaMinutes * 60 +
-		params.completionCriteriaSeconds;
-
-	// Get render iterations.
-	int iterations = params.completionCriteriaIterations;
+	CompletionCriteriaParams params = isInteractive() ? globalData.completionCriteriaViewport : globalData.completionCriteriaFinalRender;
 
 	// Set to a single iteration for animations.
 	if (animation)
 	{
-		iterations = 1;
-		seconds = 1;
-		type = 0;
+		params.completionCriteriaMaxIterations = 1;
+		params.makeInfiniteTime();
 	}
-
-	// Default batch renders to use iterations if set to unlimited.
-	if (batch && type > 1)
-		type = 0;
 
 	int iterationStep = 1;
 
-	if (!isInteractive())
-	{
-		iterationStep = m_globals.samplesPerUpdate;
-	}
-
 	// Update completion criteria.
-	setCompletionCriteria(type, seconds, iterations, iterationStep);
+	setCompletionCriteria(params);
 }
 
 bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewport, bool freshen)
@@ -653,8 +630,15 @@ void FireRenderContext::initSwatchScene()
 	m_globals.readFromCurrentScene();
 	m_globals.setupContext(*this);
 
-	// _TODO will be taken from settings after UI refactoring gets done
-	setCompletionCriteria(0, LONG_MAX, FireRenderGlobalsData::getThumbnailIterCount());
+	CompletionCriteriaParams completionParams;
+	int iterations = FireRenderGlobalsData::getThumbnailIterCount();
+	completionParams.completionCriteriaMaxIterations = iterations;
+	completionParams.completionCriteriaMinIterations = iterations;
+
+	// Time will be infinite. Left all "hours", "minutes" and "seconds" as 0.
+
+	setSamplesPerUpdate(iterations);
+	setCompletionCriteria(completionParams);
 
 	setPreview();
 }
@@ -691,14 +675,18 @@ void FireRenderContext::render(bool lock)
 	}
 
 	// may need to change iteration step
-	int tempIterationStep = m_iterationStep;
+	int iterationStep = m_samplesPerUpdate;
 
-	int remainingIterations = m_completionIterations - m_currentIteration;
-	if (remainingIterations < m_iterationStep)
+	if (!m_completionCriteriaParams.isUnlimitedIterations())
 	{
-		tempIterationStep = remainingIterations;
-		context.SetParameter("iterations", tempIterationStep);
+		int remainingIterations = m_completionCriteriaParams.completionCriteriaMaxIterations - m_currentIteration;
+		if (remainingIterations < iterationStep)
+		{
+			iterationStep = remainingIterations;
+		}
 	}
+
+	context.SetParameter("iterations", iterationStep);
 
 	if (m_useRegion)
 		context.RenderTile(m_region.left, m_region.right, m_height - m_region.top - 1, m_height - m_region.bottom - 1);
@@ -710,9 +698,14 @@ void FireRenderContext::render(bool lock)
 		DebugPrint("RPR GPU Memory used: %dMB", context.GetMemoryUsage() >> 20);
 	}
 
-	m_currentIteration += tempIterationStep;
+	m_currentIteration += iterationStep;
 
 	m_cameraAttributeChanged = false;
+}
+
+void FireRenderContext::setSamplesPerUpdate(int samplesPerUpdate)
+{
+	m_samplesPerUpdate = samplesPerUpdate;
 }
 
 void FireRenderContext::saveToFile(MString& filePath, const ImageFileDescription& imgDescription)
@@ -851,17 +844,21 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
     }
 
 	// setup CPU thread count
-	rpr_context_properties ctxProperties[3] = { 0 };
+	std::vector<rpr_context_properties> ctxProperties;
+
+	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_SAMPLER_TYPE);
+	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_SAMPLER_TYPE_CMJ);
 
 	int threadCountToOverride = getThreadCountToOverride();
 	if ((createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) && threadCountToOverride > 0)
 	{
-		ctxProperties[0] = (rpr_context_properties) RPR_CONTEXT_CREATEPROP_CPU_THREAD_LIMIT;
-		ctxProperties[1] = (rpr_context_properties) threadCountToOverride;
-		ctxProperties[2] = (rpr_context_properties) 0;
+		ctxProperties.push_back ((rpr_context_properties) RPR_CONTEXT_CREATEPROP_CPU_THREAD_LIMIT);
+		ctxProperties.push_back ((rpr_context_properties) threadCountToOverride);
 	}
 
-	int res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, ctxProperties, cachePath.asUTF8(), &context);
+	ctxProperties.push_back( (rpr_context_properties) 0);
+
+	int res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), &context);
 
 	if (pOutRes != nullptr)
 	{
@@ -888,7 +885,7 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 int FireRenderContext::getThreadCountToOverride() const
 {
 	bool useViewportParams = isInteractive();
-
+	                     
 	bool isOverriden;
 	int cpuThreadCount;
 
@@ -1897,19 +1894,15 @@ void FireRenderContext::setCameraAttributeChanged(bool value)
 		m_restartRender = true;
 }
 
-void FireRenderContext::setCompletionCriteria(short type, long seconds, int iterations, int iterationStep)
+void FireRenderContext::setCompletionCriteria(const CompletionCriteriaParams& completionCriteriaParams)
 {
-	m_completionType = type;
-	m_completionIterations = iterations;
-	m_iterationStep = iterationStep;
-
-	m_completionTime = seconds;
+	m_completionCriteriaParams = completionCriteriaParams;
 }
 
 bool FireRenderContext::isUnlimited()
 {
 	// Corresponds to the kUnlimited enum in FireRenderGlobals.
-	return m_completionType == 2;
+	return m_completionCriteriaParams.isUnlimited();
 }
 
 void FireRenderContext::setStartedRendering()
@@ -1920,29 +1913,23 @@ void FireRenderContext::setStartedRendering()
 
 bool FireRenderContext::keepRenderRunning()
 {
-	// Determine running state based on completion type.
-	switch (m_completionType)
+	// check iteration count completion criteria
+	if (!m_completionCriteriaParams.isUnlimitedIterations() &&
+		m_currentIteration >= m_completionCriteriaParams.completionCriteriaMaxIterations)
 	{
-		// Iterations.
-	case 0:
-		return m_currentIteration < m_completionIterations;
-
-		// Time (in seconds).
-	case 1:
-	{
-		long numberOfClicks = clock() - m_startTime;
-		double secondsSpentRendering = numberOfClicks / (double)CLOCKS_PER_SEC;
-		return secondsSpentRendering < m_completionTime;
-	}
-
-	// Unlimited.
-	case 2:
-		return true;
-
-		// This should never be executed.
-	default:
 		return false;
 	}
+
+	if (m_completionCriteriaParams.isUnlimitedTime())
+	{
+		return true;
+	}
+
+	// check time limit completion criteria
+	long numberOfClicks = clock() - m_startTime;
+	double secondsSpentRendering = numberOfClicks / (double)CLOCKS_PER_SEC;
+
+	return secondsSpentRendering < m_completionCriteriaParams.getTotalSecondsCount();
 }
 
 bool FireRenderContext::isFirstIterationAndShadersNOTCached() 
@@ -1962,37 +1949,21 @@ bool FireRenderContext::isFirstIterationAndShadersNOTCached()
 
 void FireRenderContext::updateProgress()
 {
-	// Update progress based on completion type.
-	switch (m_completionType)
+	if (m_completionCriteriaParams.isUnlimited())
 	{
-		// Iterations.
-	case 0:
-	{
-		double iterationState = m_currentIteration / (double)m_completionIterations;
-		m_progress = static_cast<int>(ceil(iterationState * 100));
-		break;
+		m_progress = 0;
 	}
-
-	// Time (in seconds).
-	case 1:
+	else if (!m_completionCriteriaParams.isUnlimitedIterations())
+	{
+		double iterationState = m_currentIteration / (double)m_completionCriteriaParams.completionCriteriaMaxIterations;
+		m_progress = static_cast<int>(ceil(iterationState * 100));
+	}
+	else
 	{
 		long numberOfClocks = clock() - m_startTime;
 		double secondsSpentRendering = numberOfClocks / (double)CLOCKS_PER_SEC;
-		double timeState = secondsSpentRendering / m_completionTime;
+		double timeState = secondsSpentRendering / m_completionCriteriaParams.getTotalSecondsCount();
 		m_progress = static_cast<int>(ceil(timeState * 100));
-		break;
-	}
-
-	// Unlimited.
-	case 2:
-	{
-		m_progress = 0;
-		break;
-	}
-
-	// This should never be executed.
-	default:
-		break;
 	}
 }
 

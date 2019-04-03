@@ -56,6 +56,9 @@ FireRenderViewport::FireRenderViewport(const MString& panelName) :
 {
 	m_context.m_RenderType = RenderType::ViewportRender;
 
+	m_alwaysEnabledAOVs.push_back(RPR_AOV_COLOR);
+	m_alwaysEnabledAOVs.push_back(RPR_AOV_VARIANCE);
+
 	// Initialize.
 	if (!initialize())
 		m_createFailed = true;
@@ -450,11 +453,16 @@ bool FireRenderViewport::initialize()
 			bool animating = MAnimControl::isPlaying() || MAnimControl::isScrubbing();
 			bool glViewport = MRenderer::theRenderer()->drawAPIIsOpenGL();
 
-			//enable AOV-COLOR so that it can be resolved and used properly
-			m_context.enableAOV(RPR_AOV_COLOR);
+			// enable all mandatory aovs so that it can be resolved and used properly
+			for (int aov : m_alwaysEnabledAOVs)
+			{
+				m_context.enableAOV(aov);
+			}
 
-			if (m_currentAOV != RPR_AOV_COLOR)
+			if (!isAOVShouldBeAlwaysEnabled(m_currentAOV))
+			{
 				m_context.enableAOV(m_currentAOV);
+			}
 
 			if (!m_context.buildScene(animating, true, glViewport))
 				return false;
@@ -801,6 +809,19 @@ void FireRenderViewport::enableNecessaryAOVs(int index, bool flag)
 	}
 }
 
+bool FireRenderViewport::isAOVShouldBeAlwaysEnabled(int aov)
+{
+	for (int aovToTest : m_alwaysEnabledAOVs)
+	{
+		if (aovToTest == aov)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void FireRenderViewport::setCurrentAOV(int aov)
 {
 	if (m_currentAOV == aov)
@@ -810,14 +831,14 @@ void FireRenderViewport::setCurrentAOV(int aov)
 
 	AutoMutexLock contextLock(m_contextLock);
 
-	// turning off previous selected aov if it is not color
-	if (m_currentAOV != RPR_AOV_COLOR)
+	// turning off previous selected aov if it is not color        
+	if (!isAOVShouldBeAlwaysEnabled(m_currentAOV))
 	{
 		enableNecessaryAOVs(m_currentAOV, false);
 	}
 
 	// turning on newly selected aov(s)
-	if (aov != RPR_AOV_COLOR)
+	if (!isAOVShouldBeAlwaysEnabled(aov))
 	{
 		enableNecessaryAOVs(aov, true);
 	}
@@ -873,10 +894,10 @@ def createAOVsMenu(frMenu):
 
 	aovs = ["Color", "Opacity", "World Corrdinate", "UV", "Material Idx", "Geometric Normal", "Shading Normal", "Depth", "Object ID", "Object Group ID"]
 	aovs.extend(["Shadow Catcher", "Background", "Emission", "Velocity", "Direct Illumination", "Indirect Illumination", "AO", "Direct Diffuse"])
-	aovs.extend(["Direct Reflect", "Indirect Diffuse", "Indirect Reflect", "Refract", "Volume", "Albedo"])
+	aovs.extend(["Direct Reflect", "Indirect Diffuse", "Indirect Reflect", "Refract", "Volume", "Albedo", "Variance"])
 
 	# numbers in the following arrays are IDs of RPR AOVs that are declared in RadeonProRender.h
-	aov_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 19, 18, 20, 21, 22, 27]
+	aov_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 27, 28]
 
 	ag = QtWidgets.QActionGroup(frSubMenu)
 	count = 0
