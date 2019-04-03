@@ -1,0 +1,62 @@
+global proc AEVolumeCheckEnableAlbedo(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".albedoEnabled";
+	int $enabled = `getAttr $nodeAttr`;
+
+	editorTemplate -dimControl $nodeName "albedoGradType" ($enabled == 0);
+	editorTemplate -dimControl $nodeName "albedoValue" ($enabled == 0);
+}
+
+global proc AEVolumeCheckEnableEmission(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".emissionEnabled";
+	int $enabled = `getAttr $nodeAttr`;
+
+	editorTemplate -dimControl $nodeName "emissionGradType" ($enabled == 0);
+	editorTemplate -dimControl $nodeName "emissionValue" ($enabled == 0);
+	editorTemplate -dimControl $nodeName "emissionIntensity" ($enabled == 0);
+	editorTemplate -dimControl $nodeName "emissionRamp" ($enabled == 0);
+}
+
+global proc AEVolumeCheckEnableDensity(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".densityEnabled";
+	int $enabled = `getAttr $nodeAttr`;
+
+	editorTemplate -dimControl $nodeName "densityGradType" ($enabled == 0);
+	editorTemplate -dimControl $nodeName "densityValue" ($enabled == 0);
+	editorTemplate -dimControl $nodeName "densityMultiplier" ($enabled == 0);
+}
+
+global proc AERPRVolumeTemplate(string $nodeName)
+{
+	editorTemplate -beginScrollLayout;
+		editorTemplate -beginLayout "General" -collapse 0;
+			editorTemplate -label "Volume Dimentions" -addControl "volumeDimentions";
+		editorTemplate -endLayout;
+
+		editorTemplate -beginLayout "Albedo" -collapse 0;
+			editorTemplate -label "Enable" -addControl "albedoEnabled" "AEVolumeCheckEnableAlbedo";
+			editorTemplate -label "Gradient Type" -addControl "albedoGradType";
+			AEaddRampControl($nodeName + ".albedoValue");
+		editorTemplate -endLayout;
+
+		editorTemplate -beginLayout "Emission" -collapse 0;
+			editorTemplate -label "Enable" -addControl "emissionEnabled" "AEVolumeCheckEnableEmission";
+			editorTemplate -label "Gradient Type" -addControl "emissionGradType";
+			AEaddRampControl($nodeName + ".emissionValue");
+			editorTemplate -label "Intensity" -addControl "emissionIntensity";
+			AEaddRampControl($nodeName + ".emissionRamp");
+		editorTemplate -endLayout;
+
+		editorTemplate -beginLayout "Density" -collapse 0;
+			editorTemplate -label "Enable" -addControl "densityEnabled" "AEVolumeCheckEnableDensity";
+			editorTemplate -label "Gradient Type" -addControl "densityGradType";
+			AEaddRampControl($nodeName + ".densityValue");
+			editorTemplate -label "Multiplier" -addControl "densityMultiplier";
+		editorTemplate -endLayout;
+
+	editorTemplate -addExtraControls;
+	editorTemplate -endScrollLayout;
+}
+

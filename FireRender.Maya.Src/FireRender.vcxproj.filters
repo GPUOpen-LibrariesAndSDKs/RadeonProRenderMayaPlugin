@@ -99,6 +99,9 @@
     <Filter Include="FireRender.Components\XMLExport">
       <UniqueIdentifier>{ebf1f528-6976-43ce-90f5-e1f600942a2a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Volumes">
+      <UniqueIdentifier>{8051baa7-7050-4c7d-bdb3-a94342e67a51}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="python\__init__.py">
@@ -509,6 +512,18 @@
     <ClCompile Include="..\FireRender.Components\cpp\XMLMaterialExport\XMLMaterialExportCommon.cpp">
       <Filter>FireRender.Components\XMLExport</Filter>
     </ClCompile>
+    <ClCompile Include="Volumes\FireRenderVolumeLocator.cpp">
+      <Filter>Volumes</Filter>
+    </ClCompile>
+    <ClCompile Include="Volumes\FireRenderVolumeOverride.cpp">
+      <Filter>Volumes</Filter>
+    </ClCompile>
+    <ClCompile Include="Volumes\VolumeAttributes.cpp">
+      <Filter>Volumes</Filter>
+    </ClCompile>
+    <ClCompile Include="FastNoise.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -873,6 +888,18 @@
     </ClInclude>
     <ClInclude Include="..\FireRender.Components\cpp\XMLMaterialExport\XMLMaterialExportCommon.h">
       <Filter>FireRender.Components\XMLExport</Filter>
+    </ClInclude>
+    <ClInclude Include="Volumes\FireRenderVolumeLocator.h">
+      <Filter>Volumes</Filter>
+    </ClInclude>
+    <ClInclude Include="Volumes\FireRenderVolumeOverride.h">
+      <Filter>Volumes</Filter>
+    </ClInclude>
+    <ClInclude Include="Volumes\VolumeAttributes.h">
+      <Filter>Volumes</Filter>
+    </ClInclude>
+    <ClInclude Include="FastNoise.h">
+      <Filter>Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

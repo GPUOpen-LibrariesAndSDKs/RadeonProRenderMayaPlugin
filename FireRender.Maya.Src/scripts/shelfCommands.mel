@@ -271,6 +271,21 @@ global proc createLightsSubmenuItems(string $parentMenu)
 	menuItem -label "Create physical light node" -p $parentMenu -c createPhysicalLight;
 }
 
+global proc createVolumeRPR()
+{
+	if (!checkPluginLoadedRPR())
+		return;
+
+	string $VolumeNode = `createNode RPRVolume -n RPRVolumeObj`;
+	string $parent[] = `listRelatives -p $VolumeNode`;
+	rename $parent[0] "RPRVolume#";
+}
+
+global proc createVolumesSubmenuItems(string $parentMenu)
+{
+	menuItem -label "Create RPR Volume Node" -p $parentMenu -c createVolumeRPR;
+}
+
 global proc convertVRayObjects()
 {
 	if (!checkPluginLoadedRPR())

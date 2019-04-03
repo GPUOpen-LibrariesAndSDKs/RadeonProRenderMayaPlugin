@@ -25,6 +25,7 @@
 #include "FireRenderGlobals.h"
 #include "FireRenderThread.h"
 #include "Logger.h"
+#include "Volumes\VolumeAttributes.h"
 
 #ifdef WIN32
 #include <ShlObj.h>
@@ -1002,6 +1003,20 @@ MStatus getVisibleObjects(MDagPathArray& objects, MFn::Type type, bool checkVisi
 	return status;
 }
 
+void ProcessConnectedShader(const MPlug& shaderPlug, MObjectArray& shaders)
+{
+	if (shaderPlug.isNull())
+		return;
+
+	MPlugArray shaderConnections;
+	shaderPlug.connectedTo(shaderConnections, true, false);
+	if (shaderConnections.length() == 0)
+		return;
+
+	MObject shaderNode = shaderConnections[0].node();
+	shaders.append(shaderNode);
+}
+
 MObjectArray getConnectedShaders(MDagPath& meshPath)
 {
 	MObjectArray shaders;
@@ -1024,15 +1039,14 @@ MObjectArray getConnectedShaders(MDagPath& meshPath)
 		}
 
 		MFnDependencyNode sgNode(conn.node());
+
 		MPlug surfShaderPlug = sgNode.findPlug("surfaceShader");
-		if (surfShaderPlug.isNull())
-			continue;
-		MPlugArray shaderConnections;
-		surfShaderPlug.connectedTo(shaderConnections, true, false);
-		if (shaderConnections.length() == 0)
-			continue;
-		MObject shaderNode = shaderConnections[0].node();
-		shaders.append(shaderNode);
+		if (!surfShaderPlug.isNull())
+			ProcessConnectedShader(surfShaderPlug, shaders);
+
+		MPlug volShaderPlug = sgNode.findPlug("volumeShader");
+		if (!volShaderPlug.isNull())
+			ProcessConnectedShader(volShaderPlug, shaders);
 	}
 	return shaders;
 }
@@ -2120,3 +2134,188 @@ void SetCameraLookatForMatrix(rpr_camera camera, const MMatrix& matrix)
 
 	checkStatus(frStatus);
 }
+
+void setAttribProps(MFnAttribute& attr, const MObject& attrObj)
+{
+	CHECK_MSTATUS(attr.setKeyable(true));
+	CHECK_MSTATUS(attr.setStorable(true));
+	CHECK_MSTATUS(attr.setReadable(true));
+	CHECK_MSTATUS(attr.setWritable(true));
+
+	CHECK_MSTATUS(MPxNode::addAttribute(attrObj));
+}
+
+void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals, std::vector<int>& vertexIndices, std::vector<int>& normalIndices)
+{
+	veritces.clear();
+	normals.clear();
+	vertexIndices.clear();
+	normalIndices.clear();
+
+	veritces = {
+		-0.5f, -0.5f, -0.5f,
+		0.5f, -0.5f, -0.5f,
+		0.5f, 0.5f, -0.5f,
+		-0.5f, 0.5f, -0.5f,
+
+		-0.5f, -0.5f, 0.5f,
+		0.5f, -0.5f, 0.5f,
+		0.5f, 0.5f, 0.5f,
+		-0.5f, 0.5f, 0.5f,
+	};
+
+	normals = {
+		0.0f, 0.0f, -1.0f,
+		0.0f, 0.0f, 1.0f,
+
+		1.0f, 0.0f, 0.0f,
+		-1.0f, 0.0f, 0.0f,
+
+		0.0f, 1.0f, 0.0f,
+		0.0f, -1.0f, 0.0f,
+	};
+
+	vertexIndices = {
+		0, 2, 1,
+		0, 3, 2,
+
+		4, 5, 6,
+		4, 6, 7,
+
+		0, 1, 5,
+		0, 5, 4,
+
+		3, 6, 2,
+		3, 7, 6,
+
+		1, 2, 6,
+		1, 6, 5,
+
+		0, 7, 3,
+		0, 4, 7,
+	};
+
+	normalIndices = {
+		0, 0, 0,
+		0, 0, 0,
+
+		1, 1, 1,
+		1, 1, 1,
+
+		5, 5, 5,
+		5, 5, 5,
+
+		4, 4, 4,
+		4, 4, 4,
+
+		2, 2, 2,
+		2, 2, 2,
+
+		3, 3, 3,
+		3, 3, 3,
+	};
+}
+
+float GetDistanceBetweenPoints(
+	float x, float y, float z,
+	std::array<float, 3>& point)
+{
+	return sqrt((point[0] - x)*(point[0] - x) + (point[1] - y)*(point[1] - y) + (point[2] - z)*(point[2] - z));
+}
+
+float GetDistParamNormalized(
+	const VoxelParams& voxelParams,
+	VolumeGradient gradientType
+)
+{
+	float dist2vx_normalized; // this is parameter that is used for Ramp input
+
+	float fXres = 1.0f * voxelParams.Xres;
+	float fYres = 1.0f * voxelParams.Yres;
+	float fZres = 1.0f * voxelParams.Zres;
+	float fx = 1.0f * voxelParams.x;
+	float fy = 1.0f * voxelParams.y;
+	float fz = 1.0f * voxelParams.z;
+
+	switch (gradientType)
+	{
+	case VolumeGradient::kConstant:
+	{
+		dist2vx_normalized = 1.0f;
+		break;
+	}
+
+	case VolumeGradient::kXGradient:
+	{
+		// get relative distance from current voxel to YZ plane center
+		float dist2vx = GetDistanceBetweenPoints(0, fYres / 2, fZres / 2, std::array<float, 3> {fx, fy, fz});
+		float distMax = GetDistanceBetweenPoints(0, fYres / 2, fZres / 2, std::array<float, 3> {fXres, 0.0f, 0.0f});
+		dist2vx_normalized = 1 - (dist2vx / distMax);
+		break;
+	}
+
+	case VolumeGradient::kYGradient:
+	{
+		// get relative distance from current voxel to XZ plane center
+		float dist2vx = GetDistanceBetweenPoints(fXres / 2, 0, fZres / 2, std::array<float, 3> {fx, fy, fz});
+		float distMax = GetDistanceBetweenPoints(fXres / 2, 0, fZres / 2, std::array<float, 3> {0.0f, fYres, 0.0f});
+		dist2vx_normalized = 1 - (dist2vx / distMax);
+		break;
+	}
+
+	case VolumeGradient::kZGradient:
+	{
+		// get relative distance from current voxel to XY plane center
+		float dist2vx = GetDistanceBetweenPoints(fXres / 2, fYres / 2, 0, std::array<float, 3> {fx, fy, fz});
+		float distMax = GetDistanceBetweenPoints(fXres / 2, fYres / 2, 0, std::array<float, 3> {0.0f, 0.0f, fZres});
+		dist2vx_normalized = 1 - (dist2vx / distMax);
+		break;
+	}
+
+	case VolumeGradient::kNegXGradient:
+	{
+		// get relative distance from current voxel to YZ plane center
+		float dist2vx = GetDistanceBetweenPoints(0, fYres / 2, fZres / 2, std::array<float, 3> {fx, fy, fz});
+		float distMax = GetDistanceBetweenPoints(0, fYres / 2, fZres / 2, std::array<float, 3> {fXres, 0.0f, 0.0f});
+		dist2vx_normalized = dist2vx / distMax;
+		break;
+	}
+
+	case VolumeGradient::kNegYGradient:
+	{
+		// get relative distance from current voxel to XZ plane center
+		float dist2vx = GetDistanceBetweenPoints(fXres / 2, 0, fZres / 2, std::array<float, 3> {fx, fy, fz});
+		float distMax = GetDistanceBetweenPoints(fXres / 2, 0, fZres / 2, std::array<float, 3> {0.0f, fYres, 0.0f});
+		dist2vx_normalized = dist2vx / distMax;
+		break;
+	}
+
+	case VolumeGradient::kNegZGradient:
+	{
+		// get relative distance from current voxel to XY plane center
+		float dist2vx = GetDistanceBetweenPoints(fXres / 2, fYres / 2, 0, std::array<float, 3> {fx, fy, fz});
+		float distMax = GetDistanceBetweenPoints(fXres / 2, fYres / 2, 0, std::array<float, 3> {0.0f, 0.0f, fZres});
+		dist2vx_normalized = dist2vx / distMax;
+		break;
+	}
+
+	case VolumeGradient::kCenterGradient: // 0.0 is border, 1.0 is center
+	{
+		// get relative distance from current voxel to center
+		float dist2vx = GetDistanceBetweenPoints(fXres / 2, fYres / 2, fZres / 2, std::array<float, 3> {fx, fy, fz});
+		/*std::tie(hasIntersections, dist2center) = GetDistanceToCenter(fx, fy, fz, fXres, fYres, fZres);
+		if (!hasIntersections)
+			return 100*1.0f; */
+		float dist2center = GetDistanceBetweenPoints(fXres / 2, fYres / 2, fZres / 2, std::array<float, 3> {0.0f, 0.0f, 0.0f});
+		dist2vx_normalized = 1 - (dist2vx / dist2center);
+		break;
+	}
+
+	default:
+		dist2vx_normalized = 0.0f; // atm only center gradient is supported
+	}
+
+	return dist2vx_normalized;
+}
+
+

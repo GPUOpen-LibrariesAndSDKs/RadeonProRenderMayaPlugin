@@ -320,54 +320,41 @@ inline void CreateRPRMeshes(std::vector<frw::Shape>& elements,
 #endif
 }
 
-struct MeshPolygonData
+MeshPolygonData::MeshPolygonData()
+	: pVertices(nullptr)
+	, countVertices(0)
+	, pNormals(nullptr)
+	, countNormals(0)
+	, numIndices(0)
+{}
+
+void MeshPolygonData::Initialize(MFnMesh& fnMesh)
 {
-	MStringArray uvSetNames;
-	std::vector<std::vector<Float2> > uvCoords;
-	std::vector<const float*> puvCoords;
-	std::vector<size_t> sizeCoords;
-	const float* pVertices;
-	int countVertices;
-	const float* pNormals;
-	int countNormals;
-	int numIndices;
+	GetUVCoords(fnMesh, uvSetNames, uvCoords, puvCoords, sizeCoords);
+	unsigned int uvSetCount = uvSetNames.length();
 
-	MeshPolygonData()
-		: pVertices(nullptr)
-		, countVertices(0)
-		, pNormals(nullptr)
-		, countNormals(0)
-		, numIndices(0)
-	{}
+	MStatus mstatus;
 
-	void Initialize(MFnMesh& fnMesh)
+	// pointer to array of vertices coordinates in Maya
+	pVertices = fnMesh.getRawPoints(&mstatus);
+	assert(MStatus::kSuccess == mstatus);
+	countVertices = fnMesh.numVertices(&mstatus);
+	assert(MStatus::kSuccess == mstatus);
+
+	// pointer to array of normal coordinates in Maya
+	pNormals = fnMesh.getRawNormals(&mstatus);
+	assert(MStatus::kSuccess == mstatus);
+	countNormals = fnMesh.numNormals(&mstatus);
+	assert(MStatus::kSuccess == mstatus);
+
 	{
-		GetUVCoords(fnMesh, uvSetNames, uvCoords, puvCoords, sizeCoords);
-		unsigned int uvSetCount = uvSetNames.length();
-
-		MStatus mstatus;
-
-		// pointer to array of vertices coordinates in Maya
-		pVertices = fnMesh.getRawPoints(&mstatus);
-		assert(MStatus::kSuccess == mstatus);
-		countVertices = fnMesh.numVertices(&mstatus);
-		assert(MStatus::kSuccess == mstatus);
-
-		// pointer to array of normal coordinates in Maya
-		pNormals = fnMesh.getRawNormals(&mstatus);
-		assert(MStatus::kSuccess == mstatus);
-		countNormals = fnMesh.numNormals(&mstatus);
-		assert(MStatus::kSuccess == mstatus);
-
-		{
-			// get triangle count (max possible count; this number is used for reserve only)
-			MIntArray triangleCounts; // basically number of triangles in polygons; size of array equal to number of polygons in mesh
-			MIntArray triangleVertices; // indices of points in triangles (3 indices per triangle)
-			mstatus = fnMesh.getTriangles(triangleCounts, triangleVertices);
-			numIndices = triangleVertices.length();
-		}
+		// get triangle count (max possible count; this number is used for reserve only)
+		MIntArray triangleCounts; // basically number of triangles in polygons; size of array equal to number of polygons in mesh
+		MIntArray triangleVertices; // indices of points in triangles (3 indices per triangle)
+		mstatus = fnMesh.getTriangles(triangleCounts, triangleVertices);
+		numIndices = triangleVertices.length();
 	}
-};
+}
 
 inline void AddPolygon(MItMeshPolygon& it,
 	const MStringArray& uvSetNames,
