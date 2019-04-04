@@ -169,7 +169,7 @@ bool FireRenderProduction::start()
 		m_needsContextRefresh = true;
 		m_context->setResolution(m_width, m_height, true);
 		m_context->setCamera(m_camera, true);
-		m_context->setStartedRendering();
+
 		m_context->setUseRegion(m_isRegion);
 
 		if (m_context->isFirstIterationAndShadersNOTCached())
@@ -223,6 +223,8 @@ bool FireRenderProduction::start()
 
 		refreshContext();
 		m_needsContextRefresh = false;
+
+		m_context->setStartedRendering();
 
 		// Start the render
 		FireRenderThread::KeepRunning([this]()
