@@ -84,6 +84,74 @@ enum VolumeGradient
 	kCenterGradient = 11, // ramps the value from one at the center to zero at the edges
 };
 
+struct VoxelParams
+{
+	unsigned int x;
+	unsigned int y;
+	unsigned int z;
+	unsigned int Xres;
+	unsigned int Yres;
+	unsigned int Zres;
+};
+
+float GetDistanceBetweenPoints(float x, float y, float z, std::array<float, 3> &point);
+
+float GetDistParamNormalized(const VoxelParams& voxelParams, VolumeGradient gradientType);
+
+template <class ValueType>
+ValueType GetVoxelValue(
+	const VoxelParams& voxelParams,
+	const std::vector<RampCtrlPoint<ValueType>> &ctrlPoints,
+	VolumeGradient gradientType
+)
+{
+	float dist2vx_normalized = GetDistParamNormalized(voxelParams, gradientType); // this is parameter that is used for Ramp input
+
+	// get 2 most close control points from opacity ramp control points array
+	const auto* prev_point = &ctrlPoints[0];
+	const auto* next_point = &ctrlPoints[0];
+	InterpolationMethod method = ctrlPoints[0].method;
+
+	for (unsigned int idx = 0; idx < ctrlPoints.size(); ++idx)
+	{
+		auto& ctrlPoint = ctrlPoints[idx];
+
+		if (ctrlPoint.position > dist2vx_normalized)
+		{
+			if (idx == 0)
+			{
+				return ctrlPoint.ctrlPointData;
+			}
+
+			next_point = &ctrlPoints[idx];
+			prev_point = &ctrlPoints[idx - 1];
+
+			// interpolate values from theese points
+			switch (method)
+			{
+				// only linear interpolation is supported atm
+			case InterpolationMethod::kLinear:
+			case InterpolationMethod::kSpline:
+			case InterpolationMethod::kSmooth:
+			{
+				float coef = ((dist2vx_normalized - prev_point->position) / (next_point->position - prev_point->position));
+				auto prevValue = prev_point->ctrlPointData;
+				auto nextValue = next_point->ctrlPointData;
+				auto calcRes = nextValue - prevValue;
+				calcRes = coef * calcRes;
+				calcRes = calcRes + prevValue;
+				return calcRes;
+			}
+
+			default:
+				return ValueType();
+			}
+		}
+	}
+
+	return ValueType();
+}
+
 // This is the class that describes attributes of RPR Volume node that are visible in Maya
 class RPRVolumeAttributes : public MPxNode
 {
