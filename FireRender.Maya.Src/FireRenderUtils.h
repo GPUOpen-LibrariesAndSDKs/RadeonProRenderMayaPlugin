@@ -810,7 +810,7 @@ bool SaveCtrlPoints(
 	if ((1.0f - out.back().position) > FLT_EPSILON)
 	{
 		out.emplace_back();
-		auto& last = out.end() - 2;
+		const auto& last = out.end() - 2;
 		auto& ctrlPointRef = out.back();
 		ctrlPointRef.ctrlPointData = last->ctrlPointData;
 		ctrlPointRef.method = last->method;

@@ -20,7 +20,7 @@ MObject RPRVolumeAttributes::densityGradType;
 MObject RPRVolumeAttributes::densityValue;
 MObject RPRVolumeAttributes::densityMultiplier;
 
-MStatus postConstructor_initialise_ramp_curve(MObject& parentNode, MObject& rampObj, int index, float position, float value, int interpolation)
+MStatus postConstructor_initialise_ramp_curve(MObject parentNode, MObject rampObj, int index, float position, float value, int interpolation)
 {
 	MStatus status;
 
@@ -40,7 +40,7 @@ MStatus postConstructor_initialise_ramp_curve(MObject& parentNode, MObject& ramp
 	return MS::kSuccess;
 }
 
-MStatus postConstructor_initialise_color_curve(MObject& parentNode, MObject& rampObj, int index, float position, MColor value, int interpolation)
+MStatus postConstructor_initialise_color_curve(MObject parentNode, MObject rampObj, int index, float position, MColor value, int interpolation)
 {
 	MStatus status;
 
@@ -416,7 +416,7 @@ void RPRVolumeAttributes::FillVolumeData(VolumeData& data, const MObject& node, 
 
 float GetDistanceBetweenPoints(
 	float x, float y, float z,
-	std::array<float, 3> &point)
+	std::array<float, 3> point)
 {
 	return sqrt((point[0] - x)*(point[0] - x) + (point[1] - y)*(point[1] - y) + (point[2] - z)*(point[2] - z));
 }

@@ -403,6 +403,20 @@
 		8DB9AEA0225551B400543147 /* VolumeAttributes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB9AE9A225551B400543147 /* VolumeAttributes.cpp */; };
 		8DB9AEA1225551B400543147 /* FireRenderVolumeOverride.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE9B225551B400543147 /* FireRenderVolumeOverride.h */; };
 		8DB9AEA2225551B400543147 /* VolumeAttributes.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE9C225551B400543147 /* VolumeAttributes.h */; };
+		8DB9AEA32256523400543147 /* VolumeAttributes.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE9C225551B400543147 /* VolumeAttributes.h */; };
+		8DB9AEA42256526900543147 /* FastNoise.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE922255519000543147 /* FastNoise.h */; };
+		8DB9AEA52256527A00543147 /* FastNoise.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE922255519000543147 /* FastNoise.h */; };
+		8DB9AEA62256528900543147 /* VolumeAttributes.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE9C225551B400543147 /* VolumeAttributes.h */; };
+		8DB9AEA72256529D00543147 /* FireRenderVolumeOverride.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE9B225551B400543147 /* FireRenderVolumeOverride.h */; };
+		8DB9AEA8225652A700543147 /* FireRenderVolumeLocator.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE98225551B300543147 /* FireRenderVolumeLocator.h */; };
+		8DB9AEA9225652C200543147 /* FireRenderVolumeOverride.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE9B225551B400543147 /* FireRenderVolumeOverride.h */; };
+		8DB9AEAA225652CE00543147 /* FireRenderVolumeLocator.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE98225551B300543147 /* FireRenderVolumeLocator.h */; };
+		8DB9AEAB2256530A00543147 /* VolumeAttributes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB9AE9A225551B400543147 /* VolumeAttributes.cpp */; };
+		8DB9AEAC2256531100543147 /* FireRenderVolumeOverride.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB9AE99225551B300543147 /* FireRenderVolumeOverride.cpp */; };
+		8DB9AEAD2256531600543147 /* FireRenderVolumeLocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB9AE97225551B300543147 /* FireRenderVolumeLocator.cpp */; };
+		8DB9AEAE2256532500543147 /* VolumeAttributes.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB9AE9A225551B400543147 /* VolumeAttributes.cpp */; };
+		8DB9AEAF2256532D00543147 /* FireRenderVolumeOverride.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB9AE99225551B300543147 /* FireRenderVolumeOverride.cpp */; };
+		8DB9AEB02256533300543147 /* FireRenderVolumeLocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB9AE97225551B300543147 /* FireRenderVolumeLocator.cpp */; };
 		8DBC06F3215E68C0006ECC17 /* FireRenderSwatchInstance.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DBC06F1215E68BF006ECC17 /* FireRenderSwatchInstance.cpp */; };
 		8DBC06F4215E68C0006ECC17 /* FireRenderSwatchInstance.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DBC06F2215E68C0006ECC17 /* FireRenderSwatchInstance.h */; };
 		8DBC06F5215E6943006ECC17 /* FireRenderSwatchInstance.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DBC06F2215E68C0006ECC17 /* FireRenderSwatchInstance.h */; };
@@ -1397,6 +1411,10 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8DB9AEA8225652A700543147 /* FireRenderVolumeLocator.h in Headers */,
+				8DB9AEA72256529D00543147 /* FireRenderVolumeOverride.h in Headers */,
+				8DB9AEA42256526900543147 /* FastNoise.h in Headers */,
+				8DB9AEA32256523400543147 /* VolumeAttributes.h in Headers */,
 				8D91169F222584FC0083881D /* XMLMaterialExportCommon.h in Headers */,
 				8D28372E2199D73B0004852B /* OptionVarHelpers.h in Headers */,
 				8DBC06F5215E6943006ECC17 /* FireRenderSwatchInstance.h in Headers */,
@@ -1499,6 +1517,10 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8DB9AEAA225652CE00543147 /* FireRenderVolumeLocator.h in Headers */,
+				8DB9AEA9225652C200543147 /* FireRenderVolumeOverride.h in Headers */,
+				8DB9AEA62256528900543147 /* VolumeAttributes.h in Headers */,
+				8DB9AEA52256527A00543147 /* FastNoise.h in Headers */,
 				8DBCC29D22304666003EE361 /* XMLMaterialExportCommon.h in Headers */,
 				8DBCC29E22304666003EE361 /* OptionVarHelpers.h in Headers */,
 				8DBCC29F22304666003EE361 /* FireRenderSwatchInstance.h in Headers */,
@@ -1806,6 +1828,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8DB9AEAD2256531600543147 /* FireRenderVolumeLocator.cpp in Sources */,
+				8DB9AEAC2256531100543147 /* FireRenderVolumeOverride.cpp in Sources */,
+				8DB9AEAB2256530A00543147 /* VolumeAttributes.cpp in Sources */,
 				8D9116A02225850B0083881D /* XMLMaterialExportCommon.cpp in Sources */,
 				8D28372F2199D7480004852B /* OptionVarHelpers.cpp in Sources */,
 				8DE9B55F2191DDA800ED8555 /* FireRenderImportXML.cpp in Sources */,
@@ -1907,6 +1932,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8DB9AEB02256533300543147 /* FireRenderVolumeLocator.cpp in Sources */,
+				8DB9AEAF2256532D00543147 /* FireRenderVolumeOverride.cpp in Sources */,
+				8DB9AEAE2256532500543147 /* VolumeAttributes.cpp in Sources */,
 				8DBCC2FD22304666003EE361 /* XMLMaterialExportCommon.cpp in Sources */,
 				8DBCC2FE22304666003EE361 /* OptionVarHelpers.cpp in Sources */,
 				8DBCC2FF22304666003EE361 /* FireRenderImportXML.cpp in Sources */,
@@ -2057,6 +2085,7 @@
 					"-lOpenMayaAnim",
 					"-lOpenMayaUI",
 					"-lOpenMayaRender",
+					"-lOpenMayaFX",
 					"-lFoundation",
 					"-framework",
 					OpenGL,
@@ -2117,6 +2146,7 @@
 					"-lOpenMayaAnim",
 					"-lOpenMayaUI",
 					"-lOpenMayaRender",
+					"-lOpenMayaFX",
 					"-lFoundation",
 					"-framework",
 					OpenGL,
@@ -2261,6 +2291,7 @@
 					OpenGL,
 					"-ltbb",
 					"-lglew",
+					"-lOpenMayaFX",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = RadeonProRender;
@@ -2322,6 +2353,7 @@
 					OpenGL,
 					"-ltbb",
 					"-lglew",
+					"-lOpenMayaFX",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = RadeonProRender;
@@ -2384,6 +2416,7 @@
 					OpenGL,
 					"-ltbb",
 					"-lglew",
+					"-lOpenMayaFX",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = RadeonProRender;
@@ -2444,6 +2477,7 @@
 					OpenGL,
 					"-ltbb",
 					"-lglew",
+					"-lOpenMayaFX",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = RadeonProRender;
