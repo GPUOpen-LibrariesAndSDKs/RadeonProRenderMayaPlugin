@@ -33,14 +33,12 @@ def importFireRenderMaterial(data):
             maya.cmds.select(shader, r=1)
 
 def exportRPRSelectedMaterialsXml(data):
-    basicFilter = "*.xml;;All Files (*.*)"
-    filePath = maya.cmds.fileDialog2(fileFilter=basicFilter, dialogStyle=0)
+    filePath = maya.cmds.fileDialog2(dialogStyle=0, fileMode=2)
     if filePath:
         maya.cmds.RPRXMLExport(s=1,file=filePath[0])
 
 def exportRPRMaterialsXml(data):
-    basicFilter = "*.xml;;All Files (*.*)"
-    filePath = maya.cmds.fileDialog2(fileFilter=basicFilter, dialogStyle=0)
+    filePath = maya.cmds.fileDialog2(dialogStyle=0, fileMode=2)
     if filePath:
         maya.cmds.RPRXMLExport(file=filePath[0])
 
