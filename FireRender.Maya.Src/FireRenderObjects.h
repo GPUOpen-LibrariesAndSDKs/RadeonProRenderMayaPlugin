@@ -12,6 +12,7 @@
 #include <maya/MNodeMessage.h>
 #include <maya/MDagMessage.h>
 #include <maya/MPlug.h>
+#include <maya/MFnFluid.h>
 #include <string>
 #include <atomic>
 #include "FireMaya.h"
@@ -537,7 +538,6 @@ private:
 
 // Fire render volume
 // Bridge class between a Maya Volume node and frw::Volume
-class MFnFluid; // forward declaration of maya class
 struct VolumeData; // forward declaration of RPR data wrapper class
 class FireRenderVolume : public FireRenderNode
 {

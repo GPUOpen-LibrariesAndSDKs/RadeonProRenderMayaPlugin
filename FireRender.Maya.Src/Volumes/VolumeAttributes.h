@@ -94,7 +94,7 @@ struct VoxelParams
 	unsigned int Zres;
 };
 
-float GetDistanceBetweenPoints(float x, float y, float z, std::array<float, 3> &point);
+float GetDistanceBetweenPoints(float x, float y, float z, std::array<float, 3> point);
 
 float GetDistParamNormalized(const VoxelParams& voxelParams, VolumeGradient gradientType);
 
