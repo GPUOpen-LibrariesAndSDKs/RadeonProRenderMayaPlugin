@@ -1657,7 +1657,7 @@ namespace frw
 			std::vector<float> emission_look_up; emission_look_up.reserve(countOfEmissionCtrlPoints*3);
 			for (size_t idx = 0; idx < countOfEmissionCtrlPoints; ++idx)
 			{
-				emission_look_up.push_back(emissionCtrPoints[idx] * 1.0f);
+				emission_look_up.push_back(emissionCtrPoints[idx] * 10.f);
 			}
 
 			// - create emission grid
@@ -1678,7 +1678,7 @@ namespace frw
 			// - attach grid and lookup to volume
 			status = rprHeteroVolumeSetEmissionGrid(h, emissionGrid);
 			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach emission grid!");
-			status = rprHeteroVolumeSetEmissionLookup(h, emission.data(), emission.size() / 3);
+			status = rprHeteroVolumeSetEmissionLookup(h, emission_look_up.data(), emission_look_up.size() / 3);
 			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach emission lookup table!");
 
 			// density
