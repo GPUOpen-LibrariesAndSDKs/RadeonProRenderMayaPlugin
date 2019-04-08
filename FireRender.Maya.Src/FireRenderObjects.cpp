@@ -2348,7 +2348,7 @@ void FireRenderVolume::ApplyTransform(void)
 
 	// get transform
 	MMatrix matrix = path.inclusiveMatrix();
-	m_matrix = matrix;
+	matrix = m_matrix * matrix;
 
 	// convert Maya mesh in cm to m
 	MMatrix scaleM;
@@ -3242,7 +3242,7 @@ bool FireRenderVolume::TranslateVolume(void)
 	// extract data from fluid object
 	TranslateGeneralVolumeData(&vdata, fnFluid);
 
-	// - get volume shader
+	// get volume shader
 	MDagPath path = MDagPath::getAPathTo(node);
 	MObjectArray shdrs = getConnectedShaders(path);
 	size_t count_shdrs = shdrs.length();
@@ -3253,7 +3253,33 @@ bool FireRenderVolume::TranslateVolume(void)
 	MTypeId mayaId = shaderNode.typeId();
 #endif
 
-	// - read fluid data fields to volume data container
+	// get extra transform from volume shader
+	// - it is applied only when "Auto Resize" is checked
+	MPlug isGridAutoResizePlug = shaderNode.findPlug("autoResize");
+	if (isGridAutoResizePlug.isNull())
+	{
+		mstatus.perror("MFnFluid: failed to get auto resize plug");
+		return false;
+	}
+	bool isGridAutoResize = isGridAutoResizePlug.asBool();
+
+	if (isGridAutoResize)
+	{
+		MPlug dynamicOffsetXPlug = shaderNode.findPlug("dynamicOffsetX");
+		MPlug dynamicOffsetYPlug = shaderNode.findPlug("dynamicOffsetY");
+		MPlug dynamicOffsetZPlug = shaderNode.findPlug("dynamicOffsetZ");
+		if (dynamicOffsetXPlug.isNull() || dynamicOffsetYPlug.isNull() || dynamicOffsetZPlug.isNull())
+		{
+			mstatus.perror("MFnFluid: failed to get dynamic offsets plugs");
+			return false;
+		}
+		m_matrix.setToIdentity();
+		m_matrix[3][0] = dynamicOffsetXPlug.asFloat();
+		m_matrix[3][1] = dynamicOffsetYPlug.asFloat();
+		m_matrix[3][2] = dynamicOffsetZPlug.asFloat();
+	}
+
+	// read fluid data fields to volume data container
 	bool success;
 	success = TranslateAlbedo(&vdata, fnFluid, shaderNode);
 	if (!success)
