@@ -524,6 +524,9 @@
     <ClCompile Include="FastNoise.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+    <ClCompile Include="FireRenderVolume.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
