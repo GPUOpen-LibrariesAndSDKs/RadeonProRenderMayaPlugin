@@ -323,6 +323,7 @@
     <ClCompile Include="SkyBuilder.cpp" />
     <ClCompile Include="SkyGen.cpp" />
     <ClCompile Include="SkyLocatorMesh.cpp" />
+    <ClCompile Include="FireRenderVolume.cpp" />
     <ClCompile Include="SubsurfaceMaterial.cpp" />
     <ClCompile Include="Translators\MeshTranslator.cpp" />
     <ClCompile Include="Translators\Translators.cpp" />
