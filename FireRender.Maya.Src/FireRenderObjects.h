@@ -579,6 +579,7 @@ protected:
 	bool ReadTemperatureIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues);
 	bool ReadFuelIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues);
 	bool ReadPressureIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues);
+	bool ReadSpeedIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues);
 	bool ProcessInputField(int inputField, std::vector<float>& outData, unsigned int Xres, unsigned int Yres, unsigned int Zres, MFnFluid& fnFluid);
 
 	// apply noise to channel
