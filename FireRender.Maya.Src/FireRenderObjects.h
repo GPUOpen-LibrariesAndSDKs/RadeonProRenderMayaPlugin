@@ -429,6 +429,8 @@ public:
 	virtual void clear() override;
 	virtual void Freshen() override;
 
+	void TranslateCameraExplicit(int viewWidth, int viewHeight);
+
 	// build camera for swatch render
 	void buildSwatchCamera();
 
@@ -438,6 +440,10 @@ public:
 	bool GetAlphaMask() const;
 
 	virtual void RegisterCallbacks() override;
+
+	bool isCameraTypeDefault() const;
+	bool isDefaultPerspective() const;
+	bool isDefaultOrtho() const;
 
 private:
 

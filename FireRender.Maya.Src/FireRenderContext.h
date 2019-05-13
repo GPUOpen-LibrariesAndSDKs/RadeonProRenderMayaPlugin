@@ -720,6 +720,7 @@ public:
 	bool isFirstIterationAndShadersNOTCached();
 	void updateProgress();
 	int	getProgress();
+	void setProgress(int percents);
 	bool updateOutput();
 
 	void setSamplesPerUpdate(int samplesPerUpdate);

@@ -14,6 +14,10 @@ public:
 	RenderRegion(unsigned int l, unsigned int r, unsigned int t, unsigned int b) :
 		left(l), right(r), top(t), bottom(b) {}
 
+	// create region with given size and placed at 0,0
+	RenderRegion(unsigned int w, unsigned int h) :
+		left(0), right(w - 1), top(h - 1), bottom(0) {}
+
 	// Copy constructor
 	RenderRegion(const RenderRegion& other) :
 		left(other.left), right(other.right), top(other.top), bottom(other.bottom) {}

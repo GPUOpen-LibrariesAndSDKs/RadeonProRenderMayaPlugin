@@ -524,6 +524,9 @@
     <ClCompile Include="FastNoise.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+    <ClCompile Include="TileRenderer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="FireRenderVolume.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -903,6 +906,9 @@
     </ClInclude>
     <ClInclude Include="FastNoise.h">
       <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="TileRenderer.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -241,6 +241,10 @@ public:
 	// Camera type.
 	short cameraType;
 
+	bool tileRenderingEnabled;
+	int tileSizeX;
+	int tileSizeY;
+
 	// AOVs.
 	FireRenderAOVs aovs;
 

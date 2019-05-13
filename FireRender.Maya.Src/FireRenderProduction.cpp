@@ -12,6 +12,8 @@
 #include "FireRenderGlobals.h"
 #include "FireRenderUtils.h"
 
+#include "TileRenderer.h"
+
 #ifdef OPTIMIZATION_CLOCK
 	#include <chrono>
 #endif
@@ -73,7 +75,7 @@ void FireRenderProduction::updateRegion()
 
 	// Default to the full render view if the region is invalid.
 	if (!m_isRegion)
-		m_region = RenderRegion(0, m_width - 1, m_height - 1, 0);
+		m_region = RenderRegion(m_width, m_height);
 
 	// Ensure the pixel buffer is the correct size.
 	m_pixels.resize(m_region.getArea());
@@ -136,7 +138,22 @@ bool FireRenderProduction::start()
 
 	m_aovs = &m_globals.aovs;
 
-	auto ret = FireRenderThread::RunOnceAndWait<bool>([this, &showWarningDialog]()
+	int contextWidth = m_width;
+	int contextHeight = m_height;
+
+	RenderRegion region = m_region;
+
+	if (m_globals.tileRenderingEnabled)
+	{
+		contextWidth = m_globals.tileSizeX;
+		contextHeight = m_globals.tileSizeY;
+
+		region = RenderRegion(contextWidth, contextHeight);
+	}
+
+	//m_isRegion = true;
+
+	auto ret = FireRenderThread::RunOnceAndWait<bool>([this, &showWarningDialog, contextWidth, contextHeight]()
 	{
 		{
 			AutoMutexLock contextCreationLock(m_contextCreationLock);
@@ -167,7 +184,7 @@ bool FireRenderProduction::start()
 		}
 
 		m_needsContextRefresh = true;
-		m_context->setResolution(m_width, m_height, true);
+		m_context->setResolution(contextWidth, contextHeight, true);
 		m_context->setCamera(m_camera, true);
 
 		m_context->setUseRegion(m_isRegion);
@@ -180,14 +197,6 @@ bool FireRenderProduction::start()
 
 		return true;
 	});
-
-	// Tell the Maya view that rendering has started.
-	if (m_isRegion)
-		MRenderView::startRegionRender(m_width, m_height,
-			m_region.left, m_region.right, m_region.bottom, m_region.top,
-			false, true);
-	else
-		MRenderView::startRender(m_width, m_height, false, true);
 
 	if (ret)
 	{
@@ -204,7 +213,7 @@ bool FireRenderProduction::start()
 
 		// Allocate memory for active AOV pixels and get
 		// the AOV that will be displayed in the render view.
-		m_aovs->setRegion(m_region, m_width, m_height);
+		m_aovs->setRegion(region, contextWidth, contextHeight);
 		m_aovs->allocatePixels();
 		m_renderViewAOV = &m_aovs->getRenderViewAOV();
 
@@ -231,7 +240,16 @@ bool FireRenderProduction::start()
 		{
 			try
 			{
-				m_isRunning = RunOnViewportThread();
+				if (m_globals.tileRenderingEnabled)
+				{
+					RenderTiles();
+					stop();
+					m_isRunning = false;
+				}
+				else
+				{
+					m_isRunning = RunOnViewportThread();
+				}
 			}
 			catch (...)
 			{
@@ -337,29 +355,10 @@ bool FireRenderProduction::RunOnViewportThread()
 		try
 		{	// Render.
 			AutoMutexLock contextLock(m_contextLock);
-			if (m_context->state != FireRenderContext::StateRendering) return false;
+			if (m_context->state != FireRenderContext::StateRendering) 
+				return false;
 
-			m_context->render(false);
-
-			m_context->updateProgress();
-
-			// Read pixel data for the AOV displayed in the render
-			// view. Flip the image so it's the right way up in the view.
-			m_renderViewAOV->readFrameBuffer(*m_context, true);
-
-			FireRenderThread::RunProcOnMainThread([this]()
-			{
-				// Update the Maya render view.
-				m_renderViewAOV->sendToRenderView();
-
-				if (rcWarningDialog.shown)
-					rcWarningDialog.close();
-			});
-
-			// Ensure display gamma correction is enabled for image file output. It
-			// may be disabled initially if it's not set to be applied to Maya views.
-			m_context->enableDisplayGammaCorrection(m_globals);
-			m_aovs->readFrameBuffers(*m_context, false);
+			RenderFullFrame();
 		}
 		catch (...)
 		{
@@ -376,44 +375,94 @@ bool FireRenderProduction::RunOnViewportThread()
 	}
 }
 
-// -----------------------------------------------------------------------------
-void FireRenderProduction::updateRenderView()
+void FireRenderProduction::RenderTiles()
 {
-	// Clear the scheduled flag.
-	m_renderViewUpdateScheduled = false;
+	TileRenderer tileRenderer;
 
-	// Check that rendering is still active.
-	if (m_context->state != FireRenderContext::StateRendering)
-		return;
+	TileRenderInfo info;
 
+	info.tilesFillType = TileRenderFillType::Normal;
+	info.tileSizeX = m_globals.tileSizeX;
+	info.tileSizeY = m_globals.tileSizeY;
+
+	info.totalWidth = m_width;
+	info.totalHeight = m_height;
+
+	m_context->setSamplesPerUpdate(m_globals.completionCriteriaFinalRender.completionCriteriaMaxIterations);
+
+	// we need to resetup camera because total width and height differs with tileSizeX and tileSizeY
+	m_context->camera().TranslateCameraExplicit(info.totalWidth, info.totalHeight);
+
+	tileRenderer.Render(*m_context, info, [this](RenderRegion& region, int progress)
 	{
-		// Acquire the pixels lock.
-		AutoMutexLock pixelsLock(m_pixelsLock);
+		// make proper size
+		unsigned int width = region.getWidth();
+		unsigned int height = region.getHeight();
 
-		// Prepare to update the Maya view.
-		beginMayaUpdate();
+		m_context->resize(width, height, true);
 
-		// Update the render view pixels.
-		MRenderView::updatePixels(
-			m_region.left, m_region.right,
-			m_region.bottom, m_region.top,
-			m_pixels.data(), true);
+		m_aovs->setRegion(RenderRegion(width, height), region.getWidth(), region.getHeight());
+		m_aovs->allocatePixels();
 
-		// Refresh the render view.
-		MRenderView::refresh(
-			m_region.left, m_region.right,
-			m_region.bottom, m_region.top);
+		m_context->render(false);
 
-		// Complete the Maya view update.
-		endMayaUpdate();
+		// Read pixel data for the AOV displayed in the render
+		// view. Flip the image so it's the right way up in the view.
+		m_renderViewAOV->readFrameBuffer(*m_context, true);
 
-		if (rcWarningDialog.shown) {
-			rcWarningDialog.close();
+		FireRenderThread::RunProcOnMainThread([this, region]()
+		{
+			// Update the Maya render view.
+
+			MRenderView::updatePixels(region.left, region.right,
+			region.bottom, region.top, m_renderViewAOV->pixels.get(), true);
+
+			// Refresh the render view.
+			MRenderView::refresh(region.left, region.right, region.bottom, region.top);
+
+			if (rcWarningDialog.shown)
+				rcWarningDialog.close();
+		});
+
+		m_context->setProgress(progress);
+
+		bool isContinue = !m_cancelled;
+
+		if (isContinue)
+		{
+			m_context->setStartedRendering();
 		}
-	}
 
-	// Refresh the context if required.
-	m_needsContextRefresh = true;
+		return isContinue;
+	}
+	);
+}
+
+void FireRenderProduction::RenderFullFrame()
+{
+	m_context->render(false);
+
+	m_context->updateProgress();
+
+	// Read pixel data for the AOV displayed in the render
+	// view. Flip the image so it's the right way up in the view.
+	m_renderViewAOV->readFrameBuffer(*m_context, true);
+
+	FireRenderThread::RunProcOnMainThread([this]()
+	{
+		// Update the Maya render view.
+		m_renderViewAOV->sendToRenderView();
+
+		if (rcWarningDialog.shown)
+			rcWarningDialog.close();
+	});
+
+	// Ensure display gamma correction is enabled for image file output. It
+	// may be disabled initially if it's not set to be applied to Maya views.
+	m_context->enableDisplayGammaCorrection(m_globals);
+
+	// _TODO Investigate this, looks like this call is performance waste. Why we need to read all AOVs on every render call ?
+	m_aovs->readFrameBuffers(*m_context, false);
 }
 
 void FireRenderProduction::setStopCallback(stop_callback callback)
@@ -457,10 +506,10 @@ void FireRenderProduction::startMayaRender()
 	if (m_isRegion)
 		MRenderView::startRegionRender(m_width, m_height,
 			m_region.left, m_region.right,
-			m_region.bottom, m_region.top, true, true);
+			m_region.bottom, m_region.top, false, true);
 	// Otherwise, start a full render.
 	else
-		MRenderView::startRender(m_width, m_height, true, true);
+		MRenderView::startRender(m_width, m_height, false, true);
 
 	// Flag as started.
 	m_renderStarted = true;

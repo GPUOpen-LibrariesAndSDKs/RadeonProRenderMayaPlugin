@@ -1980,6 +1980,11 @@ int FireRenderContext::getProgress()
 	return std::min(m_progress, 100);
 }
 
+void FireRenderContext::setProgress(int percents)
+{
+	m_progress = std::min(percents, 100);
+}
+
 bool FireRenderContext::updateOutput()
 {
 	long numberOfClicks = clock() - m_lastIterationTime;

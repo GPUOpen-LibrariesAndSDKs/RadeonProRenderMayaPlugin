@@ -66,9 +66,6 @@ public:
 	/** Set the render camera. */
 	void setCamera(MDagPath& camera);
 
-	/** Update the Maya render view. */
-	void updateRenderView();
-
 	void setStopCallback(stop_callback callback);
 
 	bool mainThreadPump();
@@ -93,6 +90,9 @@ private:
 
 	// Private Methods
 	// -----------------------------------------------------------------------------
+
+	void RenderFullFrame();
+	void RenderTiles();
 
 	/** Schedule a render view update. */
 	void scheduleRenderViewUpdate();
