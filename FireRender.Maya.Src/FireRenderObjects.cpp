@@ -1520,6 +1520,17 @@ void FireRenderCamera::clear()
 	FireRenderObject::clear();
 }
 
+void FireRenderCamera::TranslateCameraExplicit(int viewWidth, int viewHeight)
+{
+	auto node = Object();
+	auto dagPath = DagPath();
+
+	MMatrix camMtx = dagPath.inclusiveMatrix();
+
+	FireMaya::translateCamera(m_camera, node, camMtx, context()->isRenderView(),
+		float(viewWidth) / float(viewHeight), true, m_type);
+}
+
 void FireRenderCamera::Freshen()
 {
 	auto node = Object();
@@ -1535,12 +1546,10 @@ void FireRenderCamera::Freshen()
 
 	if (dagPath.isValid())
 	{
-		MMatrix camMtx = dagPath.inclusiveMatrix();
 		int viewWidth = context()->width();
 		int viewHeight = context()->height();
 
-		FireMaya::translateCamera(m_camera, node, camMtx, context()->isRenderView(), 
-									float(viewWidth) / float(viewHeight), true, m_type);
+		TranslateCameraExplicit(viewWidth, viewHeight);
 
 		frw::Image image;
 
@@ -1726,6 +1735,26 @@ bool FireRenderCamera::GetAlphaMask() const
 {
 	return m_alphaMask;
 }
+
+bool FireRenderCamera::isCameraTypeDefault() const
+{
+	FireRenderGlobals::CameraType cameraType = (FireRenderGlobals::CameraType) m_type;
+
+	return cameraType == FireRenderGlobals::CameraType::kCameraDefault;
+}
+
+bool FireRenderCamera::isDefaultPerspective() const
+{
+	MFnCamera fnCamera(Object());
+	return isCameraTypeDefault() && !fnCamera.isOrtho();
+}
+
+bool FireRenderCamera::isDefaultOrtho() const
+{
+	MFnCamera fnCamera(Object());
+	return isCameraTypeDefault() && fnCamera.isOrtho();
+}
+
 
 //===================
 // Display layer

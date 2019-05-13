@@ -85,6 +85,9 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	motionBlur(false),
 	motionBlurCameraExposure(0.0f),
 	motionBlurScale(0.0f),
+	tileRenderingEnabled(false),
+	tileSizeX(0),
+	tileSizeY(0),
 	cameraType(0),
 	useMPS(false)
 {
@@ -246,6 +249,18 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			viewportMaxReflectionRayDepth = plug.asShort();
 
+		// 3 Tile Rendering related parameters
+		plug = frGlobalsNode.findPlug("tileRenderEnabled");
+		if (!plug.isNull())
+			tileRenderingEnabled = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("tileRenderX");
+		if (!plug.isNull())
+			tileSizeX = plug.asInt();
+
+		plug = frGlobalsNode.findPlug("tileRenderY");
+		if (!plug.isNull())
+			tileSizeY = plug.asInt();
 
 
 		// In UI raycast epsilon defined in millimeters, convert it to meters

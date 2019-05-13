@@ -631,6 +631,12 @@
 		8DD6523B21149A9500DB2804 /* SPA.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DD65237211499D000DB2804 /* SPA.h */; };
 		8DE9B55D2191DD7200ED8555 /* FireRenderImportXML.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DE9B55B2191DD7100ED8555 /* FireRenderImportXML.cpp */; };
 		8DE9B55F2191DDA800ED8555 /* FireRenderImportXML.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DE9B55B2191DD7100ED8555 /* FireRenderImportXML.cpp */; };
+		CE5E271422804A3E00F3B6D7 /* TileRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = CE5E271122804A3E00F3B6D7 /* TileRenderer.h */; };
+		CE5E271522804A3E00F3B6D7 /* TileRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = CE5E271122804A3E00F3B6D7 /* TileRenderer.h */; };
+		CE5E271622804A3E00F3B6D7 /* TileRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = CE5E271122804A3E00F3B6D7 /* TileRenderer.h */; };
+		CE5E271722804A3E00F3B6D7 /* TileRenderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE5E271322804A3E00F3B6D7 /* TileRenderer.cpp */; };
+		CE5E271822804A3E00F3B6D7 /* TileRenderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE5E271322804A3E00F3B6D7 /* TileRenderer.cpp */; };
+		CE5E271922804A3E00F3B6D7 /* TileRenderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE5E271322804A3E00F3B6D7 /* TileRenderer.cpp */; };
 		CEED8EC8227346E900136DEF /* FireRenderVolume.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */; };
 		CEED8EC9227346E900136DEF /* FireRenderVolume.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */; };
 		CEED8ECA227346E900136DEF /* FireRenderVolume.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */; };
@@ -923,6 +929,8 @@
 		9FB8E58A1D80643600D6DB73 /* ShadersManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ShadersManager.cpp; path = ../../../FireRender.Maya.Src/ShadersManager.cpp; sourceTree = "<group>"; };
 		9FB8E58B1D80643600D6DB73 /* ShadersManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ShadersManager.h; path = ../../../FireRender.Maya.Src/ShadersManager.h; sourceTree = "<group>"; };
 		9FB8E58C1D80643600D6DB73 /* Shelfs */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shelfs; path = ../../../FireRender.Maya.Src/Shelfs; sourceTree = "<group>"; };
+		CE5E271122804A3E00F3B6D7 /* TileRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TileRenderer.h; path = ../../../FireRender.Maya.Src/TileRenderer.h; sourceTree = "<group>"; };
+		CE5E271322804A3E00F3B6D7 /* TileRenderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TileRenderer.cpp; path = ../../../FireRender.Maya.Src/TileRenderer.cpp; sourceTree = "<group>"; };
 		CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderVolume.cpp; path = ../../../FireRender.Maya.Src/FireRenderVolume.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -993,6 +1001,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				CE5E271322804A3E00F3B6D7 /* TileRenderer.cpp */,
+				CE5E271122804A3E00F3B6D7 /* TileRenderer.h */,
 				CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */,
 				8DB9AE97225551B300543147 /* FireRenderVolumeLocator.cpp */,
 				8DB9AE98225551B300543147 /* FireRenderVolumeLocator.h */,
@@ -1339,6 +1349,7 @@
 				4DE5087A1D9950A1009B2BD6 /* FireRenderImportExportXML.h in Headers */,
 				8D8F06EC1F437B2D00A13D6B /* ArHosekSkyModel.h in Headers */,
 				4DE5087B1D9950A1009B2BD6 /* frWrap.h in Headers */,
+				CE5E271422804A3E00F3B6D7 /* TileRenderer.h in Headers */,
 				8D55909C20C8743900567EEC /* Translators.h in Headers */,
 				8D77AEB21F4361E2008E88FB /* SkyLocatorMesh.h in Headers */,
 				8DB6233A2075583C00841D10 /* FireRenderPhysicalOverride.h in Headers */,
@@ -1417,6 +1428,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8DB9AEA8225652A700543147 /* FireRenderVolumeLocator.h in Headers */,
+				CE5E271522804A3E00F3B6D7 /* TileRenderer.h in Headers */,
 				8DB9AEA72256529D00543147 /* FireRenderVolumeOverride.h in Headers */,
 				8DB9AEA42256526900543147 /* FastNoise.h in Headers */,
 				8DB9AEA32256523400543147 /* VolumeAttributes.h in Headers */,
@@ -1523,6 +1535,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8DB9AEAA225652CE00543147 /* FireRenderVolumeLocator.h in Headers */,
+				CE5E271622804A3E00F3B6D7 /* TileRenderer.h in Headers */,
 				8DB9AEA9225652C200543147 /* FireRenderVolumeOverride.h in Headers */,
 				8DB9AEA62256528900543147 /* VolumeAttributes.h in Headers */,
 				8DB9AEA52256527A00543147 /* FastNoise.h in Headers */,
@@ -1734,6 +1747,7 @@
 				8D55909B20C8743900567EEC /* MeshTranslator.cpp in Sources */,
 				4DE5089B1D9950A1009B2BD6 /* FireRenderUtils.cpp in Sources */,
 				8DB6233E2075583C00841D10 /* FireRenderPhysicalOverride.cpp in Sources */,
+				CE5E271722804A3E00F3B6D7 /* TileRenderer.cpp in Sources */,
 				8D8CA4B520BC721300A90237 /* PhysicalLightData.cpp in Sources */,
 				4DE5089C1D9950A1009B2BD6 /* FireRenderNoise.cpp in Sources */,
 				4DE5089D1D9950A1009B2BD6 /* FireRenderMaterialSwatchRender.cpp in Sources */,
@@ -1850,6 +1864,7 @@
 				8DB6234220755B2800841D10 /* FireRenderPhysicalLightLocator.cpp in Sources */,
 				8DB6234320755B2800841D10 /* FireRenderPhysicalOverride.cpp in Sources */,
 				8DB6234420755B2800841D10 /* PhysicalLightAttributes.cpp in Sources */,
+				CE5E271822804A3E00F3B6D7 /* TileRenderer.cpp in Sources */,
 				8DB6234520755B2800841D10 /* PhysicalLightGeometryUtility.cpp in Sources */,
 				CEED8EC9227346E900136DEF /* FireRenderVolume.cpp in Sources */,
 				8DB6234620755B2800841D10 /* IESLightLocatorMesh.cpp in Sources */,
@@ -1955,6 +1970,7 @@
 				8DBCC30722304666003EE361 /* FireRenderPhysicalLightLocator.cpp in Sources */,
 				8DBCC30822304666003EE361 /* FireRenderPhysicalOverride.cpp in Sources */,
 				8DBCC30922304666003EE361 /* PhysicalLightAttributes.cpp in Sources */,
+				CE5E271922804A3E00F3B6D7 /* TileRenderer.cpp in Sources */,
 				8DBCC30A22304666003EE361 /* PhysicalLightGeometryUtility.cpp in Sources */,
 				CEED8ECA227346E900136DEF /* FireRenderVolume.cpp in Sources */,
 				8DBCC30B22304666003EE361 /* IESLightLocatorMesh.cpp in Sources */,

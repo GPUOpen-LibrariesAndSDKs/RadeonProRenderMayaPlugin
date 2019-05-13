@@ -325,6 +325,7 @@
     <ClCompile Include="SkyLocatorMesh.cpp" />
     <ClCompile Include="FireRenderVolume.cpp" />
     <ClCompile Include="SubsurfaceMaterial.cpp" />
+    <ClCompile Include="TileRenderer.cpp" />
     <ClCompile Include="Translators\MeshTranslator.cpp" />
     <ClCompile Include="Translators\Translators.cpp" />
     <ClCompile Include="Volumes\FireRenderVolumeLocator.cpp" />
@@ -459,6 +460,7 @@
     <ClInclude Include="SkyGen.h" />
     <ClInclude Include="SkyLocatorMesh.h" />
     <ClInclude Include="SubsurfaceMaterial.h" />
+    <ClInclude Include="TileRenderer.h" />
     <ClInclude Include="Translators\MeshTranslator.h" />
     <ClInclude Include="Translators\Translators.h" />
     <ClInclude Include="Volumes\FireRenderVolumeLocator.h" />
