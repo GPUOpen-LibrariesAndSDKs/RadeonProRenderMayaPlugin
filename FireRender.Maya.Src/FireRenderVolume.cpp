@@ -32,6 +32,8 @@
 #include <maya/MFloatMatrix.h>
 #include <maya/MRenderUtil.h> 
 #include <maya/MRampAttribute.h> 
+#include <maya/MPointArray.h>
+#include <maya/MFnNurbsCurve.h>
 #include <istream>
 #include <ostream>
 #include <sstream>
@@ -775,28 +777,146 @@ bool FireRenderVolume::ProcessInputField(int inputField,
 	return true;
 }
 
-bool FireRenderVolume::TranslateDensity(VolumeData* pVolumeData, MFnFluid& fnFluid, MFnDependencyNode& shaderNode)
+void GetRampValue(MRampAttribute& valueRamp, float position, float& value, MStatus* mstatus)
+{
+	valueRamp.getValueAtPosition(position, value, mstatus);
+}
+
+void GetRampValue(MRampAttribute& valueRamp, float position, MColor& value, MStatus* mstatus)
+{
+	valueRamp.getColorAtPosition(position, value, mstatus);
+}
+
+float GetValFromNURBS(MFnNurbsCurve& nurbsCurve, float inX, float tol = 0.01f)
+{
+	if (inX < tol)
+		return 0.0f;
+
+	if ((1.0f - tol) < inX)
+		return 1.0f;
+
+	float param = 0.5f;
+	float currX;
+	int step = 0;
+
+	const int maxStepCount = 100;
+
+	do
+	{
+		MPoint tpoint;
+		nurbsCurve.getPointAtParam(param, tpoint);
+		float tempX = tpoint.x;
+		float tempY = tpoint.y;
+
+		if (abs(tempX - inX) < tol)
+			return tempY;
+
+		if (tempX > inX)
+		{
+			param = param - (param / 2);
+		}
+		else
+		{
+			param = param + (param / 2);
+		}
+
+		++step;
+	} 
+	while (step < maxStepCount);
+
+	return 1.0f;
+}
+
+const size_t numCtrlPoints = 100; // number of control points to be passed to RPR; RPR doesn't do interpolation thus we can't pass Maya control points to RPR
+template <class valType>
+bool ProcessControlPoints(MPlug& valuePlug, std::vector<float>& outputCtrlPoints, float bias)
 {
 	MStatus mstatus;
+
+	// get ramp
+	MRampAttribute valueRamp(valuePlug);
+
+	// prepare output
+	outputCtrlPoints.clear();
+	outputCtrlPoints.reserve(numCtrlPoints * (sizeof(valType) / sizeof(float)));
+
+	// process bias
+	MFnNurbsCurve nurbsCurve; MObject nurbsMObject;
+	bool applyBias = (bias != FLT_EPSILON) && ((bias >= -1.0f) && (bias <= 1.0f));
+	
+	if (applyBias)
+	{
+		float yPos = 0.5f + (bias / 2.0f);
+		float xPos = 1.0f - yPos;
+
+		MPointArray controlVtx;
+		controlVtx.append(0.0f, 0.0f);
+		controlVtx.append(xPos, yPos);
+		controlVtx.append(1.0f, 1.0f);
+
+		MDoubleArray knots;
+		knots.append(0.0f);
+		knots.append(0.0f);
+		knots.append(1.0f);
+		knots.append(1.0f);
+
+		nurbsMObject = nurbsCurve.create(controlVtx, knots, 2, MFnNurbsCurve::kOpen, true, true, MObject::kNullObj, &mstatus);
+		if (MStatus::kSuccess != mstatus)
+		{
+			return false;
+		}
+	}
+
+	// remap control points (can't pass maya control points to RPR)
+	for (size_t idx = 0; idx <= numCtrlPoints; ++idx)
+	{
+		float pos = idx * (1.0f / numCtrlPoints);
+		if (applyBias)
+		{
+			pos = GetValFromNURBS(nurbsCurve, pos);
+		}
+		valType value;
+		GetRampValue(valueRamp, pos, value, &mstatus);
+		if (MStatus::kSuccess != mstatus)
+		{
+			return false;
+		}
+
+		AddValToArr(value, outputCtrlPoints);
+	}
+
+	if (!nurbsMObject.isNull())
+		MGlobal::deleteNode(nurbsMObject);
+
+	return true;
+}
+
+bool FireRenderVolume::TranslateDensity(VolumeData* pVolumeData, MFnFluid& fnFluid, MFnDependencyNode& shaderNode)
+{
 	FireRenderError error;
 
 	// get opacity plug
-	MPlug colorPlug = shaderNode.findPlug("opacity");
-	if (colorPlug.isNull())
+	MPlug opacityPlug = shaderNode.findPlug("opacity");
+	if (opacityPlug.isNull())
 	{
 		error.set("MFnFluid:", "failed to get opacity ramp", false, false);
 		return false;
 	}
-	std::vector<RampCtrlPoint<float>> opacityCtrlPoints;
-	bool success = GetValues<MFloatArray, float>(colorPlug, opacityCtrlPoints);
-	if (!success)
+
+	// get bias
+	MPlug opacityBiasPlug = shaderNode.findPlug("opacityInputBias");
+	if (opacityBiasPlug.isNull())
 	{
-		error.set("MFnFluid:", "failed to get floats from opacity ramp", false, false);
+		error.set("MFnFluid:", "failed to get opacity input bias", false, false);
 		return false;
 	}
+	float bias = opacityBiasPlug.asFloat();
 
-	// - remap control points (can't pass maya control points to RPR)
-	RemapControlPoints<float>(pVolumeData->denstiyLookupCtrlPoints, opacityCtrlPoints);
+	// get control points
+	if (!ProcessControlPoints<float>(opacityPlug, pVolumeData->denstiyLookupCtrlPoints, bias))
+	{
+		error.set("MFnFluid:", "failed to get density control points", false, false);
+	}
 
 	// get albedo (color) input channel (can be density, temperature, fuel, velocity, etc.)
 	MPlug opacityInputPlug = shaderNode.findPlug("opacityInput");
@@ -852,23 +972,28 @@ bool FireRenderVolume::TranslateAlbedo(VolumeData* pVolumeData, MFnFluid& fnFlui
 		return false;
 	}
 
-	// get color ramp
+	// get color plug
 	MPlug colorPlug = shaderNode.findPlug("color");
 	if (colorPlug.isNull())
 	{
 		error.set("MFnFluid:", "failed to get color ramp for Albedo", false, false);
 		return false;
 	}
-	std::vector<RampCtrlPoint<MColor>> albedoCtrlPoints;
-	bool success = GetValues<MColorArray, MColor>(colorPlug, albedoCtrlPoints);
-	if (!success)
+
+	// get bias
+	MPlug colorBiasPlug = shaderNode.findPlug("colorInputBias");
+	if (colorBiasPlug.isNull())
 	{
-		error.set("MFnFluid:", "failed to get colors from color ramp Albedo", false, false);
+		error.set("MFnFluid:", "failed to get color input bias", false, false);
 		return false;
 	}
+	float bias = colorBiasPlug.asFloat();
 
-	// - remap control points (can't pass maya control points to RPR)
-	RemapControlPoints<MColor>(pVolumeData->albedoLookupCtrlPoints, albedoCtrlPoints);
+	// get control points
+	if (!ProcessControlPoints<MColor>(colorPlug, pVolumeData->albedoLookupCtrlPoints, bias))
+	{
+		error.set("MFnFluid:", "failed to get density albedo points", false, false);
+	}
 
 	// get albedo (color) input channel (can be density, temperature, fuel, velocity, etc.)
 	MPlug colorInputPlug = shaderNode.findPlug("colorInput");
@@ -924,23 +1049,28 @@ bool FireRenderVolume::TranslateEmission(VolumeData* pVolumeData, MFnFluid& fnFl
 		return false;
 	}
 
-	// get incandescence ramp
+	// get incandescence plug
 	MPlug incandescencePlug = shaderNode.findPlug("incandescence");
 	if (incandescencePlug.isNull())
 	{
 		error.set("MFnFluid:", "failed to get incandescence ramp for Emission", false, false);
 		return false;
 	}
-	std::vector<RampCtrlPoint<MColor>> emissionCtrlPoints;
-	bool success = GetValues<MColorArray, MColor>(incandescencePlug, emissionCtrlPoints);
-	if (!success)
+
+	// get bias
+	MPlug incandescenceBiasPlug = shaderNode.findPlug("incandescenceInputBias");
+	if (incandescenceBiasPlug.isNull())
 	{
-		error.set("MFnFluid:", "failed to get colors from incandescence ramp", false, false);
+		error.set("MFnFluid:", "failed to get incandescence input bias", false, false);
 		return false;
 	}
+	float bias = incandescenceBiasPlug.asFloat();
 
-	// - remap control points (can't pass maya control points to RPR)
-	RemapControlPoints<MColor>(pVolumeData->emissionLookupCtrlPoints, emissionCtrlPoints);
+	// get control points
+	if (!ProcessControlPoints<MColor>(incandescencePlug, pVolumeData->emissionLookupCtrlPoints, bias))
+	{
+		error.set("MFnFluid:", "failed to get emission albedo points", false, false);
+	}
 
 	// get albedo (color) input channel (can be density, temperature, fuel, velocity, etc.)
 	MPlug incandescenceInputPlug = shaderNode.findPlug("incandescenceInput");
