@@ -437,77 +437,77 @@ float GetDistParamNormalized(
 
 	switch (gradientType)
 	{
-	case VolumeGradient::kConstant:
-	{
-		dist2vx_normalized = 1.0f;
-		break;
-	}
+		case VolumeGradient::kConstant:
+		{
+			dist2vx_normalized = 1.0f;
+			break;
+		}
 
-	case VolumeGradient::kXGradient:
-	{
-		// get relative distance from current voxel to YZ plane center
-		float dist2vx = GetDistanceBetweenPoints(0, fYres / 2, fZres / 2, std::array<float, 3> {fx, fy, fz});
-		float distMax = GetDistanceBetweenPoints(0, fYres / 2, fZres / 2, std::array<float, 3> {fXres, 0.0f, 0.0f});
-		dist2vx_normalized = 1 - (dist2vx / distMax);
-		break;
-	}
+		case VolumeGradient::kXGradient:
+		{
+			// get distance between YZ plane and point (fx, fy, fz)
+			/*d = | A*Mx + B*My + C*Mz + D | /	SQRT(A^2 + B^2 + C^2)*/
+			dist2vx_normalized = 1 - (fx / fXres);
 
-	case VolumeGradient::kYGradient:
-	{
-		// get relative distance from current voxel to XZ plane center
-		float dist2vx = GetDistanceBetweenPoints(fXres / 2, 0, fZres / 2, std::array<float, 3> {fx, fy, fz});
-		float distMax = GetDistanceBetweenPoints(fXres / 2, 0, fZres / 2, std::array<float, 3> {0.0f, fYres, 0.0f});
-		dist2vx_normalized = 1 - (dist2vx / distMax);
-		break;
-	}
+			break;
+		}
 
-	case VolumeGradient::kZGradient:
-	{
-		// get relative distance from current voxel to XY plane center
-		float dist2vx = GetDistanceBetweenPoints(fXres / 2, fYres / 2, 0, std::array<float, 3> {fx, fy, fz});
-		float distMax = GetDistanceBetweenPoints(fXres / 2, fYres / 2, 0, std::array<float, 3> {0.0f, 0.0f, fZres});
-		dist2vx_normalized = 1 - (dist2vx / distMax);
-		break;
-	}
+		case VolumeGradient::kYGradient:
+		{
+			// get relative distance between XZ plane and point (fx, fy, fz)
+			/*d = | A*Mx + B*My + C*Mz + D | /	SQRT(A^2 + B^2 + C^2)*/
+			dist2vx_normalized = 1 - (fy / fYres);
 
-	case VolumeGradient::kNegXGradient:
-	{
-		// get relative distance from current voxel to YZ plane center
-		float dist2vx = GetDistanceBetweenPoints(0, fYres / 2, fZres / 2, std::array<float, 3> {fx, fy, fz});
-		float distMax = GetDistanceBetweenPoints(0, fYres / 2, fZres / 2, std::array<float, 3> {fXres, 0.0f, 0.0f});
-		dist2vx_normalized = dist2vx / distMax;
-		break;
-	}
+			break;
+		}
 
-	case VolumeGradient::kNegYGradient:
-	{
-		// get relative distance from current voxel to XZ plane center
-		float dist2vx = GetDistanceBetweenPoints(fXres / 2, 0, fZres / 2, std::array<float, 3> {fx, fy, fz});
-		float distMax = GetDistanceBetweenPoints(fXres / 2, 0, fZres / 2, std::array<float, 3> {0.0f, fYres, 0.0f});
-		dist2vx_normalized = dist2vx / distMax;
-		break;
-	}
+		case VolumeGradient::kZGradient:
+		{
+			// get relative distance between XY plane and point (fx, fy, fz)
+			/*d = | A*Mx + B*My + C*Mz + D | /	SQRT(A^2 + B^2 + C^2)*/
+			dist2vx_normalized = 1 - (fz / fZres);
 
-	case VolumeGradient::kNegZGradient:
-	{
-		// get relative distance from current voxel to XY plane center
-		float dist2vx = GetDistanceBetweenPoints(fXres / 2, fYres / 2, 0, std::array<float, 3> {fx, fy, fz});
-		float distMax = GetDistanceBetweenPoints(fXres / 2, fYres / 2, 0, std::array<float, 3> {0.0f, 0.0f, fZres});
-		dist2vx_normalized = dist2vx / distMax;
-		break;
-	}
+			break;
+		}
 
-	case VolumeGradient::kCenterGradient: // 0.0 is border, 1.0 is center
-	{
-		// get relative distance from current voxel to center
-		float dist2vx = GetDistanceBetweenPoints(fXres / 2, fYres / 2, fZres / 2, std::array<float, 3> {fx, fy, fz});
-		/*std::tie(hasIntersections, dist2center) = GetDistanceToCenter(fx, fy, fz, fXres, fYres, fZres);
-		if (!hasIntersections)
-			return 100*1.0f; */
-		float dist2center = GetDistanceBetweenPoints(fXres / 2, fYres / 2, fZres / 2, std::array<float, 3> {0.0f, 0.0f, 0.0f});
-		dist2vx_normalized = 1 - (dist2vx / dist2center);
-		break;
-	}
+		case VolumeGradient::kNegXGradient:
+		{
+			// get distance between YZ plane and point (fx, fy, fz)
+			/*d = | A*Mx + B*My + C*Mz + D | /	SQRT(A^2 + B^2 + C^2)*/
+			dist2vx_normalized = fx / fXres;
+
+			break;
+		}
+
+		case VolumeGradient::kNegYGradient:
+		{
+			// get relative distance between XZ plane and point (fx, fy, fz)
+			/*d = | A*Mx + B*My + C*Mz + D | /	SQRT(A^2 + B^2 + C^2)*/
+			dist2vx_normalized = fy / fYres;
+
+			break;
+		}
+
+		case VolumeGradient::kNegZGradient:
+		{
+			// get relative distance between XY plane and point (fx, fy, fz)
+			/*d = | A*Mx + B*My + C*Mz + D | /	SQRT(A^2 + B^2 + C^2)*/
+			dist2vx_normalized = fz / fZres;
+
+			break;
+		}
+
+		case VolumeGradient::kCenterGradient: // 0.0 is border, 1.0 is center
+		{
+			// get relative distance from current voxel to center
+			float dist2vx = GetDistanceBetweenPoints(fXres / 2, fYres / 2, fZres / 2, std::array<float, 3> {fx, fy, fz});
+			/*std::tie(hasIntersections, dist2center) = GetDistanceToCenter(fx, fy, fz, fXres, fYres, fZres);
+			if (!hasIntersections)
+				return 100*1.0f; */
+			float dist2center = GetDistanceBetweenPoints(fXres / 2, fYres / 2, fZres / 2, std::array<float, 3> {0.0f, 0.0f, 0.0f});
+			dist2vx_normalized = 1 - (dist2vx / dist2center);
+			break;
+		}
 
 	default:
 		dist2vx_normalized = 0.0f; // atm only center gradient is supported
