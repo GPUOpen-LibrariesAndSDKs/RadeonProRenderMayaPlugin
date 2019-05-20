@@ -144,11 +144,11 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 
 			MDagPath cameraPath = getDefaultCamera();
 			MString cameraName = getNameByDagPath(cameraPath);
-			context.setCamera(cameraPath);
+			context.setCamera(cameraPath, true);
 		}
 		else  // (cameras.length() >= 1)
 		{
-			context.setCamera(cameras[0]);
+			context.setCamera(cameras[0], true);
 		}
 
 		// setup frame ranges
