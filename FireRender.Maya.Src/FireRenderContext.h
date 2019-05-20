@@ -192,7 +192,7 @@ public:
 	void enableDisplayGammaCorrection(const FireRenderGlobalsData& globals);
 
 	// Set camera
-	void setCamera(MDagPath& cameraPath, bool useVRCamera = false);
+	void setCamera(MDagPath& cameraPath, bool useNonDefaultCameraType = false);
 
 	// Render function (optionally Locks)
 	void render(bool lock = true);

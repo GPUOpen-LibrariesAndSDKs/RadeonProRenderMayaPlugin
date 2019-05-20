@@ -210,13 +210,13 @@ void FireRenderContext::enableDisplayGammaCorrection(const FireRenderGlobalsData
 	GetContext().SetParameter("displaygamma", globals.displayGamma);
 }
 
-void FireRenderContext::setCamera(MDagPath& cameraPath, bool useVRCamera)
+void FireRenderContext::setCamera(MDagPath& cameraPath, bool useNonDefaultCameraType)
 {
 	MAIN_THREAD_ONLY;
 	DebugPrint("FireRenderContext::setCamera(...)");
 	m_camera.SetObject(cameraPath.node());
 
-	if (useVRCamera)
+	if (useNonDefaultCameraType)
 	{
 		m_camera.setType(m_globals.cameraType);
 	}
