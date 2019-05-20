@@ -180,7 +180,7 @@ namespace FireMaya
 			{
 			case MFnCamera::kFillFilmFit:
 			{
-				if (aspectRatio < 1.0)
+				if (aspectRatio < apertureWidth / apertureHeight)
 				{
 					apertureWidth = apertureHeight * aspectRatio;
 					frstatus = rprCameraSetSensorSize(frcamera, apertureWidth, apertureHeight);
