@@ -45,7 +45,7 @@ MSyntax FireRenderExportCmd::newSyntax()
 	CHECK_MSTATUS(syntax.addFlag(kFilePathFlag, kFilePathFlagLong, MSyntax::kString));
 	CHECK_MSTATUS(syntax.addFlag(kSelectionFlag, kSelectionFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kAllFlag, kAllFlagLong, MSyntax::kNoArg));
-	CHECK_MSTATUS(syntax.addFlag(kFramesFlag, kFramesFlagLong, MSyntax::kBoolean, MSyntax::kLong, MSyntax::kLong));
+	CHECK_MSTATUS(syntax.addFlag(kFramesFlag, kFramesFlagLong, MSyntax::kBoolean, MSyntax::kLong, MSyntax::kLong, MSyntax::kBoolean));
 
 	return syntax;
 }
@@ -117,11 +117,13 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 	bool isSequenceExportEnabled = false;
 	int firstFrame = 1;
 	int lastFrame = 1;
+	bool isExportAsSingleFileEnabled = false;
 	if (argData.isFlagSet(kFramesFlag))
 	{
 		argData.getFlagArgument(kFramesFlag, 0, isSequenceExportEnabled);
 		argData.getFlagArgument(kFramesFlag, 1, firstFrame);
 		argData.getFlagArgument(kFramesFlag, 2, lastFrame);
+		argData.getFlagArgument(kFramesFlag, 3, isExportAsSingleFileEnabled);
 	}
 
 	if (argData.isFlagSet(kAllFlag))
@@ -206,13 +208,19 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 				newFilePath = filePath;
 			}
 
+			unsigned int exportFlags = 0;
+			if (!isExportAsSingleFileEnabled)
+			{
+				exportFlags = RPRLOADSTORE_EXPORTFLAG_EXTERNALFILES;
+			}
+
 			// launch export
 #if (RPR_API_VERSION >= 0x010032400)
 			rpr_int statuExport = rprsExport(newFilePath.asChar(), context.context(), context.scene(),
-				0, 0, 0, 0, 0, 0, RPRLOADSTORE_EXPORTFLAG_EXTERNALFILES);
+				0, 0, 0, 0, 0, 0, exportFlags);
 #else
 			rpr_int statuExport = rprsExport(newFilePath.asChar(), context.context(), context.scene(),
-				0, 0, 0, 0, 0, RPRLOADSTORE_EXPORTFLAG_EXTERNALFILES);
+				0, 0, 0, 0, 0, exportFlags);
 #endif
 
 			if (statuExport != RPR_SUCCESS)
