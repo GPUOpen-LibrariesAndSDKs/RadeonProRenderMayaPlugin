@@ -1,4 +1,5 @@
 source "fireRenderEnvironment.mel";
+source "AEnewNonNumericMulti.mel";
 
 global proc AERefreshObjectListSetup_IBL(  )
 {
@@ -72,6 +73,39 @@ global proc AEObjectListChanged_IBL(){
 	}
 }
 
+global proc onSelectIBLMeshButtonClicked(string $attrName)
+{
+	setAttr $attrName 1;
+}
+
+global proc string getIBLMeshButtonCommand(string $attrName)
+{
+	return "onSelectIBLMeshButtonClicked(\"" + $attrName + "\")";
+}
+
+global proc IBLPortalMeshSelectNew( string $attrName )
+{
+	$command = getIBLMeshButtonCommand($attrName);
+	rowLayout;
+	button
+		-label "Add Portal Mesh"
+		-width 150
+		-command $command
+		IBLPortalMeshSelectButton;
+	setParent ..;
+
+	connectControl IBLPortalMeshSelectButton $attrName;
+}
+
+global proc IBLPortaltMeshSelectReplace( string $attrName )
+{
+	$command = getIBLMeshButtonCommand($attrName);
+
+	connectControl IBLPortalMeshSelectButton $attrName;
+
+	button -edit -command $command IBLPortalMeshSelectButton;
+}
+
 global proc AERPRIBLTemplate( string $nodeName )
 {
 	AEswatchDisplay $nodeName;
@@ -80,6 +114,7 @@ global proc AERPRIBLTemplate( string $nodeName )
 		editorTemplate -addControl "filePath";
 		editorTemplate -addControl "intensity";
 		editorTemplate -addControl "display";
+		editorTemplate -callCustom "IBLPortalMeshSelectNew" "IBLPortaltMeshSelectReplace" "IBLSelectingPortalMesh";
 	editorTemplate -endLayout;
 
 	editorTemplate -endLayout;

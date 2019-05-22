@@ -3,10 +3,15 @@
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnMessageAttribute.h>
+#include <maya/MEventMessage.h>
 #include <maya/MImage.h>
 #include <maya/MFileObject.h>
+#include <maya/MFnStringArrayData.h>
 #include "base_mesh.h"
 #include "FireRenderUtils.h"
+#include <maya/MPxNode.h>
+#include <maya/MDagModifier.h>
+#include <maya/MFnTransform.h>
 
 #include "FireMaya.h"
 
@@ -15,8 +20,10 @@ using namespace FireMaya;
 MObject FireRenderIBL::aFilePath;
 MObject	FireRenderIBL::aIntensity;
 MObject	FireRenderIBL::aDisplay;
-MObject	FireRenderIBL::aPortal;
 MObject	FireRenderIBL::aFlipIBL;
+MObject FireRenderIBL::IBLSelectingPortalMesh;
+MObject FireRenderIBL::aPortalHolder;
+
 MTypeId FireRenderIBL::id(FireMaya::TypeId::FireRenderIBL);
 
 MString FireRenderIBL::drawDbClassification("drawdb/geometry/FireRenderIBL");
@@ -24,7 +31,9 @@ MString FireRenderIBL::drawRegistrantId("FireRenderIBLNode");
 
 FireRenderIBL::FireRenderIBL():
 	mTexturePath(""),
-	mTexture(NULL)
+	mTexture(NULL),
+	m_selectionChangedCallback(0),
+	m_attributeChangedCallback(0)
 {
 }
 
@@ -53,6 +62,8 @@ MStatus FireRenderIBL::initialize()
 	MFnTypedAttribute tAttr;
 	MFnMessageAttribute mAttr;
 
+	MStatus errorCode;
+
 	aFilePath = tAttr.create("filePath", "f", MFnData::kString);
 	tAttr.setStorable(true);
 	tAttr.setReadable(true);
@@ -73,7 +84,11 @@ MStatus FireRenderIBL::initialize()
 	nAttr.setReadable(true);
 	nAttr.setWritable(true);
 
-	aPortal = mAttr.create("portal", "p");
+	IBLSelectingPortalMesh = nAttr.create("IBLSelectingPortalMesh", "ibls", MFnNumericData::kBoolean, false);
+	nAttr.setKeyable(true);
+	nAttr.setStorable(true);
+	nAttr.setReadable(true);
+	nAttr.setWritable(true);
 
 	// Create attribute inside current node and connect it to RadeonProRenderGlobals.flipIBL attribute to
 	// have an automatical update
@@ -85,12 +100,112 @@ MStatus FireRenderIBL::initialize()
 	addAttribute(aFilePath);
 	addAttribute(aIntensity);
 	addAttribute(aDisplay);
-	addAttribute(aPortal);
+	addAttribute(IBLSelectingPortalMesh);
 	addAttribute(aFlipIBL);
 
 	return MS::kSuccess;
 }
 
+void FireRenderIBL::onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
+{
+	if (!(msg | MNodeMessage::AttributeMessage::kAttributeSet))
+	{
+		return;
+	}
+
+	if (plug == FireRenderIBL::IBLSelectingPortalMesh)
+	{
+		FireRenderIBL* fireRenderIBLNode = static_cast<FireRenderIBL*> (clientData);
+		fireRenderIBLNode->SubscribeSelectionChangedEvent();
+	}
+}
+
+void FireRenderIBL::SubscribeSelectionChangedEvent(bool subscribe)
+{
+	if (subscribe)
+	{
+		if (m_selectionChangedCallback == 0)
+		{
+			m_selectionChangedCallback = MEventMessage::addEventCallback("SelectionChanged", onSelectionChanged, this);
+		}
+	}
+	else
+	{
+		if (m_selectionChangedCallback != 0)
+		{
+			MNodeMessage::removeCallback(m_selectionChangedCallback);
+		}
+
+		m_selectionChangedCallback = 0;
+	}
+}
+
+void FireRenderIBL::onSelectionChanged(void *clientData)
+{
+	FireRenderIBL* fireRenderIBLNode = static_cast<FireRenderIBL*> (clientData);
+	fireRenderIBLNode->SubscribeSelectionChangedEvent(false);
+
+	// Add selected mesh to portals list
+	fireRenderIBLNode->AddSelectedMeshToPortalList();
+}
+
+void FireRenderIBL::AddSelectedMeshToPortalList(void)
+{
+	MSelectionList sList;
+	MGlobal::getActiveSelectionList(sList);
+	MObject nodeObject = thisMObject();
+
+	for (unsigned int i = 0; i < sList.length(); i++)
+	{
+		MDagPath path;
+
+		sList.getDagPath(i, path);
+
+		if (!path.node().hasFn(MFn::kTransform))
+		{
+			continue;
+		}
+		path.extendToShape();
+
+		MHWRender::DisplayStatus displayStatus = MHWRender::MGeometryUtilities::displayStatus(path);
+		MObject inputObj = path.node();
+		if (displayStatus != MHWRender::kLead)
+			continue;
+
+		if (!inputObj.hasFn(MFn::kMesh))
+			continue;
+
+		MFnDagNode mFnThisNode(nodeObject);
+		MObject iblNode = mFnThisNode.parent(0);
+
+		MFnTransform iblTransform(mFnThisNode.parent(0));
+		MTransformationMatrix iblTrans = iblTransform.transformation();
+		MMatrix iblTransInverted = iblTrans.asMatrixInverse();
+
+		sList.getDagPath(i, path);
+
+		MFnTransform meshTransform(path.node());
+		MTransformationMatrix meshTrans = meshTransform.transformation();
+		MMatrix trans = meshTrans.asMatrix();
+
+		trans = trans * iblTransInverted;
+		MTransformationMatrix newTrans(trans);
+
+		meshTransform.set(newTrans);
+
+		MDagModifier dagModifier;
+		MStatus result = dagModifier.reparentNode(path.node(), iblNode);
+		dagModifier.doIt();
+	}
+}
+
+void FireRenderIBL::postConstructor()
+{
+	MStatus status;
+	MObject mobj = thisMObject();
+	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(mobj, FireRenderIBL::onAttributeChanged, this, &status);
+	assert(status == MStatus::kSuccess);
+}
 
 const char* frIblVS =
 R"(#version 110

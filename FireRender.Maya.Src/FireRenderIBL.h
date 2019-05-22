@@ -24,6 +24,8 @@
 #include <maya/MShaderManager.h>
 #include <maya/MRenderTargetManager.h>
 #include <maya/MPointArray.h>
+#include <maya/MNodeMessage.h>
+#include <maya/MMessage.h>
 
 #include <memory>
 
@@ -52,17 +54,30 @@ public:
 	static  void * creator();
 	static  MStatus initialize();
 
+	void postConstructor() override;
+
 public:
 	static MObject	aFilePath;
 	static MObject	aIntensity;
 	static MObject	aDisplay;
 	static MObject	aPortal;
 	static MObject	aFlipIBL;
+	static MObject  IBLSelectingPortalMesh;
+	static MObject aPortalHolder;
 
 public:
 	static  MTypeId id;
 	static  MString drawDbClassification;
 	static  MString drawRegistrantId;
+	MCallbackId m_attributeChangedCallback;
+	MCallbackId m_selectionChangedCallback;
+
+private:
+	static void onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
+	static void onSelectionChanged(void *clientData);
+
+	void SubscribeSelectionChangedEvent(bool subscribe = true);
+	void AddSelectedMeshToPortalList(void);
 
 private:
 	MString mTexturePath;
