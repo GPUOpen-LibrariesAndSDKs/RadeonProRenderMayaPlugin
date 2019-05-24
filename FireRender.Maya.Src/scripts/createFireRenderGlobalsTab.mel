@@ -315,6 +315,12 @@ global proc createFireRenderAOVsTab()
 	createFireRenderDepthParams ("fireRenderRenderDepth");
 	setParent ..;
 
+	// Parameters are moved to Common Tab. We may remove these comments later
+	// Depth settings
+	//frameLayout -label "EXR Parameters" -cll false -cl 0 fireRenderEXRParameters;
+
+	//createEXRParameters("fireRenderEXRParameters");
+	//setParent ..;
 
 	setParent ..;
 	setParent ..;
@@ -390,3 +396,23 @@ global proc createFireRenderDepthParams(string $parent)
 	// Update state
 	aovDepthAutoNormaliseChanged();
 }
+
+//global proc createEXRParameters(string $parent)
+//{
+//	setUITemplate -pushTemplate attributeEditorTemplate;
+
+//	setParent $parent;
+
+//	columnLayout;
+
+//	attrControlGrp
+//		 -label "EXR Compression"
+//		 -attribute "RadeonProRenderGlobals.exrCompression";
+  
+//	attrControlGrp
+//		 -label "Channel Format"
+//		 -attribute "RadeonProRenderGlobals.exrChannelFormat";
+
+//	setParent ..;
+//	setUITemplate -popTemplate;
+//}

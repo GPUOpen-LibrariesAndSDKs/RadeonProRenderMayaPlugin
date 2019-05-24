@@ -1581,11 +1581,16 @@ MDagPathArray getRenderableCameras()
 	return cameras;
 }
 
+MStatus GetDefaultRenderGlobals(MObject& outGlobalsNode)
+{
+	MSelectionList slist;
+	slist.add("defaultRenderGlobals");
+	return slist.getDependNode(0, outGlobalsNode);
+}
 MStatus GetRadeonProRenderGlobals(MObject& outGlobalsNode)
 {
 	MSelectionList selList;
 	selList.add("RadeonProRenderGlobals");
-	MObject fireRenderGlobals;
 	return selList.getDependNode(0, outGlobalsNode);
 }
 

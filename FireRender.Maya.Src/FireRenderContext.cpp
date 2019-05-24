@@ -462,10 +462,8 @@ void FireRenderContext::UpdateDefaultLights()
 
 	if (enabled)
 	{
-		MSelectionList slist;
-		slist.add("defaultRenderGlobals");
 		MObject renGlobalsObj;
-		slist.getDependNode(0, renGlobalsObj);
+		GetDefaultRenderGlobals(renGlobalsObj);
 		MFnDependencyNode globalsNode(renGlobalsObj);
 		MPlug plug = globalsNode.findPlug("enableDefaultLight");
 		plug.getValue(enabled);

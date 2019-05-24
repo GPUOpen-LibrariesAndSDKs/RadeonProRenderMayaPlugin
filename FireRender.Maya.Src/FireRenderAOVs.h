@@ -5,6 +5,8 @@
 #include <maya/MFnDependencyNode.h>
 
 
+using namespace OIIO;
+
 // Forward declarations.
 class FireRenderContext;
 class RenderRegion;
@@ -29,7 +31,7 @@ public:
 	// -----------------------------------------------------------------------------
 
 	/** Get an AOV for the specified ID. */
-	FireRenderAOV& getAOV(unsigned int id);
+	FireRenderAOV* getAOV(unsigned int id);
 
 	/** Get the AOV to display in the Maya render view. */
 	FireRenderAOV& getRenderViewAOV();
@@ -68,10 +70,15 @@ public:
 	/** Gets number of AOVs */
 	int getNumberOfAOVs();
 
+	MString GetEXRCompressionType() const;
+	TypeDesc::BASETYPE GetChannelFormat() const;
+
 private:
 	template<class T = FireRenderAOV>
 	void AddAOV(unsigned int id, const MString& attribute, const MString& name,
 									const MString& folder, AOVDescription description);
+
+	void InitEXRCompressionMap();
 
 private:
 	// Members
@@ -85,4 +92,8 @@ private:
 
 	/** The ID of the AOV to display in the Maya render view. */
 	short m_renderViewAOVId;
+
+	std::map<int, MString> m_exrCompressionTypesMap;
+	MString m_exrCompressionType;
+	TypeDesc::BASETYPE m_channelFormat;
 };
