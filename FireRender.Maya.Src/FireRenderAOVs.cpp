@@ -10,7 +10,6 @@
 #include <maya/MStatus.h>
 #include <maya/MFnEnumAttribute.h>
 #include <wchar.h>
-using namespace OIIO;
 
 // Life Cycle
 // -----------------------------------------------------------------------------
@@ -92,6 +91,8 @@ FireRenderAOVs::FireRenderAOVs() :
 
 	AddAOV(RPR_AOV_VARIANCE, "aovVariance", "Variance", "variance",
 		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
+
+	InitEXRCompressionMap();
 }
 
 // -----------------------------------------------------------------------------
@@ -99,6 +100,21 @@ FireRenderAOVs::~FireRenderAOVs()
 {
 	freePixels();
 }
+
+void FireRenderAOVs::InitEXRCompressionMap()
+{
+	m_exrCompressionTypesMap[EXRCM_NONE] = "none";
+	m_exrCompressionTypesMap[EXRCM_RLE] = "rle";
+	m_exrCompressionTypesMap[EXRCM_ZIP] = "zip";
+	m_exrCompressionTypesMap[EXRCM_PIZ] = "piz";
+	m_exrCompressionTypesMap[EXRCM_PXR24] = "pxr24";
+
+	m_exrCompressionTypesMap[EXRCM_B44] = "b44";
+	m_exrCompressionTypesMap[EXRCM_B44A] = "b44a";
+	m_exrCompressionTypesMap[EXRCM_DWAA] = "dwaa";
+	m_exrCompressionTypesMap[EXRCM_DWAB] = "dwab";
+}
+
 
 template<class T>
 void FireRenderAOVs::AddAOV(unsigned int id, 
@@ -114,17 +130,20 @@ void FireRenderAOVs::AddAOV(unsigned int id,
 
 // Public Methods
 // -----------------------------------------------------------------------------
-FireRenderAOV& FireRenderAOVs::getAOV(unsigned int id)
+FireRenderAOV* FireRenderAOVs::getAOV(unsigned int id)
 {
-	assert(m_aovs.find(id) != m_aovs.end());
+	if (m_aovs.find(id) == m_aovs.end())
+	{
+		return nullptr;
+	}
 
-	return *m_aovs[id];
+	return m_aovs[id].get();
 }
 
 // -----------------------------------------------------------------------------
 FireRenderAOV& FireRenderAOVs::getRenderViewAOV()
 {
-	return getAOV(m_renderViewAOVId);
+	return *getAOV(m_renderViewAOVId);
 }
 
 // -----------------------------------------------------------------------------
@@ -215,6 +234,34 @@ void FireRenderAOVs::readFromGlobals(const MFnDependencyNode& globals)
 			aov->ReadFromGlobals(globals);
 		}
 	}
+
+	MObject renGlobalsObj;
+	GetDefaultRenderGlobals(renGlobalsObj);
+	MFnDependencyNode defaultglobalsNode(renGlobalsObj);
+
+	plug = defaultglobalsNode.findPlug("exrCompression");
+
+	int compressionIndex = -1;
+	if (!plug.isNull())
+	{ 
+		compressionIndex = plug.asInt();
+		m_exrCompressionType = m_exrCompressionTypesMap[compressionIndex];
+	}
+	else
+	{
+		assert(false);
+	}
+
+	plug = defaultglobalsNode.findPlug("exrPixelType");
+
+	if (!plug.isNull())
+	{
+		m_channelFormat = plug.asInt() == 0 ? TypeDesc::FLOAT : TypeDesc::HALF;
+	}
+	else
+	{
+		assert(false);
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -274,8 +321,11 @@ void FireRenderAOVs::writeToFile(const MString& filePath, unsigned int imageForm
 	MString extension = FireRenderImageUtil::getImageFormatExtension(imageFormat);
 	if (extension == "exr" )
 	{
-		FireRenderImageUtil::saveMultichannelAOVs(filePath,
-			m_region.getWidth(), m_region.getHeight(),imageFormat, *this);
+		if (FireRenderImageUtil::saveMultichannelAOVs(filePath,
+			m_region.getWidth(), m_region.getHeight(), imageFormat, *this))
+		{
+			fileWrittenCallback(filePath);
+		}
 	}
 
 	// Otherwise, write active AOVs to individual files.
@@ -288,6 +338,17 @@ void FireRenderAOVs::writeToFile(const MString& filePath, unsigned int imageForm
 	}
 }
 
-int FireRenderAOVs::getNumberOfAOVs() {
+int FireRenderAOVs::getNumberOfAOVs() 
+{
 	return (int)m_aovs.size();
+}
+
+MString FireRenderAOVs::GetEXRCompressionType() const 
+{ 
+	return m_exrCompressionType; 
+}
+
+TypeDesc::BASETYPE FireRenderAOVs::GetChannelFormat() const
+{
+	return m_channelFormat;
 }
