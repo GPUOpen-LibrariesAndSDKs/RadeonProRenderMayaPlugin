@@ -175,10 +175,6 @@ namespace frw
 		ContextParameterParameterCount = RPR_CONTEXT_PARAMETER_COUNT,
 		ContextParameterActivePlugin = RPR_CONTEXT_ACTIVE_PLUGIN,
 		ContextParameterScene = RPR_CONTEXT_SCENE,
-#if (RPR_API_VERSION < 0x010031000)
-		ContextParameterAACellSize = RPR_CONTEXT_AA_CELL_SIZE,
-		ContextParameterAASamples = RPR_CONTEXT_AA_SAMPLES,
-#endif
 		ContextParameterFilterType = RPR_CONTEXT_IMAGE_FILTER_TYPE,
 		ContextParameterFilterBoxRadius = RPR_CONTEXT_IMAGE_FILTER_BOX_RADIUS,
 		ContextParameterFilterGaussianRadius = RPR_CONTEXT_IMAGE_FILTER_GAUSSIAN_RADIUS,
@@ -861,52 +857,28 @@ namespace frw
 		}
 		void SetPrimaryVisibility(bool visible)
 		{
-#if RPR_API_VERSION != 0x010000110
-#if RPR_API_VERSION >= 0x010032000
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_PRIMARY_ONLY_FLAG, visible);
-#else
-			auto res = rprShapeSetVisibilityEx(Handle(), "visible.primary", visible);
-#endif
 			checkStatus(res);
-#endif
 		}
 		void SetReflectionVisibility(bool visible)
 		{
-#if RPR_API_VERSION >= 0x010032000
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_REFLECTION, visible);
 			checkStatus(res);
 			res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_GLOSSY_REFLECTION, visible);
 			checkStatus(res);
-#else
-			auto res = rprShapeSetVisibilityEx(Handle(), "visible.reflection", visible);
-			checkStatus(res);
-			res = rprShapeSetVisibilityEx(Handle(), "visible.reflection.glossy", visible);
-			checkStatus(res);
-#endif
 		}
 
 		void setRefractionVisibility(bool visible)
 		{
-#if RPR_API_VERSION >= 0x010032000
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_REFRACTION, visible);
 			checkStatus(res);
 			res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_GLOSSY_REFRACTION, visible);
 			checkStatus(res);
-#else
-			auto res = rprShapeSetVisibilityEx(Handle(), "visible.refraction", visible);
-			checkStatus(res);
-			res = rprShapeSetVisibilityEx(Handle(), "visible.refraction.glossy", visible);
-			checkStatus(res);
-#endif
 		}
 
 		void SetLightShapeVisibilityEx(bool visible)
 		{
-#if RPR_API_VERSION >= 0x010032000
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_LIGHT, visible);
-#else
-			auto res = rprShapeSetVisibilityEx(Handle(), "visible.light", visible);
-#endif
 			checkStatus(res);
 		}
 
@@ -946,20 +918,14 @@ namespace frw
 #endif
 		void SetShadowFlag(bool castsShadows)
 		{
-#if RPR_API_VERSION >= 0x010032000
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_SHADOW, castsShadows);
-#else
-			auto res = rprShapeSetVisibilityEx(Handle(), "visible.shadow", castsShadows);
-#endif
 			checkStatus(res);
 		}
 
 		void SetShadowCatcherFlag(bool shadowCatcher)
 		{
-#if RPR_API_VERSION >= 0x010000109
 			auto res = rprShapeSetShadowCatcher(Handle(), shadowCatcher);
 			checkStatus(res);
-#endif
 		}
 
 		void SetDisplacement(Value image, float minscale = 0, float maxscale = 1);
@@ -1040,10 +1006,8 @@ namespace frw
 		Image(Context context, const char * filename);
 		void SetGamma(float gamma)
 		{
-#if (RPR_API_VERSION >= 0x010029100) 
 			rpr_int res = rprImageSetGamma(Handle(), gamma);
 			checkStatus(res);
-#endif
 		}
 	};
 
@@ -2565,11 +2529,7 @@ namespace frw
 
 		void Resolve(FrameBuffer dest)
 		{
-#if (RPR_API_VERSION < 0x010031000)
-			auto status = rprContextResolveFrameBuffer(GetContext().Handle(), Handle(), dest.Handle());
-#else
 			auto status = rprContextResolveFrameBuffer(GetContext().Handle(), Handle(), dest.Handle(), FALSE);
-#endif
 			checkStatusThrow(status, "Unable to resolve frame buffer");
 		}
 

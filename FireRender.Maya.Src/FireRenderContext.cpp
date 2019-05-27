@@ -856,7 +856,11 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 
 	ctxProperties.push_back( (rpr_context_properties) 0);
 
+#ifdef RPR_VERSION_MAJOR_MINOR_REVISION
+	int res = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), &context);
+#else
 	int res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), &context);
+#endif
 
 	if (pOutRes != nullptr)
 	{
