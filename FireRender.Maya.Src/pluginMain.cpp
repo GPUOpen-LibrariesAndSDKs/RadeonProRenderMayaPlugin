@@ -801,13 +801,17 @@ MStatus initializePlugin(MObject obj)
 
 	CHECK_MSTATUS(registerNodesInPathEditor());
 
-	//#define RPR_API_VERSION 0x010029200 
+#ifdef RPR_VERSION_MAJOR_MINOR_REVISION
+	std::ostringstream oss;
+	oss << RPR_VERSION_MAJOR << "." << RPR_VERSION_MINOR << RPR_VERSION_REVISION;
+#else
 	int mj = (RPR_API_VERSION & 0xFFFF00000) >> 28;
 	int mn = (RPR_API_VERSION & 0xFFFFF) >> 8;
 
 	std::ostringstream oss;
-
 	oss << std::hex << mj << "." << mn;
+#endif
+
 
 	std::string versionStr = oss.str();
 	std::string commandStr = "setRprCoreVersion(\"" + versionStr + "\")";

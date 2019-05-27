@@ -215,13 +215,8 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			}
 
 			// launch export
-#if (RPR_API_VERSION >= 0x010032400)
 			rpr_int statuExport = rprsExport(newFilePath.asChar(), context.context(), context.scene(),
 				0, 0, 0, 0, 0, 0, exportFlags);
-#else
-			rpr_int statuExport = rprsExport(newFilePath.asChar(), context.context(), context.scene(),
-				0, 0, 0, 0, 0, exportFlags);
-#endif
 
 			if (statuExport != RPR_SUCCESS)
 			{
