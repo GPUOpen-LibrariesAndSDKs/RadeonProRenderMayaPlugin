@@ -26,6 +26,14 @@ namespace FireMaya
 namespace MeshTranslator
 {
 
+void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source)
+{
+	int length = source.length();
+	out.clear();
+	out.resize(length, 0.0f);
+	source.get(out.data());
+}
+
 MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus& status)
 {
 	MFnMesh mesh(object);
@@ -33,8 +41,51 @@ MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus
 
 	int in_numUVSets = mesh.numUVSets();
 	if (in_numUVSets != 1)
-		return MObject::kNullObj; // temporary workaround of bug of generateSmoothMesh loosing UV data
+		//return MObject::kNullObj; // temporary workaround of bug of generateSmoothMesh loosing UV data
+	{// DEBUG UV 
+		// clone original mesh
+		MObject clonedMesh = mesh.copy(object);
 
+		// get UVs from original mesh from second uv set
+		MStringArray uvsetNames;
+		mesh.getUVSetNames(uvsetNames);
+		MFloatArray uArray;
+		MFloatArray vArray;
+		std::vector<float> u;
+		std::vector<float> v;
+		mesh.getUVs(uArray, vArray, &uvsetNames[0]);
+
+		dumpFloatArrDbg(u, uArray);
+		dumpFloatArrDbg(v, vArray);
+
+		mesh.getUVs(uArray, vArray, &uvsetNames[1]);
+
+		dumpFloatArrDbg(u, uArray);
+		dumpFloatArrDbg(v, vArray);
+
+		MIntArray uvCounts;
+		MIntArray uvIds;
+		status = mesh.getAssignedUVs(uvCounts, uvIds, &uvsetNames[1]);
+
+		// assign UVs from second UV set to cloned mesh	
+		MFnMesh fnClonedMesh(clonedMesh);
+		fnClonedMesh.clearUVs();
+		status = fnClonedMesh.setUVs(uArray, vArray, &uvsetNames[1]);
+		status = fnClonedMesh.assignUVs(uvCounts, uvIds, &uvsetNames[1]);
+
+		MObject clonedSmoothedMesh = fnClonedMesh.generateSmoothMesh(parent, NULL, &status);
+
+		int debugj = 0;
+
+		MFnMesh fnClonedSmoothedMesh(clonedSmoothedMesh);
+		fnClonedSmoothedMesh.getUVs(uArray, vArray, &uvsetNames[1]);
+		dumpFloatArrDbg(u, uArray);
+		dumpFloatArrDbg(v, vArray);
+
+		int debugi = 0;
+
+	}// END DEBUG
+		
 	DependencyNode attributes(object);
 
 	bool smoothPreview = attributes.getBool("displaySmoothMesh");
@@ -54,7 +105,8 @@ MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus
 		return MObject::kNullObj;
 
 	// for non smooth preview case:
-	return mesh.generateSmoothMesh(parent, NULL, &status);
+	MObject smoothedMesh = mesh.generateSmoothMesh(parent, NULL, &status);
+	return smoothedMesh;
 }
 
 MObject MeshTranslator::TessellateNurbsSurface(const MObject& object, const MObject& parent, MStatus& status)
