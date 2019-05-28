@@ -237,9 +237,9 @@ void FireRenderAOVs::readFromGlobals(const MFnDependencyNode& globals)
 
 	MObject renGlobalsObj;
 	GetDefaultRenderGlobals(renGlobalsObj);
-	MFnDependencyNode defaultglobalsNode(renGlobalsObj);
+	MFnDependencyNode defaultGlobalsNode(renGlobalsObj);
 
-	plug = defaultglobalsNode.findPlug("exrCompression");
+	plug = defaultGlobalsNode.findPlug("exrCompression");
 
 	int compressionIndex = -1;
 	if (!plug.isNull())
@@ -252,7 +252,7 @@ void FireRenderAOVs::readFromGlobals(const MFnDependencyNode& globals)
 		assert(false);
 	}
 
-	plug = defaultglobalsNode.findPlug("exrPixelType");
+	plug = defaultGlobalsNode.findPlug("exrPixelType");
 
 	if (!plug.isNull())
 	{
