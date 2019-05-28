@@ -18,6 +18,8 @@ MTypeId FireRenderSkyLocator::id(FireMaya::TypeId::FireRenderSkyLocator);
 MString FireRenderSkyLocator::drawDbClassification("drawdb/geometry/FireRenderSkyLocator");
 MString FireRenderSkyLocator::drawRegistrantId("FireRenderSkyNode");
 
+MObject FireRenderSkyLocator::SkySelectingPortalMesh;
+
 MStatus FireRenderSkyLocator::compute(const MPlug& plug, MDataBlock& data)
 {
 	return MS::kUnknownParameter;
@@ -156,6 +158,13 @@ MStatus FireRenderSkyLocator::initialize()
 	nAttr.setMin(-180);
 	nAttr.setMax(180);
 	addAttribute(a);
+
+	SkySelectingPortalMesh = nAttr.create("SkySelectingPortalMesh", "skys", MFnNumericData::kBoolean, false);
+	nAttr.setKeyable(true);
+	nAttr.setStorable(true);
+	nAttr.setReadable(true);
+	nAttr.setWritable(true);
+	addAttribute(SkySelectingPortalMesh);
 
 	return MS::kSuccess;
 }
