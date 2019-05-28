@@ -51,6 +51,7 @@ public:
 	static  MTypeId     id;
 	static  MString     drawDbClassification;
 	static  MString     drawRegistrantId;
+	static	MObject		SkySelectingPortalMesh;
 
 private:
 
