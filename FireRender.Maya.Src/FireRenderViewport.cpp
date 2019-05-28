@@ -160,6 +160,7 @@ MStatus FireRenderViewport::doSetup()
 	if (status != MStatus::kSuccess)
 		return status;
 
+	FireRenderThread::RunItemsQueuedForTheMainThread();
 	// Check for errors again - the render thread may have
 	// encountered an error since the start of this method.
 	if (m_error.check())
