@@ -2582,6 +2582,7 @@ namespace frw
 			}
 
 			bool bDirty = true;
+			bool bCommitted = false;
 			int numAttachedShapes = 0;
 			ShaderType shaderType = ShaderTypeInvalid;
 			rprx_context context = nullptr;
@@ -2674,6 +2675,7 @@ namespace frw
 		void SetDirty()
 		{
 			data().bDirty = true;
+			data().bCommitted = false;
 		}
 
 		bool IsDirty() const
@@ -2689,7 +2691,14 @@ namespace frw
 			{
 				try
 				{
+					if (d.bCommitted)
+					{
+						return;
+					}
+
 					rpr_int res = rprxMaterialCommit(d.context, d.material);
+
+					d.bCommitted = true;
 					checkStatus(res);
 				}
 				catch (...)
@@ -2794,10 +2803,17 @@ namespace frw
 			Data& d = data();
 			rpr_int res;
 
+			if (d.bCommitted)
+			{
+				return;
+			}
+
 			if (!d.context || !d.material)
 				return;
 
 			res = rprxMaterialCommit(d.context, d.material);
+
+			d.bCommitted = true;
 			checkStatus(res);
 		}
 
