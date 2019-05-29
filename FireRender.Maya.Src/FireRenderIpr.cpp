@@ -29,7 +29,7 @@ FireRenderIpr::FireRenderIpr() :
 	m_previousSelectionList()
 {
 	m_renderViewUpdateScheduled = false;
-	m_context.m_RenderType = RenderType::IPR;
+	m_context.SetRenderType(RenderType::IPR);
 }
 
 // -----------------------------------------------------------------------------

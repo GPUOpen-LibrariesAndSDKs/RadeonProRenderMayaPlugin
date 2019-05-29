@@ -531,7 +531,7 @@ void FireRenderContext::setRenderMode(RenderMode renderMode)
 
 void FireRenderContext::setPreview()
 {
-	int preview = m_interactive || (m_RenderType == RenderType::Thumbnail);
+	int preview = m_interactive || (m_RenderType == RenderType::Thumbnail); 
 	GetContext().SetParameter("preview", preview);
 }
 

@@ -133,7 +133,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		MRenderUtil::getCommonRenderSettings(settings);
 
 		FireRenderContext context;
-		context.m_RenderType = RenderType::ProductionRender;
+		context.SetRenderType(RenderType::ProductionRender);
 		context.buildScene();
 
 		context.setResolution(settings.width, settings.height, true);
