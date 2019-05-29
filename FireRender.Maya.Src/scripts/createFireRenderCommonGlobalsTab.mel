@@ -1104,7 +1104,7 @@ proc createCompressorControl(int $item)
 			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kEXRPixelType"))
 			EXRPixelTypeMenu;
 		
-		$imgEXRPixelType = {"Float (4 bytes)", "Half (2 bytes)"};
+		$imgEXRPixelType = {"32 Bit Float", "16 Bit Half"};
 		$length = size($imgEXRPixelType);
 		for ($i = 0; $i < $length; $i++)
 		{
