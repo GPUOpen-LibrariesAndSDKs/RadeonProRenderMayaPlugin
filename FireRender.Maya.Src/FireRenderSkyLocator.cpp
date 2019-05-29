@@ -25,6 +25,11 @@ MStatus FireRenderSkyLocator::compute(const MPlug& plug, MDataBlock& data)
 	return MS::kUnknownParameter;
 }
 
+FireRenderSkyLocator::FireRenderSkyLocator()
+	:	m_selectionChangedCallback(0)
+	,	m_attributeChangedCallback(0)
+{}
+
 template <class T>
 void makeAttribute(T& attr )
 {
@@ -197,6 +202,113 @@ MBoundingBox FireRenderSkyLocator::boundingBox() const
 void* FireRenderSkyLocator::creator()
 {
 	return new FireRenderSkyLocator();
+}
+
+void FireRenderSkyLocator::onSelectionChanged(void *clientData)
+{
+	FireRenderSkyLocator* fireRenderSkyNode = static_cast<FireRenderSkyLocator*> (clientData);
+	fireRenderSkyNode->SubscribeSelectionChangedEvent(false);
+
+	// Add selected mesh to portals list
+	fireRenderSkyNode->AddSelectedMeshToPortalList();
+}
+
+void FireRenderSkyLocator::postConstructor()
+{
+	MStatus status;
+	MObject mobj = thisMObject();
+	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(mobj, FireRenderSkyLocator::onAttributeChanged, this, &status);
+	assert(status == MStatus::kSuccess);
+}
+
+void FireRenderSkyLocator::onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
+{
+	if (!(msg | MNodeMessage::AttributeMessage::kAttributeSet))
+	{
+		return;
+	}
+
+	if (plug == FireRenderSkyLocator::SkySelectingPortalMesh)
+	{
+		FireRenderSkyLocator* fireRenderSkyNode = static_cast<FireRenderSkyLocator*> (clientData);
+		fireRenderSkyNode->SubscribeSelectionChangedEvent();
+	}
+}
+
+void FireRenderSkyLocator::SubscribeSelectionChangedEvent(bool subscribe)
+{
+	if (subscribe)
+	{
+		if (m_selectionChangedCallback == 0)
+		{
+			m_selectionChangedCallback = MEventMessage::addEventCallback("SelectionChanged", onSelectionChanged, this);
+		}
+	}
+	else
+	{
+		if (m_selectionChangedCallback != 0)
+		{
+			MNodeMessage::removeCallback(m_selectionChangedCallback);
+		}
+
+		m_selectionChangedCallback = 0;
+	}
+}
+
+void FireRenderSkyLocator::AddSelectedMeshToPortalList(void)
+{
+	MSelectionList sList;
+	MGlobal::getActiveSelectionList(sList);
+	MObject nodeObject = thisMObject();
+
+	for (unsigned int i = 0; i < sList.length(); i++)
+	{
+		MDagPath path;
+
+		sList.getDagPath(i, path);
+
+		if (!path.node().hasFn(MFn::kTransform))
+		{
+			continue;
+		}
+		path.extendToShape();
+
+		MHWRender::DisplayStatus displayStatus = MHWRender::MGeometryUtilities::displayStatus(path);
+		MObject inputObj = path.node();
+		if (displayStatus != MHWRender::kLead)
+			continue;
+
+		if (!inputObj.hasFn(MFn::kMesh))
+			continue;
+
+		MFnDagNode mFnThisNode(nodeObject);
+		MObject iblNode = mFnThisNode.parent(0);
+
+		MFnDagNode mFnInputNode(inputObj);
+		if (mFnInputNode.isChildOf(iblNode))
+		{
+			continue;
+		}
+
+		MFnTransform iblTransform(mFnThisNode.parent(0));
+		MTransformationMatrix iblTrans = iblTransform.transformation();
+		MMatrix iblTransInverted = iblTrans.asMatrixInverse();
+
+		sList.getDagPath(i, path);
+
+		MFnTransform meshTransform(path.node());
+		MTransformationMatrix meshTrans = meshTransform.transformation();
+		MMatrix trans = meshTrans.asMatrix();
+
+		trans = trans * iblTransInverted;
+		MTransformationMatrix newTrans(trans);
+
+		meshTransform.set(newTrans);
+
+		MDagModifier dagModifier;
+		MStatus result = dagModifier.reparentNode(path.node(), iblNode);
+		dagModifier.doIt();
+	}
 }
 
 // ================================

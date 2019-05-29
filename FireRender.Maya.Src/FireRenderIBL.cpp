@@ -178,6 +178,12 @@ void FireRenderIBL::AddSelectedMeshToPortalList(void)
 		MFnDagNode mFnThisNode(nodeObject);
 		MObject iblNode = mFnThisNode.parent(0);
 
+		MFnDagNode mFnInputNode(inputObj);
+		if (mFnInputNode.isChildOf(iblNode))
+		{
+			continue;
+		}
+
 		MFnTransform iblTransform(mFnThisNode.parent(0));
 		MTransformationMatrix iblTrans = iblTransform.transformation();
 		MMatrix iblTransInverted = iblTrans.asMatrixInverse();
