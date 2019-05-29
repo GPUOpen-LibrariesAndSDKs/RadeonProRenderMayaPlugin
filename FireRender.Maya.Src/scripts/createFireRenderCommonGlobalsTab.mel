@@ -1088,7 +1088,6 @@ proc createCompressorControl(int $item)
 			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kEXRCompression"))
 			EXRCompressionMenu;
 
-		global string $imgEXRCompression[];
 		$imgEXRCompression = {"none", "rle", "zip", "piz", "pxr24", "b44", "b44a", "dwaa", "dwab"};
 		int $length = size($imgEXRCompression);
 		int $i = 0;
@@ -1104,8 +1103,8 @@ proc createCompressorControl(int $item)
 		optionMenuGrp
 			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kEXRPixelType"))
 			EXRPixelTypeMenu;
-
-		global string $imgEXRPixelType[];
+		
+		$imgEXRPixelType = {"32 Bit Float", "16 Bit Half"};
 		$length = size($imgEXRPixelType);
 		for ($i = 0; $i < $length; $i++)
 		{
