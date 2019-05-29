@@ -2121,6 +2121,17 @@ RenderType FireRenderContext::GetRenderType() const
 	return m_RenderType;
 }
 
+void FireRenderContext::SetRenderType(RenderType renderType)
+{
+	m_RenderType = renderType;
+
+	if ((m_RenderType == RenderType::ViewportRender) ||
+		(m_RenderType == RenderType::IPR))
+	{
+		m_interactive = true;
+	}
+}
+
 bool FireRenderContext::ShouldResizeTexture(unsigned int& max_width, unsigned int& max_height) const
 {
 	if (GetRenderType() == RenderType::Thumbnail)
