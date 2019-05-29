@@ -2733,6 +2733,8 @@ namespace frw
 				res = rprShapeSetMaterial(shape.Handle(), d.Handle());
 				checkStatus(res);
 			}
+
+			d.bCommitted = false;
 		}
 		void DetachFromShape(Shape::Data& shape)
 		{
@@ -2776,6 +2778,8 @@ namespace frw
 				res = rprCurveSetMaterial(crv.Handle(), d.material);
 				checkStatus(res);
 			}
+
+			d.bCommitted = false;
 		}
 
 		void DetachFromCurve(frw::Curve::Data& crv)
@@ -3036,13 +3040,11 @@ namespace frw
 		// in theory a null could be considered a transparent material, but would create unexpected node
 		if (!a)
 		{
-			b.xMaterialCommit();
 			return b;
 		}
 
 		if (!b)
 		{
-			a.xMaterialCommit();
 			return a;
 		}
 
@@ -3051,11 +3053,6 @@ namespace frw
 		node._SetInputNode("color1", b);
 
 		node.SetValue("weight", t);
-
-		node.xMaterialCommit();
-
-		a.xMaterialCommit();
-		b.xMaterialCommit();
 
 		return node;
 	}
