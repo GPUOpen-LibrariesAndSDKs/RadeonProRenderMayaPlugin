@@ -495,7 +495,9 @@ public:
 	typedef std::map<std::string, std::shared_ptr<FireRenderObject> > FireRenderObjectMap;
 	FireRenderObjectMap& GetSceneObjects() { return m_sceneObjects; }
 
-	virtual RenderType GetRenderType(void) const;
+	RenderType GetRenderType(void) const;
+	void SetRenderType(RenderType renderType);
+
 	virtual bool ShouldResizeTexture(unsigned int& max_width, unsigned int& max_height) const;
 
 private:
@@ -642,6 +644,9 @@ private:
 
 	int	m_samplesPerUpdate;
 
+	// render type information
+	RenderType m_RenderType;
+
 public:
 	FireRenderEnvLight *iblLight = nullptr;
 	MObject iblTransformObject = MObject();
@@ -709,9 +714,6 @@ public:
 
 	double		m_timeIntervalForOutputUpdate;//in sec, TODO: check for Linux/Mac
 	clock_t		m_lastIterationTime;
-
-	// render type information
-	RenderType m_RenderType;
 
 	void setCompletionCriteria(const CompletionCriteriaParams& completionCriteriaParams);
 	bool isUnlimited();

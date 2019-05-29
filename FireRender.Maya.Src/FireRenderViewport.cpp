@@ -54,7 +54,7 @@ FireRenderViewport::FireRenderViewport(const MString& panelName) :
 	m_createFailed(false),
 	m_currentAOV(RPR_AOV_COLOR)
 {
-	m_context.m_RenderType = RenderType::ViewportRender;
+	m_context.SetRenderType(RenderType::ViewportRender);
 
 	m_alwaysEnabledAOVs.push_back(RPR_AOV_COLOR);
 	m_alwaysEnabledAOVs.push_back(RPR_AOV_VARIANCE);
