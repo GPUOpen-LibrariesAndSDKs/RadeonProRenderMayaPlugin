@@ -106,9 +106,9 @@ frw::Shader GetShaderForBlend(FireMaya::Scope& scope, const MFnDependencyNode &n
 		return shader;
 
 	auto color = scope.GetValue(node.findPlug(attr));
-	frw::DiffuseShader difaultShder(scope.MaterialSystem());
-	difaultShder.SetColor(color);
-	return difaultShder;
+	frw::DiffuseShader defaultShader(scope.MaterialSystem());
+	defaultShader.SetColor(color);
+	return defaultShader;
 }
 
 
