@@ -2843,7 +2843,7 @@ namespace frw
 			Data& d = data();
 			rpr_int res;
 
-			if (d.bCommitted)
+			if (d.IsCommitted())
 			{
 				return;
 			}
@@ -2853,7 +2853,7 @@ namespace frw
 
 			res = rprxMaterialCommit(d.context, d.material);
 
-			d.bCommitted = true;
+			d.SetCommittedState(true);
 			checkStatus(res);
 		}
 
