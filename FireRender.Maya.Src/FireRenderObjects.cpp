@@ -1037,7 +1037,7 @@ bool FireRenderMesh::IsMeshVisible(const MDagPath& meshPath, const FireRenderCon
 	bool selectionCheck = true; // true => is rendered
 
 	bool shouldIgnoreRenderSelectedObjects =
-		context->m_RenderType == RenderType::ViewportRender;
+		context->GetRenderType() == RenderType::ViewportRender;
 
 	if (!shouldIgnoreRenderSelectedObjects)
 	{
