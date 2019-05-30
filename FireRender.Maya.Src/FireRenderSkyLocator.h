@@ -16,6 +16,9 @@
 #include <maya/MRenderTargetManager.h>
 #include <maya/MPointArray.h>
 #include "SkyLocatorMesh.h"
+#include <maya/MEventMessage.h>
+#include <maya/MNodeMessage.h>
+#include <maya/MMessage.h>
 
 #include <memory>
 
@@ -28,11 +31,13 @@ class FireRenderSkyLocator : public MPxLocatorNode
 {
 public:
 
-	FireRenderSkyLocator() {}
+	FireRenderSkyLocator();
 
 	virtual ~FireRenderSkyLocator() {}
 
 	virtual MStatus compute(const MPlug& plug, MDataBlock& data);
+
+	void postConstructor() override;
 
 	virtual void draw(M3dView & view, const MDagPath & path,
 		M3dView::DisplayStyle style,
@@ -46,11 +51,21 @@ public:
 
 	static MStatus initialize();
 
+private:
+	static void onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
+	static void onSelectionChanged(void *clientData);
+	void SubscribeSelectionChangedEvent(bool subscribe = true);
+	void AddSelectedMeshToPortalList(void);
+
 public:
 
 	static  MTypeId     id;
 	static  MString     drawDbClassification;
 	static  MString     drawRegistrantId;
+	static	MObject		SkySelectingPortalMesh;
+
+	MCallbackId m_attributeChangedCallback;
+	MCallbackId m_selectionChangedCallback;
 
 private:
 
