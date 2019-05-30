@@ -2581,8 +2581,26 @@ namespace frw
 				return false;
 			}
 
+			void SetCommittedState(bool flag)
+			{
+				bCommitted = flag;
+
+				if (flag == false)
+				{
+					for (frw::Shader& dependentShader : dependentShaders)
+					{
+						dependentShader.data().SetCommittedState(flag);
+					}
+				}
+			}
+
+			bool IsCommitted() const { return bCommitted; }
+
 			bool bDirty = true;
-			bool bCommitted = false;
+
+			// Useful in case of BlendMaterial shader. 
+			// We need to mark dependent shaders as "not committed" when we change mesh assignment on the main shader
+			std::vector<frw::Shader> dependentShaders;
 			int numAttachedShapes = 0;
 			ShaderType shaderType = ShaderTypeInvalid;
 			rprx_context context = nullptr;
@@ -2590,6 +2608,9 @@ namespace frw
 			std::map<std::string, rpr_material_node> inputs;
 			bool isShadowCatcher = false;
 			ShadowCatcherParams mShadowCatcherParams;
+
+		private:
+			bool bCommitted = false;
 		};
 
 	public:
@@ -2638,6 +2659,21 @@ namespace frw
 			FRW_PRINT_DEBUG("\tCreated RPRX material 0x%016llX of type: 0x%X", d.material, type);
 		}
 
+		void _SetInputNode(const char* key, const Shader& shader)
+		{
+			Node::_SetInputNode(key, shader);
+
+			if (shader)
+			{
+				AddDependentShader(shader);
+			}
+		}
+
+		void AddDependentShader(frw::Shader shader)
+		{
+			data().dependentShaders.push_back(shader);
+		}
+
 		ShaderType GetShaderType() const
 		{
 			if (!IsValid())
@@ -2675,7 +2711,7 @@ namespace frw
 		void SetDirty()
 		{
 			data().bDirty = true;
-			data().bCommitted = false;
+			data().SetCommittedState(false);
 		}
 
 		bool IsDirty() const
@@ -2691,14 +2727,14 @@ namespace frw
 			{
 				try
 				{
-					if (d.bCommitted)
+					if (d.IsCommitted())
 					{
 						return;
 					}
 
 					rpr_int res = rprxMaterialCommit(d.context, d.material);
 
-					d.bCommitted = true;
+					d.SetCommittedState(true);
 					checkStatus(res);
 				}
 				catch (...)
@@ -2733,6 +2769,8 @@ namespace frw
 				res = rprShapeSetMaterial(shape.Handle(), d.Handle());
 				checkStatus(res);
 			}
+
+			d.SetCommittedState(false);
 		}
 		void DetachFromShape(Shape::Data& shape)
 		{
@@ -2776,6 +2814,8 @@ namespace frw
 				res = rprCurveSetMaterial(crv.Handle(), d.material);
 				checkStatus(res);
 			}
+
+			d.SetCommittedState(false);
 		}
 
 		void DetachFromCurve(frw::Curve::Data& crv)
@@ -2803,7 +2843,7 @@ namespace frw
 			Data& d = data();
 			rpr_int res;
 
-			if (d.bCommitted)
+			if (d.IsCommitted())
 			{
 				return;
 			}
@@ -2813,7 +2853,7 @@ namespace frw
 
 			res = rprxMaterialCommit(d.context, d.material);
 
-			d.bCommitted = true;
+			d.SetCommittedState(true);
 			checkStatus(res);
 		}
 
