@@ -64,7 +64,7 @@ public:
 		const std::string& modelsPath = std::string());
 	~ImageFilter();
 
-	void CreateFilter(RifFilterType rifFilteType);
+	void CreateFilter(RifFilterType rifFilteType, bool useOpenImageDenoise = false);
 	void DeleteFilter();
 
 	void AddInput(RifFilterInput inputId, const rpr_framebuffer rprFrameBuffer, float sigma) const;
@@ -241,14 +241,23 @@ public:
 
 class RifFilterMl final : public RifFilterWrapper
 {
-	rif_image mMlOutputRifImage = nullptr;
+	enum
+	{
+		NormalsRemapFilter,
+		DepthRemapFilter,
+		OutputResampleFilter,
+		AuxFilterMax
+	};
 
-	rif_image_filter mNormalsRemapFilter = nullptr;
-	rif_image_filter mDepthRemapFilter = nullptr;
-	rif_image_filter mOutputResampleFilter = nullptr;
+	enum
+	{
+		MlOutputRifImage,
+		AuxImageMax
+	};
 
 public:
-	explicit RifFilterMl(const RifContextWrapper* rifContext, std::uint32_t width, std::uint32_t height, const std::string& modelsPath);
+	explicit RifFilterMl(const RifContextWrapper* rifContext, std::uint32_t width, std::uint32_t height,
+		const std::string& modelsPath, bool useOpenImageDenoise);
 	virtual ~RifFilterMl();
 
 	virtual void AttachFilter(const RifContextWrapper* rifContext) override;
