@@ -34,6 +34,39 @@ void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source)
 	source.get(out.data());
 }
 
+MObject Smoothed2ndUV(const MObject& object, const MObject& parent, MStatus& status)
+{
+
+	MFnMesh mesh(object);
+
+	// clone original mesh
+	MObject clonedMesh = mesh.copy(object);
+
+	// get UVs from original mesh from second uv set
+	MStringArray uvsetNames;
+	mesh.getUVSetNames(uvsetNames);
+	MFloatArray uArray;
+	MFloatArray vArray;
+	status = mesh.getUVs(uArray, vArray, &uvsetNames[1]);
+	MIntArray uvCounts;
+	MIntArray uvIds;
+	status = mesh.getAssignedUVs(uvCounts, uvIds, &uvsetNames[1]);
+
+	// get cloned mesh
+	MDagPath item;
+	MFnDagNode cloned_node(clonedMesh);
+	cloned_node.getPath(item);
+	item.extendToShape();
+	clonedMesh = item.node();
+	if (!clonedMesh.hasFn(MFn::kMesh))
+		return MObject::kNullObj;
+
+	// assign UVs from second UV set to cloned mesh	
+	MFnMesh fnClonedMesh(clonedMesh);
+	MStringArray uvSetNamesCloned;
+	fnClonedMesh.getUVSetNames(uvSetNamesCloned);
+}
+
 MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus& status)
 {
 	MFnMesh mesh(object);
@@ -43,6 +76,7 @@ MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus
 	MString cloned_path = origin_node.fullPathName();
 
 	int in_numUVSets = mesh.numUVSets();
+
 	if (in_numUVSets != 1)
 		//return MObject::kNullObj; // temporary workaround of bug of generateSmoothMesh loosing UV data
 	{
@@ -81,7 +115,7 @@ MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus
 		clonedMesh = item.node();
 		MFnDagNode cloned_node2(clonedMesh);
 		MString cloned_path2 = cloned_node2.fullPathName();
-
+		
 		if (clonedMesh.hasFn(MFn::kMesh))
 		{
 			MFnMesh fnClonedMesh(clonedMesh);
@@ -90,12 +124,6 @@ MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus
 			MString currUVSetName = uvsetNames[1];
 
 			MString firstUvSetName = uvsetNames[0];
-
-			status = fnClonedMesh.deleteUVSet(uvsetNames[0]);
-			fnClonedMesh.clearUVs();
-
-			//status = fnClonedMesh.setUVs(uArray, vArray, &uvsetNames[1]);
-			//status = fnClonedMesh.assignUVs(uvCounts, uvIds, &uvsetNames[1]);
 
 			int numUVSets = fnClonedMesh.numUVSets();
 			MStringArray uvSetNamesCloned;
@@ -106,24 +134,40 @@ MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus
 				int debugj = 1;
 			}
 
-			status = fnClonedMesh.setCurrentUVSetName(uvsetNames[1]);
+			status = fnClonedMesh.deleteUVSet(uvSetNamesCloned[1]);
+			fnClonedMesh.clearUVs();
+
+			status = fnClonedMesh.setUVs(uArray, vArray);
+			status = fnClonedMesh.assignUVs(uvCounts, uvIds);
+
+			//status = fnClonedMesh.setCurrentUVSetName(uvSetNamesCloned[1]);
+
+			fnClonedMesh.getUVSetNames(uvSetNamesCloned);
+			for (int idx = 0; idx < uvSetNamesCloned.length(); ++idx)
+			{
+				MString tempName = uvSetNamesCloned[idx];
+				int debugj = 1;
+			}
 
 			MObject clonedSmoothedMesh = fnClonedMesh.generateSmoothMesh(cloned_node2.parent(0), NULL, &status);
 
 			int debugj = 0;
 
 			MFnMesh fnClonedSmoothedMesh(clonedSmoothedMesh);
-			fnClonedSmoothedMesh.getUVs(uArray, vArray, &uvsetNames[1]);
+			fnClonedSmoothedMesh.getUVs(uArray, vArray);
 			dumpFloatArrDbg(u, uArray);
 			dumpFloatArrDbg(v, vArray);
 
 
 
 			int debugi = 0;
+
+			MGlobal::deleteNode(clonedMesh);
+			MGlobal::deleteNode(clonedSmoothedMesh);
 		}
 
 	}// END DEBUG
-		
+
 	DependencyNode attributes(object);
 
 	bool smoothPreview = attributes.getBool("displaySmoothMesh");
@@ -141,6 +185,8 @@ MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus
 
 	if (!smoothPreview)
 		return MObject::kNullObj;
+
+	MFnMesh mesh(object);
 
 	// for non smooth preview case:
 	MObject smoothedMesh = mesh.generateSmoothMesh(parent, NULL, &status);
