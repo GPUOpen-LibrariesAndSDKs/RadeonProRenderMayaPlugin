@@ -530,9 +530,6 @@
     <ClCompile Include="FireRenderVolume.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="RenderStampUtils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -911,9 +908,6 @@
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="TileRenderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="RenderStampUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
