@@ -103,12 +103,6 @@ private:
 	/** Stop the Maya render view render. */
 	void stopMayaRender();
 
-	/** Begin the Maya render view update. */
-	void beginMayaUpdate();
-
-	/** End the Maya render view update. */
-	void endMayaUpdate();
-
 	/** Read data from the RPR frame buffer into the texture. */
 	void readFrameBuffer();
 
