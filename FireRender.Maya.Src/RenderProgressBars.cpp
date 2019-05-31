@@ -151,7 +151,7 @@ bool RenderProgressBars::isCancelled()
 {
 	MAIN_THREAD_ONLY;
 
-	// For MacOS one second interval is too big for proper checking of cancellation status. Let's do it 1/4 of second
+	// For MacOS one second interval is too big for proper checking of cancellation status. Let's do it 0.1 sec
 #if defined(OSMac_)
 	clock_t interval = CLOCKS_PER_SEC / 10;
 #else
