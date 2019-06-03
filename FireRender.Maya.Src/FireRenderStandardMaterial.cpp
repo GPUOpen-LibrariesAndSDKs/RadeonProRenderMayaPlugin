@@ -82,10 +82,7 @@ namespace
 		MObject refractionRoughness;
 		MObject refractionIOR;
 		MObject refractionAbsorptionColor;
-
-#if RPR_API_VERSION >= 0x010032000
 		MObject refractionUseShaderNormal;
-#endif
 		MObject refractionNormal;
 
 #if USE_RPRX
@@ -502,14 +499,12 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 10.0);
 
-#if RPR_API_VERSION >= 0x010032000
 	Attribute::refractionUseShaderNormal = nAttr.create("refractUseShaderNormal", "refu", MFnNumericData::kBoolean, 1);
 	MAKE_INPUT_CONST(nAttr);
 
 	Attribute::refractionNormal = nAttr.createColor("refractNormal", "refn");
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
-#endif
 
 #if USE_RPRX
 	Attribute::refractionLinkToReflection = nAttr.create("refractLinkToReflect", "refl", MFnNumericData::kBoolean, 0);
@@ -739,10 +734,8 @@ MStatus FireMaya::StandardMaterial::initialize()
 	ADD_ATTRIBUTE(Attribute::refractionWeight);
 	ADD_ATTRIBUTE(Attribute::refractionRoughness);
 	ADD_ATTRIBUTE(Attribute::refractionIOR);
-#if RPR_API_VERSION >= 0x010032000
 	ADD_ATTRIBUTE(Attribute::refractionUseShaderNormal);
 	ADD_ATTRIBUTE(Attribute::refractionNormal);
-#endif
 #if USE_RPRX
 	ADD_ATTRIBUTE(Attribute::refractionLinkToReflection);
 	ADD_ATTRIBUTE(Attribute::refractionThinSurface);
@@ -922,7 +915,6 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_DIFFUSE_WEIGHT, diffuseWeight);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_DIFFUSE_ROUGHNESS, diffuseRoughness);
 
-#if (RPR_API_VERSION > 0x010030400)
 		NormalMapParams params(scope, material, shaderNode);
 		params.attrUseCommonNormalMap = Attribute::useShaderNormal;
 		params.mapPlug = Attribute::diffuseNormal;
@@ -933,7 +925,6 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 
 		if (GET_BOOL(separateBackscatterColor))
 			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_BACKSCATTER_COLOR, backscatteringColor);
-#endif
 	}
 	else
 	{
@@ -962,13 +953,11 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFLECTION_IOR, reflectionIOR);
 		}
 
-#if (RPR_API_VERSION > 0x010030400)
 		NormalMapParams params(scope, material, shaderNode);
 		params.attrUseCommonNormalMap = Attribute::reflectUseShaderNormal;
 		params.mapPlug = Attribute::reflectNormal;
 		params.param = RPRX_UBER_MATERIAL_REFLECTION_NORMAL;
 		ApplyNormalMap(params);
-#endif
 	}
 	else
 	{
@@ -987,7 +976,6 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		material.xSetParameterU(RPRX_UBER_MATERIAL_COATING_MODE, RPRX_UBER_MATERIAL_COATING_MODE_PBR);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_IOR, clearCoatIOR);
 
-#if (RPR_API_VERSION > 0x010030400)
 		NormalMapParams params(scope, material, shaderNode);
 		params.attrUseCommonNormalMap = Attribute::coatUseShaderNormal;
 		params.mapPlug = Attribute::coatNormal;
@@ -997,7 +985,6 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_COATING_THICKNESS, clearCoatThickness);
 		frw::Value clearCoatTransmissionColorInverse = frw::Value(1) - GET_VALUE(clearCoatTransmissionColor);
 		material.xSetValue(RPRX_UBER_MATERIAL_COATING_TRANSMISSION_COLOR, clearCoatTransmissionColorInverse);
-#endif
 	}
 	else
 	{
@@ -1012,32 +999,20 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFRACTION_ROUGHNESS, refractionRoughness);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFRACTION_IOR, refractionIOR);
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFRACTION_ABSORPTION_COLOR, refractionAbsorptionColor);
-#if (RPR_API_VERSION > 0x010030400)
 		frw::Value valueRefractionAbsorptionDistance = GET_VALUE(refractionAbsorptionDistance) * scale_multiplier;
 		material.xSetValue(RPRX_UBER_MATERIAL_REFRACTION_ABSORPTION_DISTANCE, valueRefractionAbsorptionDistance);
 
 		bool doAllowCaustics = GET_BOOL(refractionAllowCaustics);
 		material.xSetParameterU(RPRX_UBER_MATERIAL_REFRACTION_CAUSTICS, doAllowCaustics ? RPR_TRUE : RPR_FALSE);
-
-#endif
 		bool bThinSurface = GET_BOOL(refractionThinSurface);
 		bool bLinkedIOR = GET_BOOL(refractionLinkToReflection);
-		// prevent crash in RPR (1.258) - "linked IOR" doesn't work when reflection mode set to "metallic"
-#if (RPR_API_VERSION < 0x010031000)
-		if (GET_BOOL(reflectionMetalMaterial) || !GET_BOOL(reflectionEnable))
-			bLinkedIOR = false;
-
-		material.xSetParameterU(RPRX_UBER_MATERIAL_REFRACTION_IOR_MODE, bLinkedIOR ? RPRX_UBER_MATERIAL_REFRACTION_MODE_LINKED : RPRX_UBER_MATERIAL_REFRACTION_MODE_SEPARATE);
-#endif
 		material.xSetParameterU(RPRX_UBER_MATERIAL_REFRACTION_THIN_SURFACE, bThinSurface ? RPR_TRUE : RPR_FALSE);
 
-#if RPR_API_VERSION >= 0x010032000
 		NormalMapParams params(scope, material, shaderNode);
 		params.attrUseCommonNormalMap = Attribute::refractionUseShaderNormal;
 		params.mapPlug = Attribute::refractionNormal;
 		params.param = RPRX_UBER_MATERIAL_REFRACTION_NORMAL;
 		ApplyNormalMap(params);
-#endif
 	}
 	else
 	{
@@ -1103,9 +1078,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		int type = value.GetNodeType();
 		if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
 		{
-#if (RPR_API_VERSION < 0x010031000)
-			material.xSetValue(RPRX_UBER_MATERIAL_NORMAL, value);
-#endif
+
 		}
 		else if (type >= 0)
 		{

@@ -159,7 +159,7 @@ bool FireRenderProduction::start()
 			AutoMutexLock contextCreationLock(m_contextCreationLock);
 
 			m_context = make_shared<FireRenderContext>();
-			m_context->m_RenderType = RenderType::ProductionRender;
+			m_context->SetRenderType(RenderType::ProductionRender);
 		}
 
 		if (m_globals.adaptiveThreshold > 0.0f)

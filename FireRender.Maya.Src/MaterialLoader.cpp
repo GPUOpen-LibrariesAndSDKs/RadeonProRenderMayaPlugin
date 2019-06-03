@@ -28,7 +28,11 @@ const char* Place2dNodeName = "place2dTexture_autocreated";
 namespace
 {
 	const std::string kTab = "    "; // default 4spaces tab for xml writer
+#ifdef RPR_VERSION_MAJOR_MINOR_REVISION
+	const int kVersion = RPR_VERSION_MAJOR_MINOR_REVISION;
+#else
 	const int kVersion = RPR_API_VERSION;
+#endif
 	//need different maps because RPR_MATERIAL* constants have not an unique value;
 	const std::map<int, std::string> kMaterialTypeNames{ { RPR_MATERIAL_NODE_DIFFUSE, "DIFFUSE" },
 	{ RPR_MATERIAL_NODE_MICROFACET, "MICROFACET" },

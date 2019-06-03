@@ -462,10 +462,8 @@ void FireRenderContext::UpdateDefaultLights()
 
 	if (enabled)
 	{
-		MSelectionList slist;
-		slist.add("defaultRenderGlobals");
 		MObject renGlobalsObj;
-		slist.getDependNode(0, renGlobalsObj);
+		GetDefaultRenderGlobals(renGlobalsObj);
 		MFnDependencyNode globalsNode(renGlobalsObj);
 		MPlug plug = globalsNode.findPlug("enableDefaultLight");
 		plug.getValue(enabled);
@@ -533,7 +531,7 @@ void FireRenderContext::setRenderMode(RenderMode renderMode)
 
 void FireRenderContext::setPreview()
 {
-	int preview = m_interactive || (m_RenderType == RenderType::Thumbnail);
+	int preview = m_interactive || (m_RenderType == RenderType::Thumbnail); 
 	GetContext().SetParameter("preview", preview);
 }
 
@@ -858,7 +856,11 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 
 	ctxProperties.push_back( (rpr_context_properties) 0);
 
+#ifdef RPR_VERSION_MAJOR_MINOR_REVISION
+	int res = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), &context);
+#else
 	int res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), &context);
+#endif
 
 	if (pOutRes != nullptr)
 	{
@@ -2117,6 +2119,17 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 RenderType FireRenderContext::GetRenderType() const
 {
 	return m_RenderType;
+}
+
+void FireRenderContext::SetRenderType(RenderType renderType)
+{
+	m_RenderType = renderType;
+
+	if ((m_RenderType == RenderType::ViewportRender) ||
+		(m_RenderType == RenderType::IPR))
+	{
+		m_interactive = true;
+	}
 }
 
 bool FireRenderContext::ShouldResizeTexture(unsigned int& max_width, unsigned int& max_height) const

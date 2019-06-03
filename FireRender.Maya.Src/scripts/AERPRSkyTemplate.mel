@@ -278,6 +278,39 @@ global proc AERPRSkySunPositionTypeChanged(string $nodeName)
 	}
 }
 
+global proc onSelectSkyMeshButtonClicked(string $attrName)
+{
+	setAttr $attrName 1;
+}
+
+global proc string getSkyMeshButtonCommand(string $attrName)
+{
+	return "onSelectSkyMeshButtonClicked(\"" + $attrName + "\")";
+}
+
+global proc SkyPortalMeshSelectNew( string $attrName )
+{
+	$command = getSkyMeshButtonCommand($attrName);
+	rowLayout;
+	button
+		-label "Add Portal Mesh"
+		-width 150
+		-command $command
+		SkyPortalMeshSelectButton;
+	setParent ..;
+
+	connectControl SkyPortalMeshSelectButton $attrName;
+}
+
+global proc SkyPortaltMeshSelectReplace( string $attrName )
+{
+	$command = getSkyMeshButtonCommand($attrName);
+
+	connectControl SkyPortalMeshSelectButton $attrName;
+
+	button -edit -command $command SkyPortalMeshSelectButton;
+}
+
 global proc AERPRSkyTemplate(string $nodeName)
 {
 	AEswatchDisplay $nodeName;
@@ -315,6 +348,10 @@ global proc AERPRSkyTemplate(string $nodeName)
 		editorTemplate -addControl "latitude";
 		editorTemplate -addControl "longitude";
 		editorTemplate -callCustom "AERPRSkyGetLocationButton" "AERPRSkyGetLocationButtonEdit";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Portal" -collapse 1;
+		editorTemplate -callCustom "SkyPortalMeshSelectNew" "SkyPortaltMeshSelectReplace" "SkySelectingPortalMesh";
 	editorTemplate -endLayout;
 
 	//editorTemplate -beginLayout "Portal" -collapse 1;

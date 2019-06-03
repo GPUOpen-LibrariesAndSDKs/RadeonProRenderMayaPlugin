@@ -699,10 +699,8 @@ void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disa
 	frstatus = rprContextSetParameter1f(frcontext, filterAttrName.c_str(), filterSize);
 	checkStatus(frstatus);
 
-#if (RPR_API_VERSION >= 0x010031300)
 	frstatus = rprContextSetParameter1u(frcontext, "metalperformanceshader", useMPS ? 1 : 0);
 	checkStatus(frstatus);
-#endif
 
 	updateTonemapping(inContext, disableWhiteBalance);
 }
@@ -1233,7 +1231,11 @@ MString getShaderCachePath()
 	if (S_OK == ::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &sz))
 	{
 		wchar_t suffix[128 + 1] = {};
+#ifdef RPR_VERSION_MAJOR_MINOR_REVISION
+		wsprintfW(suffix, L"%x", RPR_VERSION_MAJOR_MINOR_REVISION);
+#else
 		wsprintfW(suffix, L"%x", RPR_API_VERSION);
+#endif
 
 		std::wstring cacheFolder(sz);
 		cacheFolder += L"\\RadeonProRender\\Maya\\ShaderCache\\API_";
@@ -1581,11 +1583,16 @@ MDagPathArray getRenderableCameras()
 	return cameras;
 }
 
+MStatus GetDefaultRenderGlobals(MObject& outGlobalsNode)
+{
+	MSelectionList slist;
+	slist.add("defaultRenderGlobals");
+	return slist.getDependNode(0, outGlobalsNode);
+}
 MStatus GetRadeonProRenderGlobals(MObject& outGlobalsNode)
 {
 	MSelectionList selList;
 	selList.add("RadeonProRenderGlobals");
-	MObject fireRenderGlobals;
 	return selList.getDependNode(0, outGlobalsNode);
 }
 
@@ -1759,7 +1766,11 @@ HardwareResources::HardwareResources()
 			rpr_int plugins[] = { g_tahoePluginID };
 			size_t pluginCount = sizeof(plugins) / sizeof(plugins[0]);
 			rpr_context temporaryContext = 0;
-			rpr_int status = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, device.creationFlag , NULL, NULL, &temporaryContext);
+#ifdef RPR_VERSION_MAJOR_MINOR_REVISION
+			rpr_int status = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, device.creationFlag , NULL, NULL, &temporaryContext);
+#else
+			rpr_int status = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, device.creationFlag, NULL, NULL, &temporaryContext);
+#endif
 			assert(status == RPR_SUCCESS);
 			size_t size = 0;
 			status = rprContextGetInfo(temporaryContext, nameFlags[i], 0, 0, &size);

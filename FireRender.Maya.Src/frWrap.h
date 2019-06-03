@@ -175,10 +175,6 @@ namespace frw
 		ContextParameterParameterCount = RPR_CONTEXT_PARAMETER_COUNT,
 		ContextParameterActivePlugin = RPR_CONTEXT_ACTIVE_PLUGIN,
 		ContextParameterScene = RPR_CONTEXT_SCENE,
-#if (RPR_API_VERSION < 0x010031000)
-		ContextParameterAACellSize = RPR_CONTEXT_AA_CELL_SIZE,
-		ContextParameterAASamples = RPR_CONTEXT_AA_SAMPLES,
-#endif
 		ContextParameterFilterType = RPR_CONTEXT_IMAGE_FILTER_TYPE,
 		ContextParameterFilterBoxRadius = RPR_CONTEXT_IMAGE_FILTER_BOX_RADIUS,
 		ContextParameterFilterGaussianRadius = RPR_CONTEXT_IMAGE_FILTER_GAUSSIAN_RADIUS,
@@ -861,52 +857,28 @@ namespace frw
 		}
 		void SetPrimaryVisibility(bool visible)
 		{
-#if RPR_API_VERSION != 0x010000110
-#if RPR_API_VERSION >= 0x010032000
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_PRIMARY_ONLY_FLAG, visible);
-#else
-			auto res = rprShapeSetVisibilityEx(Handle(), "visible.primary", visible);
-#endif
 			checkStatus(res);
-#endif
 		}
 		void SetReflectionVisibility(bool visible)
 		{
-#if RPR_API_VERSION >= 0x010032000
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_REFLECTION, visible);
 			checkStatus(res);
 			res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_GLOSSY_REFLECTION, visible);
 			checkStatus(res);
-#else
-			auto res = rprShapeSetVisibilityEx(Handle(), "visible.reflection", visible);
-			checkStatus(res);
-			res = rprShapeSetVisibilityEx(Handle(), "visible.reflection.glossy", visible);
-			checkStatus(res);
-#endif
 		}
 
 		void setRefractionVisibility(bool visible)
 		{
-#if RPR_API_VERSION >= 0x010032000
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_REFRACTION, visible);
 			checkStatus(res);
 			res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_GLOSSY_REFRACTION, visible);
 			checkStatus(res);
-#else
-			auto res = rprShapeSetVisibilityEx(Handle(), "visible.refraction", visible);
-			checkStatus(res);
-			res = rprShapeSetVisibilityEx(Handle(), "visible.refraction.glossy", visible);
-			checkStatus(res);
-#endif
 		}
 
 		void SetLightShapeVisibilityEx(bool visible)
 		{
-#if RPR_API_VERSION >= 0x010032000
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_LIGHT, visible);
-#else
-			auto res = rprShapeSetVisibilityEx(Handle(), "visible.light", visible);
-#endif
 			checkStatus(res);
 		}
 
@@ -946,20 +918,14 @@ namespace frw
 #endif
 		void SetShadowFlag(bool castsShadows)
 		{
-#if RPR_API_VERSION >= 0x010032000
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_SHADOW, castsShadows);
-#else
-			auto res = rprShapeSetVisibilityEx(Handle(), "visible.shadow", castsShadows);
-#endif
 			checkStatus(res);
 		}
 
 		void SetShadowCatcherFlag(bool shadowCatcher)
 		{
-#if RPR_API_VERSION >= 0x010000109
 			auto res = rprShapeSetShadowCatcher(Handle(), shadowCatcher);
 			checkStatus(res);
-#endif
 		}
 
 		void SetDisplacement(Value image, float minscale = 0, float maxscale = 1);
@@ -1040,10 +1006,8 @@ namespace frw
 		Image(Context context, const char * filename);
 		void SetGamma(float gamma)
 		{
-#if (RPR_API_VERSION >= 0x010029100) 
 			rpr_int res = rprImageSetGamma(Handle(), gamma);
 			checkStatus(res);
-#endif
 		}
 	};
 
@@ -2565,11 +2529,7 @@ namespace frw
 
 		void Resolve(FrameBuffer dest)
 		{
-#if (RPR_API_VERSION < 0x010031000)
-			auto status = rprContextResolveFrameBuffer(GetContext().Handle(), Handle(), dest.Handle());
-#else
 			auto status = rprContextResolveFrameBuffer(GetContext().Handle(), Handle(), dest.Handle(), FALSE);
-#endif
 			checkStatusThrow(status, "Unable to resolve frame buffer");
 		}
 
@@ -2621,7 +2581,26 @@ namespace frw
 				return false;
 			}
 
+			void SetCommittedState(bool flag)
+			{
+				bCommitted = flag;
+
+				if (flag == false)
+				{
+					for (frw::Shader& dependentShader : dependentShaders)
+					{
+						dependentShader.data().SetCommittedState(flag);
+					}
+				}
+			}
+
+			bool IsCommitted() const { return bCommitted; }
+
 			bool bDirty = true;
+
+			// Useful in case of BlendMaterial shader. 
+			// We need to mark dependent shaders as "not committed" when we change mesh assignment on the main shader
+			std::vector<frw::Shader> dependentShaders;
 			int numAttachedShapes = 0;
 			ShaderType shaderType = ShaderTypeInvalid;
 			rprx_context context = nullptr;
@@ -2629,6 +2608,9 @@ namespace frw
 			std::map<std::string, rpr_material_node> inputs;
 			bool isShadowCatcher = false;
 			ShadowCatcherParams mShadowCatcherParams;
+
+		private:
+			bool bCommitted = false;
 		};
 
 	public:
@@ -2677,6 +2659,21 @@ namespace frw
 			FRW_PRINT_DEBUG("\tCreated RPRX material 0x%016llX of type: 0x%X", d.material, type);
 		}
 
+		void _SetInputNode(const char* key, const Shader& shader)
+		{
+			Node::_SetInputNode(key, shader);
+
+			if (shader)
+			{
+				AddDependentShader(shader);
+			}
+		}
+
+		void AddDependentShader(frw::Shader shader)
+		{
+			data().dependentShaders.push_back(shader);
+		}
+
 		ShaderType GetShaderType() const
 		{
 			if (!IsValid())
@@ -2714,6 +2711,7 @@ namespace frw
 		void SetDirty()
 		{
 			data().bDirty = true;
+			data().SetCommittedState(false);
 		}
 
 		bool IsDirty() const
@@ -2729,7 +2727,14 @@ namespace frw
 			{
 				try
 				{
+					if (d.IsCommitted())
+					{
+						return;
+					}
+
 					rpr_int res = rprxMaterialCommit(d.context, d.material);
+
+					d.SetCommittedState(true);
 					checkStatus(res);
 				}
 				catch (...)
@@ -2764,6 +2769,8 @@ namespace frw
 				res = rprShapeSetMaterial(shape.Handle(), d.Handle());
 				checkStatus(res);
 			}
+
+			d.SetCommittedState(false);
 		}
 		void DetachFromShape(Shape::Data& shape)
 		{
@@ -2807,6 +2814,8 @@ namespace frw
 				res = rprCurveSetMaterial(crv.Handle(), d.material);
 				checkStatus(res);
 			}
+
+			d.SetCommittedState(false);
 		}
 
 		void DetachFromCurve(frw::Curve::Data& crv)
@@ -2834,10 +2843,17 @@ namespace frw
 			Data& d = data();
 			rpr_int res;
 
+			if (d.IsCommitted())
+			{
+				return;
+			}
+
 			if (!d.context || !d.material)
 				return;
 
 			res = rprxMaterialCommit(d.context, d.material);
+
+			d.SetCommittedState(true);
 			checkStatus(res);
 		}
 

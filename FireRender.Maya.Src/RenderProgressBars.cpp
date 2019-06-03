@@ -75,6 +75,8 @@ RenderProgressBars::RenderProgressBars(bool unlimited) :
 
 	// Force a Maya UI refresh.
 	MGlobal::executeCommand("refresh -f;");
+
+	m_lastCanceledCheck = clock();
 }
 
 // -----------------------------------------------------------------------------
@@ -149,8 +151,15 @@ bool RenderProgressBars::isCancelled()
 {
 	MAIN_THREAD_ONLY;
 
-	clock_t t = clock() / CLOCKS_PER_SEC;	// Limit to 1 check per 1s
-	if (m_lastCanceledCheck != t)
+	// For MacOS one second interval is too big for proper checking of cancellation status. Let's do it 1/4 of second
+#if defined(OSMac_)
+	clock_t interval = CLOCKS_PER_SEC / 4;
+#else
+	clock_t interval = CLOCKS_PER_SEC;
+#endif
+
+	clock_t t = clock();
+	if (m_lastCanceledCheck + interval <= t)
 	{
 		int isCancelled = 0;
 

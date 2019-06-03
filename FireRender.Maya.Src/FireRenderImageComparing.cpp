@@ -102,7 +102,11 @@ MStatus FireRenderImageComparing::doIt(const MArgList & args)
 		std::string pluginVersion = PLUGIN_VERSION;
 
 		std::stringstream s;
+#ifdef RPR_VERSION_MAJOR_MINOR_REVISION
+		s << "0x" << std::hex << RPR_VERSION_MAJOR_MINOR_REVISION;
+#else
 		s << "0x" << std::hex << RPR_API_VERSION;
+#endif
 		std::string rprApiVersion = s.str();
 
 		std::string mayaVersion = std::to_string(MAYA_API_VERSION);

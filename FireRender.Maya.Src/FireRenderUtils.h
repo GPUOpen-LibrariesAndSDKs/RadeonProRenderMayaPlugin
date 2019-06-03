@@ -344,6 +344,9 @@ MString getNameByDagPath(const MDagPath& cameraPath);
 // Get camera that is used by production render if no camera is selected
 MDagPath getDefaultCamera();
 
+// Get defaultRenderGlobals node
+MStatus GetDefaultRenderGlobals(MObject& outGlobalsNode);
+
 // Get RadeonProRenderGlobals node
 MStatus GetRadeonProRenderGlobals(MObject& outGlobalsNode);
 

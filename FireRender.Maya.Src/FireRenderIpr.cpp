@@ -29,7 +29,7 @@ FireRenderIpr::FireRenderIpr() :
 	m_previousSelectionList()
 {
 	m_renderViewUpdateScheduled = false;
-	m_context.m_RenderType = RenderType::IPR;
+	m_context.SetRenderType(RenderType::IPR);
 }
 
 // -----------------------------------------------------------------------------
@@ -142,11 +142,11 @@ bool FireRenderIpr::start()
 		FireRenderGlobalsData globals;
 		globals.readFromCurrentScene();
 
-		if (globals.aovs.getAOV(RPR_AOV_OPACITY).active)
+		if (globals.aovs.getAOV(RPR_AOV_OPACITY)->active)
 			m_context.enableAOV(RPR_AOV_OPACITY);
-		if (globals.aovs.getAOV(RPR_AOV_BACKGROUND).active)
+		if (globals.aovs.getAOV(RPR_AOV_BACKGROUND)->active)
 			m_context.enableAOV(RPR_AOV_BACKGROUND);
-		if (globals.aovs.getAOV(RPR_AOV_SHADOW_CATCHER).active)
+		if (globals.aovs.getAOV(RPR_AOV_SHADOW_CATCHER)->active)
 			m_context.enableAOV(RPR_AOV_SHADOW_CATCHER);
 		
 		if (!m_context.buildScene(false, false, false, false))
