@@ -527,6 +527,7 @@ private:
 	void initBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture = nullptr);
 
 	void turnOnAOVsForDenoiser(bool allocBuffer = false);
+	bool CanCreateAiDenoiser() const;
 	void setupDenoiser();
 
 	int getThreadCountToOverride() const;

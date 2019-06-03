@@ -360,6 +360,37 @@ void FireRenderContext::turnOnAOVsForDenoiser(bool allocBuffer)
 	}
 }
 
+bool FireRenderContext::CanCreateAiDenoiser() const
+{
+	bool canCreateAiDenoiser = false;
+
+	std::string gpuName;
+
+	MIntArray devicesUsing;
+	MGlobal::executeCommand("optionVar -q RPR_DevicesSelected", devicesUsing);
+
+	auto allDevices = HardwareResources::GetAllDevices();
+	size_t numDevices = std::min<size_t>(devicesUsing.length(), allDevices.size());
+
+	for (int i = 0; i < numDevices; i++)
+	{
+		const HardwareResources::Device& gpuInfo = allDevices[i];
+		
+		if (devicesUsing[i])
+		{
+			gpuName = gpuInfo.name;
+			break;
+		}
+	}
+
+	std::transform(gpuName.begin(), gpuName.end(), gpuName.begin(), ::tolower);
+
+	if (gpuName.find("amd") != std::string::npos || gpuName.find("radeon") != std::string::npos)
+		canCreateAiDenoiser = true;
+
+	return canCreateAiDenoiser;
+}
+
 void FireRenderContext::setupDenoiser()
 {
 	const rpr_framebuffer fbColor = m.framebufferAOV_resolved[RPR_AOV_COLOR].Handle();
@@ -369,6 +400,9 @@ void FireRenderContext::setupDenoiser()
 	const rpr_framebuffer fbObjectId = m.framebufferAOV[RPR_AOV_OBJECT_ID].Handle();
 	const rpr_framebuffer fbTrans = fbObjectId;
 	const rpr_framebuffer fbDiffuseAlbedo = m.framebufferAOV_resolved[RPR_AOV_DIFFUSE_ALBEDO].Handle();
+
+	bool canCreateAiDenoiser = CanCreateAiDenoiser();
+	bool useOpenImageDenoise = !canCreateAiDenoiser;
 
 	try
 	{
@@ -423,7 +457,7 @@ void FireRenderContext::setupDenoiser()
 			break;
 
 		case FireRenderGlobals::kML:
-			m_denoiserFilter->CreateFilter(RifFilterType::MlDenoise);
+			m_denoiserFilter->CreateFilter(RifFilterType::MlDenoise, useOpenImageDenoise);
 			m_denoiserFilter->AddInput(RifColor, fbColor, 0.0f);
 			m_denoiserFilter->AddInput(RifNormal, fbShadingNormal, 0.0f);
 			m_denoiserFilter->AddInput(RifDepth, fbDepth, 0.0f);
