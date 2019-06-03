@@ -184,7 +184,7 @@ namespace RenderStampUtils
 		if (!format || !format[0])
 			return "";		// empty string
 
-		const char *str2 = format;
+		const char *currentFormatString = format;
 
 		// parse string
 		std::string str;
@@ -192,7 +192,7 @@ namespace RenderStampUtils
 
 		int renderDevice = GetRenderDevice();
 
-		while (char c = *str2++)
+		while (char c = *currentFormatString++)
 		{
 			if (c != '%')
 			{
@@ -200,7 +200,7 @@ namespace RenderStampUtils
 				continue;
 			}
 			// here we have escape sequence
-			c = *str2++;
+			c = *currentFormatString++;
 			if (!c)
 			{
 				str += L'%'; // this was a last character in string
@@ -216,7 +216,7 @@ namespace RenderStampUtils
 				break;
 			case 'p': // performance
 			{
-				c = *str2++;
+				c = *currentFormatString++;
 				switch (c)
 				{
 				case 't': // %pt - total elapsed time
@@ -239,7 +239,7 @@ namespace RenderStampUtils
 			break;
 			case 's': // scene information
 			{
-				c = *str2++;
+				c = *currentFormatString++;
 				switch (c)
 				{
 				case 'l': // %sl - number of light primitives
