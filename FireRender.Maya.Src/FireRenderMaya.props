@@ -38,10 +38,7 @@ COPY $(ProjectDir)\shaders\* $(SolutionDir)dist\shaders\ /Y
 COPY $(ProjectDir)\renderDesc\* $(SolutionDir)dist\renderDesc\ /Y
 
 COPY "$(SolutionDir)ThirdParty\RadeonProRender SDK\Win\bin\*.dll" $(SolutionDir)dist\bin\ /Y
-COPY "$(SolutionDir)ThirdParty\RadeonProImageProcessing\Windows\lib\RadeonImageFilters64.dll" $(SolutionDir)dist\bin\RadeonImageFilters64.dll /Y
-COPY "$(SolutionDir)ThirdParty\RadeonProImageProcessing\Windows\lib\RadeonProML.dll" $(SolutionDir)dist\bin\RadeonProML.dll /Y
-COPY "$(SolutionDir)ThirdParty\RadeonProImageProcessing\Windows\lib\MIOpen.dll" $(SolutionDir)dist\bin\MIOpen.dll /Y
-COPY "$(SolutionDir)ThirdParty\RadeonProImageProcessing\Windows\lib\libcrypto-1_1-x64.dll" $(SolutionDir)dist\bin\libcrypto-1_1-x64.dll /Y
+COPY "$(SolutionDir)ThirdParty\RadeonProImageProcessing\Windows\lib\*.dll" $(SolutionDir)dist\bin\ /Y
 XCOPY /S /Y /I "$(SolutionDir)ThirdParty\RadeonProImageProcessing\models" $(SolutionDir)dist\data\models
 
 COPY $(SolutionDir)ThirdParty\glew\bin\x64\*.dll $(SolutionDir)dist\bin\ /Y
