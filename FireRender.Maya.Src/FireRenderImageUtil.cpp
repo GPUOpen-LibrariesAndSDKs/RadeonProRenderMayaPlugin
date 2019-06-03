@@ -118,7 +118,7 @@ void FireRenderImageUtil::saveMayaImage(MString filePath, unsigned int width, un
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
+bool FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 	unsigned int width, unsigned int height, unsigned int imageFormat, FireRenderAOVs& aovs)
 {
 	int aovs_component_count[RPR_AOV_MAX] = { 0 };
@@ -130,7 +130,7 @@ void FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 		outImage = ImageOutput::create(nameWithExt.asUTF8());
 		if (!outImage)
 		{
-			return;
+			return false;
 		}
 	}
 
@@ -143,29 +143,31 @@ void FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 
 	const char* comments = "Created with " FIRE_RENDER_NAME " " PLUGIN_VERSION;
 	imgSpec.attribute("ImageDescription", comments);
+	imgSpec.attribute("compression", aovs.GetEXRCompressionType().asChar());
+
+	imgSpec.set_format(aovs.GetChannelFormat());
 
 	//fill image spec setting up channels for each aov
-	for (int i = 0; i != aovs.getNumberOfAOVs(); ++i)
+	for (int i = 0; i < RPR_AOV_MAX; ++i)
 	{
-		FireRenderAOV& aov = aovs.getAOV(i);
+		FireRenderAOV* aov = aovs.getAOV(i);
 
-		if (aov.active)
+		if (aov != nullptr && aov->active)
 		{
 			int aov_component_count = 0;
 
-			for (auto c : aov.description.components)
+			for (auto c : aov->description.components)
 			{
 				if (c)
 				{
 					++aov_component_count;
 					++imgSpec.nchannels;
-					imgSpec.channelformats.push_back(TypeDesc::FLOAT);
 
 					std::string name;
 					if (0 == i)
 						name = c;//standard name for COLOR channel
 					else
-						name = std::string(aov.folder.asChar()) + "." + c;
+						name = std::string(aov->folder.asChar()) + "." + c;
 
 					imgSpec.channelnames.push_back(name);
 				}
@@ -174,26 +176,26 @@ void FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 		}
 	}
 
-	size_t pixel_size = imgSpec.pixel_bytes(true) / sizeof(float);
+	size_t pixel_size = imgSpec.nchannels;
 	std::vector<float> pixels_for_oiio;
-	pixels_for_oiio.resize(imgSpec.image_pixels() * pixel_size * aovs.getNumberOfAOVs());
+	pixels_for_oiio.resize(imgSpec.image_pixels() * pixel_size);
 
 	//interleave aov components for OIIO(each pixel contains all channels data)
-	for (int y = 0; y != height; ++y)
+	for (int y = 0; y < height; ++y)
 	{
-		for (int x = 0; x != width; ++x)
+		for (int x = 0; x < width; ++x)
 		{
 			int pixel_index = x + y * width;
 
 			float* pixel = pixels_for_oiio.data() + pixel_size * pixel_index;
 
-			for (int i = 0; i != aovs.getNumberOfAOVs(); ++i)
+			for (int i = 0; i < RPR_AOV_MAX; ++i)
 			{
-				FireRenderAOV& aov = aovs.getAOV(i);
+				FireRenderAOV* aov = aovs.getAOV(i);
 				int aov_component_count = aovs_component_count[i];
 				if (aov_component_count)
 				{
-					auto aov_pixel = aov.pixels.get()[pixel_index];
+					auto aov_pixel = aov->pixels.get()[pixel_index];
 					pixel = std::copy(&aov_pixel.r, (&aov_pixel.r) + aov_component_count, pixel);
 				}
 			}
@@ -216,6 +218,8 @@ void FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 	imgSpec.channelformats.swap(temp0);
 	std::vector<std::string> temp1 = std::vector<std::string>();
 	imgSpec.channelnames.swap(temp1);
+
+	return true;
 }
 
 // -----------------------------------------------------------------------------
