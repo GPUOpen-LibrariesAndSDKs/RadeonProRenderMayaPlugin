@@ -14,6 +14,8 @@
 
 #include "TileRenderer.h"
 
+#include "RenderStampUtils.h"
+
 #ifdef OPTIMIZATION_CLOCK
 	#include <chrono>
 #endif
@@ -298,8 +300,14 @@ bool FireRenderProduction::stop()
 		FireRenderThread::RunProcOnMainThread([&]()
 		{
 			m_stopCallback(m_aovs, m_settings);
-
 			m_progressBars.reset();
+
+			std::string renderStampText = RenderStampUtils::FormatRenderStamp(*m_context, "\\nRender Time: %pt Passes: %pp");
+
+			MString command;
+			command.format("renderWindowEditor -e -pcaption \"^1s\" renderView", renderStampText.c_str());
+
+			MGlobal::executeCommandOnIdle(command);
 		});
 
 		if (m_context)
@@ -526,51 +534,6 @@ void FireRenderProduction::stopMayaRender()
 		return;
 
 	m_renderStarted = false;
-}
-
-// -----------------------------------------------------------------------------
-void FireRenderProduction::beginMayaUpdate()
-{
-	// No action is required for Maya versions higher than 2016.
-	if (MGlobal::apiVersion() >= 201650)
-		return;
-
-#ifndef MAYA2015
-	// Action is only required for the core profile renderer.
-	MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
-	if (renderer->drawAPI() != MHWRender::kOpenGLCoreProfile)
-		return;
-
-	// No action is required if the render has already been started.
-	if (m_renderStarted)
-		return;
-
-	// Start the render.
-	startMayaRender();
-#endif
-}
-
-// -----------------------------------------------------------------------------
-void FireRenderProduction::endMayaUpdate()
-{
-	// No action is required for Maya versions higher than 2016.
-	if (MGlobal::apiVersion() >= 201650)
-		return;
-
-#ifndef MAYA2015
-
-	// Action is only required for the core profile renderer.
-	MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
-	if (renderer->drawAPI() != MHWRender::kOpenGLCoreProfile)
-		return;
-
-	// Stop the render. This forces a render view
-	// refresh that is not correctly performed by the
-	// MRenderView::refresh in Maya 2016 when using the
-	// Core OpenGL rendering engine. This also prevents
-	// a memory leak in Maya.
-	stopMayaRender();
-#endif
 }
 
 // -----------------------------------------------------------------------------
