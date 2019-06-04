@@ -64,17 +64,68 @@ MObject Smoothed2ndUV(const MObject& object, MStatus& status)
 	MFnMesh fnClonedMesh(clonedMesh);
 	MStringArray uvSetNamesCloned;
 	fnClonedMesh.getUVSetNames(uvSetNamesCloned);
+
+#ifdef _DEBUG
+	{
+		std::vector<float> uOrig;
+		std::vector<float> vOrig;
+		MFloatArray uArrayOrig;
+		MFloatArray vArrayOrig;
+		fnClonedMesh.getUVs(uArrayOrig, vArrayOrig, &uvSetNamesCloned[0]);
+		dumpFloatArrDbg(uOrig, uArrayOrig);
+		dumpFloatArrDbg(vOrig, vArrayOrig);
+
+		fnClonedMesh.getUVs(uArrayOrig, vArrayOrig, &uvSetNamesCloned[1]);
+		dumpFloatArrDbg(uOrig, uArrayOrig);
+		dumpFloatArrDbg(vOrig, vArrayOrig);
+	}
+#endif
+
 	status = fnClonedMesh.deleteUVSet(uvSetNamesCloned[1]);
-	fnClonedMesh.clearUVs();
+	/*fnClonedMesh.clearUVs();
 	status = fnClonedMesh.setUVs(uArray, vArray);
-	status = fnClonedMesh.assignUVs(uvCounts, uvIds);
+	status = fnClonedMesh.assignUVs(uvCounts, uvIds);*/
+
+#ifdef _DEBUG
+	uvSetNamesCloned.clear();
+	fnClonedMesh.getUVSetNames(uvSetNamesCloned);
+	std::vector<MString> uvSetNamesDbg;
+	for (int idx = 0; idx < uvSetNamesCloned.length(); ++idx)
+	{
+		MString tName = uvSetNamesCloned[idx];
+		uvSetNamesDbg.push_back(tName);
+	}
+
+	{
+		std::vector<float> uOrig;
+		std::vector<float> vOrig;
+		MFloatArray uArrayOrig;
+		MFloatArray vArrayOrig;
+		fnClonedMesh.getUVs(uArrayOrig, vArrayOrig, &uvSetNamesCloned[0]);
+		dumpFloatArrDbg(uOrig, uArrayOrig);
+		dumpFloatArrDbg(vOrig, vArrayOrig);
+	}
+#endif
 
 	// proceed with smoothing
 	MFnDagNode dagClonedNode(clonedMesh);
 	MObject clonedSmoothedMesh = fnClonedMesh.generateSmoothMesh(dagClonedNode.parent(0), NULL, &status);
 
+#ifdef _DEBUG
+	{
+		MFnMesh fnCloned(clonedSmoothedMesh);
+		std::vector<float> uOrig;
+		std::vector<float> vOrig;
+		MFloatArray uArrayOrig;
+		MFloatArray vArrayOrig;
+		fnCloned.getUVs(uArrayOrig, vArrayOrig);
+		dumpFloatArrDbg(uOrig, uArrayOrig);
+		dumpFloatArrDbg(vOrig, vArrayOrig);
+	}
+#endif
+
 	// destroy temporary object
-	MGlobal::deleteNode(clonedMesh);
+	//MGlobal::deleteNode(clonedMesh);
 
 	return clonedSmoothedMesh;
 }
@@ -113,6 +164,55 @@ MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus
 
 	// for smooth preview case:
 	MObject smoothedMesh = mesh.generateSmoothMesh(parent, NULL, &status);
+
+	if (clonedSmoothedMesh != MObject::kNullObj)
+	{
+		// copy data of UV 0 of clonedSmoothedMesh into UV 1 of smoothedMesh
+		MFnMesh fnCloned(clonedSmoothedMesh);
+		MStringArray clonedUVSetNames;
+		fnCloned.getUVSetNames(clonedUVSetNames);
+		MFloatArray uArrayCloned;
+		MFloatArray vArrayCloned;
+		status = fnCloned.getUVs(uArrayCloned, vArrayCloned, &clonedUVSetNames[0]);
+
+		MIntArray uvCountsCloned;
+		MIntArray uvIdsCloned;
+		status = fnCloned.getAssignedUVs(uvCountsCloned, uvIdsCloned, &clonedUVSetNames[0]);
+
+		MFnMesh fnOrigSmoothed(smoothedMesh);
+
+		MString newUVSetName("uv2");
+		fnOrigSmoothed.createUVSetWithName("uv2", NULL, &status);
+
+		status = fnOrigSmoothed.setUVs(uArrayCloned, vArrayCloned, &newUVSetName);
+		status = fnOrigSmoothed.assignUVs(uvCountsCloned, uvIdsCloned, &newUVSetName);
+
+#ifdef _DEBUG
+		MStringArray smoothedUVSetNames;
+		fnOrigSmoothed.getUVSetNames(smoothedUVSetNames);
+		std::vector<MString> uvSetNamesDbg;
+		for (int idx = 0; idx < smoothedUVSetNames.length(); ++idx)
+		{
+			MString tName = smoothedUVSetNames[idx];
+			uvSetNamesDbg.push_back(tName);
+		}
+
+		std::vector<float> uOrig;
+		std::vector<float> vOrig;
+		MFloatArray uArrayOrig;
+		MFloatArray vArrayOrig;
+		fnOrigSmoothed.getUVs(uArrayOrig, vArrayOrig, &uvSetNamesDbg[0]);
+		dumpFloatArrDbg(uOrig, uArrayCloned);
+		dumpFloatArrDbg(vOrig, vArrayCloned);
+
+		status = fnOrigSmoothed.getUVs(uArrayCloned, vArrayCloned, &smoothedUVSetNames[1]);
+
+		std::vector<float> u;
+		std::vector<float> v;
+		dumpFloatArrDbg(u, uArrayCloned);
+		dumpFloatArrDbg(v, vArrayCloned);
+#endif
+	}
 
 	return smoothedMesh;
 }
