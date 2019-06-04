@@ -176,9 +176,6 @@ namespace RenderStampUtils
 	// Render stamp string formatting function
 	//-------------------------------------------------------------------------------------------------
 
-	// Please update help text when adding new tokens here. If could be found in
-	// scripts/createFireRenderGlobalsTab.mel, showRenderStampHelp().
-
 	std::string FormatRenderStamp(FireRenderContext& context, const char* format)
 	{
 		if (!format || !format[0])
