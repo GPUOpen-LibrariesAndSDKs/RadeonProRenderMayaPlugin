@@ -885,144 +885,207 @@ void FireRenderMesh::setupDisplacement(MObject shadingEngine, frw::Shape shape)
 	}
 }
 
-void FireRenderMesh::Rebuild()
+void FireRenderMesh::ReloadMesh(MDagPath& meshPath, MObjectArray& shadingEngines)
 {
-	auto node = Object();
-	MFnDagNode meshFn(node);
-	MString name = meshFn.name();
-	MDagPath meshPath = DagPath();
+	MMatrix mMtx = meshPath.inclusiveMatrix();
+	setVisibility(false);
 
+	if (m.isMainInstance && m.elements.size() > 0)
+	{
+		this->context()->RemoveMainMesh(getNodeUUid(Object()));
+	}
+
+	m.elements.clear();
+
+	MObjectArray shaderObjs;
+	std::vector<frw::Shape> shapes;
+
+	// node is not visible => skip
+	if (IsMeshVisible(meshPath, this->context()))
+	{
+		GetShapes(Object(), shapes);
+	}
+
+	m.elements.resize(shapes.size());
+	for (unsigned int i = 0; i < shapes.size(); i++)
+	{
+		m.elements[i].shape = shapes[i];
+		m.elements[i].shadingEngine = shadingEngines[i < shadingEngines.length() ? i : 0];
+	}
+}
+
+bool IsUberEmissive(frw::Shader shader)
+{
+	// back-off
+	if (!shader.IsRprxMaterial())
+		return false;
+
+	rprx_material mHandle = shader.GetHandleRPRXmaterial();
+
+	rpr_parameter_type rprType = 0;
+	rpr_int res = rprxMaterialGetParameterType(
+		(rprx_context)shader.GetContext().Handle(),
+		mHandle,
+		RPRX_UBER_MATERIAL_EMISSION_WEIGHT,
+		&rprType);
+
+	assert(rprType == RPRX_PARAMETER_TYPE_FLOAT4);
+	float emissionWeightValue[] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+	res = rprxMaterialGetParameterValue(
+		(rprx_context)shader.GetContext().Handle(),
+		mHandle,
+		RPRX_UBER_MATERIAL_EMISSION_WEIGHT,
+		&emissionWeightValue);
+
+	if (emissionWeightValue[0] > 0.0f)
+		return true;
+
+	return false;
+}
+
+void FireRenderMesh::ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngines)
+{
 	FireRenderContext *context = this->context();
 
-	auto shadingEngines = GetShadingEngines(meshFn, Instance());
+	MFnDependencyNode nodeFn(Object());
 
+	for (int i = 0; i < m.elements.size(); i++)
+	{
+		auto& element = m.elements[i];
+		element.shadingEngine = shadingEngines[i];
+		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine));
+		element.volumeShader = context->GetVolumeShader(getVolumeShader(element.shadingEngine));
+
+		setupDisplacement(element.shadingEngine, element.shape);
+
+		if (!element.volumeShader)
+			element.volumeShader = context->GetVolumeShader(getSurfaceShader(element.shadingEngine));
+
+		// if no valid surface shader, we should set to transparent in case of volumes present
+		if (element.volumeShader)
+		{
+			if (!element.shader || element.shader == element.volumeShader)	// also catch case where volume assigned to surface
+				element.shader = frw::TransparentShader(context->GetMaterialSystem());
+		}
+
+		if (element.shape)
+		{
+			element.shape.SetShader(element.shader);
+			element.shape.SetVolumeShader(element.volumeShader);
+			frw::ShaderType shType = element.shader.GetShaderType();
+			if (shType == frw::ShaderTypeEmissive)
+				m.isEmissive = true;
+
+			if ((shType == frw::ShaderTypeRprx) && (IsUberEmissive(element.shader)) )
+			{
+				m.isEmissive = true;
+			}
+		}
+	}
+
+	RebuildTransforms();
+	setRenderStats(meshPath);
+}
+
+void FireRenderMesh::ProcessIBLLight(void)
+{
+	FireRenderContext *context = this->context();
+
+	MObject temp = context->iblTransformObject;
+	MFnTransform iblLightTransform(temp);
+
+	if (iblLightTransform.isParentOf(Object()))
+	{
+		if (!m_isPortal_IBL)
+		{
+			m_isPortal_IBL = false;
+			context->iblLight->setDirty();
+		}
+	}
+	else {
+		if (m_isPortal_IBL)
+		{
+			if (context->skyLight)
+			{
+				// in case we move object from IBL to skylight
+				MObject temp2 = context->skyTransformObject;
+				MFnTransform skyLightTransform(temp2);
+
+				if (skyLightTransform.isParentOf(Object()))
+				{
+					if (!m_isPortal_SKY)
+					{
+						m_isPortal_SKY = false;
+						context->skyLight->setDirty();
+					}
+				}
+			}
+
+
+			m_isPortal_IBL = false;
+			context->iblLight->setDirty();
+		}
+	}
+}
+
+void FireRenderMesh::ProcessSkyLight(void)
+{
+	FireRenderContext *context = this->context();
+
+	MObject temp = context->skyTransformObject;
+	MFnTransform skyLightTransform(temp);
+
+	if (skyLightTransform.isParentOf(Object()))
+	{
+		if (!m_isPortal_SKY)
+		{
+			m_isPortal_SKY = false;
+			context->skyLight->setDirty();
+		}
+	}
+	else {
+		if (m_isPortal_SKY)
+		{
+			m_isPortal_SKY = false;
+			context->skyLight->setDirty();
+		}
+	}
+}
+
+void FireRenderMesh::Rebuild()
+{
 	m.isEmissive = false;
+	
+	MFnDagNode meshFn(Object());
+	MObjectArray shadingEngines = GetShadingEngines(meshFn, Instance());
+
+#ifdef _DEBUG
+	MString name = meshFn.name();
+#endif
+
+	MDagPath meshPath = DagPath();
 
 	// If there is just one shader and the number of shader is not changed then just update the shader
 	if (m.changed.mesh || (shadingEngines.length() != m.elements.size()))
 	{
-		// the number of shader is changed so reload the mesh
-
-		MMatrix mMtx = meshPath.inclusiveMatrix();
-		setVisibility(false);
-
-		if (m.isMainInstance && m.elements.size() > 0)
-		{
-			context->RemoveMainMesh(getNodeUUid(node));
-		}
-
-		m.elements.clear();
-
-		MObjectArray shaderObjs;
-		std::vector<frw::Shape> shapes;
-
-		// node is not visible => skip
-		if (IsMeshVisible(meshPath, this->context()))
-		{
-			GetShapes(node, shapes);
-		}
-				
-		m.elements.resize(shapes.size());
-		for (unsigned int i = 0; i < shapes.size(); i++)
-		{
-			m.elements[i].shape = shapes[i];
-			m.elements[i].shadingEngine = shadingEngines[i < shadingEngines.length() ? i : 0];
-		}
+		// the number of shader has changed so reload the mesh
+		ReloadMesh(meshPath, shadingEngines);
 	}
 
 	if (meshPath.isValid())
 	{
-		MFnDependencyNode nodeFn(node);
-
-		for (int i = 0; i < m.elements.size(); i++)
-		{
-			auto& element = m.elements[i];
-			element.shadingEngine = shadingEngines[i];
-			element.shader = context->GetShader(getSurfaceShader(element.shadingEngine));
-			element.volumeShader = context->GetVolumeShader(getVolumeShader(element.shadingEngine));
-
-			setupDisplacement(element.shadingEngine, element.shape);
-
-			if (!element.volumeShader)
-				element.volumeShader = context->GetVolumeShader(getSurfaceShader(element.shadingEngine));
-
-			// if no valid surface shader, we should set to transparent in case of volumes present
-			if (element.volumeShader)
-			{
-				if (!element.shader || element.shader == element.volumeShader)	// also catch case where volume assigned to surface
-					element.shader = frw::TransparentShader(context->GetMaterialSystem());
-			}
-
-			if (element.shape)
-			{
-				element.shape.SetShader(element.shader);
-				element.shape.SetVolumeShader(element.volumeShader);
-				if (element.shader.GetShaderType() == frw::ShaderTypeEmissive)
-					m.isEmissive = true;
-			}
-		}
-		RebuildTransforms();
-		setRenderStats(meshPath);
+		ProcessMesh(meshPath, shadingEngines);
 	}
 
-	if (context->iblLight) {
-		MObject temp = context->iblTransformObject;
-		MFnTransform iblLightTransform(temp);
-
-		if (iblLightTransform.isParentOf(node))
-		{
-			if (!m_isPortal_IBL)
-			{
-				m_isPortal_IBL = false;
-				context->iblLight->setDirty();
-			}
-		}
-		else {
-			if (m_isPortal_IBL)
-			{
-				if (context->skyLight)
-				{
-					// in case we move object from IBL to skylight
-					MObject temp2 = context->skyTransformObject;
-					MFnTransform skyLightTransform(temp2);
-
-					if (skyLightTransform.isParentOf(node))
-					{
-						if (!m_isPortal_SKY)
-						{
-							m_isPortal_SKY = false;
-							context->skyLight->setDirty();
-						}
-					}
-				}
-
-
-				m_isPortal_IBL = false;
-				context->iblLight->setDirty();
-			}
-		}
-	}
-
-	if (context->skyLight)
+	if (this->context()->iblLight)
 	{
-		MObject temp = context->skyTransformObject;
-		MFnTransform skyLightTransform(temp);
+		ProcessIBLLight();
+	}
 
-		if (skyLightTransform.isParentOf(node))
-		{
-			if (!m_isPortal_SKY)
-			{
-				m_isPortal_SKY = false;
-				context->skyLight->setDirty();
-			}
-		}
-		else {
-			if (m_isPortal_SKY)
-			{
-				m_isPortal_SKY = false;
-				context->skyLight->setDirty();
-			}
-		}
+	if (this->context()->skyLight)
+	{
+		ProcessSkyLight();
 	}
 
 	m.changed.mesh = false;
