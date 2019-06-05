@@ -1063,8 +1063,10 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 	size_t dataSize;
 	std::vector<float> vecData;
 
+	bool isDenoiserEnabled = m_denoiserFilter != nullptr;
+
 	// apply Denoiser
-	if (aov == RPR_AOV_COLOR && m_denoiserFilter != nullptr)
+	if (aov == RPR_AOV_COLOR && isDenoiserEnabled)
 	{
 		try
 		{
@@ -1128,9 +1130,10 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 			}
 		}
 	}
+
 	// Copy the region from the temporary
 	// buffer into supplied pixel memory.
-	if (useTempData)
+	if (useTempData || isDenoiserEnabled)
 	{
 		copyPixels(pixels, data, width, height, region, flip, aov == RPR_AOV_COLOR);
 	}
