@@ -291,7 +291,7 @@ void FireRenderSkyLocator::AddSelectedMeshToPortalList(void)
 		}
 
 		MFnDagNode mFnInputNode(mFnInputShapeNode.parent(0));
-		MString inputNodeName = mFnInputShapeNode.name();
+		MString inputNodeName = mFnInputNode.name();
 		MString cmd = "setAttr " + inputNodeName + ".inheritsTransform 0; ";
 		MStatus status = MGlobal::executeCommand(cmd);
 		CHECK_MSTATUS(status);
