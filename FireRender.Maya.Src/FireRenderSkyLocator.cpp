@@ -282,31 +282,22 @@ void FireRenderSkyLocator::AddSelectedMeshToPortalList(void)
 			continue;
 
 		MFnDagNode mFnThisNode(nodeObject);
-		MObject iblNode = mFnThisNode.parent(0);
+		MObject skyNode = mFnThisNode.parent(0);
 
-		MFnDagNode mFnInputNode(inputObj);
-		if (mFnInputNode.isChildOf(iblNode))
+		MFnDagNode mFnInputShapeNode(inputObj);
+		if (mFnInputShapeNode.isChildOf(skyNode))
 		{
 			continue;
 		}
 
-		MFnTransform iblTransform(mFnThisNode.parent(0));
-		MTransformationMatrix iblTrans = iblTransform.transformation();
-		MMatrix iblTransInverted = iblTrans.asMatrixInverse();
-
-		sList.getDagPath(i, path);
-
-		MFnTransform meshTransform(path.node());
-		MTransformationMatrix meshTrans = meshTransform.transformation();
-		MMatrix trans = meshTrans.asMatrix();
-
-		trans = trans * iblTransInverted;
-		MTransformationMatrix newTrans(trans);
-
-		meshTransform.set(newTrans);
+		MFnDagNode mFnInputNode(mFnInputShapeNode.parent(0));
+		MString inputNodeName = mFnInputShapeNode.name();
+		MString cmd = "setAttr " + inputNodeName + ".inheritsTransform 0; ";
+		MStatus status = MGlobal::executeCommand(cmd);
+		CHECK_MSTATUS(status);
 
 		MDagModifier dagModifier;
-		MStatus result = dagModifier.reparentNode(path.node(), iblNode);
+		MStatus result = dagModifier.reparentNode(mFnInputShapeNode.parent(0), skyNode);
 		dagModifier.doIt();
 	}
 }
