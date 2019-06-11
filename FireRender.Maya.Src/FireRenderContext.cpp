@@ -360,6 +360,14 @@ void FireRenderContext::turnOnAOVsForDenoiser(bool allocBuffer)
 	}
 }
 
+#if defined(LINUX) || defined(OSMac_)
+bool FireRenderContext::CanCreateAiDenoiser() const
+{
+	return false;
+}
+
+#else
+
 bool FireRenderContext::CanCreateAiDenoiser() const
 {
 	bool canCreateAiDenoiser = false;
@@ -390,6 +398,7 @@ bool FireRenderContext::CanCreateAiDenoiser() const
 
 	return canCreateAiDenoiser;
 }
+#endif
 
 void FireRenderContext::setupDenoiser()
 {
