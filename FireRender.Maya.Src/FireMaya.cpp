@@ -12,6 +12,7 @@
 #include <maya/MSceneMessage.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MUuid.h>
+#include <maya/MItDependencyGraph.h>
 
 #include <exception>
 
@@ -944,7 +945,37 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 
 	case MayaNodePlace2dTexture:
 	{
-		auto value = materialSystem.ValueLookupUV(0);
+		// get connected texture
+		MString textureFile("");
+
+		MStatus status;
+		MItDependencyGraph it(node,
+			MFn::kFileTexture,
+			MItDependencyGraph::kDownstream,
+			MItDependencyGraph::kBreadthFirst,
+			MItDependencyGraph::kNodeLevel,
+			&status);
+		for (; !it.isDone(); it.next())
+		{
+			MFnDependencyNode fileNode(it.currentItem());
+			status = fileNode.findPlug("fileTextureName").getValue(textureFile);
+
+			break;
+		}
+
+		// get uv data
+		int uvIdx = 0;
+		const FireRenderMesh* pMesh = m->m_pCurrentlyParsedMesh;
+		if (pMesh != nullptr)
+		{
+			uvIdx = pMesh->GetAssignedUVMapIdx(textureFile);
+		}
+
+		if (uvIdx == -1)
+			uvIdx = 0;
+
+		// create node
+		auto value = materialSystem.ValueLookupUV(uvIdx);
 
 		// rotate frame
 		auto rotateFrame = GetValue(shaderNode.findPlug("rotateFrame"));
@@ -1699,7 +1730,7 @@ FireMaya::Scope::~Scope()
 }
 
 
-frw::Shader FireMaya::Scope::GetShader(MObject node, bool forceUpdate)
+frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMesh* pMesh, bool forceUpdate)
 {
 	if (node.isNull())
 		return frw::Shader();
@@ -1713,10 +1744,15 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, bool forceUpdate)
 			RegisterCallback(node);
 
 		DebugPrint("Parsing shader: %s (forceUpdate=%d, shader.IsDirty()=%d)", shaderId.c_str(), forceUpdate, shader.IsDirty());
+
+		m->m_pCurrentlyParsedMesh = pMesh;
+
 		// create now
 		shader = ParseShader(node);
 		if (shader)
 			SetCachedShader(shaderId, shader);
+
+		m->m_pCurrentlyParsedMesh = nullptr;
 	}
 	return shader;
 }
@@ -1894,6 +1930,7 @@ frw::Shader FireMaya::Scope::GetVolumeShader(MPlug plug)
 }
 
 FireMaya::Scope::Data::Data()
+	: m_pCurrentlyParsedMesh(nullptr)
 {
 }
 
