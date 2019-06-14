@@ -932,13 +932,11 @@ void FireRenderMesh::Rebuild()
 
 	if (meshPath.isValid())
 	{
-		MFnDependencyNode nodeFn(node);
-
 		for (int i = 0; i < m.elements.size(); i++)
 		{
 			auto& element = m.elements[i];
 			element.shadingEngine = shadingEngines[i];
-			element.shader = context->GetShader(getSurfaceShader(element.shadingEngine));
+			element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this);
 			element.volumeShader = context->GetVolumeShader(getVolumeShader(element.shadingEngine));
 
 			setupDisplacement(element.shadingEngine, element.shape);
@@ -1081,6 +1079,54 @@ void FireRenderMesh::GetShapes(const MFnDagNode& meshNode, std::vector<frw::Shap
 		m.isMainInstance = true;
 		context->AddMainMesh(meshNode.object(), this);
 	}
+
+	SaveUsedUV(meshNode.object());
+}
+
+void FireRenderMesh::SaveUsedUV(const MObject& meshNode)
+{
+	if (!meshNode.hasFn(MFn::kMesh))
+		return;
+
+	MStatus mstatus;
+	MFnMesh fnMesh(meshNode, &mstatus);
+	if (mstatus != MStatus::kSuccess)
+	{
+		return;
+	}
+
+	MStringArray uvSetNames;
+	mstatus = fnMesh.getUVSetNames(uvSetNames);
+	if (mstatus != MStatus::kSuccess)
+	{
+		return;
+	}
+
+	int uvSetCount = fnMesh.numUVSets();
+	for (int idx = 0; idx < uvSetCount; ++idx)
+	{
+		MString tmpName = uvSetNames[idx];
+		MObjectArray textures;
+		mstatus = fnMesh.getAssociatedUVSetTextures(tmpName, textures);
+
+		int texturesCount = textures.length();
+		for (int texture_idx = 0; texture_idx < texturesCount; texture_idx++)
+		{
+			MObject tObject = textures[texture_idx];
+
+			MFnDependencyNode fnNode(tObject);
+			MObject attrObj = fnNode.attribute("fileTextureName");
+			MFnAttribute attr(attrObj);
+			MPlug plug = fnNode.findPlug(attr.object(), &mstatus);
+			CHECK_MSTATUS(mstatus);
+			MString textureFilePath;
+			mstatus = plug.getValue(textureFilePath);
+
+			// only one uv coordinates set can be attached to texture file
+			// this is the limitation of Maya's relationship editor
+			m_uvSetCachedMappingData[textureFilePath.asChar()] = idx;
+		}		
+	}
 }
 
 void FireRenderMesh::RebuildTransforms()
@@ -1182,6 +1228,16 @@ void FireRenderMesh::ShaderDirtyCallback(MObject& node, void* clientData)
 		assert(node != self->Object());
 		self->OnShaderDirty();
 	}
+}
+
+unsigned int FireRenderMesh::GetAssignedUVMapIdx(MString& textureFile) const
+{
+	auto it = m_uvSetCachedMappingData.find(textureFile.asChar());
+
+	if (it == m_uvSetCachedMappingData.end())
+		return -1;
+
+	return it->second;
 }
 
 void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)

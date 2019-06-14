@@ -134,6 +134,8 @@ MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus
 {
 	status = MStatus::kSuccess;
 
+	return MObject::kNullObj;
+
 	DependencyNode attributes(object);
 	bool smoothPreview = attributes.getBool("displaySmoothMesh");
 

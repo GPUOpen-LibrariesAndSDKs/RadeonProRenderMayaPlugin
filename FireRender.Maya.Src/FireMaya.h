@@ -12,6 +12,8 @@
 #include <maya/MNodeMessage.h>
 #include "FireRenderContextIFace.h"
 
+class FireRenderMesh;
+
 namespace FireMaya
 {
 	class Scope;
@@ -215,6 +217,8 @@ namespace FireMaya
 			std::list<MCallbackId> callbackId;
 			std::map<std::string, frw::Image> imageCache;
 
+			FireRenderMesh const* m_pCurrentlyParsedMesh; // is not supposed to keep any data outside of during mesh parsing 
+
 			Data();
 			~Data();
 		};
@@ -281,7 +285,7 @@ namespace FireMaya
 		~Scope();
 
 		// by object
-		frw::Shader GetShader(MObject ob, bool forceUpdate = false);
+		frw::Shader GetShader(MObject ob, const FireRenderMesh* pMesh = nullptr, bool forceUpdate = false);
 		frw::Shader GetShader(MPlug ob);
 		frw::Shader GetShadowCatcherShader();
 
