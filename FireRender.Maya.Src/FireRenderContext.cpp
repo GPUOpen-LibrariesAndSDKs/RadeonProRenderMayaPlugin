@@ -2059,7 +2059,7 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 
 	rpr_framebuffer frameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
 	rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
-	rpr_framebuffer shadowCatcherFrameBuffer = frameBufferAOV(RPR_AOV_SHADOW_CATCHER);
+	rpr_framebuffer shadowCatcherFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_SHADOW_CATCHER);
 	rpr_framebuffer backgroundFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_BACKGROUND);
 
 	// Get data from the RPR frame buffer.
@@ -2073,6 +2073,9 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 
 	frw::Context context = GetContext();
 
+	RprComposite noAlpha(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	noAlpha.SetInput4f("constant.input", 1.0f, 1.0f, 1.0f, 0.0f);
+
 	/* background * (1-(alpha+sc)) + color*alpha */
 	// step 1 
 	// color*alpha
@@ -2082,12 +2085,14 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	RprComposite compositeOpacity1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
 	compositeOpacity1.SetInputFb("framebuffer.input", opacityFrameBuffer);
 
-	/*RprComposite step1(context.Handle(), RPR_COMPOSITE_LERP_VALUE);
-	step1.SetInputC("lerp.color0", compositeColor1);
-	step1.SetInputC("lerp.weight", compositeOpacity1);*/
+	RprComposite compositeOpacityNoAlpha(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	compositeOpacityNoAlpha.SetInputC("arithmetic.color0", noAlpha);
+	compositeOpacityNoAlpha.SetInputC("arithmetic.color1", compositeOpacity1);
+	compositeOpacityNoAlpha.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+
 	RprComposite step1(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
 	step1.SetInputC("arithmetic.color0", compositeColor1);
-	step1.SetInputC("arithmetic.color1", compositeOpacity1);
+	step1.SetInputC("arithmetic.color1", compositeOpacityNoAlpha);
 	step1.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
 
 	// step 2
@@ -2095,9 +2100,14 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	RprComposite compositeShadowCatcher1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
 	compositeShadowCatcher1.SetInputFb("framebuffer.input", shadowCatcherFrameBuffer);
 
+	RprComposite compositeShadowCatcherNoAlpha(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	compositeShadowCatcherNoAlpha.SetInputC("arithmetic.color0", noAlpha);
+	compositeShadowCatcherNoAlpha.SetInputC("arithmetic.color1", compositeShadowCatcher1);
+	compositeShadowCatcherNoAlpha.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+
 	RprComposite step21(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step21.SetInputC("arithmetic.color0", compositeShadowCatcher1);
-	step21.SetInputC("arithmetic.color1", compositeOpacity1);
+	step21.SetInputC("arithmetic.color0", compositeShadowCatcherNoAlpha);
+	step21.SetInputC("arithmetic.color1", compositeOpacityNoAlpha);
 	step21.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_ADD);
 
 	RprComposite composite1Color(context.Handle(), RPR_COMPOSITE_CONSTANT);
