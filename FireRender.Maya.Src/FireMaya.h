@@ -288,8 +288,15 @@ namespace FireMaya
 		frw::Shader GetVolumeShader( MObject ob, bool forceUpdate = false );
 		frw::Shader GetVolumeShader( MPlug ob );
 
-		frw::Image  GetImage(MString path, MString colorSpace, const MString& ownerNodeName, bool flipX = false);
-		frw::Image  GetAdjustedImage(MString texturePath,
+		frw::Image GetImage(MString path, MString colorSpace, const MString& ownerNodeName, bool flipX = false);
+
+		frw::Image GetTiledImage(MString texturePath, 
+			int viewWidth, int viewHeight,
+			float tileSizeX, float tileSizeY,
+			int xTileIdx, int yTileIdx,
+			MString colorSpace);
+
+		frw::Image GetAdjustedImage(MString texturePath,
 			int viewWidth, int viewHeight,
 			FitType fit, double contrast, double brightness,
 			FitType filmFit, double overScan,
