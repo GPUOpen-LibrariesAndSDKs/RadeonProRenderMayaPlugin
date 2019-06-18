@@ -194,6 +194,68 @@ void convertColorSpace(MString colorSpace, rpr_image_format format, rpr_image_de
 #endif
 }
 
+frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
+	int viewWidth, int viewHeight,
+	float tileSizeX, float tileSizeY,
+	int xTileIdx, int yTileIdx,
+	MString colorSpace)
+{
+	if (texturePath.length() == 0)
+	{
+		return NULL;
+	}
+
+	char key[1024] = {};
+	int written = snprintf(key, 1024, "%s-%d-%d-%d-%d",
+		texturePath.asUTF8(),
+		viewWidth, viewHeight,
+		xTileIdx, yTileIdx);
+	assert(written >= 0 && written < 1024);
+
+	auto it = m->imageCache.find(key);
+	if (it != m->imageCache.end())
+	{
+		DebugPrint("Using cached image from imageCache...");
+		return it->second;
+	}
+
+	frw::Image retImage = FireRenderThread::RunOnMainThread<frw::Image>([&]()
+	{
+		MAIN_THREAD_ONLY; // MTextureManager will not work in other threads
+
+		frw::Image image;
+		if (auto renderer = MHWRender::MRenderer::theRenderer())
+		{
+			if (MTextureManager* textureManager = renderer->getTextureManager())
+			{
+				if (MTexture* texture = textureManager->acquireTexture(texturePath))
+				{
+					MHWRender::MTextureDescription desc = {};
+					texture->textureDescription(desc);
+
+#if MAYA_API_VERSION >= 20180000
+					size_t slicePitch = 0;
+#else
+					int slicePitch = 0;
+#endif
+					int rowPitch = 0;
+					if (void* rawData = texture->rawData(rowPitch, slicePitch))
+					{
+						const unsigned char* pixels = static_cast<const unsigned char*>(rawData);
+						unsigned int srcPixSize = desc.fBytesPerRow / desc.fWidth;
+
+						int componentSize = srcPixSize > 4 ? 4 : 1;
+					}
+				}
+			}
+		}
+
+		return image;
+	});
+
+	return retImage;
+}
+
 frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, const MString& ownerNodeName, bool flipX)
 {
 	if (texturePath.length() == 0)
@@ -222,11 +284,11 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 		{
 			if (auto renderer = MHWRender::MRenderer::theRenderer())
 			{
-				if (auto textureManager = renderer->getTextureManager())
+				if (MTextureManager* textureManager = renderer->getTextureManager())
 				{
 					try
 					{
-						if (auto texture = textureManager->acquireTexture(texturePath, ownerNodeName))
+						if (MTexture* texture = textureManager->acquireTexture(texturePath, ownerNodeName))
 						{
 							MHWRender::MTextureDescription desc = {};
 							texture->textureDescription(desc);
@@ -236,7 +298,7 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 							int slicePitch = 0;
 #endif
 							int rowPitch = 0;
-							if (const auto rawData_to_free = texture->rawData(rowPitch, slicePitch))
+							if (void* rawData_to_free = texture->rawData(rowPitch, slicePitch))
 							{
 								auto srcData = rawData_to_free;
 								auto width = desc.fWidth;
@@ -487,9 +549,9 @@ frw::Image FireMaya::Scope::GetAdjustedImage(MString texturePath,
 		frw::Image image;
 		if (auto renderer = MHWRender::MRenderer::theRenderer())
 		{
-			if (auto textureManager = renderer->getTextureManager())
+			if (MTextureManager* textureManager = renderer->getTextureManager())
 			{
-				if (auto texture = textureManager->acquireTexture(texturePath))
+				if (MTexture* texture = textureManager->acquireTexture(texturePath))
 				{
 					MHWRender::MTextureDescription desc = {};
 					texture->textureDescription(desc);
@@ -500,7 +562,7 @@ frw::Image FireMaya::Scope::GetAdjustedImage(MString texturePath,
 					int slicePitch = 0;
 #endif
 					int rowPitch = 0;
-					if (auto rawData = texture->rawData(rowPitch, slicePitch))
+					if (void* rawData = texture->rawData(rowPitch, slicePitch))
 					{
 						auto pixels = static_cast<const unsigned char*>(rawData);
 						auto srcPixSize = desc.fBytesPerRow / desc.fWidth;
