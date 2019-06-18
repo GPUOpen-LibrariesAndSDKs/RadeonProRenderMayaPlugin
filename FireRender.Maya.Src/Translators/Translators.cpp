@@ -333,7 +333,15 @@ namespace FireMaya
 			frlight.light.SetTransform((rpr_float*)mfloats);
 		}
 
-		frlight.light.SetName(MFnDependencyNode(dagPath.transform()).name().asChar());
+		const char* lightName = MFnDependencyNode(dagPath.transform()).name().asChar();
+		if (frlight.light)
+		{
+			frlight.light.SetName(lightName);
+		}
+		else if (frlight.areaLight)
+		{
+			frlight.areaLight.SetName(lightName);
+		}
 
 		return ret;
 	}
