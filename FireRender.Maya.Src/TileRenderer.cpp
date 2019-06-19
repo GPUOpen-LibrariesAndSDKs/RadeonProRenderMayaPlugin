@@ -63,6 +63,24 @@ void TileRenderer::Render(FireRenderContext& renderContext, const TileRenderInfo
 				assert(false);
 			}
 
+			// process back plate
+			{ 
+				MObject node = fireRenderCamera.Object();
+				MFnDagNode dagNode(node);
+				//MDagPath dagPath = fireRenderCamera.DagPath();
+				MPlug imagePlanePlug = dagNode.findPlug("imagePlane");
+				MObject imagePlane = FireMaya::GetConnectedNode(imagePlanePlug);
+				MString name = fireRenderCamera.GetPlugValue(imagePlane, "imageName", MString());
+				MString colorSpace;
+				frw::Image image = fireRenderCamera.Scope().GetTiledImage(name,
+					info.totalWidth, info.totalHeight,
+					info.tileSizeX, info.tileSizeY,
+					xTiles, yTiles,
+					xTile, yTile,
+					colorSpace);
+				fireRenderCamera.Scene().SetBackgroundImage(image);
+			}
+
 			counter++;
 			if (!callbackFunc(region, 100 * counter / (xTiles * yTiles)))
 			{
