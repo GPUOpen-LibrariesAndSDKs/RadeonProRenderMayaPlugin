@@ -194,17 +194,127 @@ void convertColorSpace(MString colorSpace, rpr_image_format format, rpr_image_de
 #endif
 }
 
+std::tuple<int, int, bool> getTexturePixelStride(MHWRender::MRasterFormat fFormat)
+{
+	int channels = 1;
+	int componentSize = 0;
+	bool success = false;
+
+	switch (fFormat)
+	{
+		//case MHWRender::kD24S8: break;
+		//case MHWRender::kD24X8: break;
+		//case MHWRender::kD32_FLOAT: break;
+		//case MHWRender::kR24G8: break;
+		//case MHWRender::kR24X8: break;
+		//case MHWRender::kDXT1_UNORM: break;
+		//case MHWRender::kDXT1_UNORM_SRGB: break;
+		//case MHWRender::kDXT2_UNORM: break;
+		//case MHWRender::kDXT2_UNORM_SRGB: break;
+		//case MHWRender::kDXT2_UNORM_PREALPHA: break;
+		//case MHWRender::kDXT3_UNORM: break;
+		//case MHWRender::kDXT3_UNORM_SRGB: break;
+		//case MHWRender::kDXT3_UNORM_PREALPHA: break;
+		//case MHWRender::kDXT4_UNORM: break;
+		//case MHWRender::kDXT4_SNORM: break;
+		//case MHWRender::kDXT5_UNORM: break;
+		//case MHWRender::kDXT5_SNORM: break;
+		//case MHWRender::kR9G9B9E5_FLOAT: break;
+		//case MHWRender::kR1_UNORM: break;
+	case MHWRender::kA8:
+	case MHWRender::kR8_UNORM:
+		//case MHWRender::kR8_SNORM: break;
+	case MHWRender::kR8_UINT:
+		//case MHWRender::kR8_SINT: break;
+	case MHWRender::kL8:
+		channels = 1;
+		componentSize = 1;
+		break;
+
+	case MHWRender::kR16_FLOAT:
+		channels = 1;
+		componentSize = 2;
+		break;
+		//case MHWRender::kR16_UNORM: break;
+		//case MHWRender::kR16_SNORM: break;
+		//case MHWRender::kR16_UINT: break;
+		//case MHWRender::kR16_SINT: break;
+		//case MHWRender::kL16: break;
+		//case MHWRender::kR8G8_UNORM: break;
+		//case MHWRender::kR8G8_SNORM: break;
+		//case MHWRender::kR8G8_UINT: break;
+		//case MHWRender::kR8G8_SINT: break;
+		//case MHWRender::kB5G5R5A1: break;
+		//case MHWRender::kB5G6R5: break;
+	case MHWRender::kR32_FLOAT:
+		channels = 1;
+		componentSize = 4;
+		break;
+		//case MHWRender::kR32_UINT: break;
+		//case MHWRender::kR32_SINT: break;
+		//case MHWRender::kR16G16_FLOAT: break;
+		//case MHWRender::kR16G16_UNORM: break;
+		//case MHWRender::kR16G16_SNORM: break;
+		//case MHWRender::kR16G16_UINT: break;
+		//case MHWRender::kR16G16_SINT: break;
+	case MHWRender::kR8G8B8A8_UNORM:
+		//case MHWRender::kR8G8B8A8_SNORM: break;
+	case MHWRender::kR8G8B8A8_UINT:
+		channels = 4;
+		componentSize = 1;
+		break;
+		//case MHWRender::kR8G8B8A8_SINT: break;
+		//case MHWRender::kR10G10B10A2_UNORM: break;
+		//case MHWRender::kR10G10B10A2_UINT: break;
+		//case MHWRender::kB8G8R8A8: break;
+		//case MHWRender::kB8G8R8X8: break;
+	case MHWRender::kR8G8B8X8:
+		channels = 4;
+		componentSize = 1;
+		break;
+		//case MHWRender::kA8B8G8R8: break;
+		//case MHWRender::kR32G32_FLOAT: break;
+		//case MHWRender::kR32G32_UINT: break;
+		//case MHWRender::kR32G32_SINT: break;
+	case MHWRender::kR16G16B16A16_FLOAT:
+		channels = 4;
+		componentSize = 2;
+		break;
+		//case MHWRender::kR16G16B16A16_UNORM: break;
+		//case MHWRender::kR16G16B16A16_SNORM: break;
+		//case MHWRender::kR16G16B16A16_UINT: break;
+		//case MHWRender::kR16G16B16A16_SINT: break;
+	case MHWRender::kR32G32B32_FLOAT:
+		channels = 3;
+		componentSize = 4;
+		break;
+		//case MHWRender::kR32G32B32_UINT: break;
+		//case MHWRender::kR32G32B32_SINT: break;
+	case MHWRender::kR32G32B32A32_FLOAT:
+		channels = 4;
+		componentSize = 4;
+		break;
+		//case MHWRender::kR32G32B32A32_UINT: break;
+		//case MHWRender::kR32G32B32A32_SINT: break;
+	}
+
+	return std::make_tuple(channels, componentSize, success);
+}
+
 frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 	int viewWidth, int viewHeight,
-	float tileSizeX, float tileSizeY,
+	int tileSizeX, int tileSizeY,
+	int countXTiles, int countYTiles,
 	int xTileIdx, int yTileIdx,
 	MString colorSpace)
 {
+	// back-off
 	if (texturePath.length() == 0)
 	{
 		return NULL;
 	}
 
+	// get key for texture tile
 	char key[1024] = {};
 	int written = snprintf(key, 1024, "%s-%d-%d-%d-%d",
 		texturePath.asUTF8(),
@@ -212,6 +322,7 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		xTileIdx, yTileIdx);
 	assert(written >= 0 && written < 1024);
 
+	// try find cached texture
 	auto it = m->imageCache.find(key);
 	if (it != m->imageCache.end())
 	{
@@ -219,39 +330,102 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		return it->second;
 	}
 
+	// not cached => generate new
 	frw::Image retImage = FireRenderThread::RunOnMainThread<frw::Image>([&]()
 	{
 		MAIN_THREAD_ONLY; // MTextureManager will not work in other threads
 
 		frw::Image image;
-		if (auto renderer = MHWRender::MRenderer::theRenderer())
+
+		// back-offs
+		MRenderer* renderer = MHWRender::MRenderer::theRenderer();
+		if (!renderer)
 		{
-			if (MTextureManager* textureManager = renderer->getTextureManager())
-			{
-				if (MTexture* texture = textureManager->acquireTexture(texturePath))
-				{
-					MHWRender::MTextureDescription desc = {};
-					texture->textureDescription(desc);
+			return image;
+		}
 
+		MTextureManager* textureManager = renderer->getTextureManager();
+		if (!textureManager)
+		{
+			return image;
+		}
+
+		MTexture* texture = textureManager->acquireTexture(texturePath);
+		if (!texture)
+		{
+			return image;
+		}
+
+		// get texture file information
+		MHWRender::MTextureDescription desc = {};
+		texture->textureDescription(desc);
 #if MAYA_API_VERSION >= 20180000
-					size_t slicePitch = 0;
+		size_t slicePitch = 0;
 #else
-					int slicePitch = 0;
+		int slicePitch = 0;
 #endif
-					int rowPitch = 0;
-					if (void* rawData = texture->rawData(rowPitch, slicePitch))
-					{
-						const unsigned char* pixels = static_cast<const unsigned char*>(rawData);
-						unsigned int srcPixSize = desc.fBytesPerRow / desc.fWidth;
+		int rowPitch = 0;
+		void* rawData = texture->rawData(rowPitch, slicePitch);
+		if (!rawData)
+		{
+			textureManager->releaseTexture(texture);
 
-						int componentSize = srcPixSize > 4 ? 4 : 1;
-					}
-				}
+			return image;
+		}
+
+		const unsigned char* pixels = static_cast<const unsigned char*>(rawData);
+
+		int channels = 0;
+		int pixelStride = 0;
+		bool isImageFormatSupported = false;
+		std::tie(channels, pixelStride, isImageFormatSupported) = getTexturePixelStride(desc.fFormat);
+		assert(pixelStride != 1);
+
+		// get segment of background image corresponding to tile
+		int xSizeOfSegment = desc.fWidth / tileSizeX;
+		int ySizeOfSegment = desc.fHeight / tileSizeY;
+
+		// create rpr image structures
+		rpr_image_format format = {};
+		format.num_components = channels >= 3 ? 3 : 1;
+		format.type = (pixelStride == 4) ? RPR_COMPONENT_TYPE_FLOAT32 :
+			(pixelStride == 2) ? RPR_COMPONENT_TYPE_FLOAT16 :
+			RPR_COMPONENT_TYPE_UINT8;
+
+		int srcPixSize = pixelStride * channels;
+		int dstPixSize = pixelStride * format.num_components;
+
+		rpr_image_desc img_desc = {};
+		img_desc.image_width = desc.fWidth / countXTiles; //viewWidth;
+		img_desc.image_height = desc.fHeight / countYTiles; //viewHeight;
+		img_desc.image_row_pitch = desc.fWidth * dstPixSize;
+
+		// copy data from texture to rpr data structures
+		std::vector<unsigned char> buffer(img_desc.image_height * img_desc.image_row_pitch);
+
+		int srcRowPitch = desc.fBytesPerRow;
+		for (unsigned int y = 0; y < img_desc.image_height; y++)
+		{
+			const unsigned char* src = pixels + y * srcRowPitch + yTileIdx * srcRowPitch;
+			unsigned char* dst = buffer.data() + y * img_desc.image_row_pitch;
+
+			for (unsigned int x = 0; x < img_desc.image_width; x++)
+			{
+				memcpy(dst + x * dstPixSize, src + x * srcPixSize + xTileIdx * srcRowPitch, dstPixSize);
 			}
 		}
 
+		image = frw::Image(m->context, format, img_desc, buffer.data());
+		image.SetName(key);
+
+		texture->freeRawData(rawData);
+
 		return image;
 	});
+
+	// store image in image cache
+	if (retImage)
+		m->imageCache[key] = retImage;
 
 	return retImage;
 }
