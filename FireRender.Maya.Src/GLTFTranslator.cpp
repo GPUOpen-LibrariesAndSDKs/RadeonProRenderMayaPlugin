@@ -180,9 +180,6 @@ void GLTFTranslator::assignCameras(GLTFDataHolderStruct& dataHolder, FireRenderC
 		// set gltf group name for camera
 		MString camGroupName = getGroupNameForDagPath(dagPath);
 		rprGLTF_AssignCameraToGroup(rprCamera, camGroupName.asChar());
-
-		// set rpr name
-		rprObjectSetName(rprCamera, dagPath.partialPathName().asChar());
 	}
 #endif
 }
