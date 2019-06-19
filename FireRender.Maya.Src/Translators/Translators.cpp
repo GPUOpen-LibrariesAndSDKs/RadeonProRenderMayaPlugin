@@ -242,6 +242,9 @@ namespace FireMaya
 		frstatus = rprCameraSetFarPlane(frcamera, (float)(fnCamera.farClippingPlane() * cmToMCoefficient));
 		checkStatus(frstatus);
 
+		// set rpr name
+		frw_camera.SetName(fnCamera.name().asChar());
+
 		return true;
 	}
 
@@ -270,9 +273,10 @@ namespace FireMaya
 			return true;
 		}
 	
+		bool ret = true;
 		if (lightData.lightType == PLTArea)
 		{
-			return translateAreaLightInternal(frlight, scope, frcontext, object, matrix, dagPath, lightData, update);
+			ret = translateAreaLightInternal(frlight, scope, frcontext, object, matrix, dagPath, lightData, update);
 		}
 		else
 		{
@@ -329,7 +333,17 @@ namespace FireMaya
 			frlight.light.SetTransform((rpr_float*)mfloats);
 		}
 
-		return true;
+		const char* lightName = MFnDependencyNode(dagPath.transform()).name().asChar();
+		if (frlight.light)
+		{
+			frlight.light.SetName(lightName);
+		}
+		else if (frlight.areaLight)
+		{
+			frlight.areaLight.SetName(lightName);
+		}
+
+		return ret;
 	}
 
 	void FillLightData(PhysicalLightData& physicalLightData, const MObject& node, Scope& scope)
