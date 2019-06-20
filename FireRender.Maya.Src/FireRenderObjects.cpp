@@ -1601,6 +1601,8 @@ void FireRenderCamera::Freshen()
 	MFnDagNode dagNode(node);
 	MFnCamera fnCamera(node);
 
+	MString thisName = dagNode.name();
+
 	if (!m_camera)
 	{
 		m_camera = Context().CreateCamera();
@@ -1643,6 +1645,9 @@ void FireRenderCamera::Freshen()
 				case 0:	// image
 				{
 					MFnDependencyNode imNode(m_imagePlane);
+
+					MString name2 = imNode.name();
+
 					auto name = GetPlugValue(m_imagePlane, "imageName", MString());
 					auto contrast = Scope().GetValue(imNode.findPlug("colorGain"));
 					auto brightness = Scope().GetValue(imNode.findPlug("colorOffset"));
@@ -1730,7 +1735,7 @@ void FireRenderCamera::Freshen()
 			}
 		}
 
-		Scene().SetBackgroundImage(image);
+		//Scene().SetBackgroundImage(image);
 
 		// Set exposure from motion blur block parameters if we didn't add fireRenderExposure attribute to the camera before
 		if (context()->motionBlur() && fnCamera.findPlug("fireRenderExposure").isNull())
