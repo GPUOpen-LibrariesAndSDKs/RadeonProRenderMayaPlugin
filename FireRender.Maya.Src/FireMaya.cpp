@@ -379,7 +379,6 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		int pixelStride = 0;
 		bool isImageFormatSupported = false;
 		std::tie(channels, pixelStride, isImageFormatSupported) = getTexturePixelStride(desc.fFormat);
-		assert(pixelStride != 1);
 
 		// get segment of background image corresponding to tile
 		int xSizeOfSegment = desc.fWidth / tileSizeX;
@@ -396,22 +395,27 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		int dstPixSize = pixelStride * format.num_components;
 
 		rpr_image_desc img_desc = {};
-		img_desc.image_width = desc.fWidth / countXTiles; //viewWidth;
-		img_desc.image_height = desc.fHeight / countYTiles; //viewHeight;
-		img_desc.image_row_pitch = desc.fWidth * dstPixSize;
+		img_desc.image_width = tileSizeX; //desc.fWidth / countXTiles;
+		img_desc.image_height = tileSizeY; //desc.fHeight / countYTiles;
+		img_desc.image_row_pitch = img_desc.image_width * dstPixSize;
 
 		// copy data from texture to rpr data structures
 		std::vector<unsigned char> buffer(img_desc.image_height * img_desc.image_row_pitch);
 
-		int srcRowPitch = desc.fBytesPerRow;
+		std::vector<char> dbg_pixel_buff = { (char)255, (char)0, (char)0, (char)0 };
+
+		//int srcRowPitch = desc.fBytesPerRow;
+
+		unsigned char* dst = buffer.data();
+		// foreach pixel in resulting image (destination)
 		for (unsigned int y = 0; y < img_desc.image_height; y++)
 		{
-			const unsigned char* src = pixels + y * srcRowPitch + yTileIdx * srcRowPitch;
-			unsigned char* dst = buffer.data() + y * img_desc.image_row_pitch;
+			//const unsigned char* src = pixels + y * srcRowPitch + yTileIdx * srcRowPitch;
+			//unsigned char* dst = buffer.data() + y * img_desc.image_row_pitch;
 
 			for (unsigned int x = 0; x < img_desc.image_width; x++)
 			{
-				memcpy(dst + x * dstPixSize, src + x * srcPixSize + xTileIdx * srcRowPitch, dstPixSize);
+				memcpy(dst + x * dstPixSize + y * img_desc.image_row_pitch, /*src + x * srcPixSize + xTileIdx * srcRowPitch*/ dbg_pixel_buff.data(), dstPixSize);
 			}
 		}
 
