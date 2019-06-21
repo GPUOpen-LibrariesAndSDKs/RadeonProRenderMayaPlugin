@@ -381,6 +381,19 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		std::tie(channels, pixelStride, isImageFormatSupported) = getTexturePixelStride(desc.fFormat);
 
 		// get segment of background image corresponding to tile
+		float imageAspectRatio = (float)desc.fWidth / (float)desc.fHeight;
+		float viewAspectRatio = (float)viewWidth / (float)viewHeight;
+
+		float scaleFactor = imageAspectRatio / viewAspectRatio;
+
+		//int createdImageWidth = (desc.fWidth > viewWidth) ? desc.fWidth : viewWidth;
+		//int createdImageHeight = (desc.fHeight > viewHeight) ? desc.fHeight : viewHeight;
+
+		int createdImageWidth = desc.fWidth;
+		int createdImageHeight = std::ceil(viewWidth * scaleFactor);
+
+		float dbgResAspectRatio = (float)createdImageWidth / (float)createdImageHeight; // should be the same as viewAspectRatio
+
 		int xSizeOfSegment = desc.fWidth / tileSizeX;
 		int ySizeOfSegment = desc.fHeight / tileSizeY;
 
@@ -395,12 +408,12 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		int dstPixSize = pixelStride * format.num_components;
 
 		rpr_image_desc img_desc = {};
-		img_desc.image_width = tileSizeX; //desc.fWidth / countXTiles;
-		img_desc.image_height = tileSizeY; //desc.fHeight / countYTiles;
+		img_desc.image_width = createdImageWidth; 
+		img_desc.image_height = createdImageHeight;
 		img_desc.image_row_pitch = img_desc.image_width * dstPixSize;
 
 		// copy data from texture to rpr data structures
-		std::vector<unsigned char> buffer(img_desc.image_height * img_desc.image_row_pitch);
+		std::vector<unsigned char> buffer(img_desc.image_height * img_desc.image_row_pitch, (char)0);
 
 		std::vector<char> dbg_pixel_buff = { (char)255, (char)0, (char)0, (char)0 };
 
@@ -408,12 +421,12 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 
 		unsigned char* dst = buffer.data();
 		// foreach pixel in resulting image (destination)
-		for (unsigned int y = 0; y < img_desc.image_height; y++)
+		for (unsigned int y = 0; y < desc.fHeight; y++)
 		{
 			//const unsigned char* src = pixels + y * srcRowPitch + yTileIdx * srcRowPitch;
 			//unsigned char* dst = buffer.data() + y * img_desc.image_row_pitch;
 
-			for (unsigned int x = 0; x < img_desc.image_width; x++)
+			for (unsigned int x = 0; x < desc.fWidth; x++)
 			{
 				memcpy(dst + x * dstPixSize + y * img_desc.image_row_pitch, /*src + x * srcPixSize + xTileIdx * srcRowPitch*/ dbg_pixel_buff.data(), dstPixSize);
 			}
