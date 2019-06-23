@@ -373,29 +373,33 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 			return image;
 		}
 
-		const unsigned char* pixels = static_cast<const unsigned char*>(rawData);
+		const unsigned char* src = static_cast<const unsigned char*>(rawData);
 
 		int channels = 0;
 		int pixelStride = 0;
 		bool isImageFormatSupported = false;
 		std::tie(channels, pixelStride, isImageFormatSupported) = getTexturePixelStride(desc.fFormat);
 
+		const int srcImageWidth = desc.fWidth;
+		const int srcImageHeight = desc.fHeight;
+
 		// get segment of background image corresponding to tile
-		float imageAspectRatio = (float)desc.fWidth / (float)desc.fHeight;
+		float imageAspectRatio = (float)srcImageWidth / (float)srcImageHeight;
 		float viewAspectRatio = (float)viewWidth / (float)viewHeight;
 
-		float scaleFactor = imageAspectRatio / viewAspectRatio;
+		/*
+		should have different paths here for width > height and for height > width
+		*/
+		assert(viewWidth > viewHeight);
+		float scaleFactor = (float)srcImageWidth / (float)viewWidth;
 
-		//int createdImageWidth = (desc.fWidth > viewWidth) ? desc.fWidth : viewWidth;
-		//int createdImageHeight = (desc.fHeight > viewHeight) ? desc.fHeight : viewHeight;
-
-		int createdImageWidth = desc.fWidth;
-		int createdImageHeight = std::ceil(viewWidth * scaleFactor);
+		int createdImageWidth = srcImageWidth;
+		int createdImageHeight = std::ceil(viewHeight * scaleFactor);
 
 		float dbgResAspectRatio = (float)createdImageWidth / (float)createdImageHeight; // should be the same as viewAspectRatio
 
-		int xSizeOfSegment = desc.fWidth / tileSizeX;
-		int ySizeOfSegment = desc.fHeight / tileSizeY;
+		int xSizeOfSegment = srcImageWidth / tileSizeX;
+		int ySizeOfSegment = srcImageHeight / tileSizeY;
 
 		// create rpr image structures
 		rpr_image_format format = {};
@@ -413,22 +417,20 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		img_desc.image_row_pitch = img_desc.image_width * dstPixSize;
 
 		// copy data from texture to rpr data structures
+		assert(srcImageHeight <= img_desc.image_height);
+		assert(srcImageWidth <= img_desc.image_width);
 		std::vector<unsigned char> buffer(img_desc.image_height * img_desc.image_row_pitch, (char)0);
 
-		std::vector<char> dbg_pixel_buff = { (char)255, (char)0, (char)0, (char)0 };
-
-		//int srcRowPitch = desc.fBytesPerRow;
-
 		unsigned char* dst = buffer.data();
-		// foreach pixel in resulting image (destination)
-		for (unsigned int y = 0; y < desc.fHeight; y++)
+		// foreach pixel in source image
+		for (unsigned int y = 0; y < srcImageHeight; y++)
 		{
-			//const unsigned char* src = pixels + y * srcRowPitch + yTileIdx * srcRowPitch;
-			//unsigned char* dst = buffer.data() + y * img_desc.image_row_pitch;
-
-			for (unsigned int x = 0; x < desc.fWidth; x++)
+			for (unsigned int x = 0; x < srcImageWidth; x++)
 			{
-				memcpy(dst + x * dstPixSize + y * img_desc.image_row_pitch, /*src + x * srcPixSize + xTileIdx * srcRowPitch*/ dbg_pixel_buff.data(), dstPixSize);
+				memcpy(
+					dst + x * dstPixSize + y * img_desc.image_row_pitch, 
+					src + x * srcPixSize + y * desc.fBytesPerRow,
+					dstPixSize);
 			}
 		}
 
