@@ -1735,7 +1735,7 @@ void FireRenderCamera::Freshen()
 			}
 		}
 
-		//Scene().SetBackgroundImage(image);
+		Scene().SetBackgroundImage(image);
 
 		// Set exposure from motion blur block parameters if we didn't add fireRenderExposure attribute to the camera before
 		if (context()->motionBlur() && fnCamera.findPlug("fireRenderExposure").isNull())
