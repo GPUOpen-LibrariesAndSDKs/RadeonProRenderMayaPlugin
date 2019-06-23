@@ -292,7 +292,8 @@ namespace FireMaya
 
 		frw::Image GetTiledImage(MString texturePath, 
 			int viewWidth, int viewHeight,
-			int tileSizeX, int tileSizeY,
+			int maxTileWidth, int maxTileHeight,
+			int currTileWidth, int currTileHeight,
 			int countXTiles, int countYTiles,
 			int xTileIdx, int yTileIdx,
 			MString colorSpace);
