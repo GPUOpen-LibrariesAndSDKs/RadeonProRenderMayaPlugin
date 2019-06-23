@@ -303,7 +303,8 @@ std::tuple<int, int, bool> getTexturePixelStride(MHWRender::MRasterFormat fForma
 
 frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 	int viewWidth, int viewHeight,
-	int tileSizeX, int tileSizeY,
+	int maxTileWidth, int maxTileHeight,
+	int currTileWidth, int currTileHeight,
 	int countXTiles, int countYTiles,
 	int xTileIdx, int yTileIdx,
 	MString colorSpace)
@@ -380,26 +381,32 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		bool isImageFormatSupported = false;
 		std::tie(channels, pixelStride, isImageFormatSupported) = getTexturePixelStride(desc.fFormat);
 
-		const int srcImageWidth = desc.fWidth;
-		const int srcImageHeight = desc.fHeight;
+		const int srcWidth = desc.fWidth;
+		const int srcHeight = desc.fHeight;
 
 		// get segment of background image corresponding to tile
-		float imageAspectRatio = (float)srcImageWidth / (float)srcImageHeight;
-		float viewAspectRatio = (float)viewWidth / (float)viewHeight;
+		// srcWidth = srcFullSegWidth * (countXTiles - 1) + srcSegTail
+		float srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
+		const int srcSegWidth = std::ceil(srcWidthPerPixel * currTileWidth); //std::ceil(srcWidth / countXTiles);
+		float srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
+		const int srcSegHeight = std::ceil(srcHeightPerPixel * currTileHeight); //std::ceil(srcHeight / countYTiles);
+
+		float imageAspectRatio = (float)srcSegWidth / (float)srcSegHeight;
+		//float viewAspectRatio = (float)viewWidth / (float)viewHeight;
+		float viewAspectRatio = (float)currTileWidth / (float)currTileHeight;
 
 		/*
 		should have different paths here for width > height and for height > width
 		*/
-		assert(viewWidth > viewHeight);
-		float scaleFactor = (float)srcImageWidth / (float)viewWidth;
+		assert(viewWidth >= viewHeight);
 
-		int createdImageWidth = srcImageWidth;
-		int createdImageHeight = std::ceil(viewHeight * scaleFactor);
+		//float scaleFactor = (float)srcSegWidth / (float)viewWidth;
+		float scaleFactor = (float)srcSegWidth / (float)currTileWidth;
+		int createdImageWidth = srcSegWidth;
+		//int createdImageHeight = std::ceil(viewHeight * scaleFactor);
+		int createdImageHeight = std::ceil(currTileHeight * scaleFactor);
 
 		float dbgResAspectRatio = (float)createdImageWidth / (float)createdImageHeight; // should be the same as viewAspectRatio
-
-		int xSizeOfSegment = srcImageWidth / tileSizeX;
-		int ySizeOfSegment = srcImageHeight / tileSizeY;
 
 		// create rpr image structures
 		rpr_image_format format = {};
@@ -417,19 +424,27 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		img_desc.image_row_pitch = img_desc.image_width * dstPixSize;
 
 		// copy data from texture to rpr data structures
-		assert(srcImageHeight <= img_desc.image_height);
-		assert(srcImageWidth <= img_desc.image_width);
+		//assert(srcSegHeight <= img_desc.image_height);
+		if (srcSegHeight > img_desc.image_height)
+			return image;
+
+		//assert(srcSegWidth <= img_desc.image_width);
+		if (srcSegWidth > img_desc.image_width)
+			return image;
+
 		std::vector<unsigned char> buffer(img_desc.image_height * img_desc.image_row_pitch, (char)0);
 
 		unsigned char* dst = buffer.data();
 		// foreach pixel in source image
-		for (unsigned int y = 0; y < srcImageHeight; y++)
+		int shiftX = xTileIdx * srcSegWidth;
+		int shiftY = yTileIdx * srcSegHeight;
+		for (unsigned int y = 0; y < srcSegHeight; y++)
 		{
-			for (unsigned int x = 0; x < srcImageWidth; x++)
+			for (unsigned int x = 0; x < srcSegWidth; x++)
 			{
 				memcpy(
 					dst + x * dstPixSize + y * img_desc.image_row_pitch, 
-					src + x * srcPixSize + y * desc.fBytesPerRow,
+					src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
 					dstPixSize);
 			}
 		}

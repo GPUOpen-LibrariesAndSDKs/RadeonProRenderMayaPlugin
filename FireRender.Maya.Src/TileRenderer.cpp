@@ -29,41 +29,26 @@ void TileRenderer::Render(FireRenderContext& renderContext, const TileRenderInfo
 	rprCameraGetInfo(camera, RPR_CAMERA_ORTHO_WIDTH, sizeof(orthoSize.x), &orthoSize.x, nullptr);
 	rprCameraGetInfo(camera, RPR_CAMERA_ORTHO_HEIGHT, sizeof(orthoSize.y), &orthoSize.y, nullptr);
 
+	MObject node = fireRenderCamera.Object();
+	MFnDagNode dagNode(node);
+	MPlug imagePlanePlug = dagNode.findPlug("imagePlane");
+	MString plugName = imagePlanePlug.name();
+	if (imagePlanePlug.isArray())
 	{
-		MObject node = fireRenderCamera.Object();
-		MFnDagNode dagNode(node);
-
-		MString cameraName = dagNode.name();
-
-		//MDagPath dagPath = fireRenderCamera.DagPath();
-		MPlug imagePlanePlug = dagNode.findPlug("imagePlane");
-		MString plugName = imagePlanePlug.name();
-		if (imagePlanePlug.isArray())
-		{
-			if (int n = imagePlanePlug.numElements())
-				imagePlanePlug = imagePlanePlug.elementByPhysicalIndex(0);
-		}
-		plugName = imagePlanePlug.name();
-
-		MObject imagePlane = FireMaya::GetConnectedNode(imagePlanePlug);
-		if (!imagePlane.isNull())
-		{
-			MFnDependencyNode imNode(imagePlane);
-			MString name2 = imNode.name();
-			int debugi = 0;
-		}
-
-		MString name = fireRenderCamera.GetPlugValue(imagePlane, "imageName", MString());
-
-		MString colorSpace;
-		frw::Image image = fireRenderCamera.Scope().GetTiledImage(name,
-			info.totalWidth, info.totalHeight,
-			info.tileSizeX, info.tileSizeY,
-			xTiles, yTiles,
-			0, 0,
-			colorSpace);
-		fireRenderCamera.Scene().SetBackgroundImage(image);
+		if (int n = imagePlanePlug.numElements())
+			imagePlanePlug = imagePlanePlug.elementByPhysicalIndex(0);
 	}
+	plugName = imagePlanePlug.name();
+
+	MObject imagePlane = FireMaya::GetConnectedNode(imagePlanePlug);
+	if (!imagePlane.isNull())
+	{
+		MFnDependencyNode imNode(imagePlane);
+		MString name2 = imNode.name();
+		int debugi = 0;
+	}
+
+	MString name = fireRenderCamera.GetPlugValue(imagePlane, "imageName", MString());
 
 	int counter = 0;
 	for (int yTile = yTiles - 1; yTile >= 0; yTile--)
@@ -100,22 +85,20 @@ void TileRenderer::Render(FireRenderContext& renderContext, const TileRenderInfo
 			}
 
 			// process back plate
-			/*{ 
-				MObject node = fireRenderCamera.Object();
-				MFnDagNode dagNode(node);
-				//MDagPath dagPath = fireRenderCamera.DagPath();
-				MPlug imagePlanePlug = dagNode.findPlug("imagePlane");
-				MObject imagePlane = FireMaya::GetConnectedNode(imagePlanePlug);
-				MString name = fireRenderCamera.GetPlugValue(imagePlane, "imageName", MString());
-				MString colorSpace;
-				frw::Image image = fireRenderCamera.Scope().GetTiledImage(name,
-					info.totalWidth, info.totalHeight,
-					info.tileSizeX, info.tileSizeY,
-					xTiles, yTiles,
-					xTile, yTile,
-					colorSpace);
-				fireRenderCamera.Scene().SetBackgroundImage(image);
-			}*/
+			int yTileIdx = yTiles - yTile - 1;
+
+			int tileWidth = region.right - region.left + 1;
+			int tileHeight = region.top - region.bottom + 1;
+
+			MString colorSpace;
+			frw::Image image = fireRenderCamera.Scope().GetTiledImage(name,
+				info.totalWidth, info.totalHeight,
+				info.tileSizeX, info.tileSizeY,
+				tileWidth, tileHeight,
+				xTiles, yTiles,
+				xTile, yTileIdx,
+				colorSpace);
+			fireRenderCamera.Scene().SetBackgroundImage(image);
 
 			counter++;
 			if (!callbackFunc(region, 100 * counter / (xTiles * yTiles)))
