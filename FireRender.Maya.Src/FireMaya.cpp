@@ -301,6 +301,93 @@ std::tuple<int, int, bool> getTexturePixelStride(MHWRender::MRasterFormat fForma
 	return std::make_tuple(channels, componentSize, success);
 }
 
+// =================================== DEBUG
+const int bytesPerPixel = 4; /// red, green, blue
+const int fileHeaderSize = 14;
+const int infoHeaderSize = 40;
+
+void generateBitmapImage(unsigned char *image, int height, int width, int pitch, const char* imageFileName);
+unsigned char* createBitmapFileHeader(int height, int width, int pitch, int paddingSize);
+unsigned char* createBitmapInfoHeader(int height, int width);
+
+
+
+void generateBitmapImage(unsigned char *image, int height, int width, int pitch, const char* imageFileName) {
+
+	unsigned char padding[3] = { 0, 0, 0 };
+	int paddingSize = (4 - (/*width*bytesPerPixel*/ pitch) % 4) % 4;
+
+	unsigned char* fileHeader = createBitmapFileHeader(height, width, pitch, paddingSize);
+	unsigned char* infoHeader = createBitmapInfoHeader(height, width);
+
+	FILE* imageFile = fopen(imageFileName, "wb");
+
+	fwrite(fileHeader, 1, fileHeaderSize, imageFile);
+	fwrite(infoHeader, 1, infoHeaderSize, imageFile);
+
+	int i;
+	for (i = 0; i < height; i++) {
+		fwrite(image + (i*pitch /*width*bytesPerPixel*/), bytesPerPixel, width, imageFile);
+		fwrite(padding, 1, paddingSize, imageFile);
+	}
+
+	fclose(imageFile);
+	//free(fileHeader);
+	//free(infoHeader);
+}
+
+unsigned char* createBitmapFileHeader(int height, int width, int pitch, int paddingSize) {
+	int fileSize = fileHeaderSize + infoHeaderSize + (/*bytesPerPixel*width*/pitch + paddingSize) * height;
+
+	static unsigned char fileHeader[] = {
+		0,0, /// signature
+		0,0,0,0, /// image file size in bytes
+		0,0,0,0, /// reserved
+		0,0,0,0, /// start of pixel array
+	};
+
+	fileHeader[0] = (unsigned char)('B');
+	fileHeader[1] = (unsigned char)('M');
+	fileHeader[2] = (unsigned char)(fileSize);
+	fileHeader[3] = (unsigned char)(fileSize >> 8);
+	fileHeader[4] = (unsigned char)(fileSize >> 16);
+	fileHeader[5] = (unsigned char)(fileSize >> 24);
+	fileHeader[10] = (unsigned char)(fileHeaderSize + infoHeaderSize);
+
+	return fileHeader;
+}
+
+unsigned char* createBitmapInfoHeader(int height, int width) {
+	static unsigned char infoHeader[] = {
+		0,0,0,0, /// header size
+		0,0,0,0, /// image width
+		0,0,0,0, /// image height
+		0,0, /// number of color planes
+		0,0, /// bits per pixel
+		0,0,0,0, /// compression
+		0,0,0,0, /// image size
+		0,0,0,0, /// horizontal resolution
+		0,0,0,0, /// vertical resolution
+		0,0,0,0, /// colors in color table
+		0,0,0,0, /// important color count
+	};
+
+	infoHeader[0] = (unsigned char)(infoHeaderSize);
+	infoHeader[4] = (unsigned char)(width);
+	infoHeader[5] = (unsigned char)(width >> 8);
+	infoHeader[6] = (unsigned char)(width >> 16);
+	infoHeader[7] = (unsigned char)(width >> 24);
+	infoHeader[8] = (unsigned char)(height);
+	infoHeader[9] = (unsigned char)(height >> 8);
+	infoHeader[10] = (unsigned char)(height >> 16);
+	infoHeader[11] = (unsigned char)(height >> 24);
+	infoHeader[12] = (unsigned char)(1);
+	infoHeader[14] = (unsigned char)(bytesPerPixel * 8);
+
+	return infoHeader;
+}
+// =================================== END DEBUG
+
 frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 	int viewWidth, int viewHeight,
 	int maxTileWidth, int maxTileHeight,
@@ -385,26 +472,31 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		const int srcHeight = desc.fHeight;
 
 		// get segment of background image corresponding to tile
-		// srcWidth = srcFullSegWidth * (countXTiles - 1) + srcSegTail
-		float srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
-		const int srcSegWidth = std::ceil(srcWidthPerPixel * currTileWidth); //std::ceil(srcWidth / countXTiles);
-		float srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
-		const int srcSegHeight = std::ceil(srcHeightPerPixel * currTileHeight); //std::ceil(srcHeight / countYTiles);
+		const float srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
+		const int srcFullSegWidth = std::ceil(srcWidthPerPixel * maxTileWidth);
+		const int srcTailSegWidth = srcWidth - srcFullSegWidth * (countXTiles - 1);
+		const int srcCurrSegWidth = (xTileIdx == (countXTiles - 1)) ? srcTailSegWidth : srcFullSegWidth;
 
-		float imageAspectRatio = (float)srcSegWidth / (float)srcSegHeight;
+		const float srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
+		const int srcFullSegHeight = std::ceil(srcHeightPerPixel * maxTileHeight);
+		const int srcTailSegHeight = srcHeight - srcFullSegHeight * (countYTiles - 1);
+		const int srcCurrSegHeight = (yTileIdx == 0) ? srcTailSegHeight : srcFullSegHeight;
+
+		float imageAspectRatio = (float)srcCurrSegWidth / (float)srcCurrSegHeight;
 		//float viewAspectRatio = (float)viewWidth / (float)viewHeight;
 		float viewAspectRatio = (float)currTileWidth / (float)currTileHeight;
 
 		/*
 		should have different paths here for width > height and for height > width
 		*/
-		assert(viewWidth >= viewHeight);
+		//assert(viewWidth >= viewHeight);
 
-		//float scaleFactor = (float)srcSegWidth / (float)viewWidth;
-		float scaleFactor = (float)srcSegWidth / (float)currTileWidth;
-		int createdImageWidth = srcSegWidth;
+		//float scaleFactor = (float)srcCurrSegWidth / (float)viewWidth;
+		float scaleFactor = (float)srcCurrSegWidth / (float)currTileWidth;
+		int createdImageWidth = srcCurrSegWidth;
 		//int createdImageHeight = std::ceil(viewHeight * scaleFactor);
-		int createdImageHeight = std::ceil(currTileHeight * scaleFactor);
+		//int createdImageHeight = std::ceil(currTileHeight * scaleFactor);
+		int createdImageHeight = srcCurrSegHeight;
 
 		float dbgResAspectRatio = (float)createdImageWidth / (float)createdImageHeight; // should be the same as viewAspectRatio
 
@@ -423,24 +515,17 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		img_desc.image_height = createdImageHeight;
 		img_desc.image_row_pitch = img_desc.image_width * dstPixSize;
 
-		// copy data from texture to rpr data structures
-		//assert(srcSegHeight <= img_desc.image_height);
-		if (srcSegHeight > img_desc.image_height)
-			return image;
-
-		//assert(srcSegWidth <= img_desc.image_width);
-		if (srcSegWidth > img_desc.image_width)
-			return image;
-
 		std::vector<unsigned char> buffer(img_desc.image_height * img_desc.image_row_pitch, (char)0);
 
 		unsigned char* dst = buffer.data();
+
+		int shiftX = xTileIdx * srcFullSegWidth;
+		int shiftY = (yTileIdx > 1) ? srcTailSegHeight + (yTileIdx-1) * srcFullSegHeight : yTileIdx * srcTailSegHeight;
+
 		// foreach pixel in source image
-		int shiftX = xTileIdx * srcSegWidth;
-		int shiftY = yTileIdx * srcSegHeight;
-		for (unsigned int y = 0; y < srcSegHeight; y++)
+		for (unsigned int y = 0; y < srcCurrSegHeight; y++)
 		{
-			for (unsigned int x = 0; x < srcSegWidth; x++)
+			for (unsigned int x = 0; x < srcCurrSegWidth; x++)
 			{
 				memcpy(
 					dst + x * dstPixSize + y * img_desc.image_row_pitch, 
@@ -448,6 +533,27 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 					dstPixSize);
 			}
 		}
+
+#ifdef _DEBUG
+		// debug dump
+		if ( (xTileIdx == 0) && (yTileIdx == 2) )
+		{
+			std::vector<unsigned char> buffer2(img_desc.image_height * img_desc.image_width * (dstPixSize+1), (char)255);
+			unsigned char* dst2 = buffer2.data();
+			for (unsigned int y = 0; y < srcCurrSegHeight; y++)
+			{
+				for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+				{
+					memcpy(
+						dst2 + x * (dstPixSize + 1) + y * img_desc.image_width * (dstPixSize + 1),
+						src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
+						dstPixSize);
+				}
+			}
+
+			generateBitmapImage(dst2, img_desc.image_height, img_desc.image_width, img_desc.image_width * 4, "C:\\temp\\dbg\\1.bmp");
+		}
+#endif
 
 		image = frw::Image(m->context, format, img_desc, buffer.data());
 		image.SetName(key);
