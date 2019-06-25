@@ -456,6 +456,21 @@ void FireRenderProduction::RenderFullFrame()
 	// view. Flip the image so it's the right way up in the view.
 	m_renderViewAOV->readFrameBuffer(*m_context, true);
 
+	if (globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())
+	{
+		bool shouldSave = globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->ShouldSaveFrame(m_context->m_currentIteration);
+
+		if (shouldSave)
+		{
+			bool colorOnly = true;
+			unsigned int imageFormat = 32; // "png"
+			MString filePath = globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->FolderPath().c_str();
+			filePath += m_context->m_currentIteration;
+			filePath += ".png";
+			m_renderViewAOV->writeToFile(filePath, colorOnly, imageFormat);
+		}
+	}
+
 	FireRenderThread::RunProcOnMainThread([this]()
 	{
 		// Update the Maya render view.
