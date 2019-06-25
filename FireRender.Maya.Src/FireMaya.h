@@ -296,7 +296,8 @@ namespace FireMaya
 			int currTileWidth, int currTileHeight,
 			int countXTiles, int countYTiles,
 			int xTileIdx, int yTileIdx,
-			MString colorSpace);
+			MString colorSpace,
+			FitType imgFit = FitStretch);
 
 		frw::Image GetAdjustedImage(MString texturePath,
 			int viewWidth, int viewHeight,

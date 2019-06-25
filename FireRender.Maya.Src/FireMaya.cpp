@@ -301,7 +301,7 @@ std::tuple<int, int, bool> getTexturePixelStride(MHWRender::MRasterFormat fForma
 	return std::make_tuple(channels, componentSize, success);
 }
 
-// =================================== DEBUG
+#ifdef _DEBUG
 const int bytesPerPixel = 4; /// red, green, blue
 const int fileHeaderSize = 14;
 const int infoHeaderSize = 40;
@@ -386,7 +386,7 @@ unsigned char* createBitmapInfoHeader(int height, int width) {
 
 	return infoHeader;
 }
-// =================================== END DEBUG
+#endif
 
 frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 	int viewWidth, int viewHeight,
@@ -394,7 +394,8 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 	int currTileWidth, int currTileHeight,
 	int countXTiles, int countYTiles,
 	int xTileIdx, int yTileIdx,
-	MString colorSpace)
+	MString colorSpace,
+	FitType imgFit)
 {
 	// back-off
 	if (texturePath.length() == 0)
@@ -424,6 +425,12 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		MAIN_THREAD_ONLY; // MTextureManager will not work in other threads
 
 		frw::Image image;
+
+		/*if (xTileIdx != 0)
+			return image;
+
+		if ((yTileIdx != 2) && (yTileIdx != 1) && (yTileIdx != 3))
+			return image;*/
 
 		// back-offs
 		MRenderer* renderer = MHWRender::MRenderer::theRenderer();
@@ -472,12 +479,31 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		const int srcHeight = desc.fHeight;
 
 		// get segment of background image corresponding to tile
-		const float srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
+		float srcWidthPerPixel;
+		float srcHeightPerPixel;
+
+		if (imgFit == FitType::FitStretch)
+		{
+			srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
+			srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
+		}
+		else if (imgFit == FitType::FitHorizontal)
+		{
+			srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
+			float scaleFactor = (float)maxTileHeight / (float)maxTileWidth;
+			srcHeightPerPixel = srcWidthPerPixel * scaleFactor;
+		}
+		else if (imgFit == FitType::FitVertical)
+		{
+			srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
+			float scaleFactor = (float)maxTileWidth / (float)maxTileHeight;
+			srcWidthPerPixel = srcHeightPerPixel * scaleFactor;
+		}
+
 		const int srcFullSegWidth = std::ceil(srcWidthPerPixel * maxTileWidth);
 		const int srcTailSegWidth = srcWidth - srcFullSegWidth * (countXTiles - 1);
 		const int srcCurrSegWidth = (xTileIdx == (countXTiles - 1)) ? srcTailSegWidth : srcFullSegWidth;
 
-		const float srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
 		const int srcFullSegHeight = std::ceil(srcHeightPerPixel * maxTileHeight);
 		const int srcTailSegHeight = srcHeight - srcFullSegHeight * (countYTiles - 1);
 		const int srcCurrSegHeight = (yTileIdx == 0) ? srcTailSegHeight : srcFullSegHeight;
@@ -522,13 +548,16 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		int shiftX = xTileIdx * srcFullSegWidth;
 		int shiftY = (yTileIdx > 1) ? srcTailSegHeight + (yTileIdx-1) * srcFullSegHeight : yTileIdx * srcTailSegHeight;
 
+		int offsetX = 0; // offsets are determinded by fill type
+		int offsetY = 0;
+
 		// foreach pixel in source image
 		for (unsigned int y = 0; y < srcCurrSegHeight; y++)
 		{
 			for (unsigned int x = 0; x < srcCurrSegWidth; x++)
 			{
 				memcpy(
-					dst + x * dstPixSize + y * img_desc.image_row_pitch, 
+					dst + (x + offsetX) * dstPixSize + (y + offsetY) * img_desc.image_row_pitch,
 					src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
 					dstPixSize);
 			}
@@ -545,7 +574,7 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 				for (unsigned int x = 0; x < srcCurrSegWidth; x++)
 				{
 					memcpy(
-						dst2 + x * (dstPixSize + 1) + y * img_desc.image_width * (dstPixSize + 1),
+						dst2 + x * (dstPixSize + 1) + (srcCurrSegHeight - 1 - y) * img_desc.image_width * (dstPixSize + 1),
 						src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
 						dstPixSize);
 				}
