@@ -587,6 +587,8 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		image = frw::Image(m->context, format, img_desc, buffer.data());
 		image.SetName(key);
 
+		rprImageSetWrap(image.Handle(), RPR_IMAGE_WRAP_TYPE_MIRRORED_REPEAT);
+
 		texture->freeRawData(rawData);
 
 		return image;
