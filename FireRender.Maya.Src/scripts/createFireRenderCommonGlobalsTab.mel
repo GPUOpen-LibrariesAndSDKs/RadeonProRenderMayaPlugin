@@ -1269,6 +1269,8 @@ global proc string createFireRenderImageFormatControl()
 	return "imageMenuMayaSW";
 }
 
+global string $exrCheckbox = "";
+
 global proc updateFireRenderImageFormatControl()
 {
 	string $oldParent = `setParent -query`;
@@ -1326,6 +1328,10 @@ global proc updateFireRenderImageFormatControl()
 
 	//update the Multiple camera frame buffer naming control
 	updateFireRenderMultiCameraBufferNamingMenu();
+
+	//checkBox -edit 
+		//-enable ($imageNum == 40) 
+		//$exrCheckbox; 
 }
 
 global proc changeFireRenderImageFormat()
@@ -1954,6 +1960,8 @@ proc createCommonColorMgt()
 	scriptJob -event "colorMgtConfigChanged" $outputChangedCb;
 }
 
+
+
 proc createCommonImageFile()
 //
 //  Procedure Name:
@@ -1993,6 +2001,14 @@ proc createCommonImageFile()
 
 		string $imageFormatControl = createFireRenderImageFormatControl();
 		int $item = `optionMenuGrp -q -sl $imageFormatControl` - 1;
+
+		$exrCheckbox = `checkBox 
+			-al "center" 
+			-label "Save all AOVs in a one file" 
+			-en false 
+			-ann "Save all AOVs as channels in a single .exr file"
+			renderGlobalsEnableMultiAOV`;
+
 		createCompressorControl($item);
 
 		createFileNameFormatControl();
