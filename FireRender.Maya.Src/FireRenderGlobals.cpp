@@ -98,6 +98,9 @@ namespace
 		MObject denoiserDepth;
 		MObject denoiserNormal;
 		MObject denoiserTrans;
+
+		// image saving
+		MObject renderaGlobalsExrMultilayerEnabled;
 	}
 
     struct RenderingDeviceAttributes
@@ -375,6 +378,9 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::useMPS = nAttr.create("useMPS", "umps", MFnNumericData::kBoolean, 0, &status);
 	MAKE_INPUT(nAttr);
 
+	Attribute::renderaGlobalsExrMultilayerEnabled = nAttr.create("enableExrMultilayer", "eeml", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+
 	CHECK_MSTATUS(addAttribute(Attribute::textureCompression));
 
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradiance));
@@ -416,6 +422,8 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(m_renderStampTextDefault));
 
 	createDenoiserAttributes();
+
+	CHECK_MSTATUS(addAttribute(Attribute::renderaGlobalsExrMultilayerEnabled));
 
 	// create legacy attributes to avoid errors in mel while opening old scenes
 	createLegacyAttributes();
