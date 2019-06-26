@@ -456,21 +456,6 @@ void FireRenderProduction::RenderFullFrame()
 	// view. Flip the image so it's the right way up in the view.
 	m_renderViewAOV->readFrameBuffer(*m_context, true);
 
-	if (globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())
-	{
-		bool shouldSave = globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->ShouldSaveFrame(m_context->m_currentIteration);
-
-		if (shouldSave)
-		{
-			bool colorOnly = true;
-			unsigned int imageFormat = 32; // "png"
-			MString filePath = globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->FolderPath().c_str();
-			filePath += m_context->m_currentIteration;
-			filePath += ".png";
-			m_renderViewAOV->writeToFile(filePath, colorOnly, imageFormat);
-		}
-	}
-
 	FireRenderThread::RunProcOnMainThread([this]()
 	{
 		// Update the Maya render view.
@@ -486,6 +471,21 @@ void FireRenderProduction::RenderFullFrame()
 
 	// _TODO Investigate this, looks like this call is performance waste. Why we need to read all AOVs on every render call ?
 	m_aovs->readFrameBuffers(*m_context, false);
+
+	if (globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())
+	{
+		bool shouldSave = globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->ShouldSaveFrame(m_context->m_currentIteration);
+
+		if (shouldSave)
+		{
+			bool colorOnly = true;
+			unsigned int imageFormat = 8; // "jpg"
+			MString filePath = globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->FolderPath().c_str();
+			filePath += m_context->m_currentIteration;
+			filePath += ".jpg";
+			m_renderViewAOV->writeToFile(filePath, colorOnly, imageFormat);
+		}
+	}
 }
 
 void FireRenderProduction::setStopCallback(stop_callback callback)
