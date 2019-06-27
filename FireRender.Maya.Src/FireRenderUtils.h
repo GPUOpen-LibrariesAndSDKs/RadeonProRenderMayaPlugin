@@ -148,6 +148,8 @@ public:
 
 	static void getCPUThreadSetup(bool& overriden, int& cpuThreadCount, RenderType renderType);
 	static int getThumbnailIterCount();
+	static bool isExrMultichannelEnabled(void);
+
 public:
 
 	// Completion criteria.

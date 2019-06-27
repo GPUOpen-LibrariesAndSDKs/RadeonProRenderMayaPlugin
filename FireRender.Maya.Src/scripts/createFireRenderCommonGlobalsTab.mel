@@ -1964,7 +1964,15 @@ proc createCommonColorMgt()
 	scriptJob -event "colorMgtConfigChanged" $outputChangedCb;
 }
 
+global proc onExrCheckbox()
+{
+	setAttr RadeonProRenderGlobals.enableExrMultilayer 1;
+}
 
+global proc offExrCheckbox()
+{
+	setAttr RadeonProRenderGlobals.enableExrMultilayer 0;
+}
 
 proc createCommonImageFile()
 //
@@ -2010,6 +2018,8 @@ proc createCommonImageFile()
 		$exrCheckbox = `checkBox 
 			-al "center" 
 			-label "Save all AOVs to multilayer OpenEXR" 
+			-onCommand "onExrCheckbox"
+			-offCommand "offExrCheckbox"
 			-en false 
 			-ann "Save all AOVs as channels in a single .exr file"
 			renderGlobalsEnableMultiAOV`;
