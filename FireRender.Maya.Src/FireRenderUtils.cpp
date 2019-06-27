@@ -389,6 +389,23 @@ int FireRenderGlobalsData::getThumbnailIterCount()
 	return 0;
 }
 
+bool FireRenderGlobalsData::isExrMultichannelEnabled()
+{
+	MObject fireRenderGlobals;
+	GetRadeonProRenderGlobals(fireRenderGlobals);
+
+	// Get Fire render globals attributes
+	MFnDependencyNode frGlobalsNode(fireRenderGlobals);
+
+	MPlug plug = frGlobalsNode.findPlug("enableExrMultilayer");
+	if (!plug.isNull())
+	{
+		return plug.asBool();
+	}
+
+	return false;
+}
+
 void FireRenderGlobalsData::readDenoiserParameters(const MFnDependencyNode& frGlobalsNode)
 {
 	MPlug plug = frGlobalsNode.findPlug("denoiserEnabled");
