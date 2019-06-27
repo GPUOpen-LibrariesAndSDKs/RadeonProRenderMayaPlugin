@@ -433,19 +433,19 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 			return image;*/
 
 		// back-offs
-		MRenderer* renderer = MHWRender::MRenderer::theRenderer();
+		auto renderer = MHWRender::MRenderer::theRenderer(); // have to use auto because these are different classes in Maya 2017 and 2018
 		if (!renderer)
 		{
 			return image;
 		}
 
-		MTextureManager* textureManager = renderer->getTextureManager();
+		auto textureManager = renderer->getTextureManager(); // have to use auto because these are different classes in Maya 2017 and 2018
 		if (!textureManager)
 		{
 			return image;
 		}
 
-		MTexture* texture = textureManager->acquireTexture(texturePath);
+		auto texture = textureManager->acquireTexture(texturePath); // have to use auto because these are different classes in Maya 2017 and 2018
 		if (!texture)
 		{
 			return image;
@@ -475,56 +475,6 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		bool isImageFormatSupported = false;
 		std::tie(channels, pixelStride, isImageFormatSupported) = getTexturePixelStride(desc.fFormat);
 
-		const int srcWidth = desc.fWidth;
-		const int srcHeight = desc.fHeight;
-
-		// get segment of background image corresponding to tile
-		float srcWidthPerPixel;
-		float srcHeightPerPixel;
-
-		if (imgFit == FitType::FitStretch)
-		{
-			srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
-			srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
-		}
-		else if (imgFit == FitType::FitHorizontal)
-		{
-			srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
-			float scaleFactor = (float)maxTileHeight / (float)maxTileWidth;
-			srcHeightPerPixel = srcWidthPerPixel * scaleFactor;
-		}
-		else if (imgFit == FitType::FitVertical)
-		{
-			srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
-			float scaleFactor = (float)maxTileWidth / (float)maxTileHeight;
-			srcWidthPerPixel = srcHeightPerPixel * scaleFactor;
-		}
-
-		const int srcFullSegWidth = std::ceil(srcWidthPerPixel * maxTileWidth);
-		const int srcTailSegWidth = srcWidth - srcFullSegWidth * (countXTiles - 1);
-		const int srcCurrSegWidth = (xTileIdx == (countXTiles - 1)) ? srcTailSegWidth : srcFullSegWidth;
-
-		const int srcFullSegHeight = std::ceil(srcHeightPerPixel * maxTileHeight);
-		const int srcTailSegHeight = srcHeight - srcFullSegHeight * (countYTiles - 1);
-		const int srcCurrSegHeight = (yTileIdx == 0) ? srcTailSegHeight : srcFullSegHeight;
-
-		float imageAspectRatio = (float)srcCurrSegWidth / (float)srcCurrSegHeight;
-		//float viewAspectRatio = (float)viewWidth / (float)viewHeight;
-		float viewAspectRatio = (float)currTileWidth / (float)currTileHeight;
-
-		/*
-		should have different paths here for width > height and for height > width
-		*/
-		//assert(viewWidth >= viewHeight);
-
-		//float scaleFactor = (float)srcCurrSegWidth / (float)viewWidth;
-		float scaleFactor = (float)srcCurrSegWidth / (float)currTileWidth;
-		int createdImageWidth = srcCurrSegWidth;
-		//int createdImageHeight = std::ceil(viewHeight * scaleFactor);
-		//int createdImageHeight = std::ceil(currTileHeight * scaleFactor);
-		int createdImageHeight = srcCurrSegHeight;
-
-		float dbgResAspectRatio = (float)createdImageWidth / (float)createdImageHeight; // should be the same as viewAspectRatio
 
 		// create rpr image structures
 		rpr_image_format format = {};
@@ -533,37 +483,113 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 			(pixelStride == 2) ? RPR_COMPONENT_TYPE_FLOAT16 :
 			RPR_COMPONENT_TYPE_UINT8;
 
+		rpr_image_desc img_desc = {};
+
 		int srcPixSize = pixelStride * channels;
 		int dstPixSize = pixelStride * format.num_components;
 
-		rpr_image_desc img_desc = {};
-		img_desc.image_width = createdImageWidth; 
-		img_desc.image_height = createdImageHeight;
-		img_desc.image_row_pitch = img_desc.image_width * dstPixSize;
+		// buffer for background image tile
+		std::vector<unsigned char> buffer;
 
-		std::vector<unsigned char> buffer(img_desc.image_height * img_desc.image_row_pitch, (char)0);
+		// get segment of background image corresponding to tile
+		float srcWidthPerPixel;
+		float srcHeightPerPixel;
+		const int srcWidth = desc.fWidth;
+		const int srcHeight = desc.fHeight;
 
-		unsigned char* dst = buffer.data();
-
-		int shiftX = xTileIdx * srcFullSegWidth;
-		int shiftY = (yTileIdx > 1) ? srcTailSegHeight + (yTileIdx-1) * srcFullSegHeight : yTileIdx * srcTailSegHeight;
-
-		int offsetX = 0; // offsets are determinded by fill type
-		int offsetY = 0;
-
-		// foreach pixel in source image
-		for (unsigned int y = 0; y < srcCurrSegHeight; y++)
+		if (imgFit == FitType::FitStretch)
 		{
-			for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+			srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
+			srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
+
+			const int srcFullSegWidth = std::ceil(srcWidthPerPixel * maxTileWidth);
+			const int srcTailSegWidth = srcWidth - srcFullSegWidth * (countXTiles - 1);
+			const int srcCurrSegWidth = (xTileIdx == (countXTiles - 1)) ? srcTailSegWidth : srcFullSegWidth;
+
+			const int srcFullSegHeight = std::ceil(srcHeightPerPixel * maxTileHeight);
+			const int srcTailSegHeight = srcHeight - srcFullSegHeight * (countYTiles - 1);
+			const int srcCurrSegHeight = (yTileIdx == 0) ? srcTailSegHeight : srcFullSegHeight;
+
+			int createdImageWidth = srcCurrSegWidth;
+			int createdImageHeight = srcCurrSegHeight;
+
+			// set data and prepare for copying
+			img_desc.image_width = createdImageWidth;
+			img_desc.image_height = createdImageHeight;
+			img_desc.image_row_pitch = img_desc.image_width * dstPixSize;
+
+			buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
+
+			unsigned char* dst = buffer.data();
+
+			int shiftX = xTileIdx * srcFullSegWidth;
+			int shiftY = (yTileIdx > 1) ? srcTailSegHeight + (yTileIdx - 1) * srcFullSegHeight : yTileIdx * srcTailSegHeight;
+
+			// foreach pixel in source image
+			for (unsigned int y = 0; y < srcCurrSegHeight; y++)
 			{
-				memcpy(
-					dst + (x + offsetX) * dstPixSize + (y + offsetY) * img_desc.image_row_pitch,
-					src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
-					dstPixSize);
+				for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+				{
+					memcpy(
+						dst + x * dstPixSize + y * img_desc.image_row_pitch,
+						src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
+						dstPixSize);
+				}
 			}
+		}
+		else if (imgFit == FitType::FitHorizontal)
+		{
+			//
+		}
+		else if (imgFit == FitType::FitVertical)
+		{
+			srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
+			const int srcFullSegHeight = std::ceil(srcHeightPerPixel * maxTileHeight);
+			const int srcTailSegHeight = srcHeight - srcFullSegHeight * (countYTiles - 1);
+			const int srcCurrSegHeight = (yTileIdx == 0) ? srcTailSegHeight : srcFullSegHeight;
+
+			const int createdImageHeight = srcCurrSegHeight;
+
+			srcWidthPerPixel = srcHeightPerPixel;
+
+			// for width, we either need to add black pixels, or cut source image to preserve aspect ratio of the source picture
+			const int srcFullSegWidth = std::ceil(srcWidthPerPixel * maxTileWidth);
+			const int countFullSegments = std::trunc( srcWidth / (float)srcFullSegWidth);
+			const int srcImageTailSegWidth = srcWidth - countFullSegments * srcFullSegWidth;
+			const int scrOutputTailSegWidth = (viewWidth * srcWidthPerPixel) - srcFullSegWidth * (countXTiles - 1);
+			const int srcCurrSegWidth = (xTileIdx == (countFullSegments - 1)) ? srcImageTailSegWidth : srcFullSegWidth;
+
+			int createdImageWidth = (xTileIdx == (countXTiles - 1)) ? scrOutputTailSegWidth : srcFullSegWidth;
+
+			// set data and prepare for copying
+			img_desc.image_width = createdImageWidth;
+			img_desc.image_height = createdImageHeight;
+			img_desc.image_row_pitch = img_desc.image_width * dstPixSize;
+
+			buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
+
+			unsigned char* dst = buffer.data();
+
+			int shiftX = xTileIdx * srcFullSegWidth;
+			int shiftY = (yTileIdx > 1) ? srcTailSegHeight + (yTileIdx - 1) * srcFullSegHeight : yTileIdx * srcTailSegHeight;
+
+			// foreach pixel in source image
+			for (unsigned int y = 0; y < srcCurrSegHeight; y++)
+			{
+				for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+				{
+					memcpy(
+						dst + x * dstPixSize + y * img_desc.image_row_pitch,
+						src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
+						dstPixSize);
+				}
+			}
+
+
 		}
 
 #ifdef _DEBUG
+#ifdef DEBUG_TILE_DUMP
 		// debug dump
 		if ( (xTileIdx == 0) && (yTileIdx == 2) )
 		{
@@ -582,6 +608,7 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 
 			generateBitmapImage(dst2, img_desc.image_height, img_desc.image_width, img_desc.image_width * 4, "C:\\temp\\dbg\\1.bmp");
 		}
+#endif
 #endif
 
 		image = frw::Image(m->context, format, img_desc, buffer.data());
@@ -629,11 +656,11 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 		{
 			if (auto renderer = MHWRender::MRenderer::theRenderer())
 			{
-				if (MTextureManager* textureManager = renderer->getTextureManager())
+				if (auto textureManager = renderer->getTextureManager())
 				{
 					try
 					{
-						if (MTexture* texture = textureManager->acquireTexture(texturePath, ownerNodeName))
+						if (auto texture = textureManager->acquireTexture(texturePath, ownerNodeName))
 						{
 							MHWRender::MTextureDescription desc = {};
 							texture->textureDescription(desc);
@@ -894,9 +921,9 @@ frw::Image FireMaya::Scope::GetAdjustedImage(MString texturePath,
 		frw::Image image;
 		if (auto renderer = MHWRender::MRenderer::theRenderer())
 		{
-			if (MTextureManager* textureManager = renderer->getTextureManager())
+			if (auto textureManager = renderer->getTextureManager())
 			{
-				if (MTexture* texture = textureManager->acquireTexture(texturePath))
+				if (auto texture = textureManager->acquireTexture(texturePath))
 				{
 					MHWRender::MTextureDescription desc = {};
 					texture->textureDescription(desc);
