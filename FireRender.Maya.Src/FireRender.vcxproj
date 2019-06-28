@@ -233,7 +233,6 @@
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.cpp" />
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.cpp" />
     <ClCompile Include="DependencyNode.cpp" />
-    <ClCompile Include="EnableSaveIntermediateCmd.cpp" />
     <ClCompile Include="FastNoise.cpp" />
     <ClCompile Include="FileSystemUtils.cpp" />
     <ClCompile Include="FireMaya.cpp" />
@@ -365,7 +364,6 @@
     <ClInclude Include="base_mesh.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="DependencyNode.h" />
-    <ClInclude Include="EnableSaveIntermediateCmd.h" />
     <ClInclude Include="FastNoise.h" />
     <ClInclude Include="FileSystemUtils.h" />
     <ClInclude Include="FireMaya.h" />
