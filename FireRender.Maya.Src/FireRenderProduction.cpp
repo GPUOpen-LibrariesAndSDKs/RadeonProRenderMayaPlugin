@@ -471,6 +471,21 @@ void FireRenderProduction::RenderFullFrame()
 
 	// _TODO Investigate this, looks like this call is performance waste. Why we need to read all AOVs on every render call ?
 	m_aovs->readFrameBuffers(*m_context, false);
+
+	if (globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())
+	{
+		bool shouldSave = globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->ShouldSaveFrame(m_context->m_currentIteration);
+
+		if (shouldSave)
+		{
+			bool colorOnly = true;
+			unsigned int imageFormat = 8; // "jpg"
+			MString filePath = globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->FolderPath().c_str();
+			filePath += m_context->m_currentIteration;
+			filePath += ".jpg";
+			m_renderViewAOV->writeToFile(filePath, colorOnly, imageFormat);
+		}
+	}
 }
 
 void FireRenderProduction::setStopCallback(stop_callback callback)
