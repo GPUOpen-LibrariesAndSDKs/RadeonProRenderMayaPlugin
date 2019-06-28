@@ -885,5 +885,5 @@ public:
 
 	void SetEnabledSaveIntermediateImages(bool enable = true) { m_isSaveIntermediateEnabled = enable; }
 	void SetIntermediateImagesFolder(const std::string& folderPath) { m_IntermediateImagesFolderPath = folderPath; }
-	void SetIterationsToSave(std::vector<std::string> indices);
+	void SetIterationsToSave(std::vector<std::string>& indices);
 };

@@ -2247,7 +2247,7 @@ globalRenderUtilsDataHolder* globalRenderUtilsDataHolder::GetGlobalRenderUtilsDa
 	return &instance;
 }
 
-void globalRenderUtilsDataHolder::SetIterationsToSave(std::vector<std::string> indices)
+void globalRenderUtilsDataHolder::SetIterationsToSave(std::vector<std::string>& indices)
 {
 	framesToSave.clear();
 
