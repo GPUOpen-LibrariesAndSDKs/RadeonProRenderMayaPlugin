@@ -50,6 +50,8 @@ void TileRenderer::Render(FireRenderContext& renderContext, const TileRenderInfo
 
 	MString name = fireRenderCamera.GetPlugValue(imagePlane, "imageName", MString());
 
+	FireMaya::FitType tileFitType = (FireMaya::FitType) fireRenderCamera.GetPlugValue(imagePlane, "fit", 1);
+
 	int counter = 0;
 	for (int yTile = yTiles - 1; yTile >= 0; yTile--)
 	{
@@ -97,7 +99,7 @@ void TileRenderer::Render(FireRenderContext& renderContext, const TileRenderInfo
 				tileWidth, tileHeight,
 				xTiles, yTiles,
 				xTile, yTileIdx,
-				colorSpace);
+				colorSpace, tileFitType);
 			fireRenderCamera.Scene().SetBackgroundImage(image);
 
 			counter++;
