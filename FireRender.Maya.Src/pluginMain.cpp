@@ -28,7 +28,6 @@
 #include "FireRenderGlobals.h"
 #include "FireRenderCmd.h"
 #include "FireRenderLocationCmd.h"
-#include "EnableSaveIntermediateCmd.h"
 #include "FireRenderIBL.h"
 #include "FireRenderSkyLocator.h"
 #include "Lights/IES/FireRenderIESLight.h"
@@ -563,8 +562,6 @@ MStatus initializePlugin(MObject obj)
 	CHECK_MSTATUS(plugin.registerCommand("fireRenderLocation", FireRenderLocationCmd::creator, FireRenderLocationCmd::newSyntax));
 	CHECK_MSTATUS(plugin.registerCommand("fireRenderConvertVRay", FireRenderConvertVRayCmd::creator, FireRenderConvertVRayCmd::newSyntax));
 
-	CHECK_MSTATUS(plugin.registerCommand("enableSaveIntermediate", EnableSaveIntermediateCmd::creator, EnableSaveIntermediateCmd::newSyntax));
-
 	MString namePrefix(FIRE_RENDER_NODE_PREFIX);
 
 	////
@@ -866,8 +863,6 @@ MStatus uninitializePlugin(MObject obj)
 	CHECK_MSTATUS(plugin.deregisterCommand("fireRenderExport"));
 	CHECK_MSTATUS(plugin.deregisterCommand("fireRenderImport"));
 	CHECK_MSTATUS(plugin.deregisterCommand("fireRenderConvertVRay"));
-
-	CHECK_MSTATUS(plugin.deregisterCommand("enableSaveIntermediate"));
 
 	CHECK_MSTATUS(deRegisterNodesInPathEditor());
 
