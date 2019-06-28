@@ -388,6 +388,8 @@ unsigned char* createBitmapInfoHeader(int height, int width) {
 }
 #endif
 
+
+
 frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 	int viewWidth, int viewHeight,
 	int maxTileWidth, int maxTileHeight,
@@ -557,7 +559,8 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 			const int countFullSegments = std::trunc( srcWidth / (float)srcFullSegWidth);
 			const int srcImageTailSegWidth = srcWidth - countFullSegments * srcFullSegWidth;
 			const int scrOutputTailSegWidth = (viewWidth * srcWidthPerPixel) - srcFullSegWidth * (countXTiles - 1);
-			const int srcCurrSegWidth = (xTileIdx == (countFullSegments - 1)) ? srcImageTailSegWidth : srcFullSegWidth;
+			int countSkipTiles = std::trunc((countXTiles - countFullSegments - 1) / 2);
+			const int srcCurrSegWidth = ((xTileIdx - countSkipTiles) == countFullSegments) ? srcImageTailSegWidth : srcFullSegWidth;
 
 			int createdImageWidth = (xTileIdx == (countXTiles - 1)) ? scrOutputTailSegWidth : srcFullSegWidth;
 
@@ -568,48 +571,54 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 
 			buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
 
-			unsigned char* dst = buffer.data();
-
-			int shiftX = xTileIdx * srcFullSegWidth;
-			int shiftY = (yTileIdx > 1) ? srcTailSegHeight + (yTileIdx - 1) * srcFullSegHeight : yTileIdx * srcTailSegHeight;
-
-			// foreach pixel in source image
-			for (unsigned int y = 0; y < srcCurrSegHeight; y++)
+			if ((xTileIdx >= countSkipTiles) && ( (xTileIdx - countSkipTiles) <= countFullSegments))
 			{
-				for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+				unsigned char* dst = buffer.data();
+
+				int shiftX = (xTileIdx - countSkipTiles) * srcFullSegWidth;
+				int shiftY = (yTileIdx > 1) ? srcTailSegHeight + (yTileIdx - 1) * srcFullSegHeight : yTileIdx * srcTailSegHeight;
+
+				// foreach pixel in source image
+				for (unsigned int y = 0; y < srcCurrSegHeight; y++)
 				{
-					memcpy(
-						dst + x * dstPixSize + y * img_desc.image_row_pitch,
-						src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
-						dstPixSize);
+					for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+					{
+						memcpy(
+							dst + x * dstPixSize + y * img_desc.image_row_pitch,
+							src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
+							dstPixSize);
+					}
 				}
-			}
 
-
-		}
-
+#define DEBUG_TILE_DUMP
 #ifdef _DEBUG
 #ifdef DEBUG_TILE_DUMP
-		// debug dump
-		if ( (xTileIdx == 0) && (yTileIdx == 2) )
-		{
-			std::vector<unsigned char> buffer2(img_desc.image_height * img_desc.image_width * (dstPixSize+1), (char)255);
-			unsigned char* dst2 = buffer2.data();
-			for (unsigned int y = 0; y < srcCurrSegHeight; y++)
-			{
-				for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+				// debug dump
+				if ((xTileIdx == 2) && (yTileIdx == 0))
 				{
-					memcpy(
-						dst2 + x * (dstPixSize + 1) + (srcCurrSegHeight - 1 - y) * img_desc.image_width * (dstPixSize + 1),
-						src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
-						dstPixSize);
+					std::vector<unsigned char> buffer2(img_desc.image_height * img_desc.image_width * (dstPixSize + 1), (char)255);
+					unsigned char* dst2 = buffer2.data();
+					for (unsigned int y = 0; y < srcCurrSegHeight; y++)
+					{
+						for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+						{
+							memcpy(
+								dst2 + x * (dstPixSize + 1) + (srcCurrSegHeight - 1 - y) * img_desc.image_width * (dstPixSize + 1),
+								src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
+								dstPixSize);
+						}
+					}
+
+					generateBitmapImage(dst2, img_desc.image_height, img_desc.image_width, img_desc.image_width * 4, "C:\\temp\\dbg\\1.bmp");
 				}
+#endif
+#endif
+
 			}
 
-			generateBitmapImage(dst2, img_desc.image_height, img_desc.image_width, img_desc.image_width * 4, "C:\\temp\\dbg\\1.bmp");
+
 		}
-#endif
-#endif
+
 
 		image = frw::Image(m->context, format, img_desc, buffer.data());
 		image.SetName(key);
