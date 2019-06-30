@@ -494,15 +494,21 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		std::vector<unsigned char> buffer;
 
 		// get segment of background image corresponding to tile
-		float srcWidthPerPixel;
-		float srcHeightPerPixel;
 		const int srcWidth = desc.fWidth;
 		const int srcHeight = desc.fHeight;
 
-		if (imgFit == FitType::FitStretch)
+		if (imgFit == FitType::FitBest)
 		{
-			srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
-			srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
+			if (srcWidth > srcHeight)
+				imgFit = FitType::FitHorizontal;
+			else
+				imgFit = FitType::FitVertical;
+		}
+
+		if ((imgFit == FitType::FitStretch) || (imgFit == FitType::FitFill) )
+		{
+			float srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
+			float srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
 
 			const int srcFullSegWidth = std::ceil(srcWidthPerPixel * maxTileWidth);
 			const int srcTailSegWidth = srcWidth - srcFullSegWidth * (countXTiles - 1);
@@ -541,18 +547,82 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		}
 		else if (imgFit == FitType::FitHorizontal)
 		{
-			//
+			float srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
+			const int srcFullSegWidth = std::ceil(srcWidthPerPixel * maxTileWidth);
+			const int srcTailSegWidth = srcWidth - srcFullSegWidth * (countXTiles - 1);
+			const int srcCurrSegWidth = (xTileIdx == (countXTiles - 1)) ? srcTailSegWidth : srcFullSegWidth;
+
+			const int createdImageWidth = srcCurrSegWidth;
+
+			float srcHeightPerPixel = srcWidthPerPixel;
+			
+			// for height, we either need to add black pixels, or cut source image to preserve aspect ratio of the source picture
+			const int srcFullSegHeight = std::ceil(srcHeightPerPixel * maxTileHeight);
+			const int countFullSegments = std::trunc(srcHeight / (float)srcFullSegHeight);
+			const int srcImageTailSegHeight = srcHeight - countFullSegments * srcFullSegHeight;
+			const int scrOutputTailSegHeight = (viewHeight * srcHeightPerPixel) - srcFullSegHeight * (countYTiles - 1);
+			const int countSkipTiles = std::trunc((countYTiles - countFullSegments - 1) / 2);
+			const int srcCurrSegHeight = (yTileIdx == 0) ? scrOutputTailSegHeight : srcFullSegHeight;
+
+			int createdImageHeight = (yTileIdx == 0) ? scrOutputTailSegHeight : srcFullSegHeight;
+
+			// calculate offset
+			// - we can have uneven number of black tiles added at the sides of actual backplate image, and the tail segment length is different
+			// NIY
+
+			// - 1-st and last tile should have eqal number of black pixels added to them
+			//int offsetY = std::ceil(srcImageTailSegHeight / 2);
+
+			// set data and prepare for copying
+			img_desc.image_width = createdImageWidth;
+			img_desc.image_height = createdImageHeight;
+			img_desc.image_row_pitch = img_desc.image_width * dstPixSize;
+
+			buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
+
+			if ((yTileIdx >= countSkipTiles) && ((yTileIdx - countSkipTiles) <= countFullSegments))
+			{
+				unsigned char* dst = buffer.data();
+
+				//int dstOffset = (yTileIdx == countSkipTiles) ? offsetY : 0;
+				//int offsetShift = (yTileIdx > countSkipTiles) ? (dstOffset) : 0;
+
+				int shiftX = (xTileIdx - countSkipTiles) * srcFullSegWidth; // +offsetShift;
+				int shiftY = (yTileIdx != 0) ? scrOutputTailSegHeight : 0;
+				if (yTileIdx > 1)
+					shiftY += (yTileIdx - 1) * srcFullSegHeight;
+
+				/*int lastSrcPixel = ((xTileIdx - countSkipTiles) == countFullSegments) ?
+					(srcCurrSegWidth - dstOffset) :
+					(xTileIdx == countSkipTiles) ?
+					srcCurrSegWidth - offsetX :
+					srcCurrSegWidth;*/
+
+				int lastSrcPixel = srcCurrSegHeight;
+
+				// foreach pixel in source image
+				for (unsigned int y = 0; y < lastSrcPixel; y++)
+				{
+					for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+					{
+						memcpy(
+							dst + x * dstPixSize + (y /*+ dstOffset*/) * img_desc.image_row_pitch,
+							src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
+							dstPixSize);
+					}
+				}
+			}
 		}
 		else if (imgFit == FitType::FitVertical)
 		{
-			srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
+			float srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
 			const int srcFullSegHeight = std::ceil(srcHeightPerPixel * maxTileHeight);
 			const int srcTailSegHeight = srcHeight - srcFullSegHeight * (countYTiles - 1);
 			const int srcCurrSegHeight = (yTileIdx == 0) ? srcTailSegHeight : srcFullSegHeight;
 
 			const int createdImageHeight = srcCurrSegHeight;
 
-			srcWidthPerPixel = srcHeightPerPixel;
+			float srcWidthPerPixel = srcHeightPerPixel;
 
 			// for width, we either need to add black pixels, or cut source image to preserve aspect ratio of the source picture
 			const int srcFullSegWidth = std::ceil(srcWidthPerPixel * maxTileWidth);
