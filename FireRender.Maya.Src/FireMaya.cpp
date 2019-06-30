@@ -559,10 +559,17 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 			const int countFullSegments = std::trunc( srcWidth / (float)srcFullSegWidth);
 			const int srcImageTailSegWidth = srcWidth - countFullSegments * srcFullSegWidth;
 			const int scrOutputTailSegWidth = (viewWidth * srcWidthPerPixel) - srcFullSegWidth * (countXTiles - 1);
-			int countSkipTiles = std::trunc((countXTiles - countFullSegments - 1) / 2);
+			const int countSkipTiles = std::trunc((countXTiles - countFullSegments - 1) / 2);
 			const int srcCurrSegWidth = ((xTileIdx - countSkipTiles) == countFullSegments) ? srcImageTailSegWidth : srcFullSegWidth;
 
 			int createdImageWidth = (xTileIdx == (countXTiles - 1)) ? scrOutputTailSegWidth : srcFullSegWidth;
+
+			// calculate offset
+			// - we can have uneven number of black tiles added at the sides of actual backplate image, and the tail segment length is different
+			// NIY
+
+			// - 1-st and last tile should have eqal number of black pixels added to them
+			int offsetX = std::ceil(srcImageTailSegWidth / 2);
 
 			// set data and prepare for copying
 			img_desc.image_width = createdImageWidth;
@@ -575,16 +582,23 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 			{
 				unsigned char* dst = buffer.data();
 
-				int shiftX = (xTileIdx - countSkipTiles) * srcFullSegWidth;
+				int dstOffset = (xTileIdx == countSkipTiles) ? offsetX : 0;
+				int offsetShift = (xTileIdx > countSkipTiles) ? (dstOffset) : 0;
+				int shiftX = (xTileIdx - countSkipTiles) * srcFullSegWidth + offsetShift;
 				int shiftY = (yTileIdx > 1) ? srcTailSegHeight + (yTileIdx - 1) * srcFullSegHeight : yTileIdx * srcTailSegHeight;
+				int lastSrcPixel = ((xTileIdx - countSkipTiles) == countFullSegments) ? 
+					(srcCurrSegWidth - dstOffset) : 
+					(xTileIdx == countSkipTiles) ? 
+					srcCurrSegWidth - offsetX :
+					srcCurrSegWidth;
 
 				// foreach pixel in source image
 				for (unsigned int y = 0; y < srcCurrSegHeight; y++)
 				{
-					for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+					for (unsigned int x = 0; x < lastSrcPixel; x++)
 					{
 						memcpy(
-							dst + x * dstPixSize + y * img_desc.image_row_pitch,
+							dst + (x + dstOffset) * dstPixSize + y * img_desc.image_row_pitch,
 							src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
 							dstPixSize);
 					}
