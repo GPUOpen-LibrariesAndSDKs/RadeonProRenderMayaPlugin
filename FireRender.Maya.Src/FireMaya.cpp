@@ -580,7 +580,7 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 
 			buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
 
-			if ((yTileIdx >= countSkipTiles) && ((yTileIdx - countSkipTiles) <= countFullSegments))
+			if ((yTileIdx >= countSkipTiles) && ((yTileIdx - countSkipTiles) <= (countFullSegments+1)))
 			{
 				unsigned char* dst = buffer.data();
 
@@ -599,6 +599,11 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 					srcCurrSegWidth;*/
 
 				int lastSrcPixel = srcCurrSegHeight;
+				if ((yTileIdx - countSkipTiles) == (countFullSegments + 1))
+				{
+					int pixelsRemaining = srcHeight - scrOutputTailSegHeight - srcFullSegHeight * countFullSegments;
+					lastSrcPixel = pixelsRemaining;
+				}
 
 				// foreach pixel in source image
 				for (unsigned int y = 0; y < lastSrcPixel; y++)
