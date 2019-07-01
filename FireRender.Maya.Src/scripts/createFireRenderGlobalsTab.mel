@@ -289,7 +289,7 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 		attrControlGrp -label "Reflection Direct" -attribute "RadeonProRenderGlobals.aovReflectionDirect";
 		attrControlGrp -label "Reflection Indirect" -attribute "RadeonProRenderGlobals.aovReflectionIndirect";
 		attrControlGrp -label "Refraction" -attribute "RadeonProRenderGlobals.aovRefraction";
-		attrControlGrp -label "SSS" -attribute "RadeonProRenderGlobals.aovVolume";
+		attrControlGrp -label "Subsurface / Volume" -attribute "RadeonProRenderGlobals.aovVolume";
 		attrControlGrp -label "Albedo" -attribute "RadeonProRenderGlobals.aovAlbedo";
 
 	setParent ..;
