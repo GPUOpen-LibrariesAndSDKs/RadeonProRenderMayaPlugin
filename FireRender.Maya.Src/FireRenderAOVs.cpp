@@ -317,9 +317,10 @@ void FireRenderAOVs::writeToFile(const MString& filePath, unsigned int imageForm
 	// Check if only the color AOV is active.
 	bool colorOnly = getActiveAOVCount() == 1;
 
-	// For EXR, save all AOVs to a single multichannel file.
+	// For EXR, may want save all AOVs to a single multichannel file.
 	MString extension = FireRenderImageUtil::getImageFormatExtension(imageFormat);
-	if (extension == "exr" )
+
+	if ((extension == "exr") && (FireRenderGlobalsData::isExrMultichannelEnabled()) )
 	{
 		if (FireRenderImageUtil::saveMultichannelAOVs(filePath,
 			m_region.getWidth(), m_region.getHeight(), imageFormat, *this))
