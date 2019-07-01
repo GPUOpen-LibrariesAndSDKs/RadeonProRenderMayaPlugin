@@ -643,6 +643,12 @@
 		CE600BD422A182E100362CF7 /* RenderStampUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE600BD022A182E100362CF7 /* RenderStampUtils.cpp */; };
 		CE600BD522A182E100362CF7 /* RenderStampUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE600BD022A182E100362CF7 /* RenderStampUtils.cpp */; };
 		CE600BD622A182E100362CF7 /* RenderStampUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE600BD022A182E100362CF7 /* RenderStampUtils.cpp */; };
+		CE7CE7DC22CA0FD4007270C8 /* EnableSaveIntermediateCmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE7CE7DB22CA0FD4007270C8 /* EnableSaveIntermediateCmd.cpp */; };
+		CE7CE7DD22CA0FD4007270C8 /* EnableSaveIntermediateCmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE7CE7DB22CA0FD4007270C8 /* EnableSaveIntermediateCmd.cpp */; };
+		CE7CE7DE22CA0FD4007270C8 /* EnableSaveIntermediateCmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE7CE7DB22CA0FD4007270C8 /* EnableSaveIntermediateCmd.cpp */; };
+		CE7CE7E022CA0FF1007270C8 /* EnableSaveIntermediateCmd.h in Headers */ = {isa = PBXBuildFile; fileRef = CE7CE7DF22CA0FF1007270C8 /* EnableSaveIntermediateCmd.h */; };
+		CE7CE7E122CA0FF1007270C8 /* EnableSaveIntermediateCmd.h in Headers */ = {isa = PBXBuildFile; fileRef = CE7CE7DF22CA0FF1007270C8 /* EnableSaveIntermediateCmd.h */; };
+		CE7CE7E222CA0FF1007270C8 /* EnableSaveIntermediateCmd.h in Headers */ = {isa = PBXBuildFile; fileRef = CE7CE7DF22CA0FF1007270C8 /* EnableSaveIntermediateCmd.h */; };
 		CEED8EC8227346E900136DEF /* FireRenderVolume.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */; };
 		CEED8EC9227346E900136DEF /* FireRenderVolume.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */; };
 		CEED8ECA227346E900136DEF /* FireRenderVolume.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */; };
@@ -939,6 +945,8 @@
 		CE5E271322804A3E00F3B6D7 /* TileRenderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TileRenderer.cpp; path = ../../../FireRender.Maya.Src/TileRenderer.cpp; sourceTree = "<group>"; };
 		CE600BCE22A182E000362CF7 /* RenderStampUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RenderStampUtils.h; path = ../../../FireRender.Maya.Src/RenderStampUtils.h; sourceTree = "<group>"; };
 		CE600BD022A182E100362CF7 /* RenderStampUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RenderStampUtils.cpp; path = ../../../FireRender.Maya.Src/RenderStampUtils.cpp; sourceTree = "<group>"; };
+		CE7CE7DB22CA0FD4007270C8 /* EnableSaveIntermediateCmd.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EnableSaveIntermediateCmd.cpp; path = ../../../FireRender.Maya.Src/EnableSaveIntermediateCmd.cpp; sourceTree = "<group>"; };
+		CE7CE7DF22CA0FF1007270C8 /* EnableSaveIntermediateCmd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EnableSaveIntermediateCmd.h; path = ../../../FireRender.Maya.Src/EnableSaveIntermediateCmd.h; sourceTree = "<group>"; };
 		CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderVolume.cpp; path = ../../../FireRender.Maya.Src/FireRenderVolume.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1011,6 +1019,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				CE7CE7DF22CA0FF1007270C8 /* EnableSaveIntermediateCmd.h */,
+				CE7CE7DB22CA0FD4007270C8 /* EnableSaveIntermediateCmd.cpp */,
 				CE5E271322804A3E00F3B6D7 /* TileRenderer.cpp */,
 				CE5E271122804A3E00F3B6D7 /* TileRenderer.h */,
 				CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */,
@@ -1356,6 +1366,7 @@
 				8DB9AE952255519100543147 /* FastNoise.h in Headers */,
 				8DB9AEA2225551B400543147 /* VolumeAttributes.h in Headers */,
 				4DE508791D9950A1009B2BD6 /* FireRenderTextureCache.h in Headers */,
+				CE7CE7E022CA0FF1007270C8 /* EnableSaveIntermediateCmd.h in Headers */,
 				4DE5087A1D9950A1009B2BD6 /* FireRenderImportExportXML.h in Headers */,
 				8D8F06EC1F437B2D00A13D6B /* ArHosekSkyModel.h in Headers */,
 				4DE5087B1D9950A1009B2BD6 /* frWrap.h in Headers */,
@@ -1532,6 +1543,7 @@
 				8D595DDD20372FE20031988A /* FireRenderObjects.h in Headers */,
 				8D595DDE20372FE20031988A /* FireRenderFresnel.h in Headers */,
 				8D595DDF20372FE20031988A /* FireRenderDisplacement.h in Headers */,
+				CE7CE7E122CA0FF1007270C8 /* EnableSaveIntermediateCmd.h in Headers */,
 				8D595DE020372FE20031988A /* FireRenderGradient.h in Headers */,
 				8D595DE120372FE20031988A /* FireRenderSurfaceOverride.h in Headers */,
 				8D595DE220372FE20031988A /* FireRenderViewportOperation.h in Headers */,
@@ -1640,6 +1652,7 @@
 				8DBCC2F222304666003EE361 /* FireRenderObjects.h in Headers */,
 				8DBCC2F322304666003EE361 /* FireRenderFresnel.h in Headers */,
 				8DBCC2F422304666003EE361 /* FireRenderDisplacement.h in Headers */,
+				CE7CE7E222CA0FF1007270C8 /* EnableSaveIntermediateCmd.h in Headers */,
 				8DBCC2F522304666003EE361 /* FireRenderGradient.h in Headers */,
 				8DBCC2F622304666003EE361 /* FireRenderSurfaceOverride.h in Headers */,
 				8DBCC2F722304666003EE361 /* FireRenderViewportOperation.h in Headers */,
@@ -1823,6 +1836,7 @@
 				8DB9AE9D225551B400543147 /* FireRenderVolumeLocator.cpp in Sources */,
 				8D77AEF81F436244008E88FB /* FireRenderViewportUI.cpp in Sources */,
 				8D843D6F1F98F5470068CB2D /* IESprocessor.cpp in Sources */,
+				CE7CE7DC22CA0FD4007270C8 /* EnableSaveIntermediateCmd.cpp in Sources */,
 				8D91169D222584460083881D /* XMLMaterialExportCommon.cpp in Sources */,
 				4DE508B51D9950A1009B2BD6 /* FireRenderPassthrough.cpp in Sources */,
 				4D55F2501DDB1EFC00FD945D /* FireRenderViewportManager.cpp in Sources */,
@@ -1953,6 +1967,7 @@
 				8D595E2E20372FE20031988A /* ShadersManager.cpp in Sources */,
 				8D595E2F20372FE20031988A /* RenderCacheWarningDialog.cpp in Sources */,
 				8D595E3020372FE20031988A /* FireRenderSkyLocator.cpp in Sources */,
+				CE7CE7DD22CA0FD4007270C8 /* EnableSaveIntermediateCmd.cpp in Sources */,
 				8D595E3120372FE20031988A /* FireMaterialViewRenderer.cpp in Sources */,
 				8D595E3220372FE20031988A /* FireRenderAOVDepth.cpp in Sources */,
 				8D595E3320372FE20031988A /* FireRenderViewportCmd.cpp in Sources */,
@@ -2060,6 +2075,7 @@
 				8DBCC34F22304666003EE361 /* ShadersManager.cpp in Sources */,
 				8DBCC35022304666003EE361 /* RenderCacheWarningDialog.cpp in Sources */,
 				8DBCC35122304666003EE361 /* FireRenderSkyLocator.cpp in Sources */,
+				CE7CE7DE22CA0FD4007270C8 /* EnableSaveIntermediateCmd.cpp in Sources */,
 				8DBCC35222304666003EE361 /* FireMaterialViewRenderer.cpp in Sources */,
 				8DBCC35322304666003EE361 /* FireRenderAOVDepth.cpp in Sources */,
 				8DBCC35422304666003EE361 /* FireRenderViewportCmd.cpp in Sources */,
