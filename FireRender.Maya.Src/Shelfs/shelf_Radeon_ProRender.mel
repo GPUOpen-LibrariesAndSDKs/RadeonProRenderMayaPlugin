@@ -297,6 +297,34 @@ global proc shelf_Radeon_ProRender () {
 		-commandRepeatable 1
 		-flat 1
 	;
+
+	shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 50
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-annotation "Creates Physical Light"
+		-enableBackground 0
+		-align "center"
+		-label "Create Physical Light"
+		-labelOffset 0
+		-font "plainLabelFont"
+		// -imageOverlayLabel "Physical Light"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0 0 0 0
+		-image "shelf/RPRPhysicalLight.png"
+		-image1 "shelf/RPRPhysicalLight.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command createPhysicalLight
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+	;
 	
 	/*
 		separator

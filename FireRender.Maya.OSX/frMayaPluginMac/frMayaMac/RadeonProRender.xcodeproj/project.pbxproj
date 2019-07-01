@@ -637,6 +637,12 @@
 		CE5E271722804A3E00F3B6D7 /* TileRenderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE5E271322804A3E00F3B6D7 /* TileRenderer.cpp */; };
 		CE5E271822804A3E00F3B6D7 /* TileRenderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE5E271322804A3E00F3B6D7 /* TileRenderer.cpp */; };
 		CE5E271922804A3E00F3B6D7 /* TileRenderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE5E271322804A3E00F3B6D7 /* TileRenderer.cpp */; };
+		CE600BD122A182E100362CF7 /* RenderStampUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = CE600BCE22A182E000362CF7 /* RenderStampUtils.h */; };
+		CE600BD222A182E100362CF7 /* RenderStampUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = CE600BCE22A182E000362CF7 /* RenderStampUtils.h */; };
+		CE600BD322A182E100362CF7 /* RenderStampUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = CE600BCE22A182E000362CF7 /* RenderStampUtils.h */; };
+		CE600BD422A182E100362CF7 /* RenderStampUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE600BD022A182E100362CF7 /* RenderStampUtils.cpp */; };
+		CE600BD522A182E100362CF7 /* RenderStampUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE600BD022A182E100362CF7 /* RenderStampUtils.cpp */; };
+		CE600BD622A182E100362CF7 /* RenderStampUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE600BD022A182E100362CF7 /* RenderStampUtils.cpp */; };
 		CEED8EC8227346E900136DEF /* FireRenderVolume.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */; };
 		CEED8EC9227346E900136DEF /* FireRenderVolume.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */; };
 		CEED8ECA227346E900136DEF /* FireRenderVolume.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */; };
@@ -931,6 +937,8 @@
 		9FB8E58C1D80643600D6DB73 /* Shelfs */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Shelfs; path = ../../../FireRender.Maya.Src/Shelfs; sourceTree = "<group>"; };
 		CE5E271122804A3E00F3B6D7 /* TileRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TileRenderer.h; path = ../../../FireRender.Maya.Src/TileRenderer.h; sourceTree = "<group>"; };
 		CE5E271322804A3E00F3B6D7 /* TileRenderer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TileRenderer.cpp; path = ../../../FireRender.Maya.Src/TileRenderer.cpp; sourceTree = "<group>"; };
+		CE600BCE22A182E000362CF7 /* RenderStampUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RenderStampUtils.h; path = ../../../FireRender.Maya.Src/RenderStampUtils.h; sourceTree = "<group>"; };
+		CE600BD022A182E100362CF7 /* RenderStampUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RenderStampUtils.cpp; path = ../../../FireRender.Maya.Src/RenderStampUtils.cpp; sourceTree = "<group>"; };
 		CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderVolume.cpp; path = ../../../FireRender.Maya.Src/FireRenderVolume.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -986,6 +994,8 @@
 		08FB7794FE84155DC02AAC07 /* helloWorldCmdPlugin */ = {
 			isa = PBXGroup;
 			children = (
+				CE600BD022A182E100362CF7 /* RenderStampUtils.cpp */,
+				CE600BCE22A182E000362CF7 /* RenderStampUtils.h */,
 				4DE645101DA339A60076E6A7 /* Readme.txt */,
 				4DE645091DA228940076E6A7 /* Scripts */,
 				08FB7795FE84155DC02AAC07 /* Source */,
@@ -1361,6 +1371,7 @@
 				4DE5087E1D9950A1009B2BD6 /* FireMaya.h in Headers */,
 				8D843D6E1F98F5470068CB2D /* IESLightRepresentationCalc.h in Headers */,
 				8D1E289E2034A0550060BB11 /* FireRenderPBRMaterial.h in Headers */,
+				CE600BD122A182E100362CF7 /* RenderStampUtils.h in Headers */,
 				8D77AEED1F436244008E88FB /* FireRenderMath.h in Headers */,
 				8DB6233D2075583C00841D10 /* PhysicalLightAttributes.h in Headers */,
 				8D77AEB01F4361E2008E88FB /* SkyGen.h in Headers */,
@@ -1515,6 +1526,7 @@
 				8D595DD820372FE20031988A /* FireRenderUtils.h in Headers */,
 				8D595DD920372FE20031988A /* FireRenderViewportBlit.h in Headers */,
 				8D595DDA20372FE20031988A /* common.h in Headers */,
+				CE600BD222A182E100362CF7 /* RenderStampUtils.h in Headers */,
 				8D595DDB20372FE20031988A /* FireRenderAOVs.h in Headers */,
 				8D595DDC20372FE20031988A /* FireRenderEnvironmentLight.h in Headers */,
 				8D595DDD20372FE20031988A /* FireRenderObjects.h in Headers */,
@@ -1622,6 +1634,7 @@
 				8DBCC2ED22304666003EE361 /* FireRenderUtils.h in Headers */,
 				8DBCC2EE22304666003EE361 /* FireRenderViewportBlit.h in Headers */,
 				8DBCC2EF22304666003EE361 /* common.h in Headers */,
+				CE600BD322A182E100362CF7 /* RenderStampUtils.h in Headers */,
 				8DBCC2F022304666003EE361 /* FireRenderAOVs.h in Headers */,
 				8DBCC2F122304666003EE361 /* FireRenderEnvironmentLight.h in Headers */,
 				8DBCC2F222304666003EE361 /* FireRenderObjects.h in Headers */,
@@ -1755,6 +1768,7 @@
 				8DE9B55D2191DD7200ED8555 /* FireRenderImportXML.cpp in Sources */,
 				4D1B139F1DA48D04007BDCCD /* FireRenderImageUtil.cpp in Sources */,
 				4DE508A01D9950A1009B2BD6 /* FireRenderBlendMaterial.cpp in Sources */,
+				CE600BD422A182E100362CF7 /* RenderStampUtils.cpp in Sources */,
 				4DE508A11D9950A1009B2BD6 /* FireRenderExportCmd.cpp in Sources */,
 				8D8F06EB1F437B2D00A13D6B /* ArHosekSkyModel.cpp in Sources */,
 				8DB6232E2075582100841D10 /* IESLightLocatorMesh.cpp in Sources */,
@@ -1871,6 +1885,7 @@
 				8DB6234720755B2800841D10 /* RprTools.cpp in Sources */,
 				8DCBE50C20727FEF00F79E06 /* ImageFilter.cpp in Sources */,
 				8D595DE920372FE20031988A /* FireRenderGlobals.cpp in Sources */,
+				CE600BD522A182E100362CF7 /* RenderStampUtils.cpp in Sources */,
 				8D595DEA20372FE20031988A /* FireRenderMaterial.cpp in Sources */,
 				8D595DEB20372FE20031988A /* FireRenderShadowCatcherMaterial.cpp in Sources */,
 				8D595DEC20372FE20031988A /* FireRenderUtils.cpp in Sources */,
@@ -1977,6 +1992,7 @@
 				8DBCC30C22304666003EE361 /* RprTools.cpp in Sources */,
 				8DBCC30D22304666003EE361 /* ImageFilter.cpp in Sources */,
 				8DBCC30E22304666003EE361 /* FireRenderGlobals.cpp in Sources */,
+				CE600BD622A182E100362CF7 /* RenderStampUtils.cpp in Sources */,
 				8DBCC30F22304666003EE361 /* FireRenderMaterial.cpp in Sources */,
 				8DBCC31022304666003EE361 /* FireRenderShadowCatcherMaterial.cpp in Sources */,
 				8DBCC31122304666003EE361 /* FireRenderUtils.cpp in Sources */,
