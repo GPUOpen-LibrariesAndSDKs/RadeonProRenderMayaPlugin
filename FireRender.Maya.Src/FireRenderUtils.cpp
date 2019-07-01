@@ -2258,5 +2258,31 @@ void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals
 	};
 }
 
+globalRenderUtilsDataHolder* globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder(void)
+{
+	static globalRenderUtilsDataHolder instance;
+	return &instance;
+}
+
+void globalRenderUtilsDataHolder::SetIterationsToSave(std::vector<std::string>& indices)
+{
+	framesToSave.clear();
+
+	for (auto& token : indices)
+	{
+		int idx = std::stoi(token);
+		framesToSave.insert(idx);
+	}
+}
+
+bool globalRenderUtilsDataHolder::ShouldSaveFrame(int frameIdx) const
+{
+	auto it = std::find(framesToSave.begin(), framesToSave.end(), frameIdx);
+	if (it == framesToSave.end())
+		return false;
+
+	return true;
+}
+
 
 
