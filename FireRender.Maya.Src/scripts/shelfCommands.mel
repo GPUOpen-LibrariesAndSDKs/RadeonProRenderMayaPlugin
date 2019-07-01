@@ -130,8 +130,9 @@ global proc launchSceneExport()
 	int $firstFrameIdx = `intSliderGrp -query -value sliderFirstFrameName`;
 	int $lastFrameIdx = `intSliderGrp -query -value sliderLastFrameName`;
 	$isSingleFileEnabled = `checkBox  -query -value singleFileCheckBx`;
+	string $selectedOption = `optionMenu -query -value compressionOption`;
 
-	fireRenderExport -scene -file $result -frames $isSqExEnabled $firstFrameIdx $lastFrameIdx $isSingleFileEnabled;
+	fireRenderExport -scene -file $result -frames $isSqExEnabled $firstFrameIdx $lastFrameIdx $isSingleFileEnabled -compress $selectedOption;
 
 	deleteUI exWindow;
 }
@@ -182,6 +183,13 @@ global proc exportSceneRPR()
 			intSliderGrp -label "Last Frame" -field true -minValue 1 -fieldMinValue 1 -maxValue 100 -fieldMaxValue $maxIntVal -value 60 -enable false -cw 1 70 -dragCommand sliderLastFrameDragCallback -cc sliderLastFrameChangeCallback sliderLastFrameName;
 			checkBox -label "Enable Sequence Export" -value false -onCommand "onSqEx" -offCommand "offSqEx" exportSqCheckBx;
 			checkBox -label "Export As Single File" -value false singleFileCheckBx;
+
+			optionMenu -label "Compression" compressionOption;
+            menuItem -label "None";
+            menuItem -label "Level 1";
+            menuItem -label "Level 2";
+            menuItem -label "Level 3";
+
 			columnLayout -columnOffset "left" 120;
 				button -label "Launch Export" -command "launchSceneExport";
 
