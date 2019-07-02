@@ -26,14 +26,6 @@ namespace FireMaya
 namespace MeshTranslator
 {
 
-void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source)
-{
-	int length = source.length();
-	out.clear();
-	out.resize(length, 0.0f);
-	source.get(out.data());
-}
-
 MObject Smoothed2ndUV(const MObject& object, MStatus& status)
 {
 	MFnMesh mesh(object);
@@ -57,6 +49,7 @@ MObject Smoothed2ndUV(const MObject& object, MStatus& status)
 	cloned_node.getPath(item);
 	item.extendToShape();
 	clonedMesh = item.node();
+
 	if (!clonedMesh.hasFn(MFn::kMesh))
 		return MObject::kNullObj;
 
@@ -65,67 +58,17 @@ MObject Smoothed2ndUV(const MObject& object, MStatus& status)
 	MStringArray uvSetNamesCloned;
 	fnClonedMesh.getUVSetNames(uvSetNamesCloned);
 
-#ifdef _DEBUG
-	{
-		std::vector<float> uOrig;
-		std::vector<float> vOrig;
-		MFloatArray uArrayOrig;
-		MFloatArray vArrayOrig;
-		fnClonedMesh.getUVs(uArrayOrig, vArrayOrig, &uvSetNamesCloned[0]);
-		dumpFloatArrDbg(uOrig, uArrayOrig);
-		dumpFloatArrDbg(vOrig, vArrayOrig);
-
-		fnClonedMesh.getUVs(uArrayOrig, vArrayOrig, &uvSetNamesCloned[1]);
-		dumpFloatArrDbg(uOrig, uArrayOrig);
-		dumpFloatArrDbg(vOrig, vArrayOrig);
-	}
-#endif
-
 	status = fnClonedMesh.deleteUVSet(uvSetNamesCloned[1]);
-	/*fnClonedMesh.clearUVs();
+	fnClonedMesh.clearUVs();
 	status = fnClonedMesh.setUVs(uArray, vArray);
-	status = fnClonedMesh.assignUVs(uvCounts, uvIds);*/
-
-#ifdef _DEBUG
-	uvSetNamesCloned.clear();
-	fnClonedMesh.getUVSetNames(uvSetNamesCloned);
-	std::vector<MString> uvSetNamesDbg;
-	for (int idx = 0; idx < uvSetNamesCloned.length(); ++idx)
-	{
-		MString tName = uvSetNamesCloned[idx];
-		uvSetNamesDbg.push_back(tName);
-	}
-
-	{
-		std::vector<float> uOrig;
-		std::vector<float> vOrig;
-		MFloatArray uArrayOrig;
-		MFloatArray vArrayOrig;
-		fnClonedMesh.getUVs(uArrayOrig, vArrayOrig, &uvSetNamesCloned[0]);
-		dumpFloatArrDbg(uOrig, uArrayOrig);
-		dumpFloatArrDbg(vOrig, vArrayOrig);
-	}
-#endif
+	status = fnClonedMesh.assignUVs(uvCounts, uvIds);
 
 	// proceed with smoothing
 	MFnDagNode dagClonedNode(clonedMesh);
 	MObject clonedSmoothedMesh = fnClonedMesh.generateSmoothMesh(dagClonedNode.parent(0), NULL, &status);
 
-#ifdef _DEBUG
-	{
-		MFnMesh fnCloned(clonedSmoothedMesh);
-		std::vector<float> uOrig;
-		std::vector<float> vOrig;
-		MFloatArray uArrayOrig;
-		MFloatArray vArrayOrig;
-		fnCloned.getUVs(uArrayOrig, vArrayOrig);
-		dumpFloatArrDbg(uOrig, uArrayOrig);
-		dumpFloatArrDbg(vOrig, vArrayOrig);
-	}
-#endif
-
 	// destroy temporary object
-	//MGlobal::deleteNode(clonedMesh);
+	MGlobal::deleteNode(clonedMesh);
 
 	return clonedSmoothedMesh;
 }
@@ -133,8 +76,6 @@ MObject Smoothed2ndUV(const MObject& object, MStatus& status)
 MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus& status)
 {
 	status = MStatus::kSuccess;
-
-	return MObject::kNullObj;
 
 	DependencyNode attributes(object);
 	bool smoothPreview = attributes.getBool("displaySmoothMesh");
@@ -158,8 +99,8 @@ MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus
 	int in_numUVSets = mesh.numUVSets();
 
 	MObject clonedSmoothedMesh;
+
 	if (in_numUVSets != 1)
-		//return MObject::kNullObj; // temporary workaround of bug of generateSmoothMesh loosing UV data
 	{
 		clonedSmoothedMesh = Smoothed2ndUV(object, status);
 	}
@@ -189,31 +130,8 @@ MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus
 		status = fnOrigSmoothed.setUVs(uArrayCloned, vArrayCloned, &newUVSetName);
 		status = fnOrigSmoothed.assignUVs(uvCountsCloned, uvIdsCloned, &newUVSetName);
 
-#ifdef _DEBUG
-		MStringArray smoothedUVSetNames;
-		fnOrigSmoothed.getUVSetNames(smoothedUVSetNames);
-		std::vector<MString> uvSetNamesDbg;
-		for (int idx = 0; idx < smoothedUVSetNames.length(); ++idx)
-		{
-			MString tName = smoothedUVSetNames[idx];
-			uvSetNamesDbg.push_back(tName);
-		}
-
-		std::vector<float> uOrig;
-		std::vector<float> vOrig;
-		MFloatArray uArrayOrig;
-		MFloatArray vArrayOrig;
-		fnOrigSmoothed.getUVs(uArrayOrig, vArrayOrig, &uvSetNamesDbg[0]);
-		dumpFloatArrDbg(uOrig, uArrayCloned);
-		dumpFloatArrDbg(vOrig, vArrayCloned);
-
-		status = fnOrigSmoothed.getUVs(uArrayCloned, vArrayCloned, &smoothedUVSetNames[1]);
-
-		std::vector<float> u;
-		std::vector<float> v;
-		dumpFloatArrDbg(u, uArrayCloned);
-		dumpFloatArrDbg(v, vArrayCloned);
-#endif
+		MFnDagNode fnclonedSmoothedMesh(clonedSmoothedMesh);
+		MGlobal::deleteNode(fnclonedSmoothedMesh.parent(0));
 	}
 
 	return smoothedMesh;

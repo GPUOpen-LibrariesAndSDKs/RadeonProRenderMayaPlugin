@@ -2258,5 +2258,11 @@ void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals
 	};
 }
 
-
+void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source)
+{
+	int length = source.length();
+	out.clear();
+	out.resize(length, 0.0f);
+	source.get(out.data());
+}
 

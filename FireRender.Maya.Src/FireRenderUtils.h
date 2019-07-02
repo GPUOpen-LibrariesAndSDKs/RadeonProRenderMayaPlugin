@@ -863,3 +863,6 @@ bool GetValues(MPlug& plug, std::vector<RampCtrlPoint<valType>>& out)
 void setAttribProps(MFnAttribute& attr, const MObject& attrObj);
 
 void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals, std::vector<int>& vertexIndices, std::vector<int>& normalIndices);
+
+void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source);
+
