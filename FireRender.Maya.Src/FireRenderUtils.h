@@ -864,5 +864,30 @@ void setAttribProps(MFnAttribute& attr, const MObject& attrObj);
 
 void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals, std::vector<int>& vertexIndices, std::vector<int>& normalIndices);
 
-void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source);
+class globalRenderUtilsDataHolder
+{
+private:
+	globalRenderUtilsDataHolder(void) : m_isSaveIntermediateEnabled(false) {}
+	~globalRenderUtilsDataHolder(void) {}
 
+private:
+	bool m_isSaveIntermediateEnabled;
+	std::string m_IntermediateImagesFolderPath;
+	std::set<int> framesToSave;
+
+public:
+	static globalRenderUtilsDataHolder* GetGlobalRenderUtilsDataHolder(void);
+
+	globalRenderUtilsDataHolder(const globalRenderUtilsDataHolder&) = delete;
+	globalRenderUtilsDataHolder& operator=(const globalRenderUtilsDataHolder&) = delete;
+
+	bool IsSavingIntermediateEnabled(void) const { return m_isSaveIntermediateEnabled; }
+	bool ShouldSaveFrame(int frameIdx) const;
+	std::string FolderPath(void) const { return m_IntermediateImagesFolderPath; }
+
+	void SetEnabledSaveIntermediateImages(bool enable = true) { m_isSaveIntermediateEnabled = enable; }
+	void SetIntermediateImagesFolder(const std::string& folderPath) { m_IntermediateImagesFolderPath = folderPath; }
+	void SetIterationsToSave(std::vector<std::string>& indices);
+};
+
+void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source);
