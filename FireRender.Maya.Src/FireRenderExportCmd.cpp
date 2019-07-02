@@ -46,6 +46,7 @@ MSyntax FireRenderExportCmd::newSyntax()
 	CHECK_MSTATUS(syntax.addFlag(kSelectionFlag, kSelectionFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kAllFlag, kAllFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kFramesFlag, kFramesFlagLong, MSyntax::kBoolean, MSyntax::kLong, MSyntax::kLong, MSyntax::kBoolean));
+	CHECK_MSTATUS(syntax.addFlag(kCompressionFlag, kCompressionFlagLong, MSyntax::kString));
 
 	return syntax;
 }
@@ -124,6 +125,12 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		argData.getFlagArgument(kFramesFlag, 1, firstFrame);
 		argData.getFlagArgument(kFramesFlag, 2, lastFrame);
 		argData.getFlagArgument(kFramesFlag, 3, isExportAsSingleFileEnabled);
+	}
+
+	MString compressionOption = "None";
+	if (argData.isFlagSet(kCompressionFlag))
+	{
+		argData.getFlagArgument(kCompressionFlag, 0, compressionOption);
 	}
 
 	if (argData.isFlagSet(kAllFlag))
@@ -212,6 +219,24 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			if (!isExportAsSingleFileEnabled)
 			{
 				exportFlags = RPRLOADSTORE_EXPORTFLAG_EXTERNALFILES;
+			}
+
+			if (compressionOption == "None")
+			{
+				// don't set any flag
+				// this line exists for better logic readibility; also maybe will need to set flag here in the future
+			}
+			else if (compressionOption == "Level 1")
+			{
+				exportFlags = exportFlags | RPRLOADSTORE_EXPORTFLAG_COMPRESS_IMAGE_LEVEL_1;
+			}
+			else if (compressionOption == "Level 2")
+			{
+				exportFlags = exportFlags | RPRLOADSTORE_EXPORTFLAG_COMPRESS_IMAGE_LEVEL_2;
+			}
+			else if (compressionOption == "Level 3")
+			{
+				exportFlags = exportFlags | RPRLOADSTORE_EXPORTFLAG_COMPRESS_IMAGE_LEVEL_2 | RPRLOADSTORE_EXPORTFLAG_COMPRESS_FLOAT_TO_HALF_NORMALS | RPRLOADSTORE_EXPORTFLAG_COMPRESS_FLOAT_TO_HALF_UV;
 			}
 
 			// launch export
