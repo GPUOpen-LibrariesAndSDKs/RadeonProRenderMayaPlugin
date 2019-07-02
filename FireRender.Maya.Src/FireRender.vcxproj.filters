@@ -533,6 +533,9 @@
     <ClCompile Include="RenderStampUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="EnableSaveIntermediateCmd.cpp">
+      <Filter>Commands</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -915,6 +918,9 @@
     </ClInclude>
     <ClInclude Include="RenderStampUtils.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EnableSaveIntermediateCmd.h">
+      <Filter>Commands</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
