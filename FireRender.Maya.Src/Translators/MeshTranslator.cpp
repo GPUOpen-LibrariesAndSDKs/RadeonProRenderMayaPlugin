@@ -131,7 +131,8 @@ MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus
 		status = fnOrigSmoothed.assignUVs(uvCountsCloned, uvIdsCloned, &newUVSetName);
 
 		MFnDagNode fnclonedSmoothedMesh(clonedSmoothedMesh);
-		MGlobal::deleteNode(fnclonedSmoothedMesh.parent(0));
+		MObject clonedSmMeshParent = fnclonedSmoothedMesh.parent(0);
+		MGlobal::deleteNode(clonedSmMeshParent);
 	}
 
 	return smoothedMesh;
