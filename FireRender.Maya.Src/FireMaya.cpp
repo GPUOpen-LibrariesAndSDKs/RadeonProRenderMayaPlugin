@@ -428,12 +428,6 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 
 		frw::Image image;
 
-		/*if (xTileIdx != 0)
-			return image;
-
-		if ((yTileIdx != 2) && (yTileIdx != 1) && (yTileIdx != 3))
-			return image;*/
-
 		// back-offs
 		auto renderer = MHWRender::MRenderer::theRenderer(); // have to use auto because these are different classes in Maya 2017 and 2018
 		if (!renderer)
@@ -505,7 +499,15 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 				imgFit = FitType::FitVertical;
 		}
 
-		if ((imgFit == FitType::FitStretch) || (imgFit == FitType::FitFill) )
+		if (imgFit == FitType::FitFill)
+		{
+			if (srcWidth > srcHeight)
+				imgFit = FitType::FitVertical;
+			else
+				imgFit = FitType::FitHorizontal;
+		}
+
+		if (imgFit == FitType::FitStretch)
 		{
 			float srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
 			float srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
@@ -558,11 +560,19 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 			
 			// for height, we either need to add black pixels, or cut source image to preserve aspect ratio of the source picture
 			const int srcFullSegHeight = std::ceil(srcHeightPerPixel * maxTileHeight);
-			const int countFullSegments = std::trunc(srcHeight / (float)srcFullSegHeight);
+			const int countFullSegments = (srcHeight > srcWidth) ?
+				std::trunc( viewHeight * srcHeightPerPixel / (float)srcFullSegHeight ) :
+				std::trunc(srcHeight / (float)srcFullSegHeight);
 			const int srcImageTailSegHeight = srcHeight - countFullSegments * srcFullSegHeight;
 			const int scrOutputTailSegHeight = (viewHeight * srcHeightPerPixel) - srcFullSegHeight * (countYTiles - 1);
 			const int countSkipTiles = std::trunc((countYTiles - countFullSegments - 1) / 2);
 			const int srcCurrSegHeight = (yTileIdx == 0) ? scrOutputTailSegHeight : srcFullSegHeight;
+
+			int srcFirstPixelOffset = 0;
+			if (srcHeight > srcWidth)
+			{
+				srcFirstPixelOffset = std::ceil( (srcHeight - viewHeight * srcHeightPerPixel) / 2 );
+			}
 
 			int createdImageHeight = (yTileIdx == 0) ? scrOutputTailSegHeight : srcFullSegHeight;
 
@@ -580,29 +590,47 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 
 			buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
 
-			if ((yTileIdx >= countSkipTiles) && ((yTileIdx - countSkipTiles) <= (countFullSegments+1)))
+			int countActiveTiles = countFullSegments;
+			int activeSegHeight = countFullSegments * srcFullSegHeight;
+			if (activeSegHeight < srcHeight)//((countFullSegments * srcFullSegHeight + scrOutputTailSegHeight) < srcHeight)
+				countActiveTiles++;
+			if (srcHeight - activeSegHeight > srcFullSegHeight)
+				countActiveTiles++;
+
+			if ((yTileIdx >= countSkipTiles) && ((yTileIdx - countSkipTiles) < countActiveTiles))
 			{
 				unsigned char* dst = buffer.data();
 
 				//int dstOffset = (yTileIdx == countSkipTiles) ? offsetY : 0;
 				//int offsetShift = (yTileIdx > countSkipTiles) ? (dstOffset) : 0;
 
-				int shiftX = (xTileIdx - countSkipTiles) * srcFullSegWidth; // +offsetShift;
-				int shiftY = (yTileIdx != 0) ? scrOutputTailSegHeight : 0;
-				if (yTileIdx > 1)
-					shiftY += (yTileIdx - 1) * srcFullSegHeight;
+				int shiftX = xTileIdx * srcFullSegWidth; // +offsetShift;
 
-				/*int lastSrcPixel = ((xTileIdx - countSkipTiles) == countFullSegments) ?
-					(srcCurrSegWidth - dstOffset) :
-					(xTileIdx == countSkipTiles) ?
-					srcCurrSegWidth - offsetX :
-					srcCurrSegWidth;*/
+				int shiftY; // calculate source image offset depending on how many rows of tiles were skipped
+				if (countSkipTiles == 0)
+				{ // 1-st row height is different then that of the rest so need to handle this case separately
+					shiftY = (yTileIdx == 0) ? 0 : scrOutputTailSegHeight;
+					if (yTileIdx > 0)
+						shiftY += (yTileIdx - 1) * srcFullSegHeight;
+				}
+				else
+				{
+					shiftY = (yTileIdx - countSkipTiles) * srcFullSegHeight;
+				}
 
 				int lastSrcPixel = srcCurrSegHeight;
-				if ((yTileIdx - countSkipTiles) == (countFullSegments + 1))
+				if ((yTileIdx - countSkipTiles) == (countActiveTiles - 1))
 				{
-					int pixelsRemaining = srcHeight - scrOutputTailSegHeight - srcFullSegHeight * countFullSegments;
-					lastSrcPixel = pixelsRemaining;
+					if (countSkipTiles == 0)
+					{
+						int pixelsRemaining = srcHeight - scrOutputTailSegHeight - srcFullSegHeight * countFullSegments;
+						lastSrcPixel = pixelsRemaining;
+					}
+					else
+					{
+						int pixelsRemaining = srcHeight - srcFullSegHeight * countFullSegments;
+						lastSrcPixel = pixelsRemaining;
+					}
 				}
 
 				// foreach pixel in source image
@@ -612,7 +640,7 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 					{
 						memcpy(
 							dst + x * dstPixSize + (y /*+ dstOffset*/) * img_desc.image_row_pitch,
-							src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
+							src + (x + shiftX) * srcPixSize + (y + shiftY + srcFirstPixelOffset) * desc.fBytesPerRow,
 							dstPixSize);
 					}
 				}
@@ -631,11 +659,19 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 
 			// for width, we either need to add black pixels, or cut source image to preserve aspect ratio of the source picture
 			const int srcFullSegWidth = std::ceil(srcWidthPerPixel * maxTileWidth);
-			const int countFullSegments = std::trunc( srcWidth / (float)srcFullSegWidth);
+			const int countFullSegments = (srcWidth > srcHeight) ?
+				std::trunc( viewWidth * srcWidthPerPixel / (float) srcFullSegWidth ) :
+				std::trunc(srcWidth / (float)srcFullSegWidth);
 			const int srcImageTailSegWidth = srcWidth - countFullSegments * srcFullSegWidth;
 			const int scrOutputTailSegWidth = (viewWidth * srcWidthPerPixel) - srcFullSegWidth * (countXTiles - 1);
 			const int countSkipTiles = std::trunc((countXTiles - countFullSegments - 1) / 2);
 			const int srcCurrSegWidth = ((xTileIdx - countSkipTiles) == countFullSegments) ? srcImageTailSegWidth : srcFullSegWidth;
+
+			int srcFirstPixelOffset = 0;
+			if (srcWidth > srcHeight)
+			{
+				srcFirstPixelOffset = std::ceil((srcWidth - viewWidth * srcWidthPerPixel) / 2);
+			}
 
 			int createdImageWidth = (xTileIdx == (countXTiles - 1)) ? scrOutputTailSegWidth : srcFullSegWidth;
 
@@ -643,8 +679,9 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 			// - we can have uneven number of black tiles added at the sides of actual backplate image, and the tail segment length is different
 			// NIY
 
-			// - 1-st and last tile should have eqal number of black pixels added to them
-			int offsetX = std::ceil(srcImageTailSegWidth / 2);
+			// 1-st and last tile should have eqal number of black pixels added to them
+			// currently not used
+			//int offsetX = std::ceil(srcImageTailSegWidth / 2);
 
 			// set data and prepare for copying
 			img_desc.image_width = createdImageWidth;
@@ -657,15 +694,11 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 			{
 				unsigned char* dst = buffer.data();
 
-				int dstOffset = (xTileIdx == countSkipTiles) ? offsetX : 0;
-				int offsetShift = (xTileIdx > countSkipTiles) ? (dstOffset) : 0;
-				int shiftX = (xTileIdx - countSkipTiles) * srcFullSegWidth + offsetShift;
+				int shiftX = (xTileIdx - countSkipTiles) * srcFullSegWidth;
 				int shiftY = (yTileIdx > 1) ? srcTailSegHeight + (yTileIdx - 1) * srcFullSegHeight : yTileIdx * srcTailSegHeight;
-				int lastSrcPixel = ((xTileIdx - countSkipTiles) == countFullSegments) ? 
-					(srcCurrSegWidth - dstOffset) : 
-					(xTileIdx == countSkipTiles) ? 
-					srcCurrSegWidth - offsetX :
-					srcCurrSegWidth;
+
+				// created tile could be bigger then remaining source image (when black tiles are added) and remainin source image could be bigger (when cutting image)
+				int lastSrcPixel = (createdImageWidth > srcCurrSegWidth) ? srcCurrSegWidth : createdImageWidth;
 
 				// foreach pixel in source image
 				for (unsigned int y = 0; y < srcCurrSegHeight; y++)
@@ -673,8 +706,8 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 					for (unsigned int x = 0; x < lastSrcPixel; x++)
 					{
 						memcpy(
-							dst + (x + dstOffset) * dstPixSize + y * img_desc.image_row_pitch,
-							src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
+							dst + (x /*+ dstOffset*/) * dstPixSize + y * img_desc.image_row_pitch,
+							src + (x + shiftX + srcFirstPixelOffset) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
 							dstPixSize);
 					}
 				}
