@@ -960,6 +960,10 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 			MFnDependencyNode fileNode(it.currentItem());
 			status = fileNode.findPlug("fileTextureName").getValue(textureFile);
 
+			if (!status) // texture file node not found, continue go down the graph
+				continue;
+
+			// texture node found => exit
 			break;
 		}
 

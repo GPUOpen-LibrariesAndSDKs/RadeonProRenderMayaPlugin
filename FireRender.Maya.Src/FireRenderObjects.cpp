@@ -1298,7 +1298,7 @@ void FireRenderMesh::ShaderDirtyCallback(MObject& node, void* clientData)
 	}
 }
 
-unsigned int FireRenderMesh::GetAssignedUVMapIdx(MString& textureFile) const
+unsigned int FireRenderMesh::GetAssignedUVMapIdx(const MString& textureFile) const
 {
 	auto it = m_uvSetCachedMappingData.find(textureFile.asChar());
 
