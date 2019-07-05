@@ -295,7 +295,7 @@ public:
 
 	bool IsMainInstance() const { return m.isMainInstance; }
 
-	unsigned int GetAssignedUVMapIdx(MString& textureFile) const;
+	unsigned int GetAssignedUVMapIdx(const MString& textureFile) const;
 
 private:
 	bool IsSelected(const MDagPath& dagPath) const;
