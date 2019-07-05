@@ -388,7 +388,327 @@ unsigned char* createBitmapInfoHeader(int height, int width) {
 }
 #endif
 
+struct tileParams
+{
+	MHWRender::MTextureDescription& desc;
+	int viewWidth;
+	int viewHeight;
+	int maxTileWidth;
+	int maxTileHeight;
+	int xTileIdx;
+	int yTileIdx;
+	int countXTiles;
+	int countYTiles;
+	int srcPixSize;
+	int dstPixSize;
+	const unsigned char* src;
 
+	tileParams(MHWRender::MTextureDescription& _desc) : desc(_desc) {}
+};
+
+std::vector<unsigned char> ProcessFitStretch(
+	const tileParams& params,
+	rpr_image_desc& img_desc
+	)
+{
+	std::vector<unsigned char> buffer;
+
+	const int srcWidth = params.desc.fWidth;
+	const int srcHeight = params.desc.fHeight;
+
+	float srcWidthPerPixel = (float)srcWidth / (float)params.viewWidth;
+	float srcHeightPerPixel = (float)srcHeight / (float)params.viewHeight;
+
+	const int srcFullSegWidth = std::ceil(srcWidthPerPixel * params.maxTileWidth);
+	const int srcTailSegWidth = srcWidth - srcFullSegWidth * (params.countXTiles - 1);
+	const int srcCurrSegWidth = (params.xTileIdx == (params.countXTiles - 1)) ? srcTailSegWidth : srcFullSegWidth;
+
+	const int srcFullSegHeight = std::ceil(srcHeightPerPixel * params.maxTileHeight);
+	const int srcTailSegHeight = srcHeight - srcFullSegHeight * (params.countYTiles - 1);
+	const int srcCurrSegHeight = (params.yTileIdx == 0) ? srcTailSegHeight : srcFullSegHeight;
+
+	int createdImageWidth = srcCurrSegWidth;
+	int createdImageHeight = srcCurrSegHeight;
+
+	// set data and prepare for copying
+	img_desc.image_width = createdImageWidth;
+	img_desc.image_height = createdImageHeight;
+	img_desc.image_row_pitch = img_desc.image_width * params.dstPixSize;
+
+	buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
+
+	unsigned char* dst = buffer.data();
+
+	int shiftX = params.xTileIdx * srcFullSegWidth;
+	int shiftY = (params.yTileIdx > 1) ? srcTailSegHeight + (params.yTileIdx - 1) * srcFullSegHeight : params.yTileIdx * srcTailSegHeight;
+
+	// foreach pixel in source image
+	for (unsigned int y = 0; y < srcCurrSegHeight; y++)
+	{
+		for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+		{
+			memcpy(
+				dst + x * params.dstPixSize + y * img_desc.image_row_pitch,
+				params.src + (x + shiftX) * params.srcPixSize + (y + shiftY) * params.desc.fBytesPerRow,
+				params.dstPixSize);
+		}
+	}
+
+	return buffer;
+}
+
+std::vector<unsigned char> ProcessFitHorizontal(
+	const tileParams& params,
+	rpr_image_desc& img_desc
+)
+{
+	std::vector<unsigned char> buffer;
+
+	const int srcWidth = params.desc.fWidth;
+	const int srcHeight = params.desc.fHeight;
+
+	float srcWidthPerPixel = (float)srcWidth / (float)params.viewWidth;
+	const int srcFullSegWidth = std::ceil(srcWidthPerPixel * params.maxTileWidth);
+	const int srcTailSegWidth = srcWidth - srcFullSegWidth * (params.countXTiles - 1);
+	const int srcCurrSegWidth = (params.xTileIdx == (params.countXTiles - 1)) ? srcTailSegWidth : srcFullSegWidth;
+
+	const int createdImageWidth = srcCurrSegWidth;
+
+	float srcHeightPerPixel = srcWidthPerPixel;
+
+	// for height, we either need to add black pixels, or cut source image to preserve aspect ratio of the source picture
+	const int srcFullSegHeight = std::ceil(srcHeightPerPixel * params.maxTileHeight);
+	const int countFullSegments = (srcHeight > srcWidth) ?
+		std::trunc(params.viewHeight * srcHeightPerPixel / (float)srcFullSegHeight) :
+		std::trunc(srcHeight / (float)srcFullSegHeight);
+	const int srcImageTailSegHeight = srcHeight - countFullSegments * srcFullSegHeight;
+	const int scrOutputTailSegHeight = (params.viewHeight * srcHeightPerPixel) - srcFullSegHeight * (params.countYTiles - 1);
+	const int countSkipTiles = std::trunc((params.countYTiles - countFullSegments - 1) / 2);
+	const int srcCurrSegHeight = (params.yTileIdx == 0) ? scrOutputTailSegHeight : srcFullSegHeight;
+
+	int srcFirstPixelOffset = 0;
+	if (srcHeight > srcWidth)
+	{
+		srcFirstPixelOffset = std::ceil((srcHeight - params.viewHeight * srcHeightPerPixel) / 2);
+	}
+
+	int createdImageHeight = (params.yTileIdx == 0) ? scrOutputTailSegHeight : srcFullSegHeight;
+
+	// calculate offset
+	// - we can have uneven number of black tiles added at the sides of actual backplate image, and the tail segment length is different
+	// NIY
+
+	// - 1-st and last tile should have eqal number of black pixels added to them
+	//int offsetY = std::ceil(srcImageTailSegHeight / 2);
+
+	// set data and prepare for copying
+	img_desc.image_width = createdImageWidth;
+	img_desc.image_height = createdImageHeight;
+	img_desc.image_row_pitch = img_desc.image_width * params.dstPixSize;
+
+	buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
+
+	int countActiveTiles = countFullSegments;
+	int activeSegHeight = countFullSegments * srcFullSegHeight;
+	if (activeSegHeight < srcHeight)//((countFullSegments * srcFullSegHeight + scrOutputTailSegHeight) < srcHeight)
+		countActiveTiles++;
+	if (srcHeight - activeSegHeight > srcFullSegHeight)
+		countActiveTiles++;
+
+	if ((params.yTileIdx >= countSkipTiles) && ((params.yTileIdx - countSkipTiles) < countActiveTiles))
+	{
+		unsigned char* dst = buffer.data();
+
+		//int dstOffset = (yTileIdx == countSkipTiles) ? offsetY : 0;
+		//int offsetShift = (yTileIdx > countSkipTiles) ? (dstOffset) : 0;
+
+		int shiftX = params.xTileIdx * srcFullSegWidth; // +offsetShift;
+
+		int shiftY; // calculate source image offset depending on how many rows of tiles were skipped
+		if (countSkipTiles == 0)
+		{ // 1-st row height is different then that of the rest so need to handle this case separately
+			shiftY = (params.yTileIdx == 0) ? 0 : scrOutputTailSegHeight;
+			if (params.yTileIdx > 0)
+				shiftY += (params.yTileIdx - 1) * srcFullSegHeight;
+		}
+		else
+		{
+			shiftY = (params.yTileIdx - countSkipTiles) * srcFullSegHeight;
+		}
+
+		int lastSrcPixel = srcCurrSegHeight;
+		if ((params.yTileIdx - countSkipTiles) == (countActiveTiles - 1))
+		{
+			if (countSkipTiles == 0)
+			{
+				int pixelsRemaining = srcHeight - scrOutputTailSegHeight - srcFullSegHeight * countFullSegments;
+				lastSrcPixel = pixelsRemaining;
+			}
+			else
+			{
+				int pixelsRemaining = srcHeight - srcFullSegHeight * countFullSegments;
+				lastSrcPixel = pixelsRemaining;
+			}
+		}
+
+		// foreach pixel in source image
+		for (unsigned int y = 0; y < lastSrcPixel; y++)
+		{
+			for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+			{
+				memcpy(
+					dst + x * params.dstPixSize + (y /*+ dstOffset*/)* img_desc.image_row_pitch,
+					params.src + (x + shiftX) * params.srcPixSize + (y + shiftY + srcFirstPixelOffset) * params.desc.fBytesPerRow,
+					params.dstPixSize);
+			}
+		}
+	}
+
+	return buffer;
+}
+
+std::vector<unsigned char> ProcessFitVertical(
+	const tileParams& params,
+	rpr_image_desc& img_desc
+)
+{
+	std::vector<unsigned char> buffer;
+
+	const int srcWidth = params.desc.fWidth;
+	const int srcHeight = params.desc.fHeight;
+
+	float srcHeightPerPixel = (float)srcHeight / (float)params.viewHeight;
+	const int srcFullSegHeight = std::ceil(srcHeightPerPixel * params.maxTileHeight);
+	const int srcTailSegHeight = srcHeight - srcFullSegHeight * (params.countYTiles - 1);
+	const int srcCurrSegHeight = (params.yTileIdx == 0) ? srcTailSegHeight : srcFullSegHeight;
+
+	const int createdImageHeight = srcCurrSegHeight;
+
+	float srcWidthPerPixel = srcHeightPerPixel;
+
+	// for width, we either need to add black pixels, or cut source image to preserve aspect ratio of the source picture
+	const int srcFullSegWidth = std::ceil(srcWidthPerPixel * params.maxTileWidth);
+	const int countFullSegments = (srcWidth > srcHeight) ?
+		std::trunc(params.viewWidth * srcWidthPerPixel / (float)srcFullSegWidth) :
+		std::trunc(srcWidth / (float)srcFullSegWidth);
+	const int srcImageTailSegWidth = srcWidth - countFullSegments * srcFullSegWidth;
+	const int scrOutputTailSegWidth = (params.viewWidth * srcWidthPerPixel) - srcFullSegWidth * (params.countXTiles - 1);
+	const int countSkipTiles = std::trunc((params.countXTiles - countFullSegments - 1) / 2);
+	const int srcCurrSegWidth = ((params.xTileIdx - countSkipTiles) == countFullSegments) ? srcImageTailSegWidth : srcFullSegWidth;
+
+	int srcFirstPixelOffset = 0;
+	if (srcWidth > srcHeight)
+	{
+		srcFirstPixelOffset = std::ceil((srcWidth - params.viewWidth * srcWidthPerPixel) / 2);
+	}
+
+	int createdImageWidth = (params.xTileIdx == (params.countXTiles - 1)) ? scrOutputTailSegWidth : srcFullSegWidth;
+
+	// calculate offset
+	// - we can have uneven number of black tiles added at the sides of actual backplate image, and the tail segment length is different
+	// NIY
+
+	// 1-st and last tile should have eqal number of black pixels added to them
+	// currently not used
+	//int offsetX = std::ceil(srcImageTailSegWidth / 2);
+
+	// set data and prepare for copying
+	img_desc.image_width = createdImageWidth;
+	img_desc.image_height = createdImageHeight;
+	img_desc.image_row_pitch = img_desc.image_width * params.dstPixSize;
+
+	buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
+
+	if ((params.xTileIdx >= countSkipTiles) && ((params.xTileIdx - countSkipTiles) <= countFullSegments))
+	{
+		unsigned char* dst = buffer.data();
+
+		int shiftX = (params.xTileIdx - countSkipTiles) * srcFullSegWidth;
+		int shiftY = (params.yTileIdx > 1) ? srcTailSegHeight + (params.yTileIdx - 1) * srcFullSegHeight : params.yTileIdx * srcTailSegHeight;
+
+		// created tile could be bigger then remaining source image (when black tiles are added) and remainin source image could be bigger (when cutting image)
+		int lastSrcPixel = (createdImageWidth > srcCurrSegWidth) ? srcCurrSegWidth : createdImageWidth;
+
+		// foreach pixel in source image
+		for (unsigned int y = 0; y < srcCurrSegHeight; y++)
+		{
+			for (unsigned int x = 0; x < lastSrcPixel; x++)
+			{
+				memcpy(
+					dst + (x /*+ dstOffset*/)* params.dstPixSize + y * img_desc.image_row_pitch,
+					params.src + (x + shiftX + srcFirstPixelOffset) * params.srcPixSize + (y + shiftY) * params.desc.fBytesPerRow,
+					params.dstPixSize);
+			}
+		}
+
+#ifdef _DEBUG
+#ifdef DEBUG_TILE_DUMP
+		// debug dump
+		if ((params.xTileIdx == 2) && (params.yTileIdx == 0))
+		{
+			std::vector<unsigned char> buffer2(img_desc.image_height * img_desc.image_width * (dstPixSize + 1), (char)255);
+			unsigned char* dst2 = buffer2.data();
+			for (unsigned int y = 0; y < srcCurrSegHeight; y++)
+			{
+				for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+				{
+					memcpy(
+						dst2 + x * (dstPixSize + 1) + (srcCurrSegHeight - 1 - y) * img_desc.image_width * (dstPixSize + 1),
+						src + (x + shiftX) * srcPixSize + (y + shiftY) * params.desc.fBytesPerRow,
+						dstPixSize);
+				}
+			}
+
+			generateBitmapImage(dst2, img_desc.image_height, img_desc.image_width, img_desc.image_width * 4, "C:\\temp\\dbg\\1.bmp");
+		}
+#endif
+#endif
+
+	}
+
+	return buffer;
+}
+
+std::vector<unsigned char> calculateTileImage(
+	const tileParams& params,
+	MHWRender::MTextureDescription& desc,
+	FireMaya::FitType imgFit,
+	rpr_image_desc& img_desc)
+{
+	switch(imgFit) 
+		{
+			case FireMaya::FitType::FitBest:
+			{
+				if (desc.fWidth > desc.fHeight)
+					return ProcessFitHorizontal(params, img_desc);
+				else
+					return ProcessFitVertical(params, img_desc);
+			}
+
+			case FireMaya::FitType::FitFill:
+			{
+				if (desc.fWidth > desc.fHeight)
+					return ProcessFitVertical(params, img_desc);
+				else
+					return ProcessFitHorizontal(params, img_desc);
+			}
+
+			case FireMaya::FitType::FitStretch:
+			{
+				return ProcessFitStretch(params, img_desc);
+			}
+
+			case FireMaya::FitType::FitHorizontal:
+			{
+				return ProcessFitHorizontal(params, img_desc);
+			}
+
+			case FireMaya::FitType::FitVertical:
+			{
+				return ProcessFitVertical(params, img_desc);
+			}
+		}
+}
 
 frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 	int viewWidth, int viewHeight,
@@ -471,7 +791,6 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		bool isImageFormatSupported = false;
 		std::tie(channels, pixelStride, isImageFormatSupported) = getTexturePixelStride(desc.fFormat);
 
-
 		// create rpr image structures
 		rpr_image_format format = {};
 		format.num_components = channels >= 3 ? 3 : 1;
@@ -481,266 +800,26 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 
 		rpr_image_desc img_desc = {};
 
-		int srcPixSize = pixelStride * channels;
-		int dstPixSize = pixelStride * format.num_components;
-
-		// buffer for background image tile
-		std::vector<unsigned char> buffer;
-
 		// get segment of background image corresponding to tile
-		const int srcWidth = desc.fWidth;
-		const int srcHeight = desc.fHeight;
+		tileParams params(desc);
+		params.viewWidth = viewWidth;
+		params.viewHeight = viewHeight;
+		params.maxTileWidth = maxTileWidth;
+		params.maxTileHeight = maxTileHeight;
+		params.xTileIdx = xTileIdx;
+		params.yTileIdx = yTileIdx;
+		params.countXTiles = countXTiles;
+		params.countYTiles = countYTiles;
+		params.src = src;
+		params.srcPixSize = pixelStride * channels;
+		params.dstPixSize = pixelStride * format.num_components;
 
-		if (imgFit == FitType::FitBest)
-		{
-			if (srcWidth > srcHeight)
-				imgFit = FitType::FitHorizontal;
-			else
-				imgFit = FitType::FitVertical;
-		}
-
-		if (imgFit == FitType::FitFill)
-		{
-			if (srcWidth > srcHeight)
-				imgFit = FitType::FitVertical;
-			else
-				imgFit = FitType::FitHorizontal;
-		}
-
-		if (imgFit == FitType::FitStretch)
-		{
-			float srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
-			float srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
-
-			const int srcFullSegWidth = std::ceil(srcWidthPerPixel * maxTileWidth);
-			const int srcTailSegWidth = srcWidth - srcFullSegWidth * (countXTiles - 1);
-			const int srcCurrSegWidth = (xTileIdx == (countXTiles - 1)) ? srcTailSegWidth : srcFullSegWidth;
-
-			const int srcFullSegHeight = std::ceil(srcHeightPerPixel * maxTileHeight);
-			const int srcTailSegHeight = srcHeight - srcFullSegHeight * (countYTiles - 1);
-			const int srcCurrSegHeight = (yTileIdx == 0) ? srcTailSegHeight : srcFullSegHeight;
-
-			int createdImageWidth = srcCurrSegWidth;
-			int createdImageHeight = srcCurrSegHeight;
-
-			// set data and prepare for copying
-			img_desc.image_width = createdImageWidth;
-			img_desc.image_height = createdImageHeight;
-			img_desc.image_row_pitch = img_desc.image_width * dstPixSize;
-
-			buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
-
-			unsigned char* dst = buffer.data();
-
-			int shiftX = xTileIdx * srcFullSegWidth;
-			int shiftY = (yTileIdx > 1) ? srcTailSegHeight + (yTileIdx - 1) * srcFullSegHeight : yTileIdx * srcTailSegHeight;
-
-			// foreach pixel in source image
-			for (unsigned int y = 0; y < srcCurrSegHeight; y++)
-			{
-				for (unsigned int x = 0; x < srcCurrSegWidth; x++)
-				{
-					memcpy(
-						dst + x * dstPixSize + y * img_desc.image_row_pitch,
-						src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
-						dstPixSize);
-				}
-			}
-		}
-		else if (imgFit == FitType::FitHorizontal)
-		{
-			float srcWidthPerPixel = (float)srcWidth / (float)viewWidth;
-			const int srcFullSegWidth = std::ceil(srcWidthPerPixel * maxTileWidth);
-			const int srcTailSegWidth = srcWidth - srcFullSegWidth * (countXTiles - 1);
-			const int srcCurrSegWidth = (xTileIdx == (countXTiles - 1)) ? srcTailSegWidth : srcFullSegWidth;
-
-			const int createdImageWidth = srcCurrSegWidth;
-
-			float srcHeightPerPixel = srcWidthPerPixel;
-			
-			// for height, we either need to add black pixels, or cut source image to preserve aspect ratio of the source picture
-			const int srcFullSegHeight = std::ceil(srcHeightPerPixel * maxTileHeight);
-			const int countFullSegments = (srcHeight > srcWidth) ?
-				std::trunc( viewHeight * srcHeightPerPixel / (float)srcFullSegHeight ) :
-				std::trunc(srcHeight / (float)srcFullSegHeight);
-			const int srcImageTailSegHeight = srcHeight - countFullSegments * srcFullSegHeight;
-			const int scrOutputTailSegHeight = (viewHeight * srcHeightPerPixel) - srcFullSegHeight * (countYTiles - 1);
-			const int countSkipTiles = std::trunc((countYTiles - countFullSegments - 1) / 2);
-			const int srcCurrSegHeight = (yTileIdx == 0) ? scrOutputTailSegHeight : srcFullSegHeight;
-
-			int srcFirstPixelOffset = 0;
-			if (srcHeight > srcWidth)
-			{
-				srcFirstPixelOffset = std::ceil( (srcHeight - viewHeight * srcHeightPerPixel) / 2 );
-			}
-
-			int createdImageHeight = (yTileIdx == 0) ? scrOutputTailSegHeight : srcFullSegHeight;
-
-			// calculate offset
-			// - we can have uneven number of black tiles added at the sides of actual backplate image, and the tail segment length is different
-			// NIY
-
-			// - 1-st and last tile should have eqal number of black pixels added to them
-			//int offsetY = std::ceil(srcImageTailSegHeight / 2);
-
-			// set data and prepare for copying
-			img_desc.image_width = createdImageWidth;
-			img_desc.image_height = createdImageHeight;
-			img_desc.image_row_pitch = img_desc.image_width * dstPixSize;
-
-			buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
-
-			int countActiveTiles = countFullSegments;
-			int activeSegHeight = countFullSegments * srcFullSegHeight;
-			if (activeSegHeight < srcHeight)//((countFullSegments * srcFullSegHeight + scrOutputTailSegHeight) < srcHeight)
-				countActiveTiles++;
-			if (srcHeight - activeSegHeight > srcFullSegHeight)
-				countActiveTiles++;
-
-			if ((yTileIdx >= countSkipTiles) && ((yTileIdx - countSkipTiles) < countActiveTiles))
-			{
-				unsigned char* dst = buffer.data();
-
-				//int dstOffset = (yTileIdx == countSkipTiles) ? offsetY : 0;
-				//int offsetShift = (yTileIdx > countSkipTiles) ? (dstOffset) : 0;
-
-				int shiftX = xTileIdx * srcFullSegWidth; // +offsetShift;
-
-				int shiftY; // calculate source image offset depending on how many rows of tiles were skipped
-				if (countSkipTiles == 0)
-				{ // 1-st row height is different then that of the rest so need to handle this case separately
-					shiftY = (yTileIdx == 0) ? 0 : scrOutputTailSegHeight;
-					if (yTileIdx > 0)
-						shiftY += (yTileIdx - 1) * srcFullSegHeight;
-				}
-				else
-				{
-					shiftY = (yTileIdx - countSkipTiles) * srcFullSegHeight;
-				}
-
-				int lastSrcPixel = srcCurrSegHeight;
-				if ((yTileIdx - countSkipTiles) == (countActiveTiles - 1))
-				{
-					if (countSkipTiles == 0)
-					{
-						int pixelsRemaining = srcHeight - scrOutputTailSegHeight - srcFullSegHeight * countFullSegments;
-						lastSrcPixel = pixelsRemaining;
-					}
-					else
-					{
-						int pixelsRemaining = srcHeight - srcFullSegHeight * countFullSegments;
-						lastSrcPixel = pixelsRemaining;
-					}
-				}
-
-				// foreach pixel in source image
-				for (unsigned int y = 0; y < lastSrcPixel; y++)
-				{
-					for (unsigned int x = 0; x < srcCurrSegWidth; x++)
-					{
-						memcpy(
-							dst + x * dstPixSize + (y /*+ dstOffset*/) * img_desc.image_row_pitch,
-							src + (x + shiftX) * srcPixSize + (y + shiftY + srcFirstPixelOffset) * desc.fBytesPerRow,
-							dstPixSize);
-					}
-				}
-			}
-		}
-		else if (imgFit == FitType::FitVertical)
-		{
-			float srcHeightPerPixel = (float)srcHeight / (float)viewHeight;
-			const int srcFullSegHeight = std::ceil(srcHeightPerPixel * maxTileHeight);
-			const int srcTailSegHeight = srcHeight - srcFullSegHeight * (countYTiles - 1);
-			const int srcCurrSegHeight = (yTileIdx == 0) ? srcTailSegHeight : srcFullSegHeight;
-
-			const int createdImageHeight = srcCurrSegHeight;
-
-			float srcWidthPerPixel = srcHeightPerPixel;
-
-			// for width, we either need to add black pixels, or cut source image to preserve aspect ratio of the source picture
-			const int srcFullSegWidth = std::ceil(srcWidthPerPixel * maxTileWidth);
-			const int countFullSegments = (srcWidth > srcHeight) ?
-				std::trunc( viewWidth * srcWidthPerPixel / (float) srcFullSegWidth ) :
-				std::trunc(srcWidth / (float)srcFullSegWidth);
-			const int srcImageTailSegWidth = srcWidth - countFullSegments * srcFullSegWidth;
-			const int scrOutputTailSegWidth = (viewWidth * srcWidthPerPixel) - srcFullSegWidth * (countXTiles - 1);
-			const int countSkipTiles = std::trunc((countXTiles - countFullSegments - 1) / 2);
-			const int srcCurrSegWidth = ((xTileIdx - countSkipTiles) == countFullSegments) ? srcImageTailSegWidth : srcFullSegWidth;
-
-			int srcFirstPixelOffset = 0;
-			if (srcWidth > srcHeight)
-			{
-				srcFirstPixelOffset = std::ceil((srcWidth - viewWidth * srcWidthPerPixel) / 2);
-			}
-
-			int createdImageWidth = (xTileIdx == (countXTiles - 1)) ? scrOutputTailSegWidth : srcFullSegWidth;
-
-			// calculate offset
-			// - we can have uneven number of black tiles added at the sides of actual backplate image, and the tail segment length is different
-			// NIY
-
-			// 1-st and last tile should have eqal number of black pixels added to them
-			// currently not used
-			//int offsetX = std::ceil(srcImageTailSegWidth / 2);
-
-			// set data and prepare for copying
-			img_desc.image_width = createdImageWidth;
-			img_desc.image_height = createdImageHeight;
-			img_desc.image_row_pitch = img_desc.image_width * dstPixSize;
-
-			buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
-
-			if ((xTileIdx >= countSkipTiles) && ( (xTileIdx - countSkipTiles) <= countFullSegments))
-			{
-				unsigned char* dst = buffer.data();
-
-				int shiftX = (xTileIdx - countSkipTiles) * srcFullSegWidth;
-				int shiftY = (yTileIdx > 1) ? srcTailSegHeight + (yTileIdx - 1) * srcFullSegHeight : yTileIdx * srcTailSegHeight;
-
-				// created tile could be bigger then remaining source image (when black tiles are added) and remainin source image could be bigger (when cutting image)
-				int lastSrcPixel = (createdImageWidth > srcCurrSegWidth) ? srcCurrSegWidth : createdImageWidth;
-
-				// foreach pixel in source image
-				for (unsigned int y = 0; y < srcCurrSegHeight; y++)
-				{
-					for (unsigned int x = 0; x < lastSrcPixel; x++)
-					{
-						memcpy(
-							dst + (x /*+ dstOffset*/) * dstPixSize + y * img_desc.image_row_pitch,
-							src + (x + shiftX + srcFirstPixelOffset) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
-							dstPixSize);
-					}
-				}
-
-#define DEBUG_TILE_DUMP
-#ifdef _DEBUG
-#ifdef DEBUG_TILE_DUMP
-				// debug dump
-				if ((xTileIdx == 2) && (yTileIdx == 0))
-				{
-					std::vector<unsigned char> buffer2(img_desc.image_height * img_desc.image_width * (dstPixSize + 1), (char)255);
-					unsigned char* dst2 = buffer2.data();
-					for (unsigned int y = 0; y < srcCurrSegHeight; y++)
-					{
-						for (unsigned int x = 0; x < srcCurrSegWidth; x++)
-						{
-							memcpy(
-								dst2 + x * (dstPixSize + 1) + (srcCurrSegHeight - 1 - y) * img_desc.image_width * (dstPixSize + 1),
-								src + (x + shiftX) * srcPixSize + (y + shiftY) * desc.fBytesPerRow,
-								dstPixSize);
-						}
-					}
-
-					generateBitmapImage(dst2, img_desc.image_height, img_desc.image_width, img_desc.image_width * 4, "C:\\temp\\dbg\\1.bmp");
-				}
-#endif
-#endif
-
-			}
-
-
-		}
-
+		// - buffer for background image tile
+		std::vector<unsigned char> buffer = calculateTileImage(
+			params,
+			desc,
+			imgFit,
+			img_desc);
 
 		image = frw::Image(m->context, format, img_desc, buffer.data());
 		image.SetName(key);
