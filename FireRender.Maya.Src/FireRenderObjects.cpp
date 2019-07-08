@@ -954,7 +954,7 @@ void FireRenderMesh::ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngine
 	{
 		auto& element = m.elements[i];
 		element.shadingEngine = shadingEngines[i];
-		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine));
+		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this);
 		element.volumeShader = context->GetVolumeShader(getVolumeShader(element.shadingEngine));
 
 		setupDisplacement(element.shadingEngine, element.shape);
@@ -1055,16 +1055,19 @@ void FireRenderMesh::ProcessSkyLight(void)
 
 void FireRenderMesh::Rebuild()
 {
-	m.isEmissive = false;
-	
-	MFnDagNode meshFn(Object());
+	auto node = Object();
+	MFnDagNode meshFn(node);
+	MDagPath meshPath = DagPath();
+
+	FireRenderContext *context = this->context();
+
 	MObjectArray shadingEngines = GetShadingEngines(meshFn, Instance());
+
+	m.isEmissive = false;
 
 #ifdef _DEBUG
 	MString name = meshFn.name();
 #endif
-
-	MDagPath meshPath = DagPath();
 
 	// If there is just one shader and the number of shader is not changed then just update the shader
 	if (m.changed.mesh || (shadingEngines.length() != m.elements.size()))
@@ -1143,6 +1146,54 @@ void FireRenderMesh::GetShapes(const MFnDagNode& meshNode, std::vector<frw::Shap
 		outShapes = FireMaya::MeshTranslator::TranslateMesh(Context(), meshNode.object());
 		m.isMainInstance = true;
 		context->AddMainMesh(meshNode.object(), this);
+	}
+
+	SaveUsedUV(meshNode.object());
+}
+
+void FireRenderMesh::SaveUsedUV(const MObject& meshNode)
+{
+	if (!meshNode.hasFn(MFn::kMesh))
+		return;
+
+	MStatus mstatus;
+	MFnMesh fnMesh(meshNode, &mstatus);
+	if (mstatus != MStatus::kSuccess)
+	{
+		return;
+	}
+
+	MStringArray uvSetNames;
+	mstatus = fnMesh.getUVSetNames(uvSetNames);
+	if (mstatus != MStatus::kSuccess)
+	{
+		return;
+	}
+
+	int uvSetCount = fnMesh.numUVSets();
+	for (int idx = 0; idx < uvSetCount; ++idx)
+	{
+		MString tmpName = uvSetNames[idx];
+		MObjectArray textures;
+		mstatus = fnMesh.getAssociatedUVSetTextures(tmpName, textures);
+
+		int texturesCount = textures.length();
+		for (int texture_idx = 0; texture_idx < texturesCount; texture_idx++)
+		{
+			MObject tObject = textures[texture_idx];
+
+			MFnDependencyNode fnNode(tObject);
+			MObject attrObj = fnNode.attribute("fileTextureName");
+			MFnAttribute attr(attrObj);
+			MPlug plug = fnNode.findPlug(attr.object(), &mstatus);
+			CHECK_MSTATUS(mstatus);
+			MString textureFilePath;
+			mstatus = plug.getValue(textureFilePath);
+
+			// only one uv coordinates set can be attached to texture file
+			// this is the limitation of Maya's relationship editor
+			m_uvSetCachedMappingData[textureFilePath.asChar()] = idx;
+		}		
 	}
 }
 
@@ -1245,6 +1296,16 @@ void FireRenderMesh::ShaderDirtyCallback(MObject& node, void* clientData)
 		assert(node != self->Object());
 		self->OnShaderDirty();
 	}
+}
+
+unsigned int FireRenderMesh::GetAssignedUVMapIdx(const MString& textureFile) const
+{
+	auto it = m_uvSetCachedMappingData.find(textureFile.asChar());
+
+	if (it == m_uvSetCachedMappingData.end())
+		return -1;
+
+	return it->second;
 }
 
 void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
@@ -2379,4 +2440,5 @@ void FireRenderHair::detachFromScene()
 
 	m_isVisible = false;
 }
+
 

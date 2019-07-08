@@ -659,7 +659,7 @@ public:
 	frw::Scene GetScene() { return scope.Scene(); }
 	frw::Context GetContext() { return scope.Context(); }
 	frw::MaterialSystem GetMaterialSystem() { return scope.MaterialSystem(); }
-	frw::Shader GetShader(MObject ob, bool forceUpdate = false); // { return scope.GetShader(ob, forceUpdate); }
+	frw::Shader GetShader(MObject ob, const FireRenderMesh* pMesh = nullptr, bool forceUpdate = false); // { return scope.GetShader(ob, forceUpdate); }
 	frw::Shader GetVolumeShader(MObject ob, bool forceUpdate = false) { return scope.GetVolumeShader(ob, forceUpdate); }
 
 

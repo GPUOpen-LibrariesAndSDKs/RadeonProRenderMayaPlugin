@@ -889,3 +889,5 @@ public:
 	void SetIntermediateImagesFolder(const std::string& folderPath) { m_IntermediateImagesFolderPath = folderPath; }
 	void SetIterationsToSave(std::vector<std::string>& indices);
 };
+
+void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source);

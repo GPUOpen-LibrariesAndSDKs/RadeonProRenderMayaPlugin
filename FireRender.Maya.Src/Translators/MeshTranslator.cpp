@@ -26,20 +26,66 @@ namespace FireMaya
 namespace MeshTranslator
 {
 
-MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus& status)
+MObject Smoothed2ndUV(const MObject& object, MStatus& status)
 {
 	MFnMesh mesh(object);
+
+	// clone original mesh
+	MObject clonedMesh = mesh.copy(object);
+
+	// get UVs from original mesh from second uv set
+	MStringArray uvsetNames;
+	mesh.getUVSetNames(uvsetNames);
+	MFloatArray uArray;
+	MFloatArray vArray;
+	status = mesh.getUVs(uArray, vArray, &uvsetNames[1]);
+	MIntArray uvCounts;
+	MIntArray uvIds;
+	status = mesh.getAssignedUVs(uvCounts, uvIds, &uvsetNames[1]);
+
+	// get cloned mesh
+	MDagPath item;
+	MFnDagNode cloned_node(clonedMesh);
+	cloned_node.getPath(item);
+	item.extendToShape();
+	clonedMesh = item.node();
+
+	if (!clonedMesh.hasFn(MFn::kMesh))
+		return MObject::kNullObj;
+
+	// assign UVs from second UV set to cloned mesh	
+	MFnMesh fnClonedMesh(clonedMesh);
+	MStringArray uvSetNamesCloned;
+	fnClonedMesh.getUVSetNames(uvSetNamesCloned);
+
+	status = fnClonedMesh.deleteUVSet(uvSetNamesCloned[1]);
+	fnClonedMesh.clearUVs();
+	status = fnClonedMesh.setUVs(uArray, vArray);
+	status = fnClonedMesh.assignUVs(uvCounts, uvIds);
+
+	// proceed with smoothing
+	MFnDagNode dagClonedNode(clonedMesh);
+	MObject clonedSmoothedMesh = fnClonedMesh.generateSmoothMesh(dagClonedNode.parent(0), NULL, &status);
+
+	// destroy temporary object
+	MGlobal::deleteNode(clonedMesh);
+
+	return clonedSmoothedMesh;
+}
+
+MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus& status)
+{
 	status = MStatus::kSuccess;
 
-	int in_numUVSets = mesh.numUVSets();
-	if (in_numUVSets != 1)
-		return MObject::kNullObj; // temporary workaround of bug of generateSmoothMesh loosing UV data
-
 	DependencyNode attributes(object);
-
 	bool smoothPreview = attributes.getBool("displaySmoothMesh");
 
-	{ // same; generateSmoothMesh is loosing material data if more then 1 material is present
+	if (!smoothPreview)
+		return MObject::kNullObj;
+
+	MFnMesh mesh(object);
+
+	{ // generateSmoothMesh is loosing material data if more then 1 material is present
 		MIntArray materialIndices;
 		MObjectArray shaders;
 		unsigned int instanceNumber = 0;
@@ -50,11 +96,46 @@ MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus
 			return MObject::kNullObj;
 	}
 
-	if (!smoothPreview)
-		return MObject::kNullObj;
+	int in_numUVSets = mesh.numUVSets();
 
-	// for non smooth preview case:
-	return mesh.generateSmoothMesh(parent, NULL, &status);
+	MObject clonedSmoothedMesh;
+
+	if (in_numUVSets != 1)
+	{
+		clonedSmoothedMesh = Smoothed2ndUV(object, status);
+	}
+
+	// for smooth preview case:
+	MObject smoothedMesh = mesh.generateSmoothMesh(parent, NULL, &status);
+
+	if (clonedSmoothedMesh != MObject::kNullObj)
+	{
+		// copy data of UV 0 of clonedSmoothedMesh into UV 1 of smoothedMesh
+		MFnMesh fnCloned(clonedSmoothedMesh);
+		MStringArray clonedUVSetNames;
+		fnCloned.getUVSetNames(clonedUVSetNames);
+		MFloatArray uArrayCloned;
+		MFloatArray vArrayCloned;
+		status = fnCloned.getUVs(uArrayCloned, vArrayCloned, &clonedUVSetNames[0]);
+
+		MIntArray uvCountsCloned;
+		MIntArray uvIdsCloned;
+		status = fnCloned.getAssignedUVs(uvCountsCloned, uvIdsCloned, &clonedUVSetNames[0]);
+
+		MFnMesh fnOrigSmoothed(smoothedMesh);
+
+		MString newUVSetName("uv2");
+		fnOrigSmoothed.createUVSetWithName("uv2", NULL, &status);
+
+		status = fnOrigSmoothed.setUVs(uArrayCloned, vArrayCloned, &newUVSetName);
+		status = fnOrigSmoothed.assignUVs(uvCountsCloned, uvIdsCloned, &newUVSetName);
+
+		MFnDagNode fnclonedSmoothedMesh(clonedSmoothedMesh);
+		MObject clonedSmMeshParent = fnclonedSmoothedMesh.parent(0);
+		MGlobal::deleteNode(clonedSmMeshParent);
+	}
+
+	return smoothedMesh;
 }
 
 MObject MeshTranslator::TessellateNurbsSurface(const MObject& object, const MObject& parent, MStatus& status)
