@@ -2224,6 +2224,10 @@ bool FireRenderHair::CreateCurves()
 	if (!splines.load(opaqueStrm, sampleSize, sampleTime))
 		return false;
 
+	// apply masks etc.
+	if (!splines.executeScript())
+		return false;
+
 	// Count the number of curves and the number of points
 	unsigned int curveCount = 0;
 	unsigned int pointCount = 0;
