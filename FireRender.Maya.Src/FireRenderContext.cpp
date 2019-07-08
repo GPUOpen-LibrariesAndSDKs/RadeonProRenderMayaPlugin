@@ -2190,13 +2190,13 @@ bool FireRenderContext::ShouldResizeTexture(unsigned int& max_width, unsigned in
 	return false;
 }
 
-frw::Shader FireRenderContext::GetShader(MObject ob, bool forceUpdate)
+frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMesh* pMesh, bool forceUpdate)
 { 
 	scope.SetContextInfo(this);
 
 	MFnDependencyNode node(ob);
 
-	frw::Shader shader = scope.GetShader(ob, forceUpdate); 
+	frw::Shader shader = scope.GetShader(ob, pMesh, forceUpdate);
 
 	shader.SetMaterialName(node.name().asChar());
 

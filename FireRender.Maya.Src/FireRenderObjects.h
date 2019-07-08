@@ -295,10 +295,13 @@ public:
 
 	bool IsMainInstance() const { return m.isMainInstance; }
 
+	unsigned int GetAssignedUVMapIdx(const MString& textureFile) const;
+
 private:
 	bool IsSelected(const MDagPath& dagPath) const;
 	bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;
 	void GetShapes(const MFnDagNode& node, std::vector<frw::Shape>& outShapes);
+	void SaveUsedUV(const MObject& meshNode);
 
 	// A mesh in Maya can have multiple shaders
 	// in fr it must be split in multiple shapes
@@ -318,6 +321,11 @@ private:
 	} m;
 
 	virtual HashValue CalculateHash() override;
+
+	// only one uv coordinates set can be attached to texture file
+	// this is the limitation of Maya's relationship editor
+	// thus, it is correct to match filename with UV map index
+	std::unordered_map<std::string /*texture file name*/, unsigned int /*UV map index*/ > m_uvSetCachedMappingData;
 };
 
 

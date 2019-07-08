@@ -2284,5 +2284,12 @@ bool globalRenderUtilsDataHolder::ShouldSaveFrame(int frameIdx) const
 	return true;
 }
 
+void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source)
+{
+	int length = source.length();
+	out.clear();
+	out.resize(length, 0.0f);
+	source.get(out.data());
+}
 
 
