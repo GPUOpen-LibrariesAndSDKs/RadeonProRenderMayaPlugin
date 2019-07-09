@@ -2336,15 +2336,6 @@ bool FireRenderHair::CreateCurves()
 			*/
 			const unsigned int pointsPerSegment = 4;
 
-			// Number of points
-			unsigned int tail = length % pointsPerSegment;
-			if (tail != 0)
-				tail = 4 - tail;
-
-			const unsigned int pointsInCurve = length + tail;
-			const unsigned int segmentsInCurve = pointsInCurve / pointsPerSegment;
-			numPoints.push_back(segmentsInCurve);
-
 			// Texcoord using the patch UV from the root point
 			uvCoord.push_back(patchUVs[offset][0]);
 			uvCoord.push_back(patchUVs[offset][1]);
@@ -2353,11 +2344,23 @@ bool FireRenderHair::CreateCurves()
 			for (unsigned int i = 0; i < length; i++)
 			{
 				indicesData.push_back(points.size());
+				if (indicesData.size() % pointsPerSegment == 0)
+					indicesData.push_back(indicesData.back());
+
 				points.push_back(positions[offset + i]);
 
 				radiuses.push_back(width[offset + i] * 0.5f);
 				wCoord.push_back(texcoords[offset + i][1]);
 			}
+
+			// Number of points
+			unsigned int tail = indicesData.size() % pointsPerSegment;
+			if (tail != 0)
+				tail = 4 - tail;
+
+			const unsigned int pointsInCurve = indicesData.size() + tail;
+			const unsigned int segmentsInCurve = pointsInCurve / pointsPerSegment;
+			numPoints.push_back(segmentsInCurve);
 
 			// Extend data indices array if necessary 
 			// Segment of RPR curve should always be composed of 4 3D points
