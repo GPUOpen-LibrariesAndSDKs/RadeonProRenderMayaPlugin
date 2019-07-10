@@ -2340,12 +2340,15 @@ bool FireRenderHair::CreateCurves()
 			uvCoord.push_back(patchUVs[offset][0]);
 			uvCoord.push_back(patchUVs[offset][1]);
 
+			std::vector<rpr_uint> tmp_indicesData;
+
 			// Copy varying data
 			for (unsigned int i = 0; i < length; i++)
 			{
-				indicesData.push_back(points.size());
-				if (indicesData.size() % pointsPerSegment == 0)
-					indicesData.push_back(indicesData.back());
+
+				tmp_indicesData.push_back(points.size());
+				if (tmp_indicesData.size() % pointsPerSegment == 0)
+					tmp_indicesData.push_back(tmp_indicesData.back());
 
 				points.push_back(positions[offset + i]);
 
@@ -2354,11 +2357,11 @@ bool FireRenderHair::CreateCurves()
 			}
 
 			// Number of points
-			unsigned int tail = indicesData.size() % pointsPerSegment;
+			unsigned int tail = tmp_indicesData.size() % pointsPerSegment;
 			if (tail != 0)
 				tail = 4 - tail;
 
-			const unsigned int pointsInCurve = indicesData.size() + tail;
+			const unsigned int pointsInCurve = tmp_indicesData.size() + tail;
 			const unsigned int segmentsInCurve = pointsInCurve / pointsPerSegment;
 			numPoints.push_back(segmentsInCurve);
 
@@ -2366,8 +2369,10 @@ bool FireRenderHair::CreateCurves()
 			// Segment of RPR curve should always be composed of 4 3D points
 			for (unsigned int i = 0; i < tail; i++)
 			{
-				indicesData.push_back(indicesData.back());
+				tmp_indicesData.push_back(tmp_indicesData.back());
 			}
+
+			indicesData.insert(indicesData.end(), tmp_indicesData.begin(), tmp_indicesData.end());
 		}
 
 		// create RPR curve
