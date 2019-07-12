@@ -1101,6 +1101,12 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 		frstatus = rprFrameBufferGetInfo(frameBuffer, RPR_FRAMEBUFFER_DATA, 0, nullptr, &dataSize);
 		checkStatus(frstatus);
 
+#ifdef _DEBUG
+#ifdef DUMP_PIXELS_SOURCE
+		rprFrameBufferSaveToFile(frameBuffer, "C:\\temp\\dbg\\3.png");
+#endif
+#endif
+
 		// Check that the reported frame buffer size
 		// in bytes matches the required dimensions.
 		assert(dataSize == (sizeof(RV_PIXEL) * pixelCount));
@@ -1155,6 +1161,10 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 	}
 }
 
+#ifdef _DEBUG
+void generateBitmapImage(unsigned char *image, int height, int width, int pitch, const char* imageFileName);
+#endif
+
 // -----------------------------------------------------------------------------
 void FireRenderContext::copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 	unsigned int sourceWidth, unsigned int sourceHeight,
@@ -1172,12 +1182,46 @@ void FireRenderContext::copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 		for (unsigned int y = 0; y < regionHeight; y++)
 		{
 			unsigned int destIndex = y * regionWidth;
+				
 			unsigned int sourceIndex = flip ?
 				(sourceHeight - (region.bottom + y) - 1) * sourceWidth + region.left :
 				(sourceHeight - (region.top - y) - 1) * sourceWidth + region.left;
 
 			memcpy(&dest[destIndex], &source[sourceIndex], sizeof(RV_PIXEL) * regionWidth);
 		}
+
+#ifdef _DEBUG
+#ifdef DUMP_PIXELS_SOURCE
+		std::vector<RV_PIXEL> sourcePixels;
+		for (unsigned int y = 0; y < regionHeight; y++)
+		{
+			for (unsigned int x = 0; x < regionWidth; x++)
+			{
+				RV_PIXEL pixel = source[x + y * regionWidth];
+				sourcePixels.push_back(pixel);
+			}
+		}
+
+		std::vector<unsigned char> buffer2;
+		for (unsigned int y = 0; y < regionHeight; y++)
+		{
+			for (unsigned int x = 0; x < regionWidth; x++)
+			{
+				RV_PIXEL& pixel = sourcePixels[x + y * regionWidth];
+				char r = 255 * pixel.r;
+				char g = 255 * pixel.g;
+				char b = 255 * pixel.b;
+
+				buffer2.push_back(r);
+				buffer2.push_back(g);
+				buffer2.push_back(b);
+				buffer2.push_back(255);
+			}
+		}
+		unsigned char* dst2 = buffer2.data();
+		generateBitmapImage(dst2, sourceHeight, sourceWidth, sourceWidth * 4, "C:\\temp\\dbg\\2.bmp");
+#endif
+#endif
 	}
 
 	// A non color AOV buffer is the same size as the full frame
