@@ -1662,6 +1662,8 @@ void FireRenderCamera::Freshen()
 	MFnDagNode dagNode(node);
 	MFnCamera fnCamera(node);
 
+	MString thisName = dagNode.name();
+
 	if (!m_camera)
 	{
 		m_camera = Context().CreateCamera();
@@ -1704,6 +1706,9 @@ void FireRenderCamera::Freshen()
 				case 0:	// image
 				{
 					MFnDependencyNode imNode(m_imagePlane);
+
+					MString name2 = imNode.name();
+
 					auto name = GetPlugValue(m_imagePlane, "imageName", MString());
 					auto contrast = Scope().GetValue(imNode.findPlug("colorGain"));
 					auto brightness = Scope().GetValue(imNode.findPlug("colorOffset"));
