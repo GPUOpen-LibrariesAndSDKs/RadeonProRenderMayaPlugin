@@ -172,12 +172,22 @@ void FireRenderContext::enableAOVAndReset(int index, bool flag)
 	resetAOV(index, nullptr);
 }
 
+#if (RPR_VERSION_MINOR < 34)
+std::set<int> aovsExcluded;
+#else
+std::set<int> aovsExcluded{ RPR_AOV_VIEW_SHADING_NORMAL };
+#endif
+
 void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture)
 {
 	rpr_framebuffer_format fmt = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
 
 	m.framebufferAOV[index].Reset();
 	m.framebufferAOV_resolved[index].Reset();
+
+	auto it = aovsExcluded.find(index); // not all AOVs listed in RadeonProRender.h are supported by Tahoe
+	if (it != aovsExcluded.end())
+		return;
 
 	if (aovEnabled[index]) 
     {
@@ -886,14 +896,21 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 
 	// setup CPU thread count
 	std::vector<rpr_context_properties> ctxProperties;
-
+#if (RPR_VERSION_MINOR < 34)
 	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_SAMPLER_TYPE);
+#else
+	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_SAMPLER_TYPE);
+#endif
 	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_SAMPLER_TYPE_CMJ);
 
 	int threadCountToOverride = getThreadCountToOverride();
 	if ((createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) && threadCountToOverride > 0)
 	{
+#if (RPR_VERSION_MINOR < 34)
 		ctxProperties.push_back ((rpr_context_properties) RPR_CONTEXT_CREATEPROP_CPU_THREAD_LIMIT);
+#else
+		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CPU_THREAD_LIMIT);
+#endif
 		ctxProperties.push_back ((rpr_context_properties) threadCountToOverride);
 	}
 

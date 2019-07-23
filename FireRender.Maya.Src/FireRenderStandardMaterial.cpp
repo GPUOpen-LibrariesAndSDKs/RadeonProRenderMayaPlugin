@@ -1086,6 +1086,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		}
 	}
 
+#if (RPR_VERSION_MINOR < 34) // <= replaced by rprShapeSetDisplacementMaterial since Core v 1.34
 	// Special code for displacement map. We're using GetDisplacementNode() function which is called twice:
 	// from this function, and from FireRenderMesh::setupDisplacement(). This is done because RPRX UberMaterial
 	// doesn't have capabilities to set any displacement parameters except map image, so we're setting other
@@ -1131,6 +1132,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 			}
 		}
 	}
+#endif
 
 #else
 	auto ms = scope.MaterialSystem();
