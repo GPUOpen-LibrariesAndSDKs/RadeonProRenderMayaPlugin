@@ -552,11 +552,20 @@ std::vector<unsigned char> ProcessFitHorizontal(
 			}
 		}
 
+		if (lastSrcPixel < 0)
+			lastSrcPixel = 0;
+
 		// foreach pixel in source image
 		for (unsigned int y = 0; y < lastSrcPixel; y++)
 		{
 			for (unsigned int x = 0; x < srcCurrSegWidth; x++)
 			{
+				int finalSrcShift = y + shiftY + srcFirstPixelOffset;
+				if (finalSrcShift < 0)
+					continue;
+				if (finalSrcShift > srcWidth)
+					continue;
+
 				memcpy(
 					dst + x * params.dstPixSize + (y /*+ dstOffset*/)* img_desc.image_row_pitch,
 					params.src + (x + shiftX) * params.srcPixSize + (y + shiftY + srcFirstPixelOffset) * params.desc.fBytesPerRow,
@@ -624,17 +633,26 @@ std::vector<unsigned char> ProcessFitVertical(
 	{
 		unsigned char* dst = buffer.data();
 
-		int shiftX = (params.xTileIdx - countSkipTiles) * srcFullSegWidth;
-		int shiftY = (params.yTileIdx > 1) ? srcTailSegHeight + (params.yTileIdx - 1) * srcFullSegHeight : params.yTileIdx * srcTailSegHeight;
+		unsigned int shiftX = (params.xTileIdx - countSkipTiles) * srcFullSegWidth;
+		unsigned int shiftY = (params.yTileIdx > 1) ? srcTailSegHeight + (params.yTileIdx - 1) * srcFullSegHeight : params.yTileIdx * srcTailSegHeight;
 
 		// created tile could be bigger then remaining source image (when black tiles are added) and remainin source image could be bigger (when cutting image)
 		int lastSrcPixel = (createdImageWidth > srcCurrSegWidth) ? srcCurrSegWidth : createdImageWidth;
+
+		if (lastSrcPixel < 0)
+			lastSrcPixel = 0;
 
 		// foreach pixel in source image
 		for (unsigned int y = 0; y < srcCurrSegHeight; y++)
 		{
 			for (unsigned int x = 0; x < lastSrcPixel; x++)
 			{
+				int finalSrcShift = x + shiftX + srcFirstPixelOffset;
+				if (finalSrcShift < 0)
+					continue;
+				if (finalSrcShift > srcWidth)
+					continue;
+
 				memcpy(
 					dst + (x /*+ dstOffset*/)* params.dstPixSize + y * img_desc.image_row_pitch,
 					params.src + (x + shiftX + srcFirstPixelOffset) * params.srcPixSize + (y + shiftY) * params.desc.fBytesPerRow,
