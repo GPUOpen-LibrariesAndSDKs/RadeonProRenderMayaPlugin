@@ -93,7 +93,13 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	std::vector<rpr_scene> scenes;
 	scenes.push_back(scene.Handle());
 
-	int err = rprExportToGLTF(file.expandedFullName().asChar(), context.Handle(), materialSystem.Handle(), materialSystem.GetRprxContext(), scenes.data(), scenes.size(), 0);
+	int err = rprExportToGLTF(
+		file.expandedFullName().asChar(), 
+		context.Handle(), 
+		materialSystem.Handle(),
+		scenes.data(), 
+		scenes.size(), 
+		0);
 
 	if (err != GLTF_SUCCESS)
 	{

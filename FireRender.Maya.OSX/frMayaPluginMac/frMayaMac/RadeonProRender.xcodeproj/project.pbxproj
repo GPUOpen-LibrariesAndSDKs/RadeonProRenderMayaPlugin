@@ -112,7 +112,6 @@
 		4DE6450C1DA277850076E6A7 /* RenderProgressBars.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4DE6450A1DA2774A0076E6A7 /* RenderProgressBars.cpp */; };
 		4DE6450F1DA277D00076E6A7 /* RenderProgressBars.h in Headers */ = {isa = PBXBuildFile; fileRef = 4DE6450D1DA277BC0076E6A7 /* RenderProgressBars.h */; };
 		4DF9424A1DD09DE300E69ED3 /* libOpenImageIO.1.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DF942491DD09DE300E69ED3 /* libOpenImageIO.1.6.dylib */; };
-		8D1135861F45D4F900E58A52 /* libRprSupport64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D1135851F45D4F900E58A52 /* libRprSupport64.dylib */; };
 		8D1135891F45D6B300E58A52 /* libRprLoadStore64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */; };
 		8D1E289E2034A0550060BB11 /* FireRenderPBRMaterial.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D1E289B2034A0550060BB11 /* FireRenderPBRMaterial.h */; };
 		8D1E289F2034A0550060BB11 /* FireRenderPBRMaterial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D1E289D2034A0550060BB11 /* FireRenderPBRMaterial.cpp */; };
@@ -294,7 +293,6 @@
 		8D595E3820372FE20031988A /* FireRenderTransparentMaterial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D77AECF1F436244008E88FB /* FireRenderTransparentMaterial.cpp */; };
 		8D595E3920372FE20031988A /* RenderStamp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D77AEDB1F436244008E88FB /* RenderStamp.cpp */; };
 		8D595E3B20372FE20031988A /* libRprLoadStore64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */; };
-		8D595E3C20372FE20031988A /* libRprSupport64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D1135851F45D4F900E58A52 /* libRprSupport64.dylib */; };
 		8D595E3D20372FE20031988A /* libOpenImageIO.1.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DF942491DD09DE300E69ED3 /* libOpenImageIO.1.6.dylib */; };
 		8D595E3E20372FE20031988A /* libRadeonProRender64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FA69E321D58D8AD00E218C8 /* libRadeonProRender64.dylib */; };
 		8D595E3F20372FE20031988A /* libTahoe64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FA69E331D58D8AD00E218C8 /* libTahoe64.dylib */; };
@@ -613,7 +611,6 @@
 		8DBCC35C22304666003EE361 /* libAdskXGen.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D8613BF21EE273F009DF99F /* libAdskXGen.dylib */; };
 		8DBCC35D22304666003EE361 /* libRadeonImageFilters64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DCBE5052072777400F79E06 /* libRadeonImageFilters64.dylib */; };
 		8DBCC35E22304666003EE361 /* libRprLoadStore64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */; };
-		8DBCC35F22304666003EE361 /* libRprSupport64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 8D1135851F45D4F900E58A52 /* libRprSupport64.dylib */; };
 		8DBCC36022304666003EE361 /* libOpenImageIO.1.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4DF942491DD09DE300E69ED3 /* libOpenImageIO.1.6.dylib */; };
 		8DBCC36122304666003EE361 /* libRadeonProRender64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FA69E321D58D8AD00E218C8 /* libRadeonProRender64.dylib */; };
 		8DBCC36222304666003EE361 /* libTahoe64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FA69E331D58D8AD00E218C8 /* libTahoe64.dylib */; };
@@ -733,7 +730,6 @@
 		4DE6450D1DA277BC0076E6A7 /* RenderProgressBars.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RenderProgressBars.h; path = ../../../FireRender.Maya.Src/RenderProgressBars.h; sourceTree = "<group>"; };
 		4DE645101DA339A60076E6A7 /* Readme.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Readme.txt; path = ../../Readme.txt; sourceTree = "<group>"; };
 		4DF942491DD09DE300E69ED3 /* libOpenImageIO.1.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libOpenImageIO.1.6.dylib; path = "../../../ThirdParty/RadeonProRender SDK/Mac/lib/libOpenImageIO.1.6.dylib"; sourceTree = "<group>"; };
-		8D1135851F45D4F900E58A52 /* libRprSupport64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRprSupport64.dylib; path = "../../../ThirdParty/RadeonProRender SDK/Mac/lib/libRprSupport64.dylib"; sourceTree = "<group>"; };
 		8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRprLoadStore64.dylib; path = "../../../ThirdParty/RadeonProRender SDK/Mac/lib/libRprLoadStore64.dylib"; sourceTree = "<group>"; };
 		8D1E289B2034A0550060BB11 /* FireRenderPBRMaterial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderPBRMaterial.h; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.h; sourceTree = "<group>"; };
 		8D1E289D2034A0550060BB11 /* FireRenderPBRMaterial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderPBRMaterial.cpp; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.cpp; sourceTree = "<group>"; };
@@ -958,7 +954,6 @@
 				8D8613C221EE2764009DF99F /* libAdskXGen.dylib in Frameworks */,
 				8DCBE5062072777400F79E06 /* libRadeonImageFilters64.dylib in Frameworks */,
 				8D1135891F45D6B300E58A52 /* libRprLoadStore64.dylib in Frameworks */,
-				8D1135861F45D4F900E58A52 /* libRprSupport64.dylib in Frameworks */,
 				4DF9424A1DD09DE300E69ED3 /* libOpenImageIO.1.6.dylib in Frameworks */,
 				4DE508C71D9950A1009B2BD6 /* libRadeonProRender64.dylib in Frameworks */,
 				4DE508C81D9950A1009B2BD6 /* libTahoe64.dylib in Frameworks */,
@@ -973,7 +968,6 @@
 				8D8613C021EE273F009DF99F /* libAdskXGen.dylib in Frameworks */,
 				8DCBE5072072779300F79E06 /* libRadeonImageFilters64.dylib in Frameworks */,
 				8D595E3B20372FE20031988A /* libRprLoadStore64.dylib in Frameworks */,
-				8D595E3C20372FE20031988A /* libRprSupport64.dylib in Frameworks */,
 				8D595E3D20372FE20031988A /* libOpenImageIO.1.6.dylib in Frameworks */,
 				8D595E3E20372FE20031988A /* libRadeonProRender64.dylib in Frameworks */,
 				8D595E3F20372FE20031988A /* libTahoe64.dylib in Frameworks */,
@@ -988,7 +982,6 @@
 				8DBCC35C22304666003EE361 /* libAdskXGen.dylib in Frameworks */,
 				8DBCC35D22304666003EE361 /* libRadeonImageFilters64.dylib in Frameworks */,
 				8DBCC35E22304666003EE361 /* libRprLoadStore64.dylib in Frameworks */,
-				8DBCC35F22304666003EE361 /* libRprSupport64.dylib in Frameworks */,
 				8DBCC36022304666003EE361 /* libOpenImageIO.1.6.dylib in Frameworks */,
 				8DBCC36122304666003EE361 /* libRadeonProRender64.dylib in Frameworks */,
 				8DBCC36222304666003EE361 /* libTahoe64.dylib in Frameworks */,
@@ -1291,7 +1284,6 @@
 				8D8613C121EE2764009DF99F /* libAdskXGen.dylib */,
 				8DCBE5052072777400F79E06 /* libRadeonImageFilters64.dylib */,
 				8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */,
-				8D1135851F45D4F900E58A52 /* libRprSupport64.dylib */,
 				4DF942491DD09DE300E69ED3 /* libOpenImageIO.1.6.dylib */,
 				9FA69E321D58D8AD00E218C8 /* libRadeonProRender64.dylib */,
 				9FA69E331D58D8AD00E218C8 /* libTahoe64.dylib */,

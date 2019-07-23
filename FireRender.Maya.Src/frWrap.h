@@ -145,7 +145,11 @@ namespace frw
 		ShaderTypeEmissive = RPR_MATERIAL_NODE_EMISSIVE,
 		ShaderTypeWard = RPR_MATERIAL_NODE_WARD,
 		ShaderTypeBlend = RPR_MATERIAL_NODE_BLEND,
+#if (RPR_VERSION_MINOR < 34)
 		ShaderTypeStandard = RPR_MATERIAL_NODE_STANDARD,
+#else
+		ShaderTypeStandard = RPR_MATERIAL_NODE_UBERV2,
+#endif
 		ShaderTypeOrenNayer = RPR_MATERIAL_NODE_ORENNAYAR,
 		ShaderTypeDiffuseRefraction = RPR_MATERIAL_NODE_DIFFUSE_REFRACTION,
 		ShaderTypeAdd = RPR_MATERIAL_NODE_ADD,
@@ -263,6 +267,7 @@ namespace frw
 		NodeInputG = RPR_MATERIAL_INPUT_G,
 		NodeInputMultiScatter = RPR_MATERIAL_INPUT_MULTISCATTER,
 
+#if (RPR_VERSION_MINOR < 34)
 		NodeInputStandardDiffuseColor = RPR_MATERIAL_STANDARD_INPUT_DIFFUSE_COLOR,
 		NodeInputStandardDiffuseNormal = RPR_MATERIAL_STANDARD_INPUT_DIFFUSE_NORMAL,
 		NodeInputStandardGlossyColor = RPR_MATERIAL_STANDARD_INPUT_GLOSSY_COLOR,
@@ -278,6 +283,23 @@ namespace frw
 		NodeInputStandardTransparency = RPR_MATERIAL_STANDARD_INPUT_TRANSPARENCY,
 		NodeInputStandardTransparencyColor = RPR_MATERIAL_STANDARD_INPUT_TRANSPARENCY_COLOR,
 		NodeInputStandardRefractionRoughness = RPR_MATERIAL_STANDARD_INPUT_REFRACTION_ROUGHNESS,
+#else
+		NodeInputStandardDiffuseColor = RPR_UBER_MATERIAL_INPUT_DIFFUSE_COLOR,
+		NodeInputStandardDiffuseNormal = RPR_UBER_MATERIAL_INPUT_DIFFUSE_NORMAL,
+		NodeInputStandardGlossyColor = RPR_UBER_MATERIAL_INPUT_SHEEN,
+		//NodeInputStandardGlossyNormal = RPR_MATERIAL_STANDARD_INPUT_GLOSSY_NORMAL,
+		NodeInputStandardClearcoatColor = RPR_UBER_MATERIAL_INPUT_COATING_COLOR,
+		NodeInputStandardClearcoatNormal = RPR_UBER_MATERIAL_INPUT_COATING_NORMAL,
+		NodeInputStandardRefractionColor = RPR_UBER_MATERIAL_INPUT_REFRACTION_COLOR,
+		NodeInputStandardRefractionNormal = RPR_UBER_MATERIAL_INPUT_REFRACTION_NORMAL,
+		NodeInputStandardRefractionIOR = RPR_UBER_MATERIAL_INPUT_REFRACTION_IOR,
+		NodeInputStandardDiffuseToRefractionWeight = RPR_UBER_MATERIAL_INPUT_REFRACTION_WEIGHT,
+		NodeInputStandardGlossyToDiffuseWeight = RPR_UBER_MATERIAL_INPUT_COATING_WEIGHT,
+		//NodeInputStandardClearcoatToGlossyWeight = RPR_MATERIAL_STANDARD_INPUT_CLEARCOAT_TO_GLOSSY_WEIGHT,
+		NodeInputStandardTransparency = RPR_UBER_MATERIAL_INPUT_TRANSPARENCY,
+		//NodeInputStandardTransparencyColor = RPR_MATERIAL_STANDARD_INPUT_TRANSPARENCY_COLOR,
+		NodeInputStandardRefractionRoughness = RPR_UBER_MATERIAL_INPUT_REFRACTION_ROUGHNESS,
+#endif
 	};
 	enum NodeInputInfo
 	{
