@@ -15,6 +15,9 @@
 #include "TileRenderer.h"
 
 #include "RenderStampUtils.h"
+#include "GlobalRenderUtilsDataHolder.h"
+#include <iostream>
+#include <fstream>
 
 #ifdef OPTIMIZATION_CLOCK
 	#include <chrono>
@@ -128,6 +131,12 @@ bool FireRenderProduction::start()
 	MStatus status;
 
 	bool showWarningDialog = false;
+
+	if (GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())
+	{
+		GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->UpdateStartTime();
+		std::remove(std::string(GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->FolderPath() + "time_log.txt").c_str());
+	}
 
 	// Read common render settings.
 	MRenderUtil::getCommonRenderSettings(m_settings);
@@ -472,18 +481,27 @@ void FireRenderProduction::RenderFullFrame()
 	// _TODO Investigate this, looks like this call is performance waste. Why we need to read all AOVs on every render call ?
 	m_aovs->readFrameBuffers(*m_context, false);
 
-	if (globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())
+	if (GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())
 	{
-		bool shouldSave = globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->ShouldSaveFrame(m_context->m_currentIteration);
+		bool shouldSave = GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->ShouldSaveFrame(m_context->m_currentIteration);
 
 		if (shouldSave)
 		{
 			bool colorOnly = true;
 			unsigned int imageFormat = 8; // "jpg"
-			MString filePath = globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->FolderPath().c_str();
+			MString filePath = GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->FolderPath().c_str();
 			filePath += m_context->m_currentIteration;
 			filePath += ".jpg";
 			m_renderViewAOV->writeToFile(filePath, colorOnly, imageFormat);
+
+			std::ofstream timeLoggingFile;
+			timeLoggingFile.open(GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->FolderPath() + "time_log.txt", std::ofstream::out | std::ofstream::app);
+			timeLoggingFile << m_context->m_currentIteration << " ";
+			long numberOfClicks = clock() - GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->GetStartTime();
+			double secondsSpentRendering = numberOfClicks / (double)CLOCKS_PER_SEC;
+			timeLoggingFile << secondsSpentRendering << "s \n";
+
+			timeLoggingFile.close();
 		}
 	}
 }

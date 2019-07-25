@@ -2,6 +2,7 @@
 #include "FireRenderUtils.h"
 #include <maya/MGlobal.h>
 #include <maya/MString.h>
+#include "GlobalRenderUtilsDataHolder.h"
 #include <string>
 #include <vector>
 #include <iostream>
@@ -42,7 +43,7 @@ MStatus EnableSaveIntermediateCmd::doIt(const MArgList & args)
 	argData.getFlagArgument(kEnableSaveIntermediateFlag, 0, enable);
 	if (enable == false)
 	{
-		globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->SetEnabledSaveIntermediateImages(false);
+		GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->SetEnabledSaveIntermediateImages(false);
 		return MS::kSuccess;
 	}
 	
@@ -78,9 +79,9 @@ MStatus EnableSaveIntermediateCmd::doIt(const MArgList & args)
 		tokens.push_back(token);
 	}
 
-	globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->SetEnabledSaveIntermediateImages(true);
-	globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->SetIntermediateImagesFolder(folderPath.asChar());
-	globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->SetIterationsToSave(tokens);
+	GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->SetEnabledSaveIntermediateImages(true);
+	GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->SetIntermediateImagesFolder(folderPath.asChar());
+	GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->SetIterationsToSave(tokens);
 
 	return MS::kSuccess;
 }

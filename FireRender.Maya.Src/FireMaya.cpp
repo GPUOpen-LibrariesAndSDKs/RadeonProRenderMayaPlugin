@@ -695,38 +695,42 @@ std::vector<unsigned char> calculateTileImage(
 	rpr_image_desc& img_desc)
 {
 	switch(imgFit) 
+	{
+		case FireMaya::FitType::FitBest:
 		{
-			case FireMaya::FitType::FitBest:
-			{
-				if (desc.fWidth > desc.fHeight)
-					return ProcessFitHorizontal(params, img_desc);
-				else
-					return ProcessFitVertical(params, img_desc);
-			}
-
-			case FireMaya::FitType::FitFill:
-			{
-				if (desc.fWidth > desc.fHeight)
-					return ProcessFitVertical(params, img_desc);
-				else
-					return ProcessFitHorizontal(params, img_desc);
-			}
-
-			case FireMaya::FitType::FitStretch:
-			{
-				return ProcessFitStretch(params, img_desc);
-			}
-
-			case FireMaya::FitType::FitHorizontal:
-			{
+			if (desc.fWidth > desc.fHeight)
 				return ProcessFitHorizontal(params, img_desc);
-			}
-
-			case FireMaya::FitType::FitVertical:
-			{
+			else
 				return ProcessFitVertical(params, img_desc);
-			}
 		}
+
+		case FireMaya::FitType::FitFill:
+		{
+			if (desc.fWidth > desc.fHeight)
+				return ProcessFitVertical(params, img_desc);
+			else
+				return ProcessFitHorizontal(params, img_desc);
+		}
+
+		case FireMaya::FitType::FitStretch:
+		{
+			return ProcessFitStretch(params, img_desc);
+		}
+
+		case FireMaya::FitType::FitHorizontal:
+		{
+			return ProcessFitHorizontal(params, img_desc);
+		}
+
+		case FireMaya::FitType::FitVertical:
+		{
+			return ProcessFitVertical(params, img_desc);
+		}
+	}
+
+	// dummy return for compiler
+	std::vector <unsigned char> dummy;
+	return dummy;
 }
 
 frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,

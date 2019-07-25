@@ -18,6 +18,7 @@
 #include <maya/MFileObject.h>
 #include <cassert>
 #include <vector>
+#include <time.h>
 
 #include "attributeNames.h"
 #include "OptionVarHelpers.h"
@@ -2256,32 +2257,6 @@ void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals
 		3, 3, 3,
 		3, 3, 3,
 	};
-}
-
-globalRenderUtilsDataHolder* globalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder(void)
-{
-	static globalRenderUtilsDataHolder instance;
-	return &instance;
-}
-
-void globalRenderUtilsDataHolder::SetIterationsToSave(std::vector<std::string>& indices)
-{
-	framesToSave.clear();
-
-	for (auto& token : indices)
-	{
-		int idx = std::stoi(token);
-		framesToSave.insert(idx);
-	}
-}
-
-bool globalRenderUtilsDataHolder::ShouldSaveFrame(int frameIdx) const
-{
-	auto it = std::find(framesToSave.begin(), framesToSave.end(), frameIdx);
-	if (it == framesToSave.end())
-		return false;
-
-	return true;
 }
 
 void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source)

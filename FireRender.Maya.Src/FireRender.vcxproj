@@ -302,6 +302,7 @@
     <ClCompile Include="FireRenderThread.cpp" />
     <ClCompile Include="FireRenderVolumeMaterial.cpp" />
     <ClCompile Include="frWrap.cpp" />
+    <ClCompile Include="GlobalRenderUtilsDataHolder.cpp" />
     <ClCompile Include="GLTFTranslator.cpp" />
     <ClCompile Include="Hosek\ArHosekSkyModel.cpp" />
     <ClCompile Include="Lights\IES\FireRenderIESLight.cpp" />
@@ -436,6 +437,7 @@
     <ClInclude Include="FireRenderVolumeMaterial.h" />
     <ClInclude Include="frWrap.h" />
     <ClInclude Include="FireRenderViewportManager.h" />
+    <ClInclude Include="GlobalRenderUtilsDataHolder.h" />
     <ClInclude Include="GLTFTranslator.h" />
     <ClInclude Include="Hosek\ArHosekSkyModel.h" />
     <ClInclude Include="Hosek\ArHosekSkyModelData_CIEXYZ.h" />
