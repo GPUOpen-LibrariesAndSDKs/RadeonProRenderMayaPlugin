@@ -536,6 +536,9 @@
     <ClCompile Include="EnableSaveIntermediateCmd.cpp">
       <Filter>Commands</Filter>
     </ClCompile>
+    <ClCompile Include="GlobalRenderUtilsDataHolder.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -921,6 +924,9 @@
     </ClInclude>
     <ClInclude Include="EnableSaveIntermediateCmd.h">
       <Filter>Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalRenderUtilsDataHolder.h">
+      <Filter>Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
