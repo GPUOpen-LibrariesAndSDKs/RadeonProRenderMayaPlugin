@@ -413,10 +413,10 @@ bool FireRenderContext::CanCreateAiDenoiser() const
 void FireRenderContext::setupDenoiser()
 {
 	const rpr_framebuffer fbColor = m.framebufferAOV_resolved[RPR_AOV_COLOR].Handle();
-	const rpr_framebuffer fbShadingNormal = m.framebufferAOV[RPR_AOV_SHADING_NORMAL].Handle();
-	const rpr_framebuffer fbDepth = m.framebufferAOV[RPR_AOV_DEPTH].Handle();
-	const rpr_framebuffer fbWorldCoord = m.framebufferAOV[RPR_AOV_WORLD_COORDINATE].Handle();
-	const rpr_framebuffer fbObjectId = m.framebufferAOV[RPR_AOV_OBJECT_ID].Handle();
+	const rpr_framebuffer fbShadingNormal = m.framebufferAOV_resolved[RPR_AOV_SHADING_NORMAL].Handle();
+	const rpr_framebuffer fbDepth = m.framebufferAOV_resolved[RPR_AOV_DEPTH].Handle();
+	const rpr_framebuffer fbWorldCoord = m.framebufferAOV_resolved[RPR_AOV_WORLD_COORDINATE].Handle();
+	const rpr_framebuffer fbObjectId = m.framebufferAOV_resolved[RPR_AOV_OBJECT_ID].Handle();
 	const rpr_framebuffer fbTrans = fbObjectId;
 	const rpr_framebuffer fbDiffuseAlbedo = m.framebufferAOV_resolved[RPR_AOV_DIFFUSE_ALBEDO].Handle();
 
@@ -477,10 +477,16 @@ void FireRenderContext::setupDenoiser()
 
 		case FireRenderGlobals::kML:
 			m_denoiserFilter->CreateFilter(RifFilterType::MlDenoise, useOpenImageDenoise);
+
 			m_denoiserFilter->AddInput(RifColor, fbColor, 0.0f);
-			m_denoiserFilter->AddInput(RifNormal, fbShadingNormal, 0.0f);
-			m_denoiserFilter->AddInput(RifDepth, fbDepth, 0.0f);
-			m_denoiserFilter->AddInput(RifAlbedo, fbDiffuseAlbedo, 0.0f);
+
+			if (!m_globals.denoiserSettings.colorOnly)
+			{
+				m_denoiserFilter->AddInput(RifNormal, fbShadingNormal, 0.0f);
+				m_denoiserFilter->AddInput(RifDepth, fbDepth, 0.0f);
+				m_denoiserFilter->AddInput(RifAlbedo, fbDiffuseAlbedo, 0.0f);
+			}
+
 			break;
 
 		default:
@@ -1083,6 +1089,54 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 	int pixelCount = width * height;
 
 	rpr_framebuffer frameBuffer = frameBufferAOV_Resolved(aov);
+
+#ifdef _DEBUG
+#ifdef DUMP_AOV_SOURCE
+	std::map<unsigned int, std::string> aovNames =
+	{
+		 {RPR_AOV_COLOR, "RPR_AOV_COLOR"}
+		,{RPR_AOV_OPACITY, "RPR_AOV_OPACITY" }
+		,{RPR_AOV_WORLD_COORDINATE, "RPR_AOV_WORLD_COORDINATE" }
+		,{RPR_AOV_UV, "RPR_AOV_UV" }
+		,{RPR_AOV_MATERIAL_IDX, "RPR_AOV_MATERIAL_IDX" }
+		,{RPR_AOV_GEOMETRIC_NORMAL, "RPR_AOV_GEOMETRIC_NORMAL" }
+		,{RPR_AOV_SHADING_NORMAL, "RPR_AOV_SHADING_NORMAL" }
+		,{RPR_AOV_DEPTH, "RPR_AOV_DEPTH" }
+		,{RPR_AOV_OBJECT_ID, "RPR_AOV_OBJECT_ID" }
+		,{RPR_AOV_OBJECT_GROUP_ID, "RPR_AOV_OBJECT_GROUP_ID" }
+		,{RPR_AOV_SHADOW_CATCHER, "RPR_AOV_SHADOW_CATCHER" }
+		,{RPR_AOV_BACKGROUND, "RPR_AOV_BACKGROUND" }
+		,{RPR_AOV_EMISSION, "RPR_AOV_EMISSION" }
+		,{RPR_AOV_VELOCITY, "RPR_AOV_VELOCITY" }
+		,{RPR_AOV_DIRECT_ILLUMINATION, "RPR_AOV_DIRECT_ILLUMINATION" }
+		,{RPR_AOV_INDIRECT_ILLUMINATION, "RPR_AOV_INDIRECT_ILLUMINATION"}
+		,{RPR_AOV_AO, "RPR_AOV_AO" }
+		,{RPR_AOV_DIRECT_DIFFUSE, "RPR_AOV_DIRECT_DIFFUSE" }
+		,{RPR_AOV_DIRECT_REFLECT, "RPR_AOV_DIRECT_REFLECT" }
+		,{RPR_AOV_INDIRECT_DIFFUSE, "RPR_AOV_INDIRECT_DIFFUSE" }
+		,{RPR_AOV_INDIRECT_REFLECT, "RPR_AOV_INDIRECT_REFLECT" }
+		,{RPR_AOV_REFRACT, "RPR_AOV_REFRACT" }
+		,{RPR_AOV_VOLUME, "RPR_AOV_VOLUME" }
+		,{RPR_AOV_LIGHT_GROUP0, "RPR_AOV_LIGHT_GROUP0" }
+		,{RPR_AOV_LIGHT_GROUP1, "RPR_AOV_LIGHT_GROUP1" }
+		,{RPR_AOV_LIGHT_GROUP2, "RPR_AOV_LIGHT_GROUP2" }
+		,{RPR_AOV_LIGHT_GROUP3, "RPR_AOV_LIGHT_GROUP3" }
+		,{RPR_AOV_DIFFUSE_ALBEDO, "RPR_AOV_DIFFUSE_ALBEDO" }
+		,{RPR_AOV_VARIANCE, "RPR_AOV_VARIANCE" }
+		,{RPR_AOV_VIEW_SHADING_NORMAL, "RPR_AOV_VIEW_SHADING_NORMAL" }
+		,{RPR_AOV_REFLECTION_CATCHER, "RPR_AOV_REFLECTION_CATCHER" }
+		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
+	};
+
+	std::stringstream ssFileNameResolved;
+	ssFileNameResolved << aovNames[aov] << "_resolved.png";
+	rprFrameBufferSaveToFile(m.framebufferAOV_resolved[aov].Handle(), ssFileNameResolved.str().c_str());
+
+	std::stringstream ssFileNameNOTResolved;
+	ssFileNameNOTResolved << aovNames[aov] << "_NOTresolved.png";
+	rprFrameBufferSaveToFile(m.framebufferAOV[aov].Handle(), ssFileNameNOTResolved.str().c_str());
+#endif
+#endif
 
 	RV_PIXEL* data = nullptr;
 	rpr_int frstatus = RPR_SUCCESS;

@@ -275,6 +275,16 @@ void FireRenderAOVs::applyToContext(FireRenderContext& context)
 }
 
 // -----------------------------------------------------------------------------
+void FireRenderAOVs::setFromContext(FireRenderContext& context)
+{
+	for (auto& aov : m_aovs)
+	{
+		if (context.isAOVEnabled(aov.second->id))
+			aov.second->active = true;
+	}
+}
+
+// -----------------------------------------------------------------------------
 void FireRenderAOVs::setRegion(const RenderRegion& region,
 	unsigned int frameWidth, unsigned int frameHeight)
 {
