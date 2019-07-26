@@ -194,6 +194,8 @@ bool FireRenderProduction::start()
 			return false;
 		}
 
+		m_aovs->setFromContext(*m_context);
+
 		m_needsContextRefresh = true;
 		m_context->setResolution(contextWidth, contextHeight, true);
 		m_context->setCamera(m_camera, true);

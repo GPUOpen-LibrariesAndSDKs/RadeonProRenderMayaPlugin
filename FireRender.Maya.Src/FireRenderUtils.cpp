@@ -448,6 +448,10 @@ void FireRenderGlobalsData::readDenoiserParameters(const MFnDependencyNode& frGl
 	plug = frGlobalsNode.findPlug("denoiserTrans");
 	if (!plug.isNull())
 		denoiserSettings.trans = plug.asFloat();
+
+	plug = frGlobalsNode.findPlug("denoiserColorOnly");
+	if (!plug.isNull())
+		denoiserSettings.colorOnly = plug.asInt() == 0;
 }
 
 void FireRenderGlobalsData::updateTonemapping(FireRenderContext& inContext, bool disableWhiteBalance)

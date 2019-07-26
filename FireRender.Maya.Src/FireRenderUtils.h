@@ -52,6 +52,7 @@ struct DenoiserSettings
 		depth = 0.0f;
 		normal = 0.0f;
 		trans = 0.0f;
+		colorOnly = false;
 	}
 
 	bool enabled;
@@ -64,6 +65,7 @@ struct DenoiserSettings
 	float depth;
 	float normal;
 	float trans;
+	bool colorOnly;
 };
 
 struct CompletionCriteriaParams

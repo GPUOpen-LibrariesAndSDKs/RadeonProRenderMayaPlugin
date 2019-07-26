@@ -133,6 +133,13 @@ global proc createFireRenderDenoiserFrame(string $parent)
 			 -attribute "RadeonProRenderGlobals.denoiserTrans";
 	setParent ..;
 
+	// ML
+	frameLayout -label "Machine Learning" -cll 0 -li 30 denoiserMLFrame;
+		attrControlGrp
+			 -label ""
+			 -attribute "RadeonProRenderGlobals.denoiserColorOnly";
+	setParent ..;
+
 	setParent ..;	// columnLayout ends
 	setUITemplate -popTemplate;
 
@@ -146,6 +153,7 @@ global proc updateDenoiserUI()
 	int $enabledBilateral = $type == 0;
 	int $enabledLWR = $type == 1;
 	int $enabledEAW = $type == 2;
+	int $enabledML = $type == 3;
 
 	// Lock controls and set it to ON state
 	control -edit -enable ($enabled > 0) denoiserTypeCombobox;
@@ -153,6 +161,7 @@ global proc updateDenoiserUI()
 	frameLayout -edit -visible ($enabledBilateral && $enabled) denoiserBilateralFrame;
 	frameLayout -edit -visible ($enabledLWR && $enabled) denoiserLWRFrame;
 	frameLayout -edit -visible ($enabledEAW && $enabled) denoiserEAWFrame;
+	frameLayout -edit -visible ($enabledML && $enabled) denoiserMLFrame;
 }
 
 global proc createFireRenderCameraFrame(string $parent)

@@ -99,6 +99,9 @@ namespace
 		MObject denoiserNormal;
 		MObject denoiserTrans;
 
+			// Denoiser type: ML
+		MObject denoiserColorOnly;
+
 		// image saving
 		MObject renderaGlobalsExrMultilayerEnabled;
 	}
@@ -743,6 +746,14 @@ void FireRenderGlobals::createDenoiserAttributes()
 	CHECK_MSTATUS(addAttribute(Attribute::denoiserTrans));
 	nAttr.setMin(0.1f);
 	nAttr.setMax(1.0f);
+
+	//ML
+	Attribute::denoiserColorOnly = eAttr.create("denoiserColorOnly", "do", 1, &status);
+	eAttr.addField("Color Only", 0);
+	eAttr.addField("Color + AOVs", 1);
+	MAKE_INPUT_CONST(eAttr);
+	eAttr.setReadable(true);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserColorOnly));
 }
 
 void FireRenderGlobals::addAsGlobalAttribute(MFnAttribute& attr)
