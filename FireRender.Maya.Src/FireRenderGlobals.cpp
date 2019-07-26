@@ -748,7 +748,7 @@ void FireRenderGlobals::createDenoiserAttributes()
 	nAttr.setMax(1.0f);
 
 	//ML
-	Attribute::denoiserColorOnly = eAttr.create("denoiserColorOnly", "do", 1, &status);
+	Attribute::denoiserColorOnly = eAttr.create("denoiserColorOnly", "do", 0, &status);
 	eAttr.addField("Color Only", 0);
 	eAttr.addField("Color + AOVs", 1);
 	MAKE_INPUT_CONST(eAttr);
