@@ -674,7 +674,7 @@ void ReserveShaderData(MFnMesh& fnMesh, MeshIdxDictionary* shaderData, MIntArray
 	}
 }
 
-std::vector<frw::Shape> MeshTranslator::TranslateMesh(frw::Context context, const MObject& originalObject)
+std::vector<frw::Shape> MeshTranslator::TranslateMesh(FireRenderContext& context, const MObject& originalObject)
 {
 	MAIN_THREAD_ONLY;
 
@@ -715,6 +715,8 @@ std::vector<frw::Shape> MeshTranslator::TranslateMesh(frw::Context context, cons
 		return elements;
 	}
 
+	context.m_polycountLastRender += fnMesh.numPolygons();
+
 	// get number of submeshes in mesh (number of materials used in this mesh)
 	MIntArray faceMaterialIndices;
 	int elementCount = GetFaceMaterials(fnMesh, faceMaterialIndices);
@@ -728,7 +730,7 @@ std::vector<frw::Shape> MeshTranslator::TranslateMesh(frw::Context context, cons
 	// use special case TranslateMesh that is optimized for 1 shader
 	if (elementCount == 1)
 	{
-		TranslateMeshSingleShader(context, fnMesh, elements, meshPolygonData);
+		TranslateMeshSingleShader(context.GetContext(), fnMesh, elements, meshPolygonData);
 #ifdef OPTIMIZATION_CLOCK
 		std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
 		std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
@@ -755,7 +757,8 @@ std::vector<frw::Shape> MeshTranslator::TranslateMesh(frw::Context context, cons
 		ChangeUVArrsSizes(shaderData.data(), elementCount, meshPolygonData.uvSetNames.length());
 
 		// export shader data to context
-		CreateRPRMeshes(elements, context, shaderData.data(), meshPolygonData.uvCoords, elementCount, meshPolygonData.uvSetNames.length());
+		frw::Context ctx = context.GetContext();
+		CreateRPRMeshes(elements, ctx, shaderData.data(), meshPolygonData.uvCoords, elementCount, meshPolygonData.uvSetNames.length());
 	}
 
 	// Export shape names

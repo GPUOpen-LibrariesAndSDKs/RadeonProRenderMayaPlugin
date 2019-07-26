@@ -81,6 +81,8 @@ FireRenderContext::FireRenderContext() :
 	m_cameraAttributeChanged(false),
 	m_startTime(0),
 	m_samplesPerUpdate(1),
+	m_secondsSpentOnLastRender(0.0),
+	m_polycountLastRender(0),
 	m_currentIteration(0),
 	m_progress(0),
 	m_lastIterationTime(0),
@@ -2117,6 +2119,11 @@ bool FireRenderContext::isFirstIterationAndShadersNOTCached()
 
 void FireRenderContext::updateProgress()
 {
+	long numberOfClocks = clock() - m_startTime;
+	double secondsSpentRendering = numberOfClocks / (double)CLOCKS_PER_SEC;
+
+	m_secondsSpentOnLastRender = secondsSpentRendering;
+
 	if (m_completionCriteriaParams.isUnlimited())
 	{
 		m_progress = 0;
@@ -2128,8 +2135,6 @@ void FireRenderContext::updateProgress()
 	}
 	else
 	{
-		long numberOfClocks = clock() - m_startTime;
-		double secondsSpentRendering = numberOfClocks / (double)CLOCKS_PER_SEC;
 		double timeState = secondsSpentRendering / m_completionCriteriaParams.getTotalSecondsCount();
 		m_progress = static_cast<int>(ceil(timeState * 100));
 	}

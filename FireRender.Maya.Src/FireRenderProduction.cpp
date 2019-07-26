@@ -13,6 +13,9 @@
 #include "FireRenderUtils.h"
 
 #include "TileRenderer.h"
+#ifdef WIN32
+	#include "Athena/athenaWrap.h"
+#endif
 
 #include "RenderStampUtils.h"
 #include "GlobalRenderUtilsDataHolder.h"
@@ -22,6 +25,8 @@
 #ifdef OPTIMIZATION_CLOCK
 	#include <chrono>
 #endif
+
+#include "common.h"
 
 using namespace std;
 using namespace std::chrono;
@@ -38,7 +43,8 @@ FireRenderProduction::FireRenderProduction() :
 	m_isRegion(false),
 	m_renderStarted(false),
 	m_needsContextRefresh(false),
-	m_progressBars()
+	m_progressBars(),
+	m_rendersCount(0)
 {
 	m_renderViewUpdateScheduled = false;
 }
@@ -350,6 +356,129 @@ bool FireRenderProduction::stop()
 
 // -----------------------------------------------------------------------------
 
+#ifdef WIN32
+void FireRenderProduction::UploadAthenaData()
+{
+	AthenaWrapper* pAthenaWrapper = AthenaWrapper::GetAthenaWrapper();
+
+	std::ostringstream data_field;
+	std::ostringstream header;
+
+	// plug-in version
+	data_field.str(std::string());
+	data_field.clear();
+	data_field << PLUGIN_VERSION;
+
+	header.str(std::string());
+	header.clear();
+	header << "RPR plug-in version";
+
+	pAthenaWrapper->WriteField(header.str(), data_field.str());
+
+	// core version
+#ifdef RPR_VERSION_MAJOR_MINOR_REVISION
+	std::ostringstream oss;
+	oss << RPR_VERSION_MAJOR << "." << RPR_VERSION_MINOR << RPR_VERSION_REVISION;
+#else
+	int mj = (RPR_API_VERSION & 0xFFFF00000) >> 28;
+	int mn = (RPR_API_VERSION & 0xFFFFF) >> 8;
+
+	std::ostringstream oss;
+	oss << std::hex << mj << "." << mn;
+#endif
+	header.str(std::string());
+	header.clear();
+	header << "RPR Core version";
+	pAthenaWrapper->WriteField(header.str(), oss.str());
+
+	// render time
+	header.str(std::string());
+	header.clear();
+	data_field.str(std::string());
+	data_field.clear();
+	data_field << m_context->m_secondsSpentOnLastRender;
+	header << "Seconds spent on render";
+	pAthenaWrapper->WriteField(header.str(), data_field.str());
+
+	// device used
+	header.str(std::string());
+	header.clear();
+	MIntArray devicesUsing;
+	MGlobal::executeCommand("optionVar -q RPR_DevicesSelected", devicesUsing);
+	auto allDevices = HardwareResources::GetAllDevices();
+	size_t numDevices = std::min<size_t>(devicesUsing.length(), allDevices.size());
+	int numGPUs = 0;
+	std::string gpuName;
+	int numIdenticalGpus = 1;
+	int numOtherGpus = 0;
+
+	for (int i = 0; i < numDevices; i++)
+	{
+		const HardwareResources::Device &gpuInfo = allDevices[i];
+		if (devicesUsing[i])
+		{
+			if (numGPUs == 0)
+			{
+				gpuName = gpuInfo.name; // remember 1st GPU name
+			}
+			else if (gpuInfo.name == gpuName)
+			{
+				numIdenticalGpus++; // more than 1 GPUs, but with identical name
+			}
+			else
+			{
+				numOtherGpus++; // different GPU used
+			}
+			numGPUs++;
+		}
+	}
+
+	// - compose string
+	std::string deviceName;
+	if (!numGPUs)
+	{
+		deviceName += "not used";
+	}
+	else
+	{
+		deviceName += gpuName;
+		if (numIdenticalGpus > 1)
+		{
+			char buffer[32];
+			sprintf(buffer, " x %d", numIdenticalGpus);
+			deviceName += buffer;
+		}
+		if (numOtherGpus)
+		{
+			char buffer[32];
+			sprintf(buffer, " + %d other", numOtherGpus);
+			deviceName += buffer;
+		}
+	}
+
+	header << "Devices used";
+	pAthenaWrapper->WriteField(header.str(), deviceName);
+
+	// polygon count
+	data_field.str(std::string());
+	data_field.clear();
+	header.str(std::string());
+	header.clear();
+	header << "Polygon count";
+	data_field << m_context->m_polycountLastRender;
+	pAthenaWrapper->WriteField(header.str(), data_field.str());
+
+	// render resolution
+	header.str(std::string());
+	header.clear();
+	header << "Image resolution";
+	data_field.str(std::string());
+	data_field.clear();
+	data_field << "Width: " << m_width << "; Height: " << m_height;
+	pAthenaWrapper->WriteField(header.str(), data_field.str());
+}
+#endif
+
 bool FireRenderProduction::RunOnViewportThread()
 {
 	RPR_THREAD_ONLY;
@@ -357,40 +486,51 @@ bool FireRenderProduction::RunOnViewportThread()
 	switch (m_context->state)
 	{
 		// The context is exiting.
-	case FireRenderContext::StateExiting:
-		return false;
-
-
-		// The context is rendering.
-	case FireRenderContext::StateRendering:
-	{
-		if (m_cancelled || m_context->keepRenderRunning() == false)
+		case FireRenderContext::StateExiting:
 		{
-			stop();
-
+			m_rendersCount++;
 			return false;
 		}
 
-		try
-		{	// Render.
-			AutoMutexLock contextLock(m_contextLock);
-			if (m_context->state != FireRenderContext::StateRendering) 
-				return false;
-
-			RenderFullFrame();
-		}
-		catch (...)
+		// The context is rendering.
+		case FireRenderContext::StateRendering:
 		{
-			throw;
+			if (m_cancelled || m_context->keepRenderRunning() == false)
+			{
+#ifdef WIN32
+				AthenaWrapper::GetAthenaWrapper()->StartNewFile();
+				UploadAthenaData();
+				AthenaWrapper::GetAthenaWrapper()->AthenaSendFile();
+#endif
+
+				m_context->m_polycountLastRender = 0;
+
+				stop();
+				m_rendersCount++;
+
+				return false;
+			}
+
+			try
+			{	// Render.
+				AutoMutexLock contextLock(m_contextLock);
+				if (m_context->state != FireRenderContext::StateRendering) 
+					return false;
+
+				RenderFullFrame();
+			}
+			catch (...)
+			{
+				throw;
+			}
+
+			return true;
 		}
 
-		return true;
-	}
-
-	case FireRenderContext::StatePaused:
-	case FireRenderContext::StateUpdating:
-	default:
-		return true;
+		case FireRenderContext::StatePaused:
+		case FireRenderContext::StateUpdating:
+		default:
+			return true;
 	}
 }
 
