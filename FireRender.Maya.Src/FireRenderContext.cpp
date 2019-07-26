@@ -397,14 +397,9 @@ bool FireRenderContext::CanCreateAiDenoiser() const
 		if (devicesUsing[i])
 		{
 			gpuName = gpuInfo.name;
-			break;
+			canCreateAiDenoiser = true;
 		}
 	}
-
-	std::transform(gpuName.begin(), gpuName.end(), gpuName.begin(), ::tolower);
-
-	if (gpuName.find("amd") != std::string::npos || gpuName.find("radeon") != std::string::npos)
-		canCreateAiDenoiser = true;
 
 	return canCreateAiDenoiser;
 }
@@ -417,8 +412,8 @@ void FireRenderContext::setupDenoiser()
 	const rpr_framebuffer fbDepth = m.framebufferAOV_resolved[RPR_AOV_DEPTH].Handle();
 	const rpr_framebuffer fbWorldCoord = m.framebufferAOV_resolved[RPR_AOV_WORLD_COORDINATE].Handle();
 	const rpr_framebuffer fbObjectId = m.framebufferAOV_resolved[RPR_AOV_OBJECT_ID].Handle();
-	const rpr_framebuffer fbTrans = fbObjectId;
 	const rpr_framebuffer fbDiffuseAlbedo = m.framebufferAOV_resolved[RPR_AOV_DIFFUSE_ALBEDO].Handle();
+	const rpr_framebuffer fbTrans = fbObjectId;
 
 	bool canCreateAiDenoiser = CanCreateAiDenoiser();
 	bool useOpenImageDenoise = !canCreateAiDenoiser;
@@ -476,8 +471,10 @@ void FireRenderContext::setupDenoiser()
 			break;
 
 		case FireRenderGlobals::kML:
-			m_denoiserFilter->CreateFilter(RifFilterType::MlDenoise, useOpenImageDenoise);
-
+			{
+				RifFilterType ft = m_globals.denoiserSettings.colorOnly ? RifFilterType::MlDenoiseColorOnly : RifFilterType::MlDenoise;
+				m_denoiserFilter->CreateFilter(ft, useOpenImageDenoise);
+			}
 			m_denoiserFilter->AddInput(RifColor, fbColor, 0.0f);
 
 			if (!m_globals.denoiserSettings.colorOnly)
