@@ -47,6 +47,10 @@
 #include "FireRenderExportCmd.h"
 #include "FireRenderImportCmd.h"
 #include "FireRenderConvertVRayCmd.h"
+#ifdef WIN32
+	#include "Athena/AthenaWrap.h"
+#endif
+#include "athenaCmd.h"
 
 #include "FireRenderChecker.h"
 #include "FireRenderArithmetic.h"
@@ -183,6 +187,10 @@ void mayaExiting(void* data)
 {
 	DebugPrint("mayaExiting");
 	gExitingMaya = true;
+
+#ifdef WIN32
+	AthenaWrapper::GetAthenaWrapper()->Finalize();
+#endif
 
     // Clear ViewportManager. It should be cleared before maya destroys OpenGL context
     // so we can't rely on ViewportManager destructor
@@ -562,6 +570,7 @@ MStatus initializePlugin(MObject obj)
 	CHECK_MSTATUS(plugin.registerCommand("fireRenderImport", FireRenderImportCmd::creator, FireRenderImportCmd::newSyntax));
 	CHECK_MSTATUS(plugin.registerCommand("fireRenderLocation", FireRenderLocationCmd::creator, FireRenderLocationCmd::newSyntax));
 	CHECK_MSTATUS(plugin.registerCommand("fireRenderConvertVRay", FireRenderConvertVRayCmd::creator, FireRenderConvertVRayCmd::newSyntax));
+	CHECK_MSTATUS(plugin.registerCommand("athenaEnable", AthenaEnableCmd::creator, AthenaEnableCmd::newSyntax));
 
 	CHECK_MSTATUS(plugin.registerCommand("enableSaveIntermediate", EnableSaveIntermediateCmd::creator, EnableSaveIntermediateCmd::newSyntax));
 

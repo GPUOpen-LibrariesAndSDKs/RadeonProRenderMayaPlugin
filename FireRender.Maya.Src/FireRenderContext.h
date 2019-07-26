@@ -716,6 +716,10 @@ public:
 	double		m_timeIntervalForOutputUpdate;//in sec, TODO: check for Linux/Mac
 	clock_t		m_lastIterationTime;
 
+	/* data for athena dumping */
+	double m_secondsSpentOnLastRender;
+	unsigned int m_polycountLastRender;
+
 	void setCompletionCriteria(const CompletionCriteriaParams& completionCriteriaParams);
 	bool isUnlimited();
 	void setStartedRendering();

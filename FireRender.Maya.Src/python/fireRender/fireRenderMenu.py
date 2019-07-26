@@ -54,6 +54,9 @@ def showRPRMaterialLibrary(value):
 def enableDebugTracing(value):
     maya.cmds.fireRender(d=value)
 
+def enableAthena(value):
+    maya.cmds.athenaEnable(ae=value)
+
 def openTraceFolder(data):
     maya.cmds.fireRender(of="RPR_MAYA_TRACE_PATH")
 
@@ -120,6 +123,9 @@ def createFireRenderMenu():
         frRPRSettings = maya.cmds.menuItem("frRPRSettings", label="Settings", p=showFireRenderMenuCtrl, c=showRPRSettings)
 
         maya.cmds.menuItem( divider=True, p=showFireRenderMenuCtrl )
+
+        frAthenaMenu = maya.cmds.menuItem("FrAthenaMenu", subMenu=True, label="Athena", p=showFireRenderMenuCtrl)
+        maya.cmds.menuItem("FrAthenaEnable", label="Enable Athena", p=frAthenaMenu, cb=(True), c=enableAthena)
 
         frDebugMenu = maya.cmds.menuItem("FrDebugMenu", subMenu=True, label="Debug", p=showFireRenderMenuCtrl)
         maya.cmds.menuItem("FrDebugTrace", label="Enable Tracing", p=frDebugMenu, cb=("RPR_MAYA_TRACE_PATH" in os.environ), c=enableDebugTracing)
