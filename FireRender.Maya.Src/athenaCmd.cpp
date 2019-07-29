@@ -1,5 +1,5 @@
 #include "athenaCmd.h"
-#ifdef WIN32
+#ifdef WIN321
 	#include "Athena/athenaWrap.h"
 #endif
 
@@ -36,7 +36,7 @@ MStatus AthenaEnableCmd::doIt(const MArgList & args)
 	bool enableAthena = false;
 	argData.getFlagArgument(kAthenaEnableFlag, 0, enableAthena);
 
-#ifdef WIN32
+#ifdef WIN321
 	AthenaWrapper::GetAthenaWrapper()->SetEnabled(enableAthena);
 #endif
 

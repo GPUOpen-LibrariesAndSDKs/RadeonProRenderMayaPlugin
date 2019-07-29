@@ -542,14 +542,8 @@
     <ClCompile Include="GlobalRenderUtilsDataHolder.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="..\FireRender.Components\cpp\Athena\RprAthena.cpp">
-      <Filter>FireRender.Components\Athena</Filter>
-    </ClCompile>
     <ClCompile Include="athenaCmd.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\FireRender.Components\cpp\Athena\athenaWrap.cpp">
-      <Filter>FireRender.Components\Athena</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -940,14 +934,8 @@
     <ClInclude Include="GlobalRenderUtilsDataHolder.h">
       <Filter>Utils</Filter>
     </ClInclude>
-    <ClInclude Include="..\FireRender.Components\cpp\Athena\RprAthena.h">
-      <Filter>FireRender.Components\Athena</Filter>
-    </ClInclude>
     <ClInclude Include="athenaCmd.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\FireRender.Components\cpp\Athena\athenaWrap.h">
-      <Filter>FireRender.Components\Athena</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

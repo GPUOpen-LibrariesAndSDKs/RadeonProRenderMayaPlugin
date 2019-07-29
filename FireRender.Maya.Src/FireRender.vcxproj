@@ -224,8 +224,6 @@
     <None Include="Shelfs\shelf_Radeon_ProRender.mel" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\FireRender.Components\cpp\Athena\athenaWrap.cpp" />
-    <ClCompile Include="..\FireRender.Components\cpp\Athena\RprAthena.cpp" />
     <ClCompile Include="..\FireRender.Components\cpp\SunPosition\SPA.cpp" />
     <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.cpp" />
     <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESprocessor.cpp" />
@@ -340,8 +338,6 @@
     <ClCompile Include="VRay.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\FireRender.Components\cpp\Athena\athenaWrap.h" />
-    <ClInclude Include="..\FireRender.Components\cpp\Athena\RprAthena.h" />
     <ClInclude Include="..\FireRender.Components\cpp\SunPosition\SPA.h" />
     <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.h" />
     <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESprocessor.h" />

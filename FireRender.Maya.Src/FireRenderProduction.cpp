@@ -13,7 +13,7 @@
 #include "FireRenderUtils.h"
 
 #include "TileRenderer.h"
-#ifdef WIN32
+#ifdef WIN321
 	#include "Athena/athenaWrap.h"
 #endif
 
@@ -356,7 +356,7 @@ bool FireRenderProduction::stop()
 
 // -----------------------------------------------------------------------------
 
-#ifdef WIN32
+#ifdef WIN321
 void FireRenderProduction::UploadAthenaData()
 {
 	AthenaWrapper* pAthenaWrapper = AthenaWrapper::GetAthenaWrapper();
@@ -497,7 +497,7 @@ bool FireRenderProduction::RunOnViewportThread()
 		{
 			if (m_cancelled || m_context->keepRenderRunning() == false)
 			{
-#ifdef WIN32
+#ifdef WIN321
 				AthenaWrapper::GetAthenaWrapper()->StartNewFile();
 				UploadAthenaData();
 				AthenaWrapper::GetAthenaWrapper()->AthenaSendFile();
