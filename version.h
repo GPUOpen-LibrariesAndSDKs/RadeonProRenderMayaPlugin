@@ -1,1 +1,1 @@
-#define PLUGIN_VERSION "2.7.340"
+#define PLUGIN_VERSION "2.7.341"
