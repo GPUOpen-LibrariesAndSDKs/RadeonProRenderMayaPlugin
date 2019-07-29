@@ -47,7 +47,7 @@
 #include "FireRenderExportCmd.h"
 #include "FireRenderImportCmd.h"
 #include "FireRenderConvertVRayCmd.h"
-#ifdef WIN32
+#ifdef WIN321
 	#include "Athena/AthenaWrap.h"
 #endif
 #include "athenaCmd.h"
@@ -188,7 +188,7 @@ void mayaExiting(void* data)
 	DebugPrint("mayaExiting");
 	gExitingMaya = true;
 
-#ifdef WIN32
+#ifdef WIN321
 	AthenaWrapper::GetAthenaWrapper()->Finalize();
 #endif
 
