@@ -323,6 +323,7 @@ MStatus FireRenderGlobals::initialize()
 	eAttr.addField("Autolinear", kAutolinear);
 	eAttr.addField("MaxWhite", kMaxWhite);
 	eAttr.addField("Reinhard02", kReinhard02);
+	eAttr.addField("Simple", kSimple);
 	MAKE_INPUT_CONST(eAttr);
 
 	Attribute::toneMappingWhiteBalanceEnabled = nAttr.create("toneMappingWhiteBalanceEnabled", "tmwbe", MFnNumericData::kBoolean, false, &status);
