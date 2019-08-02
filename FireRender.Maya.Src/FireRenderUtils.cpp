@@ -569,6 +569,14 @@ void FireRenderGlobalsData::updateTonemapping(FireRenderContext& inContext, bool
 		context.SetParameter("tonemapping.reinhard02.burn", toneMappingReinhard02Burn);
 		break;
 
+	case 6:
+		if (!inContext.simple_tonemap)
+		{
+			inContext.simple_tonemap = frw::PostEffect(context, frw::PostEffectTypeSimpleTonemap);
+			context.Attach(inContext.simple_tonemap);
+		}
+		break;
+
 	default:
 		break;
 	}

@@ -430,7 +430,7 @@ public:
 	bool needsRedraw(bool setNotUpdatedOnExit = true);
 
 	frw::PostEffect white_balance;
-	frw::PostEffect simple_tonemap;			// TODO: not used
+	frw::PostEffect simple_tonemap;			
 	frw::PostEffect tonemap;
 	frw::PostEffect normalization;
 	frw::PostEffect gamma_correction;

@@ -52,7 +52,8 @@ public:
 		kPhotolinear,
 		kAutolinear,
 		kMaxWhite,
-		kReinhard02
+		kReinhard02,
+		kSimple
 	};
 
 	enum ResourceType {
