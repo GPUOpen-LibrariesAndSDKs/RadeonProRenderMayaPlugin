@@ -325,6 +325,8 @@ bool FireRenderProduction::stop()
 			command.format("renderWindowEditor -e -pcaption \"^1s\" renderView", renderStampText.c_str());
 
 			MGlobal::executeCommandOnIdle(command);
+
+			RenderStampUtils::ClearCache();
 		});
 
 		if (m_context)
