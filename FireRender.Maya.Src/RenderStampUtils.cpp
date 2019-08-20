@@ -316,4 +316,13 @@ namespace RenderStampUtils
 
 		return str;
 	}
+
+	void ClearCache()
+	{
+		g_renderDevice = 0;
+
+		g_friendlyUsedGPUName.clear();
+		g_cpuName.clear();
+		g_computerName.clear();
+	}
 }
