@@ -2549,9 +2549,9 @@ namespace frw
 
 		FrameBuffer(const Context& context, rpr_GLuint* glTextureId);
 
-		void Resolve(FrameBuffer dest)
+		void Resolve(FrameBuffer dest, bool normalizeOnly)
 		{
-			auto status = rprContextResolveFrameBuffer(GetContext().Handle(), Handle(), dest.Handle(), FALSE);
+			auto status = rprContextResolveFrameBuffer(GetContext().Handle(), Handle(), dest.Handle(), normalizeOnly);
 			checkStatusThrow(status, "Unable to resolve frame buffer");
 		}
 
