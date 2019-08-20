@@ -1047,7 +1047,7 @@ rpr_framebuffer FireRenderContext::frameBufferAOV_Resolved(int aov) {
 	if (needResolve())
 	{
 		//resolve tone mapping
-		m.framebufferAOV[aov].Resolve(m.framebufferAOV_resolved[aov]);
+		m.framebufferAOV[aov].Resolve(m.framebufferAOV_resolved[aov], aov != RPR_AOV_COLOR);
 		fb = m.framebufferAOV_resolved[aov];
 	}
 	else
