@@ -280,6 +280,19 @@ namespace FireMaya
 		void GetArrayOfValues(const MFnDependencyNode &node, const char * plugName, ArrayOfValues &arr);
 		frw::Value calcElements(const ArrayOfValues &arr, bool substract = false);
 
+		frw::Image CreateImageInternal(MString colorSpace,
+			unsigned int width,
+			unsigned int height,
+			void* srcData,
+			unsigned int channels,
+			unsigned int componentSize,
+			unsigned int rowPitch,
+			bool flipX,
+			bool flipY = false);
+
+		frw::Image LoadImageUsingMImage(MString texturePath, MString colorSpace, bool flipX);
+		frw::Image LoadImageUsingMTexture(MString texturePath, MString colorSpace, const MString& ownerNodeName, bool flipX);
+
 	public:
 		Scope();
 		~Scope();
