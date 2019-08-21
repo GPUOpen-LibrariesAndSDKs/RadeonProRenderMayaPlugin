@@ -199,7 +199,7 @@ std::tuple<int, int, bool> getTexturePixelStride(MHWRender::MRasterFormat fForma
 {
 	int channels = 1;
 	int componentSize = 0;
-	bool success = false;
+	bool success = true;
 
 	switch (fFormat)
 	{
@@ -297,6 +297,8 @@ std::tuple<int, int, bool> getTexturePixelStride(MHWRender::MRasterFormat fForma
 		break;
 		//case MHWRender::kR32G32B32A32_UINT: break;
 		//case MHWRender::kR32G32B32A32_SINT: break;
+	default:
+		success = false;
 	}
 
 	return std::make_tuple(channels, componentSize, success);
@@ -881,231 +883,241 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 
 		frw::Image image;
 
-		if (!flipX)
-			image = frw::Image(m->context, texturePath.asUTF8());
+		// case for dds
+		std::string ddsExt = ".dds";
+		std::string strPath = texturePath.asChar();
+		bool isDDS = strPath.rfind(ddsExt) == strPath.length() - ddsExt.length();
 
-		// using texture system appears more reliable that using MImage functions (which don't support exr)
+		if (!flipX && !isDDS)
+		{
+			image = frw::Image(m->context, texturePath.asUTF8());
+		}
+
 		if (!image)
 		{
-			if (auto renderer = MHWRender::MRenderer::theRenderer())
+			// case for dds	
+			if (isDDS)
 			{
-				if (auto textureManager = renderer->getTextureManager())
-				{
-					try
-					{
-						if (auto texture = textureManager->acquireTexture(texturePath, ownerNodeName))
-						{
-							MHWRender::MTextureDescription desc = {};
-							texture->textureDescription(desc);
-#if MAYA_API_VERSION >= 20180000
-							size_t slicePitch = 0;
-#else
-							int slicePitch = 0;
-#endif
-							int rowPitch = 0;
-							if (void* rawData_to_free = texture->rawData(rowPitch, slicePitch))
-							{
-								auto srcData = rawData_to_free;
-								auto width = desc.fWidth;
-								auto height = desc.fHeight;
-
-								auto channels = 1;
-								auto componentSize = 1;
-
-								switch (desc.fFormat)
-								{
-									//case MHWRender::kD24S8: break;
-									//case MHWRender::kD24X8: break;
-									//case MHWRender::kD32_FLOAT: break;
-									//case MHWRender::kR24G8: break;
-									//case MHWRender::kR24X8: break;
-									//case MHWRender::kDXT1_UNORM: break;
-									//case MHWRender::kDXT1_UNORM_SRGB: break;
-									//case MHWRender::kDXT2_UNORM: break;
-									//case MHWRender::kDXT2_UNORM_SRGB: break;
-									//case MHWRender::kDXT2_UNORM_PREALPHA: break;
-									//case MHWRender::kDXT3_UNORM: break;
-									//case MHWRender::kDXT3_UNORM_SRGB: break;
-									//case MHWRender::kDXT3_UNORM_PREALPHA: break;
-									//case MHWRender::kDXT4_UNORM: break;
-									//case MHWRender::kDXT4_SNORM: break;
-									//case MHWRender::kDXT5_UNORM: break;
-									//case MHWRender::kDXT5_SNORM: break;
-									//case MHWRender::kR9G9B9E5_FLOAT: break;
-									//case MHWRender::kR1_UNORM: break;
-								case MHWRender::kA8:
-								case MHWRender::kR8_UNORM:
-									//case MHWRender::kR8_SNORM: break;
-								case MHWRender::kR8_UINT:
-									//case MHWRender::kR8_SINT: break;
-								case MHWRender::kL8:
-									channels = 1;
-									componentSize = 1;
-									break;
-
-								case MHWRender::kR16_FLOAT:
-									channels = 1;
-									componentSize = 2;
-									break;
-									//case MHWRender::kR16_UNORM: break;
-									//case MHWRender::kR16_SNORM: break;
-									//case MHWRender::kR16_UINT: break;
-									//case MHWRender::kR16_SINT: break;
-									//case MHWRender::kL16: break;
-									//case MHWRender::kR8G8_UNORM: break;
-									//case MHWRender::kR8G8_SNORM: break;
-									//case MHWRender::kR8G8_UINT: break;
-									//case MHWRender::kR8G8_SINT: break;
-									//case MHWRender::kB5G5R5A1: break;
-									//case MHWRender::kB5G6R5: break;
-								case MHWRender::kR32_FLOAT:
-									channels = 1;
-									componentSize = 4;
-									break;
-									//case MHWRender::kR32_UINT: break;
-									//case MHWRender::kR32_SINT: break;
-									//case MHWRender::kR16G16_FLOAT: break;
-									//case MHWRender::kR16G16_UNORM: break;
-									//case MHWRender::kR16G16_SNORM: break;
-									//case MHWRender::kR16G16_UINT: break;
-									//case MHWRender::kR16G16_SINT: break;
-								case MHWRender::kR8G8B8A8_UNORM:
-									//case MHWRender::kR8G8B8A8_SNORM: break;
-								case MHWRender::kR8G8B8A8_UINT:
-									channels = 4;
-									componentSize = 1;
-									break;
-									//case MHWRender::kR8G8B8A8_SINT: break;
-									//case MHWRender::kR10G10B10A2_UNORM: break;
-									//case MHWRender::kR10G10B10A2_UINT: break;
-									//case MHWRender::kB8G8R8A8: break;
-									//case MHWRender::kB8G8R8X8: break;
-								case MHWRender::kR8G8B8X8:
-									channels = 4;
-									componentSize = 1;
-									break;
-									//case MHWRender::kA8B8G8R8: break;
-									//case MHWRender::kR32G32_FLOAT: break;
-									//case MHWRender::kR32G32_UINT: break;
-									//case MHWRender::kR32G32_SINT: break;
-								case MHWRender::kR16G16B16A16_FLOAT:
-									channels = 4;
-									componentSize = 2;
-									break;
-									//case MHWRender::kR16G16B16A16_UNORM: break;
-									//case MHWRender::kR16G16B16A16_SNORM: break;
-									//case MHWRender::kR16G16B16A16_UINT: break;
-									//case MHWRender::kR16G16B16A16_SINT: break;
-								case MHWRender::kR32G32B32_FLOAT:
-									channels = 3;
-									componentSize = 4;
-									break;
-									//case MHWRender::kR32G32B32_UINT: break;
-									//case MHWRender::kR32G32B32_SINT: break;
-								case MHWRender::kR32G32B32A32_FLOAT:
-									channels = 4;
-									componentSize = 4;
-									break;
-									//case MHWRender::kR32G32B32A32_UINT: break;
-									//case MHWRender::kR32G32B32A32_SINT: break;
-								default:
-									std::ostringstream stringStream;
-									stringStream << "Error Loading Image : " << texturePath.asUTF8() << 
-													". Unsupported MRasterFormat format: " << desc.fFormat;
-									std::string errMsg = stringStream.str();
-
-									texture->freeRawData(rawData_to_free);
-									textureManager->releaseTexture(texture);
-
-									throw std::runtime_error(errMsg.c_str());
-								}
-
-								int srcRowPitch = desc.fBytesPerRow;
-
-								std::vector<float> tempBuffer;
-								if (componentSize == 2)	// we don't support half size floats at the moment!
-								{
-									tempBuffer.resize(width * height * channels);
-									for (auto y = 0u; y < height; y++)
-									{
-										auto src = static_cast<const half *>(srcData) + y * rowPitch / sizeof(half);
-										auto dst = tempBuffer.data() + y * (width * channels);
-										for (auto x = 0u; x < width * channels; x++)
-										{
-											dst[x] = src[x];
-										}
-									}
-
-									componentSize = 4;
-									srcData = tempBuffer.data();
-									srcRowPitch = width * channels * componentSize;
-								}
-
-								rpr_image_format format = {};
-								format.num_components = channels >= 3 ? 3 : 1;
-								format.type =
-									(componentSize == 4) ? RPR_COMPONENT_TYPE_FLOAT32 :
-									(componentSize == 2) ? RPR_COMPONENT_TYPE_FLOAT16 :
-									RPR_COMPONENT_TYPE_UINT8;
-
-								int srcPixSize = componentSize * channels;
-								int dstPixSize = componentSize * format.num_components;
-
-								rpr_image_desc img_desc = {};
-								img_desc.image_width = width;
-								img_desc.image_height = height;
-								img_desc.image_row_pitch = width * dstPixSize;
-
-								std::vector<unsigned char> buffer(height * img_desc.image_row_pitch);
-
-								for (unsigned int y = 0; y < height; y++)
-								{
-									auto src = static_cast<const char*>(srcData) + y * srcRowPitch;
-									auto dst = buffer.data() + y * img_desc.image_row_pitch;
-									for (unsigned int x = 0; x < width; x++)
-									{
-										if (flipX)
-										{
-											memcpy(dst + x * dstPixSize, src + (width - x - 1) * srcPixSize, dstPixSize);
-										}
-										else
-										{
-											memcpy(dst + x * dstPixSize, src + x * srcPixSize, dstPixSize);
-										}
-									}
-								}
-
-								convertColorSpace(colorSpace, format, img_desc, buffer);
-								image = frw::Image(m->context, format, img_desc, buffer.data());
-								image.SetName(texturePath.asChar());
-#ifndef MAYA2015
-								texture->freeRawData(rawData_to_free);
-#else
-								free(rawData_to_free);
-#endif
-							}
-							textureManager->releaseTexture(texture);
-						}
-					}
-					catch (std::exception& e)
-					{
-						ErrorPrint(e.what());
-					}
-					catch (...)
-					{
-						ErrorPrint("Error Loading Image: %s", texturePath.asUTF8());
-					}
-				}
+				image = LoadImageUsingMImage(texturePath, colorSpace, flipX);
+			}
+			else
+			{ 
+				image = LoadImageUsingMTexture(texturePath, colorSpace, ownerNodeName, flipX);
 			}
 		}
 
 		if (image)
+		{
 			m->imageCache[key] = image;
+			image.SetName(texturePath.asChar());
+		}
 
 		return image;
 	});
 
 	return retImage;
+}
+
+frw::Image FireMaya::Scope::LoadImageUsingMImage(MString texturePath, MString colorSpace, bool flipX)
+{
+	MImage img;
+	unsigned int width = 0;
+	unsigned int height = 0;
+
+	MStatus status = img.readFromFile(texturePath, MImage::MPixelType::kFloat);
+	if (status != MStatus::kSuccess)
+	{
+		return frw::Image();
+	}
+
+	// this method won't work for EXR files for unknown reasons
+	//img.verticalFlip();
+
+	void* src = nullptr;
+	unsigned int componentSize = 1;
+	unsigned int depth = img.depth();
+	bool hasDepthMap = img.haveDepth();
+	bool isRGBA = img.isRGBA();
+
+	//MImage::MImageFilterFormat filterFormat = img.filter()
+
+	img.getSize(width, height);
+
+	unsigned int channels = depth;
+
+	if (img.pixelType() == MImage::MPixelType::kByte)
+	{
+		src = img.pixels();
+		componentSize = 1;
+	}
+	else if (img.pixelType() == MImage::MPixelType::kFloat)
+	{
+		src = img.floatPixels();
+		componentSize = 4;
+
+		float* srcFloat = (float*)src;
+
+		channels = depth / componentSize;
+		for (int pixel = 0; pixel < width * height; ++pixel)
+		{
+			for (int i = 0; i < channels; i++)
+			{
+				// Looks like Core needs normalized float values in range 0 .. 1. Here we can get value in range [0.0 .. 255.0]
+				srcFloat[pixel * channels + i] /= 255.0f;
+			}
+		}
+	}
+
+	return CreateImageInternal(colorSpace, width, height, src, channels, componentSize, width * depth, flipX, true);
+}
+
+frw::Image FireMaya::Scope::LoadImageUsingMTexture(MString texturePath, MString colorSpace, const MString& ownerNodeName, bool flipX)
+{
+	frw::Image img;
+
+	if (auto renderer = MHWRender::MRenderer::theRenderer())
+	{
+		if (auto textureManager = renderer->getTextureManager())
+		{
+			try
+			{
+				if (auto texture = textureManager->acquireTexture(texturePath, ownerNodeName))
+				{
+					MHWRender::MTextureDescription desc = {};
+					texture->textureDescription(desc);
+
+					int rowPitch = 0;
+
+#if MAYA_API_VERSION >= 20180000
+					size_t slicePitch = 0;
+#else
+					int slicePitch = 0;
+#endif
+
+					if (const auto rawData_to_free = texture->rawData(rowPitch, slicePitch))
+					{
+						auto srcData = rawData_to_free;
+						auto width = desc.fWidth;
+						auto height = desc.fHeight;
+
+						auto channels = 1;
+						auto componentSize = 1;
+						bool isFormatSupported = false;
+
+						std::tie(channels, componentSize, isFormatSupported) = getTexturePixelStride(desc.fFormat);
+
+						if (!isFormatSupported)
+						{
+							std::ostringstream stringStream;
+							stringStream << "Error Loading Image : " << texturePath.asUTF8() <<
+								". Unsupported MRasterFormat format: " << desc.fFormat;
+							std::string errMsg = stringStream.str();
+
+							texture->freeRawData(rawData_to_free);
+							textureManager->releaseTexture(texture);
+
+							throw std::runtime_error(errMsg.c_str());
+						}
+
+						img = CreateImageInternal(colorSpace, desc.fWidth, desc.fHeight, 
+													srcData, channels, componentSize, rowPitch, flipX);
+
+						texture->freeRawData(rawData_to_free);
+					}
+					textureManager->releaseTexture(texture);
+				}
+			}
+			catch (std::exception& e)
+			{
+				ErrorPrint(e.what());
+			}
+			catch (...)
+			{
+				ErrorPrint("Error Loading Image: %s", texturePath.asUTF8());
+			}
+		}
+	}
+
+	return img;
+}
+
+frw::Image FireMaya::Scope::CreateImageInternal(MString colorSpace, 
+												unsigned int width, 
+												unsigned int height,
+												void* srcData,
+												unsigned int channels,
+												unsigned int componentSize,
+												unsigned int rowPitch,
+												bool flipX,
+												bool flipY)
+{
+	int srcRowPitch = rowPitch;// desc.fBytesPerRow;
+
+	std::vector<float> tempBuffer;
+	if (componentSize == 2)	// we don't support half size floats at the moment!
+	{
+		tempBuffer.resize(width * height * channels);
+		for (auto y = 0u; y < height; y++)
+		{
+			auto src = static_cast<const half *>(srcData) + y * rowPitch / sizeof(half);
+			auto dst = tempBuffer.data() + y * (width * channels);
+			for (auto x = 0u; x < width * channels; x++)
+			{
+				dst[x] = src[x];
+			}
+		}
+
+		componentSize = 4;
+		srcData = tempBuffer.data();
+		srcRowPitch = width * channels * componentSize;
+	}
+
+	rpr_image_format format = {};
+	format.num_components = channels >= 3 ? 3 : 1;
+	format.type =
+		(componentSize == 4) ? RPR_COMPONENT_TYPE_FLOAT32 :
+		(componentSize == 2) ? RPR_COMPONENT_TYPE_FLOAT16 :
+		RPR_COMPONENT_TYPE_UINT8;
+
+	int srcPixSize = componentSize * channels;
+	int dstPixSize = componentSize * format.num_components;
+
+	rpr_image_desc img_desc = {};
+	img_desc.image_width = width;
+	img_desc.image_height = height;
+	img_desc.image_row_pitch = width * dstPixSize;
+
+	std::vector<unsigned char> buffer(height * img_desc.image_row_pitch);
+
+	for (unsigned int y = 0; y < height; y++)
+	{
+		auto src = static_cast<const char*>(srcData) + y * srcRowPitch;
+		unsigned char* dst = nullptr;
+		
+		if (!flipY)
+		{
+			dst = buffer.data() + y * img_desc.image_row_pitch;
+		}
+		else
+		{
+			dst = buffer.data() + (height - y - 1) * img_desc.image_row_pitch;
+		}
+
+		for (unsigned int x = 0; x < width; x++)
+		{
+			if (flipX)
+			{
+				memcpy(dst + x * dstPixSize, src + (width - x - 1) * srcPixSize, dstPixSize);
+			}
+			else
+			{
+				memcpy(dst + x * dstPixSize, src + x * srcPixSize, dstPixSize);
+			}
+		}
+	}
+
+	convertColorSpace(colorSpace, format, img_desc, buffer);
+	return frw::Image(m->context, format, img_desc, buffer.data());
 }
 
 template <class T>
