@@ -4,6 +4,8 @@
 #include "FireRenderContext.h" // used for scene stats
 #include "FireRenderThread.h"
 
+#include <Maya/MAnimControl.h>
+
 
 namespace RenderStampUtils
 {
@@ -292,6 +294,12 @@ namespace RenderStampUtils
 			case 'b': // build number
 			{
 				str += PLUGIN_VERSION;
+			}
+			break;
+			case 'f':
+			{
+				int frame = (int) MAnimControl::currentTime().value();
+				str += std::to_string(frame);
 			}
 			break;
 			default:

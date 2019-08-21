@@ -197,6 +197,7 @@ global proc showRenderStampHelp()
 		("Special symbols:\n\n" +
 		"%pt \t total elapsed time\n" +
 		"%pp \t passes\n" +
+		"%f \t frame number\n" +
 		"%sl \t number of lights\n" +
 		"%so \t number of objects\n" +
 		"%i  \t computer name\n" +
