@@ -2585,10 +2585,6 @@ namespace frw
 			{
 				if (material)
 				{
-					for(auto kvp : inputs)
-						rprxMaterialDetachMaterial(context, kvp.second, kvp.first.c_str(), material);
-					inputs.clear();
-
 					FRW_PRINT_DEBUG("\tDeleting RPRX material 0x%016llX (from context 0x%016llX)", material, context);
 					auto res = rprxMaterialDelete(context, material);
 					checkStatus(res);
@@ -2601,6 +2597,23 @@ namespace frw
 				if (Handle() != nullptr) return true;
 				if (material != nullptr) return true;
 				return false;
+			}
+
+			void ClearDependencies(void)
+			{
+				if (!material)
+					return;
+
+				for (auto kvp : inputs)
+				{
+					// rprxMaterialDetachMaterial
+					rpr_material_node node = kvp.second;
+					rpr_char const * parameter = kvp.first.c_str();
+					rpr_int res = rprMaterialNodeSetInputN(node, parameter, (rpr_material_node)NULL);
+					checkStatus(res);
+				}
+
+				inputs.clear();
 			}
 
 			void SetCommittedState(bool flag)
@@ -2658,6 +2671,8 @@ namespace frw
 
 		void SetBackgroundIsEnvironment(bool bgIsEnv) { data().mShadowCatcherParams.mBgIsEnv = bgIsEnv; }
 		bool BgIsEnv() const { return data().mShadowCatcherParams.mBgIsEnv; }
+
+		void ClearDependencies(void) { data().ClearDependencies(); }
 
 		Shader(DataPtr p)
 		{
