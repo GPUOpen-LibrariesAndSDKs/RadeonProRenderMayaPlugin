@@ -56,7 +56,6 @@ public:
 	/** Update the Maya render view. */
 	void updateRenderView();
 
-
 private:
 
 	// Life Cycle
@@ -102,6 +101,9 @@ private:
 
 	/** Set up Out of Core textures parameters for context */
 	void SetupOOC(FireRenderGlobalsData& globals);
+
+	/** Updates Render information at the bottom of Maya's render view */
+	void updateMayaRenderInfo();
 
 private:
 
