@@ -2627,6 +2627,13 @@ FireMaya::Scope::Data::~Data()
 	materialSystem.Reset();
 	context.Reset();
 
+	// before deleting shader that have dependent shaders, we need to delete these dependencies first
+	for (auto it = shaderMap.begin(); it != shaderMap.end(); ++it)
+		it->second.ClearDependencies();
+
+	// delete shaders
+	shaderMap.clear();
+
 	// everything else destroyed automatically
 }
 
