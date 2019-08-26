@@ -319,7 +319,7 @@ bool FireRenderProduction::stop()
 			m_stopCallback(m_aovs, m_settings);
 			m_progressBars.reset();
 
-			std::string renderStampText = RenderStampUtils::FormatRenderStamp(*m_context, "\\nRender Time: %pt Passes: %pp");
+			std::string renderStampText = RenderStampUtils::FormatRenderStamp(*m_context, "\\nFrame: %f  Render Time: %pt  Passes: %pp");
 
 			MString command;
 			command.format("renderWindowEditor -e -pcaption \"^1s\" renderView", renderStampText.c_str());
