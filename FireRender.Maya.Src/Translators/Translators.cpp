@@ -607,6 +607,12 @@ namespace FireMaya
 		MMatrix scaleM;
 		scaleM.setToIdentity();
 		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+
+		if (!IsFlipIBL())
+		{
+			scaleM[0][0] = -scaleM[0][0];
+		}
+
 		m *= scaleM;
 		float mfloats[4][4];
 		m.get(mfloats);
