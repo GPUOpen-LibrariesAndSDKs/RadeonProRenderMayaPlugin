@@ -287,11 +287,10 @@ namespace FireMaya
 			unsigned int channels,
 			unsigned int componentSize,
 			unsigned int rowPitch,
-			bool flipX,
 			bool flipY = false);
 
-		frw::Image LoadImageUsingMImage(MString texturePath, MString colorSpace, bool flipX);
-		frw::Image LoadImageUsingMTexture(MString texturePath, MString colorSpace, const MString& ownerNodeName, bool flipX);
+		frw::Image LoadImageUsingMImage(MString texturePath, MString colorSpace);
+		frw::Image LoadImageUsingMTexture(MString texturePath, MString colorSpace, const MString& ownerNodeName);
 
 	public:
 		Scope();
@@ -305,7 +304,7 @@ namespace FireMaya
 		frw::Shader GetVolumeShader( MObject ob, bool forceUpdate = false );
 		frw::Shader GetVolumeShader( MPlug ob );
 
-		frw::Image GetImage(MString path, MString colorSpace, const MString& ownerNodeName, bool flipX = false);
+		frw::Image GetImage(MString path, MString colorSpace, const MString& ownerNodeName);
 
 		frw::Image GetTiledImage(MString texturePath, 
 			int viewWidth, int viewHeight,
