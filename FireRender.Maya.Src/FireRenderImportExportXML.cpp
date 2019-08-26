@@ -1099,6 +1099,7 @@ void FireRenderXmlImportCmd::connectPlace2dTextureNodeTo(MObject place2dTextureN
 
 MObject FireRenderXmlImportCmd::createShadingNode(MString materialName, std::map<const std::string, std::string> &attributeMapper, std::map<std::string, Param> &params, ShadingNodeType shadingNodeType, frw::ShaderType shaderType)
 {
+	// prepare command
 	MString as;
 	switch (shadingNodeType)
 	{
@@ -1122,6 +1123,8 @@ MObject FireRenderXmlImportCmd::createShadingNode(MString materialName, std::map
 		as = "asShader";
 		break;
 	}
+
+	// create node
 	MString executeCommand = "shadingNode -" + as + " " + materialName;
 
 	MString shaderName = MGlobal::executeCommandStringResult(executeCommand);
@@ -1135,6 +1138,16 @@ MObject FireRenderXmlImportCmd::createShadingNode(MString materialName, std::map
 		return shaderNode;
 	}
 
+	// create shading group if necessary and connect it with shader node
+	if (as == "asShader")
+	{
+		MString sgCommand = "sets -renderable true -noSurfaceShader true -empty -name " + shaderName + "SG";
+		MString sgName = MGlobal::executeCommandStringResult(sgCommand);
+		MString connectCommand = "connectAttr -f " + shaderName + ".outColor " + sgName + ".surfaceShader";
+		MGlobal::executeCommandStringResult(connectCommand);
+	}
+
+	// fill node with data
 	MFnDependencyNode nodeFn(shaderNode);
 	MPlugArray arr;
 	nodeFn.getConnections(arr);
