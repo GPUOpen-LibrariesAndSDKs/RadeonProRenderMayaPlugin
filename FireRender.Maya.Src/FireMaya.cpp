@@ -863,20 +863,20 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 	return retImage;
 }
 
-frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, const MString& ownerNodeName, bool flipX)
+frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, const MString& ownerNodeName)
 {
 	if (texturePath.length() == 0)
 	{
 		return NULL;
 	}
 
-	std::string key = (texturePath + (flipX ? "_flipped" : "_notflipped")).asUTF8();
+	std::string key = texturePath.asUTF8();
 
 	auto it = m->imageCache.find(key);
 	if (it != m->imageCache.end())
 		return it->second;
 
-	frw::Image retImage = FireRenderThread::RunOnMainThread<frw::Image>([this, flipX, texturePath, key, colorSpace, ownerNodeName]() -> frw::Image
+	frw::Image retImage = FireRenderThread::RunOnMainThread<frw::Image>([this, texturePath, key, colorSpace, ownerNodeName]() -> frw::Image
 	{
 		MAIN_THREAD_ONLY; // MTextureManager will not work in other threads
 		DebugPrint("Loading Image: %s in colorSpace: %s", texturePath.asUTF8(), colorSpace.asUTF8());
@@ -888,7 +888,7 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 		std::string strPath = texturePath.asChar();
 		bool isDDS = strPath.rfind(ddsExt) == strPath.length() - ddsExt.length();
 
-		if (!flipX && !isDDS)
+		if (!isDDS)
 		{
 			image = frw::Image(m->context, texturePath.asUTF8());
 		}
@@ -898,11 +898,11 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 			// case for dds	
 			if (isDDS)
 			{
-				image = LoadImageUsingMImage(texturePath, colorSpace, flipX);
+				image = LoadImageUsingMImage(texturePath, colorSpace);
 			}
 			else
 			{ 
-				image = LoadImageUsingMTexture(texturePath, colorSpace, ownerNodeName, flipX);
+				image = LoadImageUsingMTexture(texturePath, colorSpace, ownerNodeName);
 			}
 		}
 
@@ -918,7 +918,7 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 	return retImage;
 }
 
-frw::Image FireMaya::Scope::LoadImageUsingMImage(MString texturePath, MString colorSpace, bool flipX)
+frw::Image FireMaya::Scope::LoadImageUsingMImage(MString texturePath, MString colorSpace)
 {
 	MImage img;
 	unsigned int width = 0;
@@ -968,10 +968,10 @@ frw::Image FireMaya::Scope::LoadImageUsingMImage(MString texturePath, MString co
 		}
 	}
 
-	return CreateImageInternal(colorSpace, width, height, src, channels, componentSize, width * depth, flipX, true);
+	return CreateImageInternal(colorSpace, width, height, src, channels, componentSize, width * depth, true);
 }
 
-frw::Image FireMaya::Scope::LoadImageUsingMTexture(MString texturePath, MString colorSpace, const MString& ownerNodeName, bool flipX)
+frw::Image FireMaya::Scope::LoadImageUsingMTexture(MString texturePath, MString colorSpace, const MString& ownerNodeName)
 {
 	frw::Image img;
 
@@ -1020,7 +1020,7 @@ frw::Image FireMaya::Scope::LoadImageUsingMTexture(MString texturePath, MString 
 						}
 
 						img = CreateImageInternal(colorSpace, desc.fWidth, desc.fHeight, 
-													srcData, channels, componentSize, rowPitch, flipX);
+													srcData, channels, componentSize, rowPitch);
 
 						texture->freeRawData(rawData_to_free);
 					}
@@ -1048,7 +1048,6 @@ frw::Image FireMaya::Scope::CreateImageInternal(MString colorSpace,
 												unsigned int channels,
 												unsigned int componentSize,
 												unsigned int rowPitch,
-												bool flipX,
 												bool flipY)
 {
 	int srcRowPitch = rowPitch;// desc.fBytesPerRow;
@@ -1105,14 +1104,7 @@ frw::Image FireMaya::Scope::CreateImageInternal(MString colorSpace,
 
 		for (unsigned int x = 0; x < width; x++)
 		{
-			if (flipX)
-			{
-				memcpy(dst + x * dstPixSize, src + (width - x - 1) * srcPixSize, dstPixSize);
-			}
-			else
-			{
-				memcpy(dst + x * dstPixSize, src + x * srcPixSize, dstPixSize);
-			}
+			memcpy(dst + x * dstPixSize, src + x * srcPixSize, dstPixSize);
 		}
 	}
 
