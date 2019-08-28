@@ -237,6 +237,12 @@ public:
 	// Tone mapping Reinhard02 burn
 	float toneMappingReinhard02Burn;
 
+	// Tone mapping simple exposure
+	float toneMappingSimpleExposure;
+
+	// Tone mapping simple contrast
+	float toneMappingSimpleContrast;
+
 	// Motion blur
 	bool motionBlur;
 	float motionBlurCameraExposure;
