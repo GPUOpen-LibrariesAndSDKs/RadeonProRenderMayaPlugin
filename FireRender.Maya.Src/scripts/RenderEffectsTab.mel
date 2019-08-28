@@ -319,6 +319,12 @@ global proc createFireRenderToneMappingFrame(string $parent)
 			attrControlGrp -label "Burn" -attribute "RadeonProRenderGlobals.toneMappingReinhard02Burn" toneMapReinBurnGrp;
 		setParent ..;
 	setParent ..;
+	frameLayout -label "Simple" -cll false simpleFrameLayout;
+		columnLayout -adjustableColumn true;
+			attrControlGrp -label "Exposure" -attribute "RadeonProRenderGlobals.toneMappingSimpleExposure" toneMapSimpleExposureGrp;
+			attrControlGrp -label "Contrast" -attribute "RadeonProRenderGlobals.toneMappingSimpleContrast" toneMapSimpleContrastGrp;
+		setParent ..;
+	setParent ..;
 
 	frameLayout -label "White-Balance" -cll false;
 		columnLayout -adjustableColumn true toneMappingWhiteBalanceLayout;
@@ -356,6 +362,7 @@ global proc toneMappingTypeChangedUI()
 	int $linearVisibility = 0;
 	int $photolinearVisibility = 0;
 	int $reinhard2Visibility = 0;
+	int $simpleVisibility = 0;
 
 	if ($type == 0) 
 	{	// None
@@ -375,12 +382,13 @@ global proc toneMappingTypeChangedUI()
 	}
 	else if ($type == 6)
 	{	// simple
-		// don't need to enable any ui
+		$simpleVisibility = 1;
 	}
 
 	frameLayout -edit -visible $linearVisibility linearFrameLayout;
 	frameLayout -edit -visible $photolinearVisibility photolinearFrameLayout;
 	frameLayout -edit -visible $reinhard2Visibility reinhard02FrameLayout;
+	frameLayout -edit -visible $simpleVisibility simpleFrameLayout;
 }
 
 

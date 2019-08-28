@@ -67,6 +67,8 @@ namespace
 		MObject toneMappingReinhard02Prescale;
 		MObject toneMappingReinhard02Postscale;
 		MObject toneMappingReinhard02Burn;
+		MObject toneMappingSimpleExposure;
+		MObject toneMappingSimpleContrast;
 		MObject toneMappingWhiteBalanceEnabled;
 		MObject toneMappingWhiteBalanceValue;
 
@@ -334,6 +336,16 @@ MStatus FireRenderGlobals::initialize()
 	nAttr.setMin(800);
 	nAttr.setMax(12000);
 
+	Attribute::toneMappingSimpleExposure = nAttr.create("toneMappingSimpleExposure", "tnse", MFnNumericData::kFloat, 1.0, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setMax(10);
+
+	Attribute::toneMappingSimpleContrast = nAttr.create("toneMappingSimpleContrast", "tnsc", MFnNumericData::kFloat, 1.0, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setMax(10);
+
 	Attribute::toneMappingLinearscale = nAttr.create("toneMappingLinearScale", "tnls", MFnNumericData::kFloat, 1.0, &status);
 	MAKE_INPUT(nAttr);
 
@@ -409,6 +421,8 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::toneMappingType));
 	CHECK_MSTATUS(addAttribute(Attribute::toneMappingWhiteBalanceEnabled));
 	CHECK_MSTATUS(addAttribute(Attribute::toneMappingWhiteBalanceValue));
+	CHECK_MSTATUS(addAttribute(Attribute::toneMappingSimpleExposure));
+	CHECK_MSTATUS(addAttribute(Attribute::toneMappingSimpleContrast));
 	CHECK_MSTATUS(addAttribute(Attribute::toneMappingLinearscale));
 	CHECK_MSTATUS(addAttribute(Attribute::toneMappingPhotolinearSensitivity));
 	CHECK_MSTATUS(addAttribute(Attribute::toneMappingPhotolinearExposure));
