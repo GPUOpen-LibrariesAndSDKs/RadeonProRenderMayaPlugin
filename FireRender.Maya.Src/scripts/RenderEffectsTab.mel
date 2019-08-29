@@ -321,6 +321,7 @@ global proc createFireRenderToneMappingFrame(string $parent)
 	setParent ..;
 	frameLayout -label "Simple" -cll false simpleFrameLayout;
 		columnLayout -adjustableColumn true;
+			attrControlGrp -label "Tonemap" -attribute "RadeonProRenderGlobals.toneMappingSimpleTonemap" toneMapSimpleTonemapGrp;
 			attrControlGrp -label "Exposure" -attribute "RadeonProRenderGlobals.toneMappingSimpleExposure" toneMapSimpleExposureGrp;
 			attrControlGrp -label "Contrast" -attribute "RadeonProRenderGlobals.toneMappingSimpleContrast" toneMapSimpleContrastGrp;
 		setParent ..;
