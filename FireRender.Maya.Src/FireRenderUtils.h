@@ -243,6 +243,9 @@ public:
 	// Tone mapping simple contrast
 	float toneMappingSimpleContrast;
 
+	// Tone mapping simple tonemap
+	bool toneMappingSimpleTonemap;
+
 	// Motion blur
 	bool motionBlur;
 	float motionBlurCameraExposure;
