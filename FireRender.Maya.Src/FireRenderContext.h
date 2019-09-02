@@ -170,7 +170,7 @@ public:
 	// It resets frame buffer and reinitialize it if particular aov is enabled
 	void resetAOV(int index, rpr_GLuint* glTexture);
 
-	void enableAOVAndReset(int index, bool flag);
+	void enableAOVAndReset(int index, bool flag, rpr_GLuint* glTexture);
 
 	// Sets the resolution and perform an initial render and frame buffer resolve.
 	void resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
