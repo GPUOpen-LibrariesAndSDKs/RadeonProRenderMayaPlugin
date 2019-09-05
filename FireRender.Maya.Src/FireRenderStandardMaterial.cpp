@@ -51,6 +51,7 @@ namespace
 		MObject reflectNormal;
 #endif
 		MObject reflectionIOR;
+		MObject reflectionIsFrenselApproximationOn;
 		MObject reflectionRoughnessX;	// used for upgrade v1 -> v2
 #if !USE_RPRX
 		MObject reflectionRotation;		// warning: not used
@@ -430,6 +431,9 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 10.0);
 
+	Attribute::reflectionIsFrenselApproximationOn = nAttr.create("reflectIsFrenselApproximationOn", "rfao", MFnNumericData::kBoolean, 0);
+	MAKE_INPUT(nAttr);
+
 #if !USE_RPRX
 	Attribute::reflectionRoughnessY = nAttr.create("reflectRoughnessY", "grry", MFnNumericData::kFloat, 0.1);
 	MAKE_INPUT(nAttr);
@@ -709,6 +713,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	ADD_ATTRIBUTE(Attribute::reflectionMetalness);
 #endif
 	ADD_ATTRIBUTE(Attribute::reflectionIOR);
+	ADD_ATTRIBUTE(Attribute::reflectionIsFrenselApproximationOn);
 #if !USE_RPRX
 	ADD_ATTRIBUTE(Attribute::reflectionRoughnessX);
 	ADD_ATTRIBUTE(Attribute::reflectionRotation);
@@ -952,6 +957,9 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 			material.xSetParameterU(RPRX_UBER_MATERIAL_REFLECTION_MODE, RPRX_UBER_MATERIAL_REFLECTION_MODE_PBR);
 			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFLECTION_IOR, reflectionIOR);
 		}
+
+		// Is Frensel Approximation On
+		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_FRESNEL_SCHLICK_APPROXIMATION, reflectionIsFrenselApproximationOn);
 
 		NormalMapParams params(scope, material, shaderNode);
 		params.attrUseCommonNormalMap = Attribute::reflectUseShaderNormal;
