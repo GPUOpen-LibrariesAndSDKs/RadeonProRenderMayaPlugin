@@ -309,6 +309,7 @@ global proc AERPRUberMaterialTemplateNew(string $nodeName)
 		editorTemplate -beginLayout "Reflection Fresnel" -collapse 0;
 			editorTemplate -label "Metal Material" -addControl "reflectMetalMaterial" "AEUberCheckReflectMetalness";
 			editorTemplate -label "IOR" -addControl "reflectIOR" "AEUberCheckReflIOR";
+			editorTemplate -label "Frensel Approximation On" -addControl "reflectIsFrenselApproximationOn" "AEUberCheckReflIOR";
 			editorTemplate -label "Metalness" -addControl "reflectMetalness";
 		editorTemplate -endLayout;
 	editorTemplate -endLayout;
