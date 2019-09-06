@@ -85,6 +85,7 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	toneMappingReinhard02Burn(1.0f),
 	toneMappingSimpleExposure(1.0f),
 	toneMappingSimpleContrast(1.0f),
+	toneMappingSimpleTonemap(true),
 	motionBlur(false),
 	motionBlurCameraExposure(0.0f),
 	motionBlurScale(0.0f),
@@ -348,6 +349,10 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			toneMappingReinhard02Burn = plug.asFloat();
 
+		plug = frGlobalsNode.findPlug("toneMappingSimpleTonemap");
+		if (!plug.isNull())
+			toneMappingSimpleTonemap = plug.asBool();
+
 		plug = frGlobalsNode.findPlug("toneMappingSimpleExposure");
 		if (!plug.isNull())
 			toneMappingSimpleExposure = plug.asFloat();
@@ -583,6 +588,7 @@ void FireRenderGlobalsData::updateTonemapping(FireRenderContext& inContext, bool
 		if (!inContext.simple_tonemap)
 		{
 			inContext.simple_tonemap = frw::PostEffect(context, frw::PostEffectTypeSimpleTonemap);
+			inContext.simple_tonemap.SetParameter("tonemap", toneMappingSimpleTonemap);
 			inContext.simple_tonemap.SetParameter("exposure", toneMappingSimpleExposure);
 			inContext.simple_tonemap.SetParameter("contrast", toneMappingSimpleContrast);
 			context.Attach(inContext.simple_tonemap);
