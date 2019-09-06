@@ -168,10 +168,10 @@ void FireRenderContext::resetAOV(int index, rpr_GLuint* glTexture)
 	initBuffersForAOV(context, index, glTexture);
 }
 
-void FireRenderContext::enableAOVAndReset(int index, bool flag)
+void FireRenderContext::enableAOVAndReset(int index, bool flag, rpr_GLuint* glTexture)
 {
 	enableAOV(index, flag);
-	resetAOV(index, nullptr);
+	resetAOV(index, flag ? glTexture : nullptr);
 }
 
 #if (RPR_VERSION_MINOR < 34)
