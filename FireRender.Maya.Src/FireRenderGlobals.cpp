@@ -342,13 +342,13 @@ MStatus FireRenderGlobals::initialize()
 
 	Attribute::toneMappingSimpleExposure = nAttr.create("toneMappingSimpleExposure", "tnse", MFnNumericData::kFloat, 0.0, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(-5);
-	nAttr.setMax(5);
+	nAttr.setSoftMin(-5);
+	nAttr.setSoftMax(5);
 
 	Attribute::toneMappingSimpleContrast = nAttr.create("toneMappingSimpleContrast", "tnsc", MFnNumericData::kFloat, 1.0, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(0);
-	nAttr.setMax(2);
+	nAttr.setSoftMin(0);
+	nAttr.setSoftMax(2);
 
 	Attribute::toneMappingLinearscale = nAttr.create("toneMappingLinearScale", "tnls", MFnNumericData::kFloat, 1.0, &status);
 	MAKE_INPUT(nAttr);
