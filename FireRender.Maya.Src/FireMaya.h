@@ -231,7 +231,7 @@ namespace FireMaya
 		IFireRenderContextInfo* m_pContextInfo; // Scope can not exist without a context, thus using raw pointer here is safe
 
 		/** Temporary fix for default diffuse color calculation */
-		bool m_IsLastPassTextureMissing{ false }; 
+		bool m_IsLastPassTextureMissing = false; 
 
 		// callbacks
 	public:
