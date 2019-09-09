@@ -1744,7 +1744,7 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 			DebugPrint("Warning: Unhandled or Unknown Maya Node: %X", id);
 			// I don't think we need this: Dump(shaderNode);
 		}
-		return createImageFromShaderNode(node);
+		return createImageFromShaderNodeUsingFileNode(node, "outColor");
 
 	case MayaNodeRamp:
 		//falling back onto rasterization:
