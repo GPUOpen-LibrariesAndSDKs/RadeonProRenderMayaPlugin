@@ -2555,7 +2555,6 @@ frw::Value FireMaya::Scope::GetValueForDiffuseColor(const MPlug& plug)
 	if (value.GetNodeType() == -1)
 	{
 		MPlugArray shaderConnections;
-		MString name = plug.name();
 		plug.connectedTo(shaderConnections, true, false);
 		if (shaderConnections.length() != 0)
 		{
