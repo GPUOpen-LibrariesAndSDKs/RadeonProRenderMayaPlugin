@@ -299,6 +299,8 @@ namespace frw
 		NodeInputStandardTransparency = RPR_UBER_MATERIAL_INPUT_TRANSPARENCY,
 		//NodeInputStandardTransparencyColor = RPR_MATERIAL_STANDARD_INPUT_TRANSPARENCY_COLOR,
 		NodeInputStandardRefractionRoughness = RPR_UBER_MATERIAL_INPUT_REFRACTION_ROUGHNESS,
+
+		NodeInputFresnelSchlikApproximation = RPR_UBER_MATERIAL_INPUT_FRESNEL_SCHLICK_APPROXIMATION,
 #endif
 	};
 	enum NodeInputInfo
