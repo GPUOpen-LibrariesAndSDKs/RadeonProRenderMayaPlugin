@@ -2561,15 +2561,10 @@ frw::Value FireMaya::Scope::GetValueForDiffuseColor(const MPlug& plug)
 			frw::ImageNode imageNode(MaterialSystem());
 			if (m_IsLastPassTextureMissing) 
 			{
-				//Use default value
+				//Use default value for missing texture
 				imageNode.SetMap(frw::Image(Context(), .5f, .5f, 1.f));
+				value = imageNode;
 			}
-			else 
-			{
-				//Use data from value
-				imageNode.SetMap(frw::Image(Context(), value.GetX(), value.GetY(), value.GetZ()));
-			}
-			value = imageNode;
 		}
 	}
 
