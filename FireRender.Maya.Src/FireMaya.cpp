@@ -1700,7 +1700,11 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 			imageNode.SetValue("uv", GetConnectedValue(shaderNode.findPlug("uvCoord")));
 			return imageNode;
 		}
-	}break;
+		else 
+		{
+			m_IsLastPassTextureMissing = true;
+		}
+	} break;
 
 	case MayaNodeChecker:
 	{
@@ -2545,16 +2549,18 @@ frw::Value FireMaya::Scope::GetValueForDiffuseColor(const MPlug& plug)
 {
 	assert(!plug.isNull());
 
+	m_IsLastPassTextureMissing = false;
 	frw::Value value = GetValue(plug);
 
 	if (value.GetNodeType() == -1)
 	{
 		MPlugArray shaderConnections;
 		plug.connectedTo(shaderConnections, true, false);
-		if (shaderConnections.length() != 0)
+		if (shaderConnections.length() != 0 && m_IsLastPassTextureMissing)
 		{
+			//Use default value for missing texture
 			frw::ImageNode imageNode(MaterialSystem());
-			imageNode.SetMap(frw::Image(Context(), 0.5f, 0.5f, 1.0f));
+			imageNode.SetMap(frw::Image(Context(), .5f, .5f, 1.f));
 			value = imageNode;
 		}
 	}
