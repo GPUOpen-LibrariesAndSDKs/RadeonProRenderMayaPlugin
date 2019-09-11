@@ -1734,6 +1734,17 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 		}
 	}break;
 
+	case MayaNodeRamp:
+		//falling back onto rasterization:
+		return createImageFromShaderNode(node, MString("outColor"), 128, 128);
+
+	// Try to detect what is connected to this node to obtain a texture of proper size
+	case MayaNodeGammaCorrect:
+		return createImageFromShaderNodeUsingFileNode(node, MString("outValue"));
+
+	case MayaNodeRemapHSV:
+		return createImageFromShaderNodeUsingFileNode(node, MString("outColor"));
+
 	default:
 		if (FireMaya::TypeId::IsValidId(id))
 			DebugPrint("Error: Unhandled FireMaya NodeId: %X", id);
@@ -1745,17 +1756,6 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 			// I don't think we need this: Dump(shaderNode);
 		}
 		return createImageFromShaderNodeUsingFileNode(node, "outColor");
-
-	case MayaNodeRamp:
-		//falling back onto rasterization:
-		return createImageFromShaderNode(node, MString("outColor"), 128, 128);
-
-	// Try to detect what is connected to this node to obtain a texture of proper size
-	case MayaNodeGammaCorrect:
-		return createImageFromShaderNodeUsingFileNode(node, MString("outValue"));
-
-	case MayaNodeRemapHSV:
-		return createImageFromShaderNodeUsingFileNode(node, MString("outColor"));
 	}
 
 	return nullptr;
