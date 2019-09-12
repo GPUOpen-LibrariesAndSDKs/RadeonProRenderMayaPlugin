@@ -2176,7 +2176,7 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 
 	rpr_framebuffer frameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
 	rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
-	rpr_framebuffer shadowCatcherFrameBuffer = frameBufferAOV(RPR_AOV_SHADOW_CATCHER);
+	rpr_framebuffer shadowCatcherFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_SHADOW_CATCHER);
 	rpr_framebuffer backgroundFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_BACKGROUND);
 
 	// Get data from the RPR frame buffer.
@@ -2188,95 +2188,105 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	// in bytes matches the required dimensions.
 	assert(dataSize == (sizeof(RV_PIXEL) * pixelCount));
 
-	auto context = GetContext();
-	// Step 1.
-	// Combine normalized color, background and opacity AOVs using lerp
-	RprComposite compositeBg(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeBg.SetInputFb("framebuffer.input", backgroundFrameBuffer);
+	frw::Context context = GetContext();
 
-	RprComposite compositeColor(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeColor.SetInputFb("framebuffer.input", frameBuffer);
+	RprComposite noAlpha(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	noAlpha.SetInput4f("constant.input", 1.0f, 1.0f, 1.0f, 0.0f);
 
-	RprComposite compositeOpacity(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeOpacity.SetInputFb("framebuffer.input", opacityFrameBuffer);
+	/* background * (1-(alpha+sc)) + color*alpha */ 
+	/* should be background * (1-min(alpha+sc, 1)) + color*alpha */
+	// step 1 
+	// color*alpha
+	RprComposite compositeColor1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
+	compositeColor1.SetInputFb("framebuffer.input", frameBuffer);
 
-	RprComposite compositeLerp1(context.Handle(), RPR_COMPOSITE_LERP_VALUE);
-	compositeLerp1.SetInputC("lerp.color0", compositeBg);
-	compositeLerp1.SetInputC("lerp.color1", compositeColor);
-	compositeLerp1.SetInputC("lerp.weight", compositeOpacity);
+	RprComposite compositeOpacity1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
+	compositeOpacity1.SetInputFb("framebuffer.input", opacityFrameBuffer);
 
-	// Step 2.
-	// Combine result from step 1, black color and normalized shadow catcher AOV
-	RprComposite compositeShadowCatcher(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeShadowCatcher.SetInputFb("framebuffer.input", shadowCatcherFrameBuffer);
+	RprComposite compositeOpacityNoAlpha(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	compositeOpacityNoAlpha.SetInputC("arithmetic.color0", noAlpha);
+	compositeOpacityNoAlpha.SetInputC("arithmetic.color1", compositeOpacity1);
+	compositeOpacityNoAlpha.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
 
-	//Find first shadow catcher shader
-	frw::Shader shadowCatcherShader = scope.GetShadowCatcherShader();
-	assert(shadowCatcherShader);
-	float r = 0.0f;
-	float g = 0.0f;
-	float b = 0.0f;
-	float a = 0.0f;
-	shadowCatcherShader.GetShadowColor(&r, &g, &b, &a);
+	RprComposite step1(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	step1.SetInputC("arithmetic.color0", compositeColor1);
+	step1.SetInputC("arithmetic.color1", compositeOpacityNoAlpha);
+	step1.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
 
-	float weight = shadowCatcherShader.GetShadowWeight();
+	// step 2
+	// change to 1-min(alpha+sc, 1) 
+	RprComposite compositeShadowCatcher1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
+	compositeShadowCatcher1.SetInputFb("framebuffer.input", shadowCatcherFrameBuffer);
 
-	RprComposite compositeShadowColor(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	RprComposite compositeShadowCatcherNoAlpha(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	compositeShadowCatcherNoAlpha.SetInputC("arithmetic.color0", noAlpha);
+	compositeShadowCatcherNoAlpha.SetInputC("arithmetic.color1", compositeShadowCatcher1);
+	compositeShadowCatcherNoAlpha.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
 
-	// We have "Shadow Transparency" parameter in Shadow Catcher, but not "Shadow opacity"
-	// It means we should invert this parameter
-	compositeShadowColor.SetInput4f("constant.input", r, g, b, 1.0f - a);
+	RprComposite step21(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	step21.SetInputC("arithmetic.color0", compositeShadowCatcherNoAlpha);
+	step21.SetInputC("arithmetic.color1", compositeOpacityNoAlpha);
+	step21.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_ADD);
 
-	RprComposite compositeShadowWeight(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	compositeShadowWeight.SetInput4f("constant.input", weight, weight, weight, weight);
+	RprComposite constant_1(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	constant_1.SetInput4f("constant.input", 1.0f, 1.0f, 1.0f, 1.0f);
 
-	RprComposite compositeShadowCatcherNorm(context.Handle(), RPR_COMPOSITE_NORMALIZE);
-	compositeShadowCatcherNorm.SetInputC("normalize.color", compositeShadowCatcher);
-	compositeShadowCatcherNorm.SetInput1U("normalize.aovtype", RPR_AOV_SHADOW_CATCHER);
-	
-	RprComposite compositeSCWeight(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	compositeSCWeight.SetInputC("arithmetic.color0", compositeShadowCatcherNorm);
-	compositeSCWeight.SetInputC("arithmetic.color1", compositeShadowWeight);
-	compositeSCWeight.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+	RprComposite step22(context.Handle(), RPR_COMPOSITE_ARITHMETIC); //min(alpha+sc, 1)
+	step22.SetInputC("arithmetic.color0", constant_1);
+	step22.SetInputC("arithmetic.color1", step21);
+	step22.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MIN);
 
-	RprComposite compositeLerp2(context.Handle(), RPR_COMPOSITE_LERP_VALUE);
-	//Setting BgIsEnv to false means that we should use shadow catcher color instead of environment background
-	if (shadowCatcherShader.BgIsEnv())
-		compositeLerp2.SetInputC("lerp.color0", compositeLerp1);
-	else
-		compositeLerp2.SetInputC("lerp.color0", compositeColor);
-		
-	compositeLerp2.SetInputC("lerp.color1", compositeShadowColor);
-	compositeLerp2.SetInputC("lerp.weight", compositeSCWeight);
+	RprComposite step23(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	step23.SetInputC("arithmetic.color0", constant_1);
+	step23.SetInputC("arithmetic.color1", step22);
+	step23.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_SUB);
 
-	// Step 3.
-	// Compute results from step 2 into separate framebuffer
-	rpr_framebuffer frameBufferComposite = 0;
-	rpr_framebuffer_format fmt = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
-	rpr_framebuffer_desc desc;
-	desc.fb_width = width;
-	desc.fb_height = height;
+	// step 3
+	// background * step 2
+	RprComposite compositeBackground1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
+	compositeBackground1.SetInputFb("framebuffer.input", backgroundFrameBuffer);
 
-	frstatus = rprContextCreateFrameBuffer(context.Handle(), fmt, &desc, &frameBufferComposite);
+	RprComposite step3(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	step3.SetInputC("arithmetic.color0", compositeBackground1);
+	step3.SetInputC("arithmetic.color1", step23);
+	step3.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+
+	// step 4
+	// step 3 + step 1
+	RprComposite step4(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	step4.SetInputC("arithmetic.color0", step3);
+	step4.SetInputC("arithmetic.color1", step1);
+	step4.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_ADD);
+
+	rpr_framebuffer frameBufferOut = 0;
+	rpr_framebuffer_format fmtOut = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
+	rpr_framebuffer_desc descOut;
+	descOut.fb_width = width;
+	descOut.fb_height = height;
+
+	frstatus = rprContextCreateFrameBuffer(context.Handle(), fmtOut, &descOut, &frameBufferOut);
 	checkStatus(frstatus);
-	frstatus = rprCompositeCompute(compositeLerp2, frameBufferComposite);
+	frstatus = rprCompositeCompute(step4, frameBufferOut);
 	checkStatus(frstatus);
+
+#ifdef SHADOWCATCHERDEBUG
+	frstatus = rprFrameBufferSaveToFile(frameBufferOut, "C:/temp/step4.png");
+#endif
 
 	// Copy the frame buffer into temporary memory, if
 	// required, or directly into the supplied pixel buffer.
 	if (useTempData)
 		m_tempData.resize(pixelCount);
 	RV_PIXEL* data = useTempData ? m_tempData.get() : pixels;
-	frstatus = rprFrameBufferGetInfo(frameBufferComposite, RPR_FRAMEBUFFER_DATA, dataSize, &data[0], nullptr);
+	frstatus = rprFrameBufferGetInfo(frameBufferOut, RPR_FRAMEBUFFER_DATA, dataSize, &data[0], nullptr);
 	checkStatus(frstatus);
-	// Copy the region from the temporary
-	// buffer into supplied pixel memory.
+
 	if (useTempData)
 	{
 		copyPixels(pixels, data, width, height, region, flip, true);
 	}
 
-	rprObjectDelete(frameBufferComposite);
+	rprObjectDelete(frameBufferOut);
 }
 
 RenderType FireRenderContext::GetRenderType() const
