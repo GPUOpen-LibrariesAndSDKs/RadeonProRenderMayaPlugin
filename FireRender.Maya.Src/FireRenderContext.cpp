@@ -2269,7 +2269,9 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 	frstatus = rprCompositeCompute(step4, frameBufferOut);
 	checkStatus(frstatus);
 
+#ifdef SHADOWCATCHERDEBUG
 	frstatus = rprFrameBufferSaveToFile(frameBufferOut, "C:/temp/step4.png");
+#endif
 
 	// Copy the frame buffer into temporary memory, if
 	// required, or directly into the supplied pixel buffer.
