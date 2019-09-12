@@ -52,6 +52,7 @@ struct DenoiserSettings
 		depth = 0.0f;
 		normal = 0.0f;
 		trans = 0.0f;
+		colorOnly = false;
 	}
 
 	bool enabled;
@@ -64,6 +65,7 @@ struct DenoiserSettings
 	float depth;
 	float normal;
 	float trans;
+	bool colorOnly;
 };
 
 struct CompletionCriteriaParams
@@ -148,6 +150,8 @@ public:
 
 	static void getCPUThreadSetup(bool& overriden, int& cpuThreadCount, RenderType renderType);
 	static int getThumbnailIterCount();
+	static bool isExrMultichannelEnabled(void);
+
 public:
 
 	// Completion criteria.
@@ -232,6 +236,15 @@ public:
 
 	// Tone mapping Reinhard02 burn
 	float toneMappingReinhard02Burn;
+
+	// Tone mapping simple exposure
+	float toneMappingSimpleExposure;
+
+	// Tone mapping simple contrast
+	float toneMappingSimpleContrast;
+
+	// Tone mapping simple tonemap
+	bool toneMappingSimpleTonemap;
 
 	// Motion blur
 	bool motionBlur;
@@ -861,3 +874,7 @@ bool GetValues(MPlug& plug, std::vector<RampCtrlPoint<valType>>& out)
 void setAttribProps(MFnAttribute& attr, const MObject& attrObj);
 
 void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals, std::vector<int>& vertexIndices, std::vector<int>& normalIndices);
+
+
+
+void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source);

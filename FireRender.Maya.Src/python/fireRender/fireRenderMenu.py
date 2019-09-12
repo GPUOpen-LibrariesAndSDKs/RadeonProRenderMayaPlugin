@@ -54,6 +54,9 @@ def showRPRMaterialLibrary(value):
 def enableDebugTracing(value):
     maya.cmds.fireRender(d=value)
 
+def enableAthena(value):
+    maya.cmds.athenaEnable(ae=value)
+
 def openTraceFolder(data):
     maya.cmds.fireRender(of="RPR_MAYA_TRACE_PATH")
 
@@ -113,13 +116,16 @@ def createFireRenderMenu():
         #mel.eval('source shelfCommands.mel; createVolumesSubmenuItems("frRPRVolumes");')
 
         frRPRConvert = maya.cmds.menuItem("frRPRConvert", subMenu=True, label="Convert", p=showFireRenderMenuCtrl)
-        maya.cmds.menuItem("FrConvertVRay", label="Convert VRay Scene to RPR", p=frRPRConvert, c=convertVRayToRPR)
+        #maya.cmds.menuItem("FrConvertVRay", label="Convert VRay Scene to RPR", p=frRPRConvert, c=convertVRayToRPR)
         maya.cmds.menuItem("FrConvertArnold", label="Convert Arnold Scene to RPR", p=frRPRConvert, c=convertArnoldToRPR)
         maya.cmds.menuItem("FrConvertRedshift", label="Convert Redshift Scene to RPR", p=frRPRConvert, c=convertRedshiftToRPR)
 
         frRPRSettings = maya.cmds.menuItem("frRPRSettings", label="Settings", p=showFireRenderMenuCtrl, c=showRPRSettings)
 
         maya.cmds.menuItem( divider=True, p=showFireRenderMenuCtrl )
+
+        frAthenaMenu = maya.cmds.menuItem("FrAthenaMenu", subMenu=True, label="Athena", p=showFireRenderMenuCtrl)
+        maya.cmds.menuItem("FrAthenaEnable", label="Enable Athena", p=frAthenaMenu, cb=(True), c=enableAthena)
 
         frDebugMenu = maya.cmds.menuItem("FrDebugMenu", subMenu=True, label="Debug", p=showFireRenderMenuCtrl)
         maya.cmds.menuItem("FrDebugTrace", label="Enable Tracing", p=frDebugMenu, cb=("RPR_MAYA_TRACE_PATH" in os.environ), c=enableDebugTracing)

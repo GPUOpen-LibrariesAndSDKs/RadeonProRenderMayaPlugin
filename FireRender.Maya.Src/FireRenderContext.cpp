@@ -81,6 +81,8 @@ FireRenderContext::FireRenderContext() :
 	m_cameraAttributeChanged(false),
 	m_startTime(0),
 	m_samplesPerUpdate(1),
+	m_secondsSpentOnLastRender(0.0),
+	m_polycountLastRender(0),
 	m_currentIteration(0),
 	m_progress(0),
 	m_lastIterationTime(0),
@@ -166,11 +168,17 @@ void FireRenderContext::resetAOV(int index, rpr_GLuint* glTexture)
 	initBuffersForAOV(context, index, glTexture);
 }
 
-void FireRenderContext::enableAOVAndReset(int index, bool flag)
+void FireRenderContext::enableAOVAndReset(int index, bool flag, rpr_GLuint* glTexture)
 {
 	enableAOV(index, flag);
-	resetAOV(index, nullptr);
+	resetAOV(index, flag ? glTexture : nullptr);
 }
+
+#if (RPR_VERSION_MINOR < 34)
+std::set<int> aovsExcluded;
+#else
+std::set<int> aovsExcluded{ RPR_AOV_VIEW_SHADING_NORMAL };
+#endif
 
 void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture)
 {
@@ -178,6 +186,10 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 
 	m.framebufferAOV[index].Reset();
 	m.framebufferAOV_resolved[index].Reset();
+
+	auto it = aovsExcluded.find(index); // not all AOVs listed in RadeonProRender.h are supported by Tahoe
+	if (it != aovsExcluded.end())
+		return;
 
 	if (aovEnabled[index]) 
     {
@@ -387,14 +399,9 @@ bool FireRenderContext::CanCreateAiDenoiser() const
 		if (devicesUsing[i])
 		{
 			gpuName = gpuInfo.name;
-			break;
+			canCreateAiDenoiser = true;
 		}
 	}
-
-	std::transform(gpuName.begin(), gpuName.end(), gpuName.begin(), ::tolower);
-
-	if (gpuName.find("amd") != std::string::npos || gpuName.find("radeon") != std::string::npos)
-		canCreateAiDenoiser = true;
 
 	return canCreateAiDenoiser;
 }
@@ -403,12 +410,12 @@ bool FireRenderContext::CanCreateAiDenoiser() const
 void FireRenderContext::setupDenoiser()
 {
 	const rpr_framebuffer fbColor = m.framebufferAOV_resolved[RPR_AOV_COLOR].Handle();
-	const rpr_framebuffer fbShadingNormal = m.framebufferAOV[RPR_AOV_SHADING_NORMAL].Handle();
-	const rpr_framebuffer fbDepth = m.framebufferAOV[RPR_AOV_DEPTH].Handle();
-	const rpr_framebuffer fbWorldCoord = m.framebufferAOV[RPR_AOV_WORLD_COORDINATE].Handle();
-	const rpr_framebuffer fbObjectId = m.framebufferAOV[RPR_AOV_OBJECT_ID].Handle();
-	const rpr_framebuffer fbTrans = fbObjectId;
+	const rpr_framebuffer fbShadingNormal = m.framebufferAOV_resolved[RPR_AOV_SHADING_NORMAL].Handle();
+	const rpr_framebuffer fbDepth = m.framebufferAOV_resolved[RPR_AOV_DEPTH].Handle();
+	const rpr_framebuffer fbWorldCoord = m.framebufferAOV_resolved[RPR_AOV_WORLD_COORDINATE].Handle();
+	const rpr_framebuffer fbObjectId = m.framebufferAOV_resolved[RPR_AOV_OBJECT_ID].Handle();
 	const rpr_framebuffer fbDiffuseAlbedo = m.framebufferAOV_resolved[RPR_AOV_DIFFUSE_ALBEDO].Handle();
+	const rpr_framebuffer fbTrans = fbObjectId;
 
 	bool canCreateAiDenoiser = CanCreateAiDenoiser();
 	bool useOpenImageDenoise = !canCreateAiDenoiser;
@@ -466,11 +473,19 @@ void FireRenderContext::setupDenoiser()
 			break;
 
 		case FireRenderGlobals::kML:
-			m_denoiserFilter->CreateFilter(RifFilterType::MlDenoise, useOpenImageDenoise);
+			{
+				RifFilterType ft = m_globals.denoiserSettings.colorOnly ? RifFilterType::MlDenoiseColorOnly : RifFilterType::MlDenoise;
+				m_denoiserFilter->CreateFilter(ft, useOpenImageDenoise);
+			}
 			m_denoiserFilter->AddInput(RifColor, fbColor, 0.0f);
-			m_denoiserFilter->AddInput(RifNormal, fbShadingNormal, 0.0f);
-			m_denoiserFilter->AddInput(RifDepth, fbDepth, 0.0f);
-			m_denoiserFilter->AddInput(RifAlbedo, fbDiffuseAlbedo, 0.0f);
+
+			if (!m_globals.denoiserSettings.colorOnly)
+			{
+				m_denoiserFilter->AddInput(RifNormal, fbShadingNormal, 0.0f);
+				m_denoiserFilter->AddInput(RifDepth, fbDepth, 0.0f);
+				m_denoiserFilter->AddInput(RifAlbedo, fbDiffuseAlbedo, 0.0f);
+			}
+
 			break;
 
 		default:
@@ -886,14 +901,21 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 
 	// setup CPU thread count
 	std::vector<rpr_context_properties> ctxProperties;
-
+#if (RPR_VERSION_MINOR < 34)
 	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_SAMPLER_TYPE);
+#else
+	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_SAMPLER_TYPE);
+#endif
 	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_SAMPLER_TYPE_CMJ);
 
 	int threadCountToOverride = getThreadCountToOverride();
 	if ((createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) && threadCountToOverride > 0)
 	{
+#if (RPR_VERSION_MINOR < 34)
 		ctxProperties.push_back ((rpr_context_properties) RPR_CONTEXT_CREATEPROP_CPU_THREAD_LIMIT);
+#else
+		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CPU_THREAD_LIMIT);
+#endif
 		ctxProperties.push_back ((rpr_context_properties) threadCountToOverride);
 	}
 
@@ -1025,7 +1047,7 @@ rpr_framebuffer FireRenderContext::frameBufferAOV_Resolved(int aov) {
 	if (needResolve())
 	{
 		//resolve tone mapping
-		m.framebufferAOV[aov].Resolve(m.framebufferAOV_resolved[aov]);
+		m.framebufferAOV[aov].Resolve(m.framebufferAOV_resolved[aov], aov != RPR_AOV_COLOR);
 		fb = m.framebufferAOV_resolved[aov];
 	}
 	else
@@ -1067,6 +1089,54 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 
 	rpr_framebuffer frameBuffer = frameBufferAOV_Resolved(aov);
 
+#ifdef _DEBUG
+#ifdef DUMP_AOV_SOURCE
+	std::map<unsigned int, std::string> aovNames =
+	{
+		 {RPR_AOV_COLOR, "RPR_AOV_COLOR"}
+		,{RPR_AOV_OPACITY, "RPR_AOV_OPACITY" }
+		,{RPR_AOV_WORLD_COORDINATE, "RPR_AOV_WORLD_COORDINATE" }
+		,{RPR_AOV_UV, "RPR_AOV_UV" }
+		,{RPR_AOV_MATERIAL_IDX, "RPR_AOV_MATERIAL_IDX" }
+		,{RPR_AOV_GEOMETRIC_NORMAL, "RPR_AOV_GEOMETRIC_NORMAL" }
+		,{RPR_AOV_SHADING_NORMAL, "RPR_AOV_SHADING_NORMAL" }
+		,{RPR_AOV_DEPTH, "RPR_AOV_DEPTH" }
+		,{RPR_AOV_OBJECT_ID, "RPR_AOV_OBJECT_ID" }
+		,{RPR_AOV_OBJECT_GROUP_ID, "RPR_AOV_OBJECT_GROUP_ID" }
+		,{RPR_AOV_SHADOW_CATCHER, "RPR_AOV_SHADOW_CATCHER" }
+		,{RPR_AOV_BACKGROUND, "RPR_AOV_BACKGROUND" }
+		,{RPR_AOV_EMISSION, "RPR_AOV_EMISSION" }
+		,{RPR_AOV_VELOCITY, "RPR_AOV_VELOCITY" }
+		,{RPR_AOV_DIRECT_ILLUMINATION, "RPR_AOV_DIRECT_ILLUMINATION" }
+		,{RPR_AOV_INDIRECT_ILLUMINATION, "RPR_AOV_INDIRECT_ILLUMINATION"}
+		,{RPR_AOV_AO, "RPR_AOV_AO" }
+		,{RPR_AOV_DIRECT_DIFFUSE, "RPR_AOV_DIRECT_DIFFUSE" }
+		,{RPR_AOV_DIRECT_REFLECT, "RPR_AOV_DIRECT_REFLECT" }
+		,{RPR_AOV_INDIRECT_DIFFUSE, "RPR_AOV_INDIRECT_DIFFUSE" }
+		,{RPR_AOV_INDIRECT_REFLECT, "RPR_AOV_INDIRECT_REFLECT" }
+		,{RPR_AOV_REFRACT, "RPR_AOV_REFRACT" }
+		,{RPR_AOV_VOLUME, "RPR_AOV_VOLUME" }
+		,{RPR_AOV_LIGHT_GROUP0, "RPR_AOV_LIGHT_GROUP0" }
+		,{RPR_AOV_LIGHT_GROUP1, "RPR_AOV_LIGHT_GROUP1" }
+		,{RPR_AOV_LIGHT_GROUP2, "RPR_AOV_LIGHT_GROUP2" }
+		,{RPR_AOV_LIGHT_GROUP3, "RPR_AOV_LIGHT_GROUP3" }
+		,{RPR_AOV_DIFFUSE_ALBEDO, "RPR_AOV_DIFFUSE_ALBEDO" }
+		,{RPR_AOV_VARIANCE, "RPR_AOV_VARIANCE" }
+		,{RPR_AOV_VIEW_SHADING_NORMAL, "RPR_AOV_VIEW_SHADING_NORMAL" }
+		,{RPR_AOV_REFLECTION_CATCHER, "RPR_AOV_REFLECTION_CATCHER" }
+		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
+	};
+
+	std::stringstream ssFileNameResolved;
+	ssFileNameResolved << aovNames[aov] << "_resolved.png";
+	rprFrameBufferSaveToFile(m.framebufferAOV_resolved[aov].Handle(), ssFileNameResolved.str().c_str());
+
+	std::stringstream ssFileNameNOTResolved;
+	ssFileNameNOTResolved << aovNames[aov] << "_NOTresolved.png";
+	rprFrameBufferSaveToFile(m.framebufferAOV[aov].Handle(), ssFileNameNOTResolved.str().c_str());
+#endif
+#endif
+
 	RV_PIXEL* data = nullptr;
 	rpr_int frstatus = RPR_SUCCESS;
 	size_t dataSize;
@@ -1100,6 +1170,12 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 		// Get data from the RPR frame buffer.
 		frstatus = rprFrameBufferGetInfo(frameBuffer, RPR_FRAMEBUFFER_DATA, 0, nullptr, &dataSize);
 		checkStatus(frstatus);
+
+#ifdef _DEBUG
+#ifdef DUMP_PIXELS_SOURCE
+		rprFrameBufferSaveToFile(frameBuffer, "C:\\temp\\dbg\\3.png");
+#endif
+#endif
 
 		// Check that the reported frame buffer size
 		// in bytes matches the required dimensions.
@@ -1155,6 +1231,10 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 	}
 }
 
+#ifdef _DEBUG
+void generateBitmapImage(unsigned char *image, int height, int width, int pitch, const char* imageFileName);
+#endif
+
 // -----------------------------------------------------------------------------
 void FireRenderContext::copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 	unsigned int sourceWidth, unsigned int sourceHeight,
@@ -1172,12 +1252,46 @@ void FireRenderContext::copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 		for (unsigned int y = 0; y < regionHeight; y++)
 		{
 			unsigned int destIndex = y * regionWidth;
+				
 			unsigned int sourceIndex = flip ?
 				(sourceHeight - (region.bottom + y) - 1) * sourceWidth + region.left :
 				(sourceHeight - (region.top - y) - 1) * sourceWidth + region.left;
 
 			memcpy(&dest[destIndex], &source[sourceIndex], sizeof(RV_PIXEL) * regionWidth);
 		}
+
+#ifdef _DEBUG
+#ifdef DUMP_PIXELS_SOURCE
+		std::vector<RV_PIXEL> sourcePixels;
+		for (unsigned int y = 0; y < regionHeight; y++)
+		{
+			for (unsigned int x = 0; x < regionWidth; x++)
+			{
+				RV_PIXEL pixel = source[x + y * regionWidth];
+				sourcePixels.push_back(pixel);
+			}
+		}
+
+		std::vector<unsigned char> buffer2;
+		for (unsigned int y = 0; y < regionHeight; y++)
+		{
+			for (unsigned int x = 0; x < regionWidth; x++)
+			{
+				RV_PIXEL& pixel = sourcePixels[x + y * regionWidth];
+				char r = 255 * pixel.r;
+				char g = 255 * pixel.g;
+				char b = 255 * pixel.b;
+
+				buffer2.push_back(r);
+				buffer2.push_back(g);
+				buffer2.push_back(b);
+				buffer2.push_back(255);
+			}
+		}
+		unsigned char* dst2 = buffer2.data();
+		generateBitmapImage(dst2, sourceHeight, sourceWidth, sourceWidth * 4, "C:\\temp\\dbg\\2.bmp");
+#endif
+#endif
 	}
 
 	// A non color AOV buffer is the same size as the full frame
@@ -2005,6 +2119,11 @@ bool FireRenderContext::isFirstIterationAndShadersNOTCached()
 
 void FireRenderContext::updateProgress()
 {
+	long numberOfClocks = clock() - m_startTime;
+	double secondsSpentRendering = numberOfClocks / (double)CLOCKS_PER_SEC;
+
+	m_secondsSpentOnLastRender = secondsSpentRendering;
+
 	if (m_completionCriteriaParams.isUnlimited())
 	{
 		m_progress = 0;
@@ -2016,8 +2135,6 @@ void FireRenderContext::updateProgress()
 	}
 	else
 	{
-		long numberOfClocks = clock() - m_startTime;
-		double secondsSpentRendering = numberOfClocks / (double)CLOCKS_PER_SEC;
 		double timeState = secondsSpentRendering / m_completionCriteriaParams.getTotalSecondsCount();
 		m_progress = static_cast<int>(ceil(timeState * 100));
 	}
@@ -2285,13 +2402,13 @@ bool FireRenderContext::ShouldResizeTexture(unsigned int& max_width, unsigned in
 	return false;
 }
 
-frw::Shader FireRenderContext::GetShader(MObject ob, bool forceUpdate)
+frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMesh* pMesh, bool forceUpdate)
 { 
 	scope.SetContextInfo(this);
 
 	MFnDependencyNode node(ob);
 
-	frw::Shader shader = scope.GetShader(ob, forceUpdate); 
+	frw::Shader shader = scope.GetShader(ob, pMesh, forceUpdate);
 
 	shader.SetMaterialName(node.name().asChar());
 

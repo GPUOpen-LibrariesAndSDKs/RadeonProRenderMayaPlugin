@@ -105,17 +105,6 @@ MStatus FireRenderViewport::setup()
 {
 	MAIN_THREAD_ONLY;
 
-	// Check if updating viewport's texture is required.
-	// No action is required if GL interop is active: the shared OpenGL frame buffer is rendered directly.
-	if (!m_context.isGLInteropActive() && m_pixelsUpdated || (m_currentAOV != RPR_AOV_COLOR))
-	{
-		// Acquire the pixels lock.
-		AutoMutexLock pixelsLock(m_pixelsLock);
-
-		// Update the Maya texture from the pixel data.
-		updateTexture(m_pixels.data(), m_context.width(), m_context.height());
-	}
-
 	return doSetup();
 }
 
@@ -613,12 +602,14 @@ void FireRenderViewport::resizeFrameBufferGLInterop(unsigned int width, unsigned
 	// Get the GL texture.
 	if (m_texture.texture != nullptr)
 	{
-		MTexture* texture = m_texture.texture;
-		rpr_GLuint* glTexture = static_cast<rpr_GLuint*>(texture->resourceHandle());
-
 		// Update the RPR context.
-		m_context.resize(width, height, false, glTexture);
+		m_context.resize(width, height, false, GetGlTexture());
 	}
+}
+
+rpr_GLuint* FireRenderViewport::GetGlTexture() const
+{
+	return static_cast<rpr_GLuint*>(m_texture.texture->resourceHandle());
 }
 
 // -----------------------------------------------------------------------------
@@ -698,9 +689,9 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 {
 	// The resolved frame buffer is shared with the Maya viewport
 	// when GL interop is active, so only the resolve step is required.
-	if (m_currentAOV == RPR_AOV_COLOR && m_context.isGLInteropActive())
+	if (m_context.isGLInteropActive())
 	{
-		m_context.frameBufferAOV_Resolved(RPR_AOV_COLOR);
+		m_context.frameBufferAOV_Resolved(m_currentAOV);
 		return;
 	}
 
@@ -795,17 +786,17 @@ bool FireRenderViewport::hasTextureChanged()
 	return changed;
 }
 
-void FireRenderViewport::enableNecessaryAOVs(int index, bool flag)
+void FireRenderViewport::enableNecessaryAOVs(int index, bool flag, rpr_GLuint* glTexture)
 {
 	static const std::vector<int> scaov = { RPR_AOV_BACKGROUND, RPR_AOV_OPACITY };
 
-	m_context.enableAOVAndReset(index, flag);
+	m_context.enableAOVAndReset(index, flag, glTexture);
 
 	if (index == RPR_AOV_SHADOW_CATCHER)
 	{
 		for (int index : scaov)
 		{
-			m_context.enableAOVAndReset(index, flag);
+			m_context.enableAOVAndReset(index, flag, nullptr);
 		}
 	}
 }
@@ -835,13 +826,13 @@ void FireRenderViewport::setCurrentAOV(int aov)
 	// turning off previous selected aov if it is not color        
 	if (!isAOVShouldBeAlwaysEnabled(m_currentAOV))
 	{
-		enableNecessaryAOVs(m_currentAOV, false);
+		enableNecessaryAOVs(m_currentAOV, false, nullptr);
 	}
 
 	// turning on newly selected aov(s)
 	if (!isAOVShouldBeAlwaysEnabled(aov))
 	{
-		enableNecessaryAOVs(aov, true);
+		enableNecessaryAOVs(aov, true, GetGlTexture());
 	}
 
 	m_context.setDirty();
@@ -895,7 +886,7 @@ def createAOVsMenu(frMenu):
 
 	aovs = ["Color", "Opacity", "World Corrdinate", "UV", "Material Idx", "Geometric Normal", "Shading Normal", "Depth", "Object ID", "Object Group ID"]
 	aovs.extend(["Shadow Catcher", "Background", "Emission", "Velocity", "Direct Illumination", "Indirect Illumination", "AO", "Direct Diffuse"])
-	aovs.extend(["Direct Reflect", "Indirect Diffuse", "Indirect Reflect", "Refract", "Volume", "Albedo", "Variance"])
+	aovs.extend(["Direct Reflect", "Indirect Diffuse", "Indirect Reflect", "Refract", "Subsurface / Volume", "Albedo", "Variance"])
 
 	# numbers in the following arrays are IDs of RPR AOVs that are declared in RadeonProRender.h
 	aov_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 27, 28]

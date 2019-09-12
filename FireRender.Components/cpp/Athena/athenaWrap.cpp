@@ -1,7 +1,11 @@
 #include "athenaWrap.h"
 #include <codecvt>
 #include <string>
-#include <experimental/filesystem>
+#ifdef WIN32
+	#include <experimental/filesystem>
+#else
+    #include <sys/stat.h>
+#endif
 #include <chrono>
 #include <thread>
 
@@ -83,7 +87,12 @@ bool AthenaWrapper::AthenaSendFile(void)
 	free ((PathStringType*)pUniqueFileName);
 
 	// create folder
+#ifdef WIN32
 	bool folderCreated = std::experimental::filesystem::create_directory(m_folderPath);
+#else
+    std::string s_folderPath = ws2s(m_folderPath);
+	bool folderCreated = (mkdir(s_folderPath.c_str(), 0777) != -1);
+#endif
 
 	// create and write file
 	AthenaStatus aStatus;

@@ -109,6 +109,9 @@ private:
 	/** Refresh the context. */
 	void refreshContext();
 
+	/* Gather and send render data by Athena */
+	void UploadAthenaData();
+
 private:
 
 	// Members
@@ -180,4 +183,7 @@ private:
 	RenderCacheWarningDialog rcWarningDialog;
 
 	stop_callback m_stopCallback;
+
+	/* Counts how many render calls done */
+	unsigned int m_rendersCount;
 };

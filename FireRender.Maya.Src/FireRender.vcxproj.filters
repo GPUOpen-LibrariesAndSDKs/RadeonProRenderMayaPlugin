@@ -102,6 +102,9 @@
     <Filter Include="Volumes">
       <UniqueIdentifier>{8051baa7-7050-4c7d-bdb3-a94342e67a51}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FireRender.Components\Athena">
+      <UniqueIdentifier>{68f03f08-dbf6-4e3e-855b-05a097cbb1d1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="python\__init__.py">
@@ -533,6 +536,15 @@
     <ClCompile Include="RenderStampUtils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="EnableSaveIntermediateCmd.cpp">
+      <Filter>Commands</Filter>
+    </ClCompile>
+    <ClCompile Include="GlobalRenderUtilsDataHolder.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="athenaCmd.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -914,6 +926,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RenderStampUtils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EnableSaveIntermediateCmd.h">
+      <Filter>Commands</Filter>
+    </ClInclude>
+    <ClInclude Include="GlobalRenderUtilsDataHolder.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="athenaCmd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

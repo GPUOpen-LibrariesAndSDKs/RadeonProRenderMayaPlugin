@@ -12,6 +12,8 @@
 #include <maya/MNodeMessage.h>
 #include "FireRenderContextIFace.h"
 
+class FireRenderMesh;
+
 namespace FireMaya
 {
 	class Scope;
@@ -215,6 +217,8 @@ namespace FireMaya
 			std::list<MCallbackId> callbackId;
 			std::map<std::string, frw::Image> imageCache;
 
+			FireRenderMesh const* m_pCurrentlyParsedMesh; // is not supposed to keep any data outside of during mesh parsing 
+
 			Data();
 			~Data();
 		};
@@ -276,20 +280,42 @@ namespace FireMaya
 		void GetArrayOfValues(const MFnDependencyNode &node, const char * plugName, ArrayOfValues &arr);
 		frw::Value calcElements(const ArrayOfValues &arr, bool substract = false);
 
+		frw::Image CreateImageInternal(MString colorSpace,
+			unsigned int width,
+			unsigned int height,
+			void* srcData,
+			unsigned int channels,
+			unsigned int componentSize,
+			unsigned int rowPitch,
+			bool flipY = false);
+
+		frw::Image LoadImageUsingMImage(MString texturePath, MString colorSpace);
+		frw::Image LoadImageUsingMTexture(MString texturePath, MString colorSpace, const MString& ownerNodeName);
+
 	public:
 		Scope();
 		~Scope();
 
 		// by object
-		frw::Shader GetShader(MObject ob, bool forceUpdate = false);
+		frw::Shader GetShader(MObject ob, const FireRenderMesh* pMesh = nullptr, bool forceUpdate = false);
 		frw::Shader GetShader(MPlug ob);
 		frw::Shader GetShadowCatcherShader();
 
 		frw::Shader GetVolumeShader( MObject ob, bool forceUpdate = false );
 		frw::Shader GetVolumeShader( MPlug ob );
 
-		frw::Image  GetImage(MString path, MString colorSpace, const MString& ownerNodeName, bool flipX = false);
-		frw::Image  GetAdjustedImage(MString texturePath,
+		frw::Image GetImage(MString path, MString colorSpace, const MString& ownerNodeName);
+
+		frw::Image GetTiledImage(MString texturePath, 
+			int viewWidth, int viewHeight,
+			int maxTileWidth, int maxTileHeight,
+			int currTileWidth, int currTileHeight,
+			int countXTiles, int countYTiles,
+			int xTileIdx, int yTileIdx,
+			MString colorSpace,
+			FitType imgFit = FitStretch /*FitVertical*/);
+
+		frw::Image GetAdjustedImage(MString texturePath,
 			int viewWidth, int viewHeight,
 			FitType fit, double contrast, double brightness,
 			FitType filmFit, double overScan,

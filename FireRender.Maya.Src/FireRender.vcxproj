@@ -232,7 +232,9 @@
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\half.cpp" />
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.cpp" />
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.cpp" />
+    <ClCompile Include="athenaCmd.cpp" />
     <ClCompile Include="DependencyNode.cpp" />
+    <ClCompile Include="EnableSaveIntermediateCmd.cpp" />
     <ClCompile Include="FastNoise.cpp" />
     <ClCompile Include="FileSystemUtils.cpp" />
     <ClCompile Include="FireMaya.cpp" />
@@ -301,6 +303,7 @@
     <ClCompile Include="FireRenderThread.cpp" />
     <ClCompile Include="FireRenderVolumeMaterial.cpp" />
     <ClCompile Include="frWrap.cpp" />
+    <ClCompile Include="GlobalRenderUtilsDataHolder.cpp" />
     <ClCompile Include="GLTFTranslator.cpp" />
     <ClCompile Include="Hosek\ArHosekSkyModel.cpp" />
     <ClCompile Include="Lights\IES\FireRenderIESLight.cpp" />
@@ -359,11 +362,13 @@
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedFunctions_GL.h" />
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.h" />
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.h" />
+    <ClInclude Include="athenaCmd.h" />
     <ClInclude Include="attributeNames.h" />
     <ClInclude Include="AutoLock.h" />
     <ClInclude Include="base_mesh.h" />
     <ClInclude Include="common.h" />
     <ClInclude Include="DependencyNode.h" />
+    <ClInclude Include="EnableSaveIntermediateCmd.h" />
     <ClInclude Include="FastNoise.h" />
     <ClInclude Include="FileSystemUtils.h" />
     <ClInclude Include="FireMaya.h" />
@@ -434,6 +439,7 @@
     <ClInclude Include="FireRenderVolumeMaterial.h" />
     <ClInclude Include="frWrap.h" />
     <ClInclude Include="FireRenderViewportManager.h" />
+    <ClInclude Include="GlobalRenderUtilsDataHolder.h" />
     <ClInclude Include="GLTFTranslator.h" />
     <ClInclude Include="Hosek\ArHosekSkyModel.h" />
     <ClInclude Include="Hosek\ArHosekSkyModelData_CIEXYZ.h" />
@@ -832,7 +838,7 @@
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <OpenMPSupport>true</OpenMPSupport>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\ThirdParty\aws\Win\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -841,8 +847,8 @@
       <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
-      <AdditionalLibraryDirectories>$(MAYA_X64_2018)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>OpenMayaFX.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(MAYA_X64_2018)\lib;..\ThirdParty\aws\Win\lib;..\ThirdParty\aws\Win\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>OpenMayaFX.lib;aws-c-common.lib;aws-c-event-stream.lib;aws-checksums.lib;aws-cpp-sdk-core.lib;aws-cpp-sdk-s3.lib;testing-resources.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
   </ItemDefinitionGroup>

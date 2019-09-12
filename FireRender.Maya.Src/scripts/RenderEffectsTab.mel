@@ -133,6 +133,13 @@ global proc createFireRenderDenoiserFrame(string $parent)
 			 -attribute "RadeonProRenderGlobals.denoiserTrans";
 	setParent ..;
 
+	// ML
+	frameLayout -label "Machine Learning" -cll 0 -li 30 denoiserMLFrame;
+		attrControlGrp
+			 -label ""
+			 -attribute "RadeonProRenderGlobals.denoiserColorOnly";
+	setParent ..;
+
 	setParent ..;	// columnLayout ends
 	setUITemplate -popTemplate;
 
@@ -146,6 +153,7 @@ global proc updateDenoiserUI()
 	int $enabledBilateral = $type == 0;
 	int $enabledLWR = $type == 1;
 	int $enabledEAW = $type == 2;
+	int $enabledML = $type == 3;
 
 	// Lock controls and set it to ON state
 	control -edit -enable ($enabled > 0) denoiserTypeCombobox;
@@ -153,6 +161,7 @@ global proc updateDenoiserUI()
 	frameLayout -edit -visible ($enabledBilateral && $enabled) denoiserBilateralFrame;
 	frameLayout -edit -visible ($enabledLWR && $enabled) denoiserLWRFrame;
 	frameLayout -edit -visible ($enabledEAW && $enabled) denoiserEAWFrame;
+	frameLayout -edit -visible ($enabledML && $enabled) denoiserMLFrame;
 }
 
 global proc createFireRenderCameraFrame(string $parent)
@@ -188,6 +197,7 @@ global proc showRenderStampHelp()
 		("Special symbols:\n\n" +
 		"%pt \t total elapsed time\n" +
 		"%pp \t passes\n" +
+		"%f \t frame number\n" +
 		"%sl \t number of lights\n" +
 		"%so \t number of objects\n" +
 		"%i  \t computer name\n" +
@@ -309,6 +319,13 @@ global proc createFireRenderToneMappingFrame(string $parent)
 			attrControlGrp -label "Burn" -attribute "RadeonProRenderGlobals.toneMappingReinhard02Burn" toneMapReinBurnGrp;
 		setParent ..;
 	setParent ..;
+	frameLayout -label "Simple" -cll false simpleFrameLayout;
+		columnLayout -adjustableColumn true;
+			attrControlGrp -label "Tonemap" -attribute "RadeonProRenderGlobals.toneMappingSimpleTonemap" toneMapSimpleTonemapGrp;
+			attrControlGrp -label "Exposure" -attribute "RadeonProRenderGlobals.toneMappingSimpleExposure" toneMapSimpleExposureGrp;
+			attrControlGrp -label "Contrast" -attribute "RadeonProRenderGlobals.toneMappingSimpleContrast" toneMapSimpleContrastGrp;
+		setParent ..;
+	setParent ..;
 
 	frameLayout -label "White-Balance" -cll false;
 		columnLayout -adjustableColumn true toneMappingWhiteBalanceLayout;
@@ -346,6 +363,7 @@ global proc toneMappingTypeChangedUI()
 	int $linearVisibility = 0;
 	int $photolinearVisibility = 0;
 	int $reinhard2Visibility = 0;
+	int $simpleVisibility = 0;
 
 	if ($type == 0) 
 	{	// None
@@ -363,10 +381,15 @@ global proc toneMappingTypeChangedUI()
 	{	// reinhard02
 		$reinhard2Visibility = 1;
 	}
+	else if ($type == 6)
+	{	// simple
+		$simpleVisibility = 1;
+	}
 
 	frameLayout -edit -visible $linearVisibility linearFrameLayout;
 	frameLayout -edit -visible $photolinearVisibility photolinearFrameLayout;
 	frameLayout -edit -visible $reinhard2Visibility reinhard02FrameLayout;
+	frameLayout -edit -visible $simpleVisibility simpleFrameLayout;
 }
 
 

@@ -83,7 +83,7 @@ FireRenderAOVs::FireRenderAOVs() :
 	AddAOV(RPR_AOV_REFRACT, "aovRefraction", "Refraction", "refraction",
 		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
 
-	AddAOV(RPR_AOV_VOLUME, "aovVolume", "Volume", "volume",
+	AddAOV(RPR_AOV_VOLUME, "aovVolume", "Subsurface / Volume", "volume",
 		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
 
 	AddAOV(RPR_AOV_DIFFUSE_ALBEDO, "aovAlbedo", "Albedo", "albedo",
@@ -275,6 +275,16 @@ void FireRenderAOVs::applyToContext(FireRenderContext& context)
 }
 
 // -----------------------------------------------------------------------------
+void FireRenderAOVs::setFromContext(FireRenderContext& context)
+{
+	for (auto& aov : m_aovs)
+	{
+		if (context.isAOVEnabled(aov.second->id))
+			aov.second->active = true;
+	}
+}
+
+// -----------------------------------------------------------------------------
 void FireRenderAOVs::setRegion(const RenderRegion& region,
 	unsigned int frameWidth, unsigned int frameHeight)
 {
@@ -317,9 +327,10 @@ void FireRenderAOVs::writeToFile(const MString& filePath, unsigned int imageForm
 	// Check if only the color AOV is active.
 	bool colorOnly = getActiveAOVCount() == 1;
 
-	// For EXR, save all AOVs to a single multichannel file.
+	// For EXR, may want save all AOVs to a single multichannel file.
 	MString extension = FireRenderImageUtil::getImageFormatExtension(imageFormat);
-	if (extension == "exr" )
+
+	if ((extension == "exr") && (FireRenderGlobalsData::isExrMultichannelEnabled()) )
 	{
 		if (FireRenderImageUtil::saveMultichannelAOVs(filePath,
 			m_region.getWidth(), m_region.getHeight(), imageFormat, *this))

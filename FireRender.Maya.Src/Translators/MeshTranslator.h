@@ -13,7 +13,7 @@ namespace FireMaya
 	namespace MeshTranslator
 	{
 	//public:	
-		std::vector<frw::Shape> TranslateMesh(frw::Context context, const MObject& originalObject);
+		std::vector<frw::Shape> TranslateMesh(FireRenderContext& context, const MObject& originalObject);
 
 	//private:
 		struct MeshPolygonData

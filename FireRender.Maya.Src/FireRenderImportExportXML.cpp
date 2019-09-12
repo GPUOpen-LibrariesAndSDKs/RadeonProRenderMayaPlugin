@@ -1099,6 +1099,7 @@ void FireRenderXmlImportCmd::connectPlace2dTextureNodeTo(MObject place2dTextureN
 
 MObject FireRenderXmlImportCmd::createShadingNode(MString materialName, std::map<const std::string, std::string> &attributeMapper, std::map<std::string, Param> &params, ShadingNodeType shadingNodeType, frw::ShaderType shaderType)
 {
+	// prepare command
 	MString as;
 	switch (shadingNodeType)
 	{
@@ -1122,6 +1123,8 @@ MObject FireRenderXmlImportCmd::createShadingNode(MString materialName, std::map
 		as = "asShader";
 		break;
 	}
+
+	// create node
 	MString executeCommand = "shadingNode -" + as + " " + materialName;
 
 	MString shaderName = MGlobal::executeCommandStringResult(executeCommand);
@@ -1135,6 +1138,16 @@ MObject FireRenderXmlImportCmd::createShadingNode(MString materialName, std::map
 		return shaderNode;
 	}
 
+	// create shading group if necessary and connect it with shader node
+	if (as == "asShader")
+	{
+		MString sgCommand = "sets -renderable true -noSurfaceShader true -empty -name " + shaderName + "SG";
+		MString sgName = MGlobal::executeCommandStringResult(sgCommand);
+		MString connectCommand = "connectAttr -f " + shaderName + ".outColor " + sgName + ".surfaceShader";
+		MGlobal::executeCommandStringResult(connectCommand);
+	}
+
+	// fill node with data
 	MFnDependencyNode nodeFn(shaderNode);
 	MPlugArray arr;
 	nodeFn.getConnections(arr);
@@ -1491,15 +1504,22 @@ int FireRenderXmlImportCmd::getMatType(std::string materialType) {
 	else if (materialType == "CHECKER_TEXTURE") { matType = RPR_MATERIAL_NODE_CHECKER_TEXTURE; }
 	else if (materialType == "CONSTANT_TEXTURE") { matType = RPR_MATERIAL_NODE_CONSTANT_TEXTURE; }
 	else if (materialType == "INPUT_LOOKUP") { matType = RPR_MATERIAL_NODE_INPUT_LOOKUP; }
+#if (RPR_VERSION_MINOR < 34)
 	else if (materialType == "STANDARD") { matType = RPR_MATERIAL_NODE_STANDARD; }
+#else
+	else if (materialType == "STANDARD") { matType = RPR_MATERIAL_NODE_UBERV2; }
+#endif
 	else if (materialType == "BLEND_VALUE") { matType = RPR_MATERIAL_NODE_BLEND_VALUE; }
 	else if (materialType == "PASSTHROUGH") { matType = RPR_MATERIAL_NODE_PASSTHROUGH; }
 	else if (materialType == "ORENNAYAR") { matType = RPR_MATERIAL_NODE_ORENNAYAR; }
 	else if (materialType == "FRESNEL_SCHLICK") { matType = RPR_MATERIAL_NODE_FRESNEL_SCHLICK; }
 	else if (materialType == "DIFFUSE_REFRACTION") { matType = RPR_MATERIAL_NODE_DIFFUSE_REFRACTION; }
 	else if (materialType == "BUMP_MAP") { matType = RPR_MATERIAL_NODE_BUMP_MAP; }
-
+#if (RPR_VERSION_MINOR < 34)
 	else if (materialType == "UBER") { matType = RPR_MATERIAL_NODE_STANDARD; }
+#else
+	else if (materialType == "UBER") { matType = RPR_MATERIAL_NODE_UBERV2; }
+#endif
 
 	return matType;
 }
@@ -1657,11 +1677,19 @@ MObject FireRenderXmlImportCmd::parseShader(int &matType, std::map<std::string, 
 		shaderNode = loadFireRenderLookupNode(params);
 		break;
 	}
+#if (RPR_VERSION_MINOR < 34)
 	case RPR_MATERIAL_NODE_STANDARD:
 	{
 		shaderNode = loadFireRenderStandardMaterial(params);
 		break;
 	}
+#else
+	case RPR_MATERIAL_NODE_UBERV2:
+	{
+		shaderNode = loadFireRenderStandardMaterial(params);
+		break;
+	}
+#endif
 	case RPR_MATERIAL_NODE_BLEND_VALUE:
 	{
 		shaderNode = loadFireRenderBlendValueNode(params);

@@ -9,6 +9,7 @@
 #include <mutex>
 
 #include "FireRenderUtils.h"
+#include "RenderStampUtils.h"
 #include "maya/MItSelectionList.h"
 
 using namespace std;
@@ -394,6 +395,16 @@ void FireRenderIpr::CheckSelection()
 	}
 }
 
+void FireRenderIpr::updateMayaRenderInfo()
+{
+	std::string renderStampText = RenderStampUtils::FormatRenderStamp(m_context, "\\nFrame: %f, Iteration: %pp, Lights: %sl, Objects: %so");
+
+	MString command;
+	command.format("renderWindowEditor -e -pcaption \"^1s\" renderView", renderStampText.c_str());
+
+	MGlobal::executeCommandOnIdle(command);
+}
+
 // -----------------------------------------------------------------------------
 void FireRenderIpr::updateRenderView()
 {
@@ -426,6 +437,8 @@ void FireRenderIpr::updateRenderView()
 
 		// Complete the Maya view update.
 		endMayaUpdate();
+
+		updateMayaRenderInfo();
 
 		if (rcWarningDialog.shown) {
 			rcWarningDialog.close();
