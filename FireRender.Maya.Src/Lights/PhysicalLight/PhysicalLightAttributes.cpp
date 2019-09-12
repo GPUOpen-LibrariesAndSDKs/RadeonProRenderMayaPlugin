@@ -93,7 +93,7 @@ void CreateEnumAttribute(MObject& propObject, const char* name, const char* shor
 	setAttribProps(eAttr, propObject);
 }
 
-void CreateColor(MObject& propObject, const char* name, const char* shortName)
+void CreateColor(MObject& propObject, const char* name, const char* shortName, bool readOnly = false)
 {
 	MFnNumericAttribute nAttr;
 
@@ -101,6 +101,11 @@ void CreateColor(MObject& propObject, const char* name, const char* shortName)
 	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
 
 	setAttribProps(nAttr, propObject);
+
+	if (readOnly)
+	{
+		nAttr.setWritable(false);
+	}
 }
 
 void PhysicalLightAttributes::Initialize()
