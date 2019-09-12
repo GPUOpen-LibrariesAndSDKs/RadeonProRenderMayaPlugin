@@ -25,6 +25,8 @@
 #define kFilePathFlagLong "-file"
 #define kFramesFlag "-fr"
 #define kFramesFlagLong "-frames"
+#define kCompressionFlag "-cs"
+#define kCompressionFlagLong "-compress"
 
 class FireRenderExportCmd : public MPxCommand
 {

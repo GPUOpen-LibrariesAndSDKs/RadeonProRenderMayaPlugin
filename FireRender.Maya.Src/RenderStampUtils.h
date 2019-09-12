@@ -19,4 +19,6 @@ namespace RenderStampUtils
 	std::string GetFriendlyUsedGPUName();
 	std::string GetComputerNameString();
 	int GetRenderDevice();
+
+	void ClearCache();
 };

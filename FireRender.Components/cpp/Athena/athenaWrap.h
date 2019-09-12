@@ -1,6 +1,7 @@
 #pragma once
 #include "Athena/RprAthena.h"
 #include <string>
+#include <vector>
 #include <future>
 #include <sstream>
 

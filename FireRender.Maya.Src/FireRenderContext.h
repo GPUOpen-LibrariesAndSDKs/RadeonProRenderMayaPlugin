@@ -170,7 +170,7 @@ public:
 	// It resets frame buffer and reinitialize it if particular aov is enabled
 	void resetAOV(int index, rpr_GLuint* glTexture);
 
-	void enableAOVAndReset(int index, bool flag);
+	void enableAOVAndReset(int index, bool flag, rpr_GLuint* glTexture);
 
 	// Sets the resolution and perform an initial render and frame buffer resolve.
 	void resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
@@ -430,7 +430,7 @@ public:
 	bool needsRedraw(bool setNotUpdatedOnExit = true);
 
 	frw::PostEffect white_balance;
-	frw::PostEffect simple_tonemap;			// TODO: not used
+	frw::PostEffect simple_tonemap;			
 	frw::PostEffect tonemap;
 	frw::PostEffect normalization;
 	frw::PostEffect gamma_correction;
@@ -659,7 +659,7 @@ public:
 	frw::Scene GetScene() { return scope.Scene(); }
 	frw::Context GetContext() { return scope.Context(); }
 	frw::MaterialSystem GetMaterialSystem() { return scope.MaterialSystem(); }
-	frw::Shader GetShader(MObject ob, bool forceUpdate = false); // { return scope.GetShader(ob, forceUpdate); }
+	frw::Shader GetShader(MObject ob, const FireRenderMesh* pMesh = nullptr, bool forceUpdate = false); // { return scope.GetShader(ob, forceUpdate); }
 	frw::Shader GetVolumeShader(MObject ob, bool forceUpdate = false) { return scope.GetVolumeShader(ob, forceUpdate); }
 
 
@@ -715,6 +715,10 @@ public:
 
 	double		m_timeIntervalForOutputUpdate;//in sec, TODO: check for Linux/Mac
 	clock_t		m_lastIterationTime;
+
+	/* data for athena dumping */
+	double m_secondsSpentOnLastRender;
+	unsigned int m_polycountLastRender;
 
 	void setCompletionCriteria(const CompletionCriteriaParams& completionCriteriaParams);
 	bool isUnlimited();

@@ -67,6 +67,9 @@ namespace
 		MObject toneMappingReinhard02Prescale;
 		MObject toneMappingReinhard02Postscale;
 		MObject toneMappingReinhard02Burn;
+		MObject toneMappingSimpleTonemap;
+		MObject toneMappingSimpleExposure;
+		MObject toneMappingSimpleContrast;
 		MObject toneMappingWhiteBalanceEnabled;
 		MObject toneMappingWhiteBalanceValue;
 
@@ -98,6 +101,12 @@ namespace
 		MObject denoiserDepth;
 		MObject denoiserNormal;
 		MObject denoiserTrans;
+
+			// Denoiser type: ML
+		MObject denoiserColorOnly;
+
+		// image saving
+		MObject renderaGlobalsExrMultilayerEnabled;
 	}
 
     struct RenderingDeviceAttributes
@@ -317,6 +326,7 @@ MStatus FireRenderGlobals::initialize()
 	eAttr.addField("Autolinear", kAutolinear);
 	eAttr.addField("MaxWhite", kMaxWhite);
 	eAttr.addField("Reinhard02", kReinhard02);
+	eAttr.addField("Simple", kSimple);
 	MAKE_INPUT_CONST(eAttr);
 
 	Attribute::toneMappingWhiteBalanceEnabled = nAttr.create("toneMappingWhiteBalanceEnabled", "tmwbe", MFnNumericData::kBoolean, false, &status);
@@ -326,6 +336,19 @@ MStatus FireRenderGlobals::initialize()
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(800);
 	nAttr.setMax(12000);
+
+	Attribute::toneMappingSimpleTonemap = nAttr.create("toneMappingSimpleTonemap", "tnst", MFnNumericData::kBoolean, true, &status);
+	MAKE_INPUT(nAttr);
+
+	Attribute::toneMappingSimpleExposure = nAttr.create("toneMappingSimpleExposure", "tnse", MFnNumericData::kFloat, 0.0, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setSoftMin(-5);
+	nAttr.setSoftMax(5);
+
+	Attribute::toneMappingSimpleContrast = nAttr.create("toneMappingSimpleContrast", "tnsc", MFnNumericData::kFloat, 1.0, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setSoftMin(0);
+	nAttr.setSoftMax(2);
 
 	Attribute::toneMappingLinearscale = nAttr.create("toneMappingLinearScale", "tnls", MFnNumericData::kFloat, 1.0, &status);
 	MAKE_INPUT(nAttr);
@@ -375,6 +398,9 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::useMPS = nAttr.create("useMPS", "umps", MFnNumericData::kBoolean, 0, &status);
 	MAKE_INPUT(nAttr);
 
+	Attribute::renderaGlobalsExrMultilayerEnabled = nAttr.create("enableExrMultilayer", "eeml", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+
 	CHECK_MSTATUS(addAttribute(Attribute::textureCompression));
 
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradiance));
@@ -399,6 +425,9 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::toneMappingType));
 	CHECK_MSTATUS(addAttribute(Attribute::toneMappingWhiteBalanceEnabled));
 	CHECK_MSTATUS(addAttribute(Attribute::toneMappingWhiteBalanceValue));
+	CHECK_MSTATUS(addAttribute(Attribute::toneMappingSimpleExposure));
+	CHECK_MSTATUS(addAttribute(Attribute::toneMappingSimpleTonemap));
+	CHECK_MSTATUS(addAttribute(Attribute::toneMappingSimpleContrast));
 	CHECK_MSTATUS(addAttribute(Attribute::toneMappingLinearscale));
 	CHECK_MSTATUS(addAttribute(Attribute::toneMappingPhotolinearSensitivity));
 	CHECK_MSTATUS(addAttribute(Attribute::toneMappingPhotolinearExposure));
@@ -416,6 +445,8 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(m_renderStampTextDefault));
 
 	createDenoiserAttributes();
+
+	CHECK_MSTATUS(addAttribute(Attribute::renderaGlobalsExrMultilayerEnabled));
 
 	// create legacy attributes to avoid errors in mel while opening old scenes
 	createLegacyAttributes();
@@ -735,6 +766,14 @@ void FireRenderGlobals::createDenoiserAttributes()
 	CHECK_MSTATUS(addAttribute(Attribute::denoiserTrans));
 	nAttr.setMin(0.1f);
 	nAttr.setMax(1.0f);
+
+	//ML
+	Attribute::denoiserColorOnly = eAttr.create("denoiserColorOnly", "do", 0, &status);
+	eAttr.addField("Color Only", 0);
+	eAttr.addField("Color + AOVs", 1);
+	MAKE_INPUT_CONST(eAttr);
+	eAttr.setReadable(true);
+	CHECK_MSTATUS(addAttribute(Attribute::denoiserColorOnly));
 }
 
 void FireRenderGlobals::addAsGlobalAttribute(MFnAttribute& attr)

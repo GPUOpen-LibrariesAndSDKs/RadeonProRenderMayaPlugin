@@ -1269,6 +1269,8 @@ global proc string createFireRenderImageFormatControl()
 	return "imageMenuMayaSW";
 }
 
+global string $exrCheckbox = "";
+
 global proc updateFireRenderImageFormatControl()
 {
 	string $oldParent = `setParent -query`;
@@ -1326,6 +1328,14 @@ global proc updateFireRenderImageFormatControl()
 
 	//update the Multiple camera frame buffer naming control
 	updateFireRenderMultiCameraBufferNamingMenu();
+
+	global string $exrCheckbox;
+	if ($exrCheckbox != "")
+	{
+		checkBox -edit 
+			-enable ($imageNum == 40) 
+			$exrCheckbox; 
+	};
 }
 
 global proc changeFireRenderImageFormat()
@@ -1954,6 +1964,16 @@ proc createCommonColorMgt()
 	scriptJob -event "colorMgtConfigChanged" $outputChangedCb;
 }
 
+global proc onExrCheckbox()
+{
+	setAttr RadeonProRenderGlobals.enableExrMultilayer 1;
+}
+
+global proc offExrCheckbox()
+{
+	setAttr RadeonProRenderGlobals.enableExrMultilayer 0;
+}
+
 proc createCommonImageFile()
 //
 //  Procedure Name:
@@ -1993,6 +2013,17 @@ proc createCommonImageFile()
 
 		string $imageFormatControl = createFireRenderImageFormatControl();
 		int $item = `optionMenuGrp -q -sl $imageFormatControl` - 1;
+
+		global string $exrCheckbox;
+		$exrCheckbox = `checkBox 
+			-al "center" 
+			-label "Save all AOVs to multilayer OpenEXR" 
+			-onCommand "onExrCheckbox"
+			-offCommand "offExrCheckbox"
+			-en false 
+			-ann "Save all AOVs as channels in a single .exr file"
+			renderGlobalsEnableMultiAOV`;
+
 		createCompressorControl($item);
 
 		createFileNameFormatControl();
@@ -3055,26 +3086,29 @@ global proc updateFireRenderDeviceAspectRatio()
 // Code to update pre/post layer/frame mel callbacks
 //
 
-global proc changeMayaMelCallbacks(string $control, string $attr)
+global proc RPRchangeMayaMelCallbacks(string $control, string $attr)
 {
 	string $oldParent = `setParent -query`;
 	setParentToCommonTab();
 
-	string $val = `textFieldGrp -query -text $control`;
+	string $val = `scrollField -query -text $control`;
 	setAttr $attr -type "string" $val;
 
 	setParent $oldParent;
 }
 
-global proc updateFireRenderMelCallbacks()
+global proc RPRupdateFireRenderMelCallbacks()
 {
 	string $oldParent = `setParent -query`;
 	setParentToCommonTab();
 
-	textFieldGrp -edit -text `getAttr defaultRenderGlobals.preRenderLayerMel` preRenderLayerMelSwGrp;
-	textFieldGrp -edit -text `getAttr defaultRenderGlobals.postRenderLayerMel` postRenderLayerMelSwGrp;
-	textFieldGrp -edit -text `getAttr defaultRenderGlobals.preRenderMel` preRenderMelSwGrp;
-	textFieldGrp -edit -text `getAttr defaultRenderGlobals.postRenderMel` postRenderMelSwGrp;
+	scrollField -edit -text `getAttr defaultRenderGlobals.preMel` preMelSwGrp;
+	scrollField -edit -text `getAttr defaultRenderGlobals.postMel` postMelSwGrp;
+
+	scrollField -edit -text `getAttr defaultRenderGlobals.preRenderLayerMel` preRenderLayerMelSwGrp;
+	scrollField -edit -text `getAttr defaultRenderGlobals.postRenderLayerMel` postRenderLayerMelSwGrp;
+	scrollField -edit -text `getAttr defaultRenderGlobals.preRenderMel` preRenderMelSwGrp;
+	scrollField -edit -text `getAttr defaultRenderGlobals.postRenderMel` postRenderMelSwGrp;
 
 	setParent $oldParent;
 }
@@ -3095,49 +3129,66 @@ proc createCommonRenderOptions()
 		attrControlGrp
 			-attribute "defaultRenderGlobals.enableDefaultLight";
 
-		attrControlGrp
-			-attribute defaultRenderGlobals.preMel
-			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPreRenderMEL"))
+
+		text -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPreRenderMEL"));
+		scrollField
+			-changeCommand ("RPRchangeMayaMelCallbacks(\"preMelSwGrp\", \"defaultRenderGlobals.preMel\")")
 			-preventOverride true
+                        -height 50
 			preMelSwGrp;
-		attrControlGrp
-			-attribute defaultRenderGlobals.postMel
-			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPostRenderMEL"))
+
+
+		text -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPostRenderMEL"));
+		scrollField
+			-changeCommand ("RPRchangeMayaMelCallbacks(\"postMelSwGrp\", \"defaultRenderGlobals.postMel\")")
 			-preventOverride true
+                        -height 50
 			postMelSwGrp;
 
-		textFieldGrp
-			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPreRenderLayerMEL"))
-			-changeCommand ("changeMayaMelCallbacks(\"preRenderLayerMelSwGrp\", \"defaultRenderGlobals.preRenderLayerMel\")")
+
+		text -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPreRenderLayerMEL"));
+		scrollField
+			-changeCommand ("RPRchangeMayaMelCallbacks(\"preRenderLayerMelSwGrp\", \"defaultRenderGlobals.preRenderLayerMel\")")
+			-preventOverride true
+                        -height 50
 			preRenderLayerMelSwGrp;
 
-		textFieldGrp
-			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPostRenderLayerMEL"))
-			-changeCommand ("changeMayaMelCallbacks(\"postRenderLayerMelSwGrp\", \"defaultRenderGlobals.postRenderLayerMel\")")
+
+		text -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPostRenderLayerMEL"));
+		scrollField
+			-changeCommand ("RPRchangeMayaMelCallbacks(\"postRenderLayerMelSwGrp\", \"defaultRenderGlobals.postRenderLayerMel\")")
+			-preventOverride true
+                        -height 50
 			postRenderLayerMelSwGrp;
 
-		textFieldGrp
-			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPreRenderFrameMEL"))
-			-changeCommand ("changeMayaMelCallbacks(\"preRenderMelSwGrp\", \"defaultRenderGlobals.preRenderMel\")")
+
+		text -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPreRenderFrameMEL"));
+		scrollField
+			-changeCommand ("RPRchangeMayaMelCallbacks(\"preRenderMelSwGrp\", \"defaultRenderGlobals.preRenderMel\")")
+			-preventOverride true
+                        -height 50
 			preRenderMelSwGrp;
 
-		textFieldGrp
-			-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPostRenderFrameMEL"))
-			-changeCommand ("changeMayaMelCallbacks(\"postRenderMelSwGrp\", \"defaultRenderGlobals.postRenderMel\")")
+
+		text -label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kPostRenderFrameMEL"));
+		scrollField
+			-changeCommand ("RPRchangeMayaMelCallbacks(\"postRenderMelSwGrp\", \"defaultRenderGlobals.postRenderMel\")")
+			-preventOverride true
+                        -height 50
 			postRenderMelSwGrp;
 
-		connectControl -index 1 preRenderLayerMelSwGrp defaultRenderGlobals.preRenderLayerMel;
-		connectControl -index 1 postRenderLayerMelSwGrp defaultRenderGlobals.postRenderLayerMel;
-		connectControl -index 1 preRenderMelSwGrp defaultRenderGlobals.preRenderMel;
-		connectControl -index 1 postRenderMelSwGrp defaultRenderGlobals.postRenderMel;
-
-		updateFireRenderMelCallbacks();
+		RPRupdateFireRenderMelCallbacks();
 
 		// Set up script jobs for those attributes which require updating of
 		// multiple controls.
 		// This is especially important when a user changes render layers.
 		//
-		string $attrArray[];	clear($attrArray);
+		string $attrArray[];	
+		clear($attrArray);
+
+		$attrArray[size($attrArray)] = "defaultRenderGlobals.preMel";
+		$attrArray[size($attrArray)] = "defaultRenderGlobals.postMel";
+
 		$attrArray[size($attrArray)] = "defaultRenderGlobals.preRenderLayerMel";
 		$attrArray[size($attrArray)] = "defaultRenderGlobals.postRenderLayerMel";
 		$attrArray[size($attrArray)] = "defaultRenderGlobals.preRenderMel";
@@ -3148,7 +3199,7 @@ proc createCommonRenderOptions()
 			scriptJob
 				-attributeChange
 					$attrArray[$i]
-					updateFireRenderMelCallbacks
+					RPRupdateFireRenderMelCallbacks
 				-parent `setParent -query`;
 		}
 
@@ -3343,7 +3394,7 @@ global proc updateFireRenderCommonGlobalsTab()
 	updateFireRenderCustomExtensionControl();
 	updateFireRenderCameraControl();
 	updateFireRenderResolution();
-	updateFireRenderMelCallbacks();
+	RPRupdateFireRenderMelCallbacks();
 }
 
 global proc createFireRenderCommonGlobalsTab()

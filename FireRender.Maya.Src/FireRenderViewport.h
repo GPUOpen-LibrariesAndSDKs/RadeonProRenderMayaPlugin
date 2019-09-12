@@ -199,7 +199,9 @@ private:
 	/** Remove the menu from the Maya panel. */
 	void removeMenu();
 
-	void enableNecessaryAOVs(int index, bool flag);
+	void enableNecessaryAOVs(int index, bool flag, rpr_GLuint* glTexture);
 
 	bool isAOVShouldBeAlwaysEnabled(int aov);
+
+	rpr_GLuint* GetGlTexture() const;
 };

@@ -954,7 +954,7 @@ void FireRenderMesh::ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngine
 	{
 		auto& element = m.elements[i];
 		element.shadingEngine = shadingEngines[i];
-		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine));
+		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this);
 		element.volumeShader = context->GetVolumeShader(getVolumeShader(element.shadingEngine));
 
 		setupDisplacement(element.shadingEngine, element.shape);
@@ -1055,16 +1055,19 @@ void FireRenderMesh::ProcessSkyLight(void)
 
 void FireRenderMesh::Rebuild()
 {
-	m.isEmissive = false;
-	
-	MFnDagNode meshFn(Object());
+	auto node = Object();
+	MFnDagNode meshFn(node);
+	MDagPath meshPath = DagPath();
+
+	FireRenderContext *context = this->context();
+
 	MObjectArray shadingEngines = GetShadingEngines(meshFn, Instance());
+
+	m.isEmissive = false;
 
 #ifdef _DEBUG
 	MString name = meshFn.name();
 #endif
-
-	MDagPath meshPath = DagPath();
 
 	// If there is just one shader and the number of shader is not changed then just update the shader
 	if (m.changed.mesh || (shadingEngines.length() != m.elements.size()))
@@ -1140,9 +1143,57 @@ void FireRenderMesh::GetShapes(const MFnDagNode& meshNode, std::vector<frw::Shap
 
 	if (mainMesh == nullptr)
 	{
-		outShapes = FireMaya::MeshTranslator::TranslateMesh(Context(), meshNode.object());
+		outShapes = FireMaya::MeshTranslator::TranslateMesh(*context, meshNode.object());
 		m.isMainInstance = true;
 		context->AddMainMesh(meshNode.object(), this);
+	}
+
+	SaveUsedUV(meshNode.object());
+}
+
+void FireRenderMesh::SaveUsedUV(const MObject& meshNode)
+{
+	if (!meshNode.hasFn(MFn::kMesh))
+		return;
+
+	MStatus mstatus;
+	MFnMesh fnMesh(meshNode, &mstatus);
+	if (mstatus != MStatus::kSuccess)
+	{
+		return;
+	}
+
+	MStringArray uvSetNames;
+	mstatus = fnMesh.getUVSetNames(uvSetNames);
+	if (mstatus != MStatus::kSuccess)
+	{
+		return;
+	}
+
+	int uvSetCount = fnMesh.numUVSets();
+	for (int idx = 0; idx < uvSetCount; ++idx)
+	{
+		MString tmpName = uvSetNames[idx];
+		MObjectArray textures;
+		mstatus = fnMesh.getAssociatedUVSetTextures(tmpName, textures);
+
+		int texturesCount = textures.length();
+		for (int texture_idx = 0; texture_idx < texturesCount; texture_idx++)
+		{
+			MObject tObject = textures[texture_idx];
+
+			MFnDependencyNode fnNode(tObject);
+			MObject attrObj = fnNode.attribute("fileTextureName");
+			MFnAttribute attr(attrObj);
+			MPlug plug = fnNode.findPlug(attr.object(), &mstatus);
+			CHECK_MSTATUS(mstatus);
+			MString textureFilePath;
+			mstatus = plug.getValue(textureFilePath);
+
+			// only one uv coordinates set can be attached to texture file
+			// this is the limitation of Maya's relationship editor
+			m_uvSetCachedMappingData[textureFilePath.asChar()] = idx;
+		}		
 	}
 }
 
@@ -1245,6 +1296,16 @@ void FireRenderMesh::ShaderDirtyCallback(MObject& node, void* clientData)
 		assert(node != self->Object());
 		self->OnShaderDirty();
 	}
+}
+
+unsigned int FireRenderMesh::GetAssignedUVMapIdx(const MString& textureFile) const
+{
+	auto it = m_uvSetCachedMappingData.find(textureFile.asChar());
+
+	if (it == m_uvSetCachedMappingData.end())
+		return -1;
+
+	return it->second;
 }
 
 void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
@@ -1527,7 +1588,7 @@ void FireRenderEnvLight::Freshen()
 				// from external side of the sphere, but we look from inside sphere
 				// That's why pass true if IBL flip parameter is false and vice versa
 
-				m.image = context()->GetScope().GetImage(filePath, colorSpace, dagPath.partialPathName(), !IsFlipIBL());
+				m.image = context()->GetScope().GetImage(filePath, colorSpace, dagPath.partialPathName());
 			}
 		}
 
@@ -1601,6 +1662,8 @@ void FireRenderCamera::Freshen()
 	MFnDagNode dagNode(node);
 	MFnCamera fnCamera(node);
 
+	MString thisName = dagNode.name();
+
 	if (!m_camera)
 	{
 		m_camera = Context().CreateCamera();
@@ -1643,6 +1706,9 @@ void FireRenderCamera::Freshen()
 				case 0:	// image
 				{
 					MFnDependencyNode imNode(m_imagePlane);
+
+					MString name2 = imNode.name();
+
 					auto name = GetPlugValue(m_imagePlane, "imageName", MString());
 					auto contrast = Scope().GetValue(imNode.findPlug("colorGain"));
 					auto brightness = Scope().GetValue(imNode.findPlug("colorOffset"));
@@ -2224,6 +2290,10 @@ bool FireRenderHair::CreateCurves()
 	if (!splines.load(opaqueStrm, sampleSize, sampleTime))
 		return false;
 
+	// apply masks etc.
+	if (!splines.executeScript())
+		return false;
+
 	// Count the number of curves and the number of points
 	unsigned int curveCount = 0;
 	unsigned int pointCount = 0;
@@ -2271,35 +2341,43 @@ bool FireRenderHair::CreateCurves()
 			*/
 			const unsigned int pointsPerSegment = 4;
 
-			// Number of points
-			unsigned int tail = length % pointsPerSegment;
-			if (tail != 0)
-				tail = 4 - tail;
-
-			const unsigned int pointsInCurve = length + tail;
-			const unsigned int segmentsInCurve = pointsInCurve / pointsPerSegment;
-			numPoints.push_back(segmentsInCurve);
-
 			// Texcoord using the patch UV from the root point
 			uvCoord.push_back(patchUVs[offset][0]);
 			uvCoord.push_back(patchUVs[offset][1]);
 
+			std::vector<rpr_uint> tmp_indicesData;
+
 			// Copy varying data
 			for (unsigned int i = 0; i < length; i++)
 			{
-				indicesData.push_back(points.size());
+
+				tmp_indicesData.push_back(points.size());
+				if (tmp_indicesData.size() % pointsPerSegment == 0)
+					tmp_indicesData.push_back(tmp_indicesData.back());
+
 				points.push_back(positions[offset + i]);
 
 				radiuses.push_back(width[offset + i] * 0.5f);
 				wCoord.push_back(texcoords[offset + i][1]);
 			}
 
+			// Number of points
+			unsigned int tail = tmp_indicesData.size() % pointsPerSegment;
+			if (tail != 0)
+				tail = 4 - tail;
+
+			const unsigned int pointsInCurve = tmp_indicesData.size() + tail;
+			const unsigned int segmentsInCurve = pointsInCurve / pointsPerSegment;
+			numPoints.push_back(segmentsInCurve);
+
 			// Extend data indices array if necessary 
 			// Segment of RPR curve should always be composed of 4 3D points
 			for (unsigned int i = 0; i < tail; i++)
 			{
-				indicesData.push_back(indicesData.back());
+				tmp_indicesData.push_back(tmp_indicesData.back());
 			}
+
+			indicesData.insert(indicesData.end(), tmp_indicesData.begin(), tmp_indicesData.end());
 		}
 
 		// create RPR curve
@@ -2375,4 +2453,5 @@ void FireRenderHair::detachFromScene()
 
 	m_isVisible = false;
 }
+
 

@@ -51,6 +51,7 @@ namespace
 		MObject reflectNormal;
 #endif
 		MObject reflectionIOR;
+		MObject reflectionIsFresnelApproximationOn;
 		MObject reflectionRoughnessX;	// used for upgrade v1 -> v2
 #if !USE_RPRX
 		MObject reflectionRotation;		// warning: not used
@@ -430,6 +431,9 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 10.0);
 
+	Attribute::reflectionIsFresnelApproximationOn = nAttr.create("reflectIsFresnelApproximationOn", "rfao", MFnNumericData::kBoolean, 0);
+	MAKE_INPUT(nAttr);
+
 #if !USE_RPRX
 	Attribute::reflectionRoughnessY = nAttr.create("reflectRoughnessY", "grry", MFnNumericData::kFloat, 0.1);
 	MAKE_INPUT(nAttr);
@@ -709,6 +713,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	ADD_ATTRIBUTE(Attribute::reflectionMetalness);
 #endif
 	ADD_ATTRIBUTE(Attribute::reflectionIOR);
+	ADD_ATTRIBUTE(Attribute::reflectionIsFresnelApproximationOn);
 #if !USE_RPRX
 	ADD_ATTRIBUTE(Attribute::reflectionRoughnessX);
 	ADD_ATTRIBUTE(Attribute::reflectionRotation);
@@ -953,6 +958,9 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 			SET_RPRX_VALUE(RPRX_UBER_MATERIAL_REFLECTION_IOR, reflectionIOR);
 		}
 
+		// Is Frensel Approximation On
+		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_FRESNEL_SCHLICK_APPROXIMATION, reflectionIsFresnelApproximationOn);
+
 		NormalMapParams params(scope, material, shaderNode);
 		params.attrUseCommonNormalMap = Attribute::reflectUseShaderNormal;
 		params.mapPlug = Attribute::reflectNormal;
@@ -1086,6 +1094,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		}
 	}
 
+#if (RPR_VERSION_MINOR < 34) // <= replaced by rprShapeSetDisplacementMaterial since Core v 1.34
 	// Special code for displacement map. We're using GetDisplacementNode() function which is called twice:
 	// from this function, and from FireRenderMesh::setupDisplacement(). This is done because RPRX UberMaterial
 	// doesn't have capabilities to set any displacement parameters except map image, so we're setting other
@@ -1131,6 +1140,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 			}
 		}
 	}
+#endif
 
 #else
 	auto ms = scope.MaterialSystem();

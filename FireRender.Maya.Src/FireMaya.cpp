@@ -12,6 +12,7 @@
 #include <maya/MSceneMessage.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MUuid.h>
+#include <maya/MItDependencyGraph.h>
 
 #include <exception>
 
@@ -194,251 +195,921 @@ void convertColorSpace(MString colorSpace, rpr_image_format format, rpr_image_de
 #endif
 }
 
-frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, const MString& ownerNodeName, bool flipX)
+std::tuple<int, int, bool> getTexturePixelStride(MHWRender::MRasterFormat fFormat)
+{
+	int channels = 1;
+	int componentSize = 0;
+	bool success = true;
+
+	switch (fFormat)
+	{
+		//case MHWRender::kD24S8: break;
+		//case MHWRender::kD24X8: break;
+		//case MHWRender::kD32_FLOAT: break;
+		//case MHWRender::kR24G8: break;
+		//case MHWRender::kR24X8: break;
+		//case MHWRender::kDXT1_UNORM: break;
+		//case MHWRender::kDXT1_UNORM_SRGB: break;
+		//case MHWRender::kDXT2_UNORM: break;
+		//case MHWRender::kDXT2_UNORM_SRGB: break;
+		//case MHWRender::kDXT2_UNORM_PREALPHA: break;
+		//case MHWRender::kDXT3_UNORM: break;
+		//case MHWRender::kDXT3_UNORM_SRGB: break;
+		//case MHWRender::kDXT3_UNORM_PREALPHA: break;
+		//case MHWRender::kDXT4_UNORM: break;
+		//case MHWRender::kDXT4_SNORM: break;
+		//case MHWRender::kDXT5_UNORM: break;
+		//case MHWRender::kDXT5_SNORM: break;
+		//case MHWRender::kR9G9B9E5_FLOAT: break;
+		//case MHWRender::kR1_UNORM: break;
+	case MHWRender::kA8:
+	case MHWRender::kR8_UNORM:
+		//case MHWRender::kR8_SNORM: break;
+	case MHWRender::kR8_UINT:
+		//case MHWRender::kR8_SINT: break;
+	case MHWRender::kL8:
+		channels = 1;
+		componentSize = 1;
+		break;
+
+	case MHWRender::kR16_FLOAT:
+		channels = 1;
+		componentSize = 2;
+		break;
+		//case MHWRender::kR16_UNORM: break;
+		//case MHWRender::kR16_SNORM: break;
+		//case MHWRender::kR16_UINT: break;
+		//case MHWRender::kR16_SINT: break;
+		//case MHWRender::kL16: break;
+		//case MHWRender::kR8G8_UNORM: break;
+		//case MHWRender::kR8G8_SNORM: break;
+		//case MHWRender::kR8G8_UINT: break;
+		//case MHWRender::kR8G8_SINT: break;
+		//case MHWRender::kB5G5R5A1: break;
+		//case MHWRender::kB5G6R5: break;
+	case MHWRender::kR32_FLOAT:
+		channels = 1;
+		componentSize = 4;
+		break;
+		//case MHWRender::kR32_UINT: break;
+		//case MHWRender::kR32_SINT: break;
+		//case MHWRender::kR16G16_FLOAT: break;
+		//case MHWRender::kR16G16_UNORM: break;
+		//case MHWRender::kR16G16_SNORM: break;
+		//case MHWRender::kR16G16_UINT: break;
+		//case MHWRender::kR16G16_SINT: break;
+	case MHWRender::kR8G8B8A8_UNORM:
+		//case MHWRender::kR8G8B8A8_SNORM: break;
+	case MHWRender::kR8G8B8A8_UINT:
+		channels = 4;
+		componentSize = 1;
+		break;
+		//case MHWRender::kR8G8B8A8_SINT: break;
+		//case MHWRender::kR10G10B10A2_UNORM: break;
+		//case MHWRender::kR10G10B10A2_UINT: break;
+		//case MHWRender::kB8G8R8A8: break;
+		//case MHWRender::kB8G8R8X8: break;
+	case MHWRender::kR8G8B8X8:
+		channels = 4;
+		componentSize = 1;
+		break;
+		//case MHWRender::kA8B8G8R8: break;
+		//case MHWRender::kR32G32_FLOAT: break;
+		//case MHWRender::kR32G32_UINT: break;
+		//case MHWRender::kR32G32_SINT: break;
+	case MHWRender::kR16G16B16A16_FLOAT:
+		channels = 4;
+		componentSize = 2;
+		break;
+		//case MHWRender::kR16G16B16A16_UNORM: break;
+		//case MHWRender::kR16G16B16A16_SNORM: break;
+		//case MHWRender::kR16G16B16A16_UINT: break;
+		//case MHWRender::kR16G16B16A16_SINT: break;
+	case MHWRender::kR32G32B32_FLOAT:
+		channels = 3;
+		componentSize = 4;
+		break;
+		//case MHWRender::kR32G32B32_UINT: break;
+		//case MHWRender::kR32G32B32_SINT: break;
+	case MHWRender::kR32G32B32A32_FLOAT:
+		channels = 4;
+		componentSize = 4;
+		break;
+		//case MHWRender::kR32G32B32A32_UINT: break;
+		//case MHWRender::kR32G32B32A32_SINT: break;
+	default:
+		success = false;
+	}
+
+	return std::make_tuple(channels, componentSize, success);
+}
+
+#ifdef _DEBUG
+const int bytesPerPixel = 4; /// red, green, blue
+const int fileHeaderSize = 14;
+const int infoHeaderSize = 40;
+
+void generateBitmapImage(unsigned char *image, int height, int width, int pitch, const char* imageFileName);
+unsigned char* createBitmapFileHeader(int height, int width, int pitch, int paddingSize);
+unsigned char* createBitmapInfoHeader(int height, int width);
+
+
+
+void generateBitmapImage(unsigned char *image, int height, int width, int pitch, const char* imageFileName) {
+
+	unsigned char padding[3] = { 0, 0, 0 };
+	int paddingSize = (4 - (/*width*bytesPerPixel*/ pitch) % 4) % 4;
+
+	unsigned char* fileHeader = createBitmapFileHeader(height, width, pitch, paddingSize);
+	unsigned char* infoHeader = createBitmapInfoHeader(height, width);
+
+	FILE* imageFile = fopen(imageFileName, "wb");
+
+	fwrite(fileHeader, 1, fileHeaderSize, imageFile);
+	fwrite(infoHeader, 1, infoHeaderSize, imageFile);
+
+	int i;
+	for (i = 0; i < height; i++) {
+		fwrite(image + (i*pitch /*width*bytesPerPixel*/), bytesPerPixel, width, imageFile);
+		fwrite(padding, 1, paddingSize, imageFile);
+	}
+
+	fclose(imageFile);
+	//free(fileHeader);
+	//free(infoHeader);
+}
+
+unsigned char* createBitmapFileHeader(int height, int width, int pitch, int paddingSize) {
+	int fileSize = fileHeaderSize + infoHeaderSize + (/*bytesPerPixel*width*/pitch + paddingSize) * height;
+
+	static unsigned char fileHeader[] = {
+		0,0, /// signature
+		0,0,0,0, /// image file size in bytes
+		0,0,0,0, /// reserved
+		0,0,0,0, /// start of pixel array
+	};
+
+	fileHeader[0] = (unsigned char)('B');
+	fileHeader[1] = (unsigned char)('M');
+	fileHeader[2] = (unsigned char)(fileSize);
+	fileHeader[3] = (unsigned char)(fileSize >> 8);
+	fileHeader[4] = (unsigned char)(fileSize >> 16);
+	fileHeader[5] = (unsigned char)(fileSize >> 24);
+	fileHeader[10] = (unsigned char)(fileHeaderSize + infoHeaderSize);
+
+	return fileHeader;
+}
+
+unsigned char* createBitmapInfoHeader(int height, int width) {
+	static unsigned char infoHeader[] = {
+		0,0,0,0, /// header size
+		0,0,0,0, /// image width
+		0,0,0,0, /// image height
+		0,0, /// number of color planes
+		0,0, /// bits per pixel
+		0,0,0,0, /// compression
+		0,0,0,0, /// image size
+		0,0,0,0, /// horizontal resolution
+		0,0,0,0, /// vertical resolution
+		0,0,0,0, /// colors in color table
+		0,0,0,0, /// important color count
+	};
+
+	infoHeader[0] = (unsigned char)(infoHeaderSize);
+	infoHeader[4] = (unsigned char)(width);
+	infoHeader[5] = (unsigned char)(width >> 8);
+	infoHeader[6] = (unsigned char)(width >> 16);
+	infoHeader[7] = (unsigned char)(width >> 24);
+	infoHeader[8] = (unsigned char)(height);
+	infoHeader[9] = (unsigned char)(height >> 8);
+	infoHeader[10] = (unsigned char)(height >> 16);
+	infoHeader[11] = (unsigned char)(height >> 24);
+	infoHeader[12] = (unsigned char)(1);
+	infoHeader[14] = (unsigned char)(bytesPerPixel * 8);
+
+	return infoHeader;
+}
+#endif
+
+struct tileParams
+{
+	MHWRender::MTextureDescription& desc;
+	int viewWidth;
+	int viewHeight;
+	int maxTileWidth;
+	int maxTileHeight;
+	int xTileIdx;
+	int yTileIdx;
+	int countXTiles;
+	int countYTiles;
+	int srcPixSize;
+	int dstPixSize;
+	const unsigned char* src;
+
+	tileParams(MHWRender::MTextureDescription& _desc) : desc(_desc) {}
+};
+
+std::vector<unsigned char> ProcessFitStretch(
+	const tileParams& params,
+	rpr_image_desc& img_desc
+	)
+{
+	std::vector<unsigned char> buffer;
+
+	const int srcWidth = params.desc.fWidth;
+	const int srcHeight = params.desc.fHeight;
+
+	float srcWidthPerPixel = (float)srcWidth / (float)params.viewWidth;
+	float srcHeightPerPixel = (float)srcHeight / (float)params.viewHeight;
+
+	const int srcFullSegWidth = std::ceil(srcWidthPerPixel * params.maxTileWidth);
+	const int srcTailSegWidth = srcWidth - srcFullSegWidth * (params.countXTiles - 1);
+	const int srcCurrSegWidth = (params.xTileIdx == (params.countXTiles - 1)) ? srcTailSegWidth : srcFullSegWidth;
+
+	const int srcFullSegHeight = std::ceil(srcHeightPerPixel * params.maxTileHeight);
+	const int srcTailSegHeight = srcHeight - srcFullSegHeight * (params.countYTiles - 1);
+	const int srcCurrSegHeight = (params.yTileIdx == 0) ? srcTailSegHeight : srcFullSegHeight;
+
+	int createdImageWidth = srcCurrSegWidth;
+	int createdImageHeight = srcCurrSegHeight;
+
+	// set data and prepare for copying
+	img_desc.image_width = createdImageWidth;
+	img_desc.image_height = createdImageHeight;
+	img_desc.image_row_pitch = img_desc.image_width * params.dstPixSize;
+
+	buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
+
+	unsigned char* dst = buffer.data();
+
+	int shiftX = params.xTileIdx * srcFullSegWidth;
+	int shiftY = (params.yTileIdx > 1) ? srcTailSegHeight + (params.yTileIdx - 1) * srcFullSegHeight : params.yTileIdx * srcTailSegHeight;
+
+	// foreach pixel in source image
+	for (unsigned int y = 0; y < srcCurrSegHeight; y++)
+	{
+		for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+		{
+			memcpy(
+				dst + x * params.dstPixSize + y * img_desc.image_row_pitch,
+				params.src + (x + shiftX) * params.srcPixSize + (y + shiftY) * params.desc.fBytesPerRow,
+				params.dstPixSize);
+		}
+	}
+
+	return buffer;
+}
+
+std::vector<unsigned char> ProcessFitHorizontal(
+	const tileParams& params,
+	rpr_image_desc& img_desc
+)
+{
+	std::vector<unsigned char> buffer;
+
+	const int srcWidth = params.desc.fWidth;
+	const int srcHeight = params.desc.fHeight;
+
+	float srcWidthPerPixel = (float)srcWidth / (float)params.viewWidth;
+	const int srcFullSegWidth = std::ceil(srcWidthPerPixel * params.maxTileWidth);
+	const int srcTailSegWidth = srcWidth - srcFullSegWidth * (params.countXTiles - 1);
+	const int srcCurrSegWidth = (params.xTileIdx == (params.countXTiles - 1)) ? srcTailSegWidth : srcFullSegWidth;
+
+	const int createdImageWidth = srcCurrSegWidth;
+
+	float srcHeightPerPixel = srcWidthPerPixel;
+
+	// for height, we either need to add black pixels, or cut source image to preserve aspect ratio of the source picture
+	const int srcFullSegHeight = std::ceil(srcHeightPerPixel * params.maxTileHeight);
+	const int countFullSegments = (srcHeight > srcWidth) ?
+		std::trunc(params.viewHeight * srcHeightPerPixel / (float)srcFullSegHeight) :
+		std::trunc(srcHeight / (float)srcFullSegHeight);
+	const int srcImageTailSegHeight = srcHeight - countFullSegments * srcFullSegHeight;
+	const int scrOutputTailSegHeight = (params.viewHeight * srcHeightPerPixel) - srcFullSegHeight * (params.countYTiles - 1);
+	const int countSkipTiles = std::trunc((params.countYTiles - countFullSegments - 1) / 2);
+	const int srcCurrSegHeight = (params.yTileIdx == 0) ? scrOutputTailSegHeight : srcFullSegHeight;
+
+	int srcFirstPixelOffset = 0;
+	if (srcHeight > srcWidth)
+	{
+		srcFirstPixelOffset = std::ceil((srcHeight - params.viewHeight * srcHeightPerPixel) / 2);
+	}
+
+	int createdImageHeight = (params.yTileIdx == 0) ? scrOutputTailSegHeight : srcFullSegHeight;
+
+	// calculate offset
+	// - we can have uneven number of black tiles added at the sides of actual backplate image, and the tail segment length is different
+	// NIY
+
+	// - 1-st and last tile should have eqal number of black pixels added to them
+	//int offsetY = std::ceil(srcImageTailSegHeight / 2);
+
+	// set data and prepare for copying
+	img_desc.image_width = createdImageWidth;
+	img_desc.image_height = createdImageHeight;
+	img_desc.image_row_pitch = img_desc.image_width * params.dstPixSize;
+
+	buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
+
+	int countActiveTiles = countFullSegments;
+	int activeSegHeight = countFullSegments * srcFullSegHeight;
+	if (activeSegHeight < srcHeight)//((countFullSegments * srcFullSegHeight + scrOutputTailSegHeight) < srcHeight)
+		countActiveTiles++;
+	if (srcHeight - activeSegHeight > srcFullSegHeight)
+		countActiveTiles++;
+
+	if ((params.yTileIdx >= countSkipTiles) && ((params.yTileIdx - countSkipTiles) < countActiveTiles))
+	{
+		unsigned char* dst = buffer.data();
+
+		//int dstOffset = (yTileIdx == countSkipTiles) ? offsetY : 0;
+		//int offsetShift = (yTileIdx > countSkipTiles) ? (dstOffset) : 0;
+
+		int shiftX = params.xTileIdx * srcFullSegWidth; // +offsetShift;
+
+		int shiftY; // calculate source image offset depending on how many rows of tiles were skipped
+		if (countSkipTiles == 0)
+		{ // 1-st row height is different then that of the rest so need to handle this case separately
+			shiftY = (params.yTileIdx == 0) ? 0 : scrOutputTailSegHeight;
+			if (params.yTileIdx > 0)
+				shiftY += (params.yTileIdx - 1) * srcFullSegHeight;
+		}
+		else
+		{
+			shiftY = (params.yTileIdx - countSkipTiles) * srcFullSegHeight;
+		}
+
+		int lastSrcPixel = srcCurrSegHeight;
+		if ((params.yTileIdx - countSkipTiles) == (countActiveTiles - 1))
+		{
+			if (countSkipTiles == 0)
+			{
+				int pixelsRemaining = srcHeight - scrOutputTailSegHeight - srcFullSegHeight * countFullSegments;
+				lastSrcPixel = pixelsRemaining;
+			}
+			else
+			{
+				int pixelsRemaining = srcHeight - srcFullSegHeight * countFullSegments;
+				lastSrcPixel = pixelsRemaining;
+			}
+		}
+
+		if (lastSrcPixel < 0)
+			lastSrcPixel = 0;
+
+		// foreach pixel in source image
+		for (unsigned int y = 0; y < lastSrcPixel; y++)
+		{
+			for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+			{
+				int finalSrcShift = y + shiftY + srcFirstPixelOffset;
+				if (finalSrcShift < 0)
+					continue;
+				if (finalSrcShift > srcWidth)
+					continue;
+
+				memcpy(
+					dst + x * params.dstPixSize + (y /*+ dstOffset*/)* img_desc.image_row_pitch,
+					params.src + (x + shiftX) * params.srcPixSize + (y + shiftY + srcFirstPixelOffset) * params.desc.fBytesPerRow,
+					params.dstPixSize);
+			}
+		}
+	}
+
+	return buffer;
+}
+
+std::vector<unsigned char> ProcessFitVertical(
+	const tileParams& params,
+	rpr_image_desc& img_desc
+)
+{
+	std::vector<unsigned char> buffer;
+
+	const int srcWidth = params.desc.fWidth;
+	const int srcHeight = params.desc.fHeight;
+
+	float srcHeightPerPixel = (float)srcHeight / (float)params.viewHeight;
+	const int srcFullSegHeight = std::ceil(srcHeightPerPixel * params.maxTileHeight);
+	const int srcTailSegHeight = srcHeight - srcFullSegHeight * (params.countYTiles - 1);
+	const int srcCurrSegHeight = (params.yTileIdx == 0) ? srcTailSegHeight : srcFullSegHeight;
+
+	const int createdImageHeight = srcCurrSegHeight;
+
+	float srcWidthPerPixel = srcHeightPerPixel;
+
+	// for width, we either need to add black pixels, or cut source image to preserve aspect ratio of the source picture
+	const int srcFullSegWidth = std::ceil(srcWidthPerPixel * params.maxTileWidth);
+	const int countFullSegments = (srcWidth > srcHeight) ?
+		std::trunc(params.viewWidth * srcWidthPerPixel / (float)srcFullSegWidth) :
+		std::trunc(srcWidth / (float)srcFullSegWidth);
+	const int srcImageTailSegWidth = srcWidth - countFullSegments * srcFullSegWidth;
+	const int scrOutputTailSegWidth = (params.viewWidth * srcWidthPerPixel) - srcFullSegWidth * (params.countXTiles - 1);
+	const int countSkipTiles = std::trunc((params.countXTiles - countFullSegments - 1) / 2);
+	const int srcCurrSegWidth = ((params.xTileIdx - countSkipTiles) == countFullSegments) ? srcImageTailSegWidth : srcFullSegWidth;
+
+	int srcFirstPixelOffset = 0;
+	if (srcWidth > srcHeight)
+	{
+		srcFirstPixelOffset = std::ceil((srcWidth - params.viewWidth * srcWidthPerPixel) / 2);
+	}
+
+	int createdImageWidth = (params.xTileIdx == (params.countXTiles - 1)) ? scrOutputTailSegWidth : srcFullSegWidth;
+
+	// calculate offset
+	// - we can have uneven number of black tiles added at the sides of actual backplate image, and the tail segment length is different
+	// NIY
+
+	// 1-st and last tile should have eqal number of black pixels added to them
+	// currently not used
+	//int offsetX = std::ceil(srcImageTailSegWidth / 2);
+
+	// set data and prepare for copying
+	img_desc.image_width = createdImageWidth;
+	img_desc.image_height = createdImageHeight;
+	img_desc.image_row_pitch = img_desc.image_width * params.dstPixSize;
+
+	buffer.resize(img_desc.image_height * img_desc.image_row_pitch, (char)0);
+
+	if ((params.xTileIdx >= countSkipTiles) && ((params.xTileIdx - countSkipTiles) <= countFullSegments))
+	{
+		unsigned char* dst = buffer.data();
+
+		unsigned int shiftX = (params.xTileIdx - countSkipTiles) * srcFullSegWidth;
+		unsigned int shiftY = (params.yTileIdx > 1) ? srcTailSegHeight + (params.yTileIdx - 1) * srcFullSegHeight : params.yTileIdx * srcTailSegHeight;
+
+		// created tile could be bigger then remaining source image (when black tiles are added) and remainin source image could be bigger (when cutting image)
+		int lastSrcPixel = (createdImageWidth > srcCurrSegWidth) ? srcCurrSegWidth : createdImageWidth;
+
+		if (lastSrcPixel < 0)
+			lastSrcPixel = 0;
+
+		// foreach pixel in source image
+		for (unsigned int y = 0; y < srcCurrSegHeight; y++)
+		{
+			for (unsigned int x = 0; x < lastSrcPixel; x++)
+			{
+				int finalSrcShift = x + shiftX + srcFirstPixelOffset;
+				if (finalSrcShift < 0)
+					continue;
+				if (finalSrcShift > srcWidth)
+					continue;
+
+				memcpy(
+					dst + (x /*+ dstOffset*/)* params.dstPixSize + y * img_desc.image_row_pitch,
+					params.src + (x + shiftX + srcFirstPixelOffset) * params.srcPixSize + (y + shiftY) * params.desc.fBytesPerRow,
+					params.dstPixSize);
+			}
+		}
+
+#ifdef _DEBUG
+#ifdef DEBUG_TILE_DUMP
+		// debug dump
+		if ((params.xTileIdx == 2) && (params.yTileIdx == 0))
+		{
+			std::vector<unsigned char> buffer2(img_desc.image_height * img_desc.image_width * (dstPixSize + 1), (char)255);
+			unsigned char* dst2 = buffer2.data();
+			for (unsigned int y = 0; y < srcCurrSegHeight; y++)
+			{
+				for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+				{
+					memcpy(
+						dst2 + x * (dstPixSize + 1) + (srcCurrSegHeight - 1 - y) * img_desc.image_width * (dstPixSize + 1),
+						src + (x + shiftX) * srcPixSize + (y + shiftY) * params.desc.fBytesPerRow,
+						dstPixSize);
+				}
+			}
+
+			generateBitmapImage(dst2, img_desc.image_height, img_desc.image_width, img_desc.image_width * 4, "C:\\temp\\dbg\\1.bmp");
+		}
+#endif
+#endif
+
+	}
+
+	return buffer;
+}
+
+std::vector<unsigned char> calculateTileImage(
+	const tileParams& params,
+	MHWRender::MTextureDescription& desc,
+	FireMaya::FitType imgFit,
+	rpr_image_desc& img_desc)
+{
+	switch(imgFit) 
+	{
+		case FireMaya::FitType::FitBest:
+		{
+			if (desc.fWidth > desc.fHeight)
+				return ProcessFitHorizontal(params, img_desc);
+			else
+				return ProcessFitVertical(params, img_desc);
+		}
+
+		case FireMaya::FitType::FitFill:
+		{
+			if (desc.fWidth > desc.fHeight)
+				return ProcessFitVertical(params, img_desc);
+			else
+				return ProcessFitHorizontal(params, img_desc);
+		}
+
+		case FireMaya::FitType::FitStretch:
+		{
+			return ProcessFitStretch(params, img_desc);
+		}
+
+		case FireMaya::FitType::FitHorizontal:
+		{
+			return ProcessFitHorizontal(params, img_desc);
+		}
+
+		case FireMaya::FitType::FitVertical:
+		{
+			return ProcessFitVertical(params, img_desc);
+		}
+	}
+
+	// dummy return for compiler
+	std::vector <unsigned char> dummy;
+	return dummy;
+}
+
+frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
+	int viewWidth, int viewHeight,
+	int maxTileWidth, int maxTileHeight,
+	int currTileWidth, int currTileHeight,
+	int countXTiles, int countYTiles,
+	int xTileIdx, int yTileIdx,
+	MString colorSpace,
+	FitType imgFit)
+{
+	// back-off
+	if (texturePath.length() == 0)
+	{
+		return NULL;
+	}
+
+	// get key for texture tile
+	char key[1024] = {};
+	int written = snprintf(key, 1024, "%s-%d-%d-%d-%d",
+		texturePath.asUTF8(),
+		viewWidth, viewHeight,
+		xTileIdx, yTileIdx);
+	assert(written >= 0 && written < 1024);
+
+	// try find cached texture
+	auto it = m->imageCache.find(key);
+	if (it != m->imageCache.end())
+	{
+		DebugPrint("Using cached image from imageCache...");
+		return it->second;
+	}
+
+	// not cached => generate new
+	frw::Image retImage = FireRenderThread::RunOnMainThread<frw::Image>([&]()
+	{
+		MAIN_THREAD_ONLY; // MTextureManager will not work in other threads
+
+		frw::Image image;
+
+		// back-offs
+		auto renderer = MHWRender::MRenderer::theRenderer(); // have to use auto because these are different classes in Maya 2017 and 2018
+		if (!renderer)
+		{
+			return image;
+		}
+
+		auto textureManager = renderer->getTextureManager(); // have to use auto because these are different classes in Maya 2017 and 2018
+		if (!textureManager)
+		{
+			return image;
+		}
+
+		auto texture = textureManager->acquireTexture(texturePath); // have to use auto because these are different classes in Maya 2017 and 2018
+		if (!texture)
+		{
+			return image;
+		}
+
+		// get texture file information
+		MHWRender::MTextureDescription desc = {};
+		texture->textureDescription(desc);
+#if MAYA_API_VERSION >= 20180000
+		size_t slicePitch = 0;
+#else
+		int slicePitch = 0;
+#endif
+		int rowPitch = 0;
+		void* rawData = texture->rawData(rowPitch, slicePitch);
+		if (!rawData)
+		{
+			textureManager->releaseTexture(texture);
+
+			return image;
+		}
+
+		const unsigned char* src = static_cast<const unsigned char*>(rawData);
+
+		int channels = 0;
+		int pixelStride = 0;
+		bool isImageFormatSupported = false;
+		std::tie(channels, pixelStride, isImageFormatSupported) = getTexturePixelStride(desc.fFormat);
+
+		// create rpr image structures
+		rpr_image_format format = {};
+		format.num_components = channels >= 3 ? 3 : 1;
+		format.type = (pixelStride == 4) ? RPR_COMPONENT_TYPE_FLOAT32 :
+			(pixelStride == 2) ? RPR_COMPONENT_TYPE_FLOAT16 :
+			RPR_COMPONENT_TYPE_UINT8;
+
+		rpr_image_desc img_desc = {};
+
+		// get segment of background image corresponding to tile
+		tileParams params(desc);
+		params.viewWidth = viewWidth;
+		params.viewHeight = viewHeight;
+		params.maxTileWidth = maxTileWidth;
+		params.maxTileHeight = maxTileHeight;
+		params.xTileIdx = xTileIdx;
+		params.yTileIdx = yTileIdx;
+		params.countXTiles = countXTiles;
+		params.countYTiles = countYTiles;
+		params.src = src;
+		params.srcPixSize = pixelStride * channels;
+		params.dstPixSize = pixelStride * format.num_components;
+
+		// - buffer for background image tile
+		std::vector<unsigned char> buffer = calculateTileImage(
+			params,
+			desc,
+			imgFit,
+			img_desc);
+
+		image = frw::Image(m->context, format, img_desc, buffer.data());
+		image.SetName(key);
+
+		rprImageSetWrap(image.Handle(), RPR_IMAGE_WRAP_TYPE_MIRRORED_REPEAT);
+
+		texture->freeRawData(rawData);
+
+		return image;
+	});
+
+	// store image in image cache
+	if (retImage)
+		m->imageCache[key] = retImage;
+
+	return retImage;
+}
+
+frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, const MString& ownerNodeName)
 {
 	if (texturePath.length() == 0)
 	{
 		return NULL;
 	}
 
-	std::string key = (texturePath + (flipX ? "_flipped" : "_notflipped")).asUTF8();
+	std::string key = texturePath.asUTF8();
 
 	auto it = m->imageCache.find(key);
 	if (it != m->imageCache.end())
 		return it->second;
 
-	frw::Image retImage = FireRenderThread::RunOnMainThread<frw::Image>([this, flipX, texturePath, key, colorSpace, ownerNodeName]() -> frw::Image
+	frw::Image retImage = FireRenderThread::RunOnMainThread<frw::Image>([this, texturePath, key, colorSpace, ownerNodeName]() -> frw::Image
 	{
 		MAIN_THREAD_ONLY; // MTextureManager will not work in other threads
 		DebugPrint("Loading Image: %s in colorSpace: %s", texturePath.asUTF8(), colorSpace.asUTF8());
 
 		frw::Image image;
 
-		if (!flipX)
-			image = frw::Image(m->context, texturePath.asUTF8());
+		// case for dds
+		std::string ddsExt = ".dds";
+		std::string strPath = texturePath.asChar();
+		bool isDDS = strPath.rfind(ddsExt) == strPath.length() - ddsExt.length();
 
-		// using texture system appears more reliable that using MImage functions (which don't support exr)
+		if (!isDDS)
+		{
+			image = frw::Image(m->context, texturePath.asUTF8());
+		}
+
 		if (!image)
 		{
-			if (auto renderer = MHWRender::MRenderer::theRenderer())
+			// case for dds	
+			if (isDDS)
 			{
-				if (auto textureManager = renderer->getTextureManager())
-				{
-					try
-					{
-						if (auto texture = textureManager->acquireTexture(texturePath, ownerNodeName))
-						{
-							MHWRender::MTextureDescription desc = {};
-							texture->textureDescription(desc);
-#if MAYA_API_VERSION >= 20180000
-							size_t slicePitch = 0;
-#else
-							int slicePitch = 0;
-#endif
-							int rowPitch = 0;
-							if (const auto rawData_to_free = texture->rawData(rowPitch, slicePitch))
-							{
-								auto srcData = rawData_to_free;
-								auto width = desc.fWidth;
-								auto height = desc.fHeight;
-
-								auto channels = 1;
-								auto componentSize = 1;
-
-								switch (desc.fFormat)
-								{
-									//case MHWRender::kD24S8: break;
-									//case MHWRender::kD24X8: break;
-									//case MHWRender::kD32_FLOAT: break;
-									//case MHWRender::kR24G8: break;
-									//case MHWRender::kR24X8: break;
-									//case MHWRender::kDXT1_UNORM: break;
-									//case MHWRender::kDXT1_UNORM_SRGB: break;
-									//case MHWRender::kDXT2_UNORM: break;
-									//case MHWRender::kDXT2_UNORM_SRGB: break;
-									//case MHWRender::kDXT2_UNORM_PREALPHA: break;
-									//case MHWRender::kDXT3_UNORM: break;
-									//case MHWRender::kDXT3_UNORM_SRGB: break;
-									//case MHWRender::kDXT3_UNORM_PREALPHA: break;
-									//case MHWRender::kDXT4_UNORM: break;
-									//case MHWRender::kDXT4_SNORM: break;
-									//case MHWRender::kDXT5_UNORM: break;
-									//case MHWRender::kDXT5_SNORM: break;
-									//case MHWRender::kR9G9B9E5_FLOAT: break;
-									//case MHWRender::kR1_UNORM: break;
-								case MHWRender::kA8:
-								case MHWRender::kR8_UNORM:
-									//case MHWRender::kR8_SNORM: break;
-								case MHWRender::kR8_UINT:
-									//case MHWRender::kR8_SINT: break;
-								case MHWRender::kL8:
-									channels = 1;
-									componentSize = 1;
-									break;
-
-								case MHWRender::kR16_FLOAT:
-									channels = 1;
-									componentSize = 2;
-									break;
-									//case MHWRender::kR16_UNORM: break;
-									//case MHWRender::kR16_SNORM: break;
-									//case MHWRender::kR16_UINT: break;
-									//case MHWRender::kR16_SINT: break;
-									//case MHWRender::kL16: break;
-									//case MHWRender::kR8G8_UNORM: break;
-									//case MHWRender::kR8G8_SNORM: break;
-									//case MHWRender::kR8G8_UINT: break;
-									//case MHWRender::kR8G8_SINT: break;
-									//case MHWRender::kB5G5R5A1: break;
-									//case MHWRender::kB5G6R5: break;
-								case MHWRender::kR32_FLOAT:
-									channels = 1;
-									componentSize = 4;
-									break;
-									//case MHWRender::kR32_UINT: break;
-									//case MHWRender::kR32_SINT: break;
-									//case MHWRender::kR16G16_FLOAT: break;
-									//case MHWRender::kR16G16_UNORM: break;
-									//case MHWRender::kR16G16_SNORM: break;
-									//case MHWRender::kR16G16_UINT: break;
-									//case MHWRender::kR16G16_SINT: break;
-								case MHWRender::kR8G8B8A8_UNORM:
-									//case MHWRender::kR8G8B8A8_SNORM: break;
-								case MHWRender::kR8G8B8A8_UINT:
-									channels = 4;
-									componentSize = 1;
-									break;
-									//case MHWRender::kR8G8B8A8_SINT: break;
-									//case MHWRender::kR10G10B10A2_UNORM: break;
-									//case MHWRender::kR10G10B10A2_UINT: break;
-									//case MHWRender::kB8G8R8A8: break;
-									//case MHWRender::kB8G8R8X8: break;
-								case MHWRender::kR8G8B8X8:
-									channels = 4;
-									componentSize = 1;
-									break;
-									//case MHWRender::kA8B8G8R8: break;
-									//case MHWRender::kR32G32_FLOAT: break;
-									//case MHWRender::kR32G32_UINT: break;
-									//case MHWRender::kR32G32_SINT: break;
-								case MHWRender::kR16G16B16A16_FLOAT:
-									channels = 4;
-									componentSize = 2;
-									break;
-									//case MHWRender::kR16G16B16A16_UNORM: break;
-									//case MHWRender::kR16G16B16A16_SNORM: break;
-									//case MHWRender::kR16G16B16A16_UINT: break;
-									//case MHWRender::kR16G16B16A16_SINT: break;
-								case MHWRender::kR32G32B32_FLOAT:
-									channels = 3;
-									componentSize = 4;
-									break;
-									//case MHWRender::kR32G32B32_UINT: break;
-									//case MHWRender::kR32G32B32_SINT: break;
-								case MHWRender::kR32G32B32A32_FLOAT:
-									channels = 4;
-									componentSize = 4;
-									break;
-									//case MHWRender::kR32G32B32A32_UINT: break;
-									//case MHWRender::kR32G32B32A32_SINT: break;
-								default:
-									std::ostringstream stringStream;
-									stringStream << "Error Loading Image : " << texturePath.asUTF8() << 
-													". Unsupported MRasterFormat format: " << desc.fFormat;
-									std::string errMsg = stringStream.str();
-
-									texture->freeRawData(rawData_to_free);
-									textureManager->releaseTexture(texture);
-
-									throw std::runtime_error(errMsg.c_str());
-								}
-
-								int srcRowPitch = desc.fBytesPerRow;
-
-								std::vector<float> tempBuffer;
-								if (componentSize == 2)	// we don't support half size floats at the moment!
-								{
-									tempBuffer.resize(width * height * channels);
-									for (auto y = 0u; y < height; y++)
-									{
-										auto src = static_cast<const half *>(srcData) + y * rowPitch / sizeof(half);
-										auto dst = tempBuffer.data() + y * (width * channels);
-										for (auto x = 0u; x < width * channels; x++)
-										{
-											dst[x] = src[x];
-										}
-									}
-
-									componentSize = 4;
-									srcData = tempBuffer.data();
-									srcRowPitch = width * channels * componentSize;
-								}
-
-								rpr_image_format format = {};
-								format.num_components = channels >= 3 ? 3 : 1;
-								format.type =
-									(componentSize == 4) ? RPR_COMPONENT_TYPE_FLOAT32 :
-									(componentSize == 2) ? RPR_COMPONENT_TYPE_FLOAT16 :
-									RPR_COMPONENT_TYPE_UINT8;
-
-								int srcPixSize = componentSize * channels;
-								int dstPixSize = componentSize * format.num_components;
-
-								rpr_image_desc img_desc = {};
-								img_desc.image_width = width;
-								img_desc.image_height = height;
-								img_desc.image_row_pitch = width * dstPixSize;
-
-								std::vector<unsigned char> buffer(height * img_desc.image_row_pitch);
-
-								for (unsigned int y = 0; y < height; y++)
-								{
-									auto src = static_cast<const char*>(srcData) + y * srcRowPitch;
-									auto dst = buffer.data() + y * img_desc.image_row_pitch;
-									for (unsigned int x = 0; x < width; x++)
-									{
-										if (flipX)
-										{
-											memcpy(dst + x * dstPixSize, src + (width - x - 1) * srcPixSize, dstPixSize);
-										}
-										else
-										{
-											memcpy(dst + x * dstPixSize, src + x * srcPixSize, dstPixSize);
-										}
-									}
-								}
-
-								convertColorSpace(colorSpace, format, img_desc, buffer);
-								image = frw::Image(m->context, format, img_desc, buffer.data());
-								image.SetName(texturePath.asChar());
-#ifndef MAYA2015
-								texture->freeRawData(rawData_to_free);
-#else
-								free(rawData_to_free);
-#endif
-							}
-							textureManager->releaseTexture(texture);
-						}
-					}
-					catch (std::exception& e)
-					{
-						ErrorPrint(e.what());
-					}
-					catch (...)
-					{
-						ErrorPrint("Error Loading Image: %s", texturePath.asUTF8());
-					}
-				}
+				image = LoadImageUsingMImage(texturePath, colorSpace);
+			}
+			else
+			{ 
+				image = LoadImageUsingMTexture(texturePath, colorSpace, ownerNodeName);
 			}
 		}
 
 		if (image)
+		{
 			m->imageCache[key] = image;
+			image.SetName(texturePath.asChar());
+		}
 
 		return image;
 	});
 
 	return retImage;
+}
+
+frw::Image FireMaya::Scope::LoadImageUsingMImage(MString texturePath, MString colorSpace)
+{
+	MImage img;
+	unsigned int width = 0;
+	unsigned int height = 0;
+
+	MStatus status = img.readFromFile(texturePath, MImage::MPixelType::kFloat);
+	if (status != MStatus::kSuccess)
+	{
+		return frw::Image();
+	}
+
+	// this method won't work for EXR files for unknown reasons
+	//img.verticalFlip();
+
+	void* src = nullptr;
+	unsigned int componentSize = 1;
+	unsigned int depth = img.depth();
+	bool hasDepthMap = img.haveDepth();
+	bool isRGBA = img.isRGBA();
+
+	//MImage::MImageFilterFormat filterFormat = img.filter()
+
+	img.getSize(width, height);
+
+	unsigned int channels = depth;
+
+	if (img.pixelType() == MImage::MPixelType::kByte)
+	{
+		src = img.pixels();
+		componentSize = 1;
+	}
+	else if (img.pixelType() == MImage::MPixelType::kFloat)
+	{
+		src = img.floatPixels();
+		componentSize = 4;
+
+		float* srcFloat = (float*)src;
+
+		channels = depth / componentSize;
+		for (int pixel = 0; pixel < width * height; ++pixel)
+		{
+			for (int i = 0; i < channels; i++)
+			{
+				// Looks like Core needs normalized float values in range 0 .. 1. Here we can get value in range [0.0 .. 255.0]
+				srcFloat[pixel * channels + i] /= 255.0f;
+			}
+		}
+	}
+
+	return CreateImageInternal(colorSpace, width, height, src, channels, componentSize, width * depth, true);
+}
+
+frw::Image FireMaya::Scope::LoadImageUsingMTexture(MString texturePath, MString colorSpace, const MString& ownerNodeName)
+{
+	frw::Image img;
+
+	if (auto renderer = MHWRender::MRenderer::theRenderer())
+	{
+		if (auto textureManager = renderer->getTextureManager())
+		{
+			try
+			{
+				if (auto texture = textureManager->acquireTexture(texturePath, ownerNodeName))
+				{
+					MHWRender::MTextureDescription desc = {};
+					texture->textureDescription(desc);
+
+					int rowPitch = 0;
+
+#if MAYA_API_VERSION >= 20180000
+					size_t slicePitch = 0;
+#else
+					int slicePitch = 0;
+#endif
+
+					if (const auto rawData_to_free = texture->rawData(rowPitch, slicePitch))
+					{
+						auto srcData = rawData_to_free;
+						auto width = desc.fWidth;
+						auto height = desc.fHeight;
+
+						auto channels = 1;
+						auto componentSize = 1;
+						bool isFormatSupported = false;
+
+						std::tie(channels, componentSize, isFormatSupported) = getTexturePixelStride(desc.fFormat);
+
+						if (!isFormatSupported)
+						{
+							std::ostringstream stringStream;
+							stringStream << "Error Loading Image : " << texturePath.asUTF8() <<
+								". Unsupported MRasterFormat format: " << desc.fFormat;
+							std::string errMsg = stringStream.str();
+
+							texture->freeRawData(rawData_to_free);
+							textureManager->releaseTexture(texture);
+
+							throw std::runtime_error(errMsg.c_str());
+						}
+
+						img = CreateImageInternal(colorSpace, desc.fWidth, desc.fHeight, 
+													srcData, channels, componentSize, rowPitch);
+
+						texture->freeRawData(rawData_to_free);
+					}
+					textureManager->releaseTexture(texture);
+				}
+			}
+			catch (std::exception& e)
+			{
+				ErrorPrint(e.what());
+			}
+			catch (...)
+			{
+				ErrorPrint("Error Loading Image: %s", texturePath.asUTF8());
+			}
+		}
+	}
+
+	return img;
+}
+
+frw::Image FireMaya::Scope::CreateImageInternal(MString colorSpace, 
+												unsigned int width, 
+												unsigned int height,
+												void* srcData,
+												unsigned int channels,
+												unsigned int componentSize,
+												unsigned int rowPitch,
+												bool flipY)
+{
+	int srcRowPitch = rowPitch;// desc.fBytesPerRow;
+
+	std::vector<float> tempBuffer;
+	if (componentSize == 2)	// we don't support half size floats at the moment!
+	{
+		tempBuffer.resize(width * height * channels);
+		for (auto y = 0u; y < height; y++)
+		{
+			auto src = static_cast<const half *>(srcData) + y * rowPitch / sizeof(half);
+			auto dst = tempBuffer.data() + y * (width * channels);
+			for (auto x = 0u; x < width * channels; x++)
+			{
+				dst[x] = src[x];
+			}
+		}
+
+		componentSize = 4;
+		srcData = tempBuffer.data();
+		srcRowPitch = width * channels * componentSize;
+	}
+
+	rpr_image_format format = {};
+	format.num_components = channels >= 3 ? 3 : 1;
+	format.type =
+		(componentSize == 4) ? RPR_COMPONENT_TYPE_FLOAT32 :
+		(componentSize == 2) ? RPR_COMPONENT_TYPE_FLOAT16 :
+		RPR_COMPONENT_TYPE_UINT8;
+
+	int srcPixSize = componentSize * channels;
+	int dstPixSize = componentSize * format.num_components;
+
+	rpr_image_desc img_desc = {};
+	img_desc.image_width = width;
+	img_desc.image_height = height;
+	img_desc.image_row_pitch = width * dstPixSize;
+
+	std::vector<unsigned char> buffer(height * img_desc.image_row_pitch);
+
+	for (unsigned int y = 0; y < height; y++)
+	{
+		auto src = static_cast<const char*>(srcData) + y * srcRowPitch;
+		unsigned char* dst = nullptr;
+		
+		if (!flipY)
+		{
+			dst = buffer.data() + y * img_desc.image_row_pitch;
+		}
+		else
+		{
+			dst = buffer.data() + (height - y - 1) * img_desc.image_row_pitch;
+		}
+
+		for (unsigned int x = 0; x < width; x++)
+		{
+			memcpy(dst + x * dstPixSize, src + x * srcPixSize, dstPixSize);
+		}
+	}
+
+	convertColorSpace(colorSpace, format, img_desc, buffer);
+	return frw::Image(m->context, format, img_desc, buffer.data());
 }
 
 template <class T>
@@ -500,7 +1171,7 @@ frw::Image FireMaya::Scope::GetAdjustedImage(MString texturePath,
 					int slicePitch = 0;
 #endif
 					int rowPitch = 0;
-					if (auto rawData = texture->rawData(rowPitch, slicePitch))
+					if (void* rawData = texture->rawData(rowPitch, slicePitch))
 					{
 						auto pixels = static_cast<const unsigned char*>(rawData);
 						auto srcPixSize = desc.fBytesPerRow / desc.fWidth;
@@ -944,7 +1615,41 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 
 	case MayaNodePlace2dTexture:
 	{
-		auto value = materialSystem.ValueLookupUV(0);
+		// get connected texture
+		MString textureFile("");
+
+		MStatus status;
+		MItDependencyGraph it(node,
+			MFn::kFileTexture,
+			MItDependencyGraph::kDownstream,
+			MItDependencyGraph::kBreadthFirst,
+			MItDependencyGraph::kNodeLevel,
+			&status);
+		for (; !it.isDone(); it.next())
+		{
+			MFnDependencyNode fileNode(it.currentItem());
+			status = fileNode.findPlug("fileTextureName").getValue(textureFile);
+
+			if (!status) // texture file node not found, continue go down the graph
+				continue;
+
+			// texture node found => exit
+			break;
+		}
+
+		// get uv data
+		int uvIdx = 0;
+		const FireRenderMesh* pMesh = m->m_pCurrentlyParsedMesh;
+		if (pMesh != nullptr)
+		{
+			uvIdx = pMesh->GetAssignedUVMapIdx(textureFile);
+		}
+
+		if (uvIdx == -1)
+			uvIdx = 0;
+
+		// create node
+		auto value = materialSystem.ValueLookupUV(uvIdx);
 
 		// rotate frame
 		auto rotateFrame = GetValue(shaderNode.findPlug("rotateFrame"));
@@ -1699,7 +2404,7 @@ FireMaya::Scope::~Scope()
 }
 
 
-frw::Shader FireMaya::Scope::GetShader(MObject node, bool forceUpdate)
+frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMesh* pMesh, bool forceUpdate)
 {
 	if (node.isNull())
 		return frw::Shader();
@@ -1713,10 +2418,15 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, bool forceUpdate)
 			RegisterCallback(node);
 
 		DebugPrint("Parsing shader: %s (forceUpdate=%d, shader.IsDirty()=%d)", shaderId.c_str(), forceUpdate, shader.IsDirty());
+
+		m->m_pCurrentlyParsedMesh = pMesh;
+
 		// create now
 		shader = ParseShader(node);
 		if (shader)
 			SetCachedShader(shaderId, shader);
+
+		m->m_pCurrentlyParsedMesh = nullptr;
 	}
 	return shader;
 }
@@ -1894,6 +2604,7 @@ frw::Shader FireMaya::Scope::GetVolumeShader(MPlug plug)
 }
 
 FireMaya::Scope::Data::Data()
+	: m_pCurrentlyParsedMesh(nullptr)
 {
 }
 
@@ -1907,6 +2618,13 @@ FireMaya::Scope::Data::~Data()
 	scene.Reset();
 	materialSystem.Reset();
 	context.Reset();
+
+	// before deleting shader that have dependent shaders, we need to delete these dependencies first
+	for (auto it = shaderMap.begin(); it != shaderMap.end(); ++it)
+		it->second.ClearDependencies();
+
+	// delete shaders
+	shaderMap.clear();
 
 	// everything else destroyed automatically
 }

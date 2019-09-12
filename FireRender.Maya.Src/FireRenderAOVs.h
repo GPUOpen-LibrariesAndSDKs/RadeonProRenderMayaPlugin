@@ -48,6 +48,9 @@ public:
 	/** Apply the current AOV state to the render context. */
 	void applyToContext(FireRenderContext& context);
 
+	/** Apply the current render context state to the AOVs state. */
+	void setFromContext(FireRenderContext& context);
+
 	/** Set the size of the AOVs, including the full frame buffer size. */
 	void setRegion(const RenderRegion& region,
 		unsigned int frameWidth, unsigned int frameHeight);

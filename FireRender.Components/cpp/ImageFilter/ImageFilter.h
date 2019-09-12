@@ -13,7 +13,8 @@ enum class RifFilterType
 	BilateralDenoise,
 	LwrDenoise,
 	EawDenoise,
-	MlDenoise
+	MlDenoise,
+	MlDenoiseColorOnly
 };
 
 enum RifFilterInput
@@ -259,6 +260,28 @@ public:
 	explicit RifFilterMl(const RifContextWrapper* rifContext, std::uint32_t width, std::uint32_t height,
 		const std::string& modelsPath, bool useOpenImageDenoise);
 	virtual ~RifFilterMl();
+
+	virtual void AttachFilter(const RifContextWrapper* rifContext) override;
+};
+
+class RifFilterMlColorOnly final : public RifFilterWrapper
+{
+	enum
+	{
+		OutputResampleFilter,
+		AuxFilterMax
+	};
+
+	enum
+	{
+		MlOutputRifImage,
+		AuxImageMax
+	};
+
+public:
+	explicit RifFilterMlColorOnly(const RifContextWrapper* rifContext, std::uint32_t width, std::uint32_t height,
+		const std::string& modelsPath, bool useOpenImageDenoise);
+	virtual ~RifFilterMlColorOnly();
 
 	virtual void AttachFilter(const RifContextWrapper* rifContext) override;
 };

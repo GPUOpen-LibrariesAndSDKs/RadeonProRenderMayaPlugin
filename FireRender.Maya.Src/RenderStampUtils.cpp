@@ -4,6 +4,8 @@
 #include "FireRenderContext.h" // used for scene stats
 #include "FireRenderThread.h"
 
+#include <Maya/MAnimControl.h>
+
 
 namespace RenderStampUtils
 {
@@ -294,6 +296,12 @@ namespace RenderStampUtils
 				str += PLUGIN_VERSION;
 			}
 			break;
+			case 'f':
+			{
+				int frame = (int) MAnimControl::currentTime().value();
+				str += std::to_string(frame);
+			}
+			break;
 			default:
 				// wrong escape sequence, add character
 				if (c)
@@ -315,5 +323,14 @@ namespace RenderStampUtils
 		}
 
 		return str;
+	}
+
+	void ClearCache()
+	{
+		g_renderDevice = 0;
+
+		g_friendlyUsedGPUName.clear();
+		g_cpuName.clear();
+		g_computerName.clear();
 	}
 }

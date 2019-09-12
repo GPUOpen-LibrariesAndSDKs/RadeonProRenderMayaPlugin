@@ -14,6 +14,11 @@
 
 #ifdef WIN32
 #include <Windows.h>
+#else
+#include <sys/time.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
 #endif
 
 #include <json.hpp>
@@ -26,6 +31,28 @@
 #include <aws/core/utils/ratelimiter/DefaultRateLimiter.h>
 #include <aws/core/utils/UUID.h>
 #include <aws/core/utils/StringUtils.h>
+
+#include <codecvt>
+#include <string>
+#include <ctime>
+
+std::wstring _s2ws(const std::string& str)
+{
+    using convert_typeX = std::codecvt_utf8<wchar_t>;
+    
+    std::wstring_convert<convert_typeX, wchar_t> converterX;
+    
+    return converterX.from_bytes(str);
+}
+
+std::string _ws2s(const std::wstring& wstr)
+{
+    using convert_typeX = std::codecvt_utf8<wchar_t>;
+    
+    std::wstring_convert<convert_typeX, wchar_t> converterX;
+    
+    return converterX.to_bytes(wstr);
+}
 
 //
 //	Radeon ProRender Athena data capture component
@@ -84,13 +111,30 @@ namespace
 			std::wcerr << "# GetFiles failed  " << globPath.c_str() << std::endl;
 		}
 #else
-		// Use opendir() on Linux and macOS
-		assert(false);
+		// Use opendir() on Linux and macOS <= NOT working because we have wstring instead of string
+        std::string sfolder = _ws2s(folder);
+		DIR* dirp = opendir(sfolder.c_str());
+
+		if (dirp != NULL)
+		{
+			dirent* dp;
+			while ((dp = readdir(dirp)) != NULL)
+			{
+                std::wstring wout = _s2ws(dp->d_name);
+				existingFiles.push_back(wout);
+			}
+
+			closedir(dirp);
+		}
+		else
+		{
+			std::wcerr << "# GetFiles failed  " << folder.c_str() << std::endl;
+		}
 #endif
 		return existingFiles;
 	}
 
-	bool SplitWString(std::wstring& sourceString, WCHAR delim, std::vector<std::wstring>& splitString)
+	/*bool SplitWString(std::wstring& sourceString, WCHAR delim, std::vector<std::wstring>& splitString)
 	{
 
 		if (!sourceString.empty())
@@ -108,9 +152,9 @@ namespace
 			return false;
 		}
 		return true;
-	}
+	}*/
 
-	double GetTimeDiffMilliseconds(SYSTEMTIME &recentTime, SYSTEMTIME &previousTime)
+	/*double GetTimeDiffMilliseconds(SYSTEMTIME &recentTime, SYSTEMTIME &previousTime)
 	{
 		FILETIME v_ftime;
 		ULARGE_INTEGER v_ui;
@@ -132,9 +176,9 @@ namespace
 		double totalValue = v_res / (double)10000.0;
 		return totalValue;
 
-	}
+	}*/
 
-	long long CurrentTimeMilliseconds(SYSTEMTIME currentTime)
+	/*long long CurrentTimeMilliseconds(SYSTEMTIME currentTime)
 	{
 		SYSTEMTIME epochTime;
 		epochTime.wYear = 1970;
@@ -146,21 +190,23 @@ namespace
 		epochTime.wMilliseconds = 0;
 		long long returnValue = static_cast<long long>(GetTimeDiffMilliseconds(currentTime, epochTime));
 		return returnValue;
-	}
+	}*/
 
-	_int64 CurrentTimeMilliseconds()
+/*	_int64 CurrentTimeMilliseconds()
 	{
 #ifdef WIN32
 		SYSTEMTIME time = {};
 		GetSystemTime(&time);
 		return (time.wSecond * 1000) + time.wMilliseconds;
 #else
-		assert(false);
-		return 0;
+		timeval time;
+		gettimeofday(&time, NULL);
+		long millis = (time.tv_sec * 1000) + (time.tv_usec / 1000);
+		return millis;
 #endif
-	}
+	} */
 
-	__int64 JHash(std::wstring& key, int len)
+/*	__int64 JHash(std::wstring& key, int len)
 	{
 		unsigned int hash = 0;
 		for (int i = 0; i < len; ++i)
@@ -173,9 +219,9 @@ namespace
 		hash ^= (hash >> 11);
 		hash += (hash << 15);
 		return hash;
-	}
+	} */
 
-	std::wstring GetHashFromString(const std::wstring& sourceString)
+/*	std::wstring GetHashFromString(const std::wstring& sourceString)
 	{
 		std::string convertTester(sourceString.begin(), sourceString.end());
 		void* data = static_cast<void*>(const_cast<char*>(convertTester.c_str()));
@@ -228,9 +274,9 @@ namespace
 		std::string finalString = oss.str();
 		std::wstring finalWString(finalString.begin(), finalString.end());
 		return finalWString;
-	}
+	} */
 
-	__int64 SystemGetFileSize(const std::wstring& fileName)
+/*	__int64 SystemGetFileSize(const std::wstring& fileName)
 	{
 		WIN32_FILE_ATTRIBUTE_DATA fad;
 		if (!GetFileAttributesEx((LPCSTR)fileName.c_str(), GetFileExInfoStandard, &fad))
@@ -241,22 +287,22 @@ namespace
 		size.HighPart = fad.nFileSizeHigh;
 		size.LowPart = fad.nFileSizeLow;
 		return size.QuadPart;
-	}
+	}*/
 
-	std::wstring KS1(const std::wstring& sk1, const std::wstring& fileName, const std::wstring& uploadTimestamp, const std::wstring& PREPEND_META)
+/*	std::wstring KS1(const std::wstring& sk1, const std::wstring& fileName, const std::wstring& uploadTimestamp, const std::wstring& PREPEND_META)
 	{
 		std::wstring buffer = fileName + sk1 + uploadTimestamp;
 		__int64 dynamic_number = JHash(buffer, buffer.length());
 		return PREPEND_META + std::to_wstring(dynamic_number);
-	}
+	}*/
 
-	std::wstring KS2(const std::wstring& sk2, __int64 fileSize, const std::wstring& fileName, __int64 uploadTimestampMilliseconds)
+/*	std::wstring KS2(const std::wstring& sk2, __int64 fileSize, const std::wstring& fileName, __int64 uploadTimestampMilliseconds)
 	{
 		__int64 numberValue = fileSize + uploadTimestampMilliseconds;
 		std::wstring buffer = fileName + std::to_wstring(numberValue) + sk2;
 		std::wstring modBuffer = GetHashFromString(buffer);
 		return modBuffer;
-	}
+	}*/
 
 	static std::vector<std::string> gNames;
 	static std::string gEmpty;
@@ -401,11 +447,21 @@ AthenaStatus athenaUpload(AthenaOptionsPtr pOptions, const PathStringType* sendF
 	}
 
 	Aws::S3::S3Client s3_client;
+    
+    Aws::String accessKey;
+    Aws::String secretKey;
+#ifdef WIN32
+    accessKey = Aws::Utils::StringUtils::FromWString(pOptions->pImpl->mAccessKey);
+    secretKey = Aws::Utils::StringUtils::FromWString(pOptions->pImpl->mSecretKey);
+#else
+    accessKey = _ws2s(pOptions->pImpl->mAccessKey);
+    secretKey = _ws2s(pOptions->pImpl->mSecretKey);
+#endif
 
 	s3_client = 
 		Aws::S3::S3Client(
-			Aws::Auth::AWSCredentials(Aws::Utils::StringUtils::FromWString(pOptions->pImpl->mAccessKey),
-			Aws::Utils::StringUtils::FromWString(pOptions->pImpl->mSecretKey)), 
+			Aws::Auth::AWSCredentials(accessKey,
+			secretKey),
 			config);
 
 	std::wstring fileUpload = sendFile;
@@ -415,10 +471,19 @@ AthenaStatus athenaUpload(AthenaOptionsPtr pOptions, const PathStringType* sendF
 	//std::wcerr << "### File to upload : " << fileUpload.c_str() << std::endl;
 
 	Aws::S3::Model::PutObjectRequest object_request;
+    Aws::String bucketName;
+    Aws::String currentFileName;
+#ifdef WIN32
+    bucketName = Aws::Utils::StringUtils::FromWString(pOptions->pImpl->mBucketName);
+    currentFileName = Aws::Utils::StringUtils::FromWString(currentFile.c_str());
+#else
+    bucketName = _ws2s(pOptions->pImpl->mBucketName);
+    currentFileName = _ws2s(currentFile.c_str());
+#endif
 	object_request.WithBucket(
-		Aws::Utils::StringUtils::FromWString(pOptions->pImpl->mBucketName)).WithKey(Aws::Utils::StringUtils::FromWString(currentFile.c_str())).WithStorageClass(Aws::S3::Model::StorageClass::STANDARD);
+		bucketName).WithKey(currentFileName).WithStorageClass(Aws::S3::Model::StorageClass::STANDARD);
 
-	std::shared_ptr<Aws::FStream> fileToUpload = Aws::MakeShared<Aws::FStream>(pOptions->pImpl->mALLOCATION_TAG, fileUpload, std::ios_base::in | std::ios_base::binary);
+	std::shared_ptr<Aws::FStream> fileToUpload = Aws::MakeShared<Aws::FStream>(pOptions->pImpl->mALLOCATION_TAG, _ws2s(fileUpload), (std::ios_base::in | std::ios_base::binary));
 
 	object_request.SetBody(fileToUpload);
 	auto put_object_outcome = s3_client.PutObject(object_request);
@@ -427,7 +492,9 @@ AthenaStatus athenaUpload(AthenaOptionsPtr pOptions, const PathStringType* sendF
 	{
 		//std::cerr << "### Upload successful\n";
 		fileToUpload->close();
+#ifdef WIN32
 		DeleteFile((LPCSTR)fileUpload.c_str());
+#endif
 	}
 	else
 	{
@@ -508,14 +575,20 @@ const PathStringType* athenaUniqueFilename(const char* guidstr)
 	{
 		return NULL;
 	}
-	std::wstring uniquename = Aws::Utils::StringUtils::ToWString(guidstr).c_str();
+    std::wstring uniquename;
+#ifdef WIN32
+    uniquename = Aws::Utils::StringUtils::ToWString(guidstr).c_str();
+#else
+    uniquename = _s2ws(guidstr);
+#endif
 	uniquename += L"_";
-
-	SYSTEMTIME systme;
-	GetSystemTime(&systme);
 
 	std::wostringstream stream;
 	//1111111_2019 02 22 21 27 18 0342
+    
+#ifdef WIN32
+    SYSTEMTIME systme;
+    GetSystemTime(&systme);
 	stream << std::setfill(L'0') << std::setw(4) << systme.wYear;
 	stream << std::setfill(L'0') << std::setw(2) << systme.wMonth;
 	stream << std::setfill(L'0') << std::setw(2) << systme.wDay;
@@ -523,6 +596,20 @@ const PathStringType* athenaUniqueFilename(const char* guidstr)
 	stream << std::setfill(L'0') << std::setw(2) << systme.wMinute;
 	stream << std::setfill(L'0') << std::setw(2) << systme.wSecond;
 	stream << std::setfill(L'0') << std::setw(4) << systme.wMilliseconds;
+#else
+    timeval timeval;
+    gettimeofday(&timeval, NULL);
+    long millis = (timeval.tv_sec * 1000) + (timeval.tv_usec / 1000);
+    time_t t = time(NULL);
+    tm* timePtr = localtime(&t);
+    stream << std::setfill(L'0') << std::setw(4) << (timePtr->tm_year)+1900;
+    stream << std::setfill(L'0') << std::setw(2) << (timePtr->tm_mon)+1;
+    stream << std::setfill(L'0') << std::setw(2) << (timePtr->tm_mday);
+    stream << std::setfill(L'0') << std::setw(2) << (timePtr->tm_hour);
+    stream << std::setfill(L'0') << std::setw(2) << (timePtr->tm_min);
+    stream << std::setfill(L'0') << std::setw(2) << (timePtr->tm_sec);
+    stream << std::setfill(L'0') << std::setw(4) << millis;
+#endif
 
 	uniquename += stream.str();
 	uniquename += L".json";
@@ -536,7 +623,16 @@ AthenaStatus athenaFileWrite(AthenaFilePtr pJson, const PathStringType* filePath
 	{
 		return kInvalidParam;
 	}
+    
+#ifdef WIN32
+    // MSVS added an overload to accommodate using open with wide strings where xcode did not.
 	std::ofstream o(filePath);
+#else
+    // thus different path for xcode is needed
+    std::string s_filePath = _ws2s(filePath);
+    std::ofstream o(s_filePath);
+#endif
+    
 	o << std::setw(4) << pJson->pImpl->mJson << std::endl;
 	o.close();
 	return kSuccess;
@@ -572,7 +668,11 @@ public:
 			AthenaOptionsPtr aopt = athenaCreateOptions();
 			std::cerr << "# athenaCreateOptions : " << aopt << std::endl;
 			std::cerr << "# athenaInit : " << athenaInit(aopt) << std::endl;
+#ifdef WIN32
 			Sleep(2);
+#else
+            usleep(2);
+#endif
 			std::cerr << "# athenaShutdown : " << athenaShutdown(aopt) << std::endl;
 			athenaDestroyOptions(aopt);
 		}

@@ -1,4 +1,5 @@
 #include "Translators.h"
+#include "FireRenderContext.h"
 
 #include <maya/MPlug.h>
 #include <maya/MDagPath.h>
@@ -242,6 +243,9 @@ namespace FireMaya
 		frstatus = rprCameraSetFarPlane(frcamera, (float)(fnCamera.farClippingPlane() * cmToMCoefficient));
 		checkStatus(frstatus);
 
+		// set rpr name
+		frw_camera.SetName(fnCamera.name().asChar());
+
 		return true;
 	}
 
@@ -270,9 +274,10 @@ namespace FireMaya
 			return true;
 		}
 	
+		bool ret = true;
 		if (lightData.lightType == PLTArea)
 		{
-			return translateAreaLightInternal(frlight, scope, frcontext, object, matrix, dagPath, lightData, update);
+			ret = translateAreaLightInternal(frlight, scope, frcontext, object, matrix, dagPath, lightData, update);
 		}
 		else
 		{
@@ -329,7 +334,17 @@ namespace FireMaya
 			frlight.light.SetTransform((rpr_float*)mfloats);
 		}
 
-		return true;
+		const char* lightName = MFnDependencyNode(dagPath.transform()).name().asChar();
+		if (frlight.light)
+		{
+			frlight.light.SetName(lightName);
+		}
+		else if (frlight.areaLight)
+		{
+			frlight.areaLight.SetName(lightName);
+		}
+
+		return ret;
 	}
 
 	void FillLightData(PhysicalLightData& physicalLightData, const MObject& node, Scope& scope)
@@ -446,7 +461,7 @@ namespace FireMaya
 					return false; // no mesh found
 				}
 
-				const std::vector<frw::Shape> shapes = MeshTranslator::TranslateMesh(frcontext, shapeDagPath.node());
+				const std::vector<frw::Shape> shapes = MeshTranslator::TranslateMesh(* dynamic_cast<FireRenderContext*>(const_cast<IFireRenderContextInfo*>(scope.GetContextInfo())), shapeDagPath.node());
 				if (shapes.size() > 0)
 				{
 					frlight.areaLight = shapes[0];
@@ -592,6 +607,14 @@ namespace FireMaya
 		MMatrix scaleM;
 		scaleM.setToIdentity();
 		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+
+		// We are going to flip IBL horizontally here by default.
+		// To achieve that we need just make negative scale factor for X component
+		if (!IsFlipIBL())
+		{
+			scaleM[0][0] = -scaleM[0][0];
+		}
+
 		m *= scaleM;
 		float mfloats[4][4];
 		m.get(mfloats);

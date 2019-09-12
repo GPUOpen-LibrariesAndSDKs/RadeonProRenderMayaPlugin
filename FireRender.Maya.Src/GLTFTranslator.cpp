@@ -93,7 +93,13 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	std::vector<rpr_scene> scenes;
 	scenes.push_back(scene.Handle());
 
-	int err = rprExportToGLTF(file.expandedFullName().asChar(), context.Handle(), materialSystem.Handle(), materialSystem.GetRprxContext(), scenes.data(), scenes.size(), 0);
+	int err = rprExportToGLTF(
+		file.expandedFullName().asChar(), 
+		context.Handle(), 
+		materialSystem.Handle(),
+		scenes.data(), 
+		scenes.size(), 
+		0);
 
 	if (err != GLTF_SUCCESS)
 	{
@@ -180,9 +186,6 @@ void GLTFTranslator::assignCameras(GLTFDataHolderStruct& dataHolder, FireRenderC
 		// set gltf group name for camera
 		MString camGroupName = getGroupNameForDagPath(dagPath);
 		rprGLTF_AssignCameraToGroup(rprCamera, camGroupName.asChar());
-
-		// set rpr name
-		rprObjectSetName(rprCamera, dagPath.partialPathName().asChar());
 	}
 #endif
 }
