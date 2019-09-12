@@ -153,7 +153,7 @@ void PhysicalLightAttributes::CreateIntensityAttributes()
 
 	CreateFloatAttribute(temperature, "temperature", "t", 0.0f, 40000.0f, 6500.0f);
 
-	CreateColor(temperatureColor, "temperatureColor", "tc", true);
+	CreateColor(temperatureColor, "temperatureColor", "tc");
 }
 
 void PhysicalLightAttributes::CreateAreaLightAttrbutes()
