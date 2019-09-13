@@ -272,11 +272,11 @@ namespace FireMaya
 			case FireMaya::VRay::VRayLightUnits::Default:
 				return intensisty;
 			case FireMaya::VRay::VRayLightUnits::LumensPerSqrMetersPerSteradian:
-				return intensisty * lumensToWatts * MY_PI;
+				return intensisty * lumensToWatts * M_PI;
 			case FireMaya::VRay::VRayLightUnits::Lumens:
 				return intensisty * lumensToWatts / area;
 			case FireMaya::VRay::VRayLightUnits::WattsPerSqrMetersPerSteradian:
-				return intensisty * MY_PI;
+				return intensisty * M_PI;
 			case FireMaya::VRay::VRayLightUnits::Watts:
 				return intensisty / area;
 			default:
@@ -376,7 +376,7 @@ namespace FireMaya
 				};
 
 				MEulerRotation rotation(
-					getRotation("xRotation") - MY_PI_DOUBLE / 2,
+					getRotation("xRotation") - M_PI / 2,
 					getRotation("yRotation"),
 					getRotation("zRotation"));
 				ret.matrix = rotation.asMatrix();
@@ -615,7 +615,7 @@ namespace FireMaya
 			MMatrix m = lightData.matrix * scaled * scaleM;
 			mstatus = m.get(mfloats);
 
-			auto color = translateColorOfVRayLight(lightData.color, lightData.intensity, lightData.units, 4 * MY_PI * powf(lightData.radius, 2.f));
+			auto color = translateColorOfVRayLight(lightData.color, lightData.intensity, lightData.units, 4 * M_PI * powf(lightData.radius, 2.f));
 
 			// Fire Render's area light is implemented as a mesh with emissive shader
 			if (update)
