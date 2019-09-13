@@ -333,7 +333,7 @@ doDelete;
 	cmd.substitute("$color.r", toMString(data.color.r));
 	cmd.substitute("$color.g", toMString(data.color.g));
 	cmd.substitute("$color.b", toMString(data.color.b));
-	cmd.substitute("$wattsPerSqm", toMString(translateVrayLightIntensity(data.intensity, data.units, 4 * MY_PI * powf(data.radius, 2.f))));
+	cmd.substitute("$wattsPerSqm", toMString(translateVrayLightIntensity(data.intensity, data.units, 4 * M_PI * powf(data.radius, 2.f))));
 	cmd.substitute("$translate.x", toMString(data.matrix(3, 0)));
 	cmd.substitute("$translate.y", toMString(data.matrix(3, 1)));
 	cmd.substitute("$translate.z", toMString(data.matrix(3, 2)));
