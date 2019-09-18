@@ -220,7 +220,9 @@ namespace frw
 	enum ContextParameterInfo
 	{
 		ParameterInfoId = RPR_PARAMETER_NAME,
+#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 		ParameterInfoName = RPR_PARAMETER_NAME_STRING,
+#endif
 		ParameterInfoType = RPR_PARAMETER_TYPE,
 		ParameterInfoDescription = RPR_PARAMETER_DESCRIPTION,
 		ParameterInfoValue = RPR_PARAMETER_VALUE,
@@ -306,7 +308,9 @@ namespace frw
 	enum NodeInputInfo
 	{
 		NodeInputInfoId = RPR_MATERIAL_NODE_INPUT_NAME,
+#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103305 
 		NodeInputInfoName = RPR_MATERIAL_NODE_INPUT_NAME_STRING,
+#endif
 		NodeInputInfoDescription = RPR_MATERIAL_NODE_INPUT_DESCRIPTION,
 		NodeInputInfoValue = RPR_MATERIAL_NODE_INPUT_VALUE,
 		NodeInputInfoType = RPR_MATERIAL_NODE_INPUT_TYPE,
@@ -672,7 +676,9 @@ namespace frw
 		public:
 			NodeInputId id;
 			NodeInputType type;
+#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 			std::string name;
+#endif
 		};
 
 		ParameterInfo GetParameterInfo(int i) const
@@ -688,6 +694,7 @@ namespace frw
 			res = rprMaterialNodeGetInputInfo(Handle(), i, NodeInputInfoType, sizeof(info.type), &info.type, nullptr);
 			checkStatus(res);
 
+#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 			// Get name
 			res = rprMaterialNodeGetInputInfo(Handle(), i, NodeInputInfoName, 0, nullptr, &size);
 			checkStatus(res);
@@ -695,6 +702,7 @@ namespace frw
 			info.name.resize(size);
 			res = rprMaterialNodeGetInputInfo(Handle(), i, NodeInputInfoName, size, const_cast<char*>(info.name.data()), nullptr);
 			checkStatus(res);
+#endif
 
 			return info;
 		}
@@ -1451,6 +1459,7 @@ namespace frw
 		{
 		}
 
+#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 		void SetParameter(const char * sz, rpr_uint v)
 		{
 			auto res = rprContextSetParameter1u(Handle(), sz, v);
@@ -1476,6 +1485,7 @@ namespace frw
 			auto res = rprContextSetParameter4f(Handle(), sz, (rpr_float)x, (rpr_float)y, (rpr_float)z, (rpr_float)w);
 			checkStatus(res);
 		}
+#endif
 
 		Scene CreateScene()
 		{
@@ -1815,7 +1825,9 @@ namespace frw
 		{
 		public:
 			ContextParameterId	id;
+#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 			std::string name;
+#endif
 			std::string description;
 			ContextParameterType type;
 		};
@@ -1829,12 +1841,14 @@ namespace frw
 			auto res = rprContextGetParameterInfo(Handle(), i, ParameterInfoId, sizeof(info.id), &info.id, nullptr);
 			checkStatus(res);
 
+#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 			// get name
 			res = rprContextGetParameterInfo(Handle(), i, ParameterInfoName, 0, nullptr, &size);
 			checkStatus(res);
 			info.name.resize(size);
 			res = rprContextGetParameterInfo(Handle(), i, ParameterInfoName, size, const_cast<char*>(info.name.data()), nullptr);
 			checkStatus(res);
+#endif
 
 			// get description
 			res = rprContextGetParameterInfo(Handle(), i, ParameterInfoDescription, 0, nullptr, &size);
@@ -1853,7 +1867,11 @@ namespace frw
 
 		static void TraceOutput(const char * tracingfolder)
 		{
+#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 			rprContextSetParameter1u(nullptr, "tracing", 0);
+#else
+			rprContextSetParameterByKey1u(nullptr, RPR_CONTEXT_TRACING_ENABLED, 0);
+#endif
 			if (tracingfolder)
 			{
 				auto res = rprContextSetParameterString(nullptr, "tracingfolder", tracingfolder);
