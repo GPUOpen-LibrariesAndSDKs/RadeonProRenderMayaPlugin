@@ -70,7 +70,7 @@ public:
 	FireMaterialViewRenderer();
 
 	// Destructor
-	virtual ~FireMaterialViewRenderer();
+	virtual ~FireMaterialViewRenderer() = default;
 
 	// Start async render
 	virtual MStatus startAsync(const JobParams& params);
@@ -103,8 +103,11 @@ public:
 	virtual MStatus translateShader(const MUuid& id, const MObject& node);
 
 	virtual MStatus setProperty(const MUuid& id, const MString& name, bool value);
+	
 	virtual MStatus setProperty(const MUuid& id, const MString& name, int value);
+	
 	virtual MStatus setProperty(const MUuid& id, const MString& name, float value);
+
 	virtual MStatus setProperty(const MUuid& id, const MString& name, const MString& value);
 
 	// Set shader
@@ -112,6 +115,7 @@ public:
 
 	// Set resolution
 	virtual MStatus setResolution(unsigned int width, unsigned int height);
+
 
 	// End scene update
 	virtual MStatus endSceneUpdate();
@@ -129,7 +133,7 @@ public:
 	static void* creator();
 
 	// Render function
-	void render();
+	void Render();
 
 	// Render data
 	// Contain the context and other data information needed by the render function
@@ -140,6 +144,12 @@ public:
 
 	// Number of render iterations
 	int m_numIteration;
+
+	enum ThreadCommand {
+		BEGIN_UPDATE = 0,
+		RENDER_IMAGE = 1,
+		STOP_THREAD = 2
+	};
 
 	// Render commands used by the render thread
 	volatile int m_threadCmd;

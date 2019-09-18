@@ -346,6 +346,7 @@ namespace FireMaya
 
 		frw::Shader GetCachedShader(const NodeId& str) const;
 		void SetCachedShader(const NodeId& str, frw::Shader shader);
+		void ClearShaderMapCache();
 
 		void Reset();
 		void Init(rpr_context handle, bool destroyMaterialSystemOnDelete = true);
