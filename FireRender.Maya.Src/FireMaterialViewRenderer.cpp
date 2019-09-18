@@ -70,19 +70,19 @@ bool FireMaterialViewRenderer::RunOnFireRenderThread()
 {
 	switch (m_threadCmd)
 	{
-	case 1:
-	{
-		RPR::AutoLock<MMutexLock> lock(m_renderData.m_mutex);
+		case ThreadCommand::RENDER_IMAGE: {
+			RPR::AutoLock<MMutexLock> lock(m_renderData.m_mutex);
+			Render();
+			return true;
+		}
 
-		render();
+		case ThreadCommand::STOP_THREAD:
+			return false;
 
-		return true;
-	}
-	case 2:
-		return false;
-	case 0:
-	default:
-		return true;
+		case ThreadCommand::BEGIN_UPDATE:
+
+		default:
+			return true;
 	}
 }
 
@@ -90,17 +90,12 @@ FireMaterialViewRenderer::FireMaterialViewRenderer() :
 	MPxRenderer(),
 	m_isThreadRunning(false),
 	m_numIteration(1),
-	m_threadCmd(0)
+	m_threadCmd(ThreadCommand::BEGIN_UPDATE)
 {
 	FireRenderContext& inContext = m_renderData.m_context;
 	frw::Context context = inContext.GetContext();
 	rpr_context frcontext = context.Handle();
 	rprContextSetParameter1u(frcontext, "maxRecursion", defaultMaterialViewRayDepth);
-}
-
-FireMaterialViewRenderer::~FireMaterialViewRenderer()
-{
-
 }
 
 MStatus FireMaterialViewRenderer::startAsync(const JobParams& params)
@@ -117,7 +112,7 @@ MStatus FireMaterialViewRenderer::startAsync(const JobParams& params)
 
 MStatus FireMaterialViewRenderer::stopAsync()
 {
-	MAtomic::set(&m_threadCmd, 2);
+	MAtomic::set(&m_threadCmd, ThreadCommand::STOP_THREAD);
 
 	RPR::AutoLock<MMutexLock> lock(m_renderData.m_mutex);
 
@@ -138,7 +133,7 @@ MStatus FireMaterialViewRenderer::beginSceneUpdate()
 		JobParams params;
 		startAsync(params);
 	}
-	MAtomic::set(&m_threadCmd, 0);
+	MAtomic::set(&m_threadCmd, ThreadCommand::BEGIN_UPDATE);
 	m_renderData.m_mutex.lock();
 	return MS::kSuccess;
 }
@@ -533,7 +528,7 @@ MStatus FireMaterialViewRenderer::endSceneUpdate()
 		checkStatus(frstatus);
 
 		m_numIteration = 1;
-		MAtomic::set(&m_threadCmd, 1);
+		MAtomic::set(&m_threadCmd, ThreadCommand::RENDER_IMAGE);
 
 		m_renderData.m_mutex.unlock();
 
@@ -557,13 +552,27 @@ void* FireMaterialViewRenderer::creator()
 	return renderer;
 }
 
-void FireMaterialViewRenderer::render()
+void FireMaterialViewRenderer::Render()
 {
 	RPR_THREAD_ONLY;
 
 	rpr_int frstatus;
 	auto context = m_renderData.m_context.GetContext();
-	context.Render();
+	try 
+	{
+		context.Render();
+	}
+	catch (const FireRenderException& ex) 
+	{
+		//Prevents view freezing after close material view with invalid material selected
+		m_renderData.m_surfaceShader.Reset();
+
+		//Prevents view freezing after selecting invalid material and then selecting valid
+		m_renderData.m_context.GetScope().ClearShaderMapCache();
+
+		MAtomic::set(&m_threadCmd, ThreadCommand::BEGIN_UPDATE);
+		return;
+	}
 
 	size_t dataSize = 0;
 	frstatus = rprFrameBufferGetInfo(m_renderData.m_framebuffer, RPR_FRAMEBUFFER_DATA, 0, NULL, &dataSize);
@@ -613,7 +622,6 @@ void FireMaterialViewRenderer::render()
 		ProgressParams params;
 		params.progress = 1.0;
 		progress(params);
-		MAtomic::set(&m_threadCmd, 0);
 	}
 }
 

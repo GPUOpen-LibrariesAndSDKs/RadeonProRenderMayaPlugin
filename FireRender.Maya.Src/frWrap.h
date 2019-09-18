@@ -2971,6 +2971,7 @@ namespace frw
 			assert(!"bad type");
 			return false;
 		}
+
 	};
 
 	class DiffuseShader : public Shader
