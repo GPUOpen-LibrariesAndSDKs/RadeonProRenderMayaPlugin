@@ -4,7 +4,7 @@
 // RprSupport and RadeonProRender_GL needs to be included manually
 #include <RadeonProRender.h>
 #include <RadeonProRender_GL.h>
-#include <RprSupport.h>
+#include <rprDeprecatedApi.h>
 
 #include <list>
 #include <map>
@@ -676,9 +676,7 @@ namespace frw
 		public:
 			NodeInputId id;
 			NodeInputType type;
-#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 			std::string name;
-#endif
 		};
 
 		ParameterInfo GetParameterInfo(int i) const
@@ -694,6 +692,7 @@ namespace frw
 			res = rprMaterialNodeGetInputInfo(Handle(), i, NodeInputInfoType, sizeof(info.type), &info.type, nullptr);
 			checkStatus(res);
 
+			info.name = "";
 #if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 			// Get name
 			res = rprMaterialNodeGetInputInfo(Handle(), i, NodeInputInfoName, 0, nullptr, &size);
@@ -1459,7 +1458,7 @@ namespace frw
 		{
 		}
 
-#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
+//#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 		void SetParameter(const char * sz, rpr_uint v)
 		{
 			auto res = rprContextSetParameter1u(Handle(), sz, v);
@@ -1485,7 +1484,7 @@ namespace frw
 			auto res = rprContextSetParameter4f(Handle(), sz, (rpr_float)x, (rpr_float)y, (rpr_float)z, (rpr_float)w);
 			checkStatus(res);
 		}
-#endif
+//#endif
 
 		Scene CreateScene()
 		{
@@ -1825,9 +1824,7 @@ namespace frw
 		{
 		public:
 			ContextParameterId	id;
-#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 			std::string name;
-#endif
 			std::string description;
 			ContextParameterType type;
 		};
@@ -1841,6 +1838,7 @@ namespace frw
 			auto res = rprContextGetParameterInfo(Handle(), i, ParameterInfoId, sizeof(info.id), &info.id, nullptr);
 			checkStatus(res);
 
+			info.name = "";
 #if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 			// get name
 			res = rprContextGetParameterInfo(Handle(), i, ParameterInfoName, 0, nullptr, &size);
@@ -1874,9 +1872,17 @@ namespace frw
 #endif
 			if (tracingfolder)
 			{
+#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 				auto res = rprContextSetParameterString(nullptr, "tracingfolder", tracingfolder);
+#else
+				auto res = rprContextSetParameterByKeyString(nullptr, RPR_CONTEXT_TRACING_PATH, tracingfolder);
+#endif
 				if (RPR_SUCCESS == res)
+#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 					rprContextSetParameter1u(nullptr, "tracing", 1);
+#else
+					rprContextSetParameterByKey1u(nullptr, RPR_CONTEXT_TRACING_ENABLED, 1);
+#endif
 			}
 		}
 		void DumpParameterInfo();
