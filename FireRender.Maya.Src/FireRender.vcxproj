@@ -240,7 +240,6 @@
     <ClCompile Include="FireMaya.cpp" />
     <ClCompile Include="FireRenderAO.cpp" />
     <ClCompile Include="FireRenderAOV.cpp" />
-    <ClCompile Include="FireRenderAOVDepth.cpp" />
     <ClCompile Include="FireRenderAOVs.cpp" />
     <ClCompile Include="FireRenderArithmetic.cpp" />
     <ClCompile Include="FireRenderBlendOverride.cpp">
@@ -374,7 +373,6 @@
     <ClInclude Include="FireMaya.h" />
     <ClInclude Include="FireRenderAO.h" />
     <ClInclude Include="FireRenderAOV.h" />
-    <ClInclude Include="FireRenderAOVDepth.h" />
     <ClInclude Include="FireRenderAOVs.h" />
     <ClInclude Include="FireRenderArithmetic.h" />
     <ClInclude Include="FireRenderBlendOverride.h">
