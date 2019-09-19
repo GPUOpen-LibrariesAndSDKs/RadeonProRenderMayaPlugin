@@ -309,12 +309,6 @@ global proc createFireRenderAOVsTab()
 	createFireRenderRenderPassesFrame ("fireRenderRenderPassesFrame");
 	setParent ..;
 
-	// Depth settings
-	frameLayout -label "RPR Depth" -cll false -cl 0 fireRenderRenderDepth;
-
-	createFireRenderDepthParams ("fireRenderRenderDepth");
-	setParent ..;
-
 	// Parameters are moved to Common Tab. We may remove these comments later
 	// Depth settings
 	//frameLayout -label "EXR Parameters" -cll false -cl 0 fireRenderEXRParameters;
@@ -348,53 +342,6 @@ global proc aovDepthAutoNormaliseChanged()
 		setAttr RadeonProRenderGlobals.aovDepthNormaliseMin -lock 0;
 		setAttr RadeonProRenderGlobals.aovDepthNormaliseMax -lock 0;
 	}
-}
-
-global proc aovDepthNormaliseMinMaxChanged()
-{
-	float $min = `getAttr RadeonProRenderGlobals.aovDepthNormaliseMin`;
-	float $max = `getAttr RadeonProRenderGlobals.aovDepthNormaliseMax`;
-
-	if ($min > $max)
-	{
-		$min = $max;
-		setAttr RadeonProRenderGlobals.aovDepthNormaliseMin $min;
-	}
-}
-
-global proc createFireRenderDepthParams(string $parent)
-{
-	setUITemplate -pushTemplate attributeEditorTemplate;
-
-//	setParentToFireRenderTab();
-	setParent $parent;
-
-	columnLayout;
-
-	attrControlGrp
-		 -label "AutoNormalize"
-		 -attribute "RadeonProRenderGlobals.aovDepthAutoNormalise"
-		 -changeCommand aovDepthAutoNormaliseChanged;
-
-	attrControlGrp
-		 -label "Min (Black)"
-		 -attribute "RadeonProRenderGlobals.aovDepthNormaliseMin"
-		 -changeCommand aovDepthNormaliseMinMaxChanged;
-
-	attrControlGrp
-		 -label "Max (White)"
-		 -attribute "RadeonProRenderGlobals.aovDepthNormaliseMax"
-		 -changeCommand aovDepthNormaliseMinMaxChanged;
-
-	attrControlGrp
-		 -label "Invert Output"
-		 -attribute "RadeonProRenderGlobals.aovDepthInvertOutput";
-
-	setParent ..;
-	setUITemplate -popTemplate;
-
-	// Update state
-	aovDepthAutoNormaliseChanged();
 }
 
 //global proc createEXRParameters(string $parent)

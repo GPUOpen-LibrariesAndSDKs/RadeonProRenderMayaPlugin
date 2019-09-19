@@ -4,7 +4,6 @@
 #include "FireRenderGlobals.h"
 #include "FireRenderContext.h"
 #include "FireRenderImageUtil.h"
-#include "FireRenderAOVDepth.h"
 #include "FireMaya.h"
 
 #include <maya/MStatus.h>
@@ -38,7 +37,7 @@ FireRenderAOVs::FireRenderAOVs() :
 	AddAOV(RPR_AOV_SHADING_NORMAL, "aovShadingNormal", "Shading Normal", "shading_normal",
 		{ { "X", "Y", "Z" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::NORMAL } });
 
-	AddAOV<FireRenderAOVDepth>(RPR_AOV_DEPTH, "aovDepth", "Depth", "depth",
+	AddAOV(RPR_AOV_DEPTH, "aovDepth", "Depth", "depth",
 		{ { "Z" },{ TypeDesc::FLOAT } });
 
 	AddAOV(RPR_AOV_OBJECT_ID, "aovObjectId", "Object ID", "object_id",
