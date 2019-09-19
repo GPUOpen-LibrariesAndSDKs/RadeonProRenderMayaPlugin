@@ -427,9 +427,15 @@ bool ParseRPR (
 		if (in_type == RPR_MATERIAL_NODE_INPUT_TYPE_NODE)
 		{
 			size_t read_count = 0;
+#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 			rprMaterialNodeGetInputInfo(material, i, RPR_MATERIAL_NODE_INPUT_NAME_STRING, sizeof(size_t), nullptr, &read_count);
 			std::vector<char> param_name(read_count, ' ');
 			rprMaterialNodeGetInputInfo(material, i, RPR_MATERIAL_NODE_INPUT_NAME_STRING, sizeof(param_name), param_name.data(), nullptr);
+#else
+			uint32_t id = 0;
+			CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(material, i, RPR_MATERIAL_NODE_INPUT_NAME, sizeof(uint32_t), &id, nullptr));
+			std::string param_name = id2param[id];
+#endif
 
 			rpr_material_node ref_node = nullptr;
 			status = rprMaterialNodeGetInputInfo(material, i, RPR_MATERIAL_NODE_INPUT_VALUE, sizeof(ref_node), &ref_node, nullptr);
@@ -621,9 +627,15 @@ void ExportMaterials(const std::string& filename,
 			for (int input_id = 0; input_id < input_count; ++input_id)
 			{
 				size_t read_count = 0;
+#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 				CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(node, input_id, RPR_MATERIAL_NODE_INPUT_NAME_STRING, sizeof(size_t), nullptr, &read_count));
 				std::vector<char> param_name(read_count, ' ');
 				CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(node, input_id, RPR_MATERIAL_NODE_INPUT_NAME_STRING, sizeof(param_name), param_name.data(), nullptr));
+#else
+				uint32_t id = 0;
+				CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(node, input_id, RPR_MATERIAL_NODE_INPUT_NAME, sizeof(uint32_t), &id, nullptr));
+				std::string param_name = id2param[id];
+#endif
 
 				if (!exportImageUV  // if UV not exported
 					&& type == RPR_MATERIAL_NODE_IMAGE_TEXTURE
