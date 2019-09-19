@@ -13,6 +13,7 @@
 #include "frWrap.h"
 #include "FileSystemUtils.h"
 #include "FireRenderImportExportXML.h"
+#include "XMLMaterialExport/XMLMaterialExportCommon.h"
 
 using namespace std;
 
