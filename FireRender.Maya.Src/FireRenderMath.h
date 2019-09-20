@@ -33,19 +33,19 @@ inline MColor ConvertKelvinToColor(double kelvin)
 	}
 	else
 	{
-		double temp = 329.698727446 * (std::pow(kelvin - 60, -0.1332047592)) / 255;
+		double temp = 329.698727446 * (pow(kelvin - 60, -0.1332047592)) / 255;
 		r = Clamp(temp, 0.0, 1.0);
 	}
 
 	// Green
 	if (kelvin <= 66.0)
 	{
-		double temp = (99.4708025861 * std::log(kelvin) - 161.1195681661) / 255;
+		double temp = (99.4708025861 * log(kelvin) - 161.1195681661) / 255;
 		g = Clamp(temp, 0.0, 1.0);
 	}
 	else
 	{
-		double temp = 288.1221695283 * (std::pow(kelvin - 60, -0.0755148492)) / 255;
+		double temp = 288.1221695283 * (pow(kelvin - 60, -0.0755148492)) / 255;
 		g = Clamp(temp, 0.0, 1.0);
 	}
 
@@ -60,7 +60,7 @@ inline MColor ConvertKelvinToColor(double kelvin)
 	}
 	else
 	{
-		double temp = (138.5177312231 * std::log(kelvin - 10) - 305.0447927307) / 255;
+		double temp = (138.5177312231 * log(kelvin - 10) - 305.0447927307) / 255;
 		b = Clamp(temp, 0.0, 1.0);
 	}
 
