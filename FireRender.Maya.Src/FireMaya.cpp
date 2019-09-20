@@ -1738,18 +1738,6 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 		}
 	}break;
 
-	default:
-		if (FireMaya::TypeId::IsValidId(id))
-			DebugPrint("Error: Unhandled FireMaya NodeId: %X", id);
-		else if (FireMaya::TypeId::IsReservedId(id))
-			DebugPrint("Error: Unrecognized FireMaya NodeId: %X", id);
-		else
-		{
-			DebugPrint("Warning: Unhandled or Unknown Maya Node: %X", id);
-			// I don't think we need this: Dump(shaderNode);
-		}
-		return createImageFromShaderNode(node);
-
 	case MayaNodeRamp:
 		//falling back onto rasterization:
 		return createImageFromShaderNode(node, MString("outColor"), 128, 128);
@@ -1760,6 +1748,18 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 
 	case MayaNodeRemapHSV:
 		return createImageFromShaderNodeUsingFileNode(node, MString("outColor"));
+
+	default:
+		if (FireMaya::TypeId::IsValidId(id))
+			DebugPrint("Error: Unhandled RPRMaya NodeId: %X", id);
+		else if (FireMaya::TypeId::IsReservedId(id))
+			DebugPrint("Error: Unrecognized RPRMaya NodeId: %X", id);
+		else
+		{
+			DebugPrint("Warning: Unhandled or Unknown RPRMaya Node: %X", id);
+			// I don't think we need this: Dump(shaderNode);
+		}
+		return createImageFromShaderNodeUsingFileNode(node, "outColor");
 	}
 
 	return nullptr;
