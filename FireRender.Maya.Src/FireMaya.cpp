@@ -1747,12 +1747,12 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 
 	default:
 		if (FireMaya::TypeId::IsValidId(id))
-			DebugPrint("Error: Unhandled FireMaya NodeId: %X", id);
+			DebugPrint("Error: Unhandled RPRMaya NodeId: %X", id);
 		else if (FireMaya::TypeId::IsReservedId(id))
-			DebugPrint("Error: Unrecognized FireMaya NodeId: %X", id);
+			DebugPrint("Error: Unrecognized RPRMaya NodeId: %X", id);
 		else
 		{
-			DebugPrint("Warning: Unhandled or Unknown Maya Node: %X", id);
+			DebugPrint("Warning: Unhandled or Unknown RPRMaya Node: %X", id);
 			// I don't think we need this: Dump(shaderNode);
 		}
 		return createImageFromShaderNodeUsingFileNode(node, "outColor");
