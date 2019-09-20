@@ -461,9 +461,6 @@
     <ClCompile Include="GLTFTranslator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="FireRenderAOVDepth.cpp">
-      <Filter>AOVs</Filter>
-    </ClCompile>
     <ClCompile Include="FireRenderPBRMaterial.cpp">
       <Filter>Materials</Filter>
     </ClCompile>
@@ -852,9 +849,6 @@
     </ClInclude>
     <ClInclude Include="GLTFTranslator.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FireRenderAOVDepth.h">
-      <Filter>AOVs</Filter>
     </ClInclude>
     <ClInclude Include="FireRenderPBRMaterial.h">
       <Filter>Materials</Filter>
