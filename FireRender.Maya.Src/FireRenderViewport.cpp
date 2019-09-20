@@ -105,6 +105,18 @@ MStatus FireRenderViewport::setup()
 {
 	MAIN_THREAD_ONLY;
 
+	// Check if updating viewport's texture is required.
+	// No action is required if GL interop is active: the shared OpenGL frame buffer is rendered directly.
+	// This code is needed for CPU rendering case (gl interop is switched off with CPU)
+	if (!m_context.isGLInteropActive() && m_pixelsUpdated)
+	{
+		// Acquire the pixels lock.
+		AutoMutexLock pixelsLock(m_pixelsLock);
+
+		// Update the Maya texture from the pixel data.
+		updateTexture(m_pixels.data(), m_context.width(), m_context.height());
+	}
+
 	return doSetup();
 }
 
