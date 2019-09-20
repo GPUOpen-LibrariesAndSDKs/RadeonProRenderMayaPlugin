@@ -223,10 +223,10 @@ static std::map<std::string, uint32_t> param2id = {
 };
 
 template<typename Key, typename T>
-static std::map<T, Key> reverse_map(const static std::map<Key, T>& in) 
+static std::map<T, Key> reverse_map(const std::map<Key, T>& source) 
 {
 	std::map<T, Key> out;
-	for (const auto& v : in)
+	for (const auto& v : source)
 		out[v.second] = v.first;
 	return out;
 }
