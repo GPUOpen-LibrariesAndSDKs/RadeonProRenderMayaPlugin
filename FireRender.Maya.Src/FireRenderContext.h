@@ -235,7 +235,7 @@ public:
 	// Copy pixels from the source buffer to the destination buffer.
 	void copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 		unsigned int sourceWidth, unsigned int sourceHeight,
-		const RenderRegion& region, bool flip, bool isColor) const;
+		const RenderRegion& region, bool flip) const;
 
 	// Combine pixels (set alpha) with Opacity pixels
 	void combineWithOpacity(RV_PIXEL* pixels, unsigned int size, RV_PIXEL *opacityPixels = NULL) const;
