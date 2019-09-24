@@ -1,6 +1,7 @@
 #include "FireMaya.h"
 #include "PhysicalLightAttributes.h"
 #include "FireRenderUtils.h"
+#include "FireRenderMath.h"
 
 #include <maya/MPxNode.h>
 #include <maya/MFnEnumAttribute.h>
@@ -153,7 +154,7 @@ void PhysicalLightAttributes::CreateIntensityAttributes()
 
 	CreateFloatAttribute(temperature, "temperature", "t", 0.0f, 40000.0f, 6500.0f);
 
-	CreateColor(temperatureColor, "temperatureColor", "tc");
+	CreateColor(temperatureColor, "temperatureColor", "tc", true);
 }
 
 void PhysicalLightAttributes::CreateAreaLightAttrbutes()
@@ -282,7 +283,7 @@ MColor PhysicalLightAttributes::GetColor(const MFnDependencyNode& node)
 
 MColor PhysicalLightAttributes::GetTempreratureColor(const MFnDependencyNode& node)
 {
-	return getColorAttribute(node, PhysicalLightAttributes::temperatureColor);
+	return ConvertKelvinToColor(GetFloatAttribute(node, PhysicalLightAttributes::temperature));
 }
 
 float PhysicalLightAttributes::GetIntensity(const MFnDependencyNode& node)

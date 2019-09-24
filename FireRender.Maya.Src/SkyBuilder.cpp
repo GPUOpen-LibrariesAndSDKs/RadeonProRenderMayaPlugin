@@ -97,7 +97,7 @@ MColor& SkyBuilder::getSunLightColor()
 // -----------------------------------------------------------------------------
 float SkyBuilder::getSunAzimuth()
 {
-	auto rotated = m_sunAzimuth - PI_F / 2.0f;
+	auto rotated = m_sunAzimuth - M_PI / 2.0f;
 
 	return -rotated;
 }
@@ -117,8 +117,8 @@ float SkyBuilder::getSkyIntensity()
 // -----------------------------------------------------------------------------
 MFloatVector SkyBuilder::getWorldSpaceSunDirection()
 {
-	float phi = (PI_F * 0.5f) + m_sunAltitude;
-	float theta = m_sunAzimuth + PI_F * 0.5f;
+	float phi = (M_PI * 0.5f) + m_sunAltitude;
+	float theta = m_sunAzimuth + M_PI * 0.5f;
 	float sinphi = sin(phi);
 
 	return MFloatVector(-cos(theta) * sinphi, -cos(phi), sin(theta) * sinphi);
