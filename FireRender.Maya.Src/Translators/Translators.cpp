@@ -834,7 +834,7 @@ namespace FireMaya
 		}
 		else if (typeName == TypeStr::VRayLightIESShape || fnLight.typeId() == TypeId::FireRenderIESLightLocator)
 		{
-			MEulerRotation rotation = MEulerRotation(PI_F / 2.0f, 0.0, 0.0);
+			MEulerRotation rotation = MEulerRotation(M_PI / 2.0f, 0.0, 0.0);
 
 			if (!translateVRayLightIESShape(frlight, frMatsys, frcontext, fnLight, scaleM, rotation, update))
 				return false;
