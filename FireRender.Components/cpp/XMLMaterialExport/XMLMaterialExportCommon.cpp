@@ -23,11 +23,7 @@ std::vector<RPRX_DEFINE_PARAM_MATERIAL>& GetRPRXParamList(void)
 namespace
 {
 	const std::string kTab = "    "; // default 4spaces tab for xml writer
-#ifdef RPR_VERSION_MAJOR_MINOR_REVISION
 	const int kVersion = RPR_VERSION_MAJOR_MINOR_REVISION;
-#else
-	const int kVersion = RPR_API_VERSION;
-#endif
 	//need different maps because RPR_MATERIAL* constants have not an unique value;
 	const std::map<int, std::string> kMaterialTypeNames{ { RPR_MATERIAL_NODE_DIFFUSE, "DIFFUSE" },
 	{ RPR_MATERIAL_NODE_MICROFACET, "MICROFACET" },
@@ -49,11 +45,7 @@ namespace
 	{ RPR_MATERIAL_NODE_CHECKER_TEXTURE, "CHECKER_TEXTURE" },
 	{ RPR_MATERIAL_NODE_CONSTANT_TEXTURE, "CONSTANT_TEXTURE" },
 	{ RPR_MATERIAL_NODE_INPUT_LOOKUP, "INPUT_LOOKUP" },
-#if (RPR_VERSION_MINOR < 34)
-	{ RPR_MATERIAL_NODE_STANDARD, "STANDARD" },
-#else
 	{ RPR_MATERIAL_NODE_UBERV2, "UBER" },
-#endif
 	{ RPR_MATERIAL_NODE_BLEND_VALUE, "BLEND_VALUE" },
 	{ RPR_MATERIAL_NODE_PASSTHROUGH, "PASSTHROUGH" },
 	{ RPR_MATERIAL_NODE_ORENNAYAR, "ORENNAYAR" },
@@ -86,12 +78,8 @@ namespace
 	{ "CHECKER_TEXTURE", RPR_MATERIAL_NODE_CHECKER_TEXTURE },
 	{ "CONSTANT_TEXTURE", RPR_MATERIAL_NODE_CONSTANT_TEXTURE },
 	{ "INPUT_LOOKUP", RPR_MATERIAL_NODE_INPUT_LOOKUP },
-#if (RPR_VERSION_MINOR < 34)
-	{ "STANDARD", RPR_MATERIAL_NODE_STANDARD },
-#else
 	{ "STANDARD", RPR_MATERIAL_NODE_UBERV2 },
 	{ "UBER", RPR_MATERIAL_NODE_UBERV2 },
-#endif
 	{ "BLEND_VALUE", RPR_MATERIAL_NODE_BLEND_VALUE },
 	{ "PASSTHROUGH", RPR_MATERIAL_NODE_PASSTHROUGH },
 	{ "ORENNAYAR", RPR_MATERIAL_NODE_ORENNAYAR },
@@ -253,9 +241,6 @@ void InitParamList(void)
 	g_rprxParamList.push_back(RPRX_DEFINE_PARAM_MATERIAL(RPRX_UBER_MATERIAL_EMISSION_WEIGHT, "emission.weight"));
 	g_rprxParamList.push_back(RPRX_DEFINE_PARAM_MATERIAL(RPRX_UBER_MATERIAL_EMISSION_MODE, "emission.mode"));
 	g_rprxParamList.push_back(RPRX_DEFINE_PARAM_MATERIAL(RPRX_UBER_MATERIAL_TRANSPARENCY, "transparency"));
-#if (RPR_VERSION_MINOR < 34)
-	g_rprxParamList.push_back(RPRX_DEFINE_PARAM_MATERIAL(RPRX_UBER_MATERIAL_DISPLACEMENT, "displacement"));
-#endif
 	g_rprxParamList.push_back(RPRX_DEFINE_PARAM_MATERIAL(RPRX_UBER_MATERIAL_SSS_SCATTER_COLOR, "sss.scatterColor"));
 	g_rprxParamList.push_back(RPRX_DEFINE_PARAM_MATERIAL(RPRX_UBER_MATERIAL_SSS_SCATTER_DISTANCE, "sss.scatterDistance"));
 	g_rprxParamList.push_back(RPRX_DEFINE_PARAM_MATERIAL(RPRX_UBER_MATERIAL_SSS_SCATTER_DIRECTION, "sss.scatterDirection"));
@@ -335,40 +320,28 @@ bool ParseRPRX (
 
 			if ( valueN )
 			{
-				rpr_bool materialIsRPRX = false;
-#if (RPR_VERSION_MINOR < 34)
-				// check if the node is RPR or RPRX
-				status = rprxIsMaterialRprx(contextX,valueN,nullptr,&materialIsRPRX); if (status != RPR_SUCCESS) { return false; };
-#endif
-
-				if ( materialIsRPRX )
+				
+				bool originIsUberColor = false;
+				if (   g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_DIFFUSE_COLOR
+					|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_REFLECTION_COLOR
+					|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_REFRACTION_COLOR
+					|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_REFRACTION_ABSORPTION_COLOR
+					|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_COATING_COLOR
+					|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_COATING_TRANSMISSION_COLOR
+					|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_EMISSION_COLOR
+					|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_SSS_SCATTER_COLOR
+					|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_BACKSCATTER_COLOR
+					)
 				{
-					// having a Uber material linked as an input of another Uber Material doesn't make sense and is not managed by
-					// the RPRX library. only a rpr_material_node can be input in a rprx_material
+					originIsUberColor = true;
 				}
-				else
-				{
-					bool originIsUberColor = false;
-					if (   g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_DIFFUSE_COLOR
-						|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_REFLECTION_COLOR
-						|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_REFRACTION_COLOR
-						|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_REFRACTION_ABSORPTION_COLOR
-						|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_COATING_COLOR
-						|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_COATING_TRANSMISSION_COLOR
-						|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_EMISSION_COLOR
-						|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_SSS_SCATTER_COLOR
-						|| g_rprxParamList[iParam].param == RPRX_UBER_MATERIAL_BACKSCATTER_COLOR
-						)
-					{
-						originIsUberColor = true;
-					}
 
-					bool success = ParseRPR(valueN , nodeList , nodeListX , folder , originIsUberColor, textureParameter, material_name, exportImageUV );
-					if  ( !success )
-					{
-						return false;
-					}
+				bool success = ParseRPR(valueN , nodeList , nodeListX , folder , originIsUberColor, textureParameter, material_name, exportImageUV );
+				if  ( !success )
+				{
+					return false;
 				}
+				
 			}
 		}
 		else
@@ -427,15 +400,9 @@ bool ParseRPR (
 		if (in_type == RPR_MATERIAL_NODE_INPUT_TYPE_NODE)
 		{
 			size_t read_count = 0;
-#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
-			rprMaterialNodeGetInputInfo(material, i, RPR_MATERIAL_NODE_INPUT_NAME_STRING, sizeof(size_t), nullptr, &read_count);
-			std::vector<char> param_name(read_count, ' ');
-			rprMaterialNodeGetInputInfo(material, i, RPR_MATERIAL_NODE_INPUT_NAME_STRING, sizeof(param_name), param_name.data(), nullptr);
-#else
 			uint32_t id = 0;
 			CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(material, i, RPR_MATERIAL_NODE_INPUT_NAME, sizeof(uint32_t), &id, nullptr));
 			std::string param_name = id2param[id];
-#endif
 
 			rpr_material_node ref_node = nullptr;
 			status = rprMaterialNodeGetInputInfo(material, i, RPR_MATERIAL_NODE_INPUT_VALUE, sizeof(ref_node), &ref_node, nullptr);
@@ -627,15 +594,9 @@ void ExportMaterials(const std::string& filename,
 			for (int input_id = 0; input_id < input_count; ++input_id)
 			{
 				size_t read_count = 0;
-#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
-				CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(node, input_id, RPR_MATERIAL_NODE_INPUT_NAME_STRING, sizeof(size_t), nullptr, &read_count));
-				std::vector<char> param_name(read_count, ' ');
-				CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(node, input_id, RPR_MATERIAL_NODE_INPUT_NAME_STRING, sizeof(param_name), param_name.data(), nullptr));
-#else
 				uint32_t id = 0;
 				CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(node, input_id, RPR_MATERIAL_NODE_INPUT_NAME, sizeof(uint32_t), &id, nullptr));
 				std::string param_name = id2param[id];
-#endif
 
 				if (!exportImageUV  // if UV not exported
 					&& type == RPR_MATERIAL_NODE_IMAGE_TEXTURE
