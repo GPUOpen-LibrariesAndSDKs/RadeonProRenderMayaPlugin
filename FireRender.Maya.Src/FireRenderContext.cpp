@@ -745,7 +745,7 @@ void FireRenderContext::render(bool lock)
 	context.SetParameter("iterations", iterationStep);
 
 	if (m_useRegion)
-		context.RenderTile(m_region.left, m_region.right, m_height - m_region.top - 1, m_height - m_region.bottom - 1);
+		context.RenderTile(m_region.left, m_region.right+1, m_height - m_region.top - 1, m_height - m_region.bottom);
 	else
 		context.Render();
 
@@ -1206,7 +1206,7 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 				frstatus = rprFrameBufferGetInfo(opacityFrameBuffer, RPR_FRAMEBUFFER_DATA, dataSize, m_opacityTempData.get(), nullptr);
 				checkStatus(frstatus);
 
-				copyPixels(m_opacityData.get(), m_opacityTempData.get(), width, height, region, flip, false);
+				copyPixels(m_opacityData.get(), m_opacityTempData.get(), width, height, region, flip);
 			}
 			else
 			{
@@ -1220,7 +1220,7 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 	// buffer into supplied pixel memory.
 	if (useTempData || isDenoiserEnabled)
 	{
-		copyPixels(pixels, data, width, height, region, flip, aov == RPR_AOV_COLOR);
+		copyPixels(pixels, data, width, height, region, flip);
 	}
 
 	//combine (Opacity to Alpha)
@@ -1238,27 +1238,23 @@ void generateBitmapImage(unsigned char *image, int height, int width, int pitch,
 // -----------------------------------------------------------------------------
 void FireRenderContext::copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 	unsigned int sourceWidth, unsigned int sourceHeight,
-	const RenderRegion& region, bool flip, bool isColor) const
+	const RenderRegion& region, bool flip) const
 {
 	RPR_THREAD_ONLY;
 	// Get region dimensions.
 	unsigned int regionWidth = region.getWidth();
 	unsigned int regionHeight = region.getHeight();
 
-	// A color frame buffer contains pixel data for the full
-	// source width and height, even if only a region is rendered.
-	if (isColor)
+	for (unsigned int y = 0; y < regionHeight; y++)
 	{
-		for (unsigned int y = 0; y < regionHeight; y++)
-		{
-			unsigned int destIndex = y * regionWidth;
+		unsigned int destIndex = y * regionWidth;
 				
-			unsigned int sourceIndex = flip ?
-				(sourceHeight - (region.bottom + y) - 1) * sourceWidth + region.left :
-				(sourceHeight - (region.top - y) - 1) * sourceWidth + region.left;
+		unsigned int sourceIndex = flip ?
+			(sourceHeight - (region.bottom + y) - 1) * sourceWidth + region.left :
+			(sourceHeight - (region.top - y) - 1) * sourceWidth + region.left;
 
-			memcpy(&dest[destIndex], &source[sourceIndex], sizeof(RV_PIXEL) * regionWidth);
-		}
+		memcpy(&dest[destIndex], &source[sourceIndex], sizeof(RV_PIXEL) * regionWidth);
+	}
 
 #ifdef _DEBUG
 #ifdef DUMP_PIXELS_SOURCE
@@ -1292,27 +1288,6 @@ void FireRenderContext::copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 		generateBitmapImage(dst2, sourceHeight, sourceWidth, sourceWidth * 4, "C:\\temp\\dbg\\2.bmp");
 #endif
 #endif
-	}
-
-	// A non color AOV buffer is the same size as the full frame
-	// buffer, but only contains data for the rendered region. This
-	// may be due to a bug in the RPR core API.
-	else
-	{
-		// Possibly another bug in the RPR core API, the
-		// source data width is one pixel greater than the
-		// region width if the left side of the region is zero.
-		unsigned int w = regionWidth < sourceWidth ? regionWidth - 1 : regionWidth;
-
-		for (unsigned int y = 0; y < regionHeight; y++)
-		{
-			unsigned int destIndex = y * regionWidth;
-			unsigned int sourceIndex = flip ?
-				(regionHeight - y - 1) * w : y * w;
-
-			memcpy(&dest[destIndex], &source[sourceIndex], sizeof(RV_PIXEL) * regionWidth);
-		}
-	}
 }
 
 // -----------------------------------------------------------------------------
@@ -2283,7 +2258,7 @@ void FireRenderContext::compositeOutput(RV_PIXEL* pixels, unsigned int width, un
 
 	if (useTempData)
 	{
-		copyPixels(pixels, data, width, height, region, flip, true);
+		copyPixels(pixels, data, width, height, region, flip);
 	}
 
 	rprObjectDelete(frameBufferOut);
