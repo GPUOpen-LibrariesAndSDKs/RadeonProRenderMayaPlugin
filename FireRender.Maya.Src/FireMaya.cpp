@@ -2341,11 +2341,6 @@ void FireMaya::Scope::SetCachedShader(const NodeId& id, frw::Shader shader)
 		m->shaderMap[id] = shader;
 }
 
-void FireMaya::Scope::ClearShaderMapCache()
-{
-	m->shaderMap.clear();
-}
-
 void FireMaya::Scope::CommitShaders()
 {
 	DebugPrint("Begin export materials, amount of materials: %d", m->shaderMap.size());
