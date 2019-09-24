@@ -13,6 +13,7 @@
 #include "frWrap.h"
 #include "FireRenderContext.h"
 #include "Translators/Translators.h"
+#include "FireMaya.h"
 #include <maya/MPxRenderer.h>
 #include <maya/MGlobal.h>
 #include <maya/MString.h>
@@ -20,6 +21,7 @@
 #include <maya/MMutexLock.h>
 #include <map>
 #include <string>
+#include <tuple>
 
 class FireRenderRenderData
 {
@@ -38,7 +40,7 @@ public:
 
 	FireRenderContext m_context;
 
-	frw::Shader m_surfaceShader;
+	std::tuple<frw::Shader, FireMaya::NodeId> m_surfaceShader;
 
 	frw::Shader m_volumeShader;
 

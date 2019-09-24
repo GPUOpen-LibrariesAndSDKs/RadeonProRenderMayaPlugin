@@ -157,9 +157,9 @@ MStatus FireMaterialViewRenderer::translateMesh(const MUuid& id, const MObject& 
 				m_renderData.m_context.GetScene().Attach(m_renderData.m_shape);
 		}
 
-		if (m_renderData.m_shape && m_renderData.m_surfaceShader)
+		if (m_renderData.m_shape && std::get<frw::Shader>(m_renderData.m_surfaceShader))
 		{
-			m_renderData.m_shape.SetShader(m_renderData.m_surfaceShader);
+			m_renderData.m_shape.SetShader(std::get<frw::Shader>(m_renderData.m_surfaceShader));
 			m_renderData.m_shape.SetVolumeShader(m_renderData.m_volumeShader);
 		}
 
@@ -326,12 +326,14 @@ MStatus FireMaterialViewRenderer::translateShader(const MUuid& id, const MObject
 {
 	return FireRenderThread::RunOnceAndWait<MStatus>([this, id, node]()
 	{
-		m_renderData.m_surfaceShader = m_renderData.m_context.GetShader(node);
+		std::get<frw::Shader>(m_renderData.m_surfaceShader) = m_renderData.m_context.GetShader(node);
+		std::get<FireMaya::NodeId>(m_renderData.m_surfaceShader) = getNodeUUid(node);
+
 		m_renderData.m_volumeShader = m_renderData.m_context.GetVolumeShader(node);
 
-		if (m_renderData.m_shape && m_renderData.m_surfaceShader)
+		if (m_renderData.m_shape && std::get<frw::Shader>(m_renderData.m_surfaceShader))
 		{
-			m_renderData.m_shape.SetShader(m_renderData.m_surfaceShader);
+			m_renderData.m_shape.SetShader(std::get<frw::Shader>(m_renderData.m_surfaceShader));
 		}
 
 		if (m_renderData.m_shape && m_renderData.m_volumeShader)
@@ -474,9 +476,9 @@ MStatus FireMaterialViewRenderer::setProperty(const MUuid& id, const MString& na
 
 MStatus FireMaterialViewRenderer::setShader(const MUuid& id, const MUuid& shaderId)
 {
-	if (m_renderData.m_shape && m_renderData.m_surfaceShader)
+	if (m_renderData.m_shape && std::get<frw::Shader>(m_renderData.m_surfaceShader))
 	{
-		m_renderData.m_shape.SetShader(m_renderData.m_surfaceShader);
+		m_renderData.m_shape.SetShader(std::get<frw::Shader>(m_renderData.m_surfaceShader));
 	}
 
 	if (m_renderData.m_shape && m_renderData.m_volumeShader)
@@ -565,10 +567,12 @@ void FireMaterialViewRenderer::Render()
 	catch (const FireRenderException& ex) 
 	{
 		//Prevents view freezing after close material view with invalid material selected
-		m_renderData.m_surfaceShader.Reset();
+		auto& shader = std::get<frw::Shader>(m_renderData.m_surfaceShader);
+		shader.Reset();
 
 		//Prevents view freezing after selecting invalid material and then selecting valid
-		m_renderData.m_context.GetScope().ClearShaderMapCache();
+		auto& nodeId = std::get<FireMaya::NodeId>(m_renderData.m_surfaceShader);
+		m_renderData.m_context.GetScope().SetCachedShader(nodeId, nullptr);
 
 		MAtomic::set(&m_threadCmd, ThreadCommand::BEGIN_UPDATE);
 		return;
@@ -622,6 +626,7 @@ void FireMaterialViewRenderer::Render()
 		ProgressParams params;
 		params.progress = 1.0;
 		progress(params);
+		MAtomic::set(&m_threadCmd, ThreadCommand::BEGIN_UPDATE);
 	}
 }
 
