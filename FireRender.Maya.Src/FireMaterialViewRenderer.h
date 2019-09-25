@@ -118,7 +118,6 @@ public:
 	// Set resolution
 	virtual MStatus setResolution(unsigned int width, unsigned int height);
 
-
 	// End scene update
 	virtual MStatus endSceneUpdate();
 
@@ -135,7 +134,7 @@ public:
 	static void* creator();
 
 	// Render function
-	void Render();
+	void render();
 
 	// Render data
 	// Contain the context and other data information needed by the render function
