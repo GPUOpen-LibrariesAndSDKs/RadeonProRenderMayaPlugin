@@ -72,7 +72,7 @@ bool FireMaterialViewRenderer::RunOnFireRenderThread()
 	{
 		case ThreadCommand::RENDER_IMAGE: {
 			RPR::AutoLock<MMutexLock> lock(m_renderData.m_mutex);
-			Render();
+			render();
 			return true;
 		}
 
@@ -554,7 +554,7 @@ void* FireMaterialViewRenderer::creator()
 	return renderer;
 }
 
-void FireMaterialViewRenderer::Render()
+void FireMaterialViewRenderer::render()
 {
 	RPR_THREAD_ONLY;
 
