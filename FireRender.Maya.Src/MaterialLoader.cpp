@@ -13,6 +13,7 @@
 #include "frWrap.h"
 #include "FileSystemUtils.h"
 #include "FireRenderImportExportXML.h"
+#include "XMLMaterialExport/XMLMaterialExportCommon.h"
 
 using namespace std;
 
@@ -121,6 +122,7 @@ namespace
 		CHECK_NO_ERROR(rprMaterialNodeGetInfo(node, RPR_MATERIAL_NODE_INPUT_COUNT, sizeof(size_t), &count, nullptr));
 		for (int i = 0; i < count; ++i)
 		{
+#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 			size_t str_size = 0;
 			CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(node, i, RPR_MATERIAL_NODE_INPUT_NAME_STRING, 0, nullptr, &str_size));
 			char* str = new char[str_size];
@@ -128,6 +130,12 @@ namespace
 			std::cout << "\tparam: " << str << ". ";
 			delete[]str; str = nullptr;
 			std::cout << std::endl;
+#else
+			uint32_t id = 0;
+			CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(node, i, RPR_MATERIAL_NODE_INPUT_NAME, sizeof(uint32_t), &id, nullptr));
+			std::cout << "\tparam: " << id2param[id] << ". ";
+			std::cout << std::endl;
+#endif
 		}
 
 		std::cout << "__________________________________________" << std::endl;
@@ -495,9 +503,15 @@ void ExportMaterials(const std::string& filename, rpr_material_node* materials, 
 			for (int input_id = 0; input_id < input_count; ++input_id)
 			{
 				size_t read_count = 0;
+#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
 				CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(node, input_id, RPR_MATERIAL_NODE_INPUT_NAME_STRING, sizeof(size_t), nullptr, &read_count));
 				std::vector<char> param_name(read_count, ' ');
 				CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(node, input_id, RPR_MATERIAL_NODE_INPUT_NAME_STRING, sizeof(param_name), param_name.data(), nullptr));
+#else
+				uint32_t id = 0;
+				CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(node, i, RPR_MATERIAL_NODE_INPUT_NAME, sizeof(uint32_t), &id, nullptr));
+				std::string param_name = id2param[id];
+#endif
 				std::string type = "";
 				std::string value = "";
 				rpr_material_node_type input_type;
