@@ -576,6 +576,7 @@ void FireRenderGlobals::createLegacyAttributes()
 	eAttr.addField("Time", kTime);
 	eAttr.addField("Unlimited", kUnlimited);
 	MAKE_INPUT_CONST(eAttr);
+	CHECK_MSTATUS(addAttribute(attrObj));
 
 	attrObj = eAttr.create("completionCriteriaTypeViewport", "vcct", kIterations, &status);
 	eAttr.addField("Iterations", kIterations);
@@ -583,9 +584,6 @@ void FireRenderGlobals::createLegacyAttributes()
 	eAttr.addField("Unlimited", kUnlimited);
 	MAKE_INPUT_CONST(eAttr);
 	addAsGlobalAttribute(eAttr);
-
-
-	CHECK_MSTATUS(addAttribute(attrObj));
 }
 
 void FireRenderGlobals::setupProductionRayDepthParameters()
