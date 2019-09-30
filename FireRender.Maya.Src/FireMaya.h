@@ -18,6 +18,8 @@ namespace FireMaya
 {
 	class Scope;
 
+	typedef std::string NodeId;
+
 	enum FitType	// chosen to match image layer fit info
 	{
 		FitFill,
@@ -203,8 +205,6 @@ namespace FireMaya
 
 	class Scope
 	{
-		typedef std::string NodeId;
-
 		struct Data
 		{
 			frw::Context context;

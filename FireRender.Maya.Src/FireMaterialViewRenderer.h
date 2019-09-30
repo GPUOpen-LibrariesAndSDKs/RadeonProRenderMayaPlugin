@@ -13,6 +13,7 @@
 #include "frWrap.h"
 #include "FireRenderContext.h"
 #include "Translators/Translators.h"
+#include "FireMaya.h"
 #include <maya/MPxRenderer.h>
 #include <maya/MGlobal.h>
 #include <maya/MString.h>
@@ -20,6 +21,7 @@
 #include <maya/MMutexLock.h>
 #include <map>
 #include <string>
+#include <tuple>
 
 class FireRenderRenderData
 {
@@ -38,7 +40,7 @@ public:
 
 	FireRenderContext m_context;
 
-	frw::Shader m_surfaceShader;
+	std::tuple<frw::Shader, FireMaya::NodeId> m_surfaceShader;
 
 	frw::Shader m_volumeShader;
 
@@ -70,7 +72,7 @@ public:
 	FireMaterialViewRenderer();
 
 	// Destructor
-	virtual ~FireMaterialViewRenderer();
+	virtual ~FireMaterialViewRenderer() = default;
 
 	// Start async render
 	virtual MStatus startAsync(const JobParams& params);
@@ -103,8 +105,11 @@ public:
 	virtual MStatus translateShader(const MUuid& id, const MObject& node);
 
 	virtual MStatus setProperty(const MUuid& id, const MString& name, bool value);
+	
 	virtual MStatus setProperty(const MUuid& id, const MString& name, int value);
+	
 	virtual MStatus setProperty(const MUuid& id, const MString& name, float value);
+
 	virtual MStatus setProperty(const MUuid& id, const MString& name, const MString& value);
 
 	// Set shader
@@ -140,6 +145,12 @@ public:
 
 	// Number of render iterations
 	int m_numIteration;
+
+	enum ThreadCommand {
+		BEGIN_UPDATE = 0,
+		RENDER_IMAGE = 1,
+		STOP_THREAD = 2
+	};
 
 	// Render commands used by the render thread
 	volatile int m_threadCmd;
