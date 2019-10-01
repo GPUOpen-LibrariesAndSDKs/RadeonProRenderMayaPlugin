@@ -148,7 +148,7 @@ namespace FireMaya
 		static void ForceEvaluateAllAttributes(MObject node, bool evaluateInputs);
 		static bool IsOutputAttribute(MObject attrObj, bool parentsOnly = false);
 
-		~Node();
+		virtual ~Node() override;
 
 	protected:
 		void GetOutputAttributes(std::vector<MObject>& outputVec);
@@ -157,8 +157,8 @@ namespace FireMaya
 		void FillOutputAttributeNames();
 
 	private:
-		MCallbackId openCallback;
-		MCallbackId importCallback;
+		MCallbackId openCallback = 0;
+		MCallbackId importCallback = 0;
 		static void onFileOpen(void* clientData);
 
 		std::vector<MString> m_outputAttributeNames;
