@@ -148,6 +148,8 @@ namespace FireMaya
 		static void ForceEvaluateAllAttributes(MObject node, bool evaluateInputs);
 		static bool IsOutputAttribute(MObject attrObj, bool parentsOnly = false);
 
+		~Node();
+
 	protected:
 		void GetOutputAttributes(std::vector<MObject>& outputVec);
 

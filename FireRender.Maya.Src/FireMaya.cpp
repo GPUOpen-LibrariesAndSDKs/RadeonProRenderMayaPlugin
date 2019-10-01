@@ -2880,3 +2880,9 @@ bool FireMaya::Node::IsOutputAttribute(MObject attrObj, bool parentsOnly)
 
 	return false;
 }
+
+FireMaya::Node::~Node()
+{
+	MNodeMessage::removeCallback(openCallback);
+	MNodeMessage::removeCallback(importCallback);
+}
