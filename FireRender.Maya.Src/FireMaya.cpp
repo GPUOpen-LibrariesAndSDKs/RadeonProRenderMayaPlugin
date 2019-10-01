@@ -2883,6 +2883,11 @@ bool FireMaya::Node::IsOutputAttribute(MObject attrObj, bool parentsOnly)
 
 FireMaya::Node::~Node()
 {
-	MNodeMessage::removeCallback(openCallback);
-	MNodeMessage::removeCallback(importCallback);
+	if (openCallback != 0) {
+		MNodeMessage::removeCallback(openCallback);
+	}
+
+	if (importCallback != 0) {
+		MNodeMessage::removeCallback(importCallback);
+	}
 }
