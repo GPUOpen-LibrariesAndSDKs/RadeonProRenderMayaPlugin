@@ -29,7 +29,6 @@ if exist %ThirdPartyDir% (
     xcopy /S /Y /I %ThirdPartyDir%\RadeonProRender-GLTF\* RadeonProRender-GLTF
     xcopy /S /Y /I %ThirdPartyDir%\oiio\* oiio
     xcopy /S /Y /I %ThirdPartyDir%\glew\* glew
-	xcopy /S /Y /I %ThirdPartyDir%\aws\* aws
 	xcopy /S /Y /I %ThirdPartyDir%\json\* json
 	
 	xcopy /S /Y /I %ThirdPartyDir%\SceneConvertionScripts\convertAI2RPR.py ..\FireRender.Maya.Src\python\fireRender\convertAI2RPR.py*
