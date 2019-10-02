@@ -292,7 +292,6 @@ namespace FireMaya
 			unsigned int rowPitch,
 			bool flipY = false);
 
-		frw::Image LoadImageUsingMImage(MString texturePath, MString colorSpace);
 		frw::Image LoadImageUsingMTexture(MString texturePath, MString colorSpace, const MString& ownerNodeName);
 
 	public:

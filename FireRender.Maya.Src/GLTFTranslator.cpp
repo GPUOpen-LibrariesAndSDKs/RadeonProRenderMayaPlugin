@@ -99,7 +99,7 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 		materialSystem.Handle(),
 		scenes.data(), 
 		scenes.size(), 
-		0);
+		RPRGLTF_EXPORTFLAG_COPY_IMAGES_USING_OBJECTNAME);
 
 	if (err != GLTF_SUCCESS)
 	{
@@ -190,6 +190,27 @@ void GLTFTranslator::assignCameras(GLTFDataHolderStruct& dataHolder, FireRenderC
 #endif
 }
 
+int getUVLightGroup(const MDagPath& inDagPath)
+{
+	MDagPath dagPath = inDagPath;
+
+	while (dagPath.transform() != MObject())
+	{
+		MFnTransform transform(dagPath.transform());
+
+		MPlug plug = transform.findPlug("lightmapUVGroup");
+
+		if (!plug.isNull())
+		{
+			return plug.asInt();
+		}
+
+		dagPath.pop();
+	}
+
+	return -1;
+}
+
 void GLTFTranslator::assignMeshes(FireRenderContext& context)
 {
 #if !defined(OSMac_)
@@ -221,6 +242,13 @@ void GLTFTranslator::assignMeshes(FireRenderContext& context)
 			std::array<float, 16> arr;
 			FillArrayWithScaledMMatrixData(arr);
 			element.shape.SetTransform(arr.data());
+
+			int lightGroup = getUVLightGroup(dagPath);
+
+			if (lightGroup >= 0)
+			{
+				rprGLTF_AddExtraShapeParameter(element.shape.Handle(), "lightmapUVGroup", lightGroup);
+			}
 		}
 	}
 #endif
