@@ -883,27 +883,11 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 
 		frw::Image image;
 
-		// case for dds
-		std::string ddsExt = ".dds";
-		std::string strPath = texturePath.asChar();
-		bool isDDS = strPath.rfind(ddsExt) == strPath.length() - ddsExt.length();
-
-		if (!isDDS)
-		{
-			image = frw::Image(m->context, texturePath.asUTF8());
-		}
+		image = frw::Image(m->context, texturePath.asUTF8());
 
 		if (!image)
 		{
-			// case for dds	
-			if (isDDS)
-			{
-				image = LoadImageUsingMImage(texturePath, colorSpace);
-			}
-			else
-			{ 
-				image = LoadImageUsingMTexture(texturePath, colorSpace, ownerNodeName);
-			}
+			image = LoadImageUsingMTexture(texturePath, colorSpace, ownerNodeName);
 		}
 
 		if (image)
@@ -916,59 +900,6 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 	});
 
 	return retImage;
-}
-
-frw::Image FireMaya::Scope::LoadImageUsingMImage(MString texturePath, MString colorSpace)
-{
-	MImage img;
-	unsigned int width = 0;
-	unsigned int height = 0;
-
-	MStatus status = img.readFromFile(texturePath, MImage::MPixelType::kFloat);
-	if (status != MStatus::kSuccess)
-	{
-		return frw::Image();
-	}
-
-	// this method won't work for EXR files for unknown reasons
-	//img.verticalFlip();
-
-	void* src = nullptr;
-	unsigned int componentSize = 1;
-	unsigned int depth = img.depth();
-	bool hasDepthMap = img.haveDepth();
-	bool isRGBA = img.isRGBA();
-
-	//MImage::MImageFilterFormat filterFormat = img.filter()
-
-	img.getSize(width, height);
-
-	unsigned int channels = depth;
-
-	if (img.pixelType() == MImage::MPixelType::kByte)
-	{
-		src = img.pixels();
-		componentSize = 1;
-	}
-	else if (img.pixelType() == MImage::MPixelType::kFloat)
-	{
-		src = img.floatPixels();
-		componentSize = 4;
-
-		float* srcFloat = (float*)src;
-
-		channels = depth / componentSize;
-		for (int pixel = 0; pixel < width * height; ++pixel)
-		{
-			for (int i = 0; i < channels; i++)
-			{
-				// Looks like Core needs normalized float values in range 0 .. 1. Here we can get value in range [0.0 .. 255.0]
-				srcFloat[pixel * channels + i] /= 255.0f;
-			}
-		}
-	}
-
-	return CreateImageInternal(colorSpace, width, height, src, channels, componentSize, width * depth, true);
 }
 
 frw::Image FireMaya::Scope::LoadImageUsingMTexture(MString texturePath, MString colorSpace, const MString& ownerNodeName)
