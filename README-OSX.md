@@ -6,6 +6,44 @@ Prerequisites:
         - this step may not be needed anymore
 	- /usr/local/bin/brew install glew
 
+
+Submodules:
+---------
+Plugin includes several shared source files from Shared Components repository as a submodule. You may need to get an
+access to the https://github.com/Radeon-Pro/RadeonProRenderSharedComponents.
+
+Shared components submodule is included to the project via SSH protocol. You will need to create and install SSH keys
+to access submodules.
+
+At first you need to generate SSH key pair:
+1. Open a terminal
+2. Go to your home directory by typing cd ~/
+3. Type the following command
+    - ssh-keygen -t rsa
+4. When you press enter, two files will be created
+    ~/.ssh/id_rsa
+    ~/.ssh/id_rsa.pub
+5. Your public key is stored in the file ending with .pub, i.e. ~/.ssh/id_rsa.pub
+
+In order to authenticate yourself and your device with GitHub, you need to upload your public SSH key generated above
+to your GitHub account.
+
+6. Copy public SSH key
+Open a terminal and type
+    $ pbcopy < ~/.ssh/id_rsa.pub
+
+7. You need to add this key to your github account. Go to Github accout settings, SSH and GPG keys, click New GPG key.
+In the "Key" field, paste your public SSH key and click Add GPG key.
+
+
+Once you've got an access and setup ssh please update submodules from the parent folder of the project:
+
+```
+$ git submodule init
+$ git submodule update
+
+```
+
 Building:
 ---------
 
@@ -57,5 +95,4 @@ Technical Notes:
 You may at some point want to change your Maya license server, you can do this by resetting the licesne information.
 - Resetting the Maya license information can be done by remove the following file:
 	- /Library/Application Support/Autodesk/CLM/LGS
-
 
