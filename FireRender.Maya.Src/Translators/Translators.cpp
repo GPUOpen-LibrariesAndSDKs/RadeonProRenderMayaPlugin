@@ -242,6 +242,15 @@ namespace FireMaya
 
 		frstatus = rprCameraSetFarPlane(frcamera, (float)(fnCamera.farClippingPlane() * cmToMCoefficient));
 		checkStatus(frstatus);
+		
+		float lensShiftX = (float) fnCamera.horizontalFilmOffset(&mstatus);
+		assert(mstatus == MStatus::kSuccess);
+
+		float lensShiftY = (float) fnCamera.verticalFilmOffset(&mstatus);
+		assert(mstatus == MStatus::kSuccess);
+
+		frstatus = rprCameraSetLensShift(frcamera, lensShiftX, lensShiftY);
+		checkStatus(frstatus);
 
 		// set rpr name
 		frw_camera.SetName(fnCamera.name().asChar());
