@@ -64,5 +64,10 @@ inline MColor ConvertKelvinToColor(double kelvin)
 		b = Clamp(temp, 0.0, 1.0);
 	}
 
+	// the code above makes color RGB value in gamma 2.2. We need this value in gamma 1.0
+	r = pow(r, 2.2);
+	g = pow(g, 2.2);
+	b = pow(b, 2.2);
+
 	return { static_cast<float>(r), static_cast<float>(g), static_cast<float>(b) };
 }
