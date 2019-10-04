@@ -885,7 +885,7 @@ namespace FireMaya
 
 		// Transform (rotate) generated IBL image
 		MTransformationMatrix t;
-		double r1[3] = { 0, -skyBuilder.getSunAzimuth(), 0 };
+		double r1[3] = { 0, -skyBuilder.getSunAzimuth() + M_PI / 2.0, 0 };
 		t.setRotation(r1, MTransformationMatrix::RotationOrder::kXYZ);
 		MMatrix m2 = t.asMatrix() * matrix;
 		m2.get(m);
@@ -909,5 +909,4 @@ namespace FireMaya
 
 		return true;
 	}
-
 }

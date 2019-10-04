@@ -64,7 +64,7 @@ void SkyBuilder::updateSampleImage(MImage& image)
 	bytes.resize(count * 4);
 
 	float scale = 255 * getSkyIntensity();
-	int offset = int(m_sunAzimuth / (M_PI * 2) * m_imageWidth) % m_imageWidth;
+	int offset = int((m_sunAzimuth - M_PI / 2 ) / (M_PI * 2) * m_imageWidth) % m_imageWidth;
 
 	unsigned int s = 0;
 	unsigned char* dst = &bytes[0];
@@ -152,7 +152,19 @@ void SkyBuilder::calculateSunPosition()
 	m_sunAltitude = toRadians(fmaxf(m_sunAltitude, -88));
 
 	// Calculate the sun's direction vector.
-	m_sunDirection = MFloatVector(0.f, sin(m_sunAltitude), cos(m_sunAltitude));
+	//m_sunDirection = MFloatVector(0.f, sin(m_sunAltitude), cos(m_sunAltitude));
+
+	// Calculate the sun's direction vector.
+	float phi = (M_PI * 0.5f) + m_sunAltitude;
+	float theta = 0; // -m_sunAzimuth;
+	float sinphi = sin(phi);
+
+	m_sunDirection = Point3(
+		cos(theta) * sinphi,
+		sin(theta) * sinphi,
+		-cos(phi)
+	);
+
 }
 
 // -----------------------------------------------------------------------------
@@ -226,38 +238,27 @@ void SkyBuilder::createSkyImage()
 
 	// Initialize the sky generator.
 	SkyGen sg;
-	sg.mSaturation = 1;
+	sg.saturation = m_attributes.saturation;
 #ifdef USE_DIRECTIONAL_SKY_LIGHT
 	sg.mSunIntensity = 0.01f;
 #else
-	sg.mSunIntensity = 100.0f;
+	sg.sun_disk_intensity = 100.0f;
 #endif
-	sg.mElevation = m_sunAltitude;
-	sg.mGroundAlbedo = m_attributes.groundAlbedo;
-	sg.mGroundColor = m_attributes.groundColor;
-	sg.mSunScale = m_attributes.sunDiskSize;
-	sg.mMultiplier = 1.0;
-	sg.mFilterColor = m_attributes.filterColor;
-	sg.mSunDirection = m_sunDirection;
-	sg.mTurbidity = 1.f + m_attributes.turbidity * (9.0f / 50.0f);
+	sg.ground_color = m_attributes.groundColor;
+	sg.horizon_height = m_attributes.horizonHeight;
+	sg.horizon_blur = m_attributes.horizonBlur;
+	sg.sun_disk_scale = m_attributes.sunDiskSize;
+	sg.sun_glow_intensity = m_attributes.sunGlow;
+	sg.multiplier = 1.0;
+	sg.filter_color = m_attributes.filterColor;
+	sg.sun_direction = m_sunDirection;
+	sg.haze = 1.f + m_attributes.turbidity * (9.0f / 50.0f);
 
-	float skyIntensity = m_attributes.intensity;
-	float maxSunIntensity;
-
-	if (skyIntensity < std::numeric_limits<float>::epsilon())
-	{
-		maxSunIntensity = std::numeric_limits<float>::max();
-	}
-	else if (skyIntensity > 1.f)
-	{
-		maxSunIntensity = skyIntensity;
-	}
-	else
-	{
-		maxSunIntensity = 1.f / skyIntensity;
-	}
 
 	// Generate the image.
 	memset(m_imageBuffer.get(), 0, sizeof(SkyRgbFloat32) * m_imageWidth * m_imageHeight);
-	sg.GenerateSkyHosek(m_imageWidth, m_imageHeight, m_imageBuffer.get(), maxSunIntensity);
+	sg.generate(m_imageWidth, m_imageHeight, m_imageBuffer.get());
+
+	SkyColor c = sg.computeColor(sg.sun_direction);
+	m_sunLightColor = c.asColor();
 }
