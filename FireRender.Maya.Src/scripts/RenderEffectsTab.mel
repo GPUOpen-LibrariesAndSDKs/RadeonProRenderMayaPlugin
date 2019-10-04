@@ -448,6 +448,11 @@ global proc float[] kelvin2Color(float $kelvin)
 		if ($b > 1) $b = 1;
 	}
 
+	// the code above makes color RGB value in gamma 2.2. We need this value in gamma 1.0
+	$r = pow($r, 2.2);
+	$g = pow($g, 2.2);
+	$b = pow($b, 2.2);
+
 	float $result[3];
 	$result[0] = $r;
 	$result[1] = $g;
