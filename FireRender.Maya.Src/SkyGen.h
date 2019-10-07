@@ -102,7 +102,7 @@ public:
 		return result;
 	}
 
-	inline Point3& Point3::Cross(const Point3& v1, const Point3& v2)
+	inline Point3& Cross(const Point3& v1, const Point3& v2)
 	{
 		x = v1.y * v2.z - v1.z * v2.y;
 		y = v1.z * v2.x - v1.x * v2.z;
@@ -111,7 +111,7 @@ public:
 		return *this;
 	}
 
-	inline Point3 Point3::Cross(const Point3& v1)
+	inline Point3 Cross(const Point3& v1)
 	{
 		Point3 v;
 		v.x = y * v1.z - z * v1.y;
