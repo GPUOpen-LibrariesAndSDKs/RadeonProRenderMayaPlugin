@@ -72,9 +72,26 @@ MStatus FireRenderSkyLocator::initialize()
 	CHECK_MSTATUS(nAttr.setDefault(0.4f, 0.4f, 0.4f));
 	addAttribute(a);
 
+	// Obsolete attribute. Keeped for backward compatibility (In case if we someone has saved scene with the old sun and sky version)
 	a = nAttr.createColor("groundAlbedo", "galb");
 	makeAttribute(nAttr);
 	CHECK_MSTATUS(nAttr.setDefault(0.5f, 0.5f, 0.5f));
+	addAttribute(a);
+	/////////////////////////
+
+	a = nAttr.create("saturation", "sat", MFnNumericData::kFloat, 0.5f);
+	makeAttribute(nAttr);
+	nAttr.setMin(0.0);
+	nAttr.setMax(1.0);
+	addAttribute(a);
+
+	a = nAttr.create("horizonHeight", "horh", MFnNumericData::kFloat, 0.001f);
+	makeAttribute(nAttr);
+	addAttribute(a);
+
+	a = nAttr.create("horizonBlur", "horb", MFnNumericData::kFloat, 0.1f);
+	makeAttribute(nAttr);
+	nAttr.setMin(0.0);
 	addAttribute(a);
 
 	a = nAttr.create("sunGlow", "g", MFnNumericData::kFloat, 2.0f);

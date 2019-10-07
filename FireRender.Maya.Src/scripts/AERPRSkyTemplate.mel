@@ -322,7 +322,9 @@ global proc AERPRSkyTemplate(string $nodeName)
 		editorTemplate -addSeparator;
 		editorTemplate -addControl "filterColor";
 		editorTemplate -addControl "groundColor";
-		editorTemplate -addControl "groundAlbedo";
+		editorTemplate -addControl "horizonHeight";
+		editorTemplate -addControl "horizonBlur";
+		editorTemplate -addControl "saturation";
 		editorTemplate -addSeparator;
 		editorTemplate -addControl "sunGlow";
 		editorTemplate -addControl "sunDiskSize";
