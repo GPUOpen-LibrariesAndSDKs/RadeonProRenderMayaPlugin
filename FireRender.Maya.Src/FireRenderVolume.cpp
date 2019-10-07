@@ -384,9 +384,9 @@ void FillArrayWithGradient(
 		for (size_t y_idx = 0; y_idx < Yres; ++y_idx)
 			for (size_t x_idx = 0; x_idx < Xres; ++x_idx)
 			{
-				voxelParams.x = x_idx;
-				voxelParams.y = y_idx;
-				voxelParams.z = z_idx;
+				voxelParams.x = (unsigned int) x_idx;
+				voxelParams.y = (unsigned int) y_idx;
+				voxelParams.z = (unsigned int) z_idx;
 
 				float dist2vx_normalized = GetDistParamNormalized(voxelParams, volGrad);
 				outputValues.push_back(dist2vx_normalized);
@@ -796,7 +796,6 @@ float GetValFromNURBS(MFnNurbsCurve& nurbsCurve, float inX, float tol = 0.01f)
 		return 1.0f;
 
 	float param = 0.5f;
-	float currX;
 	int step = 0;
 
 	const int maxStepCount = 100;
@@ -805,8 +804,9 @@ float GetValFromNURBS(MFnNurbsCurve& nurbsCurve, float inX, float tol = 0.01f)
 	{
 		MPoint tpoint;
 		nurbsCurve.getPointAtParam(param, tpoint);
-		float tempX = tpoint.x;
-		float tempY = tpoint.y;
+
+		float tempX = (float) tpoint.x;
+		float tempY = (float) tpoint.y;
 
 		if (abs(tempX - inX) < tol)
 			return tempY;
@@ -928,7 +928,7 @@ bool FireRenderVolume::TranslateDensity(VolumeData* pVolumeData, MFnFluid& fnFlu
 	int opacityInputField = opacityInputPlug.asInt();
 
 	// fill voxel data with values from input channel
-	ProcessInputField(opacityInputField, pVolumeData->densityVal, pVolumeData->gridSizeX, pVolumeData->gridSizeY, pVolumeData->gridSizeZ, fnFluid);
+	ProcessInputField(opacityInputField, pVolumeData->densityVal, (unsigned int) pVolumeData->gridSizeX, (unsigned int) pVolumeData->gridSizeY, (unsigned int) pVolumeData->gridSizeZ, fnFluid);
 
 	// apply noise
 	// - check if noise is enabled for this channel
