@@ -26,7 +26,11 @@ bool SkyAttributes::refresh()
 	float sunDiskSize = m_node.getFloat("sunDiskSize");
 	short sunPositionType = m_node.getShort("sunPositionType");
 	MColor groundColor = m_node.getColor("groundColor");
-	MColor groundAlbedo = m_node.getFloat("groundAlbedo");
+
+	float saturation = m_node.getFloat("saturation");
+	float horizonHeight = m_node.getFloat("horizonHeight");
+	float horizonBlur = m_node.getFloat("horizonBlur");
+
 	MColor filterColor = m_node.getColor("filterColor");
 	float azimuth = m_node.getFloat("azimuth");
 	float altitude = m_node.getFloat("altitude");
@@ -49,7 +53,9 @@ bool SkyAttributes::refresh()
 		this->sunGlow != sunGlow ||
 		this->sunDiskSize != sunDiskSize ||
 		this->groundColor != groundColor ||
-		this->groundAlbedo != groundAlbedo ||
+		this->saturation != saturation ||
+		this->horizonHeight != horizonHeight ||
+		this->horizonBlur != horizonBlur ||
 		this->filterColor != filterColor;
 
 	// If the base sky attributes have not changed,
@@ -95,7 +101,9 @@ bool SkyAttributes::refresh()
 	this->sunDiskSize = sunDiskSize;
 	this->sunPositionType = sunPositionType;
 	this->groundColor = groundColor;
-	this->groundAlbedo = groundAlbedo;
+	this->saturation = saturation;
+	this->horizonHeight = horizonHeight;
+	this->horizonBlur = horizonBlur;
 	this->filterColor = filterColor;
 	this->azimuth = azimuth;
 	this->altitude = altitude;

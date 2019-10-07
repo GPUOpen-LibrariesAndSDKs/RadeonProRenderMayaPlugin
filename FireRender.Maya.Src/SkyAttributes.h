@@ -25,8 +25,11 @@ public:
 	float sunDiskSize = 0;
 	short sunPositionType = 0;
 	MColor groundColor = MColor::kOpaqueBlack;
-	MColor groundAlbedo = MColor::kOpaqueBlack;
 	MColor filterColor = MColor::kOpaqueBlack;
+
+	float horizonHeight;
+	float horizonBlur;
+	float saturation;
 
 	float azimuth = 0;
 	float altitude = 0;
