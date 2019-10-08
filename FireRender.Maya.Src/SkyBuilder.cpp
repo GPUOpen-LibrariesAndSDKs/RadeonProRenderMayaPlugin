@@ -99,7 +99,7 @@ float SkyBuilder::getSunAzimuth()
 {
 	auto rotated = m_sunAzimuth - M_PI / 2.0f;
 
-	return -rotated;
+	return (float) -rotated;
 }
 
 // -----------------------------------------------------------------------------
@@ -117,8 +117,8 @@ float SkyBuilder::getSkyIntensity()
 // -----------------------------------------------------------------------------
 MFloatVector SkyBuilder::getWorldSpaceSunDirection()
 {
-	float phi = (M_PI * 0.5f) + m_sunAltitude;
-	float theta = m_sunAzimuth + M_PI * 0.5f;
+	float phi = (float) ((M_PI * 0.5f) + m_sunAltitude);
+	float theta = (float) (m_sunAzimuth + M_PI * 0.5f);
 	float sinphi = sin(phi);
 
 	return MFloatVector(-cos(theta) * sinphi, -cos(phi), sin(theta) * sinphi);
@@ -155,8 +155,8 @@ void SkyBuilder::calculateSunPosition()
 	//m_sunDirection = MFloatVector(0.f, sin(m_sunAltitude), cos(m_sunAltitude));
 
 	// Calculate the sun's direction vector.
-	float phi = (M_PI * 0.5f) + m_sunAltitude;
-	float theta = 0; // -m_sunAzimuth;
+	float phi = (float) ((M_PI * 0.5f) + m_sunAltitude);
+	float theta = 0.0f; // -m_sunAzimuth;
 	float sinphi = sin(phi);
 
 	m_sunDirection = Point3(
@@ -189,8 +189,8 @@ void SkyBuilder::calculateSunPositionGeographic()
 		m_attributes.latitude, m_attributes.longitude,
 		0.0, 0.0, 820, 11);
 
-	m_sunAzimuth = pos.Azimuth;
-	m_sunAltitude = 90.0 - pos.Zenith;
+	m_sunAzimuth = (float) pos.Azimuth;
+	m_sunAltitude = (float) (90.0 - pos.Zenith);
 }
 
 // -----------------------------------------------------------------------------

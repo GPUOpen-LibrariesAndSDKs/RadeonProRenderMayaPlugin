@@ -862,7 +862,7 @@ int FireMaya::Options::GetContextDeviceFlags(RenderType renderType)
 				ret |= allDevices[i].creationFlag;
 		}
 
-		if (!ret || (devicesUsing.length() > allDevices.size() && devicesUsing[allDevices.size()]))
+		if (!ret || (devicesUsing.length() > (unsigned int) allDevices.size() && devicesUsing[ (unsigned int) allDevices.size()]))
 		{
 			ret |= RPR_CREATION_FLAGS_ENABLE_CPU;
 		}

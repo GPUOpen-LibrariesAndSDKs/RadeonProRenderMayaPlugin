@@ -155,7 +155,7 @@ void GLTFTranslator::assignCameras(GLTFDataHolderStruct& dataHolder, FireRenderC
 	MDagPathArray& renderableCameras = *dataHolder.inputRenderableCameras;
 	bool mainCameraSet = false;
 
-	for (int i = 0; i < renderableCameras.length(); i++)
+	for (unsigned int i = 0; i < renderableCameras.length(); i++)
 	{
 		MDagPath dagPath = renderableCameras[i];
 
