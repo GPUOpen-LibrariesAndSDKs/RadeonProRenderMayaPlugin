@@ -422,11 +422,11 @@ std::vector<unsigned char> ProcessFitStretch(
 	float srcWidthPerPixel = (float)srcWidth / (float)params.viewWidth;
 	float srcHeightPerPixel = (float)srcHeight / (float)params.viewHeight;
 
-	const int srcFullSegWidth = std::ceil(srcWidthPerPixel * params.maxTileWidth);
+	const int srcFullSegWidth = (int) std::ceil(srcWidthPerPixel * params.maxTileWidth);
 	const int srcTailSegWidth = srcWidth - srcFullSegWidth * (params.countXTiles - 1);
 	const int srcCurrSegWidth = (params.xTileIdx == (params.countXTiles - 1)) ? srcTailSegWidth : srcFullSegWidth;
 
-	const int srcFullSegHeight = std::ceil(srcHeightPerPixel * params.maxTileHeight);
+	const int srcFullSegHeight = (int) std::ceil(srcHeightPerPixel * params.maxTileHeight);
 	const int srcTailSegHeight = srcHeight - srcFullSegHeight * (params.countYTiles - 1);
 	const int srcCurrSegHeight = (params.yTileIdx == 0) ? srcTailSegHeight : srcFullSegHeight;
 
@@ -446,9 +446,9 @@ std::vector<unsigned char> ProcessFitStretch(
 	int shiftY = (params.yTileIdx > 1) ? srcTailSegHeight + (params.yTileIdx - 1) * srcFullSegHeight : params.yTileIdx * srcTailSegHeight;
 
 	// foreach pixel in source image
-	for (unsigned int y = 0; y < srcCurrSegHeight; y++)
+	for (int y = 0; y < srcCurrSegHeight; y++)
 	{
-		for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+		for (int x = 0; x < srcCurrSegWidth; x++)
 		{
 			memcpy(
 				dst + x * params.dstPixSize + y * img_desc.image_row_pitch,
@@ -471,7 +471,7 @@ std::vector<unsigned char> ProcessFitHorizontal(
 	const int srcHeight = params.desc.fHeight;
 
 	float srcWidthPerPixel = (float)srcWidth / (float)params.viewWidth;
-	const int srcFullSegWidth = std::ceil(srcWidthPerPixel * params.maxTileWidth);
+	const int srcFullSegWidth = (int) std::ceil(srcWidthPerPixel * params.maxTileWidth);
 	const int srcTailSegWidth = srcWidth - srcFullSegWidth * (params.countXTiles - 1);
 	const int srcCurrSegWidth = (params.xTileIdx == (params.countXTiles - 1)) ? srcTailSegWidth : srcFullSegWidth;
 
@@ -480,19 +480,19 @@ std::vector<unsigned char> ProcessFitHorizontal(
 	float srcHeightPerPixel = srcWidthPerPixel;
 
 	// for height, we either need to add black pixels, or cut source image to preserve aspect ratio of the source picture
-	const int srcFullSegHeight = std::ceil(srcHeightPerPixel * params.maxTileHeight);
+	const int srcFullSegHeight = (int) std::ceil(srcHeightPerPixel * params.maxTileHeight);
 	const int countFullSegments = (srcHeight > srcWidth) ?
-		std::trunc(params.viewHeight * srcHeightPerPixel / (float)srcFullSegHeight) :
-		std::trunc(srcHeight / (float)srcFullSegHeight);
+		(int) (std::trunc(params.viewHeight * srcHeightPerPixel / (float)srcFullSegHeight)) :
+		(int) (std::trunc(srcHeight / (float)srcFullSegHeight));
 	const int srcImageTailSegHeight = srcHeight - countFullSegments * srcFullSegHeight;
-	const int scrOutputTailSegHeight = (params.viewHeight * srcHeightPerPixel) - srcFullSegHeight * (params.countYTiles - 1);
-	const int countSkipTiles = std::trunc((params.countYTiles - countFullSegments - 1) / 2);
+	const int scrOutputTailSegHeight = (int) ((params.viewHeight * srcHeightPerPixel) - srcFullSegHeight * (params.countYTiles - 1));
+	const int countSkipTiles = (int) (std::trunc((params.countYTiles - countFullSegments - 1) / 2));
 	const int srcCurrSegHeight = (params.yTileIdx == 0) ? scrOutputTailSegHeight : srcFullSegHeight;
 
 	int srcFirstPixelOffset = 0;
 	if (srcHeight > srcWidth)
 	{
-		srcFirstPixelOffset = std::ceil((srcHeight - params.viewHeight * srcHeightPerPixel) / 2);
+		srcFirstPixelOffset = (int) std::ceil((srcHeight - params.viewHeight * srcHeightPerPixel) / 2);
 	}
 
 	int createdImageHeight = (params.yTileIdx == 0) ? scrOutputTailSegHeight : srcFullSegHeight;
@@ -558,9 +558,9 @@ std::vector<unsigned char> ProcessFitHorizontal(
 			lastSrcPixel = 0;
 
 		// foreach pixel in source image
-		for (unsigned int y = 0; y < lastSrcPixel; y++)
+		for (int y = 0; y < lastSrcPixel; y++)
 		{
-			for (unsigned int x = 0; x < srcCurrSegWidth; x++)
+			for (int x = 0; x < srcCurrSegWidth; x++)
 			{
 				int finalSrcShift = y + shiftY + srcFirstPixelOffset;
 				if (finalSrcShift < 0)
@@ -590,7 +590,7 @@ std::vector<unsigned char> ProcessFitVertical(
 	const int srcHeight = params.desc.fHeight;
 
 	float srcHeightPerPixel = (float)srcHeight / (float)params.viewHeight;
-	const int srcFullSegHeight = std::ceil(srcHeightPerPixel * params.maxTileHeight);
+	const int srcFullSegHeight = (int) std::ceil(srcHeightPerPixel * params.maxTileHeight);
 	const int srcTailSegHeight = srcHeight - srcFullSegHeight * (params.countYTiles - 1);
 	const int srcCurrSegHeight = (params.yTileIdx == 0) ? srcTailSegHeight : srcFullSegHeight;
 
@@ -599,19 +599,19 @@ std::vector<unsigned char> ProcessFitVertical(
 	float srcWidthPerPixel = srcHeightPerPixel;
 
 	// for width, we either need to add black pixels, or cut source image to preserve aspect ratio of the source picture
-	const int srcFullSegWidth = std::ceil(srcWidthPerPixel * params.maxTileWidth);
+	const int srcFullSegWidth = (int) std::ceil(srcWidthPerPixel * params.maxTileWidth);
 	const int countFullSegments = (srcWidth > srcHeight) ?
-		std::trunc(params.viewWidth * srcWidthPerPixel / (float)srcFullSegWidth) :
-		std::trunc(srcWidth / (float)srcFullSegWidth);
+		(int) (std::trunc(params.viewWidth * srcWidthPerPixel / (float)srcFullSegWidth)) :
+		(int) (std::trunc(srcWidth / (float)srcFullSegWidth));
 	const int srcImageTailSegWidth = srcWidth - countFullSegments * srcFullSegWidth;
-	const int scrOutputTailSegWidth = (params.viewWidth * srcWidthPerPixel) - srcFullSegWidth * (params.countXTiles - 1);
-	const int countSkipTiles = std::trunc((params.countXTiles - countFullSegments - 1) / 2);
+	const int scrOutputTailSegWidth = (int) ((params.viewWidth * srcWidthPerPixel) - srcFullSegWidth * (params.countXTiles - 1));
+	const int countSkipTiles = (int) (std::trunc((params.countXTiles - countFullSegments - 1) / 2));
 	const int srcCurrSegWidth = ((params.xTileIdx - countSkipTiles) == countFullSegments) ? srcImageTailSegWidth : srcFullSegWidth;
 
 	int srcFirstPixelOffset = 0;
 	if (srcWidth > srcHeight)
 	{
-		srcFirstPixelOffset = std::ceil((srcWidth - params.viewWidth * srcWidthPerPixel) / 2);
+		srcFirstPixelOffset = (int) std::ceil((srcWidth - params.viewWidth * srcWidthPerPixel) / 2);
 	}
 
 	int createdImageWidth = (params.xTileIdx == (params.countXTiles - 1)) ? scrOutputTailSegWidth : srcFullSegWidth;
@@ -645,9 +645,9 @@ std::vector<unsigned char> ProcessFitVertical(
 			lastSrcPixel = 0;
 
 		// foreach pixel in source image
-		for (unsigned int y = 0; y < srcCurrSegHeight; y++)
+		for (int y = 0; y < srcCurrSegHeight; y++)
 		{
-			for (unsigned int x = 0; x < lastSrcPixel; x++)
+			for (int x = 0; x < lastSrcPixel; x++)
 			{
 				int finalSrcShift = x + shiftX + srcFirstPixelOffset;
 				if (finalSrcShift < 0)

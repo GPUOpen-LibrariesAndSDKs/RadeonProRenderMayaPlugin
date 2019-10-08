@@ -916,7 +916,7 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 #else
 		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CPU_THREAD_LIMIT);
 #endif
-		ctxProperties.push_back ((rpr_context_properties) threadCountToOverride);
+		ctxProperties.push_back ((void*) (size_t) threadCountToOverride);
 	}
 
 	ctxProperties.push_back( (rpr_context_properties) 0);

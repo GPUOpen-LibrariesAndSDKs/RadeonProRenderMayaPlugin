@@ -1005,7 +1005,7 @@ bool FireRenderVolume::TranslateAlbedo(VolumeData* pVolumeData, MFnFluid& fnFlui
 	int colorInputField = colorInputPlug.asInt();
 
 	// fill voxel data with values from input channel
-	ProcessInputField(colorInputField, pVolumeData->albedoVal, pVolumeData->gridSizeX, pVolumeData->gridSizeY, pVolumeData->gridSizeZ, fnFluid);
+	ProcessInputField(colorInputField, pVolumeData->albedoVal, (unsigned int) pVolumeData->gridSizeX, (unsigned int) pVolumeData->gridSizeY, (unsigned int) pVolumeData->gridSizeZ, fnFluid);
 
 	// apply noise
 	// - check if noise is enabled for this channel
@@ -1082,7 +1082,7 @@ bool FireRenderVolume::TranslateEmission(VolumeData* pVolumeData, MFnFluid& fnFl
 	int incandescenceInputPlugField = incandescenceInputPlug.asInt();
 
 	// fill voxel data with values from input channel
-	ProcessInputField(incandescenceInputPlugField, pVolumeData->emissionVal, pVolumeData->gridSizeX, pVolumeData->gridSizeY, pVolumeData->gridSizeZ, fnFluid);
+	ProcessInputField(incandescenceInputPlugField, pVolumeData->emissionVal, (unsigned int) pVolumeData->gridSizeX, (unsigned int) pVolumeData->gridSizeY, (unsigned int) pVolumeData->gridSizeZ, fnFluid);
 
 	// apply noise
 	// - check if noise is enabled for this channel

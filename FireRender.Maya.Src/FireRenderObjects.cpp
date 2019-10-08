@@ -2297,7 +2297,7 @@ bool FireRenderHair::CreateCurves()
 	// Compute the padding bytes and number of array elements
 	const unsigned int tail = data.size() % sizeof(unsigned int);
 	const unsigned int padding = (tail > 0) ? sizeof(unsigned int) - tail : 0;
-	const unsigned int nelements = data.size() / sizeof(unsigned int) + (tail > 0 ? 1 : 0);
+	const unsigned int nelements = (unsigned int) (data.size() / sizeof(unsigned int) + (tail > 0 ? 1 : 0));
 
 	XGenSplineAPI::XgFnSpline splines;
 	size_t sampleSize = nelements * sizeof(unsigned int) - padding;
@@ -2368,7 +2368,7 @@ bool FireRenderHair::CreateCurves()
 			for (unsigned int i = 0; i < length; i++)
 			{
 
-				tmp_indicesData.push_back(points.size());
+				tmp_indicesData.push_back((rpr_uint) points.size());
 				if (tmp_indicesData.size() % pointsPerSegment == 0)
 					tmp_indicesData.push_back(tmp_indicesData.back());
 
@@ -2383,7 +2383,7 @@ bool FireRenderHair::CreateCurves()
 			if (tail != 0)
 				tail = 4 - tail;
 
-			const unsigned int pointsInCurve = tmp_indicesData.size() + tail;
+			const unsigned int pointsInCurve = (unsigned int) (tmp_indicesData.size() + tail);
 			const unsigned int segmentsInCurve = pointsInCurve / pointsPerSegment;
 			numPoints.push_back(segmentsInCurve);
 

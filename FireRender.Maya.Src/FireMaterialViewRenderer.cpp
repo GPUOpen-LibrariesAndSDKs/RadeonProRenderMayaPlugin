@@ -564,7 +564,7 @@ void FireMaterialViewRenderer::render()
 	{
 		context.Render();
 	}
-	catch (const FireRenderException& ex) 
+	catch (const FireRenderException&) 
 	{
 		//Prevents view freezing after close material view with invalid material selected
 		auto& shader = std::get<frw::Shader>(m_renderData.m_surfaceShader);
