@@ -909,7 +909,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 
 	MDistance::Unit sceneUnits = MDistance::uiUnit();
 	MDistance distance(1.0, sceneUnits);
-	float scale_multiplier = distance.asMeters();
+	float scale_multiplier = (float) distance.asMeters();
 	// Diffuse
 	if (GET_BOOL(diffuseEnable))
 	{

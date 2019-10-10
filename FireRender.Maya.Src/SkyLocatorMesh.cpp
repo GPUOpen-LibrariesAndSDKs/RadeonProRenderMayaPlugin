@@ -175,7 +175,7 @@ void SkyLocatorMesh::generateCompassMesh()
 	for (i = 0; i < pointCount; i++)
 	{
 		// Calculate the vertex position from the radial values.
-		float a = points[i].x * M_PI / 180.0f;
+		float a = (float) (points[i].x * M_PI / 180.0f);
 		float r = points[i].y * scale;
 		m_vertices.push_back(MFloatVector(r * cos(a), c_height, r * sin(a)));
 		m_indices.push_back(i);

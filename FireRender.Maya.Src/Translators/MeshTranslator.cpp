@@ -828,8 +828,8 @@ inline void AddPolygon(MItMeshPolygon& it,
 			vtx.x = meshPolygonData.pVertices[coordIdx];
 			vtx.y = meshPolygonData.pVertices[coordIdx + 1];
 			vtx.z = meshPolygonData.pVertices[coordIdx + 2];
-			meshIdxDictionary.vertexCoordIdxGlobal2Local[vertexIndicesList[idx]] = meshIdxDictionary.vertexCoords.size();
-			meshIdxDictionary.vertexIndices.push_back(meshIdxDictionary.vertexCoords.size()); // <= write indices of triangles in mesh into output triangle indices array
+			meshIdxDictionary.vertexCoordIdxGlobal2Local[vertexIndicesList[idx]] = (int) meshIdxDictionary.vertexCoords.size();
+			meshIdxDictionary.vertexIndices.push_back( (int) meshIdxDictionary.vertexCoords.size()); // <= write indices of triangles in mesh into output triangle indices array
 			meshIdxDictionary.vertexCoords.push_back(vtx);
 		}
 		else
@@ -871,7 +871,7 @@ inline void AddPolygon(MItMeshPolygon& it,
 			normal.x = meshPolygonData.pNormals[globalNormalIdx*3];
 			normal.y = meshPolygonData.pNormals[globalNormalIdx*3+1];
 			normal.z = meshPolygonData.pNormals[globalNormalIdx*3+2];
-			meshIdxDictionary.normalCoordIdxGlobal2Local[globalNormalIdx] = meshIdxDictionary.normalCoords.size();
+			meshIdxDictionary.normalCoordIdxGlobal2Local[globalNormalIdx] = (int) (meshIdxDictionary.normalCoords.size());
 			meshIdxDictionary.normalCoords.push_back(normal);
 		}
 
@@ -907,7 +907,7 @@ inline void AddPolygon(MItMeshPolygon& it,
 				Float2 uv;
 				uv.x = meshPolygonData.puvCoords[currUVCHannel][uvIdx*2];
 				uv.y = meshPolygonData.puvCoords[currUVCHannel][uvIdx*2 + 1];
-				meshIdxDictionary.uvCoordIdxGlobal2Local[currUVCHannel][uvIdx] = meshIdxDictionary.uvSubmeshCoords[currUVCHannel].size();
+				meshIdxDictionary.uvCoordIdxGlobal2Local[currUVCHannel][uvIdx] = (int) (meshIdxDictionary.uvSubmeshCoords[currUVCHannel].size());
 				meshIdxDictionary.uvSubmeshCoords[currUVCHannel].push_back(uv);
 			}
 

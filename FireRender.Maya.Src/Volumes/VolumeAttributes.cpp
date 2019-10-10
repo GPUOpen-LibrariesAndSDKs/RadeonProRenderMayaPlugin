@@ -372,12 +372,12 @@ void RPRVolumeAttributes::FillVolumeData(VolumeData& data, const MObject& node, 
 			for (size_t x_idx = 0; x_idx < data.gridSizeX; ++x_idx)
 			{
 				VoxelParams voxelParams;
-				voxelParams.x = x_idx;
-				voxelParams.y = y_idx;
-				voxelParams.z = z_idx;
-				voxelParams.Xres = data.gridSizeX;
-				voxelParams.Yres = data.gridSizeY;
-				voxelParams.Zres = data.gridSizeZ;
+				voxelParams.x = (unsigned int) x_idx;
+				voxelParams.y = (unsigned int) y_idx;
+				voxelParams.z = (unsigned int) z_idx;
+				voxelParams.Xres = (unsigned int) data.gridSizeX;
+				voxelParams.Yres = (unsigned int) data.gridSizeY;
+				voxelParams.Zres = (unsigned int) data.gridSizeZ;
 
 				// fill voxels with data
 				if (isAlbedoEnabled)

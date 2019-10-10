@@ -1644,7 +1644,7 @@ namespace frw
 			// - attach grid and lookup to volume
 			status = rprHeteroVolumeSetAlbedoGrid(h, albedoGrid);
 			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach albedo grid!");
-			status = rprHeteroVolumeSetAlbedoLookup(h, albedo_look_up.data(), albedo_look_up.size() / 3);
+			status = rprHeteroVolumeSetAlbedoLookup(h, albedo_look_up.data(), (rpr_uint) (albedo_look_up.size() / 3));
 			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach albedo lookup table!");
 
 			// emission
@@ -1675,7 +1675,7 @@ namespace frw
 			// - attach grid and lookup to volume
 			status = rprHeteroVolumeSetEmissionGrid(h, emissionGrid);
 			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach emission grid!");
-			status = rprHeteroVolumeSetEmissionLookup(h, emission_look_up.data(), emission_look_up.size() / 3);
+			status = rprHeteroVolumeSetEmissionLookup(h, emission_look_up.data(), (rpr_uint) (emission_look_up.size() / 3));
 			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach emission lookup table!");
 
 			// density
@@ -1708,7 +1708,7 @@ namespace frw
 			// - attach grid and lookup to volume
 			status = rprHeteroVolumeSetDensityGrid(h, densityGrid);
 			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach grid!");
-			status = rprHeteroVolumeSetDensityLookup(h, density_look_up.data(), density_look_up.size()/3 );
+			status = rprHeteroVolumeSetDensityLookup(h, density_look_up.data(), (rpr_uint) (density_look_up.size() / 3) );
 			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach lookup table!");
 			
 			return Volume(h, *this);

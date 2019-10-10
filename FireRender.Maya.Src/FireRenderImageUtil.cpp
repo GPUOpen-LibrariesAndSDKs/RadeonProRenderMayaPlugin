@@ -181,11 +181,11 @@ bool FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 	pixels_for_oiio.resize(imgSpec.image_pixels() * pixel_size);
 
 	//interleave aov components for OIIO(each pixel contains all channels data)
-	for (int y = 0; y < height; ++y)
+	for (unsigned int y = 0; y < height; ++y)
 	{
-		for (int x = 0; x < width; ++x)
+		for (unsigned int x = 0; x < width; ++x)
 		{
-			int pixel_index = x + y * width;
+			unsigned int pixel_index = x + y * width;
 
 			float* pixel = pixels_for_oiio.data() + pixel_size * pixel_index;
 
