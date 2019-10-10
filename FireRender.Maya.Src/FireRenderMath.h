@@ -10,13 +10,13 @@ inline T Clamp(T value, T min, T max)
 /** Convert degrees to radians. */
 inline float toDegrees(float radians)
 {
-	return radians * (180.0f / M_PI);
+	return (float) (radians * (180.0f / M_PI));
 }
 
 /** Convert radians to degrees. */
 inline float toRadians(float degrees)
 {
-	return degrees * (M_PI / 180.0f);
+	return (float) (degrees * (M_PI / 180.0f));
 }
 
 inline MColor ConvertKelvinToColor(double kelvin)

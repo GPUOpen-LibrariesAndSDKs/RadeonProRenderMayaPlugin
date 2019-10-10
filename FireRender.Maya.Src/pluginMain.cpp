@@ -87,8 +87,10 @@
 #include "GLTFTranslator.h"
 
 #ifdef _WIN32
-# include <DbgHelp.h>
+#pragma warning( disable : 4091 )
+#include <dbghelp.h>
 # pragma comment(lib, "dbghelp.lib")
+#pragma warning( default : 4091 )
 #endif
 
 using namespace FireMaya;

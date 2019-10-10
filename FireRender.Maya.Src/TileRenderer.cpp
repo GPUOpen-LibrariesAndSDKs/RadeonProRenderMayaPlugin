@@ -16,8 +16,8 @@ void TileRenderer::Render(FireRenderContext& renderContext, const TileRenderInfo
 	float tilesXf = info.totalWidth / (float)info.tileSizeX;
 	float tilesYf = info.totalHeight / (float)info.tileSizeY;
 
-	int xTiles = std::ceil(tilesXf);
-	int yTiles = std::ceil(tilesYf);
+	int xTiles = (int) std::ceil(tilesXf);
+	int yTiles = (int) std::ceil(tilesYf);
 
 	FireRenderCamera& fireRenderCamera = renderContext.camera();
 	rpr_camera camera = fireRenderCamera.data().Handle();

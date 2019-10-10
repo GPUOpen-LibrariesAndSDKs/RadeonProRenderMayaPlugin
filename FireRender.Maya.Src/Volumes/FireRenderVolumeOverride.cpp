@@ -178,7 +178,7 @@ void FireRenderVolumeOverride::populateGeometry(
 	};
 
 	// create grid
-	int last_boundary_vtx_idx = (veritces.size()/3) - 1;
+	int last_boundary_vtx_idx = (int) ((veritces.size() / 3) - 1);
 	float step = 1.0f / (m_currentTrackedValues.nx);
 	for (short idx = 1; idx < (m_currentTrackedValues.nx); ++idx)
 	{
@@ -194,7 +194,7 @@ void FireRenderVolumeOverride::populateGeometry(
 		vertexIndices.push_back(last_boundary_vtx_idx + (idx-1)*2 + 2);
 	}
 
-	last_boundary_vtx_idx = (veritces.size()/3) - 1;
+	last_boundary_vtx_idx = (int) ((veritces.size()/3) - 1);
 	step = 1.0f / (m_currentTrackedValues.nz);
 	for (short idx = 1; idx < (m_currentTrackedValues.nz); ++idx)
 	{
