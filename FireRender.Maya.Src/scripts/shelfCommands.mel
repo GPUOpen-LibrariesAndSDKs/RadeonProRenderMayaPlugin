@@ -190,6 +190,8 @@ global proc exportSceneRPR()
             menuItem -label "Level 2";
             menuItem -label "Level 3";
 
+            optionMenu -e -value "Level 1" compressionOption;
+
 			columnLayout -columnOffset "left" 120;
 				button -label "Launch Export" -command "launchSceneExport";
 
