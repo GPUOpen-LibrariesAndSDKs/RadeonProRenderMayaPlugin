@@ -160,8 +160,9 @@ protected:
 	static void attributeAddedOrRemoved_callback(MNodeMessage::AttributeMessage msg, MPlug& plug, void* clientData);
 
 	// Plug dirty
-	virtual void OnPlugDirty(MObject& node, MPlug &plug) {}
+	virtual void OnPlugDirty(MObject& node, MPlug& plug);
 	static void plugDirty_callback(MObject& node, MPlug& plug, void* clientData);
+	void SetAllChildrenDirty();
 
 	virtual HashValue CalculateHash();
 
