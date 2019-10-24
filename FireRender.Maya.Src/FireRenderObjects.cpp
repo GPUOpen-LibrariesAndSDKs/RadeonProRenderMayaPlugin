@@ -341,6 +341,46 @@ void FireRenderObject::attributeAddedOrRemoved_callback(MNodeMessage::AttributeM
 		self->setDirty();
 }
 
+void FireRenderObject::OnPlugDirty(MObject& node, MPlug& plug)
+{
+	MFnDependencyNode nodeFn(node);
+	MString nodeName = nodeFn.name();
+	MString name = plug.partialName(false, true, true, true, true, true);
+	if (name == "visibility" || name == "drawOverride") 
+	{
+		SetAllChildrenDirty();
+	}
+}
+
+void FireRenderObject::SetAllChildrenDirty() 
+{
+	if (!m.object.hasFn(MFn::kDagNode)) 
+	{
+		DebugPrint("Error > Can't cast to DAG node (%s)", m.object.apiTypeStr());
+		return;
+	}
+
+	MFnDagNode dagNode(m.object);
+	const auto childCount = dagNode.childCount();
+	if (childCount == 0) 
+	{
+		setDirty();
+	}
+	else 
+	{
+		for (unsigned i = 0; i < dagNode.childCount(); i++) 
+		{
+			MObject child = dagNode.child(i);
+			FireRenderObject* childAsRenderObject = context()->getRenderObject(child);
+			//Null check because cameras (and maybe some other objects) could be in DAG, but they not stored as sceneObject
+			if (childAsRenderObject != nullptr) 
+			{
+				childAsRenderObject->SetAllChildrenDirty();
+			}
+		}
+	}
+}
+
 void FireRenderObject::plugDirty_callback(MObject& node, MPlug& plug, void* clientData)
 {
 	DebugPrint("CALLBACK > OnPlugDirty(%s, %s)", node.apiTypeStr(), plug.name().asUTF8());
@@ -349,7 +389,6 @@ void FireRenderObject::plugDirty_callback(MObject& node, MPlug& plug, void* clie
 	{
 		self->OnPlugDirty(node, plug);
 	}
-
 }
 
 void FireRenderNode::WorldMatrixChangedCallback(MObject& transformNode, MDagMessage::MatrixModifiedFlags& modified, void* clientData)
@@ -740,7 +779,6 @@ void FireRenderNode::RegisterCallbacks()
 	if (transform.isNull())
 		return;
 
-	AddCallback(MNodeMessage::addNodeDirtyPlugCallback(transform, plugDirty_callback, this));
 	AddCallback(MDagMessage::addWorldMatrixModifiedCallback(dagPath, WorldMatrixChangedCallback, this));
 }
 
@@ -943,7 +981,6 @@ bool IsUberEmissive(frw::Shader shader)
 		RPRX_UBER_MATERIAL_EMISSION_WEIGHT,
 		&rprType);
 
-	assert(rprType == RPRX_PARAMETER_TYPE_FLOAT4);
 	float emissionWeightValue[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 	res = rprxMaterialGetParameterValue(
@@ -1327,8 +1364,9 @@ unsigned int FireRenderMesh::GetAssignedUVMapIdx(const MString& textureFile) con
 
 void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
 {
-	MString partialShortName = plug.partialName();
+	FireRenderObject::OnPlugDirty(node, plug);
 
+	MString partialShortName = plug.partialName();
 	if (partialShortName == "fruuid")
 		return;
 

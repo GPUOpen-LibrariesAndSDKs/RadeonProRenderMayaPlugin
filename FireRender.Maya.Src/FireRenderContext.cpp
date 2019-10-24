@@ -1762,6 +1762,10 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 			{
 				ob = CreateSceneObject<FireRenderHair, NodeCachingOptions::AddPath>(dagPath);
 			}
+			else if (dagNode.typeName() == "transform")
+			{
+				ob = CreateSceneObject<FireRenderNode, NodeCachingOptions::AddPath>(dagPath);
+			}
 			else
 			{
 				DebugPrint("Ignoring %s: %s", dagNode.typeName().asUTF8(), dagNode.name().asUTF8());
