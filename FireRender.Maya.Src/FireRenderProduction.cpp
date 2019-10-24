@@ -11,20 +11,19 @@
 
 #include "FireRenderGlobals.h"
 #include "FireRenderUtils.h"
+#include "RenderStampUtils.h"
 
 #include "TileRenderer.h"
-#ifdef WIN321
-	#include "Athena/athenaWrap.h"
-#endif
+#include "Athena/athenaWrap.h"
 
 #include "RenderStampUtils.h"
 #include "GlobalRenderUtilsDataHolder.h"
 #include <iostream>
 #include <fstream>
-
-#ifdef OPTIMIZATION_CLOCK
-	#include <chrono>
-#endif
+#include <functional>
+#include <clocale>
+#include <chrono>
+#include <ctime>
 
 #include "common.h"
 
@@ -358,13 +357,33 @@ bool FireRenderProduction::stop()
 
 // -----------------------------------------------------------------------------
 
-#ifdef WIN321
 void FireRenderProduction::UploadAthenaData()
 {
 	AthenaWrapper* pAthenaWrapper = AthenaWrapper::GetAthenaWrapper();
 
 	std::ostringstream data_field;
 	std::ostringstream header;
+
+	header.str(std::string());
+	header.clear();
+	data_field.str(std::string());
+	data_field.clear();
+
+	// operating system
+	header << "OS";
+
+#if defined(_WIN32)
+	data_field << "Windows";
+
+#elif defined(__APPLE__)
+	data_field << "macOS";
+
+#elif defined(__linux__)
+	data_field << "Linux";
+
+#endif
+
+	pAthenaWrapper->WriteField(header.str(), data_field.str());
 
 	// plug-in version
 	data_field.str(std::string());
@@ -393,6 +412,16 @@ void FireRenderProduction::UploadAthenaData()
 	header << "RPR Core version";
 	pAthenaWrapper->WriteField(header.str(), oss.str());
 
+	// host application
+	data_field.str(std::string());
+	data_field.clear();
+	data_field << "Maya";
+
+	header.str(std::string());
+	header.clear();
+	header << "Host application";
+	pAthenaWrapper->WriteField(header.str(), data_field.str());
+
 	// render time
 	header.str(std::string());
 	header.clear();
@@ -405,57 +434,27 @@ void FireRenderProduction::UploadAthenaData()
 	// device used
 	header.str(std::string());
 	header.clear();
-	MIntArray devicesUsing;
-	MGlobal::executeCommand("optionVar -q RPR_DevicesSelected", devicesUsing);
-	auto allDevices = HardwareResources::GetAllDevices();
-	size_t numDevices = std::min<size_t>(devicesUsing.length(), allDevices.size());
-	int numGPUs = 0;
-	std::string gpuName;
-	int numIdenticalGpus = 1;
-	int numOtherGpus = 0;
 
-	for (int i = 0; i < numDevices; i++)
-	{
-		const HardwareResources::Device &gpuInfo = allDevices[i];
-		if (devicesUsing[i])
-		{
-			if (numGPUs == 0)
-			{
-				gpuName = gpuInfo.name; // remember 1st GPU name
-			}
-			else if (gpuInfo.name == gpuName)
-			{
-				numIdenticalGpus++; // more than 1 GPUs, but with identical name
-			}
-			else
-			{
-				numOtherGpus++; // different GPU used
-			}
-			numGPUs++;
-		}
-	}
-
-	// - compose string
 	std::string deviceName;
-	if (!numGPUs)
+
+	int renderDevice = RenderStampUtils::GetRenderDevice();
+
+	switch (renderDevice)
 	{
-		deviceName += "not used";
-	}
-	else
-	{
-		deviceName += gpuName;
-		if (numIdenticalGpus > 1)
+		case RenderStampUtils::RPR_RENDERDEVICE_CPUONLY:
 		{
-			char buffer[32];
-			sprintf(buffer, " x %d", numIdenticalGpus);
-			deviceName += buffer;
+			deviceName += RenderStampUtils::GetCPUNameString();
+			break;
 		}
-		if (numOtherGpus)
+
+		case RenderStampUtils::RPR_RENDERDEVICE_GPUONLY:
 		{
-			char buffer[32];
-			sprintf(buffer, " + %d other", numOtherGpus);
-			deviceName += buffer;
+			deviceName += RenderStampUtils::GetFriendlyUsedGPUName();
+			break; 
 		}
+
+		default: // CPU+GPU
+			deviceName += std::string(RenderStampUtils::GetCPUNameString()) + " / " + RenderStampUtils::GetFriendlyUsedGPUName();
 	}
 
 	header << "Devices used";
@@ -464,22 +463,156 @@ void FireRenderProduction::UploadAthenaData()
 	// polygon count
 	data_field.str(std::string());
 	data_field.clear();
+	data_field << m_context->m_polycountLastRender;
+
 	header.str(std::string());
 	header.clear();
 	header << "Polygon count";
-	data_field << m_context->m_polycountLastRender;
+
 	pAthenaWrapper->WriteField(header.str(), data_field.str());
 
 	// render resolution
 	header.str(std::string());
 	header.clear();
 	header << "Image resolution";
+
 	data_field.str(std::string());
 	data_field.clear();
 	data_field << "Width: " << m_width << "; Height: " << m_height;
+
+	pAthenaWrapper->WriteField(header.str(), data_field.str());
+
+	// render result
+	header.str(std::string());
+	header.clear();
+	header << "End status";
+
+	data_field.str(std::string());
+	data_field.clear();
+
+	switch (m_context->m_lastRenderResultState)
+	{
+		case FireRenderContext::COMPLETED:
+		{
+			data_field << "successfully completed";
+			break;
+		}
+
+		case FireRenderContext::CANCELED:
+		{
+			data_field << "killed by user";
+			break;
+		}
+
+		case FireRenderContext::CRASHED:
+		{
+			data_field << "crashed";
+			break;
+		}
+
+		default:
+			data_field << "error!";
+	}
+	pAthenaWrapper->WriteField(header.str(), data_field.str());
+
+	// locale
+	header.str(std::string());
+	header.clear();
+	header << "Locale";
+
+	data_field.str(std::string());
+	data_field.clear();
+	char* currLocale = std::setlocale(LC_NUMERIC, "");
+	data_field << currLocale;
+
+	pAthenaWrapper->WriteField(header.str(), data_field.str());
+
+	// lights
+	header.str(std::string());
+	header.clear();
+	header << "Lights count";
+
+	data_field.str(std::string());
+	data_field.clear();
+	int countLights = m_context->GetScene().ShapeObjectCount();
+	data_field << countLights;
+
+	pAthenaWrapper->WriteField(header.str(), data_field.str());
+
+	// time and date
+	header.str(std::string());
+	header.clear();
+	header << "Finish time and date";
+
+	data_field.str(std::string());
+	data_field.clear();
+	auto curr = std::chrono::system_clock::now();
+	std::time_t currTime = std::chrono::system_clock::to_time_t(curr);
+	data_field << std::ctime(&currTime);
+
+	pAthenaWrapper->WriteField(header.str(), data_field.str());
+
+	// aov's
+	header.str(std::string());
+	header.clear();
+	header << "Enabled AOV's";
+
+	data_field.str(std::string());
+	data_field.clear();
+
+	static std::map<unsigned int, std::string> aovNames =
+	{
+		 {RPR_AOV_COLOR, "RPR_AOV_COLOR"}
+		,{RPR_AOV_OPACITY, "RPR_AOV_OPACITY" }
+		,{RPR_AOV_WORLD_COORDINATE, "RPR_AOV_WORLD_COORDINATE" }
+		,{RPR_AOV_UV, "RPR_AOV_UV" }
+		,{RPR_AOV_MATERIAL_IDX, "RPR_AOV_MATERIAL_IDX" }
+		,{RPR_AOV_GEOMETRIC_NORMAL, "RPR_AOV_GEOMETRIC_NORMAL" }
+		,{RPR_AOV_SHADING_NORMAL, "RPR_AOV_SHADING_NORMAL" }
+		,{RPR_AOV_DEPTH, "RPR_AOV_DEPTH" }
+		,{RPR_AOV_OBJECT_ID, "RPR_AOV_OBJECT_ID" }
+		,{RPR_AOV_OBJECT_GROUP_ID, "RPR_AOV_OBJECT_GROUP_ID" }
+		,{RPR_AOV_SHADOW_CATCHER, "RPR_AOV_SHADOW_CATCHER" }
+		,{RPR_AOV_BACKGROUND, "RPR_AOV_BACKGROUND" }
+		,{RPR_AOV_EMISSION, "RPR_AOV_EMISSION" }
+		,{RPR_AOV_VELOCITY, "RPR_AOV_VELOCITY" }
+		,{RPR_AOV_DIRECT_ILLUMINATION, "RPR_AOV_DIRECT_ILLUMINATION" }
+		,{RPR_AOV_INDIRECT_ILLUMINATION, "RPR_AOV_INDIRECT_ILLUMINATION"}
+		,{RPR_AOV_AO, "RPR_AOV_AO" }
+		,{RPR_AOV_DIRECT_DIFFUSE, "RPR_AOV_DIRECT_DIFFUSE" }
+		,{RPR_AOV_DIRECT_REFLECT, "RPR_AOV_DIRECT_REFLECT" }
+		,{RPR_AOV_INDIRECT_DIFFUSE, "RPR_AOV_INDIRECT_DIFFUSE" }
+		,{RPR_AOV_INDIRECT_REFLECT, "RPR_AOV_INDIRECT_REFLECT" }
+		,{RPR_AOV_REFRACT, "RPR_AOV_REFRACT" }
+		,{RPR_AOV_VOLUME, "RPR_AOV_VOLUME" }
+		,{RPR_AOV_LIGHT_GROUP0, "RPR_AOV_LIGHT_GROUP0" }
+		,{RPR_AOV_LIGHT_GROUP1, "RPR_AOV_LIGHT_GROUP1" }
+		,{RPR_AOV_LIGHT_GROUP2, "RPR_AOV_LIGHT_GROUP2" }
+		,{RPR_AOV_LIGHT_GROUP3, "RPR_AOV_LIGHT_GROUP3" }
+		,{RPR_AOV_DIFFUSE_ALBEDO, "RPR_AOV_DIFFUSE_ALBEDO" }
+		,{RPR_AOV_VARIANCE, "RPR_AOV_VARIANCE" }
+		,{RPR_AOV_VIEW_SHADING_NORMAL, "RPR_AOV_VIEW_SHADING_NORMAL" }
+		,{RPR_AOV_REFLECTION_CATCHER, "RPR_AOV_REFLECTION_CATCHER" }
+		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
+	};
+
+	for (int aovID = 0; aovID != RPR_AOV_MAX; aovID++)
+		if (m_context->isAOVEnabled(aovID))
+			data_field << aovNames[aovID] << "; ";
+
+	pAthenaWrapper->WriteField(header.str(), data_field.str());
+
+	// completed iterations
+	header.str(std::string());
+	header.clear();
+	header << "Completed iterations count";
+
+	data_field.str(std::string());
+	data_field.clear();
+	data_field << m_context->m_currentIteration;
+
 	pAthenaWrapper->WriteField(header.str(), data_field.str());
 }
-#endif
 
 bool FireRenderProduction::RunOnViewportThread()
 {
@@ -499,11 +632,12 @@ bool FireRenderProduction::RunOnViewportThread()
 		{
 			if (m_cancelled || m_context->keepRenderRunning() == false)
 			{
-#ifdef WIN321
+				m_context->m_lastRenderResultState = (m_cancelled) ? FireRenderContext::CANCELED : FireRenderContext::COMPLETED;
+
 				AthenaWrapper::GetAthenaWrapper()->StartNewFile();
 				UploadAthenaData();
-				AthenaWrapper::GetAthenaWrapper()->AthenaSendFile();
-#endif
+				
+				AthenaWrapper::GetAthenaWrapper()->AthenaSendFile(pythonCallWrap);
 
 				m_context->m_polycountLastRender = 0;
 
@@ -519,10 +653,19 @@ bool FireRenderProduction::RunOnViewportThread()
 				if (m_context->state != FireRenderContext::StateRendering) 
 					return false;
 
+				//m_context->m_lastRenderResultState = FireRenderContext::CRASHED; // need to set before crash happens
+
 				RenderFullFrame();
 			}
 			catch (...)
 			{
+				m_context->m_lastRenderResultState = FireRenderContext::CRASHED;
+
+				AthenaWrapper::GetAthenaWrapper()->StartNewFile();
+				UploadAthenaData();
+
+				AthenaWrapper::GetAthenaWrapper()->AthenaSendFile(pythonCallWrap);
+
 				throw;
 			}
 
@@ -597,6 +740,12 @@ void FireRenderProduction::RenderTiles()
 		return isContinue;
 	}
 	);
+
+	AthenaWrapper::GetAthenaWrapper()->StartNewFile();
+	UploadAthenaData();
+	AthenaWrapper::GetAthenaWrapper()->AthenaSendFile(pythonCallWrap);
+
+	int debugi = 1;
 }
 
 void FireRenderProduction::RenderFullFrame()

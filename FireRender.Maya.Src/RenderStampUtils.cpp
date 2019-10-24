@@ -150,13 +150,6 @@ namespace RenderStampUtils
 		return g_computerName;
 	}
 
-	enum
-	{
-		RPR_RENDERDEVICE_CPUONLY = 1,
-		RPR_RENDERDEVICE_GPUONLY = 2,
-		RPR_RENDERDEVICE_CPUGPU = 3,
-	};
-
 	int GetRenderDevice()
 	{
 		if (g_renderDevice == 0)
