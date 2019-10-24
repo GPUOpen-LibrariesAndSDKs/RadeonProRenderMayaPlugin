@@ -719,6 +719,13 @@ public:
 	/* data for athena dumping */
 	double m_secondsSpentOnLastRender;
 	unsigned int m_polycountLastRender;
+	enum RenderResultState
+	{
+		COMPLETED = 0,
+		CANCELED,
+		CRASHED,
+		NOT_SET
+	} m_lastRenderResultState;
 
 	void setCompletionCriteria(const CompletionCriteriaParams& completionCriteriaParams);
 	bool isUnlimited();

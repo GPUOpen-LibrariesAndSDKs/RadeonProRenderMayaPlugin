@@ -21,4 +21,11 @@ namespace RenderStampUtils
 	int GetRenderDevice();
 
 	void ClearCache();
+
+	enum
+	{
+		RPR_RENDERDEVICE_CPUONLY = 1,
+		RPR_RENDERDEVICE_GPUONLY = 2,
+		RPR_RENDERDEVICE_CPUGPU = 3,
+	};
 };

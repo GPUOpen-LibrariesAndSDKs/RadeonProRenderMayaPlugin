@@ -32,6 +32,7 @@
 #include <algorithm>
 #include <iterator>
 #include <array>
+#include <functional>
 #include <float.h>
 
 // FireRenderGlobals
@@ -869,6 +870,17 @@ bool GetValues(MPlug& plug, std::vector<RampCtrlPoint<valType>>& out)
 	// save data
 	return SaveCtrlPoints<MayaDataContainer, valType>(dataValues, positions, interps, indexes, out);
 }
+
+// wrapper for maya call to Python
+static std::function<int(std::string)> pythonCallWrap = [](std::string arg)->int
+{
+	MStatus res = MGlobal::executePythonCommandOnIdle(MString(arg.c_str()));
+
+	if (res != MStatus::kSuccess)
+		return 1;
+
+	return 0;
+};
 
 // common helper function
 void setAttribProps(MFnAttribute& attr, const MObject& attrObj);

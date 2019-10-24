@@ -47,9 +47,7 @@
 #include "FireRenderExportCmd.h"
 #include "FireRenderImportCmd.h"
 #include "FireRenderConvertVRayCmd.h"
-#ifdef WIN321
-	#include "Athena/AthenaWrap.h"
-#endif
+#include "Athena/AthenaWrap.h"
 #include "athenaCmd.h"
 
 #include "FireRenderChecker.h"
@@ -190,9 +188,7 @@ void mayaExiting(void* data)
 	DebugPrint("mayaExiting");
 	gExitingMaya = true;
 
-#ifdef WIN321
 	AthenaWrapper::GetAthenaWrapper()->Finalize();
-#endif
 
     // Clear ViewportManager. It should be cleared before maya destroys OpenGL context
     // so we can't rely on ViewportManager destructor

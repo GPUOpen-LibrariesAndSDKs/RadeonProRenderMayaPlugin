@@ -82,6 +82,7 @@ FireRenderContext::FireRenderContext() :
 	m_startTime(0),
 	m_samplesPerUpdate(1),
 	m_secondsSpentOnLastRender(0.0),
+	m_lastRenderResultState(NOT_SET),
 	m_polycountLastRender(0),
 	m_currentIteration(0),
 	m_progress(0),

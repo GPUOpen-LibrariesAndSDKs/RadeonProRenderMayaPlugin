@@ -542,6 +542,9 @@
     <ClCompile Include="athenaCmd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\FireRender.Components\cpp\Athena\athenaWrap.cpp">
+      <Filter>FireRender.Components\Athena</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -930,6 +933,9 @@
     </ClInclude>
     <ClInclude Include="athenaCmd.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FireRender.Components\cpp\Athena\athenaWrap.h">
+      <Filter>FireRender.Components\Athena</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
