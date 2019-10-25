@@ -31,8 +31,10 @@ proc overrideUnifiedRenderGlobalsWindow()
 		eval("source \"rprUnifiedRenderGlobalsWindow201500.mel\"");
 }
 
-global proc registerFireRender()
+global proc registerFireRender(int $mlDenoiserSupportedCPU)
 {
+	setMlDenoiserSupportedCPU($mlDenoiserSupportedCPU);
+
 	string $currentRendererName = getRPRPluginName();
 
 	renderer -rendererUIName $currentRendererName

@@ -3508,6 +3508,12 @@ global proc createFireRenderCommonGlobalsTab()
 	// Update the target file preview.
 	//
 	updateFireRenderTargetFilePreview;
+
+	// Register callback on tab change
+	global string $gMasterLayerRendererName;
+	string $renderer = isDisplayingAllRendererTabs() ? $gMasterLayerRendererName : `currentRenderer`;
+	string $tabLayout = rendererTabLayoutName($renderer);
+	tabLayout -e -selectCommand onTabChanged $tabLayout;
 }
 
 global proc setImageFormat()
@@ -3527,5 +3533,17 @@ global proc setImageFormat()
 	else {
 		setAttr defaultRenderGlobals.imageFormat $val;
 		setAttr defaultRenderGlobals.imfkey -type "string" "";
+	}
+}
+
+global proc onTabChanged()
+{
+	global string $gMasterLayerRendererName;
+	string $renderer = isDisplayingAllRendererTabs() ? $gMasterLayerRendererName : `currentRenderer`;
+	string $tabLayout = rendererTabLayoutName($renderer);
+	string $tab = `tabLayout -q -selectTab $tabLayout`;
+	if($tab == "FireRenderEffectsTab") 
+	{
+		onFireRenderEffectsSelected();
 	}
 }

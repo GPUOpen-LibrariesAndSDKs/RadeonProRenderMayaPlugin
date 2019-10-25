@@ -86,11 +86,22 @@ global proc createFireRenderDenoiserFrame(string $parent)
 		 -attribute "RadeonProRenderGlobals.denoiserEnabled"
 		 -cc updateDenoiserUI;
 
-	attrControlGrp
-		 -label "Type"
-		 -attribute "RadeonProRenderGlobals.denoiserType"
-		 -cc updateDenoiserUI
-		 denoiserTypeCombobox;
+	if(getMlDenoiserSupportedCPU() == 0) 
+	{
+		text 
+		 -label "Machine learning denoiser is not supported by current CPU"
+		 -height 25;
+	}
+
+	rowLayout -columnAttach1 "left" -columnOffset1 118;
+	optionMenu -label "Type" -changeCommand "updateDenoiserUI" RPR_DenoiserTypeControl;
+		menuItem -label "Bilateral" -data 0 RPR_BilateralItem;
+		menuItem -label "LWR" -data 1 RPR_LWRItem;
+		menuItem -label "EAW" -data 2 RPR_EAWItem;
+		menuItem -label "Machine Learning" -data 3 RPR_MLItem;
+	setParent ..;
+
+	connectControl RPR_DenoiserTypeControl "RadeonProRenderGlobals.denoiserType";
 
 	// Bilateral
 	frameLayout -label "Bilateral" -cll 0 -li 30 denoiserBilateralFrame;
@@ -156,7 +167,7 @@ global proc updateDenoiserUI()
 	int $enabledML = $type == 3;
 
 	// Lock controls and set it to ON state
-	control -edit -enable ($enabled > 0) denoiserTypeCombobox;
+	control -edit -enable ($enabled > 0) RPR_DenoiserTypeControl;
 
 	frameLayout -edit -visible ($enabledBilateral && $enabled) denoiserBilateralFrame;
 	frameLayout -edit -visible ($enabledLWR && $enabled) denoiserLWRFrame;
@@ -481,5 +492,31 @@ global proc updateWhiteBalanceValue()
 
 global proc updateRenderEffectsTab()
 {
+	
+}
 
+global proc onFireRenderEffectsSelected() 
+{
+	int $renderDevices[] = `optionVar -q RPR_DevicesSelected`;
+	int $deviceCount = size(`optionVar -q RPR_DevicesName`);
+	
+	//Assuming that CPU will be the last device
+	int $cpuEnabled = $renderDevices[$deviceCount];
+	int $anyGpuEnabled = 0;
+	for($i = 0; $i < size($renderDevices) - 1; $i++) 
+	{
+		if($renderDevices[$i] == 1) 
+		{
+			$anyGpuEnabled = 1;
+		}
+	}
+
+	if(getMlDenoiserSupportedCPU() == 0 && $cpuEnabled && $anyGpuEnabled == 0)
+	{
+		menuItem -edit -enable 0 RPR_MLItem;
+	}
+	else
+	{
+		menuItem -edit -enable 1 RPR_MLItem;
+	}
 }

@@ -55,3 +55,15 @@ global proc checkRPRGlobalsNode()
         createNode -n RadeonProRenderGlobals -ss RadeonProRenderGlobals; 
     } 
 }
+
+global int $mlDenoiserSupportedCPU;
+global proc setMlDenoiserSupportedCPU(int $value)
+{
+	global int $mlDenoiserSupportedCPU;
+	$mlDenoiserSupportedCPU = $value;
+}
+global proc int getMlDenoiserSupportedCPU()
+{
+	global int $mlDenoiserSupportedCPU;
+	return $mlDenoiserSupportedCPU;
+}
