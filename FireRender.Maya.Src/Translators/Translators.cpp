@@ -470,7 +470,7 @@ namespace FireMaya
 					return false; // no mesh found
 				}
 
-				const std::vector<frw::Shape> shapes = MeshTranslator::TranslateMesh(* dynamic_cast<FireRenderContext*>(const_cast<IFireRenderContextInfo*>(scope.GetContextInfo())), shapeDagPath.node());
+				const std::vector<frw::Shape> shapes = MeshTranslator::TranslateMesh(frcontext, shapeDagPath.node());
 				if (shapes.size() > 0)
 				{
 					frlight.areaLight = shapes[0];
