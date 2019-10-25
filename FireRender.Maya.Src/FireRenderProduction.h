@@ -14,6 +14,7 @@
 #include "FireRenderUtils.h"
 
 #include <functional>
+#include <numeric>
 
 /**
 * Manages an production render session in the render view window.
@@ -111,6 +112,8 @@ private:
 
 	/* Gather and send render data by Athena */
 	void UploadAthenaData();
+
+	unsigned int GetScenePolyCount() const;
 
 private:
 

@@ -1456,6 +1456,7 @@ namespace frw
 
 		explicit Context(rpr_context h, bool destroyOnDelete = true) : Object(h, *this, destroyOnDelete, new Data())
 		{
+
 		}
 
 //#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 

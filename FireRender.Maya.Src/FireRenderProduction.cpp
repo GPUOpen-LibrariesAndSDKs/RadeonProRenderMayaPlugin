@@ -463,7 +463,7 @@ void FireRenderProduction::UploadAthenaData()
 	// polygon count
 	data_field.str(std::string());
 	data_field.clear();
-	data_field << m_context->m_polycountLastRender;
+	data_field << GetScenePolyCount();
 
 	header.str(std::string());
 	header.clear();
@@ -612,6 +612,23 @@ void FireRenderProduction::UploadAthenaData()
 	data_field << m_context->m_currentIteration;
 
 	pAthenaWrapper->WriteField(header.str(), data_field.str());
+}
+
+unsigned int FireRenderProduction::GetScenePolyCount() const
+{
+	size_t shapeCount = 0;
+	auto status = rprSceneGetInfo(m_context->scene(), RPR_SCENE_SHAPE_LIST, 0, nullptr, &shapeCount);
+	shapeCount /= sizeof(rpr_shape);
+	if (status != RPR_SUCCESS || shapeCount == 0) return 0;
+
+	std::vector<rpr_shape> shapes(shapeCount);
+	status = rprSceneGetInfo(m_context->scene(), RPR_SCENE_SHAPE_LIST, shapeCount * sizeof(rpr_shape), shapes.data(), nullptr);
+	return std::accumulate(std::begin(shapes), std::end(shapes), 0, [](size_t accumulator, const rpr_shape shape) 
+		{
+			size_t polygonCount = 0;
+			rprMeshGetInfo(shape, RPR_MESH_POLYGON_COUNT, sizeof(polygonCount), &polygonCount, nullptr);
+			return accumulator + polygonCount;
+		});
 }
 
 bool FireRenderProduction::RunOnViewportThread()
