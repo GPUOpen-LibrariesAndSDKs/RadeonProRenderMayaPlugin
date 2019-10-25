@@ -83,6 +83,7 @@
 #include "FireRenderThread.h"
 
 #include "GLTFTranslator.h"
+#include <StartupContextChecker.h>
 
 #ifdef _WIN32
 #pragma warning( disable : 4091 )
@@ -350,38 +351,6 @@ void RprExportsGLTF(bool enable)
 	}
 }
 
-// Checking availability of context creation
-bool CheckContextCreationProcedure()
-{
-	rpr_int res;
-	FireRenderContext context;
-	try
-	{
-		auto createFlags = FireMaya::Options::GetContextDeviceFlags();
-		context.createContextEtc(createFlags, true, false, &res);
-
-		if (res != RPR_SUCCESS)
-		{
-			MString msg;
-
-			if (res == RPR_ERROR_INVALID_API_VERSION)
-			{
-				msg = "Please remove all previous versions of plugin if any and make a fresh install";
-			}
-
-			FireRenderError(res, msg, true);
-			return false;
-		}
-	}
-	catch (FireRenderException e)
-	{
-		FireRenderError(e.code, e.message, true);
-		return false;
-	}
-
-	return true;
-}
-
 MStatus registerNodesInPathEditor(void)
 {
 	MStatus status;
@@ -524,6 +493,17 @@ MStatus initializePlugin(MObject obj)
 
 	glewInit();
 
+	StartupContextChecker::CheckContexts();
+	if (!StartupContextChecker::IsRprSupported())
+	{
+		return MStatus::kFailure;
+	}
+
+	if (!StartupContextChecker::IsMLDenoiserSupportedCPU())
+	{
+		MGlobal::displayWarning("Machine learning denoiser is not supported by current CPU");
+	}
+
 	CHECK_MSTATUS(plugin.registerNode("RadeonProRenderGlobals", FireRenderGlobals::FRTypeID(),
 		FireRenderGlobals::creator,
 		FireRenderGlobals::initialize,
@@ -538,11 +518,6 @@ MStatus initializePlugin(MObject obj)
 	MString physicalClassification = FireRenderPhysicalLightLocator::drawDbClassification;
 	MString envLightClassification = FireRenderEnvironmentLight::drawDbClassification;
 	MString volumeClassification = FireRenderVolumeLocator::drawDbClassification;
-
-	if (!CheckContextCreationProcedure())
-	{
-		return MStatus::kFailure;
-	}
 	
 	static const MString swatchName("swatchFireRenderMaterial");
 	if (MGlobal::mayaState() != MGlobal::kBatch)
@@ -654,7 +629,12 @@ MStatus initializePlugin(MObject obj)
 	openSceneCallback = MSceneMessage::addCallback(MSceneMessage::kAfterOpen, checkFireRenderGlobals, NULL, &status);
 	CHECK_MSTATUS(status);
 
-	MGlobal::executeCommand("registerFireRender()");
+	auto mlDenoiserSupportedCPU = static_cast<int>(StartupContextChecker::IsMLDenoiserSupportedCPU());
+	MString mlSupportCPU = MString(std::to_string(mlDenoiserSupportedCPU).c_str());
+
+	MString registerCmd = MString("registerFireRender(" + mlSupportCPU + ")");
+	MGlobal::executeCommand(registerCmd);
+
 	MGlobal::executeCommand("setupFireRenderNodeClassification()");
 
 #ifndef OSMac_

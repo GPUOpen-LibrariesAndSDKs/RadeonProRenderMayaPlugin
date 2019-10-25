@@ -77,6 +77,9 @@ global proc deviceTypeChangedUI(int $isFinalRender)
 	int $useCPU = `checkBoxGrp -q -v1 $cpuCtrlName`;
 
 	optionVar -iva $selectedDevicesVarName ($useCPU);
+
+	//We need to turn off ML denoiser if unsupported CPU is used
+	updateDenoiserAttributes();
 }
 
 // Open a browser window and display the specified URL.
@@ -363,3 +366,31 @@ global proc aovDepthAutoNormaliseChanged()
 //	setParent ..;
 //	setUITemplate -popTemplate;
 //}
+
+global proc updateDenoiserAttributes() 
+{
+	int $renderDevices[] = `optionVar -q RPR_DevicesSelected`;
+	int $deviceCount = size(`optionVar -q RPR_DevicesName`);
+	
+	//Assuming that CPU will be the last device
+	int $cpuEnabled = $renderDevices[$deviceCount];
+	int $anyGpuEnabled = 0;
+	for($i = 0; $i < size($renderDevices) - 1; $i++) 
+	{
+		if($renderDevices[$i] == 1) 
+		{
+			$anyGpuEnabled = 1;
+		}
+	}
+
+	if(getMlDenoiserSupportedCPU() == 0 && $cpuEnabled && $anyGpuEnabled == 0)
+	{
+		int $type = `getAttr RadeonProRenderGlobals.denoiserType`;
+		//Machine learning should be always at index 3
+		if($type == 3) 
+		{
+			setAttr RadeonProRenderGlobals.denoiserEnabled 0;
+			setAttr RadeonProRenderGlobals.denoiserType 0;
+		}
+	}
+}

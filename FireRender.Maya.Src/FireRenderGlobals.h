@@ -70,6 +70,7 @@ public:
 		kCubeMapStereo
 	};
 
+	//Please don't change position of kML item, its index used to properly turn off ML denoiser if unsupported by CPU
 	enum DenoiserType {
 		kBilateral,
 		kLWR,
