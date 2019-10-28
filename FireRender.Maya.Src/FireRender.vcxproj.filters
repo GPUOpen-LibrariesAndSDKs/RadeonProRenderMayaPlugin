@@ -544,6 +544,7 @@
     </ClCompile>
     <ClCompile Include="StartupContextChecker.cpp">
       <Filter>Utils</Filter>
+    </ClCompile>
     <ClCompile Include="..\FireRender.Components\cpp\Athena\athenaWrap.cpp">
       <Filter>FireRender.Components\Athena</Filter>
     </ClCompile>
@@ -938,6 +939,7 @@
     </ClInclude>
     <ClInclude Include="StartupContextChecker.h">
       <Filter>Utils</Filter>
+    </ClCompile>
     <ClInclude Include="..\FireRender.Components\cpp\Athena\athenaWrap.h">
       <Filter>FireRender.Components\Athena</Filter>
     </ClInclude>
