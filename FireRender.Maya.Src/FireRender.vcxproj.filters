@@ -939,7 +939,7 @@
     </ClInclude>
     <ClInclude Include="StartupContextChecker.h">
       <Filter>Utils</Filter>
-    </ClCompile>
+    </ClInclude>
     <ClInclude Include="..\FireRender.Components\cpp\Athena\athenaWrap.h">
       <Filter>FireRender.Components\Athena</Filter>
     </ClInclude>
