@@ -755,8 +755,7 @@ std::vector<frw::Shape> MeshTranslator::TranslateMesh(frw::Context context, cons
 		ChangeUVArrsSizes(shaderData.data(), elementCount, meshPolygonData.uvSetNames.length());
 
 		// export shader data to context
-		frw::Context ctx = context.GetContext();
-		CreateRPRMeshes(elements, ctx, shaderData.data(), meshPolygonData.uvCoords, elementCount, meshPolygonData.uvSetNames.length());
+		CreateRPRMeshes(elements, context, shaderData.data(), meshPolygonData.uvCoords, elementCount, meshPolygonData.uvSetNames.length());
 	}
 
 	// Export shape names
