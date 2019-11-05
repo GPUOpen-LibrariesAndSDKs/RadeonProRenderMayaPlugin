@@ -88,7 +88,6 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	toneMappingSimpleTonemap(true),
 	motionBlur(false),
 	motionBlurCameraExposure(0.0f),
-	motionBlurScale(0.0f),
 	tileRenderingEnabled(false),
 	tileSizeX(0),
 	tileSizeY(0),
@@ -368,10 +367,6 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("motionBlurCameraExposure");
 		if (!plug.isNull())
 			motionBlurCameraExposure = plug.asFloat();
-
-		plug = frGlobalsNode.findPlug("motionBlurScale");
-		if (!plug.isNull())
-			motionBlurScale = plug.asFloat();
 
 		plug = frGlobalsNode.findPlug("cameraType");
 		if (!plug.isNull())

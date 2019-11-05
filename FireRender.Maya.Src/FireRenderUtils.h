@@ -250,7 +250,6 @@ public:
 	// Motion blur
 	bool motionBlur;
 	float motionBlurCameraExposure;
-	float motionBlurScale;
 
 	// Camera type.
 	short cameraType;
