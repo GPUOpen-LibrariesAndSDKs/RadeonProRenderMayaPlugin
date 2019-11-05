@@ -1287,10 +1287,9 @@ void FireRenderMesh::RebuildTransforms()
 		nextFrameMatrix = MFnMatrixData(val).matrix();
 		if (nextFrameMatrix != matrix)
 		{
-			float timeMultiplier = context()->motionBlurScale();
 			MTime time = MAnimControl::currentTime();
 			MTime t2 = MTime(1.0, time.unit());
-			timeMultiplier = (float) (timeMultiplier / t2.asUnits(MTime::kSeconds));
+			float timeMultiplier = (float) (1.0f / t2.asUnits(MTime::kSeconds));
 
 			MMatrix nextMatrix = nextFrameMatrix;
 			nextMatrix *= scaleM;

@@ -413,9 +413,6 @@ public:
 	// Getting camera exposure for motion blur
 	float motionBlurCameraExposure() const;
 
-	// Getting scale for motion blur
-	float motionBlurScale() const;
-
 	// State flag of the renderer
 	tbb::atomic<StateEnum> state;
 	const char* lockedBy;
@@ -591,9 +588,6 @@ private:
 
 	// Motion blur camera exposure
 	float m_motionBlurCameraExposure;
-
-	// // Motion blur Scale
-	float m_motionBlurScale;
 
 	/** True if the render should be interactive. */
 	bool m_interactive;

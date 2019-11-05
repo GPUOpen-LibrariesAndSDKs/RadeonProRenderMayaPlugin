@@ -76,7 +76,6 @@ namespace
 
 		MObject motionBlur;
 		MObject motionBlurCameraExposure;
-		MObject motionBlurScale;
 		MObject cameraType;
 
 		// for MacOS only: "Use Metal Performance Shaders"
@@ -379,10 +378,6 @@ MStatus FireRenderGlobals::initialize()
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0.0);
 
-	Attribute::motionBlurScale = nAttr.create("motionBlurScale", "mbs", MFnNumericData::kFloat, 1.0f, &status);
-	MAKE_INPUT(nAttr);
-	nAttr.setMin(0.0);
-
 	Attribute::cameraType = eAttr.create("cameraType", "camt", kCameraDefault, &status);
 	eAttr.addField("Default", kCameraDefault);
 	eAttr.addField("Spherical Panorama", kSphericalPanorama);
@@ -417,7 +412,6 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::commandPort));
 	CHECK_MSTATUS(addAttribute(Attribute::motionBlur));
 	CHECK_MSTATUS(addAttribute(Attribute::motionBlurCameraExposure));
-	CHECK_MSTATUS(addAttribute(Attribute::motionBlurScale));
 
 	CHECK_MSTATUS(addAttribute(Attribute::applyGammaToMayaViews));
 	CHECK_MSTATUS(addAttribute(Attribute::displayGamma));
@@ -585,12 +579,15 @@ void FireRenderGlobals::createLegacyAttributes()
 	eAttr.addField("Unlimited", kUnlimited);
 	MAKE_INPUT_CONST(eAttr);
 	addAsGlobalAttribute(eAttr);
+
+	attrObj = nAttr.create("motionBlurScale", "mbs", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0);
+	CHECK_MSTATUS(addAttribute(attrObj));
 }
 
 void FireRenderGlobals::setupProductionRayDepthParameters()
 {
-	int min = 0;
-
 	MFnNumericAttribute nAttr;
 	MStatus status;
 

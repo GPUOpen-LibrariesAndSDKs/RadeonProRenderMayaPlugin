@@ -1676,7 +1676,6 @@ void FireRenderContext::setMotionBlur(bool doBlur)
 
 	m_motionBlur = doBlur;
 	m_motionBlurCameraExposure = m_globals.motionBlurCameraExposure;
-	m_motionBlurScale = m_globals.motionBlurScale;
 
 	for (const auto& it : m_sceneObjects)
 	{
@@ -2054,12 +2053,6 @@ float FireRenderContext::motionBlurCameraExposure() const
 {
 	return m_motionBlurCameraExposure;
 }
-
-float FireRenderContext::motionBlurScale() const
-{
-	return m_motionBlurScale;
-}
-
 
 void FireRenderContext::setCameraAttributeChanged(bool value)
 {
