@@ -37,6 +37,10 @@ MStatus FireMaya::Arithmetic::initialize()
 	eAttr.addField("Magnitude", frw::OperatorLength);
 	eAttr.addField("Pow", frw::OperatorPow);
 	eAttr.addField("Mix", frw::OperatorAverage);
+	eAttr.addField("Min", frw::OperatorMin);
+	eAttr.addField("Max", frw::OperatorMax);
+	eAttr.addField("Mod", frw::OperatorMod);
+	eAttr.addField("Floor", frw::OperatorFloor);
 
 	eAttr.addField("Dot Product", frw::OperatorDot);
 	eAttr.addField("Cross Product", frw::OperatorCross);
