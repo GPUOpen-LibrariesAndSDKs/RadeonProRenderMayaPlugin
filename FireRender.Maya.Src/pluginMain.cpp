@@ -699,7 +699,7 @@ MStatus initializePlugin(MObject obj)
 		FireMaya::TransparentMaterial::initialize,
 		MPxNode::kDependNode, &UserClassify));
 
-	CHECK_MSTATUS(plugin.registerNode(namePrefix + "ShadowCatcherMaterial", FireMaya::ShadowCatcherMaterial::FRTypeID(),
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "MatteMaterial", FireMaya::ShadowCatcherMaterial::FRTypeID(),
 		FireMaya::ShadowCatcherMaterial::creator,
 		FireMaya::ShadowCatcherMaterial::initialize,
 		MPxNode::kDependNode, &UserClassify));

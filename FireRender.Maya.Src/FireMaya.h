@@ -304,6 +304,7 @@ namespace FireMaya
 		frw::Shader GetShader(MObject ob, const FireRenderMesh* pMesh = nullptr, bool forceUpdate = false);
 		frw::Shader GetShader(MPlug ob);
 		frw::Shader GetShadowCatcherShader();
+		frw::Shader GetReflectionCatcherShader();
 
 		frw::Shader GetVolumeShader( MObject ob, bool forceUpdate = false );
 		frw::Shader GetVolumeShader( MPlug ob );

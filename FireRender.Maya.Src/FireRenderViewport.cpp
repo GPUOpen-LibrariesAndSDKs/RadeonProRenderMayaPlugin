@@ -800,13 +800,21 @@ bool FireRenderViewport::hasTextureChanged()
 
 void FireRenderViewport::enableNecessaryAOVs(int index, bool flag, rpr_GLuint* glTexture)
 {
-	static const std::vector<int> scaov = { RPR_AOV_BACKGROUND, RPR_AOV_OPACITY };
+	static const std::vector<int> srcaov = { RPR_AOV_BACKGROUND, RPR_AOV_OPACITY };
 
 	m_context.enableAOVAndReset(index, flag, glTexture);
 
 	if (index == RPR_AOV_SHADOW_CATCHER)
 	{
-		for (int index : scaov)
+		for (int index : srcaov)
+		{
+			m_context.enableAOVAndReset(index, flag, nullptr);
+		}
+	}
+
+	if (index == RPR_AOV_REFLECTION_CATCHER)
+	{
+		for (int index : srcaov)
 		{
 			m_context.enableAOVAndReset(index, flag, nullptr);
 		}

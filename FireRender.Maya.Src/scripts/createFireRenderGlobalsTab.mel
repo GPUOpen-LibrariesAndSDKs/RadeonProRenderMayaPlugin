@@ -246,13 +246,38 @@ global proc aovDisplayedInRenderViewChanged()
 // Set BG and Opacity AOVs to ON if SC turned ON. Also lock controls to guarantee that while we have SC set Bg and Opacity can't be turned off
 global proc shadowCatcherStateChanged()
 {
-	if (`getAttr RadeonProRenderGlobals.aovShadowCatcher`)
+	int $isShadowCatcher = `getAttr RadeonProRenderGlobals.aovShadowCatcher`;
+	int $isReflectionCatcher = `getAttr RadeonProRenderGlobals.aovReflectionCatcher`;
+
+	if (($isShadowCatcher == 1) && ($isReflectionCatcher == 0))
 	{
 		// Lock controls and set it to ON state
 		setAttr RadeonProRenderGlobals.aovBackground -lock 1 1;
 		setAttr RadeonProRenderGlobals.aovOpacity -lock 1 1;
 	}
-	else
+
+	if (($isShadowCatcher + $isReflectionCatcher) == 0)
+	{
+		// Unlock controls
+		setAttr RadeonProRenderGlobals.aovBackground -lock 0;
+		setAttr RadeonProRenderGlobals.aovOpacity -lock 0;
+	}
+}
+
+// Set BG and Opacity AOVs to ON if SC turned ON. Also lock controls to guarantee that while we have SC set Bg and Opacity can't be turned off
+global proc reflectionCatcherStateChanged()
+{
+	int $isShadowCatcher = `getAttr RadeonProRenderGlobals.aovShadowCatcher`;
+	int $isReflectionCatcher = `getAttr RadeonProRenderGlobals.aovReflectionCatcher`;
+
+	if (($isShadowCatcher == 0) && ($isReflectionCatcher == 1))
+	{
+		// Lock controls and set it to ON state
+		setAttr RadeonProRenderGlobals.aovBackground -lock 1 1;
+		setAttr RadeonProRenderGlobals.aovOpacity -lock 1 1;
+	}
+
+	if (($isShadowCatcher + $isReflectionCatcher) == 0)
 	{
 		// Unlock controls
 		setAttr RadeonProRenderGlobals.aovBackground -lock 0;
@@ -280,6 +305,7 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 		attrControlGrp -label "Object ID" -attribute "RadeonProRenderGlobals.aovObjectId";
 		// Set change handler to automatically control BG and Opacity AOV checkboxes
 		attrControlGrp -label "Shadow Catcher" -attribute "RadeonProRenderGlobals.aovShadowCatcher" -changeCommand shadowCatcherStateChanged;
+		attrControlGrp -label "Reflection Catcher" -attribute "RadeonProRenderGlobals.aovReflectionCatcher" -changeCommand reflectionCatcherStateChanged;
 		attrControlGrp -label "Background" -attribute "RadeonProRenderGlobals.aovBackground";
 
 		attrControlGrp -label "Emission" -attribute "RadeonProRenderGlobals.aovEmission";

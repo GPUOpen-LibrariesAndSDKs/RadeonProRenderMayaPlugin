@@ -2390,7 +2390,18 @@ frw::Shader FireMaya::Scope::GetShadowCatcherShader()
 {
 	for (auto shader : m->shaderMap)
 	{
-		if (shader.second.IsShadowCatcher()) return shader.second;
+		if (shader.second.IsShadowCatcher()) 
+			return shader.second;
+	}
+	return nullptr;
+}
+
+frw::Shader FireMaya::Scope::GetReflectionCatcherShader()
+{
+	for (auto shader : m->shaderMap)
+	{
+		if (shader.second.IsReflectionCatcher()) 
+			return shader.second;
 	}
 	return nullptr;
 }

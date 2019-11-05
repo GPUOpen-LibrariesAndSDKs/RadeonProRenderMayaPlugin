@@ -953,9 +953,15 @@ namespace frw
 			checkStatus(res);
 		}
 
-		void SetShadowCatcherFlag(bool shadowCatcher)
+		void SetShadowCatcherFlag(bool enableShadowCatcher)
 		{
-			auto res = rprShapeSetShadowCatcher(Handle(), shadowCatcher);
+			auto res = rprShapeSetShadowCatcher(Handle(), enableShadowCatcher);
+			checkStatus(res);
+		}
+
+		void SetReflectionCatcherFlag(bool enableReflectionCatcher)
+		{
+			auto res = rprShapeSetReflectionCatcher(Handle(), enableReflectionCatcher);
 			checkStatus(res);
 		}
 
@@ -2670,6 +2676,7 @@ namespace frw
 			std::map<std::string, rpr_material_node> inputs;
 			bool isShadowCatcher = false;
 			ShadowCatcherParams mShadowCatcherParams;
+			bool isReflectionCatcher = false;
 
 		private:
 			bool bCommitted = false;
@@ -2700,6 +2707,9 @@ namespace frw
 		bool BgIsEnv() const { return data().mShadowCatcherParams.mBgIsEnv; }
 
 		void ClearDependencies(void) { data().ClearDependencies(); }
+
+		void SetReflectionCatcher(bool isReflectionCatcher) { data().isReflectionCatcher = isReflectionCatcher; }
+		bool IsReflectionCatcher(void) const { return data().isReflectionCatcher; }
 
 		Shader(DataPtr p)
 		{
@@ -2824,6 +2834,12 @@ namespace frw
 				if (d.isShadowCatcher)
 				{
 					res = rprShapeSetShadowCatcher(shape.Handle(), true);
+					checkStatus(res);
+				}
+
+				if (d.isReflectionCatcher)
+				{
+					res = rprShapeSetReflectionCatcher(shape.Handle(), true);
 					checkStatus(res);
 				}
 			}

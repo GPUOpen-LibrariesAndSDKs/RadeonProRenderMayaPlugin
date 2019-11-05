@@ -149,6 +149,8 @@ bool FireRenderIpr::start()
 			m_context.enableAOV(RPR_AOV_BACKGROUND);
 		if (globals.aovs.getAOV(RPR_AOV_SHADOW_CATCHER)->active)
 			m_context.enableAOV(RPR_AOV_SHADOW_CATCHER);
+		if (globals.aovs.getAOV(RPR_AOV_REFLECTION_CATCHER)->active)
+			m_context.enableAOV(RPR_AOV_REFLECTION_CATCHER);
 		
 		if (!m_context.buildScene(false, false, false, false))
 		{
