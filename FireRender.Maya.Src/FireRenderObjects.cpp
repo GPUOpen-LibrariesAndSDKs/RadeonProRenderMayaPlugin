@@ -718,7 +718,7 @@ void FireRenderMesh::setReflectionVisibility(bool reflectionVisibility)
 {
 	for (auto element : m.elements)
 	{
-		if (element.shader.IsShadowCatcher())
+		if (element.shader.IsShadowCatcher() || element.shader.IsReflectionCatcher())
 		{
 			if (auto shape = element.shape)
 				shape.SetReflectionVisibility(false);
@@ -734,7 +734,7 @@ void FireRenderMesh::setRefractionVisibility(bool refractionVisibility)
 {
 	for (auto element : m.elements)
 	{
-		if (element.shader.IsShadowCatcher())
+		if (element.shader.IsShadowCatcher() || element.shader.IsReflectionCatcher())
 		{
 			if (auto shape = element.shape)
 				shape.setRefractionVisibility(false);
@@ -1028,7 +1028,7 @@ void FireRenderMesh::ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngine
 			if (shType == frw::ShaderTypeEmissive)
 				m.isEmissive = true;
 
-			if (element.shader.IsShadowCatcher())
+			if (element.shader.IsShadowCatcher() || element.shader.IsReflectionCatcher())
 				continue;
 
 			if ((shType == frw::ShaderTypeRprx) && (IsUberEmissive(element.shader)) )

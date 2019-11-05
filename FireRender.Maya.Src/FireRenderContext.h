@@ -229,7 +229,15 @@ public:
 		bool flip, bool mergeOpacity = false, bool mergeShadowCatcher = false);
 
 	// Composite image for Shadow Catcher
-	void compositeOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region,
+	void compositeShadowCatcherOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region,
+		bool flip);
+
+	// Composite image for Reflection Catcher
+	void compositeReflectionCatcherOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region,
+		bool flip);
+
+	// Composite image for Shadow+Reflection Catcher
+	void compositeReflectionShadowCatcherOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region,
 		bool flip);
 	
 	// Copy pixels from the source buffer to the destination buffer.

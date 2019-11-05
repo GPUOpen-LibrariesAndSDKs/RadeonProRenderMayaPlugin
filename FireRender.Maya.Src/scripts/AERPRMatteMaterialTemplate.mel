@@ -1,4 +1,4 @@
-global proc AEShadowCatcherCheckEnableSC(string $nodeName)
+global proc AEMatteCheckEnableSC(string $nodeName)
 {
 	string $nodeAttr = $nodeName + ".scenabled";
 	int $value = `getAttr $nodeAttr`;
@@ -14,18 +14,40 @@ global proc AEShadowCatcherCheckEnableSC(string $nodeName)
 	editorTemplate -dimControl $nodeName "normalMap" ($value == 0);
 	editorTemplate -dimControl $nodeName "useDispMap" ($value == 0);
 	editorTemplate -dimControl $nodeName "dispMap" ($value == 0);
+
+	setAttr RadeonProRenderGlobals.aovShadowCatcher ($value);
+
+	int $isShadowCatcher = `getAttr RadeonProRenderGlobals.aovShadowCatcher`;
+	int $isReflectionCatcher = `getAttr RadeonProRenderGlobals.aovReflectionCatcher`;
+	if (($isShadowCatcher == 1) && ($isReflectionCatcher == 0))
+	{
+		// Set aovs to ON state
+		setAttr RadeonProRenderGlobals.aovBackground 1;
+		setAttr RadeonProRenderGlobals.aovOpacity 1;
+	}
 }
 
-global proc AEShadowCatcherCheckEnableRC(string $nodeName)
+global proc AEMatteCheckEnableRC(string $nodeName)
 {
 	string $nodeAttr = $nodeName + ".rcenabled";
 	int $value = `getAttr $nodeAttr`;
 
 	editorTemplate -dimControl $nodeName "reflectionRoughness" ($value == 0);
 	editorTemplate -dimControl $nodeName "reflectionWeight" ($value == 0);
+
+	setAttr RadeonProRenderGlobals.aovReflectionCatcher ($value);
+
+	int $isShadowCatcher = `getAttr RadeonProRenderGlobals.aovShadowCatcher`;
+	int $isReflectionCatcher = `getAttr RadeonProRenderGlobals.aovReflectionCatcher`;
+	if (($isShadowCatcher == 0) && ($isReflectionCatcher == 1))
+	{
+		// Set aovs to ON state
+		setAttr RadeonProRenderGlobals.aovBackground 1;
+		setAttr RadeonProRenderGlobals.aovOpacity 1;
+	}
 }
 
-global proc AERPRShadowCatcherMaterialTemplate( string $nodeName )
+global proc AERPRMatteMaterialTemplate( string $nodeName )
 {
 	AEswatchDisplay $nodeName;
 	editorTemplate -beginScrollLayout;
@@ -36,7 +58,7 @@ global proc AERPRShadowCatcherMaterialTemplate( string $nodeName )
 	editorTemplate -endLayout;
 
 	editorTemplate -beginLayout "Shadow Catcher Attributes" -collapse 0;
-		editorTemplate -label "Enable" -addControl "scenabled" "AEShadowCatcherCheckEnableSC";
+		editorTemplate -label "Enable" -addControl "scenabled" "AEMatteCheckEnableSC";
 
 		editorTemplate -l "Background is Environment" -addControl "bgIsEnv";
 		editorTemplate -l "Background weight" -addControl "bgWeight";
@@ -54,7 +76,7 @@ global proc AERPRShadowCatcherMaterialTemplate( string $nodeName )
 	editorTemplate -endLayout;
 
 	editorTemplate -beginLayout "Reflection Catcher Attributes" -collapse 0;
-		editorTemplate -label "Enable" -addControl "rcenabled" "AEShadowCatcherCheckEnableRC";
+		editorTemplate -label "Enable" -addControl "rcenabled" "AEMatteCheckEnableRC";
 
 		editorTemplate -l "Reflection roughness" -addControl "reflectionRoughness";
 		editorTemplate -l "Reflection weight" -addControl "reflectionWeight";

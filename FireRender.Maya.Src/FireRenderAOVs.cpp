@@ -91,6 +91,9 @@ FireRenderAOVs::FireRenderAOVs() :
 	AddAOV(RPR_AOV_VARIANCE, "aovVariance", "Variance", "variance",
 		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
 
+	AddAOV(RPR_AOV_REFLECTION_CATCHER, "aovReflectionCatcher", "ReflectionCatcher", "refcatcher",
+		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
+
 	InitEXRCompressionMap();
 }
 
