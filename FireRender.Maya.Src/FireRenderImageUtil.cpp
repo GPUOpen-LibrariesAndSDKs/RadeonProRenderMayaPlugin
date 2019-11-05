@@ -5,25 +5,28 @@
 #include <maya/MImage.h>
 #include <string>
 #include <memory>
-
-using namespace std;
-using namespace OIIO;
+#ifdef __APPLE__
+#include <OpenImageIO/color.h>
+#else
+#include <color.h>
+#endif
 
 // -----------------------------------------------------------------------------
 void FireRenderImageUtil::save(MString filePath, unsigned int width, unsigned int height,
 	RV_PIXEL* pixels, unsigned int imageFormat)
 {
 	// Get the UTF8 file name.
-	auto fileName = filePath.asUTF8();
+	const char* fileName = filePath.asUTF8();
 
 	// Create and verify the image output.
-	auto output = unique_ptr<ImageOutput>(ImageOutput::create(fileName));
+	std::unique_ptr<ImageOutput> output = std::unique_ptr<ImageOutput>(ImageOutput::create(fileName));
+
 	if (!output)
 	{
 		// Handle any case where the image format
 		// suffix was not included with the file name.
 		auto nameWithExt = filePath + "." + getImageFormatExtension(imageFormat);
-		output = unique_ptr<ImageOutput>(ImageOutput::create(nameWithExt.asUTF8()));
+		output = std::unique_ptr<ImageOutput>(ImageOutput::create(nameWithExt.asUTF8()));
 
 		// Fall back to Maya image saving if OpenImageIO
 		// was not able to create the image output.
@@ -37,15 +40,31 @@ void FireRenderImageUtil::save(MString filePath, unsigned int width, unsigned in
 	// Not using more complex constructor as OIIO allocates data in a different heap
 	// and modifying std::vector in our heap crashes(seems line CRTs don't match for
 	// the plugin and OpenImageIO.dll that gets loaded).
-	ImageSpec imgSpec(width, height, 4, TypeDesc::FLOAT);
-	auto comments = "Created with "s + FIRE_RENDER_NAME + " "s + PLUGIN_VERSION;
+	const int numberOfChannels = sizeof(RV_PIXEL) / sizeof(float);
+	ImageSpec imgSpec(width, height, numberOfChannels, TypeDesc::FLOAT);
+	std::string comments = std::string() + "Created with " + FIRE_RENDER_NAME + " " + PLUGIN_VERSION;
 	imgSpec.attribute("ImageDescription", comments.c_str());
 
 	bool saveSuccessful = false;
+	std::vector<float> buff;
+
+	bool isEXR = getImageFormatExtension(imageFormat) == "exr";
+
+	if (isEXR) //The RGB values in OpenEXR are linear, thus conversion is required
+	{
+		int buffSize = width * height * numberOfChannels;
+		buff.reserve(buffSize);
+		float* fpixels = reinterpret_cast<float*> (pixels);
+
+		for (int idx = 0; idx < buffSize; ++idx)
+			buff.push_back(sRGB_to_linear(fpixels[idx]));
+	}
+
 	// Try to open and write to the file.
 	if (output->open(fileName, imgSpec))
 	{
-		saveSuccessful = output->write_image(TypeDesc::FLOAT, reinterpret_cast<uint8_t*>(pixels));
+		const uint8_t* ptr = isEXR ? reinterpret_cast<uint8_t*>(buff.data()) : reinterpret_cast<uint8_t*>(pixels);
+		saveSuccessful = output->write_image(TypeDesc::FLOAT, ptr);
 		output->close();
 	}
 	
@@ -222,53 +241,51 @@ bool FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 	return true;
 }
 
+static const std::map<unsigned int, std::string> imageFormats =
+{
+	{ 0, "gif" },
+	{ 1, "si" },
+	{ 2, "rla" },
+	{ 3, "tif" },
+	{ 4, "tif" },
+	{ 5, "sgi" },
+	{ 6, "als" },
+	{ 7, "iff" },
+	{ 8, "jpg" },
+	{ 9, "eps" },
+	{ 10, "iff" },
+	{ 11, "cin" },
+	{ 12, "yuv" },
+	{ 13, "sgi" },
+	{ 19, "tga" },
+	{ 20, "bmp" },
+	{ 21, "sgimv" },
+	{ 22, "mov" },
+	{ 23, "avi" },
+	{ 24, "mov" },
+	{ 31, "psd" },
+	{ 32, "png" },
+	{ 33, "mov" },
+	{ 34, "mov" },
+	{ 35, "dds" },
+	{ 36, "iff" },
+	{ 40, "exr" },
+	{ 50, "imf" },
+	{ 51, "custom" },
+	{ 60, "swf" },
+	{ 61, "ai" },
+	{ 62, "svg" },
+	{ 63, "swft" },
+	{ 163, "exr" },
+};
+
 // -----------------------------------------------------------------------------
 MString FireRenderImageUtil::getImageFormatExtension(unsigned int format)
 {
 	// Convert the code to an image format string.
-	MString extension;
+	auto it = imageFormats.find(format);
 
-	switch (format)
-	{
-	case 0: extension = "gif"; break;
-	case 1: extension = "si"; break;
-	case 2: extension = "rla"; break;
-	case 3: extension = "tif"; break;
-	case 4: extension = "tif"; break;
-	case 5: extension = "sgi"; break;
-	case 6: extension = "als"; break;
-	case 7: extension = "iff"; break;
-	case 8: extension = "jpg"; break;
-	case 9: extension = "eps"; break;
-	case 10: extension = "iff"; break;
-	case 11: extension = "cin"; break;
-	case 12: extension = "yuv"; break;
-	case 13: extension = "sgi"; break;
-	case 19: extension = "tga"; break;
-	case 20: extension = "bmp"; break;
-	case 21: extension = "sgimv"; break;
-	case 22: extension = "mov"; break;
-	case 23: extension = "avi"; break;
-	case 24: extension = "mov"; break;
-	case 31: extension = "psd"; break;
-	case 32: extension = "png"; break;
-	case 33: extension = "mov"; break;
-	case 34: extension = "mov"; break;
-	case 35: extension = "dds"; break;
-	case 36: extension = "iff"; break;
-	case 40: extension = "exr"; break;
-	case 50: extension = "imf"; break;
-	case 51: extension = "custom"; break;
-	case 60: extension = "swf"; break;
-	case 61: extension = "ai"; break;
-	case 62: extension = "svg"; break;
-	case 63: extension = "swft"; break;
-	case 163: extension = "exr"; break;
-
-		// Format not supported, use the Maya native iff format.
-	default:
-		extension = "iff";
-	}
+	MString extension = (it != imageFormats.end()) ? it->second.c_str() : "iff"; // if format not supported, use the Maya native iff format.
 
 	return extension;
 }
