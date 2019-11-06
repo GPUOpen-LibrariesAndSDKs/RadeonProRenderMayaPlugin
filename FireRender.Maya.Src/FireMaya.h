@@ -109,6 +109,7 @@ namespace FireMaya
 		MayaNodeRemapHSV = 0x524d4853,
 		MayaNodeGammaCorrect = 0x5247414d,
 		MayaReverseMap = 0x52525653,
+		MayaLayeredTexture = 0x4c595254,
 
 		// arithmetic
 		MayaAddDoubleLinear = 0x4441444c,
@@ -271,6 +272,11 @@ namespace FireMaya
 
 		frw::Value convertMayaNoise(const MFnDependencyNode &node);
 		frw::Value convertMayaBump2d(const MFnDependencyNode &node);
+
+		frw::Value convertMayaNodePlace2dTexture(MObject node, const MFnDependencyNode& shaderNode, frw::MaterialSystem materialSystem);
+		frw::Value convertMayaNodeFile(const MFnDependencyNode& node, frw::MaterialSystem materialSystem);
+		frw::Value convertMayaNodeChecker(const MFnDependencyNode& node, frw::MaterialSystem materialSystem);
+		frw::Value convertMayaReverseMap(const MFnDependencyNode& node);
 
 		// convert arithmetic nodes
 		frw::Value convertMayaAddDoubleLinear(const MFnDependencyNode &node);

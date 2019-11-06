@@ -13,7 +13,7 @@
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MUuid.h>
 #include <maya/MItDependencyGraph.h>
-
+#include <FireRenderLayeredTextureUtils.h>
 #include <exception>
 
 #ifdef MAYA2017
@@ -1512,7 +1512,9 @@ float colorSpace2Gamma(const MString& colorSpace)
 frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 {
 	if (node.isNull())
+	{
 		return nullptr;
+	}
 
 	frw::MaterialSystem materialSystem = m->materialSystem;
 
@@ -1537,137 +1539,13 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 	case MayaMultiplyDivide:	return convertMayaMultiplyDivide(shaderNode);
 	case MayaPlusMinusAverage:	return convertMayaPlusMinusAverage(shaderNode, outPlugName);
 	case MayaVectorProduct:		return convertMayaVectorProduct(shaderNode);
-
-	case MayaNoise:
-		return convertMayaNoise(shaderNode);
-
-	case MayaBump2d:
-		return convertMayaBump2d(shaderNode);
-
-	case MayaNodePlace2dTexture:
-	{
-		// get connected texture
-		MString textureFile("");
-
-		MStatus status;
-		MItDependencyGraph it(node,
-			MFn::kFileTexture,
-			MItDependencyGraph::kDownstream,
-			MItDependencyGraph::kBreadthFirst,
-			MItDependencyGraph::kNodeLevel,
-			&status);
-		for (; !it.isDone(); it.next())
-		{
-			MFnDependencyNode fileNode(it.currentItem());
-			status = fileNode.findPlug("fileTextureName").getValue(textureFile);
-
-			if (!status) // texture file node not found, continue go down the graph
-				continue;
-
-			// texture node found => exit
-			break;
-		}
-
-		// get uv data
-		int uvIdx = 0;
-		const FireRenderMesh* pMesh = m->m_pCurrentlyParsedMesh;
-		if (pMesh != nullptr)
-		{
-			uvIdx = pMesh->GetAssignedUVMapIdx(textureFile);
-		}
-
-		if (uvIdx == -1)
-			uvIdx = 0;
-
-		// create node
-		auto value = materialSystem.ValueLookupUV(uvIdx);
-
-		// rotate frame
-		auto rotateFrame = GetValue(shaderNode.findPlug("rotateFrame"));
-		if (rotateFrame != 0.)
-			value = materialSystem.ValueRotateXY(value - 0.5, rotateFrame) + 0.5;
-
-		// translate frame
-		auto translateFrameU = GetValue(shaderNode.findPlug("translateFrameU"));
-		auto translateFrameV = GetValue(shaderNode.findPlug("translateFrameV"));
-		if (translateFrameU != 0. || translateFrameV != 0.)
-			value = value + materialSystem.ValueCombine(-translateFrameU, -translateFrameV);
-
-		// handle scale
-		auto repeatU = GetValue(shaderNode.findPlug("repeatU"));
-		auto repeatV = GetValue(shaderNode.findPlug("repeatV"));
-		if (repeatU != 1. || repeatV != 1.)
-			value = value * materialSystem.ValueCombine(repeatU, repeatV);
-
-		// handle offset
-		auto offsetU = GetValue(shaderNode.findPlug("offsetU"));
-		auto offsetV = GetValue(shaderNode.findPlug("offsetV"));
-		if (offsetU != 0. || offsetV != 0.)
-			value = value + materialSystem.ValueCombine(offsetU, offsetV);
-
-		// rotate
-		auto rotateUV = GetValue(shaderNode.findPlug("rotateUV"));
-		if (rotateUV != 0.)
-			value = materialSystem.ValueRotateXY(value - 0.5, rotateUV) + 0.5;
-
-		// TODO rotation, + "frame" settings
-
-		return value;
-	}break;
-
-	case MayaNodeFile:
-	{
-		MPlug texturePlug = shaderNode.findPlug("computedFileTextureNamePattern");
-		MString texturePath = texturePlug.asString();
-		MPlug colorSpacePlug = shaderNode.findPlug("colorSpace");
-		MString colorSpace;
-		if (!colorSpacePlug.isNull())
-			colorSpace = colorSpacePlug.asString();
-		if (auto image = GetImage(texturePath, colorSpace, shaderNode.name()))
-		{
-			frw::ImageNode imageNode(materialSystem);
-			image.SetGamma(colorSpace2Gamma(colorSpace));
-			imageNode.SetMap(image);
-			imageNode.SetValue("uv", GetConnectedValue(shaderNode.findPlug("uvCoord")));
-			return imageNode;
-		}
-		else 
-		{
-			m_IsLastPassTextureMissing = true;
-		}
-	} break;
-
-	case MayaNodeChecker:
-	{
-		frw::ValueNode map(materialSystem, frw::ValueTypeCheckerMap);
-		auto uv = (GetConnectedValue(shaderNode.findPlug("uvCoord")) | materialSystem.ValueLookupUV(0));
-		map.SetValue("uv", (uv * .25) + 128.);	// <- offset added because FR mirrors checker at origin
-
-		frw::Value color1 = GetValue(shaderNode.findPlug("color1"));
-		frw::Value color2 = GetValue(shaderNode.findPlug("color2"));
-		frw::Value contrast = GetValue(shaderNode.findPlug("contrast"));
-
-		return materialSystem.ValueBlend(color2, color1, map); // Reverse blend to match tile alignment
-	}break;
-
-	case MayaReverseMap:
-	{
-		MPlugArray nodes;
-		shaderNode.getConnections(nodes);
-
-		for (unsigned int idx = 0; idx < nodes.length(); ++idx)
-		{
-			const MPlug& connection = nodes[idx];
-			const MString partialName = connection.partialName();
-
-			if (partialName == "i") // name of "input" of the node
-			{
-				frw::Value mapValue = GetValue(connection);
-				frw::Value invertedMapValue = frw::Value(1) - mapValue;
-				return invertedMapValue;
-			}
-		}
-	}break;
+	case MayaNoise:				return convertMayaNoise(shaderNode);
+	case MayaBump2d:			return convertMayaBump2d(shaderNode);
+	case MayaNodePlace2dTexture:return convertMayaNodePlace2dTexture(node, shaderNode, materialSystem);
+	case MayaNodeFile:			return convertMayaNodeFile(shaderNode, materialSystem);
+	case MayaNodeChecker:		return convertMayaNodeChecker(shaderNode, materialSystem);
+	case MayaReverseMap:		return convertMayaReverseMap(shaderNode);
+	case MayaLayeredTexture:	return FireRenderLayeredTextureUtils::ConvertMayaLayeredTexture(shaderNode, materialSystem, *this);
 
 	case MayaNodeRamp:
 		//falling back onto rasterization:
@@ -1682,9 +1560,13 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 
 	default:
 		if (FireMaya::TypeId::IsValidId(id))
+		{
 			DebugPrint("Error: Unhandled RPRMaya NodeId: %X", id);
+		}
 		else if (FireMaya::TypeId::IsReservedId(id))
+		{
 			DebugPrint("Error: Unrecognized RPRMaya NodeId: %X", id);
+		}
 		else
 		{
 			DebugPrint("Warning: Unhandled or Unknown RPRMaya Node: %X", id);
@@ -1692,8 +1574,6 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 		}
 		return createImageFromShaderNodeUsingFileNode(node, "outColor");
 	}
-
-	return nullptr;
 }
 
 frw::Value FireMaya::Scope::createImageFromShaderNodeUsingFileNode(MObject node, MString plugName)
@@ -2052,6 +1932,137 @@ frw::Value FireMaya::Scope::convertMayaBump2d(const MFnDependencyNode& shaderNod
 
 	return nullptr;
 }
+
+frw::Value FireMaya::Scope::convertMayaNodePlace2dTexture(MObject node, const MFnDependencyNode& shaderNode, frw::MaterialSystem materialSystem)
+{
+	// get connected texture
+	MString textureFile("");
+
+	MStatus status;
+	MItDependencyGraph it(node,
+		MFn::kFileTexture,
+		MItDependencyGraph::kDownstream,
+		MItDependencyGraph::kBreadthFirst,
+		MItDependencyGraph::kNodeLevel,
+		&status);
+	for (; !it.isDone(); it.next())
+	{
+		MFnDependencyNode fileNode(it.currentItem());
+		status = fileNode.findPlug("fileTextureName").getValue(textureFile);
+
+		if (!status) // texture file node not found, continue go down the graph
+			continue;
+
+		// texture node found => exit
+		break;
+	}
+
+	// get uv data
+	int uvIdx = 0;
+	const FireRenderMesh* pMesh = m->m_pCurrentlyParsedMesh;
+	if (pMesh != nullptr)
+	{
+		uvIdx = pMesh->GetAssignedUVMapIdx(textureFile);
+	}
+
+	if (uvIdx == -1)
+		uvIdx = 0;
+
+	// create node
+	auto value = materialSystem.ValueLookupUV(uvIdx);
+
+	// rotate frame
+	auto rotateFrame = GetValue(shaderNode.findPlug("rotateFrame"));
+	if (rotateFrame != 0.)
+		value = materialSystem.ValueRotateXY(value - 0.5, rotateFrame) + 0.5;
+
+	// translate frame
+	auto translateFrameU = GetValue(shaderNode.findPlug("translateFrameU"));
+	auto translateFrameV = GetValue(shaderNode.findPlug("translateFrameV"));
+	if (translateFrameU != 0. || translateFrameV != 0.)
+		value = value + materialSystem.ValueCombine(-translateFrameU, -translateFrameV);
+
+	// handle scale
+	auto repeatU = GetValue(shaderNode.findPlug("repeatU"));
+	auto repeatV = GetValue(shaderNode.findPlug("repeatV"));
+	if (repeatU != 1. || repeatV != 1.)
+		value = value * materialSystem.ValueCombine(repeatU, repeatV);
+
+	// handle offset
+	auto offsetU = GetValue(shaderNode.findPlug("offsetU"));
+	auto offsetV = GetValue(shaderNode.findPlug("offsetV"));
+	if (offsetU != 0. || offsetV != 0.)
+		value = value + materialSystem.ValueCombine(offsetU, offsetV);
+
+	// rotate
+	auto rotateUV = GetValue(shaderNode.findPlug("rotateUV"));
+	if (rotateUV != 0.)
+		value = materialSystem.ValueRotateXY(value - 0.5, rotateUV) + 0.5;
+
+	// TODO rotation, + "frame" settings
+
+	return value;
+}
+
+frw::Value FireMaya::Scope::convertMayaNodeFile(const MFnDependencyNode& shaderNode, frw::MaterialSystem materialSystem)
+{
+	MPlug texturePlug = shaderNode.findPlug("computedFileTextureNamePattern");
+	MString texturePath = texturePlug.asString();
+	MPlug colorSpacePlug = shaderNode.findPlug("colorSpace");
+	MString colorSpace;
+	if (!colorSpacePlug.isNull())
+		colorSpace = colorSpacePlug.asString();
+	if (auto image = GetImage(texturePath, colorSpace, shaderNode.name()))
+	{
+		frw::ImageNode imageNode(materialSystem);
+		image.SetGamma(colorSpace2Gamma(colorSpace));
+		imageNode.SetMap(image);
+		imageNode.SetValue("uv", GetConnectedValue(shaderNode.findPlug("uvCoord")));
+		return imageNode;
+	}
+	else
+	{
+		m_IsLastPassTextureMissing = true;
+	}
+
+	return nullptr;
+}
+
+frw::Value FireMaya::Scope::convertMayaNodeChecker(const MFnDependencyNode& shaderNode, frw::MaterialSystem materialSystem)
+{
+	frw::ValueNode map(materialSystem, frw::ValueTypeCheckerMap);
+	auto uv = (GetConnectedValue(shaderNode.findPlug("uvCoord")) | materialSystem.ValueLookupUV(0));
+	map.SetValue("uv", (uv * .25) + 128.);	// <- offset added because FR mirrors checker at origin
+
+	frw::Value color1 = GetValue(shaderNode.findPlug("color1"));
+	frw::Value color2 = GetValue(shaderNode.findPlug("color2"));
+	frw::Value contrast = GetValue(shaderNode.findPlug("contrast"));
+
+	return materialSystem.ValueBlend(color2, color1, map); // Reverse blend to match tile alignment
+}
+
+frw::Value FireMaya::Scope::convertMayaReverseMap(const MFnDependencyNode& shaderNode)
+{
+	MPlugArray nodes;
+	shaderNode.getConnections(nodes);
+
+	for (unsigned int idx = 0; idx < nodes.length(); ++idx)
+	{
+		const MPlug& connection = nodes[idx];
+		const MString partialName = connection.partialName();
+
+		if (partialName == "i") // name of "input" of the node
+		{
+			frw::Value mapValue = GetValue(connection);
+			frw::Value invertedMapValue = frw::Value(1) - mapValue;
+			return invertedMapValue;
+		}
+	}
+
+	return nullptr;
+}
+
+
 
 frw::Shader FireMaya::Scope::ParseShader(MObject node)
 {

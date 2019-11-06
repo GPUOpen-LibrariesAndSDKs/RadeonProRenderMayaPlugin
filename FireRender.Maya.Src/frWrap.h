@@ -2494,7 +2494,7 @@ namespace frw
 		}
 
 #endif
-		Value ValueMin(const Value& a, const Value& b)
+		Value ValueMin(const Value& a, const Value& b) const
 		{
 			if (allowShortcuts && a.IsFloat() && b.IsFloat())
 				return Value(std::min(a.x, b.x), std::min(a.y, b.y), std::min(a.z, b.z), std::min(a.w, b.w));
@@ -2502,7 +2502,7 @@ namespace frw
 			return ArithmeticNode(*this, OperatorMin, a, b);
 		}
 
-		Value ValueMax(const Value& a, const Value& b)
+		Value ValueMax(const Value& a, const Value& b) const
 		{
 			if (allowShortcuts && a.IsFloat() && b.IsFloat())
 				return Value(std::max(a.x, b.x), std::max(a.y, b.y), std::max(a.z, b.z), std::max(a.w, b.w));
@@ -2511,13 +2511,13 @@ namespace frw
 		}
 
 		// clamp components between 0 and 1
-		Value ValueClamp(const Value& v)
+		Value ValueClamp(const Value& v) const
 		{
 			return ValueMin(ValueMax(v, 0.), 1.);
 		}
 
-		Shader ShaderBlend(const Shader& a, const Shader& b, const Value& t);
-		Shader ShaderAdd(const Shader& a, const Shader& b);
+		Shader ShaderBlend(const Shader& a, const Shader& b, const Value& t) const;
+		Shader ShaderAdd(const Shader& a, const Shader& b) const;
 	};
 
     class AOMapNode : public ValueNode
@@ -3151,7 +3151,7 @@ namespace frw
 	}
 
 
-	inline Shader MaterialSystem::ShaderBlend(const Shader& a, const Shader& b, const Value& t)
+	inline Shader MaterialSystem::ShaderBlend(const Shader& a, const Shader& b, const Value& t) const
 	{
 		// in theory a null could be considered a transparent material, but would create unexpected node
 		if (!a)
@@ -3180,7 +3180,7 @@ namespace frw
 		return node;
 	}
 
-	inline Shader MaterialSystem::ShaderAdd(const Shader& a, const Shader& b)
+	inline Shader MaterialSystem::ShaderAdd(const Shader& a, const Shader& b) const
 	{
 		if (!a)
 			return b;

@@ -273,6 +273,7 @@
     <ClCompile Include="FireRenderImportExportXML.cpp" />
     <ClCompile Include="FireRenderImportXML.cpp" />
     <ClCompile Include="FireRenderIpr.cpp" />
+    <ClCompile Include="FireRenderLayeredTextureUtils.cpp" />
     <ClCompile Include="FireRenderLocationCmd.cpp" />
     <ClCompile Include="FireRenderLookup.cpp" />
     <ClCompile Include="FireRenderMaterialSwatchRender.cpp" />
@@ -405,6 +406,7 @@
     <ClInclude Include="FireRenderImportCmd.h" />
     <ClInclude Include="FireRenderImportExportXML.h" />
     <ClInclude Include="FireRenderIpr.h" />
+    <ClInclude Include="FireRenderLayeredTextureUtils.h" />
     <ClInclude Include="FireRenderLocationCmd.h" />
     <ClInclude Include="FireRenderLookup.h" />
     <ClInclude Include="FireRenderMaterial.h" />
