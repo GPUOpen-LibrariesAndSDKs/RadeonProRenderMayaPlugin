@@ -2782,10 +2782,14 @@ namespace frw
 			return data().context;
 		}
 
-		void SetDirty()
+		void SetDirty(bool value = true)
 		{
-			data().bDirty = true;
-			data().SetCommittedState(false);
+			data().bDirty = value;
+
+			if (value)
+			{
+				data().SetCommittedState(false);
+			}
 		}
 
 		bool IsDirty() const
@@ -3176,6 +3180,8 @@ namespace frw
 
 		a.xMaterialCommit();
 		b.xMaterialCommit();
+
+		node.SetDirty(false);
 
 		return node;
 	}
