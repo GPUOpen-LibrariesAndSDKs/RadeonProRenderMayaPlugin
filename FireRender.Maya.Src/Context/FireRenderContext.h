@@ -34,6 +34,7 @@
 
 #include "FireRenderUtils.h"
 #include "FireRenderContextIFace.h"
+#include <InstancerMASH.h>
 
 // Forward declarations.
 class FireRenderViewport;
@@ -308,7 +309,7 @@ public:
 			if (context->AddSceneObject(fr))
 			{
 				// save node id and dagPath for future use
-				context->AddNodePath(ob, fr->GetUuid());
+				context->AddNodePath(ob, fr->uuid());
 			}
 			else
 			{
@@ -436,10 +437,8 @@ public:
 	frw::PostEffect normalization;
 	frw::PostEffect gamma_correction;
 
-	const FireRenderMesh* GetMainMesh(const MObject& shape) const 
+	const FireRenderMesh* GetMainMesh(const std::string& uuid) const 
 	{ 
-		std::string uuid = getNodeUUid(shape);
-
 		auto it = m_mainMeshesDictionary.find(uuid);
 
 		if (it != m_mainMeshesDictionary.end())
@@ -450,21 +449,23 @@ public:
 		return nullptr;
 	}
 
-	void AddMainMesh(const MObject& shape, const FireRenderMesh* mainMesh)
+	void AddMainMesh(const FireRenderMesh* mainMesh)
 	{
-		const FireRenderMesh* alreadyHas = GetMainMesh(shape);
+		auto uuid = mainMesh->uuid();
+		const FireRenderMesh* alreadyHas = GetMainMesh(mainMesh->uuid());
 		assert(!alreadyHas);
 
-		m_mainMeshesDictionary[getNodeUUid(shape)] = mainMesh;
+		m_mainMeshesDictionary[mainMesh->uuid()] = mainMesh;
 	}
 
-	void RemoveMainMesh(const std::string& uuid)
+	void RemoveMainMesh(const FireRenderMesh* mainMesh)
 	{
-		auto found = m_mainMeshesDictionary.find(uuid);
+		auto uuid = mainMesh->uuid();
+		auto found = m_mainMeshesDictionary.find(mainMesh->uuid());
 
 		if (found != m_mainMeshesDictionary.end())
 		{
-			m_mainMeshesDictionary.erase(uuid);
+			m_mainMeshesDictionary.erase(mainMesh->uuid());
 		}
 	}
 
@@ -547,6 +548,7 @@ private:
 	void turnOnAOVsForDenoiser(bool allocBuffer = false);
 	bool CanCreateAiDenoiser() const;
 	void setupDenoiser();
+	void BuildLateinitObjects();
 
 private:
 	std::shared_ptr<ImageFilter> m_denoiserFilter;
@@ -654,6 +656,7 @@ private:
 	// render type information
 	RenderType m_RenderType;
 
+	std::vector<MDagPath> m_LateinitMASHInstancers;
 	bool m_DoesContextSupportCurrentSettings = true;
 
 public:

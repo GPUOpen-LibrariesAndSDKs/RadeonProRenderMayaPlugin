@@ -282,6 +282,7 @@
     <ClCompile Include="FireRenderMaterialSwatchRender.cpp" />
     <ClCompile Include="FireMaterialViewRenderer.cpp" />
     <ClCompile Include="FireRenderBlendMaterial.cpp" />
+    <ClCompile Include="FireRenderMeshMASH.cpp" />
     <ClCompile Include="FireRenderNoise.cpp" />
     <ClCompile Include="FireRenderNormal.cpp" />
     <ClCompile Include="FireRenderObjects.cpp" />
@@ -317,6 +318,7 @@
     <ClCompile Include="Lights\PhysicalLight\PhysicalLightData.cpp" />
     <ClCompile Include="Lights\PhysicalLight\PhysicalLightAttributes.cpp" />
     <ClCompile Include="Lights\PhysicalLight\PhysicalLightGeometryUtility.cpp" />
+    <ClCompile Include="InstancerMASH.cpp" />
     <ClCompile Include="MaterialLoader.cpp" />
     <ClCompile Include="OptionVarHelpers.cpp" />
     <ClCompile Include="pluginMain.cpp" />
@@ -421,6 +423,7 @@
     <ClInclude Include="FireRenderBlendMaterial.h" />
     <ClInclude Include="FireRenderCmd.h" />
     <ClInclude Include="FireRenderMath.h" />
+    <ClInclude Include="FireRenderMeshMASH.h" />
     <ClInclude Include="FireRenderNoise.h" />
     <ClInclude Include="FireRenderNormal.h" />
     <ClInclude Include="FireRenderObjects.h" />
@@ -462,6 +465,7 @@
     <ClInclude Include="Lights\PhysicalLight\PhysicalLightAttributes.h" />
     <ClInclude Include="Lights\PhysicalLight\PhysicalLightGeometryUtility.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="InstancerMASH.h" />
     <ClInclude Include="MaterialLoader.h" />
     <ClInclude Include="OptionVarHelpers.h" />
     <ClInclude Include="RenderCacheWarningDialog.h" />

@@ -542,6 +542,9 @@
     <ClCompile Include="athenaCmd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FireRenderMeshMASH.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="Context\HybridContext.cpp">
       <Filter>Context</Filter>
     </ClCompile>
@@ -556,6 +559,9 @@
     </ClCompile>
     <ClCompile Include="..\FireRender.Components\cpp\Athena\athenaWrap.cpp">
       <Filter>FireRender.Components\Athena</Filter>
+    </ClCompile>
+    <ClCompile Include="InstancerMASH.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Context\FireRenderContext.cpp">
       <Filter>Context</Filter>
@@ -949,6 +955,9 @@
     <ClInclude Include="athenaCmd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FireRenderMeshMASH.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Context\HybridContext.h">
       <Filter>Context</Filter>
     </ClInclude>
@@ -957,12 +966,15 @@
     </ClInclude>
     <ClInclude Include="Context\ContextCreator.h">
       <Filter>Context</Filter>
-   </ClInclude>
+    </ClInclude>
     <ClInclude Include="StartupContextChecker.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\FireRender.Components\cpp\Athena\athenaWrap.h">
       <Filter>FireRender.Components\Athena</Filter>
+    </ClInclude>
+    <ClInclude Include="InstancerMASH.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Context\FireRenderContext.h">
       <Filter>Context</Filter>
