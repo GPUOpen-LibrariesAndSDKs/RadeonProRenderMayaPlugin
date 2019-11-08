@@ -282,6 +282,7 @@ void FillDiscShapeGeom(GeometryVertexVector& vertices, IndexVector& indices)
 
 	vertices[segments].pos = { 0.0f, 0.0f, 0.0f };
 	vertices[segments].uv = { 0.5f, 0.5f };
+	vertices[segments].norm = { 0.0f, 0.0f, -1.0f };
 
 	for (int i = 0; i < segments; ++i)
 	{
@@ -401,10 +402,10 @@ frw::Shape PhysicalLightGeometryUtility::CreateShapeForAreaLight(PLAreaLightShap
 
 	return frcontext.CreateMesh(
 		(rpr_float*) &vertices[0], vertices.size(), sizeof(PLUtilityVertex),
-		nullptr, 0, 0,
+		(rpr_float*)&vertices[0].norm, vertices.size(), sizeof(PLUtilityVertex),
 		(rpr_float*) (&vertices[0] + 6), vertices.size(), sizeof(PLUtilityVertex),
 		(int*) &indices[0], sizeof(int),
-		nullptr, 0,
+		(int*)&indices[0], sizeof(int),
 		(int*)&indices[0], sizeof(int),
 		(int*) &numFaceVertices[0], numFaceVertices.size());
 }

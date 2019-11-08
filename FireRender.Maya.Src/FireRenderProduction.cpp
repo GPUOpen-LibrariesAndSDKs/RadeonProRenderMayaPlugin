@@ -1,4 +1,5 @@
 #include "FireRenderProduction.h"
+#include "Context/TahoeContext.h"
 #include <tbb/atomic.h>
 #include <maya/MRenderView.h>
 #include <maya/MViewport2Renderer.h>
@@ -20,6 +21,9 @@
 #include "GlobalRenderUtilsDataHolder.h"
 #include <iostream>
 #include <fstream>
+
+#include "Context/ContextCreator.h"
+
 #include <functional>
 #include <clocale>
 #include <chrono>
@@ -96,13 +100,15 @@ void FireRenderProduction::updateRegion()
 		FireRenderThread::RunOnceProcAndWait([this]()
 		{
 			// was causing deadlock: AutoMutexLock contextLock(m_contextLock);
-			m_context->setUseRegion(m_isRegion);
+			m_isRegion = m_contextPtr->setUseRegion(m_isRegion);
 
 			if (m_isRegion)
-				m_context->setRenderRegion(m_region);
+			{
+				m_contextPtr->setRenderRegion(m_region);
+			}
 
 			// Invalidate the context to restart the render.
-			m_context->setDirty();
+			m_contextPtr->setDirty();
 		});
 	}
 
@@ -174,16 +180,17 @@ bool FireRenderProduction::start()
 		{
 			AutoMutexLock contextCreationLock(m_contextCreationLock);
 
-			m_context = make_shared<FireRenderContext>();
-			m_context->SetRenderType(RenderType::ProductionRender);
+			m_contextPtr = ContextCreator::CreateAppropriateContextForRenderType(RenderType::ProductionRender);
+			m_contextPtr->SetRenderType(RenderType::ProductionRender);
 		}
 
+		m_contextPtr->enableAOV(RPR_AOV_OPACITY);
 		if (m_globals.adaptiveThreshold > 0.0f)
 		{
-			m_context->enableAOV(RPR_AOV_VARIANCE);
+			m_contextPtr->enableAOV(RPR_AOV_VARIANCE);
 		}
 
-		m_aovs->applyToContext(*m_context);
+		m_aovs->applyToContext(*m_contextPtr);
 
 		// Stop before restarting if already running.
 		if (m_isRunning)
@@ -193,25 +200,25 @@ bool FireRenderProduction::start()
 		if (m_width == 0 || m_height == 0)
 			return false;
 
-		m_context->setCallbackCreationDisabled(true);
-		if (!m_context->buildScene(false, false, false, false))
+		m_contextPtr->setCallbackCreationDisabled(true);
+		if (!m_contextPtr->buildScene(false, false, false, false))
 		{
 			return false;
 		}
 
-		m_aovs->setFromContext(*m_context);
+		m_aovs->setFromContext(*m_contextPtr);
 
 		m_needsContextRefresh = true;
-		m_context->setResolution(contextWidth, contextHeight, true);
-		m_context->setCamera(m_camera, true);
+		m_contextPtr->setResolution(contextWidth, contextHeight, true);
+		m_contextPtr->setCamera(m_camera, true);
 
-		m_context->setUseRegion(m_isRegion);
+		m_contextPtr->setUseRegion(m_isRegion);
 
-		if (m_context->isFirstIterationAndShadersNOTCached())
+		if (m_contextPtr->isFirstIterationAndShadersNOTCached())
 			showWarningDialog = true;	//first iteration and shaders are _NOT_ cached
 
 		if (m_isRegion)
-			m_context->setRenderRegion(m_region);
+			m_contextPtr->setRenderRegion(m_region);
 
 		return true;
 	});
@@ -219,7 +226,7 @@ bool FireRenderProduction::start()
 	if (ret)
 	{
 		// Initialize the render progress bar UI.
-		m_progressBars = make_unique<RenderProgressBars>(m_context->isUnlimited());
+		m_progressBars = make_unique<RenderProgressBars>(m_contextPtr->isUnlimited());
 
 		FireRenderThread::KeepRunningOnMainThread([this]() -> bool { return mainThreadPump(); });
 
@@ -251,7 +258,7 @@ bool FireRenderProduction::start()
 		refreshContext();
 		m_needsContextRefresh = false;
 
-		m_context->setStartedRendering();
+		m_contextPtr->setStartedRendering();
 
 		// Start the render
 		FireRenderThread::KeepRunning([this]()
@@ -291,11 +298,11 @@ bool FireRenderProduction::pause(bool value)
 
 	if (m_isPaused)
 	{
-		m_context->state = FireRenderContext::StatePaused;
+		m_contextPtr->state = FireRenderContext::StatePaused;
 	}
 	else
 	{
-		m_context->state = FireRenderContext::StateRendering;
+		m_contextPtr->state = FireRenderContext::StateRendering;
 
 		m_needsContextRefresh = true;
 	}
@@ -308,8 +315,8 @@ bool FireRenderProduction::stop()
 {
 	if (m_isRunning)
 	{
-		if (m_context)
-			m_context->state = FireRenderContext::StateExiting;
+		if (m_contextPtr)
+			m_contextPtr->state = FireRenderContext::StateExiting;
 
 		stopMayaRender();
 
@@ -318,7 +325,7 @@ bool FireRenderProduction::stop()
 			m_stopCallback(m_aovs, m_settings);
 			m_progressBars.reset();
 
-			std::string renderStampText = RenderStampUtils::FormatRenderStamp(*m_context, "\\nFrame: %f  Render Time: %pt  Passes: %pp");
+			std::string renderStampText = RenderStampUtils::FormatRenderStamp(*m_contextPtr, "\\nFrame: %f  Render Time: %pt  Passes: %pp");
 
 			MString command;
 			command.format("renderWindowEditor -e -pcaption \"^1s\" renderView", renderStampText.c_str());
@@ -328,7 +335,7 @@ bool FireRenderProduction::stop()
 			RenderStampUtils::ClearCache();
 		});
 
-		if (m_context)
+		if (m_contextPtr)
 		{
 			if (FireRenderThread::AreWeOnMainThread())
 			{
@@ -338,14 +345,14 @@ bool FireRenderProduction::stop()
 					FireRenderThread::RunItemsQueuedForTheMainThread();
 				}
 
-				m_context->cleanScene();
+				m_contextPtr->cleanScene();
 
 				m_contextLock.unlock();
 			}
 			else
 			{
-				std::shared_ptr<FireRenderContext> refToKeepAlive = m_context;
-				m_context.reset();
+				std::shared_ptr<FireRenderContext> refToKeepAlive = m_contextPtr;
+				m_contextPtr.reset();
 
 				refToKeepAlive->cleanSceneAsync(refToKeepAlive);
 			}
@@ -427,7 +434,7 @@ void FireRenderProduction::UploadAthenaData()
 	header.clear();
 	data_field.str(std::string());
 	data_field.clear();
-	data_field << m_context->m_secondsSpentOnLastRender;
+	data_field << m_contextPtr->m_secondsSpentOnLastRender;
 	header << "Seconds spent on render";
 	pAthenaWrapper->WriteField(header.str(), data_field.str());
 
@@ -490,7 +497,7 @@ void FireRenderProduction::UploadAthenaData()
 	data_field.str(std::string());
 	data_field.clear();
 
-	switch (m_context->m_lastRenderResultState)
+	switch (m_contextPtr->m_lastRenderResultState)
 	{
 		case FireRenderContext::COMPLETED:
 		{
@@ -534,7 +541,7 @@ void FireRenderProduction::UploadAthenaData()
 
 	data_field.str(std::string());
 	data_field.clear();
-	int countLights = m_context->GetScene().ShapeObjectCount();
+	int countLights = m_contextPtr->GetScene().ShapeObjectCount();
 	data_field << countLights;
 
 	pAthenaWrapper->WriteField(header.str(), data_field.str());
@@ -597,7 +604,7 @@ void FireRenderProduction::UploadAthenaData()
 	};
 
 	for (int aovID = 0; aovID != RPR_AOV_MAX; aovID++)
-		if (m_context->isAOVEnabled(aovID))
+		if (m_contextPtr->isAOVEnabled(aovID))
 			data_field << aovNames[aovID] << "; ";
 
 	pAthenaWrapper->WriteField(header.str(), data_field.str());
@@ -609,7 +616,7 @@ void FireRenderProduction::UploadAthenaData()
 
 	data_field.str(std::string());
 	data_field.clear();
-	data_field << m_context->m_currentIteration;
+	data_field << m_contextPtr->m_currentIteration;
 
 	pAthenaWrapper->WriteField(header.str(), data_field.str());
 }
@@ -617,12 +624,12 @@ void FireRenderProduction::UploadAthenaData()
 unsigned int FireRenderProduction::GetScenePolyCount() const
 {
 	size_t shapeCount = 0;
-	auto status = rprSceneGetInfo(m_context->scene(), RPR_SCENE_SHAPE_LIST, 0, nullptr, &shapeCount);
+	auto status = rprSceneGetInfo(m_contextPtr->scene(), RPR_SCENE_SHAPE_LIST, 0, nullptr, &shapeCount);
 	shapeCount /= sizeof(rpr_shape);
 	if (status != RPR_SUCCESS || shapeCount == 0) return 0;
 
 	std::vector<rpr_shape> shapes(shapeCount);
-	status = rprSceneGetInfo(m_context->scene(), RPR_SCENE_SHAPE_LIST, shapeCount * sizeof(rpr_shape), shapes.data(), nullptr);
+	status = rprSceneGetInfo(m_contextPtr->scene(), RPR_SCENE_SHAPE_LIST, shapeCount * sizeof(rpr_shape), shapes.data(), nullptr);
 	return std::accumulate(std::begin(shapes), std::end(shapes), 0, [](size_t accumulator, const rpr_shape shape) 
 		{
 			size_t polygonCount = 0;
@@ -635,7 +642,7 @@ bool FireRenderProduction::RunOnViewportThread()
 {
 	RPR_THREAD_ONLY;
 
-	switch (m_context->state)
+	switch (m_contextPtr->state)
 	{
 		// The context is exiting.
 		case FireRenderContext::StateExiting:
@@ -647,16 +654,16 @@ bool FireRenderProduction::RunOnViewportThread()
 		// The context is rendering.
 		case FireRenderContext::StateRendering:
 		{
-			if (m_cancelled || m_context->keepRenderRunning() == false)
+			if (m_cancelled || m_contextPtr->keepRenderRunning() == false)
 			{
-				m_context->m_lastRenderResultState = (m_cancelled) ? FireRenderContext::CANCELED : FireRenderContext::COMPLETED;
+				m_contextPtr->m_lastRenderResultState = (m_cancelled) ? FireRenderContext::CANCELED : FireRenderContext::COMPLETED;
 
 				AthenaWrapper::GetAthenaWrapper()->StartNewFile();
 				UploadAthenaData();
 				
 				AthenaWrapper::GetAthenaWrapper()->AthenaSendFile(pythonCallWrap);
 
-				m_context->m_polycountLastRender = 0;
+				m_contextPtr->m_polycountLastRender = 0;
 
 				stop();
 				m_rendersCount++;
@@ -667,7 +674,7 @@ bool FireRenderProduction::RunOnViewportThread()
 			try
 			{	// Render.
 				AutoMutexLock contextLock(m_contextLock);
-				if (m_context->state != FireRenderContext::StateRendering) 
+				if (m_contextPtr->state != FireRenderContext::StateRendering) 
 					return false;
 
 				//m_context->m_lastRenderResultState = FireRenderContext::CRASHED; // need to set before crash happens
@@ -676,7 +683,7 @@ bool FireRenderProduction::RunOnViewportThread()
 			}
 			catch (...)
 			{
-				m_context->m_lastRenderResultState = FireRenderContext::CRASHED;
+				m_contextPtr->m_lastRenderResultState = FireRenderContext::CRASHED;
 
 				AthenaWrapper::GetAthenaWrapper()->StartNewFile();
 				UploadAthenaData();
@@ -709,27 +716,27 @@ void FireRenderProduction::RenderTiles()
 	info.totalWidth = m_width;
 	info.totalHeight = m_height;
 
-	m_context->setSamplesPerUpdate(m_globals.completionCriteriaFinalRender.completionCriteriaMaxIterations);
+	m_contextPtr->setSamplesPerUpdate(m_globals.completionCriteriaFinalRender.completionCriteriaMaxIterations);
 
 	// we need to resetup camera because total width and height differs with tileSizeX and tileSizeY
-	m_context->camera().TranslateCameraExplicit(info.totalWidth, info.totalHeight);
+	m_contextPtr->camera().TranslateCameraExplicit(info.totalWidth, info.totalHeight);
 
-	tileRenderer.Render(*m_context, info, [this](RenderRegion& region, int progress)
+	tileRenderer.Render(*m_contextPtr, info, [this](RenderRegion& region, int progress)
 	{
 		// make proper size
 		unsigned int width = region.getWidth();
 		unsigned int height = region.getHeight();
 
-		m_context->resize(width, height, true);
+		m_contextPtr->resize(width, height, true);
 
 		m_aovs->setRegion(RenderRegion(width, height), region.getWidth(), region.getHeight());
 		m_aovs->allocatePixels();
 
-		m_context->render(false);
+		m_contextPtr->render(false);
 
 		// Read pixel data for the AOV displayed in the render
 		// view. Flip the image so it's the right way up in the view.
-		m_renderViewAOV->readFrameBuffer(*m_context, true);
+		m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
 
 		FireRenderThread::RunProcOnMainThread([this, region]()
 		{
@@ -745,13 +752,13 @@ void FireRenderProduction::RenderTiles()
 				rcWarningDialog.close();
 		});
 
-		m_context->setProgress(progress);
+		m_contextPtr->setProgress(progress);
 
 		bool isContinue = !m_cancelled;
 
 		if (isContinue)
 		{
-			m_context->setStartedRendering();
+			m_contextPtr->setStartedRendering();
 		}
 
 		return isContinue;
@@ -767,13 +774,13 @@ void FireRenderProduction::RenderTiles()
 
 void FireRenderProduction::RenderFullFrame()
 {
-	m_context->render(false);
+	m_contextPtr->render(false);
 
-	m_context->updateProgress();
+	m_contextPtr->updateProgress();
 
 	// Read pixel data for the AOV displayed in the render
 	// view. Flip the image so it's the right way up in the view.
-	m_renderViewAOV->readFrameBuffer(*m_context, true);
+	m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
 
 	FireRenderThread::RunProcOnMainThread([this]()
 	{
@@ -786,27 +793,27 @@ void FireRenderProduction::RenderFullFrame()
 
 	// Ensure display gamma correction is enabled for image file output. It
 	// may be disabled initially if it's not set to be applied to Maya views.
-	m_context->enableDisplayGammaCorrection(m_globals);
+	m_contextPtr->enableDisplayGammaCorrection(m_globals);
 
 	// _TODO Investigate this, looks like this call is performance waste. Why we need to read all AOVs on every render call ?
-	m_aovs->readFrameBuffers(*m_context, false);
+	m_aovs->readFrameBuffers(*m_contextPtr, false);
 
 	if (GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())
 	{
-		bool shouldSave = GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->ShouldSaveFrame(m_context->m_currentIteration);
+		bool shouldSave = GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->ShouldSaveFrame(m_contextPtr->m_currentIteration);
 
 		if (shouldSave)
 		{
 			bool colorOnly = true;
 			unsigned int imageFormat = 8; // "jpg"
 			MString filePath = GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->FolderPath().c_str();
-			filePath += m_context->m_currentIteration;
+			filePath += m_contextPtr->m_currentIteration;
 			filePath += ".jpg";
 			m_renderViewAOV->writeToFile(filePath, colorOnly, imageFormat);
 
 			std::ofstream timeLoggingFile;
 			timeLoggingFile.open(GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->FolderPath() + "time_log.txt", std::ofstream::out | std::ofstream::app);
-			timeLoggingFile << m_context->m_currentIteration << " ";
+			timeLoggingFile << m_contextPtr->m_currentIteration << " ";
 			long numberOfClicks = clock() - GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->GetStartTime();
 			double secondsSpentRendering = numberOfClicks / (double)CLOCKS_PER_SEC;
 			timeLoggingFile << secondsSpentRendering << "s \n";
@@ -884,10 +891,10 @@ void FireRenderProduction::readFrameBuffer()
 {
 	RPR_THREAD_ONLY;
 
-	m_context->readFrameBuffer(m_pixels.data(),
+	m_contextPtr->readFrameBuffer(m_pixels.data(),
 		RPR_AOV_COLOR,
-		m_context->width(),
-		m_context->height(),
+		m_contextPtr->width(),
+		m_contextPtr->height(),
 		m_region,
 		true);
 }
@@ -900,9 +907,9 @@ bool FireRenderProduction::mainThreadPump()
 	{
 		AutoMutexLock contextCreationLock(m_contextCreationLock);
 
-		if (m_progressBars && m_context)
+		if (m_progressBars && m_contextPtr)
 		{
-			m_progressBars->update(m_context->getProgress());
+			m_progressBars->update(m_contextPtr->getProgress());
 
 			m_cancelled = m_progressBars->isCancelled();
 
@@ -927,12 +934,12 @@ void FireRenderProduction::refreshContext()
 	auto start = std::chrono::steady_clock::now();
 #endif
 
-	if (!m_context->isDirty())
+	if (!m_contextPtr->isDirty())
 		return;
 
 	try
 	{
-		m_context->Freshen(false,
+		m_contextPtr->Freshen(false,
 			[this]() -> bool
 		{
 			return m_cancelled;

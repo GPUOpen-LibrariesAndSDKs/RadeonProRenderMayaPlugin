@@ -131,11 +131,12 @@ public:
 		StateUpdating = 3,
 	};
 
+
 	// Constructor
 	FireRenderContext();
 
 	// Destructor
-	~FireRenderContext();
+	virtual ~FireRenderContext();
 
 	// Initialize the context
 	// It create  the rpr_context, rpr_scene and rpr_material_system
@@ -178,12 +179,8 @@ public:
 	// Set the frame buffer resolution
 	void setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
 
-	void enableAOV(int aov, bool flag = true){
-		aovEnabled[aov] = flag;
-	}
-	bool isAOVEnabled(int aov){
-		return aovEnabled[aov];
-	}
+	void enableAOV(int aov, bool flag = true);
+	bool isAOVEnabled(int aov);
 
 	/**
 	 * Enable FireRender gamma correction
@@ -249,10 +246,6 @@ public:
 	void combineWithOpacity(RV_PIXEL* pixels, unsigned int size, RV_PIXEL *opacityPixels = NULL) const;
 
 
-	// Return a transparent shader
-	// Used by the portals
-	frw::Shader transparentShader();
-
 	// Resolve the framebuffer using the current tone mapping
 
 	// Return the rpr_scene
@@ -284,6 +277,9 @@ public:
 
 	bool AddSceneObject(FireRenderObject* ob);
 	bool AddSceneObject(const MDagPath& ob);
+
+	virtual FireRenderEnvLight* CreateEnvLight(const MDagPath& dagPath);
+	virtual FireRenderSky* CreateSky(const MDagPath& dagPath);
 
 	enum class NodeCachingOptions
 	{
@@ -386,8 +382,8 @@ public:
 	// Update active render layers.
 	void updateRenderLayers();
 
-	// Use render region
-	void setUseRegion(bool value);
+	// Set "Use render region" flag and returns if this flag was really set or not
+	bool setUseRegion(bool value);
 
 	// Check if render region is on
 	bool useRegion();
@@ -503,7 +499,30 @@ public:
 	RenderType GetRenderType(void) const;
 	void SetRenderType(RenderType renderType);
 
+	// In case if we set render quality which is not supported by the current Renderer. i.e you set "Full" for Hybrid or "Low" for Tahoe
+	bool DoesContextSupportCurrentSettings() const { return m_DoesContextSupportCurrentSettings; }
+	void ResetContextSupportCurrentSettings() { m_DoesContextSupportCurrentSettings = true; }
+
 	virtual bool ShouldResizeTexture(unsigned int& max_width, unsigned int& max_height) const;
+
+	virtual rpr_int SetRenderQuality(RenderQuality quality) { return RPR_SUCCESS; }
+	virtual bool IsRenderQualitySupported(RenderQuality quality) const = 0;
+
+	virtual void setupContext(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) {}
+	virtual bool IsAOVSupported(int aov) const { return true; }
+
+	virtual bool IsRenderRegionSupported() const { return true; }
+
+protected:
+	virtual rpr_int CreateContextInternal(rpr_creation_flags createFlags, rpr_context* pContext) = 0;
+	virtual void updateTonemapping(const FireRenderGlobalsData&, bool disableWhiteBalance = false) {}
+
+	int getThreadCountToOverride() const;
+
+	// Helper function showing if we need to use buffer or resolved buffer
+	virtual bool needResolve() const { return false; }
+
+	virtual bool IsGLInteropEnabled() const { return true; }
 
 private:
 	struct CallbacksAttachmentHelper
@@ -523,19 +542,11 @@ private:
 		FireRenderContext *mContext;
 	};
 
-	// Helper function showing if we need to use buffer or resolved buffer
-	bool needResolve() const
-	{
-		return bool(white_balance) || bool(simple_tonemap) || bool(tonemap) || bool(normalization) || bool(gamma_correction);
-	}
-
 	void initBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture = nullptr);
 
 	void turnOnAOVsForDenoiser(bool allocBuffer = false);
 	bool CanCreateAiDenoiser() const;
 	void setupDenoiser();
-
-	int getThreadCountToOverride() const;
 
 private:
 	std::shared_ptr<ImageFilter> m_denoiserFilter;
@@ -556,13 +567,6 @@ private:
 	{
 		frw::FrameBuffer framebufferAOV[RPR_AOV_MAX];
 		frw::FrameBuffer framebufferAOV_resolved[RPR_AOV_MAX];
-
-		struct
-		{
-			frw::EnvironmentLight	light;
-			frw::Shape				shadows;
-			frw::Shape				reflections;
-		} ground;
 
 		void Reset()
 		{
@@ -650,6 +654,8 @@ private:
 	// render type information
 	RenderType m_RenderType;
 
+	bool m_DoesContextSupportCurrentSettings = true;
+
 public:
 	FireRenderEnvLight *iblLight = nullptr;
 	MObject iblTransformObject = MObject();
@@ -663,10 +669,6 @@ public:
 	frw::MaterialSystem GetMaterialSystem() { return scope.MaterialSystem(); }
 	frw::Shader GetShader(MObject ob, const FireRenderMesh* pMesh = nullptr, bool forceUpdate = false); // { return scope.GetShader(ob, forceUpdate); }
 	frw::Shader GetVolumeShader(MObject ob, bool forceUpdate = false) { return scope.GetVolumeShader(ob, forceUpdate); }
-
-
-	// Transparent material
-	frw::Shader m_transparent;
 
 	// Width of the framebuffer
 	unsigned int m_width;
@@ -794,7 +796,8 @@ public:
 	};
 
 	friend class Lock;
-    
+
+   
 private:
     
 #ifdef DEBUG_LOCKS
@@ -855,7 +858,7 @@ private:
 
 };
 
-extern rpr_int g_tahoePluginID;
+typedef std::shared_ptr<FireRenderContext> FireRenderContextPtr;
 
 #define STRINGIZE(x) STRINGIZE2(x)
 #define STRINGIZE2(x) #x

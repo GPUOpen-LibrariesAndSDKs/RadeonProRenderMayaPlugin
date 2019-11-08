@@ -269,6 +269,7 @@ bool FireRenderError::isErrorCodeCritical(rpr_int errorCode)
 		case RPR_ERROR_INVALID_IMAGE: return false;
 		case RPR_ERROR_INVALID_AA_METHOD: return false;
 		case RPR_ERROR_UNSUPPORTED_IMAGE_FORMAT: return false;
+		case RPR_ERROR_UNSUPPORTED: return false;
 		case RPR_ERROR_INVALID_GL_TEXTURE: return false;
 		case RPR_ERROR_INVALID_CL_IMAGE: return false;
 		case RPR_ERROR_INVALID_OBJECT: return false;

@@ -124,6 +124,15 @@ enum class RenderType
 	Thumbnail // swatch
 };
 
+enum RenderQuality
+{
+	RenderQualityFull = 0,
+	RenderQualityHigh,
+	RenderQualityMedium,
+	RenderQualityLow
+};
+
+
 class FireRenderGlobalsData
 {
 public:
@@ -138,10 +147,10 @@ public:
 	void readFromCurrentScene();
 
 	// Update the tonemapping in rpr_context
-	void updateTonemapping(class FireRenderContext& frcontext, bool disableWhiteBalance = false);
+	//void updateTonemapping(class FireRenderContext& frcontext, bool disableWhiteBalance = false);
 
 	// Setup the rpr_context
-	void setupContext(class FireRenderContext& frcontext, bool disableWhiteBalance = false);
+	//void setupContext(class FireRenderContext& frcontext);
 
 	// Checks if name is one of the options are tonemapping options
 	static bool isTonemapping(MString name);
@@ -886,6 +895,7 @@ void setAttribProps(MFnAttribute& attr, const MObject& attrObj);
 
 void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals, std::vector<int>& vertexIndices, std::vector<int>& normalIndices);
 
-
-
 void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source);
+
+RenderQuality GetRenderQualityFromPlug(const char* plugName);
+RenderQuality GetRenderQualityForRenderType(RenderType renderType);

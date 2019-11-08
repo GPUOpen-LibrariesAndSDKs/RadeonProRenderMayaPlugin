@@ -105,6 +105,9 @@
     <Filter Include="FireRender.Components\Athena">
       <UniqueIdentifier>{68f03f08-dbf6-4e3e-855b-05a097cbb1d1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Context">
+      <UniqueIdentifier>{5a678c45-fabd-4caa-9d3d-d4229be4ab68}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="python\__init__.py">
@@ -237,9 +240,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FireMaterialViewRenderer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="FireRenderContext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FireRenderObjects.cpp">
@@ -542,11 +542,23 @@
     <ClCompile Include="athenaCmd.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Context\HybridContext.cpp">
+      <Filter>Context</Filter>
+    </ClCompile>
+    <ClCompile Include="Context\TahoeContext.cpp">
+      <Filter>Context</Filter>
+    </ClCompile>
+    <ClCompile Include="Context\ContextCreator.cpp">
+      <Filter>Context</Filter>
+    </ClCompile>
     <ClCompile Include="StartupContextChecker.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="..\FireRender.Components\cpp\Athena\athenaWrap.cpp">
       <Filter>FireRender.Components\Athena</Filter>
+    </ClCompile>
+    <ClCompile Include="Context\FireRenderContext.cpp">
+      <Filter>Context</Filter>
     </ClCompile>
     <ClCompile Include="FireRenderLayeredTextureUtils.cpp">
       <Filter>Utils</Filter>
@@ -557,9 +569,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FireMaterialViewRenderer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="FireRenderContext.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FireRenderObjects.h">
@@ -940,11 +949,23 @@
     <ClInclude Include="athenaCmd.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Context\HybridContext.h">
+      <Filter>Context</Filter>
+    </ClInclude>
+    <ClInclude Include="Context\TahoeContext.h">
+      <Filter>Context</Filter>
+    </ClInclude>
+    <ClInclude Include="Context\ContextCreator.h">
+      <Filter>Context</Filter>
+   </ClInclude>
     <ClInclude Include="StartupContextChecker.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="..\FireRender.Components\cpp\Athena\athenaWrap.h">
       <Filter>FireRender.Components\Athena</Filter>
+    </ClInclude>
+    <ClInclude Include="Context\FireRenderContext.h">
+      <Filter>Context</Filter>
     </ClInclude>
     <ClInclude Include="FireRenderLayeredTextureUtils.h">
       <Filter>Utils</Filter>

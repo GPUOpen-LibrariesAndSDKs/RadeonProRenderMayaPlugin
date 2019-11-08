@@ -7,7 +7,7 @@
 #include <maya/MHWShaderSwatchGenerator.h>
 
 #include "FireRenderIBL.h"
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 #include "frWrap.h"
 
 #include <mutex>              // std::mutex, std::unique_lock

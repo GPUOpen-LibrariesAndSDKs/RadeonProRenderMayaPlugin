@@ -12,7 +12,7 @@
 #include <maya/MFileObject.h>
 #include <maya/MCommonSystemUtils.h>
 
-#include "FireRenderContext.h"
+#include "Context/TahoeContext.h"
 #include "FireRenderUtils.h"
 
 #include <vector>
@@ -173,7 +173,7 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 		}
 	}
 
-	FireRenderContext context;
+	TahoeContext context;
 	context.setCallbackCreationDisabled(true);
 
 	rpr_int res = context.initializeContext();

@@ -1,5 +1,5 @@
 #include "FireRenderExportCmd.h"
-#include "FireRenderContext.h"
+#include "Context/TahoeContext.h"
 #include "FireRenderUtils.h"
 #include <maya/MArgDatabase.h>
 #include <maya/MItDag.h>
@@ -91,7 +91,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			return MS::kFailure;
 		}
 
-		FireRenderContext context;
+		TahoeContext context;
 		context.setCallbackCreationDisabled(true);
 
 		rpr_int res = context.initializeContext();
@@ -139,7 +139,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		MCommonRenderSettingsData settings;
 		MRenderUtil::getCommonRenderSettings(settings);
 
-		FireRenderContext context;
+		TahoeContext context;
 		context.SetRenderType(RenderType::ProductionRender);
 		context.buildScene();
 
@@ -256,7 +256,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 	if (argData.isFlagSet(kSelectionFlag))
 	{
 		//initialize
-		FireRenderContext context;
+		TahoeContext context;
 		context.setCallbackCreationDisabled(true);
 		context.buildScene();
 

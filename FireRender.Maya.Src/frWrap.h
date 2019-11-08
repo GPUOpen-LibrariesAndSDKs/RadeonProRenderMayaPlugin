@@ -884,32 +884,84 @@ namespace frw
 		void SetVisibility(bool visible)
 		{
 			auto res = rprShapeSetVisibility(Handle(), visible);
-			checkStatus(res);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 		void SetPrimaryVisibility(bool visible)
 		{
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_PRIMARY_ONLY_FLAG, visible);
-			checkStatus(res);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 		void SetReflectionVisibility(bool visible)
 		{
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_REFLECTION, visible);
-			checkStatus(res);
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+
 			res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_GLOSSY_REFLECTION, visible);
-			checkStatus(res);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 
 		void setRefractionVisibility(bool visible)
 		{
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_REFRACTION, visible);
-			checkStatus(res);
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+
 			res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_GLOSSY_REFRACTION, visible);
-			checkStatus(res);
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 
 		void SetLightShapeVisibilityEx(bool visible)
 		{
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_LIGHT, visible);
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+
 			checkStatus(res);
 		}
 
@@ -923,13 +975,29 @@ namespace frw
 		void SetLinearMotion(float x, float y, float z)
 		{
 			auto res = rprShapeSetLinearMotion(Handle(), x, y, z);
-			checkStatus(res);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 
 		void SetAngularMotion(float x, float y, float z, float w)
 		{
 			auto res = rprShapeSetAngularMotion(Handle(), x, y, z, w);
-			checkStatus(res);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 
 #ifdef FRW_USE_MAX_TYPES
@@ -950,19 +1018,42 @@ namespace frw
 		void SetShadowFlag(bool castsShadows)
 		{
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_SHADOW, castsShadows);
-			checkStatus(res);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 
 		void SetShadowCatcherFlag(bool enableShadowCatcher)
 		{
 			auto res = rprShapeSetShadowCatcher(Handle(), enableShadowCatcher);
-			checkStatus(res);
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 
 		void SetReflectionCatcherFlag(bool enableReflectionCatcher)
 		{
 			auto res = rprShapeSetReflectionCatcher(Handle(), enableReflectionCatcher);
-			checkStatus(res);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 
 		void SetDisplacement(Value image, float minscale = 0, float maxscale = 1);
@@ -1417,6 +1508,30 @@ namespace frw
 			data().overrides[e] = light;
 		}
 
+		// Used for Hybrid
+		void SetEnvironmentLight(EnvironmentLight light)
+		{
+			if (light.IsValid())
+			{
+				rpr_uint res = rprSceneSetEnvironmentLight(Handle(), light.Handle());
+				checkStatus(res);
+
+				AddReference(light);
+				data().overrides[EnvironmentOverrideBackground] = light;
+				data().mLightCount++;
+			}
+			else if (data().overrides[EnvironmentOverrideBackground].IsValid())
+			{
+				rpr_uint res = rprSceneSetEnvironmentLight(Handle(), nullptr);
+				checkStatus(res);
+
+				data().mLightCount--;
+				RemoveReference(data().overrides[EnvironmentOverrideBackground]);
+				data().overrides[EnvironmentOverrideBackground] = nullptr;
+			}
+
+		}
+
 		void ClearEnvironmentOverrides()
 		{
 			for (const auto& it : data().overrides)
@@ -1427,11 +1542,15 @@ namespace frw
 			data().overrides.clear();
 		}
 
-		void SetBackgroundImage(Image v)
+		rpr_int SetBackgroundImage(Image v)
 		{
 			auto res = rprSceneSetBackgroundImage(Handle(), v.Handle());
-			checkStatus(res);
-			data().backgroundImage = v;
+			if (res == RPR_SUCCESS)
+			{
+				data().backgroundImage = v;
+			}
+
+			return res;
 		}
 		Image GetBackgroundImage()
 		{
@@ -1469,27 +1588,73 @@ namespace frw
 		void SetParameter(const char * sz, rpr_uint v)
 		{
 			auto res = rprContextSetParameter1u(Handle(), sz, v);
-			checkStatus(res);
+
+			if (res == RPR_ERROR_UNSUPPORTED ||
+				res == RPR_ERROR_INVALID_PARAMETER)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+
 		}
 		void SetParameter(const char * sz, int v)
 		{
 			auto res = rprContextSetParameter1u(Handle(), sz, v);
-			checkStatus(res);
+
+			if (res == RPR_ERROR_UNSUPPORTED ||
+				res == RPR_ERROR_INVALID_PARAMETER)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 		void SetParameter(const char * sz, double v)
 		{
 			auto res = rprContextSetParameter1f(Handle(), sz, (rpr_float)v);
-			checkStatus(res);
+
+			if (res == RPR_ERROR_UNSUPPORTED ||
+				res == RPR_ERROR_INVALID_PARAMETER)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 		void SetParameter(const char * sz, double x, double y, double z)
 		{
 			auto res = rprContextSetParameter3f(Handle(), sz, (rpr_float)x, (rpr_float)y, (rpr_float)z);
-			checkStatus(res);
+
+			if (res == RPR_ERROR_UNSUPPORTED ||
+				res == RPR_ERROR_INVALID_PARAMETER)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 		void SetParameter(const char * sz, double x, double y, double z, double w)
 		{
 			auto res = rprContextSetParameter4f(Handle(), sz, (rpr_float)x, (rpr_float)y, (rpr_float)z, (rpr_float)w);
-			checkStatus(res);
+
+			if (res == RPR_ERROR_UNSUPPORTED ||
+				res == RPR_ERROR_INVALID_PARAMETER)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 //#endif
 
@@ -1785,10 +1950,15 @@ namespace frw
 #else
 			if (status != RPR_SUCCESS)
 			{
-				size_t length;
-				auto status2 = rprContextGetInfo(Handle(), RPR_CONTEXT_LAST_ERROR_MESSAGE, sizeof(size_t), nullptr, &length);
-				std::vector<rpr_char> path(length);
-				auto status3 = rprContextGetInfo(Handle(), RPR_CONTEXT_LAST_ERROR_MESSAGE, path.size(), &path[0], nullptr);
+				size_t length = 0;
+				rpr_int status2 = rprContextGetInfo(Handle(), RPR_CONTEXT_LAST_ERROR_MESSAGE, sizeof(size_t), nullptr, &length);
+
+				std::vector<rpr_char> path;
+				if (status2 == RPR_SUCCESS && length > 0)
+				{
+					path.resize(length);
+					rpr_int status3 = rprContextGetInfo(Handle(), RPR_CONTEXT_LAST_ERROR_MESSAGE, path.size(), &path[0], nullptr);
+				}
 
 				std::string error_msg(path.begin(), path.end());
 				LogPrint(error_msg.c_str());
@@ -2007,7 +2177,12 @@ namespace frw
 			FRW_PRINT_DEBUG("CreateNode(%d) in MaterialSystem: 0x%016llX", type, Handle());
 			rpr_material_node node = nullptr;
 			auto res = rprMaterialSystemCreateNode(Handle(), type, &node);
-			checkStatus(res);
+			if (res != RPR_ERROR_UNSUPPORTED &&
+				res != RPR_ERROR_INVALID_PARAMETER)
+			{
+				checkStatus(res);
+			}
+
 			return node;
 		}
 
@@ -2838,7 +3013,10 @@ namespace frw
 				if (d.isShadowCatcher)
 				{
 					res = rprShapeSetShadowCatcher(shape.Handle(), true);
-					checkStatus(res);
+					if (res != RPR_ERROR_UNSUPPORTED)
+					{
+						checkStatus(res);
+					}
 				}
 
 				if (d.isReflectionCatcher)
@@ -2869,7 +3047,11 @@ namespace frw
 				if (d.isShadowCatcher)
 				{
 					res = rprShapeSetShadowCatcher(shape.Handle(), false);
-					checkStatus(res);
+
+					if (res != RPR_ERROR_UNSUPPORTED)
+					{
+						checkStatus(res);
+					}
 				}
 			}
 //			else -- RPR 1.262 crashes when changing any RPRX parameter (when creating new material and replacing old one); mirroring call to rpr API fixes that
@@ -2982,19 +3164,45 @@ namespace frw
 		{
 			const Data& d = data();
 			rpr_int res = rprxMaterialSetParameterN(d.context, d.material, parameter, node);
-			checkStatus(res);
+
+			if (res == RPR_ERROR_UNSUPPORTED ||
+				res == RPR_ERROR_INVALID_PARAMETER)
+			{
+				// print error/warning if needed
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 		void xSetParameterU(rprx_parameter parameter, rpr_uint value)
 		{
 			const Data& d = data();
 			rpr_int res = rprxMaterialSetParameterU(d.context, d.material, parameter, value);
-			checkStatus(res);
+			if (res == RPR_ERROR_UNSUPPORTED ||
+				res == RPR_ERROR_INVALID_PARAMETER)
+			{
+				// print error/warning if needed
+			}
+			else
+			{
+				checkStatus(res);
+			}
+
 		}
 		void xSetParameterF(rprx_parameter parameter, rpr_float x, rpr_float y, rpr_float z, rpr_float w)
 		{
 			const Data& d = data();
 			rpr_int res = rprxMaterialSetParameterF(d.context, d.material, parameter, x, y, z, w);
-			checkStatus(res);
+			if (res == RPR_ERROR_UNSUPPORTED ||
+				res == RPR_ERROR_INVALID_PARAMETER)
+			{
+				// print error/warning if needed
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 
 		bool xSetValue(rprx_parameter parameter, const Value& v)
@@ -3267,7 +3475,18 @@ namespace frw
 		if (!shader.IsRprxMaterial())
 		{
 			auto res = rprShapeSetVolumeMaterial(Handle(), shader.Handle());
-			checkStatus(res);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				if (shader)
+				{
+					// display
+				}
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 	}
 
@@ -3413,7 +3632,19 @@ namespace frw
 		: Object(nullptr, context, true, new Data())
 	{
 		rpr_image h = nullptr;
-		auto res = rprContextCreateImageFromFile(context.Handle(), filename, &h);
+
+		rpr_int res = RPR_SUCCESS;
+
+		// It sometimes throw an exception instead of returning error code for some reason in case if incorrect path was specified
+		try
+		{
+			res = rprContextCreateImageFromFile(context.Handle(), filename, &h);
+		}
+		catch (...)
+		{
+			res = RPR_ERROR_INVALID_PARAMETER;
+		}
+
 		if (ErrorUnsupportedImageFormat != res) {
 			//^ we don't want to give Error messages to the user about unsupported image formats, since we support them through the plugin.
 			if (checkStatus(res, "Unable to load: " + MString(filename)))
@@ -3431,15 +3662,23 @@ namespace frw
 	inline void EnvironmentLight::AttachPortal(Shape shape)
 	{
 		auto res = rprEnvironmentLightAttachPortal(GetContext().GetScene(), Handle(), shape.Handle());
-		checkStatus(res);
-		AddReference(shape);
+
+		if (res != RPR_ERROR_UNSUPPORTED)
+		{
+			checkStatus(res);
+			AddReference(shape);
+		}
 	}
 
 	inline void EnvironmentLight::DetachPortal(Shape shape)
 	{
 		auto res = rprEnvironmentLightDetachPortal(GetContext().GetScene(), Handle(), shape.Handle());
-		checkStatus(res);
-		AddReference(shape);
+
+		if (res != RPR_ERROR_UNSUPPORTED)
+		{
+			checkStatus(res);
+			RemoveReference(shape);
+		}
 	}
 
 	inline void Scene::SetActive()
@@ -3452,14 +3691,28 @@ namespace frw
 	{
 		FRW_PRINT_DEBUG("AttachPostEffect(%p)\n", post_effect.Handle());
 		auto res = rprContextAttachPostEffect(Handle(), post_effect.Handle());
-		checkStatus(res);
+		if (res == RPR_ERROR_UNSUPPORTED)
+		{
+			return;
+		}
+		else
+		{
+			checkStatus(res);
+		}
 	}
 
 	inline void Context::Detach(PostEffect post_effect)
 	{
 		FRW_PRINT_DEBUG("DetachPostEffect(%p)\n", post_effect.Handle());
 		auto res = rprContextDetachPostEffect(Handle(), post_effect.Handle());
-		checkStatus(res);
+		if (res == RPR_ERROR_UNSUPPORTED)
+		{
+			return;
+		}
+		else
+		{
+			checkStatus(res);
+		}
 	}
 
 	inline Shape Context::CreateMesh(const rpr_float* vertices, size_t num_vertices, rpr_int vertex_stride,

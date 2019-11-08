@@ -173,9 +173,6 @@ public:
 
 class FireRenderNode : public FireRenderObject
 {
-protected:
-	bool m_isVisible = false;
-
 public:
 	// Constructor
 	FireRenderNode(FireRenderContext* context, const MDagPath& dagPath);
@@ -230,6 +227,13 @@ public:
 
 	std::vector<std::pair<MObject, bool>> m_visiblePortals_IBL;
 	std::vector<std::pair<MObject, bool>> m_visiblePortals_SKY;
+
+protected:
+	bool m_isVisible = false;
+	bool m_bIsTransformChanged = false;
+
+protected:
+	virtual void UpdateTransform(const MMatrix& matrix) {}
 };
 
 // Fire render mesh
@@ -367,6 +371,9 @@ public:
 	// return portal
 	bool portal();
 
+protected:
+	void UpdateTransform(const MMatrix& matrix) override;
+
 private:
 
 	// Transform matrix
@@ -408,6 +415,11 @@ public:
 	virtual bool IsEmissive() override { return true; }
 
 	inline frw::EnvironmentLight getLight() { return m.light; }
+
+protected:
+	virtual void attachToSceneInternal();
+	virtual void detachFromSceneInternal();
+
 private:
 
 	// Transform matrix
@@ -421,6 +433,17 @@ public:
 
 		frw::Image image;
 	} m;
+};
+
+class FireRenderEnvLightHybrid : public FireRenderEnvLight
+{
+public:
+	FireRenderEnvLightHybrid(FireRenderContext* context, const MDagPath& dagPath):
+		FireRenderEnvLight(context, dagPath) {}
+
+protected:
+	void attachToSceneInternal() override;
+	void detachFromSceneInternal() override;
 };
 
 // Fire render camera
@@ -529,16 +552,18 @@ public:
 	// Detach portals.
 	void detachPortals();
 
-private:
-
-	// transform matrix
-	MMatrix m_matrix;
-
 public:
 	// The environment light.
 	frw::EnvironmentLight m_envLight;
 
+protected:
+	virtual void attachToSceneInternal();
+	virtual void detachFromSceneInternal();
+
 private:
+	// transform matrix
+	MMatrix m_matrix;
+
 	// The sun light.
 	frw::DirectionalLight m_sunLight;
 
@@ -553,6 +578,18 @@ private:
 
 	// True once the sky has been initialized.
 	bool m_initialized = false;
+};
+
+
+class FireRenderSkyHybrid : public FireRenderSky
+{
+public:
+	FireRenderSkyHybrid(FireRenderContext* context, const MDagPath& dagPath) :
+		FireRenderSky(context, dagPath) {}
+
+protected:
+	void attachToSceneInternal() override;
+	void detachFromSceneInternal() override;
 };
 
 // Fire render volume

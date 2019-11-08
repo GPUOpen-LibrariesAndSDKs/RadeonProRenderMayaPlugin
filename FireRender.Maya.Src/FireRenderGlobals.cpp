@@ -107,6 +107,8 @@ namespace
 
 		// image saving
 		MObject renderaGlobalsExrMultilayerEnabled;
+
+		MObject renderQuality;
 	}
 
     struct RenderingDeviceAttributes
@@ -143,6 +145,7 @@ namespace
 		MObject completionCriteriaSeconds;
 		MObject completionCriteriaMaxIterations;
 		MObject completionCriteriaMinIterations;
+		MObject renderQuality;
 	}
 
 	bool operator==(const MStringArray& a, const MStringArray& b)
@@ -397,6 +400,15 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::renderaGlobalsExrMultilayerEnabled = nAttr.create("enableExrMultilayer", "eeml", MFnNumericData::kBoolean, 0, &status);
 	MAKE_INPUT(nAttr);
 
+	Attribute::renderQuality = eAttr.create("renderQualityFinalRender", "rqfr", RenderQuality::RenderQualityFull, &status);
+	addRenderQualityModes(eAttr);
+	MAKE_INPUT_CONST(eAttr);
+
+	ViewportRenderAttributes::renderQuality = eAttr.create("renderQualityViewport", "rqv", RenderQuality::RenderQualityFull, &status);
+	addRenderQualityModes(eAttr);
+	MAKE_INPUT_CONST(eAttr);
+
+
 	CHECK_MSTATUS(addAttribute(Attribute::textureCompression));
 
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradiance));
@@ -439,14 +451,25 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(m_renderStampText));
 	CHECK_MSTATUS(addAttribute(m_renderStampTextDefault));
 
-	createDenoiserAttributes();
-
 	CHECK_MSTATUS(addAttribute(Attribute::renderaGlobalsExrMultilayerEnabled));
+
+	CHECK_MSTATUS(addAttribute(Attribute::renderQuality));
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::renderQuality));
+
+	createDenoiserAttributes();
 
 	// create legacy attributes to avoid errors in mel while opening old scenes
 	createLegacyAttributes();
 
 	return status;
+}
+
+void FireRenderGlobals::addRenderQualityModes(MFnEnumAttribute& eAttr)
+{
+	eAttr.addField("Full", RenderQuality::RenderQualityFull);
+	eAttr.addField("High", RenderQuality::RenderQualityHigh);
+	eAttr.addField("Medium", RenderQuality::RenderQualityMedium);
+	eAttr.addField("Low", RenderQuality::RenderQualityLow);
 }
 
 void FireRenderGlobals::createCompletionCriteriaAttributes()

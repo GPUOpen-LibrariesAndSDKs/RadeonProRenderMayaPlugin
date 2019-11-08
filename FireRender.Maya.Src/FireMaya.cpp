@@ -3,7 +3,7 @@
 #include "../ThirdParty/RadeonProRender SDK/Win/inc/Math/half.h"
 #include "FireRenderThread.h"
 #include "VRay.h"
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 
 #include <maya/MImage.h>
 #include <maya/MPlugArray.h>

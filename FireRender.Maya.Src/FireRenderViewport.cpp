@@ -18,7 +18,8 @@
 #include <maya/MTextureManager.h>
 #include "AutoLock.h"
 
-#include "FireRenderContext.h"
+#include "Context/ContextCreator.h"
+#include "Context/FireRenderContext.h"
 #include "FireRenderViewport.h"
 #include "FireRenderThread.h"
 
@@ -54,8 +55,6 @@ FireRenderViewport::FireRenderViewport(const MString& panelName) :
 	m_createFailed(false),
 	m_currentAOV(RPR_AOV_COLOR)
 {
-	m_context.SetRenderType(RenderType::ViewportRender);
-
 	m_alwaysEnabledAOVs.push_back(RPR_AOV_COLOR);
 	m_alwaysEnabledAOVs.push_back(RPR_AOV_VARIANCE);
 
@@ -108,13 +107,13 @@ MStatus FireRenderViewport::setup()
 	// Check if updating viewport's texture is required.
 	// No action is required if GL interop is active: the shared OpenGL frame buffer is rendered directly.
 	// This code is needed for CPU rendering case (gl interop is switched off with CPU)
-	if (!m_context.isGLInteropActive() && m_pixelsUpdated)
+	if (!m_contextPtr->isGLInteropActive() && m_pixelsUpdated)
 	{
 		// Acquire the pixels lock.
 		AutoMutexLock pixelsLock(m_pixelsLock);
 
 		// Update the Maya texture from the pixel data.
-		updateTexture(m_pixels.data(), m_context.width(), m_context.height());
+		updateTexture(m_pixels.data(), m_contextPtr->width(), m_contextPtr->height());
 	}
 
 	return doSetup();
@@ -123,7 +122,6 @@ MStatus FireRenderViewport::setup()
 MStatus FireRenderViewport::doSetup()
 {
 	MAIN_THREAD_ONLY;
-
 
 	// Check for errors.
 	if (m_error.check())
@@ -138,18 +136,18 @@ MStatus FireRenderViewport::doSetup()
 
 	// Update render limits based on animation state.
 	bool animating = MAnimControl::isPlaying() || MAnimControl::isScrubbing();
-	m_context.updateLimits(animating);
+	m_contextPtr->updateLimits(animating);
 
 	// Check if animation caching should be used.
 	bool useAnimationCache =
-		animating && m_useAnimationCache && !m_context.isGLInteropActive();
+		animating && m_useAnimationCache && !m_contextPtr->isGLInteropActive();
 
 	// Stop the viewport render thread if using cached frames.
 	if (m_isRunning && useAnimationCache)
 		stop();
 
 	// Check if the viewport size has changed.
-	if (width != m_context.width() || height != m_context.height())
+	if (width != m_contextPtr->width() || height != m_contextPtr->height())
 	{
 		status = resize(width, height);
 		if (status != MStatus::kSuccess)
@@ -199,7 +197,7 @@ bool FireRenderViewport::RunOnViewportThread()
 {
 	RPR_THREAD_ONLY;
 
-	switch (m_context.state)
+	switch (m_contextPtr->state)
 	{
 		// The context is exiting.
 	case FireRenderContext::StateExiting:
@@ -209,20 +207,20 @@ bool FireRenderViewport::RunOnViewportThread()
 	case FireRenderContext::StateRendering:
 	{
 		// Check if a render is required. Note that this code will be executed
-		if (m_context.needsRedraw() ||				// context needs redrawing
-			m_context.cameraAttributeChanged() ||	// camera changed
-			m_context.keepRenderRunning())			// or we must render just because rendering is not yet completed
+		if (m_contextPtr->needsRedraw() ||				// context needs redrawing
+			m_contextPtr->cameraAttributeChanged() ||	// camera changed
+			m_contextPtr->keepRenderRunning())			// or we must render just because rendering is not yet completed
 		{
 			try
 			{
-				FireRenderContext::Lock lock(&m_context, "FireRenderContext::StateRendering"); // lock with constructor which will not change state
+				FireRenderContext::Lock lock(m_contextPtr.get(), "FireRenderContext::StateRendering"); // lock with constructor which will not change state
 
 				// Perform a render iteration.
 				{
 					AutoMutexLock contextLock(m_contextLock);
                     AutoMutexLock pixelsLock(m_pixelsLock);
 
-					m_context.render(false);
+					m_contextPtr->render(false);
 					m_closeDialogNeeded = true;
 
                     readFrameBuffer();
@@ -256,7 +254,7 @@ bool FireRenderViewport::RunOnViewportThread()
                     if (activeView.widget() == m_widget)
                         m_view.scheduleRefresh();
                     else
-                        m_context.state = FireRenderContext::StateExiting;
+                        m_contextPtr->state = FireRenderContext::StateExiting;
                 }
             });
 		}
@@ -285,15 +283,15 @@ bool FireRenderViewport::start()
 		stop();
 
 	// Check dimensions are valid.
-	if (m_context.width() == 0 || m_context.height() == 0)
+	if (m_contextPtr->width() == 0 || m_contextPtr->height() == 0)
 		return false;
 
 	// Start rendering.
 	{
 		// We should lock context, otherwise another asynchronous lock could
 		// change context's state, and rendering will stall in StateUpdating.
-		FireRenderContext::Lock lock(&m_context, "FireRenderViewport::start"); // lock constructor which do not change state
-		m_context.state = FireRenderContext::StateRendering;
+		FireRenderContext::Lock lock(m_contextPtr.get(), "FireRenderViewport::start"); // lock constructor which do not change state
+		m_contextPtr->state = FireRenderContext::StateRendering;
 	}
 
 	m_isRunning = false;
@@ -331,7 +329,7 @@ bool FireRenderViewport::stop()
 		FireRenderThread::RunItemsQueuedForTheMainThread();
 
 		// terminate the thread
-		m_context.state = FireRenderContext::StateExiting;
+		m_contextPtr->state = FireRenderContext::StateExiting;
 		this_thread::sleep_for(10ms); // 10.03.2017 - perhaps this is better than yield()
 	}
 
@@ -354,8 +352,8 @@ void FireRenderViewport::setViewportRenderMode(int renderMode)
 	FireRenderThread::RunOnceProcAndWait([this, renderMode]()
 	{
 		AutoMutexLock contextLock(m_contextLock);
-		m_context.setRenderMode(static_cast<FireRenderContext::RenderMode>(renderMode));
-		m_context.setDirty();
+		m_contextPtr->setRenderMode(static_cast<FireRenderContext::RenderMode>(renderMode));
+		m_contextPtr->setDirty();
 		m_view.scheduleRefresh();
 	});
 }
@@ -383,8 +381,8 @@ MStatus FireRenderViewport::cameraChanged(MDagPath& cameraPath)
 
 		try
 		{
-			m_context.setCamera(cameraPath, true);
-			m_context.setDirty();
+			m_contextPtr->setCamera(cameraPath, true);
+			m_contextPtr->setDirty();
 		}
 		catch (...)
 		{
@@ -424,7 +422,7 @@ void FireRenderViewport::preBlit()
 	// If GL Interop is active, ensure that Maya
 	// has exclusive access to the OpenGL frame
 	// buffer before using it to draw to the viewport.
-	if (m_context.isGLInteropActive())
+	if (m_contextPtr->isGLInteropActive())
 		m_pixelsLock.lock();
 }
 
@@ -433,7 +431,7 @@ void FireRenderViewport::postBlit()
 {
 	// Release the context lock after the shared
 	// GL frame buffer has been drawn to the viewport.
-	if (m_context.isGLInteropActive())
+	if (m_contextPtr->isGLInteropActive())
 		m_pixelsLock.unlock();
 }
 
@@ -446,6 +444,9 @@ bool FireRenderViewport::initialize()
 	{
 		try
 		{
+			m_contextPtr = ContextCreator::CreateAppropriateContextForRenderType(RenderType::ViewportRender);
+			m_contextPtr->SetRenderType(RenderType::ViewportRender);
+
 			// Initialize the hardware texture.
 			m_texture.texture = nullptr;
 			m_textureDesc.setToDefault2DTexture();
@@ -458,15 +459,15 @@ bool FireRenderViewport::initialize()
 			// enable all mandatory aovs so that it can be resolved and used properly
 			for (int aov : m_alwaysEnabledAOVs)
 			{
-				m_context.enableAOV(aov);
+				m_contextPtr->enableAOV(aov);
 			}
 
 			if (!isAOVShouldBeAlwaysEnabled(m_currentAOV))
 			{
-				m_context.enableAOV(m_currentAOV);
+				m_contextPtr->enableAOV(m_currentAOV);
 			}
 
-			if (!m_context.buildScene(animating, true, glViewport))
+			if (!m_contextPtr->buildScene(animating, true, glViewport))
 				return false;
 		}
 		catch (...)
@@ -482,7 +483,7 @@ bool FireRenderViewport::initialize()
 void FireRenderViewport::cleanUp()
 {
 	// Clean the RPR scene.
-	m_context.cleanScene();
+	m_contextPtr->cleanScene();
 
 	// Delete the hardware backed texture.
 	// Do not delete when exiting Maya - this will cause access violation
@@ -545,14 +546,14 @@ MStatus FireRenderViewport::resize(unsigned int width, unsigned int height)
 			m_texture.texture = nullptr;
 		}
 
-		if (m_context.isFirstIterationAndShadersNOTCached()) {
+		if (m_contextPtr->isFirstIterationAndShadersNOTCached()) {
 			//first iteration and shaders are _NOT_ cached
 			m_closeDialogNeeded = false;
 			m_showDialogNeeded = true;
 		}
 
 		// Resize the frame buffer.
-		if (m_context.isGLInteropActive())
+		if (m_contextPtr->isGLInteropActive())
 			resizeFrameBufferGLInterop(width, height);
 		else
 			resizeFrameBufferStandard(width, height);
@@ -569,11 +570,11 @@ MStatus FireRenderViewport::resize(unsigned int width, unsigned int height)
 			return status;
 
 		if (cameraPath.isValid())
-			m_context.setCamera(cameraPath, true);
+			m_contextPtr->setCamera(cameraPath, true);
 
 
 		// Invalidate the context.
-		m_context.setDirty();
+		m_contextPtr->setDirty();
 	}
 	catch (...)
 	{
@@ -589,7 +590,7 @@ MStatus FireRenderViewport::resize(unsigned int width, unsigned int height)
 void FireRenderViewport::resizeFrameBufferStandard(unsigned int width, unsigned int height)
 {
 	// Update the RPR context dimensions.
-	m_context.resize(width, height, false);
+	m_contextPtr->resize(width, height, false);
 
 	// Resize the pixel buffer that
 	// will receive frame buffer data.
@@ -615,7 +616,7 @@ void FireRenderViewport::resizeFrameBufferGLInterop(unsigned int width, unsigned
 	if (m_texture.texture != nullptr)
 	{
 		// Update the RPR context.
-		m_context.resize(width, height, false, GetGlTexture());
+		m_contextPtr->resize(width, height, false, GetGlTexture());
 	}
 }
 
@@ -646,7 +647,7 @@ MStatus FireRenderViewport::renderCached(unsigned int width, unsigned int height
 	try
 	{
 		// Get the frame hash.
-		auto hash = m_context.GetStateHash();
+		auto hash = m_contextPtr->GetStateHash();
 		stringstream ss;
 		ss << m_panelName.asChar() << ";" << size_t(hash);
 
@@ -658,7 +659,7 @@ MStatus FireRenderViewport::renderCached(unsigned int width, unsigned int height
 		{
 			AutoMutexLock contextLock(m_contextLock);
 
-			m_context.render();
+			m_contextPtr->render();
 			readFrameBuffer(&frame);
 
 			return updateTexture(frame.data(), width, height);
@@ -680,12 +681,12 @@ MStatus FireRenderViewport::refreshContext()
 {
 	RPR_THREAD_ONLY;
 
-	if (!m_context.isDirty())
+	if (!m_contextPtr->isDirty())
 		return MStatus::kSuccess;
 
 	try
 	{
-		m_context.Freshen(true);
+		m_contextPtr->Freshen(true);
 
 		return MStatus::kSuccess;
 	}
@@ -701,27 +702,27 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 {
 	// The resolved frame buffer is shared with the Maya viewport
 	// when GL interop is active, so only the resolve step is required.
-	if (m_context.isGLInteropActive())
+	if (m_contextPtr->isGLInteropActive())
 	{
-		m_context.frameBufferAOV_Resolved(m_currentAOV);
+		m_contextPtr->frameBufferAOV_Resolved(m_currentAOV);
 		return;
 	}
 
 	// Read the frame buffer.
-	RenderRegion region(0, m_context.width() - 1, 0, m_context.height() - 1);
+	RenderRegion region(0, m_contextPtr->width() - 1, 0, m_contextPtr->height() - 1);
 
 	// Read to a cached frame if supplied.
 	if (storedFrame)
 	{
-		m_context.readFrameBuffer(reinterpret_cast<RV_PIXEL*>(storedFrame->data()),
-			m_currentAOV, m_context.width(), m_context.height(), region, false);
+		m_contextPtr->readFrameBuffer(reinterpret_cast<RV_PIXEL*>(storedFrame->data()),
+			m_currentAOV, m_contextPtr->width(), m_contextPtr->height(), region, false);
 	}
 
 	// Otherwise, read to a temporary buffer.
 	else
 	{
 		//m_context.enableAOV
-		m_context.readFrameBuffer(m_pixels.data(), m_currentAOV, m_context.width(), m_context.height(), region, false);
+		m_contextPtr->readFrameBuffer(m_pixels.data(), m_currentAOV, m_contextPtr->width(), m_contextPtr->height(), region, false);
 
 		// Flag as updated so the pixels will
 		// be copied to the viewport texture.
@@ -740,7 +741,7 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 		RV_PIXEL c = colors[nn];
 		if (++nn == 6) nn = 0;
 		LogPrint(">>> fill: %g %g %g", c.r, c.g, c.b);
-		for (int i = 0; i < m_context.width() * 8; i += m_context.width())
+		for (int i = 0; i < m_contextPtr->width() * 8; i += m_contextPtr->width())
 		{
 			for (int j = 0; j < 8; j++)
 				m_pixels[i + j] = c;
@@ -802,13 +803,13 @@ void FireRenderViewport::enableNecessaryAOVs(int index, bool flag, rpr_GLuint* g
 {
 	static const std::vector<int> srcaov = { RPR_AOV_BACKGROUND, RPR_AOV_OPACITY };
 
-	m_context.enableAOVAndReset(index, flag, glTexture);
+	m_contextPtr->enableAOVAndReset(index, flag, glTexture);
 
 	if (index == RPR_AOV_SHADOW_CATCHER)
 	{
 		for (int index : srcaov)
 		{
-			m_context.enableAOVAndReset(index, flag, nullptr);
+			m_contextPtr->enableAOVAndReset(index, flag, nullptr);
 		}
 	}
 
@@ -816,7 +817,7 @@ void FireRenderViewport::enableNecessaryAOVs(int index, bool flag, rpr_GLuint* g
 	{
 		for (int index : srcaov)
 		{
-			m_context.enableAOVAndReset(index, flag, nullptr);
+			m_contextPtr->enableAOVAndReset(index, flag, nullptr);
 		}
 	}
 }
@@ -841,6 +842,12 @@ void FireRenderViewport::setCurrentAOV(int aov)
 		return;
 	}
 
+	if (!m_contextPtr->IsAOVSupported(aov))
+	{
+		MGlobal::displayError("Selected AOV is not supported in the given Render Quality");
+		return;
+	}
+
 	AutoMutexLock contextLock(m_contextLock);
 
 	// turning off previous selected aov if it is not color        
@@ -855,7 +862,7 @@ void FireRenderViewport::setCurrentAOV(int aov)
 		enableNecessaryAOVs(aov, true, GetGlTexture());
 	}
 
-	m_context.setDirty();
+	m_contextPtr->setDirty();
 	refreshContext();
 
 	m_currentAOV = aov;

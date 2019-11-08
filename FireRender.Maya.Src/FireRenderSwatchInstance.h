@@ -3,7 +3,7 @@
 #include <maya/MSpinLock.h>
 
 #include "RenderCacheWarningDialog.h"
-#include "FireRenderContext.h"
+#include "Context/TahoeContext.h"
 
 class FireRenderMaterialSwatchRender;
 
@@ -37,7 +37,7 @@ private:
 	bool sceneIsCleaned;
 	MSpinLock mutex;
 
-	FireRenderContext context;
+	TahoeContext context;
 	std::atomic<bool> backgroundRendererBusy;
 
 	std::list<FireRenderMaterialSwatchRender*> queueToProcess;

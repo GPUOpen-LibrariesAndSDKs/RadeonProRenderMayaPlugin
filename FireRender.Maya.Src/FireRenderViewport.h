@@ -11,7 +11,7 @@
 #include <maya/M3dView.h>
 #include <maya/MUiMessage.h>
 #include <maya/MShaderManager.h>
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 #include "FireRenderTextureCache.h"
 #include <maya/MThreadAsync.h>
 #include <maya/MTextureManager.h>
@@ -88,6 +88,8 @@ public:
 
     /** Finds M3dView object by panel name. Returns active M3dView if it can't be found by name */
     static MStatus FindMayaView(const MString& panelName, M3dView *view);
+
+	bool ShouldBeRecreated() const { return m_contextPtr && !m_contextPtr->DoesContextSupportCurrentSettings(); }
 private:
 
 	// Members
@@ -99,7 +101,7 @@ private:
 	M3dView m_view;
 
 	/** Viewport render context. */
-	FireRenderContext m_context;
+	FireRenderContextPtr m_contextPtr;
 
 	/** The description of the texture that will receive the RPR frame buffer. */
 	MHWRender::MTextureDescription m_textureDesc;

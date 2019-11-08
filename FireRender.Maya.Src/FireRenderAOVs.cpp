@@ -2,7 +2,7 @@
 
 #include "FireRenderAOVs.h"
 #include "FireRenderGlobals.h"
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 #include "FireRenderImageUtil.h"
 #include "FireMaya.h"
 
@@ -219,7 +219,7 @@ void FireRenderAOVs::readFromGlobals(const MFnDependencyNode& globals)
 		std::shared_ptr<FireRenderAOV> aov = aovIter.second;
 
 		// Colour and render view AOVs are always active.
-		if (aov->id == RPR_AOV_COLOR || aov->id == RPR_AOV_OPACITY || aov->id == m_renderViewAOVId)
+		if (aov->id == RPR_AOV_COLOR || aov->id == m_renderViewAOVId)
 		{
 			aov->active = true;
 		}

@@ -5,7 +5,7 @@
 #include <maya/MDrawContext.h>
 #include <maya/MFrameContext.h>
 
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 #include "ShadersManager.h"
 #include "FireRenderViewportOperation.h"
 

@@ -14,7 +14,7 @@
 #include "FireRenderViewportManager.h"
 #include "FireRenderViewportBlit.h"
 #include "FireRenderViewportUI.h"
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 
 
 // Static Initialization
@@ -205,8 +205,11 @@ MStatus FireRenderOverride::setupViewport(const MString & panelName)
     {
         M3dView currentView;
         MStatus status = FireRenderViewport::FindMayaView(panelName, &currentView);
-        if ((status == MStatus::kSuccess) && (currentView.widget() != viewport->getMayaWidget()))
-            doReinit = true;
+		if ((status == MStatus::kSuccess) && (currentView.widget() != viewport->getMayaWidget()) || 
+			viewport->ShouldBeRecreated())
+		{
+			doReinit = true;
+		}
     }
 
 	// Create the viewport if required.

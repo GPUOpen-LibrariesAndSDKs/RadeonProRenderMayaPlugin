@@ -234,6 +234,10 @@
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.cpp" />
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.cpp" />
     <ClCompile Include="athenaCmd.cpp" />
+    <ClCompile Include="Context\ContextCreator.cpp" />
+    <ClCompile Include="Context\FireRenderContext.cpp" />
+    <ClCompile Include="Context\HybridContext.cpp" />
+    <ClCompile Include="Context\TahoeContext.cpp" />
     <ClCompile Include="DependencyNode.cpp" />
     <ClCompile Include="EnableSaveIntermediateCmd.cpp" />
     <ClCompile Include="FastNoise.cpp" />
@@ -255,7 +259,6 @@
     <ClCompile Include="FireRenderBump.cpp" />
     <ClCompile Include="FireRenderChecker.cpp" />
     <ClCompile Include="FireRenderCmd.cpp" />
-    <ClCompile Include="FireRenderContext.cpp" />
     <ClCompile Include="FireRenderConvertVRayCmd.cpp" />
     <ClCompile Include="FireRenderDisplacement.cpp" />
     <ClCompile Include="FireRenderDot.cpp" />
@@ -370,6 +373,10 @@
     <ClInclude Include="AutoLock.h" />
     <ClInclude Include="base_mesh.h" />
     <ClInclude Include="common.h" />
+    <ClInclude Include="Context\ContextCreator.h" />
+    <ClInclude Include="Context\FireRenderContext.h" />
+    <ClInclude Include="Context\HybridContext.h" />
+    <ClInclude Include="Context\TahoeContext.h" />
     <ClInclude Include="DependencyNode.h" />
     <ClInclude Include="EnableSaveIntermediateCmd.h" />
     <ClInclude Include="FastNoise.h" />
@@ -390,7 +397,6 @@
     <ClInclude Include="FireRenderBlendValue.h" />
     <ClInclude Include="FireRenderBump.h" />
     <ClInclude Include="FireRenderChecker.h" />
-    <ClInclude Include="FireRenderContext.h" />
     <ClInclude Include="FireRenderContextIFace.h" />
     <ClInclude Include="FireRenderConvertVRayCmd.h" />
     <ClInclude Include="FireRenderDisplacement.h" />

@@ -8,7 +8,7 @@
 #include <maya/MImage.h>
 #include <maya/MFileIO.h>
 #include <maya/MGlobal.h>
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 #include "FireRenderViewport.h"
 #include "FireRenderViewportManager.h"
 #include <maya/MAtomic.h>
