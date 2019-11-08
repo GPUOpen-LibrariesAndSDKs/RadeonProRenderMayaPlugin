@@ -340,6 +340,9 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 			AddSceneObject(dagPath);
 		}
 
+		//Should be called when all scene objects are constucted
+		BuildLateinitObjects();
+
 		attachCallbacks();
 	}
 
@@ -948,6 +951,15 @@ int FireRenderContext::getThreadCountToOverride() const
 	return 0;
 }
 
+void FireRenderContext::BuildLateinitObjects()
+{
+	for (const MDagPath path : m_LateinitMASHInstancers)
+	{
+		CreateSceneObject<InstancerMASH, NodeCachingOptions::AddPath>(path);
+	}
+	m_LateinitMASHInstancers.clear();
+}
+
 bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete, bool glViewport, int* pOutRes)
 {
 	return FireRenderThread::RunOnceAndWait<bool>([this, &creation_flags, destroyMaterialSystemOnDelete, glViewport, pOutRes]()
@@ -1360,17 +1372,24 @@ void FireRenderContext::RemoveRenderObject(const MObject& ob)
 				if (pRobj != nullptr)
 				{
 					MDagPath tmpPath;
-					bool found = GetNodePath(tmpPath, pRobj->GetUuid());
+					bool found = GetNodePath(tmpPath, pRobj->uuid());
 
 					if (found)
 					{
-						m_nodePathCache.erase(pRobj->GetUuid());
+						m_nodePathCache.erase(pRobj->uuid());
 					}
 				}
 
 				// remove object from main meshes cache
-				std::string uuid = getNodeUUid(ob);
-				RemoveMainMesh(uuid);
+				/**
+					Sometimes it get fired for Node or Object, but the map of meshes should contain only FireRenderMesh
+					Dynamic cast is needed to type check
+				*/
+				FireRenderMesh* mesh = dynamic_cast<FireRenderMesh*>(frNode);
+				if (mesh != nullptr)
+				{
+					RemoveMainMesh(mesh);
+				}
 
 				// remove object from scene
 				frNode->detachFromScene();
@@ -1767,6 +1786,10 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			ob = CreateSceneObject<FireRenderRPRVolume, NodeCachingOptions::AddPath>(dagPath);
 		}
+		else if (dagNode.typeName() == "instancer")
+		{
+			m_LateinitMASHInstancers.push_back(dagPath);
+		}
 		else
 		{
 			MTypeId type_id = dagNode.typeId();
@@ -1886,6 +1909,9 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 	for (MObject& node : removedNodes)
 		removeNode(node);
+
+	//Should be called when all scene objects are updated
+	BuildLateinitObjects();
 
 	bool changed = m_dirty;
 

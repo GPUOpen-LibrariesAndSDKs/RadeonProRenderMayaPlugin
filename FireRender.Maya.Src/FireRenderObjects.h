@@ -91,6 +91,9 @@ public:
 	// Constructor
 	FireRenderObject(FireRenderContext* context, const MObject& object = MObject::kNullObj);
 
+	// Copy constuctor with custom uuid
+	FireRenderObject(const FireRenderObject& rhs, const std::string& uuid);
+
 	// Destructor
 	virtual ~FireRenderObject();
 
@@ -98,7 +101,7 @@ public:
 	virtual void clear();
 
 	// uuid
-	std::string uuid();
+	std::string uuid() const;
 
 	// Set dirty
 	void setDirty();
@@ -111,9 +114,6 @@ public:
 
 	// hash is generated during Freshen call
 	HashValue GetStateHash() { return m.hash; }
-
-	// get uuid
-	const std::string& GetUuid() const { return m.uuid; }
 
 	// Return the render context
 	FireRenderContext* context() { return m.context; }
@@ -176,6 +176,11 @@ class FireRenderNode : public FireRenderObject
 public:
 	// Constructor
 	FireRenderNode(FireRenderContext* context, const MDagPath& dagPath);
+
+	// Copy constructor with custom uuid.
+	// In the future should be deleted, because FireRenderMesh should inherit from FireRenderObject, so there no need in this constructor with custom uuid.
+	FireRenderNode(const FireRenderNode& rhs, const std::string& uuid);
+
 	virtual ~FireRenderNode();
 
 	// Detach from the fire render scene
@@ -245,10 +250,13 @@ public:
 	// Constructor
 	FireRenderMesh(FireRenderContext* context, const MDagPath& dagPath);
 
+	// Copy constructor with custom uuid
+	FireRenderMesh(const FireRenderMesh& rhs, const std::string& uuid);
+
 	// Destructor
 	virtual ~FireRenderMesh();
 
-		// Clear
+	// Clear
 	virtual void clear() override;
 private:
 	// Detach from the scene
@@ -302,15 +310,10 @@ public:
 
 	unsigned int GetAssignedUVMapIdx(const MString& textureFile) const;
 
-private:
-	bool IsSelected(const MDagPath& dagPath) const;
-	bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;
-	void GetShapes(const MFnDagNode& node, std::vector<frw::Shape>& outShapes);
+protected:
+	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;
+	virtual MMatrix GetSelfTransform();
 	void SaveUsedUV(const MObject& meshNode);
-
-	// A mesh in Maya can have multiple shaders
-	// in fr it must be split in multiple shapes
-	// so this return the list of all the fr_shapes created for this Maya mesh
 
 	struct
 	{
@@ -324,6 +327,15 @@ private:
 			bool shader = false;
 		} changed;
 	} m;
+
+private:
+	void GetShapes(std::vector<frw::Shape>& outShapes);
+	
+	bool IsSelected(const MDagPath& dagPath) const;
+
+	// A mesh in Maya can have multiple shaders
+	// in fr it must be split in multiple shapes
+	// so this return the list of all the fr_shapes created for this Maya mesh
 
 	virtual HashValue CalculateHash() override;
 

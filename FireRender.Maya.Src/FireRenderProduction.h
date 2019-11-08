@@ -113,7 +113,7 @@ private:
 	/* Gather and send render data by Athena */
 	void UploadAthenaData();
 
-	unsigned int GetScenePolyCount() const;
+	size_t GetScenePolyCount() const;
 
 private:
 

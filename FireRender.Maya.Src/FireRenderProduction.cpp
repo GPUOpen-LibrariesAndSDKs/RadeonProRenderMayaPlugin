@@ -621,7 +621,7 @@ void FireRenderProduction::UploadAthenaData()
 	pAthenaWrapper->WriteField(header.str(), data_field.str());
 }
 
-unsigned int FireRenderProduction::GetScenePolyCount() const
+size_t FireRenderProduction::GetScenePolyCount() const
 {
 	size_t shapeCount = 0;
 	auto status = rprSceneGetInfo(m_contextPtr->scene(), RPR_SCENE_SHAPE_LIST, 0, nullptr, &shapeCount);
@@ -630,7 +630,7 @@ unsigned int FireRenderProduction::GetScenePolyCount() const
 
 	std::vector<rpr_shape> shapes(shapeCount);
 	status = rprSceneGetInfo(m_contextPtr->scene(), RPR_SCENE_SHAPE_LIST, shapeCount * sizeof(rpr_shape), shapes.data(), nullptr);
-	return std::accumulate(std::begin(shapes), std::end(shapes), 0, [](size_t accumulator, const rpr_shape shape) 
+	return std::accumulate(std::begin(shapes), std::end(shapes), (size_t)0, [](size_t accumulator, const rpr_shape shape) 
 		{
 			size_t polygonCount = 0;
 			rprMeshGetInfo(shape, RPR_MESH_POLYGON_COUNT, sizeof(polygonCount), &polygonCount, nullptr);

@@ -65,12 +65,23 @@ FireRenderObject::FireRenderObject(FireRenderContext* context, const MObject& ob
 	m_isPortal_SKY = false;
 }
 
+FireRenderObject::FireRenderObject(const FireRenderObject& rhs, const std::string& uuid)
+{
+	m.context = rhs.m.context;
+	m.object = rhs.Object();
+	m.uuid = uuid;
+	if (!rhs.Object().isNull())
+		rhs.m.context->setDirtyObject(this);
+	m_isPortal_IBL = false;
+	m_isPortal_SKY = false;
+}
+
 FireRenderObject::~FireRenderObject()
 {
 	FireRenderObject::clear();
 }
 
-std::string FireRenderObject::uuid()
+std::string FireRenderObject::uuid() const
 {
 	return m.uuid;
 }
@@ -406,6 +417,10 @@ FireRenderNode::FireRenderNode(FireRenderContext* context, const MDagPath& dagPa
 	m.uuid = getNodeUUid(dagPath);
 }
 
+FireRenderNode::FireRenderNode(const FireRenderNode& rhs, const std::string& uuid)
+	: FireRenderObject(rhs, uuid)
+{ }
+
 FireRenderNode::~FireRenderNode()
 {
 	RestorePortalStates();
@@ -515,7 +530,7 @@ void FireRenderNode::RestorePortalStates(bool iblPortals)
 MDagPath FireRenderNode::DagPath()
 {
 	MDagPath outPath;
-	bool found = context()->GetNodePath(outPath, GetUuid());
+	bool found = context()->GetNodePath(outPath, uuid());
 
 	if (found)
 	{
@@ -528,7 +543,7 @@ MDagPath FireRenderNode::DagPath()
 
 	if (m.instance < pathArray.length())
 	{
-		context()->AddNodePath(pathArray[m.instance], GetUuid());
+		context()->AddNodePath(pathArray[m.instance], uuid());
 		
 		return pathArray[m.instance];
 	}
@@ -541,6 +556,11 @@ MDagPath FireRenderNode::DagPath()
 //===================
 FireRenderMesh::FireRenderMesh(FireRenderContext* context, const MDagPath& dagPath) :
 	FireRenderNode(context, dagPath)
+{
+}
+
+FireRenderMesh::FireRenderMesh(const FireRenderMesh& rhs, const std::string& uuid)
+	: FireRenderNode(rhs, uuid)
 {
 }
 
@@ -944,7 +964,7 @@ void FireRenderMesh::ReloadMesh(MDagPath& meshPath, MObjectArray& shadingEngines
 
 	if (m.isMainInstance && m.elements.size() > 0)
 	{
-		this->context()->RemoveMainMesh(getNodeUUid(Object()));
+		this->context()->RemoveMainMesh(this);
 	}
 
 	m.elements.clear();
@@ -955,7 +975,7 @@ void FireRenderMesh::ReloadMesh(MDagPath& meshPath, MObjectArray& shadingEngines
 	// node is not visible => skip
 	if (IsMeshVisible(meshPath, this->context()))
 	{
-		GetShapes(Object(), shapes);
+		GetShapes(shapes);
 	}
 
 	m.elements.resize(shapes.size());
@@ -1170,16 +1190,16 @@ bool FireRenderMesh::IsMeshVisible(const MDagPath& meshPath, const FireRenderCon
 	return isVisible;
 }
 
-void FireRenderMesh::GetShapes(const MFnDagNode& meshNode, std::vector<frw::Shape>& outShapes)
+MMatrix FireRenderMesh::GetSelfTransform()
+{
+	return DagPath().inclusiveMatrix();
+}
+
+void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 {
 	FireRenderContext* context = this->context();
 
-	const FireRenderMesh* mainMesh = nullptr;
-
-	if (meshNode.isInstanced())
-	{
-		mainMesh = context->GetMainMesh(meshNode.object());
-	}
+	const FireRenderMesh* mainMesh = context->GetMainMesh(uuid());
 
 	if (mainMesh != nullptr)
 	{
@@ -1197,12 +1217,12 @@ void FireRenderMesh::GetShapes(const MFnDagNode& meshNode, std::vector<frw::Shap
 
 	if (mainMesh == nullptr)
 	{
-		outShapes = FireMaya::MeshTranslator::TranslateMesh(context->GetContext(), meshNode.object());
+		outShapes = FireMaya::MeshTranslator::TranslateMesh(context->GetContext(), Object());
 		m.isMainInstance = true;
-		context->AddMainMesh(meshNode.object(), this);
+		context->AddMainMesh(this);
 	}
 
-	SaveUsedUV(meshNode.object());
+	SaveUsedUV(Object());
 }
 
 void FireRenderMesh::SaveUsedUV(const MObject& meshNode)
@@ -1257,7 +1277,7 @@ void FireRenderMesh::RebuildTransforms()
 	MFnDagNode meshFn(node);
 	auto meshPath = DagPath();
 
-	MMatrix matrix = meshPath.inclusiveMatrix();
+	MMatrix matrix = GetSelfTransform();
 	MMatrix nextFrameMatrix = matrix;
 
 	// convert Maya mesh in cm to m
@@ -1376,7 +1396,6 @@ void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
 void FireRenderMesh::Freshen()
 {
 	Rebuild();
-
 	FireRenderNode::Freshen();
 }
 
