@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FireRenderContext.h"
+#include "Context/TahoeContext.h"
 #include <maya/MDagPath.h>
 #include <maya/MThreadAsync.h>
 #include "RenderCacheWarningDialog.h"
@@ -111,7 +111,7 @@ private:
 	// -----------------------------------------------------------------------------
 
 	/** The FireRender context. */
-	FireRenderContext m_context;
+	FireRenderContextPtr m_contextPtr;
 
 	/** The current camera. */
 	MDagPath m_camera;

@@ -1,5 +1,5 @@
 #include "FireRenderObjects.h"
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 #include "FireRenderUtils.h"
 #include "base_mesh.h"
 #include "FireRenderDisplacement.h"
@@ -1332,6 +1332,7 @@ void FireRenderMesh::OnNodeDirty()
 
 void FireRenderNode::OnWorldMatrixChanged()
 {
+	m_bIsTransformChanged = true;
 	setDirty();
 }
 
@@ -1440,15 +1441,41 @@ void FireRenderLight::attachToScene()
 	}
 }
 
+void FireRenderLight::UpdateTransform(const MMatrix& matrix)
+{
+	float matrixfloats[4][4];
+	FireMaya::ScaleMatrixFromCmToMFloats(matrix, matrixfloats);
+
+	if (!m_light.areaLight)
+	{
+		m_light.light.SetTransform((rpr_float*)matrixfloats);
+	}
+	else
+	{
+		m_light.areaLight.SetTransform((rpr_float*)matrixfloats);
+	}
+}
+
 void FireRenderLight::Freshen()
 {
+	if (m_bIsTransformChanged)
+	{
+		auto dagPath = DagPath();
+		MMatrix matrix = dagPath.inclusiveMatrix();
+
+		UpdateTransform(matrix);
+
+		m_bIsTransformChanged = false;
+		return;
+	}
+
 	detachFromScene();
 	m_light = FrLight();
 	auto node = Object();
 	auto dagPath = DagPath();
 	if (dagPath.isValid())
 	{
-		auto mMtx = dagPath.inclusiveMatrix();
+		MMatrix mMtx = dagPath.inclusiveMatrix();
 
 		MFnDependencyNode depNode(node);
 		if (depNode.typeId() == FireMaya::TypeId::FireRenderPhysicalLightLocator)
@@ -1543,8 +1570,7 @@ void FireRenderEnvLight::detachFromScene()
 
 	if (auto scene = Scene())
 	{
-		scene.SetEnvironmentOverride(frw::EnvironmentOverrideBackground, frw::EnvironmentLight());
-		scene.Detach(m.light);
+		detachFromSceneInternal();
 	}
 
 	m_isVisible = false;
@@ -1557,11 +1583,31 @@ void FireRenderEnvLight::attachToScene()
 
 	if (auto scene = Scene())
 	{
-		scene.Attach(m.light);
-		Scene().SetEnvironmentOverride(frw::EnvironmentOverrideBackground, m.bgOverride);
-
+		attachToSceneInternal();
 		m_isVisible = true;
 	}
+}
+
+void FireRenderEnvLight::attachToSceneInternal()
+{
+	Scene().Attach(m.light);
+	Scene().SetEnvironmentOverride(frw::EnvironmentOverrideBackground, m.bgOverride);
+}
+
+void FireRenderEnvLight::detachFromSceneInternal()
+{
+	Scene().SetEnvironmentOverride(frw::EnvironmentOverrideBackground, frw::EnvironmentLight());
+	Scene().Detach(m.light);
+}
+
+void FireRenderEnvLightHybrid::attachToSceneInternal()
+{
+	Scene().SetEnvironmentLight(m.light);
+}
+
+void FireRenderEnvLightHybrid::detachFromSceneInternal()
+{
+	Scene().SetEnvironmentLight(nullptr);
 }
 
 void setPortal_IBL(MObject transformObject, FireRenderEnvLight *light) {
@@ -1850,7 +1896,10 @@ void FireRenderCamera::Freshen()
 			}
 		}
 
-		Scene().SetBackgroundImage(image);
+		if (image.IsValid())
+		{
+			Scene().SetBackgroundImage(image);
+		}
 
 		// Set exposure from motion blur block parameters if we didn't add fireRenderExposure attribute to the camera before
 		if (context()->motionBlur() && fnCamera.findPlug("fireRenderExposure").isNull())
@@ -2168,7 +2217,7 @@ void FireRenderSky::detachFromScene()
 
 	if (auto scene = Scene())
 	{
-		scene.Detach(m_envLight);
+		detachFromSceneInternal();
 		scene.Detach(m_sunLight);
 	}
 
@@ -2182,12 +2231,35 @@ void FireRenderSky::attachToScene()
 
 	if (auto scene = Scene())
 	{
-		scene.Attach(m_envLight);
+		attachToSceneInternal();
+
 		if (m_sunLight.Handle()) // m_sunLight could be empty if IBL is used for lighting
 			scene.Attach(m_sunLight);
+
 		m_isVisible = true;
 	}
 }
+
+void FireRenderSky::detachFromSceneInternal()
+{
+	Scene().Detach(m_envLight);
+}
+
+void FireRenderSky::attachToSceneInternal()
+{
+	Scene().Attach(m_envLight);
+}
+
+void FireRenderSkyHybrid::attachToSceneInternal()
+{
+	Scene().SetEnvironmentLight(m_envLight);
+}
+
+void FireRenderSkyHybrid::detachFromSceneInternal()
+{
+	Scene().SetEnvironmentLight(nullptr);
+}
+
 
 //===================
 // Hair shader

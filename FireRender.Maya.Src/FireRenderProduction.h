@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 #include <maya/MDagPath.h>
 #include <maya/MThreadAsync.h>
 #include <maya/MCommonRenderSettingsData.h>
@@ -121,7 +121,7 @@ private:
 	// -----------------------------------------------------------------------------
 
 	/** The FireRender context. */
-	std::shared_ptr<FireRenderContext> m_context;
+	FireRenderContextPtr m_contextPtr;
 
 	/** The current camera. */
 	MDagPath m_camera;

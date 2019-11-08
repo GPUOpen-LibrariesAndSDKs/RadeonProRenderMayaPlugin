@@ -11,7 +11,7 @@
 #include <maya/M3dView.h>
 #include <maya/MUiMessage.h>
 #include <maya/MShaderManager.h>
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 #include <maya/MThreadAsync.h>
 #include <maya/MTextureManager.h>
 

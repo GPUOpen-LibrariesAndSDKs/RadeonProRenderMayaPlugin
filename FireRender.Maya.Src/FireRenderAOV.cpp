@@ -1,7 +1,7 @@
 #include "frWrap.h"
 
 #include "FireRenderAOV.h"
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 #include "FireRenderImageUtil.h"
 #include "RenderStamp.h"
 #include <maya/MCommonSystemUtils.h>
@@ -127,10 +127,10 @@ void FireRenderAOV::freePixels()
 void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip)
 {
 	// Check that the AOV is active and in a valid state.
-	if (!active || !pixels || m_region.isZeroArea())
+	if (!active || !pixels || m_region.isZeroArea() || !context.IsAOVSupported(id))
 		return;
 
-	bool opacityMerge = context.camera().GetAlphaMask();
+	bool opacityMerge = context.camera().GetAlphaMask() && context.isAOVEnabled(RPR_AOV_OPACITY);
 	context.readFrameBuffer(pixels.get(), id, m_frameWidth, m_frameHeight, m_region, flip, opacityMerge, true);
 
 	PostProcess();

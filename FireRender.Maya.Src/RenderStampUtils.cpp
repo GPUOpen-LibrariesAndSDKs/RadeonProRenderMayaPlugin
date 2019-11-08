@@ -1,7 +1,7 @@
 #include "RenderStampUtils.h"
 
 #include "common.h"
-#include "FireRenderContext.h" // used for scene stats
+#include "Context/FireRenderContext.h" // used for scene stats
 #include "FireRenderThread.h"
 
 #include <Maya/MAnimControl.h>

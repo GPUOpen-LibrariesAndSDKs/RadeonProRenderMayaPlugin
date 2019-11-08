@@ -1,5 +1,5 @@
 #include "FireRenderObjects.h"
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 #include "FireRenderUtils.h"
 #include "Volumes/VolumeAttributes.h"
 #include "FastNoise.h"

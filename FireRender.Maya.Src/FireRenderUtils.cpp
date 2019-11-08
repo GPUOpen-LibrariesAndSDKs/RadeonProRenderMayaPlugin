@@ -22,7 +22,7 @@
 
 #include "attributeNames.h"
 #include "OptionVarHelpers.h"
-#include "FireRenderContext.h"
+#include "Context/TahoeContext.h"
 #include "FireRenderGlobals.h"
 #include "FireRenderThread.h"
 #include "Logger.h"
@@ -462,290 +462,6 @@ void FireRenderGlobalsData::readDenoiserParameters(const MFnDependencyNode& frGl
 	plug = frGlobalsNode.findPlug("denoiserColorOnly");
 	if (!plug.isNull())
 		denoiserSettings.colorOnly = plug.asInt() == 0;
-}
-
-void FireRenderGlobalsData::updateTonemapping(FireRenderContext& inContext, bool disableWhiteBalance)
-{
-	frw::Context context = inContext.GetContext();
-	rpr_context frcontext = context.Handle();
-
-	rpr_int frstatus = RPR_SUCCESS;
-
-	frstatus = rprContextSetParameter1f(frcontext, "texturegamma", textureGamma);
-	checkStatus(frstatus);
-
-	// Disable display gamma correction unless it is being applied
-	// to Maya views. It will be always be enabled before file output.
-	auto displayGammaValue = applyGammaToMayaViews ? displayGamma : 1.0f;
-	frstatus = rprContextSetParameter1f(frcontext, "displaygamma", displayGammaValue);
-	checkStatus(frstatus);
-
-	// Release existing effects
-	if (inContext.white_balance)
-	{
-		context.Detach(inContext.white_balance);
-		inContext.white_balance.Reset();
-	}
-
-	if (inContext.simple_tonemap)
-	{
-		context.Detach(inContext.simple_tonemap);
-		inContext.simple_tonemap.Reset();
-	}
-
-	if (inContext.tonemap)
-	{
-		context.Detach(inContext.tonemap);
-		inContext.tonemap.Reset();
-	}
-
-	if (inContext.normalization)
-	{
-		context.Detach(inContext.normalization);
-		inContext.normalization.Reset();
-	}
-
-	if (inContext.gamma_correction)
-	{
-		context.Detach(inContext.gamma_correction);
-		inContext.gamma_correction.Reset();
-	}
-
-	// At least one post effect is required for frame buffer resolve to
-	// work, which is required for OpenGL interop. Frame buffer normalization
-	// should be applied before other post effects.
-	// Also gamma effect requires normalization when tonemapping is not used.
-	//if (inContext.isGLInteropActive() || (applyGammaToMayaViews && toneMappingType == 0))
-	//{
-	inContext.normalization = frw::PostEffect(context, frw::PostEffectTypeNormalization);
-	context.Attach(inContext.normalization);
-	//}
-
-	// Create new effects
-	switch (toneMappingType)
-	{
-	case 0:
-		break;
-
-	case 1:
-		if (!inContext.tonemap)
-		{
-			inContext.tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(inContext.tonemap);
-		}
-		context.SetParameter("tonemapping.type", RPR_TONEMAPPING_OPERATOR_LINEAR);
-		context.SetParameter("tonemapping.linear.scale", toneMappingLinearScale);
-		break;
-
-	case 2:
-		if (!inContext.tonemap)
-		{
-			inContext.tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(inContext.tonemap);
-		}
-		context.SetParameter("tonemapping.type", RPR_TONEMAPPING_OPERATOR_PHOTOLINEAR);
-		context.SetParameter("tonemapping.photolinear.sensitivity", toneMappingPhotolinearSensitivity);
-		context.SetParameter("tonemapping.photolinear.fstop", toneMappingPhotolinearFstop);
-		context.SetParameter("tonemapping.photolinear.exposure", toneMappingPhotolinearExposure);
-		break;
-
-	case 3:
-		if (!inContext.tonemap)
-		{
-			inContext.tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(inContext.tonemap);
-		}
-		context.SetParameter("tonemapping.type", RPR_TONEMAPPING_OPERATOR_AUTOLINEAR);
-		break;
-
-	case 4:
-		if (!inContext.tonemap)
-		{
-			inContext.tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(inContext.tonemap);
-		}
-		context.SetParameter("tonemapping.type", RPR_TONEMAPPING_OPERATOR_MAXWHITE);
-		break;
-
-	case 5:
-		if (!inContext.tonemap)
-		{
-			inContext.tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(inContext.tonemap);
-		}
-		context.SetParameter("tonemapping.type", RPR_TONEMAPPING_OPERATOR_REINHARD02);
-		context.SetParameter("tonemapping.reinhard02.prescale", toneMappingReinhard02Prescale);
-		context.SetParameter("tonemapping.reinhard02.postscale", toneMappingReinhard02Postscale);
-		context.SetParameter("tonemapping.reinhard02.burn", toneMappingReinhard02Burn);
-		break;
-
-	case 6:
-		if (!inContext.simple_tonemap)
-		{
-			inContext.simple_tonemap = frw::PostEffect(context, frw::PostEffectTypeSimpleTonemap);
-			inContext.simple_tonemap.SetParameter("tonemap", toneMappingSimpleTonemap);
-			inContext.simple_tonemap.SetParameter("exposure", toneMappingSimpleExposure);
-			inContext.simple_tonemap.SetParameter("contrast", toneMappingSimpleContrast);
-			context.Attach(inContext.simple_tonemap);
-		}
-		break;
-
-	default:
-		break;
-	}
-
-	// This block is required for gamma functionality
-	if (applyGammaToMayaViews)
-	{
-		inContext.gamma_correction = frw::PostEffect(context, frw::PostEffectTypeGammaCorrection);
-		context.Attach(inContext.gamma_correction);
-	}
-
-	if (toneMappingWhiteBalanceEnabled && !disableWhiteBalance)
-	{
-		if (!inContext.white_balance)
-		{
-			inContext.white_balance = frw::PostEffect(context, frw::PostEffectTypeWhiteBalance);
-			context.Attach(inContext.white_balance);
-		}
-		float temperature = toneMappingWhiteBalanceValue;
-		inContext.white_balance.SetParameter("colorspace", RPR_COLOR_SPACE_SRGB); // check: Max uses Adobe SRGB here
-		inContext.white_balance.SetParameter("colortemp", temperature);
-	}
-}
-
-void FireRenderGlobalsData::setupContext(FireRenderContext& inContext, bool disableWhiteBalance)
-{
-	frw::Context context = inContext.GetContext();
-	rpr_context frcontext = context.Handle();
-
-	rpr_int frstatus = RPR_SUCCESS;
-
-	frstatus = rprContextSetParameter1f(frcontext, "pdfthreshold", 0.0000f);
-	checkStatus(frstatus);
-
-	if (inContext.GetRenderType() == RenderType::Thumbnail)
-	{
-		updateTonemapping(inContext, disableWhiteBalance);
-		return;
-	}
-
-	frstatus = rprContextSetParameter1f(frcontext, "radianceclamp", giClampIrradiance ? giClampIrradianceValue : FLT_MAX);
-	checkStatus(frstatus);
-
-	frstatus = rprContextSetParameter1u(frcontext, "texturecompression", textureCompression);
-	checkStatus(frstatus);
-
-	frstatus = rprContextSetParameter1u(frcontext, "as.tilesize", adaptiveTileSize);
-	checkStatus(frstatus);
-
-	frstatus = rprContextSetParameter1f(frcontext, "as.threshold", adaptiveThreshold);
-	checkStatus(frstatus);
-
-	if (inContext.GetRenderType() == RenderType::ProductionRender) // production (final) rendering
-	{
-		frstatus = rprContextSetParameter1u(frcontext, "rendermode", renderMode);
-		checkStatus(frstatus);
-
-		inContext.setSamplesPerUpdate(samplesPerUpdate);
-
-		frstatus = rprContextSetParameter1u(frcontext, "maxRecursion", maxRayDepth);
-		checkStatus(frstatus);
-
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.diffuse", maxRayDepthDiffuse);
-		checkStatus(frstatus);
-
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.glossy", maxRayDepthGlossy);
-		checkStatus(frstatus);
-
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction", maxRayDepthRefraction);
-		checkStatus(frstatus);
-
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction.glossy", maxRayDepthGlossyRefraction);
-		checkStatus(frstatus);
-
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.shadow", maxRayDepthShadow);
-		checkStatus(frstatus);
-
-		frstatus = rprContextSetParameter1u(frcontext, "as.minspp", completionCriteriaFinalRender.completionCriteriaMinIterations);
-		checkStatus(frstatus);
-	}
-	else if (inContext.isInteractive())
-	{
-		inContext.setSamplesPerUpdate(1);
-
-		frstatus = rprContextSetParameter1u(frcontext, "rendermode", viewportRenderMode);
-		checkStatus(frstatus);
-
-		frstatus = rprContextSetParameter1u(frcontext, "maxRecursion", viewportMaxRayDepth);
-		checkStatus(frstatus);
-
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.diffuse", viewportMaxDiffuseRayDepth);
-		checkStatus(frstatus);
-
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.glossy", viewportMaxReflectionRayDepth);
-		checkStatus(frstatus);
-
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction", viewportMaxReflectionRayDepth);
-		checkStatus(frstatus);
-
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction.glossy", viewportMaxReflectionRayDepth);
-		checkStatus(frstatus);
-
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.shadow", viewportMaxDiffuseRayDepth);
-		checkStatus(frstatus);
-
-		frstatus = rprContextSetParameter1u(frcontext, "as.minspp", completionCriteriaViewport.completionCriteriaMinIterations);
-		checkStatus(frstatus);
-	}
-
-	frstatus = rprContextSetParameter1f(frcontext, "raycastepsilon", raycastEpsilon);
-	checkStatus(frstatus);
-
-	frstatus = rprContextSetParameter1u(frcontext, "imagefilter.type", filterType);
-	checkStatus(frstatus);
-
-	//
-
-	std::string filterAttrName = "imagefilter.box.radius";
-	switch (filterType)
-	{
-	case 2:
-	{
-		filterAttrName = "imagefilter.triangle.radius";
-		break;
-	}
-	case 3:
-	{
-		filterAttrName = "imagefilter.gaussian.radius";
-		break;
-	}
-	case 4:
-	{
-		filterAttrName = "imagefilter.mitchell.radius";
-		break;
-	}
-	case 5:
-	{
-		filterAttrName = "imagefilter.lanczos.radius";
-		break;
-	}
-	case 6:
-	{
-		filterAttrName = "imagefilter.blackmanharris.radius";
-		break;
-	}
-	default:
-		break;
-	}
-
-	frstatus = rprContextSetParameter1f(frcontext, filterAttrName.c_str(), filterSize);
-	checkStatus(frstatus);
-
-	frstatus = rprContextSetParameter1u(frcontext, "metalperformanceshader", useMPS ? 1 : 0);
-	checkStatus(frstatus);
-
-	updateTonemapping(inContext, disableWhiteBalance);
 }
 
 bool FireRenderGlobalsData::isTonemapping(MString name)
@@ -1804,9 +1520,8 @@ HardwareResources::HardwareResources()
 			// Request device name. Earlier (before RPR 1.255) rprIsDeviceCompatible returned device name, however
 			// this functionality was removed. We're doing "assert" here just in case because rprIsDeviceCompatible
 			// does exactly the same right before this code.
-			if (g_tahoePluginID == -1)
-				g_tahoePluginID = rprRegisterPlugin(dll);
-			rpr_int plugins[] = { g_tahoePluginID };
+			
+			rpr_int plugins[] = { TahoeContext::GetPluginID() };
 			size_t pluginCount = sizeof(plugins) / sizeof(plugins[0]);
 			rpr_context temporaryContext = 0;
 #ifdef RPR_VERSION_MAJOR_MINOR_REVISION
@@ -2292,4 +2007,31 @@ void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source)
 	source.get(out.data());
 }
 
+RenderQuality GetRenderQualityFromPlug(const char* plugName)
+{
+	MPlug plug = GetRadeonProRenderGlobalsPlug(plugName);
+
+	if (plug.isNull())
+	{
+		MGlobal::displayError("Cannot get render type selected. Full render quality will be used");
+		return RenderQuality::RenderQualityFull;
+	}
+
+	return (RenderQuality)plug.asInt();
+}
+
+RenderQuality GetRenderQualityForRenderType(RenderType renderType)
+{
+	RenderQuality quality = RenderQuality::RenderQualityFull;
+	if (renderType == RenderType::ProductionRender)
+	{
+		quality = GetRenderQualityFromPlug("renderQualityFinalRender");
+	}
+	else if (renderType == RenderType::ViewportRender || renderType == RenderType::IPR)
+	{
+		quality = GetRenderQualityFromPlug("renderQualityViewport");
+	}
+
+	return quality;
+}
 

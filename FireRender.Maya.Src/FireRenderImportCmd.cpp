@@ -1,5 +1,5 @@
 #include "FireRenderImportCmd.h"
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 #include "FireRenderUtils.h"
 #include <maya/MArgDatabase.h>
 #include <maya/MItDag.h>

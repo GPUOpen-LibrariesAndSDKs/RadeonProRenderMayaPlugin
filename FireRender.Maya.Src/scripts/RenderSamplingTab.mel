@@ -6,7 +6,7 @@ global proc createRenderSamplingTab()
     scrollLayout -w 375 -horizontalScrollBarThickness 0 RenderSamplingScrollLayout;
     columnLayout -w 375 -adjustableColumn true RenderSamplingTabColumn;
 
-    frameLayout -label "Anti-Aliasing" -cll false -cl 0 RenderSamplingAASettings;
+    frameLayout -label "Anti-Aliasing" -cll true -cl 0 RenderSamplingAASettings;
     columnLayout -cat left 20;
 
 	// Filter
@@ -22,13 +22,13 @@ global proc createRenderSamplingTab()
     setParent ..;
     setParent ..;
 
-    frameLayout -label "Adaptive Sampling" -cll false -cl 0 AdaptiveSamplingCCSettings;
+    frameLayout -label "Adaptive Sampling" -cll true -cl 0 AdaptiveSamplingCCSettings;
 	attrControlGrp
 		-label "Threshold"
 		-attribute "RadeonProRenderGlobals.adaptiveThreshold" adaptiveThreshold;
     setParent ..;	
 
-    frameLayout -label "Final Render Completion Criteria" -cll false -cl 0 RenderSamplingCCSettings;
+    frameLayout -label "Final Render Completion Criteria" -cll true -cl 0 RenderSamplingCCSettings;
     columnLayout -cat left 20;
 
 	attrControlGrp
@@ -56,7 +56,7 @@ global proc createRenderSamplingTab()
     setParent ..;
 
 	//viewport compeltion criteria
-    frameLayout -label "Viewport Completion Criteria" -cll false -cl 0 ViewportRenderCCSettings;
+    frameLayout -label "Viewport Completion Criteria" -cll true -cl 0 ViewportRenderCCSettings;
     columnLayout -cat left 20;
 
 	attrControlGrp

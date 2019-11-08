@@ -10,7 +10,7 @@ void StartupContextChecker::CheckContexts()
 
 	//Check rpr context
 	rpr_int res;
-	FireRenderContext rprContext;
+	TahoeContext rprContext;
 	try
 	{
 		auto createFlags = FireMaya::Options::GetContextDeviceFlags();

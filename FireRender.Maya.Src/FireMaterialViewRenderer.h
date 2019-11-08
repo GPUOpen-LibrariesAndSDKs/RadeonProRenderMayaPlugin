@@ -11,7 +11,7 @@
 
 #ifndef MAYA2015
 #include "frWrap.h"
-#include "FireRenderContext.h"
+#include "Context/TahoeContext.h"
 #include "Translators/Translators.h"
 #include "FireMaya.h"
 #include <maya/MPxRenderer.h>
@@ -38,7 +38,7 @@ public:
 
 	std::map<std::string, std::string> m_lightsNames;
 
-	FireRenderContext m_context;
+	TahoeContext m_context;
 
 	std::tuple<frw::Shader, FireMaya::NodeId> m_surfaceShader;
 

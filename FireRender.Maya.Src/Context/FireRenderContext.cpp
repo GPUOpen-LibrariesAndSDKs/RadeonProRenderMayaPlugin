@@ -58,8 +58,6 @@ std::map<FireRenderContext*,FireRenderContext::Lock::frcinfo> FireRenderContext:
 #include "FireRenderIBL.h"
 #include <maya/MFnRenderLayer.h>
 
-rpr_int g_tahoePluginID = -1;
-
 #ifdef OPTIMIZATION_CLOCK
 	int FireRenderContext::timeInInnerAddPolygon;
 	int FireRenderContext::overallAddPolygon;
@@ -73,7 +71,6 @@ rpr_int g_tahoePluginID = -1;
 #endif
 
 FireRenderContext::FireRenderContext() :
-	m_transparent(NULL),
 	m_width(0),
 	m_height(0),
 	m_useRegion(false),
@@ -213,7 +210,10 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 	}
 	else
 	{
-		context.SetAOV(nullptr, index);
+		if (IsAOVSupported(index))
+		{
+			context.SetAOV(nullptr, index);
+		}
 	}
 }
 
@@ -310,11 +310,8 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 			}
 		}
 
-		m_transparent = frw::TransparentShader(GetMaterialSystem());
-		m_transparent.SetValue("color", 1.0f);
-
 		updateLimitsFromGlobalData(m_globals);
-		m_globals.setupContext(*this);
+		setupContext(m_globals);
 
 		setMotionBlur(m_globals.motionBlur);
 
@@ -602,7 +599,32 @@ void FireRenderContext::cleanScene()
 		LOCKMUTEX(this);
 		removeCallbacks();
 
+		// Remove shapes first (It is connected with issue in Hybrid. We should clean up all meshes first before deleting lights)
+		FireRenderObjectMap::iterator it = m_sceneObjects.begin();
+
+		while (it != m_sceneObjects.end())	
+		{
+			FireRenderMesh* fireRenderMesh = dynamic_cast<FireRenderMesh*> (it->second.get());
+			FireRenderLight* fireRenderLight = dynamic_cast<FireRenderLight*> (it->second.get());
+
+			if (fireRenderMesh != nullptr)
+			{
+				fireRenderMesh->setVisibility(false);
+				it = m_sceneObjects.erase(it);
+			}
+			else if (fireRenderLight != nullptr && fireRenderLight->data().isAreaLight)
+			{
+				fireRenderLight->detachFromScene();
+				it = m_sceneObjects.erase(it);
+			}
+			else
+			{
+				it++;
+			}
+		}
+
 		m_sceneObjects.clear();
+
 		m_camera.clear();
 		m_defaultLight.Reset();
 		m.Reset();
@@ -685,7 +707,7 @@ void FireRenderContext::initSwatchScene()
 	m_sceneObjects["light"] = std::shared_ptr<FireRenderObject>(light);
 
 	m_globals.readFromCurrentScene();
-	m_globals.setupContext(*this);
+	setupContext(m_globals);
 
 	CompletionCriteriaParams completionParams;
 	int iterations = FireRenderGlobalsData::getThumbnailIterCount();
@@ -712,10 +734,16 @@ void FireRenderContext::render(bool lock)
 
 	if (m_restartRender)
 	{
-		for (int i = 0; i != RPR_AOV_MAX; ++i) {
-			if (aovEnabled[i]){
+		for (int i = 0; i != RPR_AOV_MAX; ++i) 
+		{
+			if (aovEnabled[i])
+			{
 				m.framebufferAOV[i].Clear();
-				m.framebufferAOV_resolved[i].Clear();
+
+				if (m.framebufferAOV_resolved[i].IsValid())
+				{
+					m.framebufferAOV_resolved[i].Clear();
+				}
 			}
 		}
 
@@ -868,65 +896,17 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 {
 	RPR_THREAD_ONLY;
 
-	auto cachePath = getShaderCachePath();
-
-	if (g_tahoePluginID == -1)
-	{
-#ifdef OSMac_
-		g_tahoePluginID = rprRegisterPlugin("/Users/Shared/RadeonProRender/lib/libTahoe64.dylib");
-#elif __linux__
-		g_tahoePluginID = rprRegisterPlugin("libTahoe64.so");
-#else
-		g_tahoePluginID = rprRegisterPlugin("Tahoe64.dll");
-#endif
-	}
-
-	if (g_tahoePluginID == -1)
-	{
-		MGlobal::displayError("Unable to register Radeon ProRender plug-in.");
-		return false;
-	}
-
-	rpr_int plugins[] = { g_tahoePluginID };
-	size_t pluginCount = sizeof(plugins) / sizeof(plugins[0]);
+	rpr_context context = nullptr;
 
 	bool useThread = (createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) == RPR_CREATION_FLAGS_ENABLE_CPU;
-
 	DebugPrint("* Creating Context: %d (0x%x) - useThread: %d", createFlags, createFlags, useThread);
 
-	rpr_context context = nullptr;
-    if (isMetalOn() && !(createFlags & RPR_CREATION_FLAGS_ENABLE_CPU))
-    {
-        createFlags = createFlags | RPR_CREATION_FLAGS_ENABLE_METAL;
-    }
-
-	// setup CPU thread count
-	std::vector<rpr_context_properties> ctxProperties;
-#if (RPR_VERSION_MINOR < 34)
-	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_SAMPLER_TYPE);
-#else
-	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_SAMPLER_TYPE);
-#endif
-	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_SAMPLER_TYPE_CMJ);
-
-	int threadCountToOverride = getThreadCountToOverride();
-	if ((createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) && threadCountToOverride > 0)
+	if (isMetalOn() && !(createFlags & RPR_CREATION_FLAGS_ENABLE_CPU))
 	{
-#if (RPR_VERSION_MINOR < 34)
-		ctxProperties.push_back ((rpr_context_properties) RPR_CONTEXT_CREATEPROP_CPU_THREAD_LIMIT);
-#else
-		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CPU_THREAD_LIMIT);
-#endif
-		ctxProperties.push_back ((void*) (size_t) threadCountToOverride);
+		createFlags = createFlags | RPR_CREATION_FLAGS_ENABLE_METAL;
 	}
 
-	ctxProperties.push_back( (rpr_context_properties) 0);
-
-#ifdef RPR_VERSION_MAJOR_MINOR_REVISION
-	int res = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), &context);
-#else
-	int res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), &context);
-#endif
+	int res = CreateContextInternal(createFlags, &context);
 
 	if (pOutRes != nullptr)
 	{
@@ -981,7 +961,7 @@ bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool
 		{
 			// GL interop is active if enabled and not using CPU rendering.
 			bool useCPU = (creation_flags & RPR_CREATION_FLAGS_ENABLE_CPU) != 0;
-			m_glInteropActive = !useCPU;
+			m_glInteropActive = !useCPU && IsGLInteropEnabled();
 
 			if (m_glInteropActive)
 				creation_flags |= RPR_CREATION_FLAGS_ENABLE_GL_INTEROP;
@@ -1045,6 +1025,12 @@ rpr_framebuffer FireRenderContext::frameBufferAOV(int aov) const
 rpr_framebuffer FireRenderContext::frameBufferAOV_Resolved(int aov) {
 	RPR_THREAD_ONLY;
 	frw::FrameBuffer fb;
+
+	if (m.framebufferAOV[aov].Handle() == nullptr)
+	{
+		return nullptr;
+	}
+
 	if (needResolve())
 	{
 		//resolve tone mapping
@@ -1433,12 +1419,6 @@ void FireRenderContext::RefreshInstances()
 		AddSceneObject(it);
 }
 
-
-frw::Shader FireRenderContext::transparentShader()
-{
-	return m_transparent;
-}
-
 rpr_scene  FireRenderContext::scene()
 {
 	RPR_THREAD_ONLY;
@@ -1582,7 +1562,7 @@ void FireRenderContext::updateFromGlobals(bool applyLock)
         }
 
 		m_globals.readFromCurrentScene();
-		m_globals.updateTonemapping(*this);
+		updateTonemapping(m_globals);
 
 		m_tonemappingChanged = false;
 	}
@@ -1596,7 +1576,7 @@ void FireRenderContext::updateFromGlobals(bool applyLock)
     }
     
 	m_globals.readFromCurrentScene();
-	m_globals.setupContext(*this);
+	setupContext(m_globals);
 
 	updateLimitsFromGlobalData(m_globals);
 	setMotionBlur(m_globals.motionBlur);
@@ -1658,6 +1638,15 @@ void FireRenderContext::globalsChangedCallback(MNodeMessage::AttributeMessage ms
 			if (FireRenderGlobalsData::isDenoiser(plug.name()))
 			{
 				frContext->m_denoiserChanged = true;
+			}
+
+			RenderType renderType = frContext->GetRenderType();
+			RenderQuality quality = GetRenderQualityForRenderType(renderType);
+
+			if (!frContext->IsRenderQualitySupported(quality))
+			{
+				// If current Render Context does not support newly selected render quality we need to restart the render
+				frContext->m_DoesContextSupportCurrentSettings = false;			
 			}
 
 			frContext->m_globalsChanged = true;
@@ -1763,12 +1752,12 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 			|| dagNode.typeName() == "ambientLight"
 			|| VRay::isEnvironmentLight(dagNode))
 		{
-			ob = CreateSceneObject<FireRenderEnvLight, NodeCachingOptions::AddPath>(dagPath);
+			ob = CreateEnvLight(dagPath);
 		}
 		else if (dagNode.typeId() == TypeId::FireRenderSkyLocator
 			|| VRay::isSkyLight(dagNode))
 		{
-			ob = CreateSceneObject<FireRenderSky, NodeCachingOptions::AddPath>(dagPath);
+			ob = CreateSky(dagPath);
 		}
 		else if (dagNode.typeName() == "fluidShape")
 		{
@@ -1802,6 +1791,16 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 	}
 
 	return !!ob;
+}
+
+FireRenderEnvLight* FireRenderContext::CreateEnvLight(const MDagPath& dagPath)
+{
+	return CreateSceneObject<FireRenderEnvLight, NodeCachingOptions::AddPath>(dagPath);
+}
+
+FireRenderSky* FireRenderContext::CreateSky(const MDagPath& dagPath)
+{
+	return CreateSceneObject<FireRenderSky, NodeCachingOptions::AddPath>(dagPath);
 }
 
 void FireRenderContext::setDirty()
@@ -2009,9 +2008,11 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 	return true;
 }
 
-void FireRenderContext::setUseRegion(bool value)
+bool FireRenderContext::setUseRegion(bool value)
 {
-	m_useRegion = value;
+	m_useRegion = value && IsRenderRegionSupported();
+
+	return m_useRegion;
 }
 
 bool FireRenderContext::useRegion()
@@ -2644,4 +2645,17 @@ frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMesh* pMesh
 	shader.SetMaterialName(node.name().asChar());
 
 	return shader;
+}
+
+void FireRenderContext::enableAOV(int aov, bool flag)
+{
+	if (IsAOVSupported(aov))
+	{
+		aovEnabled[aov] = flag;
+	}
+}
+
+bool FireRenderContext::isAOVEnabled(int aov) 
+{
+	return aovEnabled[aov];
 }

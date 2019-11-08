@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 #include <maya/MPxFileTranslator.h>
 
 #include <maya/MFnAnimCurve.h>

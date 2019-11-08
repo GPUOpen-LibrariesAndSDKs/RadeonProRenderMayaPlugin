@@ -12,6 +12,8 @@
 #include "RenderStampUtils.h"
 #include "maya/MItSelectionList.h"
 
+#include "Context/ContextCreator.h"
+
 using namespace std;
 using namespace std::chrono;
 using namespace RPR;
@@ -30,14 +32,16 @@ FireRenderIpr::FireRenderIpr() :
 	m_previousSelectionList()
 {
 	m_renderViewUpdateScheduled = false;
-	m_context.SetRenderType(RenderType::IPR);
 }
 
 // -----------------------------------------------------------------------------
 FireRenderIpr::~FireRenderIpr()
 {
 	stop();
-	m_context.cleanScene();
+	if (m_contextPtr)
+	{
+		m_contextPtr->cleanScene();
+	}
 	m_previousSelectionList.clear();
 }
 
@@ -87,13 +91,15 @@ void FireRenderIpr::updateRegion()
 	{
 		FireRenderThread::RunOnceProcAndWait([this]()
 		{
-			m_context.setUseRegion(m_isRegion);
+			m_isRegion = m_contextPtr->setUseRegion(m_isRegion);
 
 			if (m_isRegion)
-				m_context.setRenderRegion(m_region);
+			{
+				m_contextPtr->setRenderRegion(m_region);
+			}
 
 			// Invalidate the context to restart the render.
-			m_context.setDirty();
+			m_contextPtr->setDirty();
 		});
 	}
 
@@ -135,24 +141,27 @@ bool FireRenderIpr::start()
 		if (m_width == 0 || m_height == 0)
 			return false;
 
+		m_contextPtr = ContextCreator::CreateAppropriateContextForRenderType(RenderType::IPR);
+		m_contextPtr->SetRenderType(RenderType::IPR);
+
 		//enable AOV-COLOR and Variance so that it can be resolved and used properly
-		m_context.enableAOV(RPR_AOV_COLOR);
-		m_context.enableAOV(RPR_AOV_VARIANCE);
+		m_contextPtr->enableAOV(RPR_AOV_COLOR);
+		m_contextPtr->enableAOV(RPR_AOV_VARIANCE);
 
 		// Enable SC related AOVs if they was turned on
 		FireRenderGlobalsData globals;
 		globals.readFromCurrentScene();
 
 		if (globals.aovs.getAOV(RPR_AOV_OPACITY)->active)
-			m_context.enableAOV(RPR_AOV_OPACITY);
+			m_contextPtr->enableAOV(RPR_AOV_OPACITY);
 		if (globals.aovs.getAOV(RPR_AOV_BACKGROUND)->active)
-			m_context.enableAOV(RPR_AOV_BACKGROUND);
+			m_contextPtr->enableAOV(RPR_AOV_BACKGROUND);
 		if (globals.aovs.getAOV(RPR_AOV_SHADOW_CATCHER)->active)
-			m_context.enableAOV(RPR_AOV_SHADOW_CATCHER);
+			m_contextPtr->enableAOV(RPR_AOV_SHADOW_CATCHER);
 		if (globals.aovs.getAOV(RPR_AOV_REFLECTION_CATCHER)->active)
-			m_context.enableAOV(RPR_AOV_REFLECTION_CATCHER);
+			m_contextPtr->enableAOV(RPR_AOV_REFLECTION_CATCHER);
 		
-		if (!m_context.buildScene(false, false, false, false))
+		if (!m_contextPtr->buildScene(false, false, false, false))
 		{
 			return false;
 		}
@@ -160,16 +169,16 @@ bool FireRenderIpr::start()
 		SetupOOC(globals);
 
 		m_needsContextRefresh = true;
-		m_context.setResolution(m_width, m_height, true);
-		m_context.setCamera(m_camera, true);
-		m_context.setStartedRendering();
-		m_context.setUseRegion(m_isRegion);
+		m_contextPtr->setResolution(m_width, m_height, true);
+		m_contextPtr->setCamera(m_camera, true);
+		m_contextPtr->setStartedRendering();
+		m_contextPtr->setUseRegion(m_isRegion);
 
-		if (m_context.isFirstIterationAndShadersNOTCached())
+		if (m_contextPtr->isFirstIterationAndShadersNOTCached())
 			showWarningDialog = true;	//first iteration and shaders are _NOT_ cached
 
 		if (m_isRegion)
-			m_context.setRenderRegion(m_region);
+			m_contextPtr->setRenderRegion(m_region);
 
 		return true;
 	});
@@ -212,7 +221,7 @@ bool FireRenderIpr::start()
 // -----------------------------------------------------------------------------
 void FireRenderIpr::SetupOOC(FireRenderGlobalsData& globals)
 {
-	frw::Context context = m_context.GetContext();
+	frw::Context context = m_contextPtr->GetContext();
 	rpr_context frcontext = context.Handle();
 
 	rpr_int frstatus = RPR_SUCCESS;
@@ -234,11 +243,11 @@ bool FireRenderIpr::pause(bool value)
 
 	if (m_isPaused)
 	{
-		m_context.state = FireRenderContext::StatePaused;
+		m_contextPtr->state = FireRenderContext::StatePaused;
 	}
 	else
 	{
-		m_context.state = FireRenderContext::StateRendering;
+		m_contextPtr->state = FireRenderContext::StateRendering;
 
 		m_needsContextRefresh = true;
 	}
@@ -251,7 +260,7 @@ bool FireRenderIpr::stop()
 {
 	if (m_isRunning)
 	{
-		m_context.state = FireRenderContext::StateExiting;
+		m_contextPtr->state = FireRenderContext::StateExiting;
 
 		stopMayaRender();
 
@@ -271,7 +280,14 @@ bool FireRenderIpr::RunOnViewportThread()
 {
 	RPR_THREAD_ONLY;
 
-	switch (m_context.state)
+	if (m_contextPtr && !m_contextPtr->DoesContextSupportCurrentSettings())
+	{
+		// Restart IPR
+		MGlobal::executeCommandOnIdle("IPRRenderIntoNewWindow();");
+		m_contextPtr->ResetContextSupportCurrentSettings();
+	}
+
+	switch (m_contextPtr->state)
 	{
 		// The context is exiting.
 	case FireRenderContext::StateExiting:
@@ -281,7 +297,7 @@ bool FireRenderIpr::RunOnViewportThread()
 		// The context is rendering.
 	case FireRenderContext::StateRendering:
 	{
-		if (m_needsContextRefresh || m_context.isDirty())
+		if (m_needsContextRefresh || m_contextPtr->isDirty())
 		{
 			FireRenderThread::RunProcOnMainThread([this]() {refreshContext(); });
 			
@@ -289,15 +305,15 @@ bool FireRenderIpr::RunOnViewportThread()
 		}
 
 		// Check if a render is required.
-		if (m_context.needsRedraw() ||
-			m_context.cameraAttributeChanged() ||
-			m_context.keepRenderRunning())
+		if (m_contextPtr->needsRedraw() ||
+			m_contextPtr->cameraAttributeChanged() ||
+			m_contextPtr->keepRenderRunning())
 		{
 			try
 			{
 				// Render.
 				AutoMutexLock contextLock(m_contextLock);
-				m_context.render(false);
+				m_contextPtr->render(false);
 
 				// Read the frame buffer.
 				AutoMutexLock pixelsLock(m_pixelsLock);
@@ -326,7 +342,7 @@ bool FireRenderIpr::RunOnViewportThread()
 void FireRenderIpr::CheckSelection()
 {
 	// render selected is not enabled => back off
-	if (!m_context.renderSelectedObjectsOnly())
+	if (!m_contextPtr->renderSelectedObjectsOnly())
 		return;
 
 	MSelectionList currSelectionList;
@@ -371,7 +387,7 @@ void FireRenderIpr::CheckSelection()
 				MObject component;
 				MStatus status = it.getDagPath(item, component);
 				item.extendToShape();
-				FireRenderObject* pRObj = m_context.getRenderObject(item);
+				FireRenderObject* pRObj = m_contextPtr->getRenderObject(item);
 				if (pRObj)
 				{
 					pRObj->setDirty();
@@ -384,7 +400,7 @@ void FireRenderIpr::CheckSelection()
 				MObject component;
 				MStatus status = it2.getDagPath(item, component);
 				item.extendToShape();
-				FireRenderObject* pRObj = m_context.getRenderObject(item);
+				FireRenderObject* pRObj = m_contextPtr->getRenderObject(item);
 				if (pRObj)
 				{
 					pRObj->setDirty();
@@ -399,7 +415,7 @@ void FireRenderIpr::CheckSelection()
 
 void FireRenderIpr::updateMayaRenderInfo()
 {
-	std::string renderStampText = RenderStampUtils::FormatRenderStamp(m_context, "\\nFrame: %f, Iteration: %pp, Lights: %sl, Objects: %so");
+	std::string renderStampText = RenderStampUtils::FormatRenderStamp(*m_contextPtr, "\\nFrame: %f, Iteration: %pp, Lights: %sl, Objects: %so");
 
 	MString command;
 	command.format("renderWindowEditor -e -pcaption \"^1s\" renderView", renderStampText.c_str());
@@ -416,7 +432,7 @@ void FireRenderIpr::updateRenderView()
 	CheckSelection();
 
 	// Check that rendering is still active.
-	if (m_context.state != FireRenderContext::StateRendering)
+	if (m_contextPtr->state != FireRenderContext::StateRendering)
 		return;
 
 	{
@@ -553,19 +569,19 @@ void FireRenderIpr::readFrameBuffer()
 
 	// We need to made SC merge here, but we don't want to do opacity merge 
 	// since we render in interactive mode
-	m_context.readFrameBuffer(m_pixels.data(), RPR_AOV_COLOR, m_context.width(),
-		m_context.height(), m_region, true, false, true);
+	m_contextPtr->readFrameBuffer(m_pixels.data(), RPR_AOV_COLOR, m_contextPtr->width(),
+		m_contextPtr->height(), m_region, true, false, true);
 }
 
 // -----------------------------------------------------------------------------
 void FireRenderIpr::refreshContext()
 {
-	if (!m_context.isDirty())
+	if (!m_contextPtr->isDirty())
 		return;
 
 	FireRenderThread::RunOnceProcAndWait([this]()
 	{
 		AutoMutexLock contextLock(m_contextLock);
-		m_context.Freshen(false);
+		m_contextPtr->Freshen(false);
 	});
 }

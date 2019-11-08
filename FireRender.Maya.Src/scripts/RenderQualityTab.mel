@@ -2,7 +2,15 @@ proc createFinalRenderQualityPart()
 {
 	// Render Resources section
 	//
-	frameLayout -label "Final Render Ray Depths" -cll false -cl 0 fireRenderQualityFrame;
+
+	frameLayout -label "Final Render Quality" -cll true -cl 0 fireRenderQualityFrame;
+	attrControlGrp
+		 -label "Render Quality"
+		 -attribute "RadeonProRenderGlobals.renderQualityFinalRender";
+	setParent ..;
+
+
+	frameLayout -label "Final Render Ray Depths" -cll true -cl 0 fireRenderRayDepthsFrame;
 
 	// Trace depth
 	attrControlGrp
@@ -32,7 +40,7 @@ proc createFinalRenderQualityPart()
 	setParent ..;
 
 	// Advanced settings section
-	frameLayout -label "Final Render Advanced Settings" -cll false -cl 0 fireRenderQualityAdvancedFrame;
+	frameLayout -label "Final Render Advanced Settings" -cll true -cl 0 fireRenderQualityAdvancedFrame;
 
 	attrControlGrp
 		-label "Ray Epsilon(mm)"
@@ -65,6 +73,14 @@ proc createFinalRenderQualityPart()
 	setParent ..;
 }
 
+proc createViewportRenderQualityPart()
+{
+	frameLayout -label "Viewport Render Quality" -cll true -cl 0 fireRenderViewportQualityFrame;
+	attrControlGrp
+		 -label "Render Quality"
+		 -attribute "RadeonProRenderGlobals.renderQualityViewport";
+	setParent ..;
+}
 
 global proc createQualityTab()
 {
@@ -73,6 +89,7 @@ global proc createQualityTab()
 	columnLayout -w 375 -adjustableColumn true fireRenderTabColumn;
 
         createFinalRenderQualityPart();
+	createViewportRenderQualityPart();
 
 	formLayout
 		-edit

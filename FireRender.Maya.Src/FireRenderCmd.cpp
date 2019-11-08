@@ -324,7 +324,7 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 	auto previousUseThreadValue = FireRenderThread::UseTheThread(false);	// No need to use separate thread for batch render
 
 	// The render context.
-	FireRenderContext context;
+	TahoeContext context;
 
 	try
 	{

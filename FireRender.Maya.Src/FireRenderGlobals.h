@@ -92,6 +92,8 @@ public:
 
 	static MStatus initialize();
 
+	static void addRenderQualityModes(MFnEnumAttribute& eAttr);
+
 	static void createDenoiserAttributes();
 
     static void createFinalRenderAttributes();

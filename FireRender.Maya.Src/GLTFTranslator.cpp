@@ -1,6 +1,7 @@
 #include "GLTFTranslator.h"
 
 #include "Translators/Translators.h"
+#include "Context/TahoeContext.h"
 
 #include <maya/MItDag.h>
 #include <maya/MGlobal.h>
@@ -51,7 +52,7 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
     return MStatus::kFailure;
 #else
 	// Create new context and fill it with scene
-	std::unique_ptr<FireRenderContext> fireRenderContext = std::make_unique<FireRenderContext>();
+	std::unique_ptr<TahoeContext> fireRenderContext = std::make_unique<TahoeContext>();
 	ContextAutoCleaner contextAutoCleaner(fireRenderContext.get());
 
 	fireRenderContext->setCallbackCreationDisabled(true);

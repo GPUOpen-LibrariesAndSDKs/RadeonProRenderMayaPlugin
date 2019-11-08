@@ -1,5 +1,5 @@
 #include "Translators.h"
-#include "FireRenderContext.h"
+#include "../Context/FireRenderContext.h"
 
 #include <maya/MPlug.h>
 #include <maya/MDagPath.h>
@@ -250,7 +250,10 @@ namespace FireMaya
 		assert(mstatus == MStatus::kSuccess);
 
 		frstatus = rprCameraSetLensShift(frcamera, lensShiftX, lensShiftY);
-		checkStatus(frstatus);
+		if (frstatus != RPR_ERROR_UNSUPPORTED)
+		{
+			checkStatus(frstatus);
+		}
 
 		// set rpr name
 		frw_camera.SetName(fnCamera.name().asChar());
@@ -742,15 +745,16 @@ namespace FireMaya
 			frlight = frcontext.CreateEnvironmentLight();
 
 		rpr_image_desc imgDesc;
-		imgDesc.image_width = 1;
-		imgDesc.image_height = 1;
+		rpr_uint channels = 4;
+		imgDesc.image_width = 64;
+		imgDesc.image_height = 64;
 		imgDesc.image_depth = 0;
-		imgDesc.image_row_pitch = imgDesc.image_width * sizeof(rpr_float) * 4;
+		imgDesc.image_row_pitch = imgDesc.image_width * sizeof(rpr_float) * channels;
 		imgDesc.image_slice_pitch = 0;
 
-		float imgData[4] = { 1.f, 1.f, 1.f, 1.f };
+		std::vector<float> imgData(imgDesc.image_width * imgDesc.image_height * channels, 1.f);
 
-		frw::Image frImage(frcontext, { 4, RPR_COMPONENT_TYPE_FLOAT32 }, imgDesc, imgData);
+		frw::Image frImage(frcontext, { channels, RPR_COMPONENT_TYPE_FLOAT32 }, imgDesc, imgData.data());
 
 		frlight.SetImage(frImage);
 		frlight.SetLightIntensityScale(intensity);
