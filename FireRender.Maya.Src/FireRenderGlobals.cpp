@@ -380,6 +380,7 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::motionBlurCameraExposure = nAttr.create("motionBlurCameraExposure", "mbce", MFnNumericData::kFloat, 0.1f, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0.0);
+	nAttr.setSoftMax(10.0);
 
 	Attribute::cameraType = eAttr.create("cameraType", "camt", kCameraDefault, &status);
 	eAttr.addField("Default", kCameraDefault);
