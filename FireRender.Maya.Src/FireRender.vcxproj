@@ -232,6 +232,7 @@
     <ClCompile Include="..\FireRender.Components\cpp\XMLMaterialExport\XMLMaterialExportCommon.cpp" />
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\half.cpp" />
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.cpp" />
+    <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RPRStringIDMapper.cpp" />
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.cpp" />
     <ClCompile Include="athenaCmd.cpp" />
     <ClCompile Include="Context\ContextCreator.cpp" />
@@ -369,6 +370,7 @@
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedFunctions.h" />
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedFunctions_GL.h" />
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.h" />
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\RPRStringIDMapper.h" />
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.h" />
     <ClInclude Include="athenaCmd.h" />
     <ClInclude Include="attributeNames.h" />

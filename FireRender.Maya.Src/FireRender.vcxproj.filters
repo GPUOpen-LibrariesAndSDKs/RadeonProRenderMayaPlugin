@@ -569,6 +569,9 @@
     <ClCompile Include="FireRenderLayeredTextureUtils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RPRStringIDMapper.cpp">
+      <Filter>RadeonProRender</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -981,6 +984,9 @@
     </ClInclude>
     <ClInclude Include="FireRenderLayeredTextureUtils.h">
       <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\RPRStringIDMapper.h">
+      <Filter>RadeonProRender</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
