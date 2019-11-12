@@ -220,52 +220,27 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 
 		rprx_context mat_rprx_context = nullptr;
 		std::set<rpr_material_node> nodeList;
-		std::set<rprx_material> nodeListX;
 		std::unordered_map<rpr_image, RPR_MATERIAL_XML_EXPORT_TEXTURE_PARAM> textureParameter;
-		void* closureNode = nullptr;
 
 		std::string folderpath(filePath.asChar());
 		folderpath += "/";
 
 		bool exportImageUV = false; // ignore UV for IMAGE_TEXTURE nodes.  Because UV is exported with "tiling_u" & "tiling_v" in XML
 
-		bool isitRprx = shader.IsRprxMaterial();
-		if (isitRprx)
-		{
-			rprx_material mat_rprx_material = shader.GetHandleRPRXmaterial();
-			mat_rprx_context = shader.GetHandleRPRXcontext();
-			closureNode = mat_rprx_material;
+		rpr_material_node materialNodeRPR = shader.IsRprxMaterial() ? shader.GetHandleRPRXmaterial() : shader.Handle();
 
-			bool success = ParseRPRX(
-				mat_rprx_material,
-				mat_rprx_context,
-				nodeList,
-				nodeListX,
-				folderpath,
-				textureParameter,
-				material_name,
-				exportImageUV);
+		bool success = ParseRPR(
+			materialNodeRPR,
+			nodeList,
+			folderpath,
+			false,
+			textureParameter,
+			material_name,
+			exportImageUV);
 
-			if (!success)
-				return MStatus::kFailure;
-		}
-		else
-		{
-			closureNode = shader.Handle();
-
-			bool success = ParseRPR(
-				shader.Handle(),
-				nodeList,
-				nodeListX,
-				folderpath,
-				false,
-				textureParameter,
-				material_name,
-				exportImageUV);
-
-			if (!success)
-				return MStatus::kFailure;
-		}
+		if (!success)
+			return MStatus::kFailure;
+		
 
 		std::string curr_material_name;
 		if (std::find(namesUsed.begin(), namesUsed.end(), material_name) == namesUsed.end())
@@ -285,12 +260,9 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 		std::map<rpr_image, EXTRA_IMAGE_DATA> extraImageData;
 		ExportMaterials(
 			res_filename,
-			nodeList, 
-			nodeListX,
-			GetRPRXParamList(),
-			mat_rprx_context,
+			nodeList,
 			textureParameter,
-			closureNode,
+			materialNodeRPR,
 			material_name,
 			extraImageData,
 			exportImageUV

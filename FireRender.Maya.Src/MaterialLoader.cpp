@@ -14,6 +14,7 @@
 #include "FileSystemUtils.h"
 #include "FireRenderImportExportXML.h"
 #include "XMLMaterialExport/XMLMaterialExportCommon.h"
+#include <../RPRStringIDMapper.h>
 
 using namespace std;
 
@@ -25,6 +26,8 @@ const char* Place2dNodeName = "place2dTexture_autocreated";
 								if (status != RPR_SUCCESS) \
 									throw std::runtime_error("Radeon ProRender error (" + std::to_string(status) + ") in " + std::string(__FILE__) + ":" + std::to_string(__LINE__)); \
 								}
+
+RPRStringIDMapper g_rprStringMapper_;
 
 namespace
 {
@@ -133,7 +136,9 @@ namespace
 #else
 			uint32_t id = 0;
 			CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(node, i, RPR_MATERIAL_NODE_INPUT_NAME, sizeof(uint32_t), &id, nullptr));
-			std::cout << "\tparam: " << id2param[id] << ". ";
+			std::string nameParam;
+			g_rprStringMapper_.RPRMaterialInput_id_to_string(id,nameParam);
+			std::cout << "\tparam: " << nameParam << ". ";
 			std::cout << std::endl;
 #endif
 		}
@@ -510,7 +515,9 @@ void ExportMaterials(const std::string& filename, rpr_material_node* materials, 
 #else
 				uint32_t id = 0;
 				CHECK_NO_ERROR(rprMaterialNodeGetInputInfo(node, i, RPR_MATERIAL_NODE_INPUT_NAME, sizeof(uint32_t), &id, nullptr));
-				std::string param_name = id2param[id];
+				std::string param_name;
+				g_rprStringMapper_.RPRMaterialInput_id_to_string(id,param_name);
+
 #endif
 				std::string type = "";
 				std::string value = "";
