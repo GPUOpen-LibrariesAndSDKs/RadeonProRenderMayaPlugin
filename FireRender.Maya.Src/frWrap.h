@@ -1997,6 +1997,24 @@ namespace frw
 			return (int)info;
 		}
 
+		bool IsAdaptiveSamplingFinalized()
+		{
+			rpr_uint activePixelCount;
+			rpr_int res = rprContextGetInfo(Handle(), RPR_CONTEXT_ACTIVE_PIXEL_COUNT, sizeof(activePixelCount), &activePixelCount, 0);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return false;
+			}
+
+			if (!checkStatus(res))
+			{
+				return false;
+			}
+
+			return activePixelCount == 0;
+		}
+
 		class ParameterInfo
 		{
 		public:

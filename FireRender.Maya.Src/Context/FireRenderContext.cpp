@@ -2107,6 +2107,13 @@ void FireRenderContext::setStartedRendering()
 
 bool FireRenderContext::keepRenderRunning()
 {
+	// Check if adaptive sampling finished it's work.
+	// At zero iterarion there's no render info for active pixel count.
+	if (m_currentIteration != 0 && GetScope().Context().IsAdaptiveSamplingFinalized())
+	{
+		return false;
+	}
+
 	// check iteration count completion criteria
 	if (!m_completionCriteriaParams.isUnlimitedIterations() &&
 		m_currentIteration >= m_completionCriteriaParams.completionCriteriaMaxIterations)
