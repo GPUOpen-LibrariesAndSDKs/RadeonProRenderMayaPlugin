@@ -14,12 +14,14 @@ class FireRenderMeshMASH;
 	Handles all instanced objects lifecycle.
 	For now supports only one target object, but already retieves all instanced object array
 */
-class InstancerMASH: public FireRenderObject
+class InstancerMASH: public FireRenderNode
 {
 	using FireRenderObjectMap = std::map<std::size_t, std::shared_ptr<FireRenderMeshMASH>>;
 
 	/** All objects created by instancer */
 	FireRenderObjectMap m_instancedObjects;
+
+	size_t m_instancedObjectsCachedSize;
 
 public:
     InstancerMASH(FireRenderContext* context, const MDagPath& dagPath);
@@ -32,5 +34,6 @@ private:
 	std::vector<MObject> GetTargetObjects() const;
 	std::vector<MMatrix> GetTransformMatrices() const;
 	void GenerateInstances();
+	bool ShouldBeRecreated() const;
 };
 
