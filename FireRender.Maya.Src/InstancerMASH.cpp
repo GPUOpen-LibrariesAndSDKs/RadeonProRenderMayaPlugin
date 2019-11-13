@@ -1,7 +1,9 @@
 #include <InstancerMASH.h>
 #include <FireRenderMeshMASH.h>
 
-InstancerMASH::InstancerMASH(FireRenderContext* context, const MDagPath& dagPath) : FireRenderObject(context, dagPath.node())
+InstancerMASH::InstancerMASH(FireRenderContext* context, const MDagPath& dagPath) :
+	FireRenderNode(context, dagPath),
+	m_instancedObjectsCachedSize(0)
 {
 	GenerateInstances();
 	RegisterCallbacks();
@@ -45,13 +47,15 @@ void InstancerMASH::Freshen()
 		instancedObject->Rebuild();
 		instancedObject->setDirty();
 	}
+
+	m_instancedObjectsCachedSize = GetInstanceCount();
 }
 
 void InstancerMASH::OnPlugDirty(MObject& node, MPlug& plug)
 {
 	(void) node;
 	(void) plug;
-	if (GetTargetObjects().empty())
+	if (ShouldBeRecreated())
 	{
 		for (auto o : m_instancedObjects)
 		{
@@ -149,4 +153,12 @@ void InstancerMASH::GenerateInstances()
 		auto instance = std::make_shared<FireRenderMeshMASH>(*renderMesh, uuid.asString().asChar(), m.object);
 		m_instancedObjects[i] = instance;
 	}
+}
+
+bool InstancerMASH::ShouldBeRecreated() const
+{
+	return
+		(GetInstanceCount() != m_instancedObjectsCachedSize)
+		||
+		GetTargetObjects().empty();
 }
