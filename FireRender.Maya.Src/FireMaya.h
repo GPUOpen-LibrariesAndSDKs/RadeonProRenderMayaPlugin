@@ -274,7 +274,7 @@ namespace FireMaya
 		frw::Value convertMayaBump2d(const MFnDependencyNode &node);
 
 		frw::Value convertMayaNodePlace2dTexture(MObject node, const MFnDependencyNode& shaderNode, frw::MaterialSystem materialSystem);
-		frw::Value convertMayaNodeFile(const MFnDependencyNode& node, frw::MaterialSystem materialSystem);
+		frw::Value convertMayaNodeFile(const MFnDependencyNode& shaderNode, const frw::MaterialSystem& materialSystem, const MString& outPlugName);
 		frw::Value convertMayaNodeChecker(const MFnDependencyNode& node, frw::MaterialSystem materialSystem);
 		frw::Value convertMayaReverseMap(const MFnDependencyNode& node);
 
@@ -372,7 +372,11 @@ namespace FireMaya
 	MString GetBasePath();
 	MString GetIconPath();
 	MString GetShaderPath();
+
+	const MString MAYA_FILE_NODE_OUTPUT_COLOR = "oc";
+	const MString MAYA_FILE_NODE_OUTPUT_ALPHA = "oa";
 }
+// End of namespace FireMaya
 
 template <class T>
 void MAKE_INPUT(T& attr)

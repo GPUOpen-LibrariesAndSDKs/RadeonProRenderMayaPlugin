@@ -84,6 +84,7 @@ namespace frw
 		OperatorSelectX = RPR_MATERIAL_NODE_OP_SELECT_X,
 		OperatorSelectY = RPR_MATERIAL_NODE_OP_SELECT_Y,
 		OperatorSelectZ = RPR_MATERIAL_NODE_OP_SELECT_Z,
+		OperatorSelectW = RPR_MATERIAL_NODE_OP_SELECT_W,
 		OperatorCombine = RPR_MATERIAL_NODE_OP_COMBINE,
 		OperatorDot = RPR_MATERIAL_NODE_OP_DOT3,
 		OperatorCross = RPR_MATERIAL_NODE_OP_CROSS3,
@@ -816,6 +817,7 @@ namespace frw
 		Value SelectX() const;
 		Value SelectY() const;
 		Value SelectZ() const;
+		Value SelectW() const;
 
 		// casting
 		explicit operator ValueNode() const { return ValueNode(type == NODE ? node : ValueNode()); }
@@ -2590,6 +2592,14 @@ namespace frw
 			return ArithmeticNode(*this, OperatorSelectZ, a);
 		}
 
+		Value ValueSelectW(const Value& a) const
+		{
+			if (allowShortcuts && a.IsFloat())
+				return Value(a.w);
+
+			return ArithmeticNode(*this, OperatorSelectW, a);
+		}
+
 		// special lookup values
 		Value ValueLookupN() const
 		{
@@ -3427,18 +3437,23 @@ namespace frw
 
 	inline Value Value::SelectX() const
 	{
-		auto ms = GetMaterialSystem();
-		return ms.ValueSelectX(*this);
+		const frw::MaterialSystem materialSystem = GetMaterialSystem();
+		return materialSystem.ValueSelectX(*this);
 	}
 	inline Value Value::SelectY() const
 	{
-		auto ms = GetMaterialSystem();
-		return ms.ValueSelectY(*this);
+		const frw::MaterialSystem materialSystem = GetMaterialSystem();
+		return materialSystem.ValueSelectY(*this);
 	}
 	inline Value Value::SelectZ() const
 	{
-		auto ms = GetMaterialSystem();
-		return ms.ValueSelectZ(*this);
+		const frw::MaterialSystem materialSystem = GetMaterialSystem();
+		return materialSystem.ValueSelectZ(*this);
+	}
+	inline Value Value::SelectW() const
+	{
+		const frw::MaterialSystem materialSystem = GetMaterialSystem();
+		return materialSystem.ValueSelectW(*this);
 	}
 
 	inline MaterialSystem Value::GetMaterialSystem() const
