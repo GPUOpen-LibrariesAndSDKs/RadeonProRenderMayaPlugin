@@ -500,7 +500,7 @@ void FireRenderGlobals::createCompletionCriteriaAttributes()
 	nAttr.setSoftMax(1000);
 	nAttr.setMax(INT_MAX);
 
-	Attribute::completionCriteriaMinIterations = nAttr.create("completionCriteriaMinIterations", "ccmt", MFnNumericData::kInt, 16, &status);
+	Attribute::completionCriteriaMinIterations = nAttr.create("completionCriteriaMinIterations", "ccmt", MFnNumericData::kInt, 64, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(16);
 	nAttr.setSoftMax(100);
