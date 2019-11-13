@@ -1542,10 +1542,10 @@ frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
 	case MayaNoise:				return convertMayaNoise(shaderNode);
 	case MayaBump2d:			return convertMayaBump2d(shaderNode);
 	case MayaNodePlace2dTexture:return convertMayaNodePlace2dTexture(node, shaderNode, materialSystem);
-	case MayaNodeFile:			return convertMayaNodeFile(shaderNode, materialSystem);
+	case MayaNodeFile:			return convertMayaNodeFile(shaderNode, materialSystem, outPlugName);
 	case MayaNodeChecker:		return convertMayaNodeChecker(shaderNode, materialSystem);
 	case MayaReverseMap:		return convertMayaReverseMap(shaderNode);
-	case MayaLayeredTexture:	return FireRenderLayeredTextureUtils::ConvertMayaLayeredTexture(shaderNode, materialSystem, *this);
+	case MayaLayeredTexture:	return LayeredTextureConverter(shaderNode, materialSystem, *this, outPlugName).Convert();
 
 	case MayaNodeRamp:
 		//falling back onto rasterization:
@@ -2004,7 +2004,7 @@ frw::Value FireMaya::Scope::convertMayaNodePlace2dTexture(MObject node, const MF
 	return value;
 }
 
-frw::Value FireMaya::Scope::convertMayaNodeFile(const MFnDependencyNode& shaderNode, frw::MaterialSystem materialSystem)
+frw::Value FireMaya::Scope::convertMayaNodeFile(const MFnDependencyNode& shaderNode, const frw::MaterialSystem& materialSystem, const MString& outPlugName)
 {
 	MPlug texturePlug = shaderNode.findPlug("computedFileTextureNamePattern");
 	MString texturePath = texturePlug.asString();
@@ -2018,7 +2018,19 @@ frw::Value FireMaya::Scope::convertMayaNodeFile(const MFnDependencyNode& shaderN
 		image.SetGamma(colorSpace2Gamma(colorSpace));
 		imageNode.SetMap(image);
 		imageNode.SetValue("uv", GetConnectedValue(shaderNode.findPlug("uvCoord")));
-		return imageNode;
+
+		if (outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_COLOR)
+		{
+			return imageNode;
+		}
+		else if (outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_ALPHA)
+		{
+			return frw::Value(imageNode).SelectW();
+		}
+		else
+		{
+			m_IsLastPassTextureMissing = true;
+		}
 	}
 	else
 	{
