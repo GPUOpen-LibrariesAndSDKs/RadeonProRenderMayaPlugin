@@ -893,7 +893,11 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 		if (image)
 		{
 			m->imageCache[key] = image;
-			image.SetName(texturePath.asChar());
+
+			// recent RPR API is friendly with UTF-8.
+			// RPRS and GLTF lib use RPR Object Name (set with rprObjectSetName) to get image file path for quick export. They support this path as UTF-8.
+			image.SetName(texturePath.asUTF8());
+
 		}
 
 		return image;
