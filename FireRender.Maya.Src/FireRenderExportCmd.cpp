@@ -239,6 +239,13 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 				exportFlags = exportFlags | RPRLOADSTORE_EXPORTFLAG_COMPRESS_IMAGE_LEVEL_2 | RPRLOADSTORE_EXPORTFLAG_COMPRESS_FLOAT_TO_HALF_NORMALS | RPRLOADSTORE_EXPORTFLAG_COMPRESS_FLOAT_TO_HALF_UV;
 			}
 
+			#if RPR_VERSION_MAJOR_MINOR_REVISION >= 0x00103404 
+			// Always using this flag by default doesn't hurt :
+			// If rprObjectSetName(<path to image file>) has been called on all rpr_image, the performance of export is really better ( ~100x faster )
+			// If <path to image file> has not been set, or doesn't exist, then data from RPR is used to export the image.
+			exportFlags = exportFlags | RPRLOADSTORE_EXPORTFLAG_EMBED_FILE_IMAGES_USING_OBJECTNAME;
+			#endif
+
 			// launch export
 			rpr_int statuExport = rprsExport(newFilePath.asChar(), context.context(), context.scene(),
 				0, 0, 0, 0, 0, 0, exportFlags);
