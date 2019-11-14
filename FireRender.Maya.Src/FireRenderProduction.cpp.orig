@@ -471,7 +471,17 @@ void FireRenderProduction::UploadAthenaData()
 	WriteAthenaField("Host App", "Maya");
 
 	// render time
-	WriteAthenaField("Seconds spent on render", m_contextPtr->m_secondsSpentOnLastRender);
+<<<<<<< HEAD
+	WriteAthenaField("Seconds spent on render", m_context->m_secondsSpentOnLastRender);
+=======
+	header.str(std::string());
+	header.clear();
+	data_field.str(std::string());
+	data_field.clear();
+	data_field << m_contextPtr->m_secondsSpentOnLastRender;
+	header << "Seconds spent on render";
+	pAthenaWrapper->WriteField(header.str(), data_field.str());
+>>>>>>> master
 
 	// device used
 	// - CPU Name
@@ -535,7 +545,18 @@ void FireRenderProduction::UploadAthenaData()
 	WriteAthenaField("Resolution", imgRes);
 
 	// render result
+<<<<<<< HEAD
+	switch (m_context->m_lastRenderResultState)
+=======
+	header.str(std::string());
+	header.clear();
+	header << "End status";
+
+	data_field.str(std::string());
+	data_field.clear();
+
 	switch (m_contextPtr->m_lastRenderResultState)
+>>>>>>> master
 	{
 		case FireRenderContext::COMPLETED:
 		{
@@ -564,14 +585,27 @@ void FireRenderProduction::UploadAthenaData()
 	WriteAthenaFieldAsString("OS Locale", currLocale);
 
 	// lights
-	WriteAthenaField("Lights Count", m_contextPtr->GetScene().LightObjectCount());
+<<<<<<< HEAD
+	WriteAthenaField("Lights Count", m_context->GetScene().LightObjectCount());
+=======
+	header.str(std::string());
+	header.clear();
+	header << "Lights count";
+
+	data_field.str(std::string());
+	data_field.clear();
+	int countLights = m_contextPtr->GetScene().ShapeObjectCount();
+	data_field << countLights;
+
+	pAthenaWrapper->WriteField(header.str(), data_field.str());
+>>>>>>> master
 
 	// time and date
 	auto curr = std::chrono::system_clock::now();
 	std::time_t currTime = std::chrono::system_clock::to_time_t(curr);
 	WriteAthenaField("Stop Time", std::string(std::ctime(&currTime)) );
 
-	std::time_t renderStartTime = std::chrono::system_clock::to_time_t(m_contextPtr->m_lastRenderStartTime);
+	std::time_t renderStartTime = std::chrono::system_clock::to_time_t(m_context->m_lastRenderStartTime);
 	WriteAthenaField("Start Time", std::string(std::ctime(&renderStartTime)) );
 
 	// aov's
@@ -615,13 +649,18 @@ void FireRenderProduction::UploadAthenaData()
 	aovsUsed.reserve(aovNames.size());
 
 	for (int aovID = 0; aovID != RPR_AOV_MAX; aovID++)
-		if (m_contextPtr->isAOVEnabled(aovID))
+<<<<<<< HEAD
+		if (m_context->isAOVEnabled(aovID))
 			aovsUsed.push_back(aovNames[aovID]);
+=======
+		if (m_contextPtr->isAOVEnabled(aovID))
+			data_field << aovNames[aovID] << "; ";
+>>>>>>> master
 
 	WriteAthenaField("AOVs Enabled", aovsUsed);
 
 	// completed iterations
-	WriteAthenaField("Samples", m_contextPtr->m_currentIteration);
+	WriteAthenaField("Samples", m_context->m_currentIteration);
 
 	// textures
 	size_t countTextures = 0;
@@ -652,25 +691,15 @@ void FireRenderProduction::UploadAthenaData()
 
 	bool isDenoiserEnabled = m_globals.denoiserSettings.enabled;
 	WriteAthenaField("RIF Type", isDenoiserEnabled ? denoiserName[m_globals.denoiserSettings.type] : "Not Enabled");
-
-	RenderType renderType = m_contextPtr->GetRenderType();
-	RenderQuality quality = GetRenderQualityForRenderType(renderType);
-	static std::map<RenderQuality, std::string> renderQualityName =
-	{
-		{RenderQuality::RenderQualityFull, "Full"},
-		{RenderQuality::RenderQualityHigh, "High"},
-		{RenderQuality::RenderQualityMedium, "Medium"},
-		{RenderQuality::RenderQualityLow, "Low"},
-	};
-	WriteAthenaField("Quality", renderQualityName[quality]);
 }
 
+<<<<<<< HEAD
 std::tuple<size_t, long long> FireRenderProduction::GeSceneTexturesCountAndSize() const
 {
 	size_t data_size = 0;
-	rprContextGetInfo(m_contextPtr->context(), RPR_CONTEXT_LIST_CREATED_IMAGES, 0, nullptr, &data_size);
+	rprContextGetInfo(m_context->context(), RPR_CONTEXT_LIST_CREATED_IMAGES, 0, nullptr, &data_size);
 	std::vector<rpr_image> images(data_size / sizeof(rpr_image));
-	rprContextGetInfo(m_contextPtr->context(), RPR_CONTEXT_LIST_CREATED_IMAGES, data_size, images.data(), &data_size);
+	rprContextGetInfo(m_context->context(), RPR_CONTEXT_LIST_CREATED_IMAGES, data_size, images.data(), &data_size);
 
 	long long texturesSize = 0;
 
@@ -684,6 +713,11 @@ std::tuple<size_t, long long> FireRenderProduction::GeSceneTexturesCountAndSize(
 
 		texturesSize += temp;
 	}
+=======
+	data_field.str(std::string());
+	data_field.clear();
+	data_field << m_contextPtr->m_currentIteration;
+>>>>>>> master
 
 	return std::make_tuple(images.size(), texturesSize);
 }

@@ -235,11 +235,14 @@
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RPRStringIDMapper.cpp" />
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.cpp" />
     <ClCompile Include="athenaCmd.cpp" />
+<<<<<<< HEAD
     <ClCompile Include="athenaSystemInfo_Win.cpp" />
+=======
     <ClCompile Include="Context\ContextCreator.cpp" />
     <ClCompile Include="Context\FireRenderContext.cpp" />
     <ClCompile Include="Context\HybridContext.cpp" />
     <ClCompile Include="Context\TahoeContext.cpp" />
+>>>>>>> master
     <ClCompile Include="DependencyNode.cpp" />
     <ClCompile Include="EnableSaveIntermediateCmd.cpp" />
     <ClCompile Include="FastNoise.cpp" />
