@@ -560,9 +560,11 @@
     <ClCompile Include="..\FireRender.Components\cpp\Athena\athenaWrap.cpp">
       <Filter>FireRender.Components\Athena</Filter>
     </ClCompile>
+<<<<<<< HEAD
     <ClCompile Include="athenaSystemInfo_Win.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+=======
     <ClCompile Include="InstancerMASH.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -575,6 +577,7 @@
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RPRStringIDMapper.cpp">
       <Filter>RadeonProRender</Filter>
     </ClCompile>
+>>>>>>> master
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -979,9 +982,11 @@
     <ClInclude Include="..\FireRender.Components\cpp\Athena\athenaWrap.h">
       <Filter>FireRender.Components\Athena</Filter>
     </ClInclude>
+<<<<<<< HEAD
     <ClInclude Include="athenaSystemInfo_Win.h">
       <Filter>Utils</Filter>
     </ClInclude>
+=======
     <ClInclude Include="InstancerMASH.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -994,6 +999,7 @@
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\RPRStringIDMapper.h">
       <Filter>RadeonProRender</Filter>
     </ClInclude>
+>>>>>>> master
   </ItemGroup>
   <ItemGroup>
     <Text Include="scripts\registerFireRender.mel">

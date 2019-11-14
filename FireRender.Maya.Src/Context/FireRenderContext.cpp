@@ -783,6 +783,8 @@ void FireRenderContext::render(bool lock)
 
 	if (m_currentIteration == 0)
 	{
+		m_lastRenderStartTime = std::chrono::system_clock::now();
+
 		DebugPrint("RPR GPU Memory used: %dMB", context.GetMemoryUsage() >> 20);
 	}
 

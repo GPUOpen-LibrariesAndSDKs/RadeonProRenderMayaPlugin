@@ -719,6 +719,7 @@ public:
 
 	int	m_currentIteration;
 	int	m_progress;
+	std::chrono::time_point<std::chrono::system_clock> m_lastRenderStartTime;
 
 	double		m_timeIntervalForOutputUpdate;//in sec, TODO: check for Linux/Mac
 	clock_t		m_lastIterationTime;

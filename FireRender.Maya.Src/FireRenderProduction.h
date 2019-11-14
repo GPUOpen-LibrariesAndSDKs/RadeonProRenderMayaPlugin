@@ -115,6 +115,8 @@ private:
 
 	size_t GetScenePolyCount() const;
 
+	std::tuple<size_t, long long> GeSceneTexturesCountAndSize() const;
+
 private:
 
 	// Members
