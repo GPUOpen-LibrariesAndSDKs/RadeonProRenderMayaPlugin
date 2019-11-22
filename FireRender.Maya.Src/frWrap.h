@@ -1919,7 +1919,7 @@ namespace frw
 				controlPointsStride, num_indices,
 				curveCount, indicesData,
 				radiuses, textureCoordUV,
-				segmentsPerCurve);
+				segmentsPerCurve, 0);
 
 			checkStatusThrow(status, "Unable to create Hair Curve");
 
