@@ -12,7 +12,12 @@ rpr_int TahoeContext::GetPluginID()
 	if (m_gTahoePluginID == -1)
 	{
 #ifdef OSMac_
-		m_gTahoePluginID = rprRegisterPlugin("/Users/Shared/RadeonProRender/lib/libTahoe64.dylib");
+		std::string pathToTahoeDll = "/Users/Shared/RadeonProRender/Maya/lib/libTahoe64.dylib";
+		if (0 != access(pathToTahoeDll.c_str(), F_OK))
+		{
+			pathToTahoeDll = "/Users/Shared/RadeonProRender/lib/libTahoe64.dylib";
+		}
+		m_gTahoePluginID = rprRegisterPlugin(pathToTahoeDll.c_str());
 #elif __linux__
 		m_gTahoePluginID = rprRegisterPlugin("libTahoe64.so");
 #else

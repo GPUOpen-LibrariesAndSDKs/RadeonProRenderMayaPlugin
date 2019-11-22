@@ -35,6 +35,7 @@ void StartupContextChecker::CheckContexts()
 	m_IsRprSupported = true;
 
 	//Check rif context
+#ifdef WIN32
 	try
 	{
 		auto rifContext = std::make_unique<RifContextCPU>(rprContext.context());
@@ -49,6 +50,8 @@ void StartupContextChecker::CheckContexts()
 		MGlobal::displayWarning(e.what());
 		return;
 	}
+#endif
+
 	m_IsMachineLearningDenoiserSupportedOnCPU = true;
 }
 

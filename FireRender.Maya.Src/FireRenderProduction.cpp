@@ -484,8 +484,11 @@ void FireRenderProduction::UploadAthenaData()
 
 	// - GPU0 Name
 	std::vector<HardwareResources::Device> allDevices = HardwareResources::GetAllDevices();
-	std::string GPU0Name = allDevices[0].name;
-	WriteAthenaField("GPU0 Name", GPU0Name);
+	if (allDevices.size() > 0)
+	{
+		std::string GPU0Name = allDevices[0].name;
+		WriteAthenaField("GPU0 Name", GPU0Name);
+	}
 
 	// - GPU1 Name
 	std::vector<std::string> GPU1Name; // list GPU 0-15

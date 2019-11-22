@@ -1489,17 +1489,10 @@ HardwareResources::HardwareResources()
 	const int maxDevices = 9;
 #ifdef OSMac_
 	auto os = RPRTOS_MACOS;
-	auto dll = "/Users/Shared/RadeonProRender/Maya/lib/libTahoe64.dylib";
-    if (0 != access(dll,F_OK))
-    {
-        dll = "/Users/Shared/RadeonProRender/lib/libTahoe64.dylib";
-    }
 #elif __linux__
 	auto os = RPRTOS_LINUX;
-	auto dll = "libTahoe64.so";
 #else
 	auto os = RPRTOS_WINDOWS;
-	auto dll = "Tahoe64.dll";
 #endif
 
 	for (int i = 0; i < maxDevices; ++i)
@@ -1513,15 +1506,18 @@ HardwareResources::HardwareResources()
             additionalFlags = additionalFlags | RPR_CREATION_FLAGS_ENABLE_METAL;
             doWhiteList = false;
         }
+
+		int tahoeID = TahoeContext::GetPluginID();
+
         device.creationFlag = device.creationFlag | additionalFlags;
-		device.compatibility = rprIsDeviceCompatible(dll, RPR_TOOLS_DEVICE(i), nullptr, doWhiteList, os, additionalFlags );
+		device.compatibility = rprIsDeviceCompatible(tahoeID, RPR_TOOLS_DEVICE(i), nullptr, doWhiteList, os, additionalFlags );
 		if (device.compatibility == RPRTC_INCOMPATIBLE_UNCERTIFIED || device.compatibility == RPRTC_COMPATIBLE)
 		{
 			// Request device name. Earlier (before RPR 1.255) rprIsDeviceCompatible returned device name, however
 			// this functionality was removed. We're doing "assert" here just in case because rprIsDeviceCompatible
 			// does exactly the same right before this code.
 			
-			rpr_int plugins[] = { TahoeContext::GetPluginID() };
+			rpr_int plugins[] = { tahoeID };
 			size_t pluginCount = sizeof(plugins) / sizeof(plugins[0]);
 			rpr_context temporaryContext = 0;
 #ifdef RPR_VERSION_MAJOR_MINOR_REVISION
