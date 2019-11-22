@@ -44,6 +44,11 @@ $ git submodule update
 
 ```
 
+or 
+
+`git submodule update --init -f --recursive`
+
+
 Building:
 ---------
 
