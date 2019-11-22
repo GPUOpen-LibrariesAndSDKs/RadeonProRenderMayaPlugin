@@ -1,3 +1,6 @@
 [submodule "FireRender.Components"]
 	path = FireRender.Components
 	url = git@github.com:Radeon-Pro/RadeonProRenderSharedComponents.git
+[submodule "ThirdParty"]
+	path = ThirdParty
+	url = git@github.com:Radeon-Pro/RadeonProRenderThirdPartyComponents.git

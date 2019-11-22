@@ -68,6 +68,11 @@ $ git submodule update
 
 ```
 
+or 
+
+`git submodule update --init -f --recursive`
+
+
 Running/Debugging the Build on Windows
 ======================================
 
