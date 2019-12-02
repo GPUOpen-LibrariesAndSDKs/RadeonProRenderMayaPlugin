@@ -217,7 +217,8 @@ namespace FireMaya
 			std::map<NodeId, frw::Shader> volumeShaderMap;
 			std::map<NodeId, frw::Shader> shaderMap;
 			std::map<NodeId, frw::Value> valueMap;
-			std::list<MCallbackId> callbackId;
+			std::map<NodeId, MCallbackId> m_nodeDirtyCallbacks;
+			std::map<NodeId, MCallbackId> m_AttributeChangedCallbacks;
 			std::map<std::string, frw::Image> imageCache;
 
 			FireRenderMesh const* m_pCurrentlyParsedMesh; // is not supposed to keep any data outside of during mesh parsing 
@@ -239,9 +240,11 @@ namespace FireMaya
 		// callbacks
 	public:
 		void NodeDirtyCallback(MObject& node);
+		void AttributeChangedCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug);
 
 	private:
 		static void NodeDirtyCallback(MObject& node, void* clientData);
+		static void AttributeChangedCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug, void* clientData);
 
 		void NodeDirtyPlugCallback(MObject& node, MPlug &plug);
 		static void NodeDirtyPlugCallback(MObject& node, MPlug& plug, void* clientData);

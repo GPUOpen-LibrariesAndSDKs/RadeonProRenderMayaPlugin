@@ -2831,7 +2831,7 @@ namespace frw
 				if (material)
 				{
 					FRW_PRINT_DEBUG("\tDeleting RPRX material 0x%016llX (from context 0x%016llX)", material, context);
-					auto res = rprxMaterialDelete(context, material);
+					rpr_int res = rprxMaterialDelete(context, material);
 					checkStatus(res);
 					FRW_PRINT_DEBUG("\tDeleted RPRX material 0x%016llX", material);
 				}
@@ -3183,6 +3183,18 @@ namespace frw
 			checkStatus(res);
 		}
 
+		void DetachFromAllMaterialInputs()
+		{
+			auto& d = data();
+			rpr_int res = RPR_ERROR_INVALID_PARAMETER;
+			for (const auto& input : d.inputs)
+			{
+				res = rprxMaterialDetachMaterial(d.context, input.second, input.first.c_str(), d.material);
+				checkStatus(res);
+			}
+			d.inputs.clear();
+		}
+
 		void DetachFromMaterialInput(rpr_material_node node, const char* inputName) const
 		{
 			auto& d = data();
@@ -3403,13 +3415,13 @@ namespace frw
 	inline Shader MaterialSystem::ShaderBlend(const Shader& a, const Shader& b, const Value& t) const
 	{
 		// in theory a null could be considered a transparent material, but would create unexpected node
-		if (!a)
+		if (!a.IsValid())
 		{
 			b.xMaterialCommit();
 			return b;
 		}
 
-		if (!b)
+		if (!b.IsValid())
 		{
 			a.xMaterialCommit();
 			return a;
