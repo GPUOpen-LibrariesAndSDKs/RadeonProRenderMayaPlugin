@@ -2233,7 +2233,12 @@ frw::Shader FireMaya::Scope::ParseVolumeShader(MObject node)
 
 void FireMaya::Scope::RegisterCallback(MObject node)
 {
-	m->callbackId.push_back(MNodeMessage::addNodeDirtyCallback(node, NodeDirtyCallback, this));
+	std::string uuid = getNodeUUid(node);
+	if (m->m_nodeDirtyCallbacks.find(uuid) == m->m_nodeDirtyCallbacks.end())
+	{
+		m->m_nodeDirtyCallbacks[uuid] = MNodeMessage::addNodeDirtyCallback(node, NodeDirtyCallback, this);
+		m->m_AttributeChangedCallbacks[uuid] = MNodeMessage::addAttributeChangedCallback(node, AttributeChangedCallback, this);
+	}
 }
 
 void FireMaya::Scope::NodeDirtyCallback(MObject& ob)
@@ -2265,10 +2270,28 @@ void FireMaya::Scope::NodeDirtyCallback(MObject& ob)
 
 void FireMaya::Scope::NodeDirtyCallback(MObject& node, void* clientData)
 {
-	auto self = static_cast<Scope*>(clientData);
+	Scope* self = static_cast<Scope*>(clientData);
 	self->NodeDirtyCallback(node);
 }
 
+void FireMaya::Scope::AttributeChangedCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug, void* clientData)
+{
+	Scope* self = static_cast<Scope*>(clientData);
+	self->AttributeChangedCallback(msg, plug, otherPlug);
+}
+
+void FireMaya::Scope::AttributeChangedCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug)
+{
+	bool connectionWasBroken = MNodeMessage::AttributeMessage::kConnectionBroken & msg;
+	bool newIncomingDirection = MNodeMessage::AttributeMessage::kIncomingDirection & msg;
+
+	if (connectionWasBroken & !newIncomingDirection)
+	{
+		std::string uuid = getNodeUUid(plug.node());
+		frw::Shader shader = GetCachedShader(uuid);
+		shader.DetachFromAllMaterialInputs();
+	}
+}
 
 void FireMaya::Scope::NodeDirtyPlugCallback(MObject& ob, MPlug& plug)
 {
@@ -2376,27 +2399,35 @@ FireMaya::Scope::~Scope()
 frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMesh* pMesh, bool forceUpdate)
 {
 	if (node.isNull())
-		return frw::Shader();
-
-	auto shaderId = getNodeUUid(node);
-	auto shader = GetCachedShader(shaderId);
-
-	if (forceUpdate || !shader || shader.IsDirty())
 	{
-		if (!shader)	// register callbacks if one doesn't already exist
-			RegisterCallback(node);
-
-		DebugPrint("Parsing shader: %s (forceUpdate=%d, shader.IsDirty()=%d)", shaderId.c_str(), forceUpdate, shader.IsDirty());
-
-		m->m_pCurrentlyParsedMesh = pMesh;
-
-		// create now
-		shader = ParseShader(node);
-		if (shader)
-			SetCachedShader(shaderId, shader);
-
-		m->m_pCurrentlyParsedMesh = nullptr;
+		return frw::Shader();
 	}
+
+	std::string shaderId = getNodeUUid(node);
+	frw::Shader shader = GetCachedShader(shaderId);
+
+	if (!forceUpdate && shader.IsValid() && !shader.IsDirty())
+	{
+		return shader;
+	}
+
+	// register callbacks if one doesn't already exist
+	if (!shader.IsValid())
+	{
+		RegisterCallback(node);
+	}
+
+	DebugPrint("Parsing shader: %s (forceUpdate=%d, shader.IsDirty()=%d)", shaderId.c_str(), forceUpdate, shader.IsDirty());
+	m->m_pCurrentlyParsedMesh = pMesh;
+
+	// create now
+	shader = ParseShader(node);
+	if (shader.IsValid())
+	{
+		SetCachedShader(shaderId, shader);
+	}
+
+	m->m_pCurrentlyParsedMesh = nullptr;
 	return shader;
 }
 
@@ -2594,8 +2625,15 @@ FireMaya::Scope::Data::~Data()
 {
 	RPR_THREAD_ONLY;
 
-	for (auto it : callbackId)
-		MNodeMessage::removeCallback(it);
+	for (const auto& it : m_nodeDirtyCallbacks)
+	{
+		MNodeMessage::removeCallback(it.second);
+	}
+
+	for (const auto& it : m_AttributeChangedCallbacks)
+	{
+		MNodeMessage::removeCallback(it.second);
+	}
 
 	scene.Reset();
 	materialSystem.Reset();
