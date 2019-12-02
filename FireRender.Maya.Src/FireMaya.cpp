@@ -2021,7 +2021,14 @@ frw::Value FireMaya::Scope::convertMayaNodeFile(const MFnDependencyNode& shaderN
 		frw::ImageNode imageNode(materialSystem);
 		image.SetGamma(colorSpace2Gamma(colorSpace));
 		imageNode.SetMap(image);
-		imageNode.SetValue("uv", GetConnectedValue(shaderNode.findPlug("uvCoord")));
+
+		frw::Value uvVal = GetConnectedValue(shaderNode.findPlug("uvCoord"));
+		if (uvVal.IsNull())
+		{
+			uvVal = GetConnectedValue(shaderNode.findPlug("uCoord")); // uvCoord, uCoord and vCoord are different fields. Hovewer RPR_MATERIAL_NODE_IMAGE_TEXTURE have only "uv" input, thus cCoord is ignored
+		}
+
+		imageNode.SetValue("uv", uvVal);
 
 		if (outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_COLOR)
 		{

@@ -2486,25 +2486,26 @@ bool FireRenderHair::CreateCurves()
 			*/
 			const unsigned int pointsPerSegment = 4;
 
-			// Texcoord using the patch UV from the root point
-			uvCoord.push_back(patchUVs[offset][0]);
-			uvCoord.push_back(patchUVs[offset][1]);
-
 			std::vector<rpr_uint> tmp_indicesData;
 
 			// Copy varying data
 			for (unsigned int i = 0; i < length; i++)
 			{
-
 				tmp_indicesData.push_back((rpr_uint) points.size());
+
 				if (tmp_indicesData.size() % pointsPerSegment == 0)
-					tmp_indicesData.push_back(tmp_indicesData.back());
+					if (i < (length - 1))
+						tmp_indicesData.push_back(tmp_indicesData.back());
 
 				points.push_back(positions[offset + i]);
 
 				radiuses.push_back(width[offset + i] * 0.5f);
 				wCoord.push_back(texcoords[offset + i][1]);
 			}
+
+			// Texcoord using the patch UV from the root point
+			uvCoord.push_back(patchUVs[offset][0]);
+			uvCoord.push_back(patchUVs[offset][1]);
 
 			// Number of points
 			unsigned int tail = tmp_indicesData.size() % pointsPerSegment;
