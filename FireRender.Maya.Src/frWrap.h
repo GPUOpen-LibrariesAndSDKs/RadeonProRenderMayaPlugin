@@ -103,6 +103,8 @@ namespace frw
 		OperatorAbs = RPR_MATERIAL_NODE_OP_ABS,
 	};
 
+	const static int MATERIAL_NODE_LOOKUP_VERTEX_COLOR = 0x100;
+
 	enum LookupType
 	{
 		LookupTypeUV0 = RPR_MATERIAL_NODE_LOOKUP_UV,
@@ -111,6 +113,13 @@ namespace frw
 		LookupTypeIncident = RPR_MATERIAL_NODE_LOOKUP_INVEC,
 		LookupTypeOutVector = RPR_MATERIAL_NODE_LOOKUP_OUTVEC,
 		LookupTypeUV1 = RPR_MATERIAL_NODE_LOOKUP_UV1,
+		LookupTypePositionLocal = RPR_MATERIAL_NODE_LOOKUP_P_LOCAL,
+		LookupTypeVertexColor = MATERIAL_NODE_LOOKUP_VERTEX_COLOR,
+		LookupTypeVertexValue0 = RPR_MATERIAL_NODE_LOOKUP_VERTEX_VALUE0,
+		LookupTypeVertexValue1 = RPR_MATERIAL_NODE_LOOKUP_VERTEX_VALUE1,
+		LookupTypeVertexValue2 = RPR_MATERIAL_NODE_LOOKUP_VERTEX_VALUE2,
+		LookupTypeVertexValue3 = RPR_MATERIAL_NODE_LOOKUP_VERTEX_VALUE3,
+		LookupTypeShapeRandomColor = RPR_MATERIAL_NODE_LOOKUP_SHAPE_RANDOM_COLOR
 	};
 
 	enum ValueType
