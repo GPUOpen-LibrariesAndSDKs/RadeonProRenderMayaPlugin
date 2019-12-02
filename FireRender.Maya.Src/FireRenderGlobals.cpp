@@ -468,9 +468,12 @@ MStatus FireRenderGlobals::initialize()
 void FireRenderGlobals::addRenderQualityModes(MFnEnumAttribute& eAttr)
 {
 	eAttr.addField("Full", RenderQuality::RenderQualityFull);
+
+#ifdef WIN32
 	eAttr.addField("High", RenderQuality::RenderQualityHigh);
 	eAttr.addField("Medium", RenderQuality::RenderQualityMedium);
 	eAttr.addField("Low", RenderQuality::RenderQualityLow);
+#endif
 }
 
 void FireRenderGlobals::createCompletionCriteriaAttributes()
