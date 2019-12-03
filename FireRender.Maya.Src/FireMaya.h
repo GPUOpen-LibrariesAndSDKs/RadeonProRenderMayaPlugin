@@ -377,6 +377,9 @@ namespace FireMaya
 	MString GetShaderPath();
 
 	const MString MAYA_FILE_NODE_OUTPUT_COLOR = "oc";
+	const MString MAYA_FILE_NODE_OUTPUT_COLOR_COMPONENT_RED = "ocr";
+	const MString MAYA_FILE_NODE_OUTPUT_COLOR_COMPONENT_GREEN = "ocg";
+	const MString MAYA_FILE_NODE_OUTPUT_COLOR_COMPONENT_BLUE = "ocb";
 	const MString MAYA_FILE_NODE_OUTPUT_ALPHA = "oa";
 }
 // End of namespace FireMaya

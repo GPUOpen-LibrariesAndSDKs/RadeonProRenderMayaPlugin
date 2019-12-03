@@ -1148,6 +1148,14 @@ namespace frw
 			rpr_int res = rprImageSetGamma(Handle(), gamma);
 			checkStatus(res);
 		}
+
+		bool HasAlphaChannel()
+		{
+			rpr_image_format format;
+			rpr_int status = rprImageGetInfo(Handle(), RPR_IMAGE_FORMAT, sizeof(format), &format, NULL);
+			checkStatus(status);
+			return format.num_components == 4;
+		}
 	};
 
 	class PointLight : public Light
@@ -2690,7 +2698,14 @@ namespace frw
 			return ArithmeticNode(*this, OperatorCross, a, b);
 		}
 
-
+		Value ValueConvertToLuminance(const frw::Value& value) const
+		{
+			frw::Value red = ValueMul(value.SelectX(), 0.3f);
+			frw::Value green = ValueMul(value.SelectY(), 0.59f);
+			frw::Value blue = ValueMul(value.SelectZ(), 0.11f);
+			frw::Value action1 = ValueAdd(red, green);
+			return ValueAdd(action1, blue);
+		}
 
 #ifdef FRW_USE_MAX_TYPES
 		Value ValueTransform(Value v, const Matrix3& tm)

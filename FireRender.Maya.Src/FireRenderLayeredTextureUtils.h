@@ -68,6 +68,4 @@ private:
 
 	/** Retrieves layer info from the maya plug */
 	LayerInfoType GetLayerInfo(const MPlug& inputsPlug, bool alphaIsLuminance);
-
-	frw::Value ConvertToGrayscale(const frw::Value& value);
 };

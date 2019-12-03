@@ -230,7 +230,7 @@ LayeredTextureConverter::LayerInfoType LayeredTextureConverter::GetLayerInfo(con
 					assert(false);
 				}
 
-				alpha = ConvertToGrayscale(color);
+				alpha = m_materialSystem.ValueConvertToLuminance(color);
 			}
 			else
 			{
@@ -241,15 +241,6 @@ LayeredTextureConverter::LayerInfoType LayeredTextureConverter::GetLayerInfo(con
 	}
 
 	return { blendMode, color, alpha, isVisible };
-}
-
-frw::Value LayeredTextureConverter::ConvertToGrayscale(const frw::Value& value)
-{
-	frw::Value red = m_materialSystem.ValueMul(value.SelectX(), 0.3f);
-	frw::Value green = m_materialSystem.ValueMul(value.SelectY(), 0.59f);
-	frw::Value blue = m_materialSystem.ValueMul(value.SelectZ(), 0.11f);
-	frw::Value action1 = m_materialSystem.ValueAdd(red, green);
-	return m_materialSystem.ValueAdd(action1, blue);
 }
 
 frw::Value LayeredTextureConverter::Convert()
