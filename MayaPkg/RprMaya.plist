@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="1">
+     <title>AMD Radeon ProRender Maya Plugin</title>
+     <license file="eula.txt"/>
+     <welcome file="welcome.html"/>
+    <pkg-ref id="com.amd.rpr.inst-maya.app"/>
+    <options customize="never" require-scripts="false"/>
+    <choices-outline>
+        <line choice="default">
+            <line choice="com.amd.rpr.inst-maya.app"/>
+        </line>
+    </choices-outline>
+    <choice id="default"/>
+    <choice id="com.amd.rpr.inst-maya.app" visible="false">
+        <pkg-ref id="com.amd.rpr.inst-maya.app"/>
+    </choice>
+    <pkg-ref id="com.amd.rpr.inst-maya.app" version="0" onConclusion="none">RadeonProRenderPlugin-2.6.280.pkg</pkg-ref>
+</installer-gui-script>

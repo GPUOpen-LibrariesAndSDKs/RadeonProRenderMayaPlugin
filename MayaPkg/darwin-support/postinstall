@@ -1,0 +1,95 @@
+#!/bin/bash
+
+amIRoot() {
+    if ((${EUID:-0} || "$(id -u)")); then
+        return 1
+    else
+        return 0
+    fi
+}
+
+copyModuleFiles() {
+    echo "Copying module files ..."
+    for version in 2017 2018 2019
+    do
+        modulesDir=`printf "/Users/Shared/Autodesk/modules/maya/%s" ${version}`
+        if [ -d ${modulesDir} ];
+        then
+            echo "Found module directory:" ${modulesDir}
+            module=`printf "/Users/Shared/RadeonProRender/Maya/modules/rpr%s.mod" ${version}`
+            target=`printf "/Users/Shared/Autodesk/modules/maya/%s/RadeonProRender.module" ${version}`
+            echo "Copying " ${module} " to " ${target}
+            cp ${module} ${target}
+        else
+            echo "Directory " ${modulesDir} " was not found"
+        fi
+    done
+}
+
+installBoto3ForMaya () {
+    echo "Trying to installBoto3ForMaya: " $1
+    cd $1
+    if amIRoot; then
+        curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
+        sh mayapy get-pip.py
+        sh mayapy -m pip install boto3
+        echo "Boto3 for Maya installation finished"
+    else
+        echo "root rights are required to execute this operation"
+        echo "skipping installation"
+    fi
+}
+
+copyShelfForUser() {
+    echo "User: " $1
+    for version in 2017 2018 2019
+    do
+        shelfDir=`printf "/Users/%s/Library/Preferences/Autodesk/maya/%s/prefs/shelves/" ${1} ${version}`
+        if [ -d ${shelfDir} ];
+        then
+            targetDir=`printf "/Applications/Autodesk/maya%s/Maya.app/Contents/bin" ${version}`
+            installBoto3ForMaya ${targetDir}
+        else
+            echo "Shelf directory " ${shelfDir} " was not found"
+        fi
+    done
+}
+
+copyShelves() {
+    echo "Installing Radeon ProRender Maya shelf for Users: "
+    localUsers=$( dscl . list /Users UniqueID | awk '$2 >= 501 {print $1}' | grep -v admin )
+    for userName in $localUsers; do
+        copyShelfForUser $userName
+    done
+}
+
+showInstalledDialog(){
+    osascript <<END
+        tell me to activate
+        display dialog "Installed Maya modules and shelves." buttons { "OK" } default button 1
+END
+}
+
+main() {
+    echo "Running postinstall script as: `whoami`"
+    if amIRoot; then
+        echo "running with root rights"
+        copyModuleFiles
+        copyShelves
+        showInstalledDialog
+    else
+        echo "running without admin rights"
+        echo "relaunching as admin"
+        osascript -e 'do shell script "/Users/Shared/RadeonProRender/Maya/scripts/postinstall" with administrator privileges'
+    fi
+}
+
+#create installer logfile
+logsDir="/Users/Shared/Logs"
+logFile=${logsDir}/RPRInstaller.log
+if [[ ! -f $logFile ]]; then
+    mkdir -p ${logsDir}
+    touch ${logFile}
+fi
+
+main 2>&1 | sed "s/^/`date` -> /" >> ${logFile}

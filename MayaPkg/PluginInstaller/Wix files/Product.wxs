@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?include Variables.wxi?>
+
+ <!-- Need fix
+ 1. install module only for single feature
+ 2. install shelf only for single feature
+ 3. copy .mll only for single feature
+ -->
+
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi"
+	xmlns:util="http://schemas.microsoft.com/wix/UtilExtension">
+	
+	<Product Id="*" Name="$(var.ProductLongName)" Language="1033" Version="$(var.Version)" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
+
+		<Package InstallerVersion="405" Platform="x64" Compressed="yes" InstallScope="perMachine"/>
+
+		<!-- Updates -->
+		<MajorUpgrade
+			AllowSameVersionUpgrades="yes"
+			DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+
+		<!-- UI stuff -->
+		<MediaTemplate EmbedCab="yes"/>
+
+		<Icon Id="amd_icon.ico" SourceFile=".\amd_icon.ico"/>
+		<Property Id="ARPPRODUCTICON" Value="amd_icon.ico" />
+
+		<Binary Id='InstallerDll' SourceFile='$(var.InstallerDll)' />
+    
+<!--
+		<CustomAction Id='CheckActivationKey' BinaryKey='InstallerDll' DllEntry='checkActivationKey' />
+-->
+    
+		<CustomAction Id='UserRegister' BinaryKey='InstallerDll' DllEntry='userRegister' Return="ignore" />
+		<CustomAction Id='HardwareCheck' BinaryKey='InstallerDll' DllEntry='hardwareCheck' Return="ignore" />
+		<CustomAction Id='PostInstall' BinaryKey='InstallerDll' DllEntry='postInstall' Return="ignore" />
+		<CustomAction Id='BotoInstall' BinaryKey='InstallerDll' DllEntry='botoInstall' Execute="deferred" Impersonate="no" Return="ignore" />
+
+		<CustomAction Id='maya2017WasInstalled' Property='MAYA2017_INSTALLED'  Value='true'/>
+		<CustomAction Id='maya2018WasInstalled' Property='MAYA2018_INSTALLED'  Value='true'/>
+		<CustomAction Id='maya2019WasInstalled' Property='MAYA2019_INSTALLED'  Value='true'/>
+<!--	
+		<Property Id='ACTIVATION_KEY_ACCEPTED'>
+			<RegistrySearch Id='regSearchForActivationKey' Root='HKCU' Key='Software\AMD\RadeonProRender\Maya' Name='ACTIVATION_KEY_ACCEPTED' Type='raw'/>
+		</Property>
+-->
+
+		<Property Id="CACHE_PATH">
+			<RegistrySearch Id="RegSearchForCache" Root="HKCU" Key="Software\AMD\RadeonProRender\Maya" Type="raw" Name="CachePath" />
+		</Property>
+
+		<UI Id="MyWixUI_Mondo">
+			<UIRef Id="WixUI_Wizard" />
+			<UIRef Id="WixUI_ErrorProgressText" />
+<!--		
+			<Dialog Id="InvalidActivationKey" Width="260" Height="85" Title="[ProductName] [Setup]" NoMinimize="yes">
+				<Control Id="Return" Type="PushButton" X="100" Y="57" Width="56" Height="17" Default="yes" Cancel="yes" Text="&amp;Return">
+					<Publish Event="EndDialog" Value="Return">1</Publish>
+				</Control>
+				<Control Id="Text" Type="Text" X="48" Y="15" Width="194" Height="30" NoPrefix="yes">
+					<Text>Wrong activation key. Please, paste link from clipboard to web browser and register.</Text>
+				</Control>
+				<Control Id="Icon" Type="Icon" X="15" Y="15" Width="24" Height="24" ToolTip="!(loc.CancelDlgIconTooltip)" FixedSize="yes" IconSize="32" Text="!(loc.CancelDlgIcon)" />
+			</Dialog>
+
+			<DialogRef Id="UserRegistrationDlg" />
+-->
+		</UI>
+
+		<WixVariable Id="WixUILicenseRtf" Value=".\agreement.rtf" />
+		<WixVariable Id="WixUIBannerBmp" Value=".\rpr_banner.png" />
+		<WixVariable Id="WixUIDialogBmp" Value=".\rpr_dialog.png" />
+
+		<InstallExecuteSequence>
+      <Custom Action="BotoInstall" After="InstallInitialize">(NOT Installed) AND (NOT REMOVE)</Custom>
+			<CreateFolders/>
+			<InstallFiles/>
+			<WriteEnvironmentStrings/>
+		</InstallExecuteSequence>
+
+		<!-- Define the directory structure -->
+		<Directory Id="TARGETDIR" Name="SourceDir">
+
+			<Directory Id="ProgramFiles64Folder">
+				<Directory Id="AMD" Name="$(var.Manufacturer)">
+					<Directory Id="PLUGINS" Name="$(var.ProductsFolder)">
+						<Directory Id="DR_ARTEFACTS" Name="Maya">
+							<Directory Id="DR_PLUGINS" Name="plug-ins"/>
+					</Directory>
+<!--
+					<Merge Id="Microsoft_VC140_CRT_x64" SourceFile="$(env.CommonProgramFiles(x86))\Merge Modules\Microsoft_VC140_CRT_x64.msm" Language="0" DiskId="1"/>
+					<Merge Id="Microsoft_VC140_OpenMP_x64" SourceFile="$(env.CommonProgramFiles(x86))\Merge Modules\Microsoft_VC140_OpenMP_x64.msm" Language="0" DiskId="1"/>
+-->						
+				</Directory>
+				</Directory>
+			</Directory>
+
+			<Directory Id="CommonFiles64Folder">
+				<Directory Id="AUTODESK_SHARED" Name="Autodesk Shared">
+					<Directory Id="MODULES" Name="Modules">
+						<Directory Id="DR_MODULES" Name="maya"/>
+					</Directory>
+				</Directory>
+			</Directory>
+
+			<Directory Id="PersonalFolder">
+<!--			
+EXCLUDE MATERIAL LIBRARY FROM INSTALLER
+				<Directory Id="DOCUMENTS_RPR" Name="Radeon ProRender">
+					<Directory Id="DOCUMENTS_RPR_MAYA" Name="Maya">
+						<Directory Id="DR_MATLIBRARY" Name="Material Library">
+						</Directory>
+					</Directory>
+				</Directory>
+EXCLUDE MATERIAL LIBRARY FROM INSTALLER
+-->
+				<Directory Id="DOCUMENTS_MAYA" Name="maya">
+					<Directory Id="DOCUMENTS_MAYA_2019" Name="2019">
+						<Directory Id="DOCUMENTS_MAYA_2019_PREFS" Name="prefs">
+							<Directory Id="DOCUMENTS_MAYA_2019_PREFS_SHELVES" Name="shelves">
+							</Directory>
+						</Directory>
+					</Directory>
+					<Directory Id="DOCUMENTS_MAYA_2017" Name="2017">
+						<Directory Id="DOCUMENTS_MAYA_2017_PREFS" Name="prefs">
+							<Directory Id="DOCUMENTS_MAYA_2017_PREFS_SHELVES" Name="shelves">
+							</Directory>
+						</Directory>
+					</Directory>
+					<Directory Id="DOCUMENTS_MAYA_2018" Name="2018">
+						<Directory Id="DOCUMENTS_MAYA_2018_PREFS" Name="prefs">
+							<Directory Id="DOCUMENTS_MAYA_2018_PREFS_SHELVES" Name="shelves">
+							</Directory>
+						</Directory>
+					</Directory>
+				</Directory>
+			</Directory>
+
+			<Directory Id="LocalAppDataFolder">
+				<Directory Id="RPR" Name="RadeonProRender">
+					<Directory Id="MAYA" Name="Maya">
+						<Directory Id="SHADER_CACHE" Name="ShaderCache" />
+					</Directory>
+				</Directory>
+			</Directory>
+		
+		</Directory>
+
+		<!-- Add files to your installer package -->
+		<DirectoryRef Id="DOCUMENTS_MAYA">
+			<Component Id="RprCore" Guid="4C4E8CFA-9AEC-CD11-FE6E-108CBCC25D37" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes">
+				<CreateFolder Directory="SHADER_CACHE" />
+				<RegistryValue Root="HKCU" Key="Software\AMD\RadeonProRender\Maya" Name="CachePath" Type="string" Value="[SHADER_CACHE]" KeyPath="yes" />
+				<util:RemoveFolderEx On="uninstall" Property="CACHE_PATH" />
+			</Component>			
+		</DirectoryRef>
+
+		<DirectoryRef Id="DOCUMENTS_MAYA">
+			<Component Id="SceneConv" Guid="127BA071-5452-943B-2C8E-ABFE39ED9FD9" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes" KeyPath="yes" />
+		</DirectoryRef>
+
+		<DirectoryRef Id="DOCUMENTS_MAYA_2019_PREFS_SHELVES">
+			<Component Id="shelf_Radeon_ProRender_2019.mel" Guid="D66B15A9-A9AA-47D7-9DED-96E7F152AE11" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes">
+				<RegistryKey Root="HKCU" Key="Software\AMD\RadeonProRender\Maya">
+					<RegistryValue Name="shelf_Radeon_ProRender_2019" Value="1" Type="integer" KeyPath="yes" />
+				</RegistryKey>
+				<File Id="file_shelf_Radeon_ProRender_2019.mel" DiskId="1" Hidden="no" ReadOnly="no" TrueType="no" System="no" Vital="yes" Name="shelf_Radeon_ProRender.mel" Source="..\..\..\RadeonProRenderMayaPlugin\FireRender.Maya.Src\Shelfs\shelf_Radeon_ProRender.mel" />
+			</Component>
+		</DirectoryRef>
+				
+		<DirectoryRef Id="DOCUMENTS_MAYA_2017_PREFS_SHELVES">
+			<Component Id="shelf_Radeon_ProRender_2017.mel" Guid="27700FAD-0E12-460D-93B7-E5D65723ED29" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes">
+				<RegistryKey Root="HKCU" Key="Software\AMD\RadeonProRender\Maya">
+					<RegistryValue Name="shelf_Radeon_ProRender_2017" Value="1" Type="integer" KeyPath="yes" />
+				</RegistryKey>
+				<File Id="file_shelf_Radeon_ProRender_2017.mel" DiskId="1" Hidden="no" ReadOnly="no" TrueType="no" System="no" Vital="yes" Name="shelf_Radeon_ProRender.mel" Source="..\..\..\RadeonProRenderMayaPlugin\FireRender.Maya.Src\Shelfs\shelf_Radeon_ProRender.mel" />
+			</Component>
+		</DirectoryRef>
+		
+		<DirectoryRef Id="DOCUMENTS_MAYA_2018_PREFS_SHELVES">
+			<Component Id="shelf_Radeon_ProRender_2018.mel" Guid="27700FAD-0E12-460D-93B7-E5D65723ED39" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes">
+				<RegistryKey Root="HKCU" Key="Software\AMD\RadeonProRender\Maya">
+					<RegistryValue Name="shelf_Radeon_ProRender_2018" Value="1" Type="integer" KeyPath="yes" />
+				</RegistryKey>
+				<File Id="file_shelf_Radeon_ProRender_2018.mel" DiskId="1" Hidden="no" ReadOnly="no" TrueType="no" System="no" Vital="yes" Name="shelf_Radeon_ProRender.mel" Source="..\..\..\RadeonProRenderMayaPlugin\FireRender.Maya.Src\Shelfs\shelf_Radeon_ProRender.mel" />
+			</Component>
+		</DirectoryRef>
+
+<!--		
+EXCLUDE MATERIAL LIBRARY FROM INSTALLER
+		<DirectoryRef Id="DR_MATLIBRARY">
+			<Component Id="MaterialLibraryReg" Guid="1300EF05-FCB3-47E4-BF16-34F1AAF8B14B"  Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes">
+				<RegistryKey Root="HKCU" Key="Software\AMD\RadeonProRender\Maya">
+					<RegistryValue Name="MaterialLibraryPath" Value="[DR_MATLIBRARY]Xml" Type="string" KeyPath="yes" />
+				</RegistryKey>
+			</Component>
+		</DirectoryRef>
+EXCLUDE MATERIAL LIBRARY FROM INSTALLER
+-->
+		<!-- Tell WiX to install the files -->
+
+		<Feature Id="Product" Title="$(var.ProductName)" Description="$(var.ProductLongName)" Level="1" Display="expand">
+
+			<Feature Id="RprCore" Title="Radeon ProRender Core" Description="$(var.ProductLongName) Core" Level="1" Absent="disallow" AllowAdvertise="no">
+				<ComponentRef Id="RprCore"/>
+			</Feature>
+
+			<Feature Id="Product2017" Title="Support Maya 2017" Description="$(var.ProductLongName) 2017" Level="1">
+				<ComponentGroupRef Id="CG_ARTEFACTS"/>
+				<ComponentGroupRef Id="CG_2017"/>
+				<ComponentGroupRef Id="CG_MODULES"/>
+<!--				
+				<MergeRef Id="Microsoft_VC140_CRT_x64"/>
+				<MergeRef Id="Microsoft_VC140_OpenMP_x64"/>
+-->
+				<ComponentRef Id="shelf_Radeon_ProRender_2017.mel" />
+
+			</Feature>
+
+			<Feature Id="Product2018" Title="Support Maya 2018" Description="$(var.ProductLongName) 2018" Level="1">
+				<ComponentGroupRef Id="CG_ARTEFACTS"/>
+				<ComponentGroupRef Id="CG_2018"/>
+				<ComponentGroupRef Id="CG_MODULES"/>
+<!--				
+				<MergeRef Id="Microsoft_VC140_CRT_x64"/>
+				<MergeRef Id="Microsoft_VC140_OpenMP_x64"/>
+-->
+				<ComponentRef Id="shelf_Radeon_ProRender_2018.mel" />
+
+			</Feature>
+			
+
+			<Feature Id="Product2019" Title="Support Maya 2019" Description="$(var.ProductLongName) 2019" Level="1">
+				<ComponentGroupRef Id="CG_ARTEFACTS"/>
+				<ComponentGroupRef Id="CG_2019"/>
+				<ComponentGroupRef Id="CG_MODULES"/>
+<!--
+				<MergeRef Id="Microsoft_VC140_CRT_x64"/>
+				<MergeRef Id="Microsoft_VC140_OpenMP_x64"/>
+-->
+				<!--DOCUMENTS_MAYA_2016_PREFS_SHELVES-->
+				<ComponentRef Id="shelf_Radeon_ProRender_2019.mel" />
+			</Feature>
+
+<!--
+EXCLUDE MATERIAL LIBRARY FROM INSTALLER			
+			<Feature Id="ProductMaterialLibrary" Title="Material Library" Description="Material Library for plugin" Level="1">
+				<ComponentGroupRef Id="CG_MATLIBRARY"/>
+				<ComponentRef Id="MaterialLibraryReg" />
+			</Feature>
+EXCLUDE MATERIAL LIBRARY FROM INSTALLER
+-->
+			<Feature Id="SceneConvScripts" Title="Scene Convertion Scripts" Description="Scene Convertion Scripts for Arnold and RedShift" Level="1" Absent="disallow" AllowAdvertise="no">
+				<ComponentRef Id="SceneConv"/>
+			</Feature>
+
+		</Feature>
+	</Product>
+</Wix>

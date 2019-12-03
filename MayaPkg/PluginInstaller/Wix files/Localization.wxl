@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<WixLocalization Culture="en-US" Codepage="1252" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+  <String Id="LicenseAgreementDlgDescription">{\Font_Normal_White8}Please read the following license agreement carefully</String>
+  <String Id="CustomizeDlgDescription">{\Font_Normal_White8}Select the way you want features to be installed.</String>
+  <String Id="VerifyReadyDlgInstallTitle">{\WixUI_Font_Title}Ready to install...</String>
+  <String Id="DiskCostDlgDescription">{\Font_Normal_White8}The disk space required for the installation of the selected features.</String>
+  <String Id="ProgressDlgTitleInstalling">{\WixUI_Font_Title}Installing...</String>
+  <String Id="ResumeDlgDescription">{\Font_Normal_White8}The Setup Wizard will complete the installation of [ProductName] on your computer. Click Install to continue or Cancel to exit the Setup Wizard.</String>
+  <String Id="BrowseDlgDescription">{\Font_Normal_White8}Browse to the destination folder</String>
+  <String Id="FeaturesDlgDescription">{\Font_Normal_White8}Select the way you want features to be installed.</String>
+  <String Id="FilesInUseDescription">{\Font_Normal_White8}Some files that need to be updated are currently in use.</String>
+  <String Id="InstallDirDlgDescription">{\Font_Normal_White8}Click Next to install to the default folder or click Change to choose another.</String>
+  <String Id="MaintenanceTypeDlgDescription">{\Font_Normal_White8}Select the operation you wish to perform.</String>
+  <String Id="MaintenanceWelcomeDlgDescription">{\Font_Normal_White8}The Setup Wizard allows you to change the way [ProductName] features are installed on your computer or to remove it from your computer. Click Next to continue or Cancel to exit the Setup Wizard.</String>
+  <String Id="MsiRMFilesInUseDescription">{\Font_Normal_White8}Some files that need to be updated are currently in use.</String>
+  <String Id="OutOfDiskDlgDescription">{\Font_Normal_White8}Disk space required for the installation exceeds available disk space.</String>
+  <String Id="OutOfRbDiskDlgDescription">{\Font_Normal_White8}Disk space required for the installation exceeds available disk space.</String>
+  <String Id="PrepareDlgDescription">{\Font_Normal_White8}Please wait while the Setup Wizard prepares to guide you through the installation.</String>
+  <String Id="SetupTypeDlgDescription">{\Font_Normal_White8}Choose the setup type that best suits your needs</String>
+  <String Id="ProgressDlgTitleRemoving">{\WixUI_Font_Title}Removing...</String>
+  <String Id="VerifyReadyDlgChangeTitle">{\WixUI_Font_Title}Ready to change...</String>
+  <String Id="VerifyReadyDlgRepairTitle" Overridable="yes">{\WixUI_Font_Title}Ready to repair...</String>
+  <String Id="VerifyReadyDlgRemoveTitle" Overridable="yes">{\WixUI_Font_Title}Ready to remove...</String>
+  <String Id="VerifyReadyDlgUpdateTitle" Overridable="yes">{\WixUI_Font_Title}Ready to update...</String>
+
+</WixLocalization>
