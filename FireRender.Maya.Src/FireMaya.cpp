@@ -13,6 +13,7 @@
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MUuid.h>
 #include <maya/MItDependencyGraph.h>
+#include <maya/MImageFileInfo.h>
 #include <FireRenderLayeredTextureUtils.h>
 #include <exception>
 
@@ -2012,42 +2013,66 @@ frw::Value FireMaya::Scope::convertMayaNodeFile(const MFnDependencyNode& shaderN
 {
 	MPlug texturePlug = shaderNode.findPlug("computedFileTextureNamePattern");
 	MString texturePath = texturePlug.asString();
+	
 	MPlug colorSpacePlug = shaderNode.findPlug("colorSpace");
 	MString colorSpace;
 	if (!colorSpacePlug.isNull())
-		colorSpace = colorSpacePlug.asString();
-	if (auto image = GetImage(texturePath, colorSpace, shaderNode.name()))
 	{
-		frw::ImageNode imageNode(materialSystem);
-		image.SetGamma(colorSpace2Gamma(colorSpace));
-		imageNode.SetMap(image);
+		colorSpace = colorSpacePlug.asString();
+	}
 
-		frw::Value uvVal = GetConnectedValue(shaderNode.findPlug("uvCoord"));
-		if (uvVal.IsNull())
-		{
-			uvVal = GetConnectedValue(shaderNode.findPlug("uCoord")); // uvCoord, uCoord and vCoord are different fields. Hovewer RPR_MATERIAL_NODE_IMAGE_TEXTURE have only "uv" input, thus cCoord is ignored
-		}
+	frw::Image image = GetImage(texturePath, colorSpace, shaderNode.name());
+	if (!image.IsValid())
+	{
+		m_IsLastPassTextureMissing = true;
+		return nullptr;
+	}
 
-		imageNode.SetValue("uv", uvVal);
+	frw::ImageNode imageNode(materialSystem);
+	image.SetGamma(colorSpace2Gamma(colorSpace));
+	imageNode.SetMap(image);
 
-		if (outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_COLOR)
+	frw::Value uvVal = GetConnectedValue(shaderNode.findPlug("uvCoord"));
+	if (uvVal.IsNull())
+	{
+		uvVal = GetConnectedValue(shaderNode.findPlug("uCoord")); // uvCoord, uCoord and vCoord are different fields. Hovewer RPR_MATERIAL_NODE_IMAGE_TEXTURE have only "uv" input, thus cCoord is ignored
+	}
+	imageNode.SetValue("uv", uvVal);
+
+	if (outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_COLOR)
+	{
+		return imageNode;
+	}
+	else if (outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_ALPHA)
+	{
+		MPlug alphaIsLuminancePlug = shaderNode.findPlug("alphaIsLuminance");
+		bool alphaIsLuminance = alphaIsLuminancePlug.asBool();
+
+		bool shouldUseAlphaIsLuminance = alphaIsLuminance || !image.HasAlphaChannel();
+		if (shouldUseAlphaIsLuminance)
 		{
-			return imageNode;
-		}
-		else if (outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_ALPHA)
-		{
-			return frw::Value(imageNode).SelectW();
+			// Calculate alpha is luminance value
+			return materialSystem.ValueConvertToLuminance(imageNode);
 		}
 		else
 		{
-			m_IsLastPassTextureMissing = true;
+			// Select the real alpha value
+			return frw::Value(imageNode).SelectW();
 		}
 	}
-	else
+
+	bool isColorComponentRequested =
+		outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_COLOR_COMPONENT_RED ||
+		outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_COLOR_COMPONENT_GREEN ||
+		outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_COLOR_COMPONENT_BLUE;
+
+	if (isColorComponentRequested)
 	{
-		m_IsLastPassTextureMissing = true;
+		// Component is selected later
+		return imageNode;
 	}
 
+	m_IsLastPassTextureMissing = true;
 	return nullptr;
 }
 
