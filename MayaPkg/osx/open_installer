@@ -1,0 +1,4 @@
+#!/bin/bash
+rm -rf output
+mkdir output
+open RadeonProRenderForMayaInstaller.platypus

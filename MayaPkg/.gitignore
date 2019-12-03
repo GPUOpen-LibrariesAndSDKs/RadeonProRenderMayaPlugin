@@ -1,0 +1,14 @@
+.vs/
+bin/
+dist/
+output/
+system/
+ThirdParty/
+PluginInstaller/Generated/
+PluginInstaller/Modules/
+.installer_build/
+*.msi
+*.dmg
+*.pyc
+*.VC.db
+*.user

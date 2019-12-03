@@ -1,0 +1,137 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x64</Platform>
+    <ProductVersion>3.10</ProductVersion>
+    <ProjectGuid>d692f2ce-22b0-4500-bbfb-61fb9310d0b1</ProjectGuid>
+    <SchemaVersion>2.0</SchemaVersion>
+    <OutputName>RadeonProRenderSetup</OutputName>
+    <OutputType>Package</OutputType>
+    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
+    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
+    <Name>PluginInstaller</Name>
+    <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+    <DefineConstants>
+    </DefineConstants>
+    <OutputPath>$(SolutionDir)output\$(Name)\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>$(SolutionDir)system\$(Name)\$(Configuration)\</IntermediateOutputPath>
+    <SuppressValidation>False</SuppressValidation>
+    <SuppressIces>ICE91;ICE64;ICE38</SuppressIces>
+    <WixVariables>
+    </WixVariables>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+    <OutputPath>$(SolutionDir)output\$(Name)\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>$(SolutionDir)system\$(Name)\$(Configuration)\</IntermediateOutputPath>
+    <SuppressAllWarnings>False</SuppressAllWarnings>
+    <Pedantic>True</Pedantic>
+    <SuppressIces>ICE91;ICE64;ICE38</SuppressIces>
+    <DefineConstants>
+      Artefacts=$(SolutionDir)system\$(Name)\InputData\feature_Core;
+      Modules=.\Modules;
+      Plugin2019=$(SolutionDir)system\$(Name)\InputData\feature_2019;
+      Plugin2017=$(SolutionDir)system\$(Name)\InputData\feature_2017;
+      Plugin2018=$(SolutionDir)system\$(Name)\InputData\feature_2018;
+      InstallerDll=../output/PluginInstallerDll/PluginInstallerDll.dll
+<!--
+EXCLUDE MATERIAL LIBRARY FROM INSTALLER
+      MatLibrary=$(SolutionDir)system\$(Name)\InputData\feature_MaterialLibrary;
+EXCLUDE MATERIAL LIBRARY FROM INSTALLER
+-->
+    </DefineConstants>
+    <CompilerAdditionalOptions>
+    </CompilerAdditionalOptions>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
+    <DefineConstants>Debug</DefineConstants>
+    <OutputPath>$(SolutionDir)output\$(Name)\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>$(SolutionDir)system\$(Name)\$(Configuration)\</IntermediateOutputPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
+    <OutputPath>$(SolutionDir)output\$(Name)\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>$(SolutionDir)system\$(Name)\$(Configuration)\</IntermediateOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Generated\Artefacts.wxs" />
+    <Compile Include="Generated\Modules.wxs" />
+    <Compile Include="Generated\Plugin2017.wxs" />
+    <Compile Include="Generated\Plugin2018.wxs" />
+    <Compile Include="Generated\Plugin2019.wxs" />
+    <Compile Include="Wix files\CheckHardwareDlg.wxs" />
+    <Compile Include="Wix files\PluginFinishDlg.wxs" />
+    <Compile Include="Wix files\PluginWelcomeDlg.wxs" />
+    <Compile Include="Wix files\Product.wxs" />
+    <Compile Include="Wix files\UserRegistrationDlg.wxs" />
+    <Compile Include="Wix files\WiXUI_Wizard.wxs" />
+<!--
+EXCLUDE MATERIAL LIBRARY FROM INSTALLER
+    <Compile Include="Generated\MatLibrary.wxs" />
+EXCLUDE MATERIAL LIBRARY FROM INSTALLER
+-->
+  </ItemGroup>
+  <ItemGroup>
+    <WixExtension Include="WixUtilExtension">
+      <HintPath>$(WixExtDir)\WixUtilExtension.dll</HintPath>
+      <Name>WixUtilExtension</Name>
+    </WixExtension>
+    <WixExtension Include="WixBalExtension">
+      <HintPath>$(WixExtDir)\WixBalExtension.dll</HintPath>
+      <Name>WixBalExtension</Name>
+    </WixExtension>
+    <WixExtension Include="WixUIExtension">
+      <HintPath>$(WixExtDir)\WixUIExtension.dll</HintPath>
+      <Name>WixUIExtension</Name>
+    </WixExtension>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="agreement.rtf" />
+    <Content Include="Modules\2019\RadeonProRender.module" />
+    <Content Include="Modules\2017\RadeonProRender.module" />
+    <Content Include="Modules\2018\RadeonProRender.module" />
+    <Content Include="Readme.txt" />
+    <Content Include="rpr_banner.png" />
+    <Content Include="rpr_dialog.png" />
+    <Content Include="Wix files\Variables.wxi" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Generated\" />
+    <Folder Include="Modules" />
+    <Folder Include="Modules\2019" />
+    <Folder Include="Modules\2017" />
+    <Folder Include="Modules\2018" />
+    <Folder Include="Wix files" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Wix files\Localization.wxl" />
+  </ItemGroup>
+  <Import Project="$(WixTargetsPath)" />
+  <PropertyGroup>
+    <PostBuildEvent />
+  </PropertyGroup>
+  <PropertyGroup>
+    <PreBuildEvent>
+      "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_Core" -cg CG_ARTEFACTS -ag -scom -sreg -sfrag -srd -dr DR_ARTEFACTS -var var.Artefacts -out "$(ProjectDir)Generated\Artefacts.wxs"
+      "$(WIX)bin\heat.exe" dir "$(ProjectDir)modules" -cg CG_MODULES -ag -scom -sreg -sfrag -srd -dr DR_MODULES -var var.Modules -out "$(ProjectDir)Generated\Modules.wxs"
+      "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_2017" -cg CG_2017 -ag -scom -sreg -sfrag -srd -dr DR_PLUGINS -var var.Plugin2017 -out "$(ProjectDir)Generated\Plugin2017.wxs"
+      "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_2018" -cg CG_2018 -ag -scom -sreg -sfrag -srd -dr DR_PLUGINS -var var.Plugin2018 -out "$(ProjectDir)Generated\Plugin2018.wxs"
+      "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_2019" -cg CG_2019 -ag -scom -sreg -sfrag -srd -dr DR_PLUGINS -var var.Plugin2019 -out "$(ProjectDir)Generated\Plugin2019.wxs"
+
+<!--
+EXCLUDE MATERIAL LIBRARY FROM INSTALLER
+      "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_MaterialLibrary" -cg CG_MATLIBRARY -ag -scom -sreg -sfrag -srd -dr DR_MATLIBRARY -var var.MatLibrary -out "$(ProjectDir)Generated\MatLibrary.wxs"
+EXCLUDE MATERIAL LIBRARY FROM INSTALLER
+-->
+    </PreBuildEvent>
+  </PropertyGroup>
+  <!--
+	To modify your build process, add your task inside one of the targets below and uncomment it.
+	Other similar extension points exist, see Wix.targets.
+	<Target Name="BeforeBuild">
+	</Target>
+	<Target Name="AfterBuild">
+	</Target>
+	-->
+</Project>
