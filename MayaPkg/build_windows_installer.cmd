@@ -28,8 +28,8 @@ popd
 :build_installer
 echo Building Radeon ProRender for Maya installer %MAYA_PLUGIN_VERSION%
 
-:: call create_module.cmd 2017
-:: call create_module.cmd 2018
+call create_module.cmd 2017
+call create_module.cmd 2018
 call create_module.cmd 2019
 
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\bin" "system\PluginInstaller\InputData\feature_Core\bin\*"
