@@ -1905,7 +1905,7 @@ namespace frw
 			return Volume(h, *this);
 		}
 
-		Curve CreateCurve(size_t num_controlPoints, rpr_float * controlPointsData, 
+		Curve CreateCurve(size_t num_controlPoints, rpr_float const * controlPointsData, 
 			rpr_int controlPointsStride, size_t num_indices, 
 			rpr_uint curveCount, rpr_uint const * indicesData, 
 			rpr_float const * radiuses, rpr_float const * textureCoordUV, 
@@ -1936,7 +1936,7 @@ namespace frw
 				controlPointsStride, num_indices,
 				curveCount, indicesData,
 				radiuses, textureCoordUV,
-				segmentsPerCurve, 0);
+				segmentsPerCurve, 1);
 
 			checkStatusThrow(status, "Unable to create Hair Curve");
 

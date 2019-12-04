@@ -341,24 +341,24 @@ void RPRVolumeAttributes::FillVolumeData(VolumeData& data, const MObject& node, 
 	if (isAlbedoEnabled)
 	{
 		MPlug albedoRampPlug = RPRVolumeAttributes::GetAlbedoRamp(node);
-		GetValues<MColorArray, MColor>(albedoRampPlug, albedoCtrlPoints);
+		GetRampValues<MColorArray, MColor>(albedoRampPlug, albedoCtrlPoints);
 	}
 
 	bool isEmissionEnabled = RPRVolumeAttributes::GetEmissionEnabled(node);
 	if (isEmissionEnabled)
 	{
 		MPlug emissionRampPlug = RPRVolumeAttributes::GetEmissionValueRamp(node);
-		GetValues<MColorArray, MColor>(emissionRampPlug, emisionCtrlPoints);
+		GetRampValues<MColorArray, MColor>(emissionRampPlug, emisionCtrlPoints);
 		emission_intensity = RPRVolumeAttributes::GetEmissionIntensity(node);
 		MPlug emissionIntensityRampPlug = RPRVolumeAttributes::GetEmissionIntensityRamp(node);
-		GetValues<MFloatArray, float>(emissionIntensityRampPlug, emisionIntensityCtrlPoints);
+		GetRampValues<MFloatArray, float>(emissionIntensityRampPlug, emisionIntensityCtrlPoints);
 	}
 
 	bool isDensityEnabled = RPRVolumeAttributes::GetDensityEnabled(node);
 	if (isDensityEnabled)
 	{
 		MPlug densityRampPlug = RPRVolumeAttributes::GetDensityRamp(node);
-		GetValues<MFloatArray, float>(densityRampPlug, denstiyCtrlPoints);
+		GetRampValues<MFloatArray, float>(densityRampPlug, denstiyCtrlPoints);
 		density_multiplier = RPRVolumeAttributes::GetDensityMultiplier(node);
 	}
 
