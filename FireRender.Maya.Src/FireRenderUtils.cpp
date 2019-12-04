@@ -2003,6 +2003,31 @@ void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source)
 	source.get(out.data());
 }
 
+std::vector<MString> dumpAttributeNamesDbg(MObject node)
+{
+	MFnDependencyNode fnNode(node);
+
+	MString fnName = fnNode.name();
+	unsigned int attrCount = fnNode.attributeCount();
+
+	std::vector<MString> attrData;
+
+	for (unsigned int idx = 0; idx < attrCount; ++idx)
+	{
+		MObject attr = fnNode.attribute(idx);
+		MString type = attr.apiTypeStr();
+
+		MPlug plug = fnNode.findPlug(attr);
+		MString name = plug.name();
+
+		// first write name of an attribute than its type
+		attrData.push_back(name);
+		attrData.push_back(type);
+	}
+
+	return attrData;
+}
+
 RenderQuality GetRenderQualityFromPlug(const char* plugName)
 {
 	MPlug plug = GetRadeonProRenderGlobalsPlug(plugName);

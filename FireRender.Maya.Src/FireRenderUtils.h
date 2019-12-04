@@ -779,6 +779,7 @@ bool isMetalOn();
 bool DisconnectFromPlug(MPlug& plug);
 
 void SetCameraLookatForMatrix(rpr_camera camera, const MMatrix& matrix);
+
 /*
 * Auxiliary function and struct for extracting data from UI Ramp 
 */
@@ -790,6 +791,8 @@ enum class InterpolationMethod
 	kSmooth,
 };
 
+// representation of Control Point on Ramp in Maya UI
+// type of value of control point can be MColor, float or int
 template <class T> 
 struct RampCtrlPoint // T is either MColor or float
 {
@@ -801,6 +804,60 @@ struct RampCtrlPoint // T is either MColor or float
 	RampCtrlPoint() : method(InterpolationMethod::kNone) {}
 };
 
+// function to get value between prev and next point on ramp corresponding to positionOnRamp using Linear Interpolation
+template <typename valType>
+auto RampLerp(const RampCtrlPoint<valType>& prev, const RampCtrlPoint<valType>& next, float positionOnRamp)
+{
+	float coef = ((positionOnRamp - prev.position) / (next.position - prev.position));
+
+	valType prevValue = prev.ctrlPointData;
+	valType nextValue = next.ctrlPointData;
+	valType calcRes = nextValue - prevValue;
+
+	calcRes = coef * calcRes;
+	calcRes = calcRes + prevValue;
+
+	return calcRes;
+}
+
+// function to get array of values of type valType that are calculated by ramp control points values in inputControlPoints
+// is used to get values from maya ramp that can be passed to RPR
+template <typename valType>
+void RemapRampControlPoints(
+	unsigned int countOutputPoints,
+	std::vector<valType>& output,
+	const std::vector<RampCtrlPoint<valType>>& inputControlPoints)
+{
+	output.clear();
+	output.reserve(countOutputPoints);
+
+	auto itCurr = inputControlPoints.begin();
+	auto itNext = inputControlPoints.begin(); ++itNext;
+
+	for (unsigned int idx = 0; idx < countOutputPoints; ++idx)
+	{
+		float positionOnRamp = (1.0f / (countOutputPoints - 1)) * idx;
+
+		if (positionOnRamp > itNext->position)
+		{
+			itNext++;
+			itCurr++;
+		}
+
+		if (itNext == inputControlPoints.end())
+		{
+			output.push_back(itCurr->ctrlPointData);
+			continue;
+		}
+
+		valType remappedValue = RampLerp(*itCurr, *itNext, positionOnRamp); // only linear interpolation is currently supported
+
+		output.push_back(remappedValue);
+	}
+}
+
+// internal function to grab ramp control points from maya Ramp
+// shouldn't be used directly
 template <class MayaDataContainer, class valType>
 bool SaveCtrlPoints(
 	MayaDataContainer& dataVals,
@@ -809,6 +866,8 @@ bool SaveCtrlPoints(
 	MIntArray& indexes,
 	std::vector<RampCtrlPoint<valType>>& out)
 {
+	out.clear();
+
 	// ensure correct input
 	unsigned int length = dataVals.length();
 	if ((length != positions.length()) || 
@@ -850,8 +909,10 @@ bool SaveCtrlPoints(
 	return true;
 }
 
+// function to grab ramp control points from maya Ramp
+// use this to get control points array from MPlug
 template <class MayaDataContainer, class valType>
-bool GetValues(MPlug& plug, std::vector<RampCtrlPoint<valType>>& out)
+bool GetRampValues(MPlug& plug, std::vector<RampCtrlPoint<valType>>& out)
 {
 	// get ramp from plug
 	MRampAttribute valueRamp(plug);
@@ -879,6 +940,26 @@ bool GetValues(MPlug& plug, std::vector<RampCtrlPoint<valType>>& out)
 	return SaveCtrlPoints<MayaDataContainer, valType>(dataValues, positions, interps, indexes, out);
 }
 
+// function to grab ramp control points from maya Ramp
+// takes MObject rampObject and MString rampKey 
+// use this to get control points array 
+// - notice that in maya calls to ramp plug usually looks like: rampPlugName[0].SetSomething(...)
+// - the plug name in this case will be "rampPlugName"
+template<typename MayaDataContainer, typename valType>
+bool GetValuesFromUIRamp(MObject rampObject, const MString& rampKey, std::vector<RampCtrlPoint<valType>>& outRampCtrlPoints)
+{
+	MFnDependencyNode shaderNode(rampObject);
+	MPlug rampPlug = shaderNode.findPlug(rampKey);
+
+	bool found = !rampPlug.isNull();
+	if (!found)
+		return false;
+
+	GetRampValues<MayaDataContainer>(rampPlug, outRampCtrlPoints);
+
+	return true;
+}
+
 // wrapper for maya call to Python
 static std::function<int(std::string)> pythonCallWrap = [](std::string arg)->int
 {
@@ -896,6 +977,8 @@ void setAttribProps(MFnAttribute& attr, const MObject& attrObj);
 void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals, std::vector<int>& vertexIndices, std::vector<int>& normalIndices);
 
 void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source);
+
+std::vector<MString> dumpAttributeNamesDbg(MObject node);
 
 RenderQuality GetRenderQualityFromPlug(const char* plugName);
 RenderQuality GetRenderQualityForRenderType(RenderType renderType);

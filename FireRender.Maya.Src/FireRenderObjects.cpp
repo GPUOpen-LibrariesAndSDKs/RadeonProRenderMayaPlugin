@@ -2402,22 +2402,170 @@ void FireRenderHair::ApplyTransform(void)
 	}
 }
 
-bool FireRenderHair::CreateCurves()
-{
-#if !defined(MAYA2015) && !defined(MAYA2016)
-	MObject node = Object();
-	MFnDagNode fnDagNode(node);
+/* from RadeonProRender.h :
+	*  A rpr_curve is a set of curves
+	*  A curve is a set of segments
+	*  A segment is always composed of 4 3D points
+*/
+const unsigned int PointsPerSegment = 4;
 
+void ProcessHairPoints(
+	std::vector<rpr_uint>& outCurveIndicesData,
+	unsigned int offset,
+	unsigned int length,
+	const SgVec3f* positions
+	)
+{
+	assert(positions != nullptr);
+
+	rpr_uint currIdx = offset;
+	for (unsigned int idx = 0; idx < length; idx++)
+	{
+		outCurveIndicesData.push_back(currIdx++);
+
+		// duplicate index of last point in segment if necessary
+		if (outCurveIndicesData.size() % PointsPerSegment == 0)
+			if (idx < (length - 1))
+				outCurveIndicesData.push_back(outCurveIndicesData.back());
+	}
+}
+
+void ProcessHairTail(std::vector<rpr_uint>& outCurveIndicesData)
+{
+	// Number of points that should be added 
+	unsigned int tail = outCurveIndicesData.size() % PointsPerSegment;
+	if (tail != 0)
+		tail = PointsPerSegment - tail;
+
+	// Extend data indices array if necessary 
+	// Segment of RPR curve should always be composed of 4 3D points
+	for (unsigned int idx = 0; idx < tail; idx++)
+	{
+		outCurveIndicesData.push_back(outCurveIndicesData.back());
+	}
+}
+
+void ProcessHairWidth(
+	std::vector<float>& outRadiuses, 
+	const float* width,
+	const std::vector<rpr_uint>& curveIndicesData)
+{
+	// ensure correct inputs
+	assert(width != nullptr);
+	assert(curveIndicesData.size() % PointsPerSegment == 0);
+
+	const unsigned int segmentsInCurve = (unsigned int)(curveIndicesData.size()) / PointsPerSegment;
+
+	// N = 2*(number of segments)
+	// In RPR we set 2 widths per segment (segment is 4 points)
+	for (unsigned int idx = 0; idx < segmentsInCurve; ++idx)
+	{
+		// bottom circle
+		rpr_uint controlPointIdx = curveIndicesData[idx * PointsPerSegment];
+		float radius = width[controlPointIdx] * 0.5f;
+		outRadiuses.push_back(radius);
+
+		// top circle
+		controlPointIdx = curveIndicesData[idx * PointsPerSegment + (PointsPerSegment - 1)];
+		radius = width[controlPointIdx] * 0.5f;
+		outRadiuses.push_back(radius);
+	}
+}
+
+std::tuple<unsigned int, unsigned int> GetHairLengthOffset(const XGenSplineAPI::XgItSpline& splineIt, unsigned int currCurveIdx)
+{
+	// find length of current segment and its offset in data arrays
+	const unsigned int* primitiveInfos = splineIt.primitiveInfos();
+	const unsigned int  stride = splineIt.primitiveInfoStride();
+
+	unsigned int length = primitiveInfos[currCurveIdx * stride + 1];
+	unsigned int offset = primitiveInfos[currCurveIdx * stride];
+
+	return std::make_tuple(length, offset);
+}
+
+struct CurvesBatchData
+{
+	std::vector<rpr_uint> m_indicesData;
+	std::vector<int> m_numPointsPerSegment;
+	std::vector<float> m_radiuses;
+	std::vector<float> m_uvCoord;
+	unsigned int m_pointCount;
+	const SgVec3f* m_points;
+
+	CurvesBatchData(const XGenSplineAPI::XgItSpline& splineIt)
+		: m_indicesData()
+		, m_numPointsPerSegment()
+		, m_radiuses() // In RPR we set 2 widths per segment (segment is 4 points)
+		, m_uvCoord() // RPR accepts only one UV pair per curve
+		, m_pointCount(splineIt.vertexCount())
+		, m_points(splineIt.positions(0))
+	{
+		const unsigned int  curveCount = splineIt.primitiveCount();
+
+		m_indicesData.reserve(m_pointCount*2);
+		m_numPointsPerSegment.reserve(curveCount);
+		m_radiuses.reserve(m_pointCount); // array of N float. If curve is not tapered, N = curveCount. If curve is tapered, N = 2*(number of segments)
+		m_uvCoord.reserve(2 * curveCount);
+	}
+
+	frw::Curve CreateRPRCurve(frw::Context& currContext)
+	{
+		return currContext.CreateCurve(m_pointCount, m_points->getValue(),
+			sizeof(float) * 3, m_indicesData.size(), (rpr_uint) m_numPointsPerSegment.size(), m_indicesData.data(),
+			m_radiuses.data(), m_uvCoord.data(), m_numPointsPerSegment.data());
+	}
+};
+
+frw::Curve ProcessCurvesBatch(const XGenSplineAPI::XgItSpline& splineIt, frw::Context currContext)
+{
+	// create data buffers
+	CurvesBatchData batchData(splineIt);
+
+	// for each primitive (for each hair in batch)
+	for (unsigned int currCurveIdx = 0; currCurveIdx < splineIt.primitiveCount(); ++currCurveIdx)
+	{
+		unsigned int offset = 0;
+		unsigned int length = 0;
+		std::tie(length, offset) = GetHairLengthOffset(splineIt, currCurveIdx);
+
+		// Write indices and copy points
+		std::vector<rpr_uint> curveIndicesData;
+		ProcessHairPoints(curveIndicesData, offset, length, splineIt.positions(0));
+		ProcessHairTail(curveIndicesData);
+		assert (curveIndicesData.size() % PointsPerSegment == 0);
+
+		// Texcoord using the patch UV from the root point
+		const SgVec2f* patchUVs = splineIt.patchUVs();
+		batchData.m_uvCoord.push_back(patchUVs[offset][0]);
+		batchData.m_uvCoord.push_back(patchUVs[offset][1]);
+		// Number of points in the current curve
+		const unsigned int segmentsInCurve = (unsigned int)(curveIndicesData.size()) / PointsPerSegment;
+		batchData.m_numPointsPerSegment.push_back(segmentsInCurve);
+
+		// add tmp_indicesData to output
+		batchData.m_indicesData.insert(batchData.m_indicesData.end(), curveIndicesData.begin(), curveIndicesData.end());
+
+		// Hair segments radiuses
+		ProcessHairWidth(batchData.m_radiuses, splineIt.width(), curveIndicesData);
+	}
+
+	// create RPR curve (create batch of hairs)
+	return batchData.CreateRPRCurve(currContext);
+}
+
+bool GetCurvesData(XGenSplineAPI::XgFnSpline& out, MFnDagNode& curvesNode)
+{
 	// Stream out the spline data
 	std::string data;
-	MPlug       outPlug = fnDagNode.findPlug("outRenderData");
+	MPlug       outPlug = curvesNode.findPlug("outRenderData");
 	MObject     outObj = outPlug.asMObject();
 	MPxData*    outData = MFnPluginData(outObj).data();
-
-	if (!outData)
+	// failed to get data
+	if (outData == nullptr)
 		return false;
 
-	// Data found
+	// Data found => dump data to stream
 	std::stringstream opaqueStrm;
 	outData->writeBinary(opaqueStrm);
 	data = opaqueStrm.str();
@@ -2425,124 +2573,45 @@ bool FireRenderHair::CreateCurves()
 	// Compute the padding bytes and number of array elements
 	const unsigned int tail = data.size() % sizeof(unsigned int);
 	const unsigned int padding = (tail > 0) ? sizeof(unsigned int) - tail : 0;
-	const unsigned int nelements = (unsigned int) (data.size() / sizeof(unsigned int) + (tail > 0 ? 1 : 0));
+	const unsigned int nelements = (unsigned int)(data.size() / sizeof(unsigned int) + (tail > 0 ? 1 : 0));
 
-	XGenSplineAPI::XgFnSpline splines;
 	size_t sampleSize = nelements * sizeof(unsigned int) - padding;
-	float sampleTime = 0.0f;
+	float sampleTime = 0.0f; // this seems to be an irrelevant parameter
 
 	// get splines
-	if (!splines.load(opaqueStrm, sampleSize, sampleTime))
+	if (!out.load(opaqueStrm, sampleSize, sampleTime))
 		return false;
 
 	// apply masks etc.
-	if (!splines.executeScript())
+	if (!out.executeScript())
 		return false;
 
-	// Count the number of curves and the number of points
-	unsigned int curveCount = 0;
-	unsigned int pointCount = 0;
-	unsigned int pointInterpoCount = 0;
+	return true;
+}
+
+bool FireRenderHair::CreateCurves()
+{
+	MObject node = Object();
+	MFnDagNode fnDagNode(node);
+
+	// get curves data
+	XGenSplineAPI::XgFnSpline splines;
+	if (!GetCurvesData(splines, fnDagNode))
+		return false;
+
+	// create rpr curves (hair batch) for each primitive batch
 	for (XGenSplineAPI::XgItSpline splineIt = splines.iterator(); !splineIt.isDone(); splineIt.next())
 	{
-		curveCount += splineIt.primitiveCount();
-		pointCount += splineIt.vertexCount();
-		pointInterpoCount += splineIt.vertexCount() + splineIt.primitiveCount() * 2;
+		m_Curves.push_back(ProcessCurvesBatch(splineIt, Context()));
 	}
 
-	// Get the number of motion samples
-	const unsigned int steps = splines.sampleCount();
+	// apply transform to curves
+	ApplyTransform();
 
-	// for each primitive batch
-	for (XGenSplineAPI::XgItSpline splineIt = splines.iterator(); !splineIt.isDone(); splineIt.next())
-	{
-		const unsigned int  stride = splineIt.primitiveInfoStride();
-		const unsigned int  curveCount = splineIt.primitiveCount();
-		const unsigned int* primitiveInfos = splineIt.primitiveInfos();
-		const SgVec3f*      positions = splineIt.positions(0);
-
-		const float*        width = splineIt.width();
-		const SgVec2f*      texcoords = splineIt.texcoords();
-		const SgVec2f*      patchUVs = splineIt.patchUVs();
-
-		// create data buffers
-		std::vector<rpr_uint> indicesData; indicesData.reserve(pointCount);
-		std::vector<int> numPoints; numPoints.reserve(curveCount);
-		std::vector<SgVec3f> points; points.reserve(pointInterpoCount);
-		std::vector<float> radiuses; radiuses.reserve(pointCount);
-		std::vector<float> uvCoord; uvCoord.reserve(2 * curveCount);
-		std::vector<float> wCoord; wCoord.reserve(pointInterpoCount);
-
-		// for each primitive
-		for (unsigned int p = 0; p < curveCount; p++)
-		{
-			const unsigned int offset = primitiveInfos[p * stride];
-			const unsigned int length = primitiveInfos[p * stride + 1];
-
-			/* from RadeonProRender.h :
-			    *  A rpr_curve is a set of curves
-				*  A curve is a set of segments
-				*  A segment is always composed of 4 3D points
-			*/
-			const unsigned int pointsPerSegment = 4;
-
-			std::vector<rpr_uint> tmp_indicesData;
-
-			// Copy varying data
-			for (unsigned int i = 0; i < length; i++)
-			{
-				tmp_indicesData.push_back((rpr_uint) points.size());
-
-				if (tmp_indicesData.size() % pointsPerSegment == 0)
-					if (i < (length - 1))
-						tmp_indicesData.push_back(tmp_indicesData.back());
-
-				points.push_back(positions[offset + i]);
-
-				radiuses.push_back(width[offset + i] * 0.5f);
-				wCoord.push_back(texcoords[offset + i][1]);
-			}
-
-			// Texcoord using the patch UV from the root point
-			uvCoord.push_back(patchUVs[offset][0]);
-			uvCoord.push_back(patchUVs[offset][1]);
-
-			// Number of points
-			unsigned int tail = tmp_indicesData.size() % pointsPerSegment;
-			if (tail != 0)
-				tail = 4 - tail;
-
-			const unsigned int pointsInCurve = (unsigned int) (tmp_indicesData.size() + tail);
-			const unsigned int segmentsInCurve = pointsInCurve / pointsPerSegment;
-			numPoints.push_back(segmentsInCurve);
-
-			// Extend data indices array if necessary 
-			// Segment of RPR curve should always be composed of 4 3D points
-			for (unsigned int i = 0; i < tail; i++)
-			{
-				tmp_indicesData.push_back(tmp_indicesData.back());
-			}
-
-			indicesData.insert(indicesData.end(), tmp_indicesData.begin(), tmp_indicesData.end());
-		}
-
-		// create RPR curve
-		frw::Curve crv = Context().CreateCurve(points.size(), &points.data()[0][0],
-			sizeof(float) * 3, indicesData.size(), curveCount, indicesData.data(),
-			radiuses.data(), uvCoord.data(), numPoints.data());
-		m_Curves.push_back(crv);
-
-		// apply transform to curves
-		ApplyTransform();
-
-		// apply material to curves
-		ApplyMaterial();
-	}
+	// apply material to curves
+	ApplyMaterial();
 
 	return (m_Curves.size() > 0);
-#else
-	return false;
-#endif
 }
 
 void FireRenderHair::Freshen()
