@@ -10,6 +10,7 @@
 #include <maya/MFloatVector.h>
 #include <maya/MDataBlock.h>
 #include <maya/MDataHandle.h>
+#include <maya/MFnFloatArrayData.h>
 
 #include "FireMaya.h"
 
@@ -187,9 +188,7 @@ MString FireMaya::BlendMaterial::Override::fragmentName() const
 
 void FireMaya::BlendMaterial::Override::getCustomMappings(MHWRender::MAttributeParameterMappingList& mappings)
 {
-	mappings.append(MHWRender::MAttributeParameterMapping("color2", "color0", true, true));
-	mappings.append(MHWRender::MAttributeParameterMapping("color1", "color1", true, true));
-	mappings.append(MHWRender::MAttributeParameterMapping("blender", "weight", true, true));
+	// Mapping removed because of strange behavior when mix different shader types with multiple blend nodes
 }
 
 bool FireMaya::BlendMaterial::Override::valueChangeRequiresFragmentRebuild(const MPlug* plug) const
@@ -203,6 +202,33 @@ void FireMaya::BlendMaterial::Override::updateDG()
 
 void FireMaya::BlendMaterial::Override::updateShader(MHWRender::MShaderInstance& shader, const MHWRender::MAttributeParameterMappingList& mappings)
 {
+	if (m_shader.isNull())
+	{
+		return;
+	}
+
+	MFnDependencyNode shaderNode(m_shader);
+
+	MPlug weightPlug = shaderNode.findPlug("weight");
+	float weight = 0;
+	MStatus weightStatus = weightPlug.getValue(weight);
+	assert(weightStatus == MStatus::kSuccess);
+
+	MPlug colorPlug0 = shaderNode.findPlug("color0");
+	MDataHandle colorDataHandle0;
+	MStatus status0 = colorPlug0.getValue(colorDataHandle0);
+	assert(status0 == MStatus::kSuccess);
+	float3& color0 = colorDataHandle0.asFloat3();
+
+	MPlug colorPlug1 = shaderNode.findPlug("color1");
+	MDataHandle colorDataHandle1;
+	MStatus status1 = colorPlug1.getValue(colorDataHandle1);
+	assert(status1 == MStatus::kSuccess);
+	float3& color1 = colorDataHandle1.asFloat3();
+
+	shader.setParameter("color2", color0);
+	shader.setParameter("color1", color1);
+	shader.setParameter("blender", weight);
 }
 
 const char* FireMaya::BlendMaterial::Override::className()
