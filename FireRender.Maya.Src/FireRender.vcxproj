@@ -340,6 +340,8 @@
     <ClCompile Include="SubsurfaceMaterial.cpp" />
     <ClCompile Include="TileRenderer.cpp" />
     <ClCompile Include="Translators\MeshTranslator.cpp" />
+    <ClCompile Include="Translators\MultipleShaderMeshTranslator.cpp" />
+    <ClCompile Include="Translators\SingleShaderMeshTranslator.cpp" />
     <ClCompile Include="Translators\Translators.cpp" />
     <ClCompile Include="Volumes\FireRenderVolumeLocator.cpp" />
     <ClCompile Include="Volumes\FireRenderVolumeOverride.cpp" />
@@ -488,6 +490,8 @@
     <ClInclude Include="SubsurfaceMaterial.h" />
     <ClInclude Include="TileRenderer.h" />
     <ClInclude Include="Translators\MeshTranslator.h" />
+    <ClInclude Include="Translators\MultipleShaderMeshTranslator.h" />
+    <ClInclude Include="Translators\SingleShaderMeshTranslator.h" />
     <ClInclude Include="Translators\Translators.h" />
     <ClInclude Include="Volumes\FireRenderVolumeLocator.h" />
     <ClInclude Include="Volumes\FireRenderVolumeOverride.h" />

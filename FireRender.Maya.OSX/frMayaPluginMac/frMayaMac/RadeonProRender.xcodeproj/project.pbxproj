@@ -628,6 +628,18 @@
 		AD18136C22E6A0F800BB2B78 /* RprAthena.h in Headers */ = {isa = PBXBuildFile; fileRef = AD18136222E6A0F800BB2B78 /* RprAthena.h */; };
 		AD18136D22E6A0F800BB2B78 /* RprAthena.h in Headers */ = {isa = PBXBuildFile; fileRef = AD18136222E6A0F800BB2B78 /* RprAthena.h */; };
 		AD18136E22E6A0F800BB2B78 /* RprAthena.h in Headers */ = {isa = PBXBuildFile; fileRef = AD18136222E6A0F800BB2B78 /* RprAthena.h */; };
+		B7542DEB238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7542DE6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp */; };
+		B7542DEC238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7542DE6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp */; };
+		B7542DED238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7542DE6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp */; };
+		B7542DEE238FE61B00ACBE7C /* SingleShaderMeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = B7542DE8238FE61B00ACBE7C /* SingleShaderMeshTranslator.h */; };
+		B7542DEF238FE61B00ACBE7C /* SingleShaderMeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = B7542DE8238FE61B00ACBE7C /* SingleShaderMeshTranslator.h */; };
+		B7542DF0238FE61B00ACBE7C /* SingleShaderMeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = B7542DE8238FE61B00ACBE7C /* SingleShaderMeshTranslator.h */; };
+		B7542DF1238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7542DE9238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp */; };
+		B7542DF2238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7542DE9238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp */; };
+		B7542DF3238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7542DE9238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp */; };
+		B7542DF4238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */; };
+		B7542DF5238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */; };
+		B7542DF6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */; };
 		B7701DDD235DE0380072482F /* StartupContextChecker.h in Headers */ = {isa = PBXBuildFile; fileRef = B7701DDA235DE0380072482F /* StartupContextChecker.h */; };
 		B7701DDE235DE0380072482F /* StartupContextChecker.h in Headers */ = {isa = PBXBuildFile; fileRef = B7701DDA235DE0380072482F /* StartupContextChecker.h */; };
 		B7701DDF235DE0380072482F /* StartupContextChecker.h in Headers */ = {isa = PBXBuildFile; fileRef = B7701DDA235DE0380072482F /* StartupContextChecker.h */; };
@@ -1010,6 +1022,10 @@
 		AD18136022E6A0F700BB2B78 /* athenaWrap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = athenaWrap.cpp; path = ../../../FireRender.Components/cpp/Athena/athenaWrap.cpp; sourceTree = "<group>"; };
 		AD18136122E6A0F800BB2B78 /* RprAthena.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RprAthena.cpp; path = ../../../FireRender.Components/cpp/Athena/RprAthena.cpp; sourceTree = "<group>"; };
 		AD18136222E6A0F800BB2B78 /* RprAthena.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RprAthena.h; path = ../../../FireRender.Components/cpp/Athena/RprAthena.h; sourceTree = "<group>"; };
+		B7542DE6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MultipleShaderMeshTranslator.cpp; path = ../../../FireRender.Maya.Src/Translators/MultipleShaderMeshTranslator.cpp; sourceTree = "<group>"; };
+		B7542DE8238FE61B00ACBE7C /* SingleShaderMeshTranslator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SingleShaderMeshTranslator.h; path = ../../../FireRender.Maya.Src/Translators/SingleShaderMeshTranslator.h; sourceTree = "<group>"; };
+		B7542DE9238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SingleShaderMeshTranslator.cpp; path = ../../../FireRender.Maya.Src/Translators/SingleShaderMeshTranslator.cpp; sourceTree = "<group>"; };
+		B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MultipleShaderMeshTranslator.h; path = ../../../FireRender.Maya.Src/Translators/MultipleShaderMeshTranslator.h; sourceTree = "<group>"; };
 		B7701DDA235DE0380072482F /* StartupContextChecker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StartupContextChecker.h; path = ../../../FireRender.Maya.Src/StartupContextChecker.h; sourceTree = "<group>"; };
 		B7701DDC235DE0380072482F /* StartupContextChecker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StartupContextChecker.cpp; path = ../../../FireRender.Maya.Src/StartupContextChecker.cpp; sourceTree = "<group>"; };
 		B7D1F00C2367615F00BB07CE /* FireRenderMeshMASH.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderMeshMASH.h; path = ../../../FireRender.Maya.Src/FireRenderMeshMASH.h; sourceTree = "<group>"; };
@@ -1111,6 +1127,10 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				B7542DE6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp */,
+				B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */,
+				B7542DE9238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp */,
+				B7542DE8238FE61B00ACBE7C /* SingleShaderMeshTranslator.h */,
 				B7EDEA6B237C2A01003060F1 /* athenaSystemInfo_Mac.h */,
 				B7EDEA6D237C2A02003060F1 /* athenaSystemInfo.m */,
 				B7D1F00F2367616000BB07CE /* FireRenderMeshMASH.cpp */,
@@ -1530,6 +1550,7 @@
 				8D91AC36203C76A800E6226B /* RprTools.h in Headers */,
 				8D77AEF51F436244008E88FB /* FireRenderTransparentMaterial.h in Headers */,
 				4DE508821D9950A1009B2BD6 /* FireRenderGlobals.h in Headers */,
+				B7542DF4238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h in Headers */,
 				8D55909A20C8743900567EEC /* MeshTranslator.h in Headers */,
 				4DE508831D9950A1009B2BD6 /* FireRenderViewportCmd.h in Headers */,
 				4D55F2511DDB1EFC00FD945D /* FireRenderViewportManager.h in Headers */,
@@ -1575,6 +1596,7 @@
 				4DE508941D9950A1009B2BD6 /* FireRenderSurfaceOverride.h in Headers */,
 				8D77AEF71F436244008E88FB /* FireRenderViewportOperation.h in Headers */,
 				4DE508951D9950A1009B2BD6 /* FireRenderIpr.h in Headers */,
+				B7542DEE238FE61B00ACBE7C /* SingleShaderMeshTranslator.h in Headers */,
 				4DE508961D9950A1009B2BD6 /* FireRenderOverride.h in Headers */,
 				8D77AEDE1F436244008E88FB /* AutoLock.h in Headers */,
 				4DE508971D9950A1009B2BD6 /* FireRenderArithmetic.h in Headers */,
@@ -1651,6 +1673,7 @@
 				8D595DBB20372FE20031988A /* ArHosekSkyModelData_CIEXYZ.h in Headers */,
 				8D595DBC20372FE20031988A /* RenderStamp.h in Headers */,
 				8D595DBD20372FE20031988A /* SkyAttributes.h in Headers */,
+				B7542DF5238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h in Headers */,
 				B7EC453423743C97001E49F7 /* HybridContext.h in Headers */,
 				8D595DBE20372FE20031988A /* FireRenderTransparentMaterial.h in Headers */,
 				8D595DBF20372FE20031988A /* FireRenderGlobals.h in Headers */,
@@ -1679,6 +1702,7 @@
 				8D595DD420372FE20031988A /* FireRenderImageComparing.h in Headers */,
 				8D595DD520372FE20031988A /* IESprocessor.h in Headers */,
 				8D595DD620372FE20031988A /* RenderProgressBars.h in Headers */,
+				B7542DEF238FE61B00ACBE7C /* SingleShaderMeshTranslator.h in Headers */,
 				8D595DD720372FE20031988A /* FireRenderAOV.h in Headers */,
 				8D595DD820372FE20031988A /* FireRenderUtils.h in Headers */,
 				8D595DD920372FE20031988A /* FireRenderViewportBlit.h in Headers */,
@@ -1772,6 +1796,7 @@
 				8DBCC2D122304666003EE361 /* ArHosekSkyModelData_CIEXYZ.h in Headers */,
 				8DBCC2D222304666003EE361 /* RenderStamp.h in Headers */,
 				8DBCC2D322304666003EE361 /* SkyAttributes.h in Headers */,
+				B7542DF6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h in Headers */,
 				B7EC453523743C97001E49F7 /* HybridContext.h in Headers */,
 				8DBCC2D422304666003EE361 /* FireRenderTransparentMaterial.h in Headers */,
 				8DBCC2D522304666003EE361 /* FireRenderGlobals.h in Headers */,
@@ -1800,6 +1825,7 @@
 				8DBCC2E922304666003EE361 /* FireRenderImageComparing.h in Headers */,
 				8DBCC2EA22304666003EE361 /* IESprocessor.h in Headers */,
 				8DBCC2EB22304666003EE361 /* RenderProgressBars.h in Headers */,
+				B7542DF0238FE61B00ACBE7C /* SingleShaderMeshTranslator.h in Headers */,
 				8DBCC2EC22304666003EE361 /* FireRenderAOV.h in Headers */,
 				8DBCC2ED22304666003EE361 /* FireRenderUtils.h in Headers */,
 				8DBCC2EE22304666003EE361 /* FireRenderViewportBlit.h in Headers */,
@@ -1945,6 +1971,7 @@
 				4DE508A01D9950A1009B2BD6 /* FireRenderBlendMaterial.cpp in Sources */,
 				B7701DE0235DE0380072482F /* StartupContextChecker.cpp in Sources */,
 				CE600BD422A182E100362CF7 /* RenderStampUtils.cpp in Sources */,
+				B7542DF1238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp in Sources */,
 				4DE508A11D9950A1009B2BD6 /* FireRenderExportCmd.cpp in Sources */,
 				8D8F06EB1F437B2D00A13D6B /* ArHosekSkyModel.cpp in Sources */,
 				8DB6232E2075582100841D10 /* IESLightLocatorMesh.cpp in Sources */,
@@ -1999,6 +2026,7 @@
 				4DE508B21D9950A1009B2BD6 /* FireRenderBump.cpp in Sources */,
 				4D6C220D1DEBFE8F00D745F8 /* FireRenderError.cpp in Sources */,
 				B7EC452B23743ACC001E49F7 /* FireRenderContext.cpp in Sources */,
+				B7542DEB238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp in Sources */,
 				B7EC452623743ACC001E49F7 /* TahoeContext.cpp in Sources */,
 				4DE508B31D9950A1009B2BD6 /* FireRenderCmd.cpp in Sources */,
 				4DE508B41D9950A1009B2BD6 /* FireRenderObjects.cpp in Sources */,
@@ -2053,6 +2081,7 @@
 				B7D1F01A2367616000BB07CE /* FireRenderMeshMASH.cpp in Sources */,
 				8D9116A02225850B0083881D /* XMLMaterialExportCommon.cpp in Sources */,
 				8D28372F2199D7480004852B /* OptionVarHelpers.cpp in Sources */,
+				B7542DEC238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp in Sources */,
 				CE9B693C2359B76500B45249 /* athenaWrap.cpp in Sources */,
 				8DE9B55F2191DDA800ED8555 /* FireRenderImportXML.cpp in Sources */,
 				8DBC06F6215E6968006ECC17 /* FireRenderSwatchInstance.cpp in Sources */,
@@ -2140,6 +2169,7 @@
 				8D595E2720372FE20031988A /* FireRenderImportExportXML.cpp in Sources */,
 				8D595E2820372FE20031988A /* FireRenderPBRMaterial.cpp in Sources */,
 				8D595E2920372FE20031988A /* FireRenderChecker.cpp in Sources */,
+				B7542DF2238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp in Sources */,
 				8D595E2A20372FE20031988A /* SkyAttributes.cpp in Sources */,
 				8D595E2B20372FE20031988A /* FireRenderImportCmd.cpp in Sources */,
 				8D595E2C20372FE20031988A /* FireRenderViewport.cpp in Sources */,
@@ -2171,6 +2201,7 @@
 				B7D1F01B2367616000BB07CE /* FireRenderMeshMASH.cpp in Sources */,
 				8DBCC2FD22304666003EE361 /* XMLMaterialExportCommon.cpp in Sources */,
 				8DBCC2FE22304666003EE361 /* OptionVarHelpers.cpp in Sources */,
+				B7542DED238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp in Sources */,
 				CE9B693A2359B76500B45249 /* athenaWrap.cpp in Sources */,
 				8DBCC2FF22304666003EE361 /* FireRenderImportXML.cpp in Sources */,
 				8DBCC30022304666003EE361 /* FireRenderSwatchInstance.cpp in Sources */,
@@ -2258,6 +2289,7 @@
 				8DBCC34822304666003EE361 /* FireRenderImportExportXML.cpp in Sources */,
 				8DBCC34922304666003EE361 /* FireRenderPBRMaterial.cpp in Sources */,
 				8DBCC34A22304666003EE361 /* FireRenderChecker.cpp in Sources */,
+				B7542DF3238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp in Sources */,
 				8DBCC34B22304666003EE361 /* SkyAttributes.cpp in Sources */,
 				8DBCC34C22304666003EE361 /* FireRenderImportCmd.cpp in Sources */,
 				8DBCC34D22304666003EE361 /* FireRenderViewport.cpp in Sources */,
