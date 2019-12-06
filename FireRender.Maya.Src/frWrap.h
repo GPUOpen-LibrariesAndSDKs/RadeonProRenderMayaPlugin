@@ -15,6 +15,7 @@
 #endif
 #include <set>
 #include <string>
+#include <array>
 #include <maya/MString.h>
 
 #include <math.h>
@@ -24,6 +25,7 @@
 
 #include <maya/MGlobal.h>
 #include <maya/MDistance.h>
+#include <maya/MColor.h>
 
 //#define FRW_LOGGING 1
 
@@ -1011,6 +1013,36 @@ namespace frw
 			}
 		}
 
+		void SetVertexColors(const std::vector<int>& vertexIndices, const std::vector<MColor>& vertexColors, rpr_int indexCount)
+		{
+			std::vector<rpr_float> colors;
+			colors.resize(indexCount);
+
+			for (size_t colorComponent = 0; colorComponent < 4; colorComponent++)
+			{
+				for (auto vertexIndex : vertexIndices)
+				{
+					switch (colorComponent)
+					{
+					case 0:
+						colors[vertexIndex] = vertexColors[vertexIndex].r;
+						break;
+					case 1:
+						colors[vertexIndex] = vertexColors[vertexIndex].g;
+						break;
+					case 2:
+						colors[vertexIndex] = vertexColors[vertexIndex].b;
+						break;
+					case 3:
+						colors[vertexIndex] = vertexColors[vertexIndex].a;
+						break;
+					}
+				}
+
+				rprShapeSetVertexValue(Handle(), colorComponent, vertexIndices.data(), colors.data(), indexCount);
+			}
+		}
+
 #ifdef FRW_USE_MAX_TYPES
 		void SetTransform(const Matrix3& tm)
 		{
@@ -1717,7 +1749,7 @@ namespace frw
 			rpr_int numberOfTexCoordLayers, const rpr_float** texcoords, const size_t* num_texcoords, const rpr_int* texcoord_stride,
 			const rpr_int* vertex_indices, rpr_int vidx_stride,
 			const rpr_int* normal_indices, rpr_int nidx_stride, const rpr_int** texcoord_indices,
-			const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces);
+			const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces) const;
 
 		PointLight CreatePointLight()
 		{
@@ -3820,7 +3852,7 @@ namespace frw
 		rpr_int numberOfTexCoordLayers, const rpr_float** texcoords, const size_t* num_texcoords, const rpr_int* texcoord_stride,
 		const rpr_int* vertex_indices, rpr_int vidx_stride,
 		const rpr_int* normal_indices, rpr_int nidx_stride, const rpr_int** texcoord_indices,
-		const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces)
+		const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces) const
 	{
 		FRW_PRINT_DEBUG("CreateMesh() - %d faces\n", num_faces);
 		rpr_shape shape = nullptr;

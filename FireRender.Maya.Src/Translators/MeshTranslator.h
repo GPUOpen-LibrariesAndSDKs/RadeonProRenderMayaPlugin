@@ -10,10 +10,9 @@
 
 namespace FireMaya
 {
-	namespace MeshTranslator
-	{	
-		std::vector<frw::Shape> TranslateMesh(frw::Context context, const MObject& originalObject);
-
+	class MeshTranslator
+	{
+	public:
 		struct MeshPolygonData
 		{
 			MStringArray uvSetNames;
@@ -24,45 +23,75 @@ namespace FireMaya
 			int countVertices;
 			const float* pNormals;
 			int countNormals;
-			int numIndices;
+			int triangleVertexIndicesCount;
 
 			MeshPolygonData();
 
-			void Initialize(MFnMesh& fnMesh);
+			void Initialize(const MFnMesh& fnMesh);
 		};
 
-		// forward declaration of data structures used in auxiliary functions
-		struct MeshIdxDictionary;
+		struct MeshIdxDictionary
+		{
+			// output coords of vertices
+			std::vector<Float3> vertexCoords;
 
-		/** TranslateMesh optimized for meshes with 1 submesh*/
-		inline void TranslateMeshSingleShader(frw::Context context,
-			MFnMesh& fnMesh,
-			std::vector<frw::Shape>& elements,
-			MeshPolygonData& meshPolygonData
-		);
+			// output coords of normals
+			std::vector<Float3> normalCoords;
 
-		MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus& status);
+			// output coords of uv's
+			std::vector<Float2> uvSubmeshCoords[2];
+
+			// output indices of vertexes (3 indices for each triangle)
+			std::vector<int> vertexCoordsIndices;
+
+			// output indices of normals (3 indices for each triangle)
+			std::vector<int> normalIndices;
+
+			// table to convert global index of vertex (index of vertex in pVertices array) to one in vertexCoords
+			// - local to submesh
+			std::unordered_map<int, int> vertexCoordsIndicesGlobalToDictionary;
+
+			// table to convert global index of normal (index of normal in pNormals array) to one in vertexCoords
+			// - local to submesh
+			std::unordered_map<int, int> normalCoordIdxGlobal2Local;
+
+			// table to convert global index of uv coord (index of coord in uvIndices array) to one in normalCoords
+			// - local to submesh
+			std::unordered_map<int, int> uvCoordIdxGlobal2Local[2]; // size is always 1 or 2
+
+			// output indices of UV coordinates (3 indices for each triangle)
+			// up to 2 UV channels is supported, thus vector of vectors
+			std::vector<int> uvIndices[2];
+
+			// Indices of colored vertices
+			std::vector<int> colorVertexIndices;
+
+			// Colors corresponding to vertices
+			std::vector<MColor> vertexColors;
+		};
+
+		static std::vector<frw::Shape> TranslateMesh(const frw::Context& context, const MObject& originalObject);
+
+	private:
+
+		static MObject GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus& status);
 
 		/** Tessellate a NURBS surface and return the resulting mesh object. */
-		MObject TessellateNurbsSurface(const MObject& object, const MObject& parent, MStatus& status);
+		static MObject TessellateNurbsSurface(const MObject& object, const MObject& parent, MStatus& status);
 
-		MObject GetTesselatedObjectIfNecessary(const MObject& originalObject, MStatus& mstatus);
+		static MObject GetTesselatedObjectIfNecessary(const MObject& originalObject, MStatus& mstatus);
 
-		void GetUVCoords(const MFnMesh& fnMesh,
+		static void GetUVCoords(
+			const MFnMesh& fnMesh,
 			MStringArray& uvSetNames,
 			std::vector<std::vector<Float2> >& uvCoords,
 			std::vector<const float*>& puvCoords,
-			std::vector<size_t>& sizeCoords);
+			std::vector<size_t>& sizeCoords
+		);
 
-		inline void AddPolygon(MItMeshPolygon& it,
-			const MeshPolygonData& meshPolygonData,
-			MeshIdxDictionary& meshIdxDictionary);
+		static MObject Smoothed2ndUV(const MObject& object, MStatus& status);
 
-		inline void AddPolygon(MItMeshPolygon& it,
-			const MStringArray& uvSetNames,
-			std::vector<int>& vertexIndices,
-			std::vector<int>& normalIndices,
-			std::vector<std::vector<int> >& uvIndices);
+		static void RemoveTesselatedTemporaryMesh(const MFnDagNode& node, MObject tessellated);
+
 	};
 }
-

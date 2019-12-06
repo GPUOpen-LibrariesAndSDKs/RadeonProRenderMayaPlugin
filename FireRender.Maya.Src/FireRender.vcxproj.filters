@@ -575,6 +575,12 @@
     <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RPRStringIDMapper.cpp">
       <Filter>RadeonProRender</Filter>
     </ClCompile>
+    <ClCompile Include="Translators\MultipleShaderMeshTranslator.cpp">
+      <Filter>Translators</Filter>
+    </ClCompile>
+    <ClCompile Include="Translators\SingleShaderMeshTranslator.cpp">
+      <Filter>Translators</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -993,6 +999,12 @@
     </ClInclude>
     <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\RPRStringIDMapper.h">
       <Filter>RadeonProRender</Filter>
+    </ClInclude>
+    <ClInclude Include="Translators\MultipleShaderMeshTranslator.h">
+      <Filter>Translators</Filter>
+    </ClInclude>
+    <ClInclude Include="Translators\SingleShaderMeshTranslator.h">
+      <Filter>Translators</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
