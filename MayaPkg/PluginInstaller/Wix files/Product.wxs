@@ -87,7 +87,10 @@
 					<Directory Id="PLUGINS" Name="$(var.ProductsFolder)">
 						<Directory Id="DR_ARTEFACTS" Name="Maya">
 							<Directory Id="DR_PLUGINS" Name="plug-ins"/>
-					</Directory>
+							<Directory Id="DR_SCRIPTS" Name="scripts">
+								<Directory Id="DR_SCRIPTS_FIRE_RENDER" Name="fireRender"/>
+							</Directory>
+						</Directory>
 <!--
 					<Merge Id="Microsoft_VC140_CRT_x64" SourceFile="$(env.CommonProgramFiles(x86))\Merge Modules\Microsoft_VC140_CRT_x64.msm" Language="0" DiskId="1"/>
 					<Merge Id="Microsoft_VC140_OpenMP_x64" SourceFile="$(env.CommonProgramFiles(x86))\Merge Modules\Microsoft_VC140_OpenMP_x64.msm" Language="0" DiskId="1"/>
@@ -252,6 +255,7 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 -->
 			<Feature Id="SceneConvScripts" Title="Scene Convertion Scripts" Description="Scene Convertion Scripts for Arnold and RedShift" Level="1" Absent="disallow" AllowAdvertise="no">
+				<ComponentGroupRef Id="CG_SCENE_CONV"/>
 				<ComponentRef Id="SceneConv"/>
 			</Feature>
 

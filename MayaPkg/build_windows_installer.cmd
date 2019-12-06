@@ -32,6 +32,9 @@ call create_module.cmd 2017
 call create_module.cmd 2018
 call create_module.cmd 2019
 
+:: update ThirdParty
+set ThirdPartyDir="..\ThirdParty"
+
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\bin" "system\PluginInstaller\InputData\feature_Core\bin\*"
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\data" "system\PluginInstaller\InputData\feature_Core\data\*"
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\icons" "system\PluginInstaller\InputData\feature_Core\icons\*"
@@ -44,8 +47,11 @@ xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2017" "system\PluginI
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2018" "system\PluginInstaller\InputData\feature_2018\2018\*"
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2019" "system\PluginInstaller\InputData\feature_2019\2019\*"
 
-:: update ThirdParty
-set ThirdPartyDir="..\ThirdParty"
+:: scene convertion scripts
+mkdir "system\PluginInstaller\InputData\feature_ConvScripts"
+copy /Y "%ThirdPartyDir%\SceneConvertionScripts\convertAI2RPR.py" "system\PluginInstaller\InputData\feature_ConvScripts\convertAI2RPR.py"
+copy /Y "%ThirdPartyDir%\SceneConvertionScripts\convertRS2RPR.py" "system\PluginInstaller\InputData\feature_ConvScripts\convertRS2RPR.py"
+
 
 :: copy material library
 :: EXCLUDE MATERIAL LIBRARY FROM INSTALLER
@@ -58,11 +64,6 @@ set MaterialLibraryMaps="..\MaterialLibrary\2.0\Maps"
 set InstallerMatLibMapsFolder="system\PluginInstaller\InputData\feature_MaterialLibrary\Maps"
 xcopy /S /Q %materialLibraryMaps% %InstallerMatLibMapsFolder%\*
 )
-
-:: scene convertion scripts
-mkdir "system\PluginInstaller\InputData\feature_ConvScripts"
-copy /Y "%ThirdPartyDir%\SceneConvertionScripts\convertAI2RPR.py" "system\PluginInstaller\InputData\feature_ConvScripts\convertAI2RPR.py"
-copy /Y "%ThirdPartyDir%\SceneConvertionScripts\convertRS2RPR.py" "system\PluginInstaller\InputData\feature_ConvScripts\convertRS2RPR.py"
 
 :: build an installer and patch its name with a version
 call build.cmd
