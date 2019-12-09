@@ -1283,6 +1283,8 @@ void FireRenderContext::copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 
 #ifdef _DEBUG
 #ifdef DUMP_PIXELS_SOURCE
+	if (debugDump) {
+		static int debugDumpIdx = 0;
 		std::vector<RV_PIXEL> sourcePixels;
 		for (unsigned int y = 0; y < regionHeight; y++)
 		{
@@ -1309,8 +1311,11 @@ void FireRenderContext::copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 				buffer2.push_back(255);
 			}
 		}
+
+		std::string dumpAddr = "C:\\temp\\dbg\\2.bmp" + std::to_string(debugDumpIdx++);
 		unsigned char* dst2 = buffer2.data();
-		generateBitmapImage(dst2, sourceHeight, sourceWidth, sourceWidth * 4, "C:\\temp\\dbg\\2.bmp");
+		generateBitmapImage(dst2, sourceHeight, sourceWidth, sourceWidth * 4, dumpAddr.c_str());
+	}
 #endif
 #endif
 }

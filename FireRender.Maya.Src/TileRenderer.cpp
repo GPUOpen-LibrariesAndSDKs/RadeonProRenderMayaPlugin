@@ -11,7 +11,7 @@ TileRenderer::~TileRenderer()
 {
 }
 
-void TileRenderer::Render(FireRenderContext& renderContext, const TileRenderInfo& info, TileRenderingCallback callbackFunc)
+void TileRenderer::Render(FireRenderContext& renderContext, const TileRenderInfo& info, PixelBuffer& outBuffer, TileRenderingCallback callbackFunc)
 {
 	float tilesXf = info.totalWidth / (float)info.tileSizeX;
 	float tilesYf = info.totalHeight / (float)info.tileSizeY;
@@ -103,7 +103,7 @@ void TileRenderer::Render(FireRenderContext& renderContext, const TileRenderInfo
 			fireRenderCamera.Scene().SetBackgroundImage(image);
 
 			counter++;
-			if (!callbackFunc(region, 100 * counter / (xTiles * yTiles)))
+			if (!callbackFunc(region, 100 * counter / (xTiles * yTiles), outBuffer))
 			{
 				// to exit the loop
 				xTile = xTiles;
