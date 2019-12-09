@@ -30,6 +30,81 @@ void PixelBuffer::resize(size_t newCount)
 		m_size = newSize;
 	}
 }
+void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, unsigned int totalHeight, unsigned int totalWidth)
+{
+	// ensure valid input
+	assert(input != nullptr);
+
+	if (region.top > totalHeight)
+		return;
+
+	if (region.right > totalWidth)
+		return;
+
+	// Get region dimensions.
+	unsigned int regionWidth = region.getWidth();
+	unsigned int regionHeight = region.getHeight();
+
+	// copy line by line
+	for (unsigned int y = 0; y < regionHeight; y++)
+	{
+		unsigned int inputIndex = y * regionWidth; // writing to self
+
+		// - keep in mind that y is inverted
+		unsigned int destShiftY = (totalHeight - 1) - region.top;
+		unsigned int destIndex = region.left + (destShiftY + y) * totalWidth;
+
+		memcpy(&m_pBuffer[destIndex], &input[inputIndex], sizeof(RV_PIXEL) * regionWidth);
+	}
+
+	debugDump(totalHeight, totalWidth);
+}
+
+#ifdef _DEBUG
+void generateBitmapImage(unsigned char *image, int height, int width, int pitch, const char* imageFileName);
+#endif
+
+void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth)
+{
+#define DUMP_PIXELS_PIXELBUFF
+#ifdef _DEBUG
+#ifdef DUMP_PIXELS_PIXELBUFF
+	assert(sizeof(RV_PIXEL) * totalHeight * totalWidth == m_size);
+
+	std::vector<RV_PIXEL> sourcePixels;
+	for (unsigned int y = 0; y < totalHeight; y++)
+	{
+		for (unsigned int x = 0; x < totalWidth; x++)
+		{
+			RV_PIXEL pixel = m_pBuffer[x + y * totalWidth];
+			sourcePixels.push_back(pixel);
+		}
+	}
+
+	std::vector<unsigned char> buffer2;
+	for (unsigned int y = 0; y < totalHeight; y++)
+	{
+		for (unsigned int x = 0; x < totalWidth; x++)
+		{
+			RV_PIXEL& pixel = sourcePixels[x + y * totalWidth];
+			char r = 255 * pixel.r;
+			char g = 255 * pixel.g;
+			char b = 255 * pixel.b;
+
+			buffer2.push_back(r);
+			buffer2.push_back(g);
+			buffer2.push_back(b);
+			buffer2.push_back(255);
+		}
+	}
+
+	static int debugDumpIdx = 0;
+	std::string dumpAddr = "C:\\temp\\dbg\\" + std::to_string(debugDumpIdx++) + ".bmp";
+	unsigned char* dst2 = buffer2.data();
+	generateBitmapImage(dst2, totalHeight, totalWidth, totalWidth * 4, dumpAddr.c_str());
+#endif
+#endif
+}
 
 // Life Cycle
 // -----------------------------------------------------------------------------

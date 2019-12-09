@@ -786,12 +786,15 @@ void FireRenderProduction::RenderTiles()
 	info.totalWidth = m_width;
 	info.totalHeight = m_height;
 
+	PixelBuffer outBuffer;
+	outBuffer.resize(m_width*m_height);
+
 	m_contextPtr->setSamplesPerUpdate(m_globals.completionCriteriaFinalRender.completionCriteriaMaxIterations);
 
 	// we need to resetup camera because total width and height differs with tileSizeX and tileSizeY
 	m_contextPtr->camera().TranslateCameraExplicit(info.totalWidth, info.totalHeight);
 
-	tileRenderer.Render(*m_contextPtr, info, [this](RenderRegion& region, int progress)
+	tileRenderer.Render(*m_contextPtr, info, outBuffer, [&](RenderRegion& region, int progress, PixelBuffer& out)
 	{
 		// make proper size
 		unsigned int width = region.getWidth();
@@ -804,14 +807,18 @@ void FireRenderProduction::RenderTiles()
 
 		m_contextPtr->render(false);
 
+		//m_contextPtr->copyPixels(m_renderViewAOV->pixels.get(), out.get(), region.getWidth(), region.getHeight(), region, true, true);
+		out.overwrite(m_renderViewAOV->pixels.get(), region, info.totalHeight, info.totalWidth);
+
 		// Read pixel data for the AOV displayed in the render
 		// view. Flip the image so it's the right way up in the view.
+		// - readFrameBuffer function also does denoiser setup
 		m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
 
+		// send data to Maya render view
 		FireRenderThread::RunProcOnMainThread([this, region]()
 		{
 			// Update the Maya render view.
-
 			MRenderView::updatePixels(region.left, region.right,
 			region.bottom, region.top, m_renderViewAOV->pixels.get(), true);
 
@@ -834,6 +841,8 @@ void FireRenderProduction::RenderTiles()
 		return isContinue;
 	}
 	);
+
+	outBuffer.debugDump(m_height, m_width);
 
 	AthenaWrapper::GetAthenaWrapper()->StartNewFile();
 	UploadAthenaData();

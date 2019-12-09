@@ -74,6 +74,10 @@ public:
 		m_pBuffer = nullptr;
 		m_size = 0;
 	}
+
+	void overwrite(const RV_PIXEL* input, const RenderRegion& region, unsigned int totalHeight, unsigned int totalWidth);
+
+	void debugDump(unsigned int totalHeight, unsigned int totalWidth);
 };
 
 /** AOV data. */
