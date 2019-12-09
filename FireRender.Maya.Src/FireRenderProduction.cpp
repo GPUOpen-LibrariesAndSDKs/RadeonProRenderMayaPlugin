@@ -807,13 +807,13 @@ void FireRenderProduction::RenderTiles()
 
 		m_contextPtr->render(false);
 
-		//m_contextPtr->copyPixels(m_renderViewAOV->pixels.get(), out.get(), region.getWidth(), region.getHeight(), region, true, true);
-		out.overwrite(m_renderViewAOV->pixels.get(), region, info.totalHeight, info.totalWidth);
-
 		// Read pixel data for the AOV displayed in the render
 		// view. Flip the image so it's the right way up in the view.
 		// - readFrameBuffer function also does denoiser setup
 		m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
+
+		// copy data to buffer
+		out.overwrite(m_renderViewAOV->pixels.get(), region, info.totalHeight, info.totalWidth);
 
 		// send data to Maya render view
 		FireRenderThread::RunProcOnMainThread([this, region]()

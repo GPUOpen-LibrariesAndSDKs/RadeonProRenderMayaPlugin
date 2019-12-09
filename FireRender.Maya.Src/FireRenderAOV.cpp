@@ -30,8 +30,20 @@ void PixelBuffer::resize(size_t newCount)
 		m_size = newSize;
 	}
 }
+
+
+#define DUMP_PIXELS_PIXELBUFF
+
 void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, unsigned int totalHeight, unsigned int totalWidth)
 {
+#ifdef _DEBUG
+#ifdef DUMP_PIXELS_PIXELBUFF
+	static int debugExecIdx = 0;
+	if (debugExecIdx > 10)
+		return;
+#endif
+#endif
+
 	// ensure valid input
 	assert(input != nullptr);
 
@@ -57,7 +69,13 @@ void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, u
 		memcpy(&m_pBuffer[destIndex], &input[inputIndex], sizeof(RV_PIXEL) * regionWidth);
 	}
 
+#ifdef _DEBUG
+#ifdef DUMP_PIXELS_PIXELBUFF
 	debugDump(totalHeight, totalWidth);
+
+	debugExecIdx++;
+#endif
+#endif
 }
 
 #ifdef _DEBUG
@@ -66,7 +84,6 @@ void generateBitmapImage(unsigned char *image, int height, int width, int pitch,
 
 void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth)
 {
-#define DUMP_PIXELS_PIXELBUFF
 #ifdef _DEBUG
 #ifdef DUMP_PIXELS_PIXELBUFF
 	assert(sizeof(RV_PIXEL) * totalHeight * totalWidth == m_size);
