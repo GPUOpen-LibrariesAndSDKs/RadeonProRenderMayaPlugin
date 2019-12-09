@@ -151,6 +151,8 @@ private:
 #define kRegionFlagLong "-region"
 #define kIsRunningFlag "-ir"
 #define kIsRunningFlagLong "-isRunning"
+#define kProductionIsRunningFlag "-ifr"
+#define kProductionIsRunningFlagLong "-isProductionRunning"
 #define kBatchFlag "-b"
 #define kBatchFlagLong "-batch"
 #define kFilenameFlag "-f"

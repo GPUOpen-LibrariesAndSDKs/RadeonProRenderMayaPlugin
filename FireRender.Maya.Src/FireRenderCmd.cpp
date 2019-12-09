@@ -73,6 +73,7 @@ MSyntax FireRenderCmd::newSyntax()
 	CHECK_MSTATUS(syntax.addFlag(kStopFlag, kStopFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kRegionFlag, kRegionFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kIsRunningFlag, kIsRunningFlagLong, MSyntax::kNoArg));
+	CHECK_MSTATUS(syntax.addFlag(kProductionIsRunningFlag, kProductionIsRunningFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kBatchFlag, kBatchFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kFilenameFlag, kFilenameFlagLong, MSyntax::kString));
 	CHECK_MSTATUS(syntax.addFlag(kDebugTraceFlag, kDebugTraceFlagLong, MSyntax::kBoolean));
@@ -138,6 +139,13 @@ void FireRenderCmd::cleanUp()
 // -----------------------------------------------------------------------------
 MStatus FireRenderCmd::renderFrame(const MArgDatabase& argData)
 {
+	// Query production is running
+	if (argData.isFlagSet(kProductionIsRunningFlag))
+	{
+		setResult(s_production != nullptr && s_production->isRunning());
+		return MStatus::kSuccess;
+	}
+
 	// Only allow one render to be active at a time.
 	if (s_rendering)
 		return MS::kSuccess;
