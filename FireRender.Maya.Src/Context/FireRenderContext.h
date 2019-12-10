@@ -221,10 +221,52 @@ public:
 	rpr_framebuffer frameBufferAOV(int aov) const;
 	rpr_framebuffer frameBufferAOV_Resolved(int aov);
 
+	struct ReadFrameBufferRequestParams
+	{
+		RV_PIXEL* pixels; 
+		int aov;
+		unsigned int width;
+		unsigned int height;
+		const RenderRegion& region;
+		bool flip;
+		bool mergeOpacity;
+		bool mergeShadowCatcher;
+
+		ReadFrameBufferRequestParams(const RenderRegion& _region)
+			: pixels(nullptr)
+			, aov(RPR_AOV_MAX)
+			, width(0)
+			, height(0)
+			, region(_region)
+			, flip(false)
+			, mergeOpacity(false)
+			, mergeShadowCatcher(false)
+		{};
+
+		int PixelCount(void) const { return (width*height); }
+		bool UseTempData(void) const { return (flip || region.getWidth() < width || region.getHeight() < height); }
+	};
+
 	// Read frame buffer pixels and optionally normalize and flip the image.
 	void readFrameBuffer(RV_PIXEL* pixels, int aov,
 		unsigned int width, unsigned int height, const RenderRegion& region,
 		bool flip, bool mergeOpacity = false, bool mergeShadowCatcher = false);
+
+	// will process frame as shadow and/or reflection catcher
+	bool ConsiderShadowReflectionCatcherOverride(const ReadFrameBufferRequestParams& params);
+
+	// writes input aov frame bufer on disk (both resolved and not resolved)
+	void DebugDumpAOV(int aov) const;
+
+	// runs denoiser, returns pixel array as float vector if denoiser runs succesfully
+	std::vector<float> GetDenoisedData(bool& result, const ReadFrameBufferRequestParams& params);
+
+	// reads aov directly into internal storage
+	RV_PIXEL* GetAOVData(const ReadFrameBufferRequestParams& params);
+
+	void MergeOpacity(void);
+
+	void CombineOpacity(void);
 
 	// Composite image for Shadow Catcher
 	void compositeShadowCatcherOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region,

@@ -99,6 +99,8 @@ public:
 
 	// Public Methods
 	// -----------------------------------------------------------------------------
+	/** Check that the AOV is active and in a valid state. */
+	bool IsValid(const FireRenderContext& context) const;
 
 	/** Set the size of the AOVs, including the full frame buffer size. */
 	void setRegion(const RenderRegion& region,
@@ -111,6 +113,7 @@ public:
 	void freePixels();
 
 	/** Read the frame buffer pixels for this AOV. */
+	// Obsolete. Avoid using
 	void readFrameBuffer(FireRenderContext& context, bool flip);
 
 	/** Send the AOV pixels to the Maya render view. */

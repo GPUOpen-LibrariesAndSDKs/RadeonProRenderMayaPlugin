@@ -31,19 +31,8 @@ void PixelBuffer::resize(size_t newCount)
 	}
 }
 
-
-#define DUMP_PIXELS_PIXELBUFF
-
 void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, unsigned int totalHeight, unsigned int totalWidth)
 {
-#ifdef _DEBUG
-#ifdef DUMP_PIXELS_PIXELBUFF
-	static int debugExecIdx = 0;
-	if (debugExecIdx > 10)
-		return;
-#endif
-#endif
-
 	// ensure valid input
 	assert(input != nullptr);
 
@@ -60,11 +49,13 @@ void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, u
 	// copy line by line
 	for (unsigned int y = 0; y < regionHeight; y++)
 	{
-		unsigned int inputIndex = y * regionWidth; // writing to self
+		unsigned int inputIndex = (regionHeight - 1 - y) * regionWidth; // writing to self
 
 		// - keep in mind that y is inverted
-		unsigned int destShiftY = (totalHeight - 1) - region.top;
-		unsigned int destIndex = region.left + (destShiftY + y) * totalWidth;
+		//unsigned int destShiftY = (totalHeight - 1) - region.top;
+		//unsigned int destIndex = region.left + (destShiftY + y) * totalWidth;
+		unsigned int destShiftY = region.top - y;
+		unsigned int destIndex = region.left + (destShiftY) * totalWidth;
 
 		memcpy(&m_pBuffer[destIndex], &input[inputIndex], sizeof(RV_PIXEL) * regionWidth);
 	}
@@ -72,8 +63,6 @@ void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, u
 #ifdef _DEBUG
 #ifdef DUMP_PIXELS_PIXELBUFF
 	debugDump(totalHeight, totalWidth);
-
-	debugExecIdx++;
 #endif
 #endif
 }
@@ -213,6 +202,15 @@ void FireRenderAOV::freePixels()
 	// Check that the pixels have been allocated.
 	pixels.reset();
 	m_renderStamp.reset();
+}
+
+// Check that the AOV is active and in a valid state.
+bool FireRenderAOV::IsValid(const FireRenderContext& context) const
+{
+	if (!active || !pixels || m_region.isZeroArea() || !context.IsAOVSupported(id))
+		return false;
+
+	return true;
 }
 
 // -----------------------------------------------------------------------------
