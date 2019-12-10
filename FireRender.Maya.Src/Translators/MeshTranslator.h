@@ -27,7 +27,8 @@ namespace FireMaya
 
 			MeshPolygonData();
 
-			void Initialize(const MFnMesh& fnMesh);
+			// Initializes mesh and returns error status
+			bool Initialize(const MFnMesh& fnMesh);
 		};
 
 		struct MeshIdxDictionary
