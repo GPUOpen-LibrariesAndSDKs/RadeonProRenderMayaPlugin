@@ -32,7 +32,7 @@ FireMaya::MeshTranslator::MeshPolygonData::MeshPolygonData()
 {
 }
 
-void FireMaya::MeshTranslator::MeshPolygonData::Initialize(const MFnMesh& fnMesh)
+bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(const MFnMesh& fnMesh)
 {
 	GetUVCoords(fnMesh, uvSetNames, uvCoords, puvCoords, sizeCoords);
 	unsigned int uvSetCount = uvSetNames.length();
@@ -42,6 +42,13 @@ void FireMaya::MeshTranslator::MeshPolygonData::Initialize(const MFnMesh& fnMesh
 	// pointer to array of vertices coordinates in Maya
 	pVertices = fnMesh.getRawPoints(&mstatus);
 	assert(MStatus::kSuccess == mstatus);
+
+	// For empty meshes vertices is null
+	if (pVertices == nullptr)
+	{
+		return false;
+	}
+
 	countVertices = fnMesh.numVertices(&mstatus);
 	assert(MStatus::kSuccess == mstatus);
 
@@ -51,13 +58,13 @@ void FireMaya::MeshTranslator::MeshPolygonData::Initialize(const MFnMesh& fnMesh
 	countNormals = fnMesh.numNormals(&mstatus);
 	assert(MStatus::kSuccess == mstatus);
 
-	{
-		// get triangle count (max possible count; this number is used for reserve only)
-		MIntArray triangleCounts; // basically number of triangles in polygons; size of array equal to number of polygons in mesh
-		MIntArray triangleVertices; // indices of points in triangles (3 indices per triangle)
-		mstatus = fnMesh.getTriangles(triangleCounts, triangleVertices);
-		triangleVertexIndicesCount = triangleVertices.length();
-	}
+	// get triangle count (max possible count; this number is used for reserve only)
+	MIntArray triangleCounts; // basically number of triangles in polygons; size of array equal to number of polygons in mesh
+	MIntArray triangleVertices; // indices of points in triangles (3 indices per triangle)
+	mstatus = fnMesh.getTriangles(triangleCounts, triangleVertices);
+	triangleVertexIndicesCount = triangleVertices.length();
+
+	return true;
 }
 
 std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Context& context, const MObject& originalObject)
@@ -106,7 +113,14 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 
 	// get common data from mesh
 	MeshPolygonData meshPolygonData;
-	meshPolygonData.Initialize(fnMesh);
+	bool successfullyInitialized = meshPolygonData.Initialize(fnMesh);
+	if (!successfullyInitialized)
+	{
+		std::string nodeName = fnMesh.name().asChar();
+		std::string message = nodeName + " wasn't created: it probably has no vertices";
+		MGlobal::displayWarning(message.c_str());
+		return resultShapes;
+	}
 
 	// use special case TranslateMesh that is optimized for 1 shader
 	if (elementCount == 1)
