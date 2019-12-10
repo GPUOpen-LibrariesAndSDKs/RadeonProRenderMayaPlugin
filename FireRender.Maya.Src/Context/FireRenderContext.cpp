@@ -1059,6 +1059,164 @@ rpr_framebuffer FireRenderContext::frameBufferAOV_Resolved(int aov) {
 }
 
 // -----------------------------------------------------------------------------
+bool FireRenderContext::ConsiderShadowReflectionCatcherOverride(const ReadFrameBufferRequestParams& params)
+{
+	RPR_THREAD_ONLY;
+
+	/**
+	 * Shadow catcher can work only if COLOR, BACKGROUND, OPACITY and SHADOW_CATCHER AOVs are turned on.
+	 * If all of them are turned on and shadow catcher is requested - run composite pipeline.
+	 */
+	bool isShadowCather = (params.aov == RPR_AOV_COLOR) &&
+		params.mergeShadowCatcher &&
+		m.framebufferAOV[RPR_AOV_SHADOW_CATCHER] &&
+		m.framebufferAOV[RPR_AOV_BACKGROUND] &&
+		m.framebufferAOV[RPR_AOV_OPACITY] &&
+		scope.GetShadowCatcherShader();
+
+	/**
+	 * Reflection catcher can work only if COLOR, BACKGROUND, OPACITY and REFLECTION_CATCHER AOVs are turned on.
+	 * If all of them are turned on and reflection catcher is requested - run composite pipeline.
+	 */
+	bool isReflectionCatcher = (params.aov == RPR_AOV_COLOR) &&
+		params.mergeShadowCatcher &&
+		m.framebufferAOV[RPR_AOV_REFLECTION_CATCHER] &&
+		m.framebufferAOV[RPR_AOV_BACKGROUND] &&
+		m.framebufferAOV[RPR_AOV_OPACITY] &&
+		scope.GetReflectionCatcherShader();
+
+	if (isShadowCather && isReflectionCatcher)
+	{
+		compositeReflectionShadowCatcherOutput(params.pixels, params.width, params.height, params.region, params.flip);
+		return true;
+	}
+
+	if (isShadowCather)
+	{
+		compositeShadowCatcherOutput(params.pixels, params.width, params.height, params.region, params.flip);
+		return true;
+	}
+
+	if (isReflectionCatcher)
+	{
+		compositeReflectionCatcherOutput(params.pixels, params.width, params.height, params.region, params.flip);
+		return true;
+	}
+
+	// SC or RC not used
+	return false;
+}
+
+void FireRenderContext::DebugDumpAOV(int aov) const
+{
+#ifdef _DEBUG
+	std::map<unsigned int, std::string> aovNames =
+	{
+		 {RPR_AOV_COLOR, "RPR_AOV_COLOR"}
+		,{RPR_AOV_OPACITY, "RPR_AOV_OPACITY" }
+		,{RPR_AOV_WORLD_COORDINATE, "RPR_AOV_WORLD_COORDINATE" }
+		,{RPR_AOV_UV, "RPR_AOV_UV" }
+		,{RPR_AOV_MATERIAL_IDX, "RPR_AOV_MATERIAL_IDX" }
+		,{RPR_AOV_GEOMETRIC_NORMAL, "RPR_AOV_GEOMETRIC_NORMAL" }
+		,{RPR_AOV_SHADING_NORMAL, "RPR_AOV_SHADING_NORMAL" }
+		,{RPR_AOV_DEPTH, "RPR_AOV_DEPTH" }
+		,{RPR_AOV_OBJECT_ID, "RPR_AOV_OBJECT_ID" }
+		,{RPR_AOV_OBJECT_GROUP_ID, "RPR_AOV_OBJECT_GROUP_ID" }
+		,{RPR_AOV_SHADOW_CATCHER, "RPR_AOV_SHADOW_CATCHER" }
+		,{RPR_AOV_BACKGROUND, "RPR_AOV_BACKGROUND" }
+		,{RPR_AOV_EMISSION, "RPR_AOV_EMISSION" }
+		,{RPR_AOV_VELOCITY, "RPR_AOV_VELOCITY" }
+		,{RPR_AOV_DIRECT_ILLUMINATION, "RPR_AOV_DIRECT_ILLUMINATION" }
+		,{RPR_AOV_INDIRECT_ILLUMINATION, "RPR_AOV_INDIRECT_ILLUMINATION"}
+		,{RPR_AOV_AO, "RPR_AOV_AO" }
+		,{RPR_AOV_DIRECT_DIFFUSE, "RPR_AOV_DIRECT_DIFFUSE" }
+		,{RPR_AOV_DIRECT_REFLECT, "RPR_AOV_DIRECT_REFLECT" }
+		,{RPR_AOV_INDIRECT_DIFFUSE, "RPR_AOV_INDIRECT_DIFFUSE" }
+		,{RPR_AOV_INDIRECT_REFLECT, "RPR_AOV_INDIRECT_REFLECT" }
+		,{RPR_AOV_REFRACT, "RPR_AOV_REFRACT" }
+		,{RPR_AOV_VOLUME, "RPR_AOV_VOLUME" }
+		,{RPR_AOV_LIGHT_GROUP0, "RPR_AOV_LIGHT_GROUP0" }
+		,{RPR_AOV_LIGHT_GROUP1, "RPR_AOV_LIGHT_GROUP1" }
+		,{RPR_AOV_LIGHT_GROUP2, "RPR_AOV_LIGHT_GROUP2" }
+		,{RPR_AOV_LIGHT_GROUP3, "RPR_AOV_LIGHT_GROUP3" }
+		,{RPR_AOV_DIFFUSE_ALBEDO, "RPR_AOV_DIFFUSE_ALBEDO" }
+		,{RPR_AOV_VARIANCE, "RPR_AOV_VARIANCE" }
+		,{RPR_AOV_VIEW_SHADING_NORMAL, "RPR_AOV_VIEW_SHADING_NORMAL" }
+		,{RPR_AOV_REFLECTION_CATCHER, "RPR_AOV_REFLECTION_CATCHER" }
+		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
+	};
+
+	std::stringstream ssFileNameResolved;
+	ssFileNameResolved << aovNames[aov] << "_resolved.png";
+	rprFrameBufferSaveToFile(m.framebufferAOV_resolved[aov].Handle(), ssFileNameResolved.str().c_str());
+
+	std::stringstream ssFileNameNOTResolved;
+	ssFileNameNOTResolved << aovNames[aov] << "_NOTresolved.png";
+	rprFrameBufferSaveToFile(m.framebufferAOV[aov].Handle(), ssFileNameNOTResolved.str().c_str());
+#endif
+}
+
+std::vector<float> FireRenderContext::GetDenoisedData(bool& result, const ReadFrameBufferRequestParams& params)
+{
+	if (params.aov != RPR_AOV_COLOR)
+	{
+		result = false;
+		return std::vector<float>();
+	}
+	
+	try
+	{
+		m_denoiserFilter->Run();
+		std::vector<float> vecData = m_denoiserFilter->GetData();
+
+		assert(vecData.size() == params.PixelCount() * 4);
+
+		result = true;
+		return vecData;
+	}
+	catch (std::exception& e)
+	{
+		m_denoiserFilter.reset();
+		ErrorPrint(e.what());
+		MGlobal::displayError("RPR failed to execute denoiser, turning it off.");
+
+		result = false;
+		return std::vector<float>();
+	}
+}
+
+RV_PIXEL* FireRenderContext::GetAOVData(const ReadFrameBufferRequestParams& params)
+{
+	rpr_int frstatus = RPR_SUCCESS;
+	size_t dataSize;
+
+	// Get data from the RPR frame buffer.
+	rpr_framebuffer frameBuffer = frameBufferAOV_Resolved(params.aov);
+	frstatus = rprFrameBufferGetInfo(frameBuffer, RPR_FRAMEBUFFER_DATA, 0, nullptr, &dataSize);
+	checkStatus(frstatus);
+
+#ifdef _DEBUG
+#ifdef DUMP_PIXELS_SOURCE
+	rprFrameBufferSaveToFile(frameBuffer, "C:\\temp\\dbg\\3.png");
+#endif
+#endif
+
+	// Check that the reported frame buffer size
+	// in bytes matches the required dimensions.
+	assert(dataSize == (sizeof(RV_PIXEL) * params.PixelCount()));
+
+	// Copy the frame buffer into temporary memory, if
+	// required, or directly into the supplied pixel buffer.
+	if (params.UseTempData())
+		m_tempData.resize(params.PixelCount());
+
+	RV_PIXEL* data = params.UseTempData() ? m_tempData.get() : params.pixels;
+	frstatus = rprFrameBufferGetInfo(frameBuffer, RPR_FRAMEBUFFER_DATA, dataSize, &data[0], nullptr);
+	checkStatus(frstatus);
+
+	return data;
+}
+
 void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 	unsigned int width, unsigned int height, const RenderRegion& region,
 	bool flip, bool mergeOpacity, bool mergeShadowCatcher)

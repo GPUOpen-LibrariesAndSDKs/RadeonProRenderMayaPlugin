@@ -747,8 +747,6 @@ bool FireRenderProduction::RunOnViewportThread()
 				if (m_contextPtr->state != FireRenderContext::StateRendering) 
 					return false;
 
-				//m_context->m_lastRenderResultState = FireRenderContext::CRASHED; // need to set before crash happens
-
 				RenderFullFrame();
 			}
 			catch (...)
@@ -843,6 +841,10 @@ void FireRenderProduction::RenderTiles()
 	);
 
 	outBuffer.debugDump(m_height, m_width);
+
+	// Update the Maya render view.
+	MRenderView::updatePixels(0, (m_width - 1),
+		0, (m_height - 1), outBuffer.get(), true);
 
 	AthenaWrapper::GetAthenaWrapper()->StartNewFile();
 	UploadAthenaData();
