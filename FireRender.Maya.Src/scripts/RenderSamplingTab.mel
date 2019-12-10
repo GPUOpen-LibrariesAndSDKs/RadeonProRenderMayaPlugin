@@ -64,6 +64,10 @@ global proc createRenderSamplingTab()
 		-attribute "RadeonProRenderGlobals.completionCriteriaIterationsViewport" viewportCompletionCriteriaMaxIterations;
 
 	attrControlGrp
+		-label "Min Iterations"
+		-attribute "RadeonProRenderGlobals.completionCriteriaMinIterationsViewport" viewportCompletionCriteriaMinIterations;
+
+	attrControlGrp
 		-label "Max Time Hours"
 		-attribute "RadeonProRenderGlobals.completionCriteriaHoursViewport" viewportCompletionCriteriaHours;
 

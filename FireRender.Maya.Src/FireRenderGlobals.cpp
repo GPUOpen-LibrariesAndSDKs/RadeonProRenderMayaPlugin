@@ -17,6 +17,9 @@
 
 #define DEFAULT_RENDER_STAMP "Radeon ProRender for Maya %b | %h | Time: %pt | Passes: %pp | Objects: %so | Lights: %sl"
 
+// Empirically gotten value. Same used in blender
+const int RECOMMENDED_MIN_ITERATIONS_VIEWPORT = 64;
+
 namespace
 {
 	namespace Attribute
@@ -929,7 +932,7 @@ void FireRenderGlobals::createViewportAttributes()
 	nAttr.setMax(INT_MAX);
 	addAsGlobalAttribute(nAttr);
 																			  
-	ViewportRenderAttributes::completionCriteriaMinIterations = nAttr.create("completionCriteriaMinIterationsViewport", "vcmi", MFnNumericData::kInt, 16, &status);
+	ViewportRenderAttributes::completionCriteriaMinIterations = nAttr.create("completionCriteriaMinIterationsViewport", "vcmi", MFnNumericData::kInt, RECOMMENDED_MIN_ITERATIONS_VIEWPORT, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(16);
 	nAttr.setSoftMax(100);
