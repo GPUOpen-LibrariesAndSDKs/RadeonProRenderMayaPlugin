@@ -175,10 +175,12 @@ public:
 	void enableAOVAndReset(int index, bool flag, rpr_GLuint* glTexture);
 
 	// Sets the resolution and perform an initial render and frame buffer resolve.
-	void resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
+	void ResizeContext(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
+	// - Setup denoiser if necessary (this function was used to be called from ResizeContext and ContextSetResolution)
+	bool ConsiderSetupDenoiser(void);
 
 	// Set the frame buffer resolution
-	void setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
+	void ContextSetResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
 
 	void enableAOV(int aov, bool flag = true);
 	bool isAOVEnabled(int aov);

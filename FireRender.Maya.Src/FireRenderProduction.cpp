@@ -217,7 +217,8 @@ bool FireRenderProduction::start()
 		m_aovs->setFromContext(*m_contextPtr);
 
 		m_needsContextRefresh = true;
-		m_contextPtr->setResolution(contextWidth, contextHeight, true);
+		m_contextPtr->ContextSetResolution(contextWidth, contextHeight, true);
+		m_contextPtr->ConsiderSetupDenoiser();
 		m_contextPtr->setCamera(m_camera, true);
 
 		m_contextPtr->setUseRegion(m_isRegion);
@@ -798,7 +799,8 @@ void FireRenderProduction::RenderTiles()
 		unsigned int width = region.getWidth();
 		unsigned int height = region.getHeight();
 
-		m_contextPtr->resize(width, height, true);
+		m_contextPtr->ResizeContext(width, height, true);
+		m_contextPtr->ConsiderSetupDenoiser();
 
 		m_aovs->setRegion(RenderRegion(width, height), region.getWidth(), region.getHeight());
 		m_aovs->allocatePixels();
