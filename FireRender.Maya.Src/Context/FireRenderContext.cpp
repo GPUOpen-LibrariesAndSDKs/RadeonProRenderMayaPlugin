@@ -1261,6 +1261,10 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 {
 	RPR_THREAD_ONLY;
 
+	// resolve frame buffer
+	rpr_framebuffer frameBuffer = frameBufferAOV_Resolved(aov);
+
+	// setup params
 	ReadFrameBufferRequestParams params(region);
 	params.pixels = pixels;
 	params.aov = aov;
