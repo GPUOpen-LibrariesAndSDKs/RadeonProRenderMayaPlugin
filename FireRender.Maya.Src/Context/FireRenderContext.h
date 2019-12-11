@@ -264,9 +264,9 @@ public:
 	// reads aov directly into internal storage
 	RV_PIXEL* GetAOVData(const ReadFrameBufferRequestParams& params);
 
-	void MergeOpacity(void);
+	void MergeOpacity(const ReadFrameBufferRequestParams& params, size_t dataSize);
 
-	void CombineOpacity(void);
+	void CombineOpacity(ReadFrameBufferRequestParams& params);
 
 	// Composite image for Shadow Catcher
 	void compositeShadowCatcherOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region,

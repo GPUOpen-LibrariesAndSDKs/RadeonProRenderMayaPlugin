@@ -1217,201 +1217,104 @@ RV_PIXEL* FireRenderContext::GetAOVData(const ReadFrameBufferRequestParams& para
 	return data;
 }
 
+void FireRenderContext::MergeOpacity(const ReadFrameBufferRequestParams& params, size_t dataSize)
+{
+	// No need to merge opacity for any FB other then color
+	if (!params.mergeOpacity || params.aov != RPR_AOV_COLOR)
+		return;
+
+	rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
+	if (opacityFrameBuffer == nullptr)
+		return;
+
+	m_opacityData.resize(params.PixelCount());
+
+	if (params.UseTempData())
+	{
+		m_opacityTempData.resize(params.PixelCount());
+
+		rpr_int frstatus = rprFrameBufferGetInfo(opacityFrameBuffer, RPR_FRAMEBUFFER_DATA, dataSize, m_opacityTempData.get(), nullptr);
+		checkStatus(frstatus);
+
+		copyPixels(m_opacityData.get(), m_opacityTempData.get(), params.width, params.height, params.region, params.flip);
+	}
+	else
+	{
+		rpr_int frstatus = rprFrameBufferGetInfo(opacityFrameBuffer, RPR_FRAMEBUFFER_DATA, dataSize, m_opacityData.get(), nullptr);
+		checkStatus(frstatus);
+	}
+}
+
+void FireRenderContext::CombineOpacity(ReadFrameBufferRequestParams& params)
+{
+	//combine (Opacity to Alpha)
+	// No need to merge opacity for any FB other then color
+	if (!params.mergeOpacity || params.aov != RPR_AOV_COLOR)
+		return;
+
+	combineWithOpacity(params.pixels, params.region.getArea(), m_opacityData.get());
+}
+
 void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 	unsigned int width, unsigned int height, const RenderRegion& region,
 	bool flip, bool mergeOpacity, bool mergeShadowCatcher)
 {
 	RPR_THREAD_ONLY;
 
-	/**
-	 * Shadow catcher can work only if COLOR, BACKGROUND, OPACITY and SHADOW_CATCHER AOVs are turned on.
-	 * If all of them are turned on and shadow catcher is requested - run composite pipeline.
-	 */
-	bool isShadowCather = (aov == RPR_AOV_COLOR) &&
-		mergeShadowCatcher &&
-		m.framebufferAOV[RPR_AOV_SHADOW_CATCHER] &&
-		m.framebufferAOV[RPR_AOV_BACKGROUND] &&
-		m.framebufferAOV[RPR_AOV_OPACITY] &&
-		scope.GetShadowCatcherShader();
+	ReadFrameBufferRequestParams params(region);
+	params.pixels = pixels;
+	params.aov = aov;
+	params.width = width;
+	params.height = height;
+	params.flip = flip;
+	params.mergeOpacity = mergeOpacity;
+	params.mergeShadowCatcher = mergeShadowCatcher;
 
-	/**
-	 * Reflection catcher can work only if COLOR, BACKGROUND, OPACITY and REFLECTION_CATCHER AOVs are turned on.
-	 * If all of them are turned on and reflection catcher is requested - run composite pipeline.
-	 */
-	bool isReflectionCatcher = (aov == RPR_AOV_COLOR) &&
-		mergeShadowCatcher &&
-		m.framebufferAOV[RPR_AOV_REFLECTION_CATCHER] &&
-		m.framebufferAOV[RPR_AOV_BACKGROUND] &&
-		m.framebufferAOV[RPR_AOV_OPACITY] &&
-		scope.GetReflectionCatcherShader();
-
-	if (isShadowCather && isReflectionCatcher)
-	{
-		compositeReflectionShadowCatcherOutput(pixels, width, height, region, flip);
-		return;
-	}
-
-	if (isShadowCather)
-	{
-		compositeShadowCatcherOutput(pixels, width, height, region, flip);
-		return;
-	}
-
-	if (isReflectionCatcher)
-	{
-		compositeReflectionCatcherOutput(pixels, width, height, region, flip);
-		return;
-	}
-
-	// A temporary pixel buffer is required if the region is less
-	// than the full width and height, or the image should be flipped.
-	bool useTempData = flip || region.getWidth() < width || region.getHeight() < height;
-
-	// Find the number of pixels in the frame buffer.
-	int pixelCount = width * height;
-
-	rpr_framebuffer frameBuffer = frameBufferAOV_Resolved(aov);
-
-#ifdef _DEBUG
+	// debug output (if enabled)
 #ifdef DUMP_AOV_SOURCE
-	std::map<unsigned int, std::string> aovNames =
-	{
-		 {RPR_AOV_COLOR, "RPR_AOV_COLOR"}
-		,{RPR_AOV_OPACITY, "RPR_AOV_OPACITY" }
-		,{RPR_AOV_WORLD_COORDINATE, "RPR_AOV_WORLD_COORDINATE" }
-		,{RPR_AOV_UV, "RPR_AOV_UV" }
-		,{RPR_AOV_MATERIAL_IDX, "RPR_AOV_MATERIAL_IDX" }
-		,{RPR_AOV_GEOMETRIC_NORMAL, "RPR_AOV_GEOMETRIC_NORMAL" }
-		,{RPR_AOV_SHADING_NORMAL, "RPR_AOV_SHADING_NORMAL" }
-		,{RPR_AOV_DEPTH, "RPR_AOV_DEPTH" }
-		,{RPR_AOV_OBJECT_ID, "RPR_AOV_OBJECT_ID" }
-		,{RPR_AOV_OBJECT_GROUP_ID, "RPR_AOV_OBJECT_GROUP_ID" }
-		,{RPR_AOV_SHADOW_CATCHER, "RPR_AOV_SHADOW_CATCHER" }
-		,{RPR_AOV_BACKGROUND, "RPR_AOV_BACKGROUND" }
-		,{RPR_AOV_EMISSION, "RPR_AOV_EMISSION" }
-		,{RPR_AOV_VELOCITY, "RPR_AOV_VELOCITY" }
-		,{RPR_AOV_DIRECT_ILLUMINATION, "RPR_AOV_DIRECT_ILLUMINATION" }
-		,{RPR_AOV_INDIRECT_ILLUMINATION, "RPR_AOV_INDIRECT_ILLUMINATION"}
-		,{RPR_AOV_AO, "RPR_AOV_AO" }
-		,{RPR_AOV_DIRECT_DIFFUSE, "RPR_AOV_DIRECT_DIFFUSE" }
-		,{RPR_AOV_DIRECT_REFLECT, "RPR_AOV_DIRECT_REFLECT" }
-		,{RPR_AOV_INDIRECT_DIFFUSE, "RPR_AOV_INDIRECT_DIFFUSE" }
-		,{RPR_AOV_INDIRECT_REFLECT, "RPR_AOV_INDIRECT_REFLECT" }
-		,{RPR_AOV_REFRACT, "RPR_AOV_REFRACT" }
-		,{RPR_AOV_VOLUME, "RPR_AOV_VOLUME" }
-		,{RPR_AOV_LIGHT_GROUP0, "RPR_AOV_LIGHT_GROUP0" }
-		,{RPR_AOV_LIGHT_GROUP1, "RPR_AOV_LIGHT_GROUP1" }
-		,{RPR_AOV_LIGHT_GROUP2, "RPR_AOV_LIGHT_GROUP2" }
-		,{RPR_AOV_LIGHT_GROUP3, "RPR_AOV_LIGHT_GROUP3" }
-		,{RPR_AOV_DIFFUSE_ALBEDO, "RPR_AOV_DIFFUSE_ALBEDO" }
-		,{RPR_AOV_VARIANCE, "RPR_AOV_VARIANCE" }
-		,{RPR_AOV_VIEW_SHADING_NORMAL, "RPR_AOV_VIEW_SHADING_NORMAL" }
-		,{RPR_AOV_REFLECTION_CATCHER, "RPR_AOV_REFLECTION_CATCHER" }
-		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
-	};
-
-	std::stringstream ssFileNameResolved;
-	ssFileNameResolved << aovNames[aov] << "_resolved.png";
-	rprFrameBufferSaveToFile(m.framebufferAOV_resolved[aov].Handle(), ssFileNameResolved.str().c_str());
-
-	std::stringstream ssFileNameNOTResolved;
-	ssFileNameNOTResolved << aovNames[aov] << "_NOTresolved.png";
-	rprFrameBufferSaveToFile(m.framebufferAOV[aov].Handle(), ssFileNameNOTResolved.str().c_str());
+	DebugDumpAOV(params.aov);
 #endif
-#endif
+
+	// process shadow and/or reflection catcher logic
+	bool isShadowReflectionCatcherUsed = ConsiderShadowReflectionCatcherOverride(params);
+	if (isShadowReflectionCatcherUsed)
+		return; // fo now; should run denoiser if enabled instead
+
+	// load data normally either from RIF or from AOV
+	bool isDenoiserEnabled = m_denoiserFilter != nullptr;
+	bool shouldRunDenoiser = (aov == RPR_AOV_COLOR && isDenoiserEnabled);
 
 	RV_PIXEL* data = nullptr;
-	rpr_int frstatus = RPR_SUCCESS;
-	size_t dataSize;
 	std::vector<float> vecData;
-
-	bool isDenoiserEnabled = m_denoiserFilter != nullptr;
-
-	// apply Denoiser
-	if (aov == RPR_AOV_COLOR && isDenoiserEnabled)
+	if (shouldRunDenoiser)
 	{
-		try
-		{
-			m_denoiserFilter->Run();
-			vecData = m_denoiserFilter->GetData();
-
-			assert(vecData.size() == pixelCount * 4);
-
-			data = (RV_PIXEL*)&vecData[0];
-			dataSize = vecData.size() * sizeof(float);
-		}
-		catch (std::exception& e)
-		{
-			m_denoiserFilter.reset();
-			ErrorPrint( e.what() );
-			MGlobal::displayError("RPR failed to execute denoiser, turning it off.");
+		// - run RIF and load data
+		bool denoiseResult = false;
+		vecData = GetDenoisedData(denoiseResult, params);
+		if (!denoiseResult)
 			return;
-		}
+
+		data = (RV_PIXEL*)&vecData[0];
 	}
 	else
 	{
-		// Get data from the RPR frame buffer.
-		frstatus = rprFrameBufferGetInfo(frameBuffer, RPR_FRAMEBUFFER_DATA, 0, nullptr, &dataSize);
-		checkStatus(frstatus);
-
-#ifdef _DEBUG
-#ifdef DUMP_PIXELS_SOURCE
-		rprFrameBufferSaveToFile(frameBuffer, "C:\\temp\\dbg\\3.png");
-#endif
-#endif
-
-		// Check that the reported frame buffer size
-		// in bytes matches the required dimensions.
-		assert(dataSize == (sizeof(RV_PIXEL) * pixelCount));
-
-		// Copy the frame buffer into temporary memory, if
-		// required, or directly into the supplied pixel buffer.
-		if (useTempData)
-			m_tempData.resize(pixelCount);
-
-		data = useTempData ? m_tempData.get() : pixels;
-		frstatus = rprFrameBufferGetInfo(frameBuffer, RPR_FRAMEBUFFER_DATA, dataSize, &data[0], nullptr);
-		checkStatus(frstatus);
+		// load data from AOV
+		data = GetAOVData(params);
 	}
 
 	// No need to merge opacity for any FB other then color
-	if (mergeOpacity && aov == RPR_AOV_COLOR)
-	{
-		rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
-		if (opacityFrameBuffer != nullptr)
-		{
-			m_opacityData.resize(pixelCount);
-
-			if (useTempData)
-			{
-				m_opacityTempData.resize(pixelCount);
-
-				frstatus = rprFrameBufferGetInfo(opacityFrameBuffer, RPR_FRAMEBUFFER_DATA, dataSize, m_opacityTempData.get(), nullptr);
-				checkStatus(frstatus);
-
-				copyPixels(m_opacityData.get(), m_opacityTempData.get(), width, height, region, flip);
-			}
-			else
-			{
-				frstatus = rprFrameBufferGetInfo(opacityFrameBuffer, RPR_FRAMEBUFFER_DATA, dataSize, m_opacityData.get(), nullptr);
-				checkStatus(frstatus);
-			}
-		}
-	}
+	MergeOpacity(params, (sizeof(RV_PIXEL) * params.PixelCount()));
 
 	// Copy the region from the temporary
 	// buffer into supplied pixel memory.
-	if (useTempData || isDenoiserEnabled)
+	if (params.UseTempData() || isDenoiserEnabled)
 	{
-		copyPixels(pixels, data, width, height, region, flip);
+		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
 	}
 
 	//combine (Opacity to Alpha)
 	// No need to merge opacity for any FB other then color
-	if (mergeOpacity && aov == RPR_AOV_COLOR)
-	{
-		combineWithOpacity(pixels, region.getArea(), m_opacityData.get());
-	}
+	CombineOpacity(params);
 }
 
 #ifdef _DEBUG
