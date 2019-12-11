@@ -590,7 +590,8 @@ MStatus FireRenderViewport::resize(unsigned int width, unsigned int height)
 void FireRenderViewport::resizeFrameBufferStandard(unsigned int width, unsigned int height)
 {
 	// Update the RPR context dimensions.
-	m_contextPtr->resize(width, height, false);
+	m_contextPtr->ResizeContext(width, height, false);
+	m_contextPtr->ConsiderSetupDenoiser();
 
 	// Resize the pixel buffer that
 	// will receive frame buffer data.
@@ -616,7 +617,8 @@ void FireRenderViewport::resizeFrameBufferGLInterop(unsigned int width, unsigned
 	if (m_texture.texture != nullptr)
 	{
 		// Update the RPR context.
-		m_contextPtr->resize(width, height, false, GetGlTexture());
+		m_contextPtr->ResizeContext(width, height, false, GetGlTexture());
+		m_contextPtr->ConsiderSetupDenoiser();
 	}
 }
 

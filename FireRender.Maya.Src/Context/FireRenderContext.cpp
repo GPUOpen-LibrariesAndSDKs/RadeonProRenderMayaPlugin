@@ -126,15 +126,15 @@ int FireRenderContext::initializeContext()
 	return res;
 }
 
-void FireRenderContext::resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture)
+void FireRenderContext::ResizeContext(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture)
 {
 	RPR_THREAD_ONLY;
 
 	// Set the context resolution.
-	setResolution(w, h, renderView, glTexture);
+	ContextSetResolution(w, h, renderView, glTexture);
 }
 
-void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture)
+void FireRenderContext::ContextSetResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture)
 {
 	RPR_THREAD_ONLY;
 	DebugPrint("FireRenderContext::setResolution(%d,%d)", w, h);
@@ -151,12 +151,18 @@ void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool rende
 	{
 		initBuffersForAOV(context, i, glTexture);
 	}
+}
 
-	// Here we have buffers setup with proper size, lets setup denoiser if needed
-	if (m_globals.denoiserSettings.enabled && ((m_RenderType == RenderType::ProductionRender) || (m_RenderType == RenderType::IPR)))
-	{
-		setupDenoiser();
-	}
+bool FireRenderContext::ConsiderSetupDenoiser(void)
+{
+	bool shouldDenoise = m_globals.denoiserSettings.enabled && ((m_RenderType == RenderType::ProductionRender) || (m_RenderType == RenderType::IPR));
+
+	if (!shouldDenoise)
+		return false;
+
+	setupDenoiser();
+
+	return true;
 }
 
 void FireRenderContext::resetAOV(int index, rpr_GLuint* glTexture)
