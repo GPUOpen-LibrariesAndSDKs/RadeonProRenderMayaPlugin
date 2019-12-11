@@ -337,7 +337,10 @@ void FireRenderAOVs::writeToFile(const MString& filePath, unsigned int imageForm
 		if (FireRenderImageUtil::saveMultichannelAOVs(filePath,
 			m_region.getWidth(), m_region.getHeight(), imageFormat, *this))
 		{
-			fileWrittenCallback(filePath);
+			if (fileWrittenCallback != nullptr)
+			{
+				fileWrittenCallback(filePath);
+			}
 		}
 	}
 
