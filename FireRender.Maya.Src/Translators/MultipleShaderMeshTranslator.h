@@ -57,12 +57,12 @@ namespace FireMaya
 			const MFnMesh& fnMesh,
 			MeshTranslator::MeshIdxDictionary* shaderData,
 			const MIntArray& faceMaterialIndices,
-			int elementCount
+			size_t elementCount
 		);
 
 		static void ChangeUVArrsSizes(
 			MeshTranslator::MeshIdxDictionary* shaderData,
-			const int elementCount,
+			const size_t elementCount,
 			const unsigned int uvSetCount
 		);
 
@@ -71,7 +71,7 @@ namespace FireMaya
 			const frw::Context& context,
 			const MeshTranslator::MeshIdxDictionary* shaderData,
 			std::vector<std::vector<Float2> >& uvCoords,
-			const int elementCount,
+			const size_t elementCount,
 			const unsigned int uvSetCount
 		);
 

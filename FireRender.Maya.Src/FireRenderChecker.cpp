@@ -54,7 +54,7 @@ frw::Value FireMaya::Checker::GetValue(Scope& scope)
 
 	Type mapChannel = kTexture_Channel0;
 
-	MPlug mapChannelPlug = shaderNode.findPlug(Attribute::mapChannel);
+	MPlug mapChannelPlug = shaderNode.findPlug(Attribute::mapChannel, false);
 	if (!mapChannelPlug.isNull())
 	{
 		int n = 0;
@@ -64,7 +64,7 @@ frw::Value FireMaya::Checker::GetValue(Scope& scope)
 		}
 	}
 
-	auto uv = scope.GetConnectedValue(shaderNode.findPlug("uvCoord")) | scope.MaterialSystem().ValueLookupUV(mapChannel);
+	auto uv = scope.GetConnectedValue(shaderNode.findPlug("uvCoord", false)) | scope.MaterialSystem().ValueLookupUV(mapChannel);
 	valueNode.SetValue("uv", uv + 128.);	// <- offset added because FR mirrors checker at origin
 
 	return valueNode;

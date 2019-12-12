@@ -163,7 +163,7 @@ MStatus FireRenderViewport::doSetup()
 	// TODO: Use different threads for different tasks, so this check would be unneccessary
 	int isProductionRunning = 1;
 	MGlobal::executeCommand("fireRender -isProductionRunning", isProductionRunning);
-	if (!static_cast<bool>(isProductionRunning))
+	if (0 == isProductionRunning)
 	{
 		FireRenderThread::RunItemsQueuedForTheMainThread();
 	}

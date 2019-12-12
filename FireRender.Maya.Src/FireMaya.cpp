@@ -2307,8 +2307,8 @@ void FireMaya::Scope::AttributeChangedCallback(MNodeMessage::AttributeMessage ms
 
 void FireMaya::Scope::AttributeChangedCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug)
 {
-	bool connectionWasBroken = MNodeMessage::AttributeMessage::kConnectionBroken & msg;
-	bool newIncomingDirection = MNodeMessage::AttributeMessage::kIncomingDirection & msg;
+	bool connectionWasBroken = (MNodeMessage::AttributeMessage::kConnectionBroken & msg) > 0;
+	bool newIncomingDirection = (MNodeMessage::AttributeMessage::kIncomingDirection & msg) > 0;
 
 	if (connectionWasBroken & !newIncomingDirection)
 	{

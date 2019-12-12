@@ -65,7 +65,7 @@ namespace FireMaya
 	{
 		MFnDependencyNode shaderNode(thisMObject());
 
-		MPlug texturePlug = shaderNode.findPlug(Attribute::source);
+		MPlug texturePlug = shaderNode.findPlug(Attribute::source, false);
 		MString texturePath = texturePlug.asString();
 		MString nodeName = shaderNode.name();
 		if (auto image = scope.GetImage(texturePath, "", nodeName))
@@ -75,7 +75,7 @@ namespace FireMaya
 
 			Type mapChannel = kTexture_Channel0;
 
-			MPlug mapChannelPlug = shaderNode.findPlug(Attribute::mapChannel);
+			MPlug mapChannelPlug = shaderNode.findPlug(Attribute::mapChannel, false);
 			if (!mapChannelPlug.isNull())
 			{
 				int n = 0;
@@ -85,7 +85,7 @@ namespace FireMaya
 				}
 			}
 
-			imageNode.SetValue("uv", scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv)) | scope.MaterialSystem().ValueLookupUV(mapChannel));
+			imageNode.SetValue("uv", scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv, false)) | scope.MaterialSystem().ValueLookupUV(mapChannel));
 
 			return imageNode;
 		}
@@ -96,7 +96,7 @@ namespace FireMaya
 	{
 		MFnDependencyNode shaderNode(thisMObject());
 
-		MPlug texturePlug = shaderNode.findPlug(Attribute::source);
+		MPlug texturePlug = shaderNode.findPlug(Attribute::source, false);
 		MString texturePath = texturePlug.asString();
 
 		return texturePath;

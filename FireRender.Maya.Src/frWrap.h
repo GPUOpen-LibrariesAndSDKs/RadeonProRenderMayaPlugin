@@ -1018,9 +1018,9 @@ namespace frw
 			std::vector<rpr_float> colors;
 			colors.resize(indexCount);
 
-			for (size_t colorComponent = 0; colorComponent < 4; colorComponent++)
+			for (int colorComponent = 0; colorComponent < 4; colorComponent++)
 			{
-				for (auto vertexIndex : vertexIndices)
+				for (int vertexIndex : vertexIndices)
 				{
 					switch (colorComponent)
 					{

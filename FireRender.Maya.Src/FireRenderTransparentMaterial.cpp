@@ -83,7 +83,7 @@ frw::Shader FireMaya::TransparentMaterial::GetShader(Scope& scope)
 
 	frw::Shader material = frw::Shader(ms, frw::ShaderTypeTransparent);
 
-	material.SetValue("color", scope.GetValue(shaderNode.findPlug(Attribute::color)));
+	material.SetValue("color", scope.GetValue(shaderNode.findPlug(Attribute::color, false)));
 	return material;
 }
 

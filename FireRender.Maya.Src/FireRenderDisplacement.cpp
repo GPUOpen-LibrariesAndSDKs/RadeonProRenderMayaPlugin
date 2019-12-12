@@ -102,32 +102,32 @@ frw::Shader FireMaya::Displacement::GetShader(Scope& scope)
 bool FireMaya::Displacement::getValues(Scope &scope, DisplacementParams& params)
 {
 	MFnDependencyNode shaderNode(thisMObject());
-	frw::Value color = scope.GetConnectedValue(shaderNode.findPlug(Attribute::map));
+	frw::Value color = scope.GetConnectedValue(shaderNode.findPlug(Attribute::map, false));
 
 	params.map = color;
 	bool haveMap = color.IsNode();
 
-	MPlug plug = shaderNode.findPlug("minHeight");
+	MPlug plug = shaderNode.findPlug("minHeight", false);
 
 	if (!plug.isNull())
 		plug.getValue(params.minHeight);
 
-	plug = shaderNode.findPlug("maxHeight");
+	plug = shaderNode.findPlug("maxHeight", false);
 
 	if (!plug.isNull())
 		plug.getValue(params.maxHeight);
 
-	plug = shaderNode.findPlug("subdivision");
+	plug = shaderNode.findPlug("subdivision", false);
 
 	if (!plug.isNull())
 		plug.getValue(params.subdivision);
 
-	plug = shaderNode.findPlug("creaseWeight");
+	plug = shaderNode.findPlug("creaseWeight", false);
 
 	if (!plug.isNull())
 		plug.getValue(params.creaseWeight);
 
-	plug = shaderNode.findPlug("boundary");
+	plug = shaderNode.findPlug("boundary", false);
 	if (!plug.isNull())
 	{
 		int n = 0;
@@ -145,12 +145,12 @@ bool FireMaya::Displacement::getValues(Scope &scope, DisplacementParams& params)
 		}
 	}
 
-	plug = shaderNode.findPlug("enableAdaptiveSubdiv");
+	plug = shaderNode.findPlug("enableAdaptiveSubdiv", false);
 
 	if (!plug.isNull())
 		plug.getValue(params.isAdaptive);
 
-	plug = shaderNode.findPlug("aSubdivFactor");
+	plug = shaderNode.findPlug("aSubdivFactor", false);
 
 	if (!plug.isNull())
 		plug.getValue(params.adaptiveFactor);
