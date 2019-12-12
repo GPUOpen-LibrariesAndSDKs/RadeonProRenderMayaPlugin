@@ -3,7 +3,7 @@
 #include <map>
 #include "FireRenderAOV.h"
 #include <maya/MFnDependencyNode.h>
-
+#include <functional>
 
 using namespace OIIO;
 
@@ -32,6 +32,8 @@ public:
 
 	/** Get an AOV for the specified ID. */
 	FireRenderAOV* getAOV(unsigned int id);
+
+	void ForEachActiveAOV(std::function<void(FireRenderAOV& aov)> actionFunc);
 
 	/** Get the AOV to display in the Maya render view. */
 	FireRenderAOV& getRenderViewAOV();

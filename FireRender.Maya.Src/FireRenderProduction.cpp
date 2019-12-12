@@ -785,15 +785,19 @@ void FireRenderProduction::RenderTiles()
 	info.totalWidth = m_width;
 	info.totalHeight = m_height;
 
-	PixelBuffer outBuffer;
-	outBuffer.resize(m_width*m_height);
+	std::map<unsigned int, PixelBuffer> outBuffers;
+	m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov) 
+	{
+		auto ret = outBuffers.insert(std::pair<unsigned int, PixelBuffer>(aov.id, PixelBuffer()));
+		ret.first->second.resize(m_width*m_height);
+	});
 
 	m_contextPtr->setSamplesPerUpdate(m_globals.completionCriteriaFinalRender.completionCriteriaMaxIterations);
 
 	// we need to resetup camera because total width and height differs with tileSizeX and tileSizeY
 	m_contextPtr->camera().TranslateCameraExplicit(info.totalWidth, info.totalHeight);
 
-	tileRenderer.Render(*m_contextPtr, info, outBuffer, [&](RenderRegion& region, int progress, PixelBuffer& out)
+	tileRenderer.Render(*m_contextPtr, info, outBuffers, [&](RenderRegion& region, int progress, std::map<unsigned int, PixelBuffer>& out)
 	{
 		// make proper size
 		unsigned int width = region.getWidth();
@@ -810,10 +814,19 @@ void FireRenderProduction::RenderTiles()
 		// Read pixel data for the AOV displayed in the render
 		// view. Flip the image so it's the right way up in the view.
 		// - readFrameBuffer function also does denoiser setup
-		m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
+		//m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
+		m_aovs->readFrameBuffers(*m_contextPtr, true);
 
 		// copy data to buffer
-		out.overwrite(m_renderViewAOV->pixels.get(), region, info.totalHeight, info.totalWidth);
+		m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov)
+		{
+			auto it = out.find(aov.id);
+
+			if (it == out.end())
+				return;
+
+			it->second.overwrite(aov.pixels.get(), region, info.totalHeight, info.totalWidth);
+		});
 
 		// send data to Maya render view
 		FireRenderThread::RunProcOnMainThread([this, region]()
@@ -842,11 +855,14 @@ void FireRenderProduction::RenderTiles()
 	}
 	);
 
-	outBuffer.debugDump(m_height, m_width);
+	for (auto& tmp : outBuffers)
+		tmp.second.debugDump(m_height, m_width);
 
 	// Update the Maya render view.
+	auto it = outBuffers.find(m_renderViewAOV->id);
+	assert(it != outBuffers.end());
 	MRenderView::updatePixels(0, (m_width - 1),
-		0, (m_height - 1), outBuffer.get(), true);
+		0, (m_height - 1), it->second.get(), true);
 
 	AthenaWrapper::GetAthenaWrapper()->StartNewFile();
 	UploadAthenaData();
