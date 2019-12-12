@@ -365,3 +365,12 @@ TypeDesc::BASETYPE FireRenderAOVs::GetChannelFormat() const
 {
 	return m_channelFormat;
 }
+
+void FireRenderAOVs::ForEachActiveAOV(std::function<void(FireRenderAOV& aov)> actionFunc)
+{
+	for (auto& aov : m_aovs)
+	{
+		if (aov.second->active)
+			actionFunc(*aov.second.get());
+	}
+}

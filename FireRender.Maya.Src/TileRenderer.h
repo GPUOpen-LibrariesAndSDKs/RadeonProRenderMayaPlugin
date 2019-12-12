@@ -25,7 +25,7 @@ struct TileRenderInfo
 	TileRenderFillType tilesFillType;
 };
 
-typedef std::function<bool(RenderRegion&, int, PixelBuffer& out)> TileRenderingCallback;
+typedef std::function<bool(RenderRegion&, int, std::map<unsigned int, PixelBuffer>& out)> TileRenderingCallback;
 
 class TileRenderer
 {
@@ -33,6 +33,6 @@ public:
 	TileRenderer();
 	~TileRenderer();
 
-	void Render(FireRenderContext& renderContext, const TileRenderInfo& info, PixelBuffer& outBuffer, TileRenderingCallback callbackFunc);
+	void Render(FireRenderContext& renderContext, const TileRenderInfo& info, std::map<unsigned int, PixelBuffer>& outBuffer, TileRenderingCallback callbackFunc);
 };
 
