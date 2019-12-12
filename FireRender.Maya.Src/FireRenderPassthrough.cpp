@@ -39,7 +39,7 @@ frw::Shader FireMaya::Passthrough::GetShader(Scope& scope)
 	MFnDependencyNode shaderNode(thisMObject());
 
 	frw::Shader shader(scope.MaterialSystem(), frw::ShaderTypeFlatColor);
-	shader.SetValue("color", scope.GetValue(shaderNode.findPlug(Attribute::color)));
+	shader.SetValue("color", scope.GetValue(shaderNode.findPlug(Attribute::color, false)));
 
 	return shader;
 }

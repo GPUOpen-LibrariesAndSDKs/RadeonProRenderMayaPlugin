@@ -125,12 +125,12 @@ frw::Shader FireMaya::VolumeMaterial::GetVolumeShader(Scope& scope)
 
 	frw::Shader material = frw::Shader(ms, frw::ShaderTypeVolume);
 
-	auto scatterColor = scope.GetValue(shaderNode.findPlug(Attribute::scatterColor));
-	auto transmissionColor = scope.GetValue(shaderNode.findPlug(Attribute::transmissionColor));
-	auto emissionColor = scope.GetValue(shaderNode.findPlug(Attribute::emissionColor));
-	auto k = shaderNode.findPlug(Attribute::density).asFloat();
-	auto scatteringDirection = shaderNode.findPlug(Attribute::scatteringDirection).asFloat();
-	auto multiScatter = shaderNode.findPlug(Attribute::multiScattering).asBool();
+	auto scatterColor = scope.GetValue(shaderNode.findPlug(Attribute::scatterColor, false));
+	auto transmissionColor = scope.GetValue(shaderNode.findPlug(Attribute::transmissionColor, false));
+	auto emissionColor = scope.GetValue(shaderNode.findPlug(Attribute::emissionColor, false));
+	auto k = shaderNode.findPlug(Attribute::density, false).asFloat();
+	auto scatteringDirection = shaderNode.findPlug(Attribute::scatteringDirection, false).asFloat();
+	auto multiScatter = shaderNode.findPlug(Attribute::multiScattering, false).asBool();
 
 	// scattering
 	material.SetValue("sigmas", scatterColor * k);

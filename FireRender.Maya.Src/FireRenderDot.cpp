@@ -64,7 +64,7 @@ frw::Value FireMaya::Dot::GetValue(Scope& scope)
 
 	Type mapChannel = kTexture_Channel0;
 
-	MPlug mapChannelPlug = shaderNode.findPlug(Attribute::mapChannel);
+	MPlug mapChannelPlug = shaderNode.findPlug(Attribute::mapChannel, false);
 	if (!mapChannelPlug.isNull())
 	{
 		int n = 0;
@@ -74,9 +74,9 @@ frw::Value FireMaya::Dot::GetValue(Scope& scope)
 		}
 	}
 
-	valueNode.SetValue("uv", scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv)) | scope.MaterialSystem().ValueLookupUV(mapChannel));
+	valueNode.SetValue("uv", scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv, false)) | scope.MaterialSystem().ValueLookupUV(mapChannel));
 
-	auto uvScale = scope.GetValue(shaderNode.findPlug(Attribute::uvScale));
+	auto uvScale = scope.GetValue(shaderNode.findPlug(Attribute::uvScale, false));
 	if (uvScale != 1.)
 		valueNode.SetValue("uv_scale", uvScale);
 

@@ -245,7 +245,7 @@ LayeredTextureConverter::LayerInfoType LayeredTextureConverter::GetLayerInfo(con
 
 frw::Value LayeredTextureConverter::Convert()
 {
-	MPlug alphaIsLuminancePlug = m_node.findPlug(PLUG_ALPHA_IS_LUMINANCE);
+	MPlug alphaIsLuminancePlug = m_node.findPlug(PLUG_ALPHA_IS_LUMINANCE, false);
 	bool alphaIsLuminance = alphaIsLuminancePlug.asBool();
 
 	MPlug inputs = m_node.findPlug(PLUG_INPUTS, false);
@@ -254,7 +254,7 @@ frw::Value LayeredTextureConverter::Convert()
 	std::vector<LayerInfoType> layers;
 	layers.reserve(inputsCount);
 
-	for (int inputIndex = 0; inputIndex < inputsCount; inputIndex++)
+	for (unsigned int inputIndex = 0; inputIndex < inputsCount; inputIndex++)
 	{
 		MPlug inputsPlug = inputs.elementByPhysicalIndex(inputIndex);
 		LayerInfoType layer = GetLayerInfo(inputsPlug, alphaIsLuminance);

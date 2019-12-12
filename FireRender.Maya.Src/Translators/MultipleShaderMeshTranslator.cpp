@@ -45,7 +45,7 @@ void FireMaya::MultipleShaderMeshTranslator::AddPolygonMultipleShader(
 	// this table is needed for normals and UVs
 	// - local to polygon
 	std::map<int, int> vertexIdxGlobalToLocal;
-	for (int localIndex = 0; localIndex < indicesInPolygon.length(); ++localIndex)
+	for (unsigned int localIndex = 0; localIndex < indicesInPolygon.length(); ++localIndex)
 	{
 		int globalIndex = indicesInPolygon[localIndex];
 		vertexIdxGlobalToLocal[globalIndex] = localIndex;
@@ -71,7 +71,7 @@ void FireMaya::MultipleShaderMeshTranslator::FillDictionaryWithColorData(
 	MeshTranslator::MeshIdxDictionary& outMeshDictionary)
 {
 	// Save polygon color data into dictionary with corresponging indices
-	for (int localVertexIndex = 0; localVertexIndex < indicesInPolygon.length(); localVertexIndex++)
+	for (unsigned int localVertexIndex = 0; localVertexIndex < indicesInPolygon.length(); localVertexIndex++)
 	{
 		int globalVertexIndex = indicesInPolygon[localVertexIndex];
 		int coreVertexIndex = outMeshDictionary.vertexCoordsIndicesGlobalToDictionary[globalVertexIndex];
@@ -196,7 +196,7 @@ void FireMaya::MultipleShaderMeshTranslator::ReserveShaderData(
 	const MFnMesh& fnMesh,
 	MeshTranslator::MeshIdxDictionary* shaderData,
 	const MIntArray& faceMaterialIndices,
-	int elementCount)
+	size_t elementCount)
 {
 	struct IdxSizes
 	{
@@ -243,7 +243,7 @@ void FireMaya::MultipleShaderMeshTranslator::ReserveShaderData(
 // make UVCoords and UVIndices arrays have the same size (RPR crashes if they are not)
 void FireMaya::MultipleShaderMeshTranslator::ChangeUVArrsSizes(
 	MeshTranslator::MeshIdxDictionary* shaderData,
-	const int elementCount,
+	const size_t elementCount,
 	const unsigned int uvSetCount)
 {
 	if (uvSetCount == 1)
@@ -308,7 +308,7 @@ void FireMaya::MultipleShaderMeshTranslator::CreateRPRMeshes(
 	const frw::Context& context,
 	const MeshTranslator::MeshIdxDictionary* shaderData,
 	std::vector<std::vector<Float2> >& uvCoords,
-	const int elementCount,
+	const size_t elementCount,
 	const unsigned int uvSetCount)
 {
 #ifdef OPTIMIZATION_CLOCK
@@ -363,7 +363,7 @@ void FireMaya::MultipleShaderMeshTranslator::CreateRPRMeshes(
 
 		if (!currShaderData.vertexColors.empty())
 		{
-			elements[shaderId].SetVertexColors(currShaderData.colorVertexIndices, currShaderData.vertexColors, currShaderData.vertexCoords.size());
+			elements[shaderId].SetVertexColors(currShaderData.colorVertexIndices, currShaderData.vertexColors, (rpr_int) currShaderData.vertexCoords.size());
 		}
 	}
 

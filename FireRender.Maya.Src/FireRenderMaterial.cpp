@@ -194,7 +194,7 @@ frw::Shader FireMaya::Material::GetShader(Scope& scope)
 	Type mayaType = kDiffuse;
 
 	{
-		MPlug plug = shaderNode.findPlug("type");
+		MPlug plug = shaderNode.findPlug("type", false);
 		if (!plug.isNull())
 		{
 			int n = 0;
@@ -206,7 +206,7 @@ frw::Shader FireMaya::Material::GetShader(Scope& scope)
 	float intensity = 1.0f;
 	if (mayaType == kEmissive)
 	{
-		MPlug plug = shaderNode.findPlug("wattsPerSqm");
+		MPlug plug = shaderNode.findPlug("wattsPerSqm", false);
 		if (!plug.isNull())
 			plug.getValue(intensity);
 	}
@@ -254,8 +254,8 @@ frw::Shader FireMaya::Material::GetShader(Scope& scope)
 	for (auto it : attributes)
 	{
 		if (auto value = (it.attribute == Attribute::normalMap)
-			? scope.GetConnectedValue(shaderNode.findPlug(it.attribute))
-			: scope.GetValue(shaderNode.findPlug(it.attribute))
+			? scope.GetConnectedValue(shaderNode.findPlug(it.attribute, false))
+			: scope.GetValue(shaderNode.findPlug(it.attribute, false))
 			)
 		{
 			if (shaderType == frw::ShaderTypeEmissive && it.attribute == Attribute::color)
@@ -265,7 +265,7 @@ frw::Shader FireMaya::Material::GetShader(Scope& scope)
 		}
 	}
 
-	auto roughnessPlug = shaderNode.findPlug(Attribute::roughness);
+	auto roughnessPlug = shaderNode.findPlug(Attribute::roughness, false);
 	auto roughnessVal = scope.GetValue(roughnessPlug).GetX();
 	MFnNumericAttribute roughnessAttr(roughnessPlug.attribute());
 	auto softMax = float(int(roughnessVal * 2 + 0.5));

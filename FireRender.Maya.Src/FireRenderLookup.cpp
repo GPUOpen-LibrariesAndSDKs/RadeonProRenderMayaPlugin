@@ -53,7 +53,7 @@ frw::Value FireMaya::Lookup::GetValue(Scope& scope)
 
 	auto type = frw::LookupTypeUV0;
 
-	MPlug plug = shaderNode.findPlug(Attribute::type);
+	MPlug plug = shaderNode.findPlug(Attribute::type, false);
 	if (!plug.isNull())
 	{
 		type = static_cast<frw::LookupType>(plug.asInt());

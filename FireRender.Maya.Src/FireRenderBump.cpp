@@ -68,13 +68,13 @@ frw::Value FireMaya::Bump::GetValue(Scope& scope)
 {
 	MFnDependencyNode shaderNode(thisMObject());
 
-	frw::Value color = scope.GetConnectedValue(shaderNode.findPlug(Attribute::color));
+	frw::Value color = scope.GetConnectedValue(shaderNode.findPlug(Attribute::color, false));
 	if (color)
 	{
 		frw::BumpMapNode imageNode(scope.MaterialSystem());
 		imageNode.SetMap(color);
 
-		frw::Value strength = scope.GetValue(shaderNode.findPlug(Attribute::strength));
+		frw::Value strength = scope.GetValue(shaderNode.findPlug(Attribute::strength, false));
 		if (strength != 1.)
 			imageNode.SetValue("bumpscale", strength);
 

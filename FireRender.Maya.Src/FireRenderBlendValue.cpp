@@ -54,9 +54,9 @@ frw::Value FireMaya::BlendValue::GetValue(Scope& scope)
 {
 	MFnDependencyNode shaderNode(thisMObject());
 
-	auto a = scope.GetValue(shaderNode.findPlug(Attribute::inputA));
-	auto b = scope.GetValue(shaderNode.findPlug(Attribute::inputB));
-	auto t = scope.GetValue(shaderNode.findPlug(Attribute::weight));
+	auto a = scope.GetValue(shaderNode.findPlug(Attribute::inputA, false));
+	auto b = scope.GetValue(shaderNode.findPlug(Attribute::inputB, false));
+	auto t = scope.GetValue(shaderNode.findPlug(Attribute::weight, false));
 
 	return scope.MaterialSystem().ValueBlend(a, b, t);
 }

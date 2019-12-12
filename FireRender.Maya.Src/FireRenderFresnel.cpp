@@ -54,9 +54,9 @@ frw::Value FireMaya::Fresnel::GetValue(Scope& scope)
 	MFnDependencyNode shaderNode(thisMObject());
 
 	frw::ValueNode valueNode(scope.MaterialSystem(), frw::ValueTypeFresnel);
-	valueNode.SetValue("ior", scope.GetValue(shaderNode.findPlug(Attribute::ior)));
-	valueNode.SetValue("normal", scope.GetConnectedValue(shaderNode.findPlug(Attribute::normal)));
-	valueNode.SetValue("invec", scope.GetConnectedValue(shaderNode.findPlug(Attribute::inVec)));
+	valueNode.SetValue("ior", scope.GetValue(shaderNode.findPlug(Attribute::ior, false)));
+	valueNode.SetValue("normal", scope.GetConnectedValue(shaderNode.findPlug(Attribute::normal, false)));
+	valueNode.SetValue("invec", scope.GetConnectedValue(shaderNode.findPlug(Attribute::inVec, false)));
 
 	return valueNode;
 }
@@ -112,7 +112,7 @@ bool FireMaya::Fresnel::Override::valueChangeRequiresFragmentRebuild(const MPlug
 void FireMaya::Fresnel::Override::updateDG()
 {
 	MFnDependencyNode shaderNode(m_shader);
-	MPlug rplug = shaderNode.findPlug("ior");
+	MPlug rplug = shaderNode.findPlug("ior", false);
 	if (!rplug.isNull())
 		rplug.getValue(m_ior);
 }
