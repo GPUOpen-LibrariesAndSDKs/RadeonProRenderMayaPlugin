@@ -177,7 +177,7 @@ public:
 	// Sets the resolution and perform an initial render and frame buffer resolve.
 	void ResizeContext(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
 	// - Setup denoiser if necessary (this function was used to be called from ResizeContext and ContextSetResolution)
-	bool ConsiderSetupDenoiser(void);
+	bool ConsiderSetupDenoiser(bool useRAMBufer = false);
 
 	// Set the frame buffer resolution
 	void ContextSetResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
@@ -475,6 +475,8 @@ public:
 	// Returns true if context was recently Freshen and needs redraw
 	bool needsRedraw(bool setNotUpdatedOnExit = true);
 
+	bool IsDenoiserEnabled(void) { return m_denoiserFilter != nullptr; }
+
 	frw::PostEffect white_balance;
 	frw::PostEffect simple_tonemap;			
 	frw::PostEffect tonemap;
@@ -591,7 +593,8 @@ private:
 
 	void turnOnAOVsForDenoiser(bool allocBuffer = false);
 	bool CanCreateAiDenoiser() const;
-	void setupDenoiser();
+	void setupDenoiserFB(void);
+	void setupDenoiserRAM(void);
 	void BuildLateinitObjects();
 
 private:
@@ -703,6 +706,9 @@ private:
 	std::vector<MDagPath> m_LateinitMASHInstancers;
 	bool m_DoesContextSupportCurrentSettings = true;
 
+	// buffer to dump data from frame buffers, if needed
+	std::map<unsigned int, PixelBuffer> m_pixelBuffers;
+
 public:
 	FireRenderEnvLight *iblLight = nullptr;
 	MObject iblTransformObject = MObject();
@@ -790,6 +796,8 @@ public:
 	bool updateOutput();
 
 	void setSamplesPerUpdate(int samplesPerUpdate);
+
+	std::map<unsigned int, PixelBuffer>& PixelBuffers(void) { return m_pixelBuffers; }
     
 	class Lock
 	{
