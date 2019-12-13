@@ -153,16 +153,26 @@ void FireRenderContext::ContextSetResolution(unsigned int w, unsigned int h, boo
 	}
 }
 
-bool FireRenderContext::ConsiderSetupDenoiser(void)
+bool FireRenderContext::ConsiderSetupDenoiser(bool useRAMBufer /* = false*/)
 {
 	bool shouldDenoise = m_globals.denoiserSettings.enabled && ((m_RenderType == RenderType::ProductionRender) || (m_RenderType == RenderType::IPR));
 
 	if (!shouldDenoise)
 		return false;
 
-	setupDenoiser();
+	if (!useRAMBufer)
+	{
+		setupDenoiserFB();
+		return true;
+	}
 
-	return true;
+	if (useRAMBufer && (m_pixelBuffers.size() != 0))
+	{
+		setupDenoiserRAM();
+		return true;
+	}
+
+	return false;
 }
 
 void FireRenderContext::resetAOV(int index, rpr_GLuint* glTexture)
@@ -414,7 +424,94 @@ bool FireRenderContext::CanCreateAiDenoiser() const
 }
 #endif
 
-void FireRenderContext::setupDenoiser()
+void FireRenderContext::setupDenoiserRAM()
+{
+	bool canCreateAiDenoiser = CanCreateAiDenoiser();
+	bool useOpenImageDenoise = !canCreateAiDenoiser;
+
+	try
+	{
+		MString path;
+		MStatus s = MGlobal::executeCommand("getModulePath -moduleName RadeonProRender", path);
+		MString mlModelsFolder = path + "/data/models";
+
+		m_denoiserFilter = std::shared_ptr<ImageFilter>(new ImageFilter(context(), m_width, m_height, mlModelsFolder.asChar()));
+
+		RifParam p;
+
+		switch (m_globals.denoiserSettings.type)
+		{
+		case FireRenderGlobals::kBilateral:
+			m_denoiserFilter->CreateFilter(RifFilterType::BilateralDenoise);
+			m_denoiserFilter->AddInput(RifColor, m_pixelBuffers[RPR_AOV_COLOR].get(), 0.3f);
+			m_denoiserFilter->AddInput(RifNormal, m_pixelBuffers[RPR_AOV_SHADING_NORMAL].get(), 0.01f);
+			m_denoiserFilter->AddInput(RifWorldCoordinate, m_pixelBuffers[RPR_AOV_WORLD_COORDINATE].get(), 0.01f);
+
+			p = { RifParamType::RifInt, m_globals.denoiserSettings.radius };
+			m_denoiserFilter->AddParam("radius", p);
+			break;
+
+		case FireRenderGlobals::kLWR:
+			m_denoiserFilter->CreateFilter(RifFilterType::LwrDenoise);
+			m_denoiserFilter->AddInput(RifColor, m_pixelBuffers[RPR_AOV_COLOR].get(), 0.1f);
+			m_denoiserFilter->AddInput(RifNormal, m_pixelBuffers[RPR_AOV_SHADING_NORMAL].get(), 0.1f);
+			m_denoiserFilter->AddInput(RifDepth, m_pixelBuffers[RPR_AOV_DEPTH].get(), 0.1f);
+			m_denoiserFilter->AddInput(RifWorldCoordinate, m_pixelBuffers[RPR_AOV_WORLD_COORDINATE].get(), 0.1f);
+			m_denoiserFilter->AddInput(RifObjectId, m_pixelBuffers[RPR_AOV_OBJECT_ID].get(), 0.1f);
+			m_denoiserFilter->AddInput(RifTrans, m_pixelBuffers[RPR_AOV_OBJECT_ID].get(), 0.1f);
+
+			p = { RifParamType::RifInt, m_globals.denoiserSettings.samples };
+			m_denoiserFilter->AddParam("samples", p);
+
+			p = { RifParamType::RifInt,  m_globals.denoiserSettings.filterRadius };
+			m_denoiserFilter->AddParam("halfWindow", p);
+
+			p.mType = RifParamType::RifFloat;
+			p.mData.f = m_globals.denoiserSettings.bandwidth;
+			m_denoiserFilter->AddParam("bandwidth", p);
+			break;
+
+		case FireRenderGlobals::kEAW:
+			m_denoiserFilter->CreateFilter(RifFilterType::EawDenoise);
+			m_denoiserFilter->AddInput(RifColor, m_pixelBuffers[RPR_AOV_COLOR].get(), m_globals.denoiserSettings.color);
+			m_denoiserFilter->AddInput(RifNormal, m_pixelBuffers[RPR_AOV_SHADING_NORMAL].get(), m_globals.denoiserSettings.normal);
+			m_denoiserFilter->AddInput(RifDepth, m_pixelBuffers[RPR_AOV_DEPTH].get(), m_globals.denoiserSettings.depth);
+			m_denoiserFilter->AddInput(RifTrans, m_pixelBuffers[RPR_AOV_OBJECT_ID].get(), m_globals.denoiserSettings.trans);
+			m_denoiserFilter->AddInput(RifWorldCoordinate, m_pixelBuffers[RPR_AOV_WORLD_COORDINATE].get(), 0.1f);
+			m_denoiserFilter->AddInput(RifObjectId, m_pixelBuffers[RPR_AOV_OBJECT_ID].get(), 0.1f);
+			break;
+
+		case FireRenderGlobals::kML:
+		{
+			RifFilterType ft = m_globals.denoiserSettings.colorOnly ? RifFilterType::MlDenoiseColorOnly : RifFilterType::MlDenoise;
+			m_denoiserFilter->CreateFilter(ft, useOpenImageDenoise);
+		}
+		m_denoiserFilter->AddInput(RifColor, m_pixelBuffers[RPR_AOV_COLOR].get(), 0.0f);
+
+		if (!m_globals.denoiserSettings.colorOnly)
+		{
+			m_denoiserFilter->AddInput(RifNormal, m_pixelBuffers[RPR_AOV_SHADING_NORMAL].get(), 0.0f);
+			m_denoiserFilter->AddInput(RifDepth, m_pixelBuffers[RPR_AOV_DEPTH].get(), 0.0f);
+			m_denoiserFilter->AddInput(RifAlbedo, m_pixelBuffers[RPR_AOV_DIFFUSE_ALBEDO].get(), 0.0f);
+		}
+
+		break;
+
+		default:
+			assert(false);
+		}
+
+		m_denoiserFilter->AttachFilter();
+	}
+	catch (std::exception& e)
+	{
+		m_denoiserFilter.reset();
+		ErrorPrint(e.what());
+		MGlobal::displayError("RPR failed to setup denoiser, turning it off.");
+	}
+}
+
+void FireRenderContext::setupDenoiserFB()
 {
 	const rpr_framebuffer fbColor = m.framebufferAOV_resolved[RPR_AOV_COLOR].Handle();
 	const rpr_framebuffer fbShadingNormal = m.framebufferAOV_resolved[RPR_AOV_SHADING_NORMAL].Handle();
@@ -759,7 +856,7 @@ void FireRenderContext::render(bool lock)
 		if (m_interactive && m_denoiserChanged && m_globals.denoiserSettings.enabled)
 		{
 			turnOnAOVsForDenoiser(true);
-			setupDenoiser();
+			setupDenoiserFB();
 			m_denoiserChanged = false;
 		}
 
@@ -1291,8 +1388,7 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 		return; // fo now; should run denoiser if enabled instead
 
 	// load data normally either from RIF or from AOV
-	bool isDenoiserEnabled = m_denoiserFilter != nullptr;
-	bool shouldRunDenoiser = (aov == RPR_AOV_COLOR && isDenoiserEnabled);
+	bool shouldRunDenoiser = (aov == RPR_AOV_COLOR && IsDenoiserEnabled());
 
 	RV_PIXEL* data = nullptr;
 	std::vector<float> vecData;
@@ -1317,7 +1413,7 @@ void FireRenderContext::readFrameBuffer(RV_PIXEL* pixels, int aov,
 
 	// Copy the region from the temporary
 	// buffer into supplied pixel memory.
-	if (params.UseTempData() || isDenoiserEnabled)
+	if (params.UseTempData() || IsDenoiserEnabled())
 	{
 		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
 	}

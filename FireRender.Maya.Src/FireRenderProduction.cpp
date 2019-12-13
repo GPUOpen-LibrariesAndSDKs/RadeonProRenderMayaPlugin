@@ -785,7 +785,8 @@ void FireRenderProduction::RenderTiles()
 	info.totalWidth = m_width;
 	info.totalHeight = m_height;
 
-	std::map<unsigned int, PixelBuffer> outBuffers;
+	std::map<unsigned int, PixelBuffer> outBuffers = m_contextPtr->PixelBuffers();
+	outBuffers.clear();
 	m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov) 
 	{
 		auto ret = outBuffers.insert(std::pair<unsigned int, PixelBuffer>(aov.id, PixelBuffer()));
@@ -804,7 +805,6 @@ void FireRenderProduction::RenderTiles()
 		unsigned int height = region.getHeight();
 
 		m_contextPtr->ResizeContext(width, height, true);
-		m_contextPtr->ConsiderSetupDenoiser();
 
 		m_aovs->setRegion(RenderRegion(width, height), region.getWidth(), region.getHeight());
 		m_aovs->allocatePixels();
@@ -814,8 +814,7 @@ void FireRenderProduction::RenderTiles()
 		// Read pixel data for the AOV displayed in the render
 		// view. Flip the image so it's the right way up in the view.
 		// - readFrameBuffer function also does denoiser setup
-		//m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
-		m_aovs->readFrameBuffers(*m_contextPtr, true);
+		m_aovs->readFrameBuffers(*m_contextPtr, true); //m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
 
 		// copy data to buffer
 		m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov)
@@ -855,8 +854,12 @@ void FireRenderProduction::RenderTiles()
 	}
 	);
 
+	// debug dump resulting AOVs
 	for (auto& tmp : outBuffers)
 		tmp.second.debugDump(m_height, m_width);
+
+	// run denoiser if necessary
+	m_contextPtr->ConsiderSetupDenoiser(true);
 
 	// Update the Maya render view.
 	auto it = outBuffers.find(m_renderViewAOV->id);
@@ -864,11 +867,11 @@ void FireRenderProduction::RenderTiles()
 	MRenderView::updatePixels(0, (m_width - 1),
 		0, (m_height - 1), it->second.get(), true);
 
+	outBuffers.clear();
+
 	AthenaWrapper::GetAthenaWrapper()->StartNewFile();
 	UploadAthenaData();
 	AthenaWrapper::GetAthenaWrapper()->AthenaSendFile(pythonCallWrap);
-
-	int debugi = 1;
 }
 
 void FireRenderProduction::RenderFullFrame()
