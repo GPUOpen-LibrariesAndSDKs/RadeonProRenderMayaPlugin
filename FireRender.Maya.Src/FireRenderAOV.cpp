@@ -214,14 +214,27 @@ bool FireRenderAOV::IsValid(const FireRenderContext& context) const
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip)
+void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip, bool isDenoiserDisabled /*= false*/)
 {
 	// Check that the AOV is active and in a valid state.
 	if (!active || !pixels || m_region.isZeroArea() || !context.IsAOVSupported(id))
 		return;
 
 	bool opacityMerge = context.camera().GetAlphaMask() && context.isAOVEnabled(RPR_AOV_OPACITY);
-	context.readFrameBuffer(pixels.get(), id, m_frameWidth, m_frameHeight, m_region, flip, opacityMerge, true);
+
+	// setup params
+	FireRenderContext::ReadFrameBufferRequestParams params(m_region);
+	params.pixels = pixels.get();
+	params.aov = id;
+	params.width = m_frameWidth;
+	params.height = m_frameHeight;
+	params.flip = flip;
+	params.mergeOpacity = context.camera().GetAlphaMask() && context.isAOVEnabled(RPR_AOV_OPACITY);
+	params.mergeShadowCatcher = true;
+	params.isDenoiserDisabled = isDenoiserDisabled;
+
+	// process frame buffer
+	context.readFrameBuffer(params);
 
 	PostProcess();
 
