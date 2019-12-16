@@ -233,6 +233,7 @@ public:
 		bool flip;
 		bool mergeOpacity;
 		bool mergeShadowCatcher;
+		bool isDenoiserDisabled;
 
 		ReadFrameBufferRequestParams(const RenderRegion& _region)
 			: pixels(nullptr)
@@ -243,6 +244,7 @@ public:
 			, flip(false)
 			, mergeOpacity(false)
 			, mergeShadowCatcher(false)
+			, isDenoiserDisabled(false)
 		{};
 
 		int PixelCount(void) const { return (width*height); }
@@ -250,9 +252,7 @@ public:
 	};
 
 	// Read frame buffer pixels and optionally normalize and flip the image.
-	void readFrameBuffer(RV_PIXEL* pixels, int aov,
-		unsigned int width, unsigned int height, const RenderRegion& region,
-		bool flip, bool mergeOpacity = false, bool mergeShadowCatcher = false);
+	void readFrameBuffer(ReadFrameBufferRequestParams& params);
 
 	// will process frame as shadow and/or reflection catcher
 	bool ConsiderShadowReflectionCatcherOverride(const ReadFrameBufferRequestParams& params);
@@ -261,7 +261,7 @@ public:
 	void DebugDumpAOV(int aov) const;
 
 	// runs denoiser, returns pixel array as float vector if denoiser runs succesfully
-	std::vector<float> GetDenoisedData(bool& result, const ReadFrameBufferRequestParams& params);
+	std::vector<float> GetDenoisedData(bool& result);
 
 	// reads aov directly into internal storage
 	RV_PIXEL* GetAOVData(const ReadFrameBufferRequestParams& params);

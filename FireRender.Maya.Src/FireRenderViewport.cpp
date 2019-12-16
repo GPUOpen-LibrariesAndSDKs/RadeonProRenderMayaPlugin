@@ -716,15 +716,35 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 	// Read to a cached frame if supplied.
 	if (storedFrame)
 	{
-		m_contextPtr->readFrameBuffer(reinterpret_cast<RV_PIXEL*>(storedFrame->data()),
-			m_currentAOV, m_contextPtr->width(), m_contextPtr->height(), region, false);
+		// setup params
+		FireRenderContext::ReadFrameBufferRequestParams params(region);
+		params.pixels = reinterpret_cast<RV_PIXEL*>(storedFrame->data());
+		params.aov = m_currentAOV;
+		params.width = m_contextPtr->width();
+		params.height = m_contextPtr->height();
+		params.flip = false;
+		params.mergeOpacity = false;
+		params.mergeShadowCatcher = false;
+
+		// process frame buffer	
+		m_contextPtr->readFrameBuffer(params);
 	}
 
 	// Otherwise, read to a temporary buffer.
 	else
 	{
-		//m_context.enableAOV
-		m_contextPtr->readFrameBuffer(m_pixels.data(), m_currentAOV, m_contextPtr->width(), m_contextPtr->height(), region, false);
+		// setup params
+		FireRenderContext::ReadFrameBufferRequestParams params(region);
+		params.pixels = m_pixels.data();
+		params.aov = m_currentAOV;
+		params.width = m_contextPtr->width();
+		params.height = m_contextPtr->height();
+		params.flip = false;
+		params.mergeOpacity = false;
+		params.mergeShadowCatcher = true;
+
+		// process frame buffer
+		m_contextPtr->readFrameBuffer(params);
 
 		// Flag as updated so the pixels will
 		// be copied to the viewport texture.

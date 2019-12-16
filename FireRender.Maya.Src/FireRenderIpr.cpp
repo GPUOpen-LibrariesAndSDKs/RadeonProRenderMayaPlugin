@@ -570,8 +570,17 @@ void FireRenderIpr::readFrameBuffer()
 
 	// We need to made SC merge here, but we don't want to do opacity merge 
 	// since we render in interactive mode
-	m_contextPtr->readFrameBuffer(m_pixels.data(), RPR_AOV_COLOR, m_contextPtr->width(),
-		m_contextPtr->height(), m_region, true, false, true);
+	FireRenderContext::ReadFrameBufferRequestParams params(m_region);
+	params.pixels = m_pixels.data();
+	params.aov = RPR_AOV_COLOR;
+	params.width = m_contextPtr->width();
+	params.height = m_contextPtr->height();
+	params.flip = true;
+	params.mergeOpacity = false;
+	params.mergeShadowCatcher = true;
+
+	// process frame buffer	
+	m_contextPtr->readFrameBuffer(params);
 }
 
 // -----------------------------------------------------------------------------

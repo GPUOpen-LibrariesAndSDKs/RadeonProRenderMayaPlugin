@@ -785,7 +785,7 @@ void FireRenderProduction::RenderTiles()
 	info.totalWidth = m_width;
 	info.totalHeight = m_height;
 
-	std::map<unsigned int, PixelBuffer> outBuffers = m_contextPtr->PixelBuffers();
+	std::map<unsigned int, PixelBuffer>& outBuffers = m_contextPtr->PixelBuffers();
 	outBuffers.clear();
 	m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov) 
 	{
@@ -813,8 +813,11 @@ void FireRenderProduction::RenderTiles()
 
 		// Read pixel data for the AOV displayed in the render
 		// view. Flip the image so it's the right way up in the view.
-		// - readFrameBuffer function also does denoiser setup
-		m_aovs->readFrameBuffers(*m_contextPtr, true); //m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
+		// - readFrameBuffer function also can do denoiser setup
+		m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov)
+		{
+			aov.readFrameBuffer(*m_contextPtr, true, true);
+		});
 
 		// copy data to buffer
 		m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov)
@@ -858,14 +861,28 @@ void FireRenderProduction::RenderTiles()
 	for (auto& tmp : outBuffers)
 		tmp.second.debugDump(m_height, m_width);
 
-	// run denoiser if necessary
+	// setup denoiser if necessary
 	m_contextPtr->ConsiderSetupDenoiser(true);
 
+	RV_PIXEL* data = nullptr;
+	if (m_contextPtr->IsDenoiserEnabled())
+	{
+		// run denoiser on cached data if necessary
+		bool denoiseResult = false;
+		std::vector<float> vecData = m_contextPtr->GetDenoisedData(denoiseResult);
+		data = (RV_PIXEL*)&vecData[0];
+	}
+	else
+	{
+		// else upload data from buffers directly
+		auto it = outBuffers.find(m_renderViewAOV->id);
+		assert(it != outBuffers.end());
+		data = it->second.get();
+	}
+
 	// Update the Maya render view.
-	auto it = outBuffers.find(m_renderViewAOV->id);
-	assert(it != outBuffers.end());
 	MRenderView::updatePixels(0, (m_width - 1),
-		0, (m_height - 1), it->second.get(), true);
+		0, (m_height - 1), data, true);
 
 	outBuffers.clear();
 
@@ -993,12 +1010,18 @@ void FireRenderProduction::readFrameBuffer()
 {
 	RPR_THREAD_ONLY;
 
-	m_contextPtr->readFrameBuffer(m_pixels.data(),
-		RPR_AOV_COLOR,
-		m_contextPtr->width(),
-		m_contextPtr->height(),
-		m_region,
-		true);
+	// setup params
+	FireRenderContext::ReadFrameBufferRequestParams params(m_region);
+	params.pixels = m_pixels.data();
+	params.aov = RPR_AOV_COLOR;
+	params.width = m_contextPtr->width();
+	params.height = m_contextPtr->height();
+	params.flip = true;
+	params.mergeOpacity = false;
+	params.mergeShadowCatcher = false;
+
+	// process frame buffer
+	m_contextPtr->readFrameBuffer(params);
 }
 
 bool FireRenderProduction::mainThreadPump()
