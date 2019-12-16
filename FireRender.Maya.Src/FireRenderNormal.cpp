@@ -64,7 +64,7 @@ MStatus FireMaya::Normal::initialize()
 	return MS::kSuccess;
 }
 
-frw::Value FireMaya::Normal::GetValue(Scope& scope)
+frw::Value FireMaya::Normal::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 

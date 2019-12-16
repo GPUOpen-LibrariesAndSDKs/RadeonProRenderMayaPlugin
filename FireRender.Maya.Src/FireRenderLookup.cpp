@@ -47,7 +47,7 @@ void* FireMaya::Lookup::creator()
 	return new Lookup;
 }
 
-frw::Value FireMaya::Lookup::GetValue(Scope& scope)
+frw::Value FireMaya::Lookup::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 

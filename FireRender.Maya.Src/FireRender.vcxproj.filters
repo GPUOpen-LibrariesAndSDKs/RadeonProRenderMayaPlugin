@@ -108,6 +108,9 @@
     <Filter Include="Context">
       <UniqueIdentifier>{5a678c45-fabd-4caa-9d3d-d4229be4ab68}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MayaStandardNodesSupport">
+      <UniqueIdentifier>{4691976c-14e4-49e6-a828-972389286dd3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="python\__init__.py">
@@ -581,6 +584,60 @@
     <ClCompile Include="Translators\SingleShaderMeshTranslator.cpp">
       <Filter>Translators</Filter>
     </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\AddDoubleLinearConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\BaseConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\BlendColorsConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\Bump2dConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\ContrastConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\FileNodeConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\MultDoubleLinearConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\MultiplyDivideConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\NodeCheckerConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\NodeConverterUtil.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\NoiseConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\Place2dTextureConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\PlusMinusAverageConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\ReverseMapConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\VectorProductConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\RampNodeConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\GammaCorrectConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\RemapHSVConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -1005,6 +1062,60 @@
     </ClInclude>
     <ClInclude Include="Translators\SingleShaderMeshTranslator.h">
       <Filter>Translators</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\AddDoubleLinearConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\BaseConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\BlendColorsConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\Bump2dConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\ContrastConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\FileNodeConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\MultDoubleLinearConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\MultiplyDivideConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\NodeCheckerConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\NodeConverterUtil.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\NoiseConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\Place2dTextureConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\PlusMinusAverageConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\ReverseMapConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\VectorProductConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\RampNodeConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\GammaCorrectConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\RemapHSVConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

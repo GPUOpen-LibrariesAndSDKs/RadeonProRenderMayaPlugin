@@ -40,7 +40,7 @@ MStatus FireMaya::Noise::initialize()
 	return MS::kSuccess;
 }
 
-frw::Value FireMaya::Noise::GetValue(Scope& scope)
+frw::Value FireMaya::Noise::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 

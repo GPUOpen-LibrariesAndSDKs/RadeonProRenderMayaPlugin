@@ -50,7 +50,7 @@ void* FireMaya::BlendValue::creator()
 	return new BlendValue;
 }
 
-frw::Value FireMaya::BlendValue::GetValue(Scope& scope)
+frw::Value FireMaya::BlendValue::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 

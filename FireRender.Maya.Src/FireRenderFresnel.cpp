@@ -49,7 +49,7 @@ MStatus FireMaya::Fresnel::initialize()
 	return MS::kSuccess;
 }
 
-frw::Value FireMaya::Fresnel::GetValue(Scope& scope)
+frw::Value FireMaya::Fresnel::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 

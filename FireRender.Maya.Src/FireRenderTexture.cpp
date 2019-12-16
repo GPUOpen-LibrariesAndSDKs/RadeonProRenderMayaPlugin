@@ -61,7 +61,7 @@ namespace FireMaya
 		return MS::kSuccess;
 	}
 
-	frw::Value Texture::GetValue(Scope& scope)
+	frw::Value Texture::GetValue(const Scope& scope) const
 	{
 		MFnDependencyNode shaderNode(thisMObject());
 

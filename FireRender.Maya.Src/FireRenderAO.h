@@ -17,7 +17,7 @@ namespace FireMaya
         static void* creator();
         static MStatus initialize();
 
-        frw::Value GetValue(Scope& scope) override;
+        frw::Value GetValue(const Scope& scope) const override;
 
     private:
         static MObject m_radiusAttr;
