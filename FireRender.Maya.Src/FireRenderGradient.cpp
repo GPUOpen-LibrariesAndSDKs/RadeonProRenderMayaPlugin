@@ -43,7 +43,7 @@ MStatus FireMaya::Gradient::initialize()
 	return MS::kSuccess;
 }
 
-frw::Value FireMaya::Gradient::GetValue(Scope& scope)
+frw::Value FireMaya::Gradient::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 

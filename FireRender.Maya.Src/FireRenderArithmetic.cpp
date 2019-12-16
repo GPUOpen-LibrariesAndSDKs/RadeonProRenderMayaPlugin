@@ -82,7 +82,7 @@ void* FireMaya::Arithmetic::creator()
 	return new Arithmetic;
 }
 
-frw::Value FireMaya::Arithmetic::GetValue(Scope& scope)
+frw::Value FireMaya::Arithmetic::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 

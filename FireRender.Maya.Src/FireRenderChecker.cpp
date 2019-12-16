@@ -46,7 +46,7 @@ MStatus FireMaya::Checker::initialize()
 	return MS::kSuccess;
 }
 
-frw::Value FireMaya::Checker::GetValue(Scope& scope)
+frw::Value FireMaya::Checker::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 

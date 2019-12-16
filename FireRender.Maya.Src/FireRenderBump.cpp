@@ -64,7 +64,7 @@ MStatus FireMaya::Bump::initialize()
 	return MS::kSuccess;
 }
 
-frw::Value FireMaya::Bump::GetValue(Scope& scope)
+frw::Value FireMaya::Bump::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 

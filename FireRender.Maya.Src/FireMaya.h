@@ -97,30 +97,6 @@ namespace FireMaya
 
 	};
 
-	enum MayaValueId
-	{
-		// maps
-		MayaNodePlace2dTexture = 0x52504c32,
-		MayaNodeFile = 0x52544654,
-		MayaNodeChecker = 0x52544348,
-		MayaNodeRamp = 0x52545241,
-		MayaNoise = 0x52544e33,
-		MayaBump2d = 0x5242554D,
-		MayaNodeRemapHSV = 0x524d4853,
-		MayaNodeGammaCorrect = 0x5247414d,
-		MayaReverseMap = 0x52525653,
-		MayaLayeredTexture = 0x4c595254,
-
-		// arithmetic
-		MayaAddDoubleLinear = 0x4441444c,
-		MayaBlendColors = 0x52424c32,
-		MayaContrast = 0x52434f4e,
-		MayaMultDoubleLinear = 0x444d444c,
-		MayaMultiplyDivide = 0x524d4449,
-		MayaPlusMinusAverage = 0x52504d41,
-		MayaVectorProduct = 0x52564543
-	};
-
 	enum MayaSurfaceId
 	{
 		MayaNodeLambert = 0x524c414d,
@@ -170,7 +146,7 @@ namespace FireMaya
 	class ValueNode : public Node
 	{
 	public:
-		virtual frw::Value GetValue(FireMaya::Scope& scope) = 0;
+		virtual frw::Value GetValue(const FireMaya::Scope& scope) const = 0;
 
 		virtual void postConstructor()
 		{
@@ -235,12 +211,18 @@ namespace FireMaya
 		IFireRenderContextInfo* m_pContextInfo; // Scope can not exist without a context, thus using raw pointer here is safe
 
 		/** Temporary fix for default diffuse color calculation */
-		bool m_IsLastPassTextureMissing = false; 
+		mutable bool m_IsLastPassTextureMissing = false; 
 
 		// callbacks
 	public:
 		void NodeDirtyCallback(MObject& node);
 		void AttributeChangedCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug);
+
+		FireRenderMesh const* GetCurrentlyParsedMesh() const { return m->m_pCurrentlyParsedMesh; }
+		void SetIsLastPassTextureMissing(bool value) const { m_IsLastPassTextureMissing = value; }
+
+		frw::Value createImageFromShaderNode(MObject node, MString plugName = "outColor", int width = 256, int height = 256) const;
+		frw::Value createImageFromShaderNodeUsingFileNode(MObject node, MString plugName) const;
 
 	private:
 		static void NodeDirtyCallback(MObject& node, void* clientData);
@@ -256,43 +238,20 @@ namespace FireMaya
 		void SetCachedValue(const NodeId& str, frw::Value shader);
 
 		frw::Image GetCachedImage(const MString& key) const;
-		void SetCachedImage(const MString& key, frw::Image img);
+		void SetCachedImage(const MString& key, frw::Image img) const;
 
 		frw::Shader ParseVolumeShader( MObject ob );
 		frw::Shader ParseShader(MObject ob);
-		frw::Value createImageFromShaderNode(MObject node, MString plugName = "outColor", int width = 256, int height = 256);
 
-		frw::Value ParseValue(MObject ob, const MString &outPlugName);
+		frw::Value ParseValue(MObject ob, const MString &outPlugName) const;
 
-		bool FindFileNodeRecursive(MObject objectNode, int& width, int& height);
-		frw::Value createImageFromShaderNodeUsingFileNode(MObject node, MString plugName);
+		bool FindFileNodeRecursive(MObject objectNode, int& width, int& height) const;
 
 		frw::Value CosinePowerToRoughness(const frw::Value &power);
 
 		frw::Shader convertMayaBlinn(const MFnDependencyNode &node);
 		frw::Shader convertMayaPhong(const MFnDependencyNode &node);
 		frw::Shader convertMayaPhongE(const MFnDependencyNode &node);
-
-		frw::Value convertMayaNoise(const MFnDependencyNode &node);
-		frw::Value convertMayaBump2d(const MFnDependencyNode &node);
-
-		frw::Value convertMayaNodePlace2dTexture(MObject node, const MFnDependencyNode& shaderNode, frw::MaterialSystem materialSystem);
-		frw::Value convertMayaNodeFile(const MFnDependencyNode& shaderNode, const frw::MaterialSystem& materialSystem, const MString& outPlugName);
-		frw::Value convertMayaNodeChecker(const MFnDependencyNode& node, frw::MaterialSystem materialSystem);
-		frw::Value convertMayaReverseMap(const MFnDependencyNode& node);
-
-		// convert arithmetic nodes
-		frw::Value convertMayaAddDoubleLinear(const MFnDependencyNode &node);
-		frw::Value convertMayaBlendColors(const MFnDependencyNode &node);
-		frw::Value convertMayaContrast(const MFnDependencyNode &node);
-		frw::Value convertMayaMultDoubleLinear(const MFnDependencyNode &node);
-		frw::Value convertMayaMultiplyDivide(const MFnDependencyNode &node);
-		frw::Value convertMayaPlusMinusAverage(const MFnDependencyNode &node, const MString &outPlugName);
-		frw::Value convertMayaVectorProduct(const MFnDependencyNode &node);
-
-		typedef std::vector<frw::Value> ArrayOfValues;
-		void GetArrayOfValues(const MFnDependencyNode &node, const char * plugName, ArrayOfValues &arr);
-		frw::Value calcElements(const ArrayOfValues &arr, bool substract = false);
 
 		frw::Image CreateImageInternal(MString colorSpace,
 			unsigned int width,
@@ -301,9 +260,9 @@ namespace FireMaya
 			unsigned int channels,
 			unsigned int componentSize,
 			unsigned int rowPitch,
-			bool flipY = false);
+			bool flipY = false) const;
 
-		frw::Image LoadImageUsingMTexture(MString texturePath, MString colorSpace, const MString& ownerNodeName);
+		frw::Image LoadImageUsingMTexture(MString texturePath, MString colorSpace, const MString& ownerNodeName) const;
 
 	public:
 		Scope();
@@ -318,7 +277,7 @@ namespace FireMaya
 		frw::Shader GetVolumeShader( MObject ob, bool forceUpdate = false );
 		frw::Shader GetVolumeShader( MPlug ob );
 
-		frw::Image GetImage(MString path, MString colorSpace, const MString& ownerNodeName);
+		frw::Image GetImage(MString path, MString colorSpace, const MString& ownerNodeName) const;
 
 		frw::Image GetTiledImage(MString texturePath, 
 			int viewWidth, int viewHeight,
@@ -339,17 +298,17 @@ namespace FireMaya
 			bool ignoreColorSpaceFileRules, MString colorSpace);
 
 
-		frw::Value GetValue(MObject ob, const MString &outPlugName = MString());
-		frw::Value GetValue(const MPlug& ob);
+		frw::Value GetValue(MObject ob, const MString &outPlugName = MString()) const;
+		frw::Value GetValue(const MPlug& ob) const;
 		frw::Value GetValue(MObject ob, frw::Value orDefault) { return GetValue(ob) | orDefault; }
 		frw::Value GetValue(const MPlug& ob, frw::Value orDefault) { return GetValue(ob) | orDefault; }
 
 		// Returns 1x1 purple image node in case if something is connected to the plug but there is no valid map as output
 		frw::Value GetValueForDiffuseColor(const MPlug& ob);
 
-		frw::Value GetConnectedValue(const MPlug& ob);	// recommended for uv and normals, where constant value is undesired or invalid
+		frw::Value GetConnectedValue(const MPlug& ob) const;	// recommended for uv and normals, where constant value is undesired or invalid
 
-		frw::Value GetValueWithCheck(const MFnDependencyNode &node, const char * plugName);
+		frw::Value GetValueWithCheck(const MFnDependencyNode &node, const char * plugName) const;
 
 		frw::Context Context() const { return m->context; }
 		frw::MaterialSystem MaterialSystem() const { return m->materialSystem; }

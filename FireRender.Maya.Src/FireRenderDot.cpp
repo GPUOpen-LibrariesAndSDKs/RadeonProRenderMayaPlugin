@@ -56,7 +56,7 @@ MStatus FireMaya::Dot::initialize()
 }
 
 
-frw::Value FireMaya::Dot::GetValue(Scope& scope)
+frw::Value FireMaya::Dot::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 

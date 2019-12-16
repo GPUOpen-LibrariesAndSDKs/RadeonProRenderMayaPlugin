@@ -66,7 +66,7 @@ void* FireRenderAO::creator()
     return new FireRenderAO;
 }
 
-frw::Value FireRenderAO::GetValue(Scope& scope)
+frw::Value FireRenderAO::GetValue(const Scope& scope) const
 {
     MFnDependencyNode shaderNode(thisMObject());
 
