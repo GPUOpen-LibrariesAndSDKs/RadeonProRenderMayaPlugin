@@ -16,6 +16,7 @@ FireRenderContextPtr ContextCreator::CreateTahoeContext()
 
 FireRenderContextPtr ContextCreator::CreateAppropriateContextForRenderQuality(RenderQuality quality)
 {
+#ifdef WIN32
 	if (quality == RenderQuality::RenderQualityFull)
 	{
 		return CreateTahoeContext();
@@ -24,6 +25,9 @@ FireRenderContextPtr ContextCreator::CreateAppropriateContextForRenderQuality(Re
 	{
 		return CreateHybridContext();
 	}
+#endif
+
+	return CreateTahoeContext();
 }
 
 FireRenderContextPtr ContextCreator::CreateAppropriateContextForRenderType(RenderType renderType)

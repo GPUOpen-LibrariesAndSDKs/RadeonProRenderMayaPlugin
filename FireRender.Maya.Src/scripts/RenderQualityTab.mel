@@ -1,13 +1,20 @@
+proc int isWindowsRunning()
+{
+	return `about -windows`;
+}
+
 proc createFinalRenderQualityPart()
 {
 	// Render Resources section
 	//
-
-	frameLayout -label "Final Render Quality" -cll true -cl 0 fireRenderQualityFrame;
-	attrControlGrp
-		 -label "Render Quality"
-		 -attribute "RadeonProRenderGlobals.renderQualityFinalRender";
-	setParent ..;
+	if (isWindowsRunning())
+	{
+		frameLayout -label "Final Render Quality" -cll true -cl 0 fireRenderQualityFrame;
+		attrControlGrp
+			-label "Render Quality"
+			-attribute "RadeonProRenderGlobals.renderQualityFinalRender";
+		setParent ..;
+	}
 
 
 	frameLayout -label "Final Render Ray Depths" -cll true -cl 0 fireRenderRayDepthsFrame;
@@ -51,10 +58,10 @@ proc createFinalRenderQualityPart()
             -attribute "RadeonProRenderGlobals.enableOOC"
             -cc updateOOCUIProduction;
 
-    attrControlGrp
-        -label "GPU texture cache (MB)"
-        -attribute "RadeonProRenderGlobals.textureCacheSize"
-        textureCacheSize;
+        attrControlGrp
+            -label "GPU Texture Cache (MB)"
+            -attribute "RadeonProRenderGlobals.textureCacheSize"
+            textureCacheSize;
 
 	// Clamp irradiance
 	attrControlGrp
@@ -75,11 +82,14 @@ proc createFinalRenderQualityPart()
 
 proc createViewportRenderQualityPart()
 {
-	frameLayout -label "Viewport Render Quality" -cll true -cl 0 fireRenderViewportQualityFrame;
-	attrControlGrp
-		 -label "Render Quality"
-		 -attribute "RadeonProRenderGlobals.renderQualityViewport";
-	setParent ..;
+	if (isWindowsRunning())
+	{
+		frameLayout -label "Viewport Render Quality" -cll true -cl 0 fireRenderViewportQualityFrame;
+		attrControlGrp
+			 -label "Render Quality"
+			 -attribute "RadeonProRenderGlobals.renderQualityViewport";
+		setParent ..;
+	}
 }
 
 global proc createQualityTab()

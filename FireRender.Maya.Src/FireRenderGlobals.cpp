@@ -149,6 +149,8 @@ namespace
 		MObject completionCriteriaMaxIterations;
 		MObject completionCriteriaMinIterations;
 		MObject renderQuality;
+
+		MObject adaptiveThresholdViewport;
 	}
 
 	bool operator==(const MStringArray& a, const MStringArray& b)
@@ -241,6 +243,7 @@ MStatus FireRenderGlobals::initialize()
 	createFinalRenderAttributes();
 	createViewportAttributes();
 	createCompletionCriteriaAttributes();
+	createTileRenderAttributes();
 
 	Attribute::textureCompression = nAttr.create("textureCompression", "texC", MFnNumericData::kBoolean, false, &status);
 	MAKE_INPUT(nAttr);
@@ -479,6 +482,35 @@ void FireRenderGlobals::addRenderQualityModes(MFnEnumAttribute& eAttr)
 #endif
 }
 
+void FireRenderGlobals::createTileRenderAttributes()
+{
+	MFnNumericAttribute nAttr;
+	MStatus status;
+
+	FinalRenderAttributes::tileRenderEnabled = nAttr.create("tileRenderEnabled", "tre", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+
+	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::tileRenderEnabled));
+
+	const int tileDefaultSize = 128;
+	const int tileDefaultSizeMin = 16;
+	const int tileDefaultSizeMax = 512;
+
+	FinalRenderAttributes::tileRenderX = nAttr.create("tileRenderX", "trx", MFnNumericData::kInt, tileDefaultSize, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(tileDefaultSizeMin);
+	nAttr.setSoftMax(tileDefaultSizeMax);
+
+	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::tileRenderX));
+
+	FinalRenderAttributes::tileRenderY = nAttr.create("tileRenderY", "try", MFnNumericData::kInt, tileDefaultSize, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(tileDefaultSizeMin);
+	nAttr.setSoftMax(tileDefaultSizeMax);
+
+	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::tileRenderY));
+}
+
 void FireRenderGlobals::createCompletionCriteriaAttributes()
 {
 	MFnNumericAttribute nAttr;
@@ -495,12 +527,12 @@ void FireRenderGlobals::createCompletionCriteriaAttributes()
 	nAttr.setMin(0);
 	nAttr.setMax(59);
 
-	Attribute::completionCriteriaSeconds = nAttr.create("completionCriteriaSeconds", "ccsc", MFnNumericData::kInt, 10, &status);
+	Attribute::completionCriteriaSeconds = nAttr.create("completionCriteriaSeconds", "ccsc", MFnNumericData::kInt, 0, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0);
 	nAttr.setMax(59);
 
-	Attribute::completionCriteriaMaxIterations = nAttr.create("completionCriteriaIterations", "ccit", MFnNumericData::kInt, 100, &status);
+	Attribute::completionCriteriaMaxIterations = nAttr.create("completionCriteriaIterations", "ccit", MFnNumericData::kInt, 256, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0);
 	nAttr.setSoftMax(1000);
@@ -835,6 +867,7 @@ void getMinMaxCpuThreads(int& min, int& max, int& softMax)
 	softMax = concurentThreadsSupported;
 }
 
+//System Tab
 void FireRenderGlobals::createFinalRenderAttributes()
 {
     MStatus status;
@@ -859,28 +892,6 @@ void FireRenderGlobals::createFinalRenderAttributes()
     nAttr.setMin(samplesPerUpdateMin);
 	nAttr.setMax(samplesPerUpdateMax / 4);
     nAttr.setMax(samplesPerUpdateMax);
-	addAsGlobalAttribute(nAttr);
-
-    FinalRenderAttributes::tileRenderEnabled = nAttr.create("tileRenderEnabled", "tre", MFnNumericData::kBoolean, false, &status);
-    MAKE_INPUT(nAttr);
-	addAsGlobalAttribute(nAttr);
-
-    const int tileDefaultSize = 128;
-    const int tileDefaultSizeMin = 16;
-    const int tileDefaultSizeMax = 512;
-
-    FinalRenderAttributes::tileRenderX = nAttr.create("tileRenderX", "trx", MFnNumericData::kInt, tileDefaultSize, &status);
-    MAKE_INPUT(nAttr);
-    nAttr.setMin(tileDefaultSizeMin);
-    nAttr.setSoftMax(tileDefaultSizeMax);
-	nAttr.setStorable(false);
-	nAttr.setConnectable(false);
-	addAsGlobalAttribute(nAttr);
-
-    FinalRenderAttributes::tileRenderY = nAttr.create("tileRenderY", "try", MFnNumericData::kInt, tileDefaultSize, &status);
-    MAKE_INPUT(nAttr);
-    nAttr.setMin(tileDefaultSizeMin);
-    nAttr.setSoftMax(tileDefaultSizeMax);
 	addAsGlobalAttribute(nAttr);
 }
 
@@ -911,33 +922,33 @@ void FireRenderGlobals::createViewportAttributes()
 	nAttr.setMin(0.0);
 	nAttr.setSoftMax(24);
 	nAttr.setMax(INT_MAX);
-	addAsGlobalAttribute(nAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::completionCriteriaHours));
 
 	ViewportRenderAttributes::completionCriteriaMinutes = nAttr.create("completionCriteriaMinutesViewport", "vccm", MFnNumericData::kInt, 0, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0);
 	nAttr.setMax(59);
-	addAsGlobalAttribute(nAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::completionCriteriaMinutes));
 
-	ViewportRenderAttributes::completionCriteriaSeconds = nAttr.create("completionCriteriaSecondsViewport", "vccs", MFnNumericData::kInt, 10, &status);
+	ViewportRenderAttributes::completionCriteriaSeconds = nAttr.create("completionCriteriaSecondsViewport", "vccs", MFnNumericData::kInt, 0, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0);
 	nAttr.setMax(59);
-	addAsGlobalAttribute(nAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::completionCriteriaSeconds));
 
-	ViewportRenderAttributes::completionCriteriaMaxIterations = nAttr.create("completionCriteriaIterationsViewport", "vcci", MFnNumericData::kInt, 100, &status);
+	ViewportRenderAttributes::completionCriteriaMaxIterations = nAttr.create("completionCriteriaIterationsViewport", "vcci", MFnNumericData::kInt, 256, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0);
 	nAttr.setSoftMax(1000);
 	nAttr.setMax(INT_MAX);
-	addAsGlobalAttribute(nAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::completionCriteriaMaxIterations));
 																			  
 	ViewportRenderAttributes::completionCriteriaMinIterations = nAttr.create("completionCriteriaMinIterationsViewport", "vcmi", MFnNumericData::kInt, RECOMMENDED_MIN_ITERATIONS_VIEWPORT, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(16);
 	nAttr.setSoftMax(100);
 	nAttr.setMax(INT_MAX);
-	addAsGlobalAttribute(nAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::completionCriteriaMinIterations));
 
 	ViewportRenderAttributes::thumbnailIterCount = nAttr.create("thumbnailIterationCount", "tic", MFnNumericData::kInt, 50, &status);
 	MAKE_INPUT(nAttr);
@@ -977,6 +988,13 @@ void FireRenderGlobals::createViewportAttributes()
 	ViewportRenderAttributes::motionBlur = nAttr.create("motionBlurViewport", "vmb", MFnNumericData::kBoolean, false);
 	MAKE_INPUT(nAttr);
 	addAsGlobalAttribute(nAttr);
+
+	ViewportRenderAttributes::adaptiveThresholdViewport = nAttr.create("adaptiveThresholdViewport", "atv", MFnNumericData::kFloat, 0.05, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0);
+	nAttr.setMax(1.0);
+
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::adaptiveThresholdViewport));
 }
 
 /** Return the FR camera mode that matches the given camera type. */
