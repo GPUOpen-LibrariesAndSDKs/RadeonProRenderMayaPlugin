@@ -638,6 +638,21 @@
     <ClCompile Include="MayaStandardNodesSupport\RemapHSVConverter.cpp">
       <Filter>MayaStandardNodesSupport</Filter>
     </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\BlendTwoAttrConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\ClampConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\ColorMathConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\HSVToRGBConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\RGBToHSVConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -1115,6 +1130,21 @@
       <Filter>MayaStandardNodesSupport</Filter>
     </ClInclude>
     <ClInclude Include="MayaStandardNodesSupport\RemapHSVConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\BlendTwoAttrConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\ClampConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\ColorMathConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\HSVToRGBConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\RGBToHSVConverter.h">
       <Filter>MayaStandardNodesSupport</Filter>
     </ClInclude>
   </ItemGroup>

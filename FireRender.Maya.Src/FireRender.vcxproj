@@ -325,10 +325,14 @@
     <ClCompile Include="MayaStandardNodesSupport\AddDoubleLinearConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\BaseConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\BlendColorsConverter.cpp" />
+    <ClCompile Include="MayaStandardNodesSupport\BlendTwoAttrConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\Bump2dConverter.cpp" />
+    <ClCompile Include="MayaStandardNodesSupport\ClampConverter.cpp" />
+    <ClCompile Include="MayaStandardNodesSupport\ColorMathConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\ContrastConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\FileNodeConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\GammaCorrectConverter.cpp" />
+    <ClCompile Include="MayaStandardNodesSupport\HSVToRGBConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\MultDoubleLinearConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\MultiplyDivideConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\NodeCheckerConverter.cpp" />
@@ -339,6 +343,7 @@
     <ClCompile Include="MayaStandardNodesSupport\RampNodeConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\RemapHSVConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\ReverseMapConverter.cpp" />
+    <ClCompile Include="MayaStandardNodesSupport\RGBToHSVConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\VectorProductConverter.cpp" />
     <ClCompile Include="OptionVarHelpers.cpp" />
     <ClCompile Include="pluginMain.cpp" />
@@ -494,10 +499,14 @@
     <ClInclude Include="MayaStandardNodesSupport\AddDoubleLinearConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\BaseConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\BlendColorsConverter.h" />
+    <ClInclude Include="MayaStandardNodesSupport\BlendTwoAttrConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\Bump2dConverter.h" />
+    <ClInclude Include="MayaStandardNodesSupport\ClampConverter.h" />
+    <ClInclude Include="MayaStandardNodesSupport\ColorMathConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\ContrastConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\FileNodeConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\GammaCorrectConverter.h" />
+    <ClInclude Include="MayaStandardNodesSupport\HSVToRGBConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\MultDoubleLinearConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\MultiplyDivideConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\NodeCheckerConverter.h" />
@@ -508,6 +517,7 @@
     <ClInclude Include="MayaStandardNodesSupport\RampNodeConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\RemapHSVConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\ReverseMapConverter.h" />
+    <ClInclude Include="MayaStandardNodesSupport\RGBToHSVConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\VectorProductConverter.h" />
     <ClInclude Include="OptionVarHelpers.h" />
     <ClInclude Include="RenderCacheWarningDialog.h" />
