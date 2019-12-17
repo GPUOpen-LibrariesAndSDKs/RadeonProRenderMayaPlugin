@@ -99,11 +99,11 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 	frstatus = rprContextSetParameter1u(frcontext, "as.tilesize", fireRenderGlobalsData.adaptiveTileSize);
 	checkStatus(frstatus);
 
-	frstatus = rprContextSetParameter1f(frcontext, "as.threshold", fireRenderGlobalsData.adaptiveThreshold);
-	checkStatus(frstatus);
-
 	if (GetRenderType() == RenderType::ProductionRender) // production (final) rendering
 	{
+		frstatus = rprContextSetParameter1f(frcontext, "as.threshold", fireRenderGlobalsData.adaptiveThreshold);
+		checkStatus(frstatus);
+
 		frstatus = rprContextSetParameter1u(frcontext, "rendermode", fireRenderGlobalsData.renderMode);
 		checkStatus(frstatus);
 
@@ -133,6 +133,9 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 	else if (isInteractive())
 	{
 		setSamplesPerUpdate(1);
+
+		frstatus = rprContextSetParameter1f(frcontext, "as.threshold", fireRenderGlobalsData.adaptiveThresholdViewport);
+		checkStatus(frstatus);
 
 		frstatus = rprContextSetParameter1u(frcontext, "rendermode", fireRenderGlobalsData.viewportRenderMode);
 		checkStatus(frstatus);
