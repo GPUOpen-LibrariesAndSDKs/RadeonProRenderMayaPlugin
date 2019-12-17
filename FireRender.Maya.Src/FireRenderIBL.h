@@ -68,6 +68,7 @@ public:
 public:
 	static  MTypeId id;
 	static  MString drawDbClassification;
+	static  MString drawDbGeomClassification;
 	static  MString drawRegistrantId;
 	MCallbackId m_attributeChangedCallback;
 	MCallbackId m_selectionChangedCallback;

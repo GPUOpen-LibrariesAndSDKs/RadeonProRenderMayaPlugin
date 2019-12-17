@@ -26,7 +26,8 @@ MObject FireRenderIBL::aPortalHolder;
 
 MTypeId FireRenderIBL::id(FireMaya::TypeId::FireRenderIBL);
 
-MString FireRenderIBL::drawDbClassification("drawdb/geometry/FireRenderIBL");
+MString FireRenderIBL::drawDbClassification("light:drawdb/light/directionalLight:drawdb/geometry/FireRenderIBL");
+MString FireRenderIBL::drawDbGeomClassification("drawdb/geometry/FireRenderIBL");
 MString FireRenderIBL::drawRegistrantId("FireRenderIBLNode");
 
 FireRenderIBL::FireRenderIBL():
