@@ -61,12 +61,12 @@ global proc createIBLNodeRPR()
 	}
 
 	// Create, name and scale the IBL node.
-	string $iblNode = `createNode RPRIBL -n RPRIBLShape`;
-	string $parent[] = `listRelatives -p $iblNode`;
-	setAttr ($parent[0] + ".scaleX") 1001.25663706144; //pi*5/10 ... something unique (for hierarchy change tracking)
-	setAttr ($parent[0] + ".scaleY") 1001.25663706144;
-	setAttr ($parent[0] + ".scaleZ") 1001.25663706144;
-	rename $parent[0] RPRIBL;
+	string $iblNode = `shadingNode -asLight RPRIBL -n RPRIBLShape`;
+	rename $iblNode "RPRIBL";
+
+	setAttr ($iblNode + ".scaleX") 1001.25663706144; //pi*5/10 ... something unique (for hierarchy change tracking)
+	setAttr ($iblNode + ".scaleY") 1001.25663706144;
+	setAttr ($iblNode + ".scaleZ") 1001.25663706144;
 
 	// Update the UI.
 	updateIBLInterfaceRPR();
@@ -244,12 +244,11 @@ global proc createSkyNodeRPR()
 	}
 
 	// Create and name the Sky node.
-	string $skyNode = `createNode RPRSky -n RPRSkyShape`;
-	string $parent[] = `listRelatives -p $skyNode`;
-	setAttr ($parent[0] + ".scaleX") 0.94247779607; //pi*3/10 ... something unique (for hierarchy change tracking)
-	setAttr ($parent[0] + ".scaleY") 0.94247779607; //pi*3/10
-	setAttr ($parent[0] + ".scaleZ") 0.94247779607; //pi*3/10
-	rename $parent[0] RPRSky;
+	string $skyNode = `shadingNode -asLight RPRSky -n RPRSkyShape`;
+	rename $skyNode "RPRSky";
+	setAttr ($skyNode + ".scaleX") 0.94247779607; //pi*3/10 ... something unique (for hierarchy change tracking)
+	setAttr ($skyNode + ".scaleY") 0.94247779607; //pi*3/10
+	setAttr ($skyNode + ".scaleZ") 0.94247779607; //pi*3/10
 
 	// Update the UI.
 	updateSkyInterfaceRPR();

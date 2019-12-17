@@ -14,7 +14,8 @@
 #include "FireMaya.h"
 
 MTypeId FireRenderPhysicalLightLocator::id(FireMaya::TypeId::FireRenderPhysicalLightLocator);
-MString FireRenderPhysicalLightLocator::drawDbClassification("drawdb/geometry/FireRenderPhysicalLightLocator");
+MString FireRenderPhysicalLightLocator::drawDbClassification("light:drawdb/light/directionalLight:drawdb/geometry/FireRenderPhysicalLightLocator");
+MString FireRenderPhysicalLightLocator::drawDbGeomClassification("drawdb/geometry/FireRenderPhysicalLightLocator");
 MString FireRenderPhysicalLightLocator::drawRegistrantId("FireRenderPhysicalLightNode");
 
 FireRenderPhysicalLightLocator::FireRenderPhysicalLightLocator() :

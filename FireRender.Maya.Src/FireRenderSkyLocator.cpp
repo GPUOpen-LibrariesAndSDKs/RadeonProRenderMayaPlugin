@@ -15,7 +15,8 @@ using namespace std;
 
 MTypeId FireRenderSkyLocator::id(FireMaya::TypeId::FireRenderSkyLocator);
 
-MString FireRenderSkyLocator::drawDbClassification("drawdb/geometry/FireRenderSkyLocator");
+MString FireRenderSkyLocator::drawDbClassification("light:drawdb/light/directionalLight:drawdb/geometry/FireRenderSkyLocator");
+MString FireRenderSkyLocator::drawDbGeomClassification("drawdb/geometry/FireRenderSkyLocator");
 MString FireRenderSkyLocator::drawRegistrantId("FireRenderSkyNode");
 
 MObject FireRenderSkyLocator::SkySelectingPortalMesh;

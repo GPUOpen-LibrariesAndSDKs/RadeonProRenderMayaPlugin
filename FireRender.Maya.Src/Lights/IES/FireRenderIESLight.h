@@ -58,6 +58,7 @@ public:
 public:
 	static MTypeId	id;
 	static MString	drawDbClassification;
+	static MString	drawDbGeomClassification;
 	static MString	drawRegistrantId;
 	static MObject	aFilePath;
 	static MObject	aAreaWidth;
