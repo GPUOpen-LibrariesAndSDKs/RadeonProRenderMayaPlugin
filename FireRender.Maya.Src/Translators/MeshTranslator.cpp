@@ -117,7 +117,7 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 	if (!successfullyInitialized)
 	{
 		std::string nodeName = fnMesh.name().asChar();
-		std::string message = nodeName + " wasn't created: it probably has no vertices";
+		std::string message = nodeName + " wasn't created: Mesh has no vertices";
 		MGlobal::displayWarning(message.c_str());
 		return resultShapes;
 	}
