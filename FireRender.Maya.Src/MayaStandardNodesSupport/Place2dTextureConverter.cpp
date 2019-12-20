@@ -45,37 +45,53 @@ frw::Value MayaStandardNodeConverters::Place2dTextureConverter::Convert() const
 		uvIdx = 0;
 
 	// create node
-	auto value = m_params.scope.MaterialSystem().ValueLookupUV(uvIdx);
+	frw::Value value = m_params.scope.MaterialSystem().ValueLookupUV(uvIdx);
 
 	// rotate frame
-	auto rotateFrame = m_params.scope.GetValue(m_params.shaderNode.findPlug("rotateFrame"));
-	if (rotateFrame != 0.)
-		value = m_params.scope.MaterialSystem().ValueRotateXY(value - 0.5, rotateFrame) + 0.5;
+	frw::Value rotateFrame = m_params.scope.GetValue(m_params.shaderNode.findPlug("rotateFrame"));
+	if (rotateFrame != 0.0f)
+	{
+		value = m_params.scope.MaterialSystem().ValueRotateXY(value - 0.5f, rotateFrame) + 0.5f;
+	}
 
 	// translate frame
-	auto translateFrameU = m_params.scope.GetValue(m_params.shaderNode.findPlug("translateFrameU"));
-	auto translateFrameV = m_params.scope.GetValue(m_params.shaderNode.findPlug("translateFrameV"));
-	if (translateFrameU != 0. || translateFrameV != 0.)
+	frw::Value translateFrameU = m_params.scope.GetValue(m_params.shaderNode.findPlug("translateFrameU"));
+	frw::Value translateFrameV = m_params.scope.GetValue(m_params.shaderNode.findPlug("translateFrameV"));
+	if (translateFrameU != 0.0f || translateFrameV != 0.0f)
+	{
 		value = value + m_params.scope.MaterialSystem().ValueCombine(-translateFrameU, -translateFrameV);
+	}
 
 	// handle scale
-	auto repeatU = m_params.scope.GetValue(m_params.shaderNode.findPlug("repeatU"));
-	auto repeatV = m_params.scope.GetValue(m_params.shaderNode.findPlug("repeatV"));
-	if (repeatU != 1. || repeatV != 1.)
+	frw::Value repeatU = m_params.scope.GetValue(m_params.shaderNode.findPlug("repeatU"));
+	frw::Value repeatV = m_params.scope.GetValue(m_params.shaderNode.findPlug("repeatV"));
+	if (repeatU != 1.0f || repeatV != 1.0f)
+	{
 		value = value * m_params.scope.MaterialSystem().ValueCombine(repeatU, repeatV);
+	}
 
 	// handle offset
-	auto offsetU = m_params.scope.GetValue(m_params.shaderNode.findPlug("offsetU"));
-	auto offsetV = m_params.scope.GetValue(m_params.shaderNode.findPlug("offsetV"));
-	if (offsetU != 0. || offsetV != 0.)
+	frw::Value offsetU = m_params.scope.GetValue(m_params.shaderNode.findPlug("offsetU"));
+	frw::Value offsetV = m_params.scope.GetValue(m_params.shaderNode.findPlug("offsetV"));
+	if (offsetU != 0.0f || offsetV != 0.0f)
+	{
 		value = value + m_params.scope.MaterialSystem().ValueCombine(offsetU, offsetV);
+	}
 
 	// rotate
-	auto rotateUV = m_params.scope.GetValue(m_params.shaderNode.findPlug("rotateUV"));
-	if (rotateUV != 0.)
-		value = m_params.scope.MaterialSystem().ValueRotateXY(value - 0.5, rotateUV) + 0.5;
+	frw::Value rotateUV = m_params.scope.GetValue(m_params.shaderNode.findPlug("rotateUV"));
+	if (rotateUV != 0.0f)
+	{
+		value = m_params.scope.MaterialSystem().ValueRotateXY(value - 0.5f, rotateUV) + 0.5f;
+	}
 
-	// TODO rotation, + "frame" settings
+	frw::Value coverageU = m_params.scope.GetValue(m_params.shaderNode.findPlug("coverageU"));
+	frw::Value coverageV = m_params.scope.GetValue(m_params.shaderNode.findPlug("coverageV"));
+
+	if (coverageU != 1.0f || coverageV != 1.0f)
+	{
+		value = value / m_params.scope.MaterialSystem().ValueCombine(coverageU, coverageV);
+	}
 
 	return value;
 }

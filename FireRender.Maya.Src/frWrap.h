@@ -26,6 +26,7 @@
 #include <maya/MGlobal.h>
 #include <maya/MDistance.h>
 #include <maya/MColor.h>
+#include "FireRenderMath.h"
 
 //#define FRW_LOGGING 1
 
@@ -810,10 +811,22 @@ namespace frw
 
 		bool operator==(const Value& rhs) const
 		{
-			return type == rhs.type
-				&& (type == NODE
-					? (node == rhs.node)
-					: (x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w));
+			if (type != rhs.type)
+			{
+				return false;
+			}
+
+			if ((type == NODE) &&
+				(node == rhs.node))
+			{
+				return true;
+			}
+
+			// we should use correct float comparison method
+			return IsAlmostEqual(x, rhs.x) && 
+					IsAlmostEqual(y, rhs.y) && 
+					IsAlmostEqual(z, rhs.z) && 
+					IsAlmostEqual(w, rhs.w);
 		}
 
 		bool operator!=(const Value& rhs) const { return !(*this == rhs); }

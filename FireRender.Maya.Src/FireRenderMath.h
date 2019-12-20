@@ -71,3 +71,12 @@ inline MColor ConvertKelvinToColor(double kelvin)
 
 	return { static_cast<float>(r), static_cast<float>(g), static_cast<float>(b) };
 }
+
+// Function to check are two float point values equal or not.
+template<typename T>
+inline typename std::enable_if_t<std::is_floating_point<T>::value, bool> IsAlmostEqual(T lhs, T rhs)
+{
+	return std::abs(lhs - rhs) <=
+		std::numeric_limits<T>::epsilon() *
+		std::max(std::abs(lhs), std::abs(rhs));
+}
