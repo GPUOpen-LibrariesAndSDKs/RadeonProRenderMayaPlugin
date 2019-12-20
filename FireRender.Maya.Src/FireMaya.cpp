@@ -1049,16 +1049,6 @@ frw::Image FireMaya::Scope::CreateImageInternal(MString colorSpace,
 	return frw::Image(m->context, format, img_desc, buffer.data());
 }
 
-template <class T>
-const T& Clamp(const T& v, const T& mn, const T& mx)
-{
-	if (v < mn)
-		return mn;
-	if (mx < v)
-		return mx;
-	return v;
-}
-
 frw::Image FireMaya::Scope::GetAdjustedImage(MString texturePath,
 	int viewWidth, int viewHeight,
 	FitType imgFit, double contrast, double brightness,
