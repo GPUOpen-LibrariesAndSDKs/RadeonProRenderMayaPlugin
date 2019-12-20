@@ -4,7 +4,6 @@
 
 namespace MayaStandardNodeConverters
 {
-
 	// Forward declarations
 	class BaseConverter;
 	struct ConverterParams;
@@ -30,7 +29,8 @@ namespace MayaStandardNodeConverters
 		MultDoubleLinear = 0x444d444c,
 		MultiplyDivide = 0x524d4449,
 		PlusMinusAverage = 0x52504d41,
-		VectorProduct = 0x52564543
+		VectorProduct = 0x52564543,
+		Clamp = 0x52434c33
 	};
 
 	class NodeConverterUtil

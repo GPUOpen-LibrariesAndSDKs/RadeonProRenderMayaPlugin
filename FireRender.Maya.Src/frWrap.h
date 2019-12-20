@@ -2769,10 +2769,9 @@ namespace frw
 			return ArithmeticNode(*this, OperatorMax, a, b);
 		}
 
-		// clamp components between 0 and 1
-		Value ValueClamp(const Value& v) const
+		Value ValueClamp(const Value& v, const Value& minValue = 0.0f, const Value& maxValue = 1.0f) const
 		{
-			return ValueMin(ValueMax(v, 0.), 1.);
+			return ValueMin(ValueMax(v, minValue), maxValue);
 		}
 
 		Shader ShaderBlend(const Shader& a, const Shader& b, const Value& t) const;
