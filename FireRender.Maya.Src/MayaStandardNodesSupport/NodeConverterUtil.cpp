@@ -18,6 +18,7 @@
 #include "RampNodeConverter.h"
 #include "GammaCorrectConverter.h"
 #include "RemapHSVConverter.h"
+#include "ClampConverter.h"
 
 frw::Value MayaStandardNodeConverters::NodeConverterUtil::Convert(const ConverterParams& params, const MayaValueId mayaNodeId)
 {
@@ -66,6 +67,8 @@ std::unique_ptr<MayaStandardNodeConverters::BaseConverter> MayaStandardNodeConve
 		case MayaValueId::Ramp:				return std::make_unique<RampNodeConverter>(params);
 		case MayaValueId::GammaCorrect:		return std::make_unique<GammaCorrectConverter>(params);
 		case MayaValueId::RemapHSV:			return std::make_unique<RemapHSVConverter>(params);
+		case MayaValueId::Clamp:			return std::make_unique<ClampConverter>(params);
+
 		default: return nullptr;
 	}
 }

@@ -628,6 +628,26 @@
 		AD18136C22E6A0F800BB2B78 /* RprAthena.h in Headers */ = {isa = PBXBuildFile; fileRef = AD18136222E6A0F800BB2B78 /* RprAthena.h */; };
 		AD18136D22E6A0F800BB2B78 /* RprAthena.h in Headers */ = {isa = PBXBuildFile; fileRef = AD18136222E6A0F800BB2B78 /* RprAthena.h */; };
 		AD18136E22E6A0F800BB2B78 /* RprAthena.h in Headers */ = {isa = PBXBuildFile; fileRef = AD18136222E6A0F800BB2B78 /* RprAthena.h */; };
+		B7230A5F23ACD82900E51BD1 /* BlendTwoAttrConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2CD23A912AF009FC79C /* BlendTwoAttrConverter.cpp */; };
+		B7230A6023ACD82900E51BD1 /* BlendTwoAttrConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2CE23A912AF009FC79C /* BlendTwoAttrConverter.h */; };
+		B7230A6123ACD82900E51BD1 /* ClampConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2D023A912AF009FC79C /* ClampConverter.cpp */; };
+		B7230A6223ACD82900E51BD1 /* ClampConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2D123A912AF009FC79C /* ClampConverter.h */; };
+		B7230A6323ACD82900E51BD1 /* ColorMathConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2CC23A912AF009FC79C /* ColorMathConverter.cpp */; };
+		B7230A6423ACD82900E51BD1 /* ColorMathConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2CF23A912AF009FC79C /* ColorMathConverter.h */; };
+		B7230A6523ACD82900E51BD1 /* HSVToRGBConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2C923A912AF009FC79C /* HSVToRGBConverter.cpp */; };
+		B7230A6623ACD82900E51BD1 /* HSVToRGBConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2CA23A912AF009FC79C /* HSVToRGBConverter.h */; };
+		B7230A6723ACD82900E51BD1 /* RGBToHSVConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2CB23A912AF009FC79C /* RGBToHSVConverter.cpp */; };
+		B7230A6823ACD82900E51BD1 /* RGBToHSVConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2D223A912AF009FC79C /* RGBToHSVConverter.h */; };
+		B7230A6A23ACD82A00E51BD1 /* BlendTwoAttrConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2CD23A912AF009FC79C /* BlendTwoAttrConverter.cpp */; };
+		B7230A6B23ACD82A00E51BD1 /* BlendTwoAttrConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2CE23A912AF009FC79C /* BlendTwoAttrConverter.h */; };
+		B7230A6C23ACD82A00E51BD1 /* ClampConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2D023A912AF009FC79C /* ClampConverter.cpp */; };
+		B7230A6D23ACD82A00E51BD1 /* ClampConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2D123A912AF009FC79C /* ClampConverter.h */; };
+		B7230A6E23ACD82A00E51BD1 /* ColorMathConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2CC23A912AF009FC79C /* ColorMathConverter.cpp */; };
+		B7230A6F23ACD82A00E51BD1 /* ColorMathConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2CF23A912AF009FC79C /* ColorMathConverter.h */; };
+		B7230A7023ACD82A00E51BD1 /* HSVToRGBConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2C923A912AF009FC79C /* HSVToRGBConverter.cpp */; };
+		B7230A7123ACD82A00E51BD1 /* HSVToRGBConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2CA23A912AF009FC79C /* HSVToRGBConverter.h */; };
+		B7230A7223ACD82A00E51BD1 /* RGBToHSVConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2CB23A912AF009FC79C /* RGBToHSVConverter.cpp */; };
+		B7230A7323ACD82A00E51BD1 /* RGBToHSVConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2D223A912AF009FC79C /* RGBToHSVConverter.h */; };
 		B72F81D0239F813F00C2BFB3 /* VectorProductConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B72F81B1239F813C00C2BFB3 /* VectorProductConverter.h */; };
 		B72F81D1239F813F00C2BFB3 /* VectorProductConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B72F81B1239F813C00C2BFB3 /* VectorProductConverter.h */; };
 		B72F81D2239F813F00C2BFB3 /* VectorProductConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B72F81B1239F813C00C2BFB3 /* VectorProductConverter.h */; };
@@ -1866,6 +1886,7 @@
 				8D8CA4B720BC729D00A90237 /* PhysicalLightData.h in Headers */,
 				8D595D8D20372FE20031988A /* SkyBuilder.h in Headers */,
 				8D595D8E20372FE20031988A /* base_mesh.h in Headers */,
+				B7230A6023ACD82900E51BD1 /* BlendTwoAttrConverter.h in Headers */,
 				8D595D9020372FE20031988A /* FireRenderBlendMaterial.h in Headers */,
 				8D595D9120372FE20031988A /* FireRenderImportCmd.h in Headers */,
 				8D595D9220372FE20031988A /* FireRenderCmd.h in Headers */,
@@ -1874,6 +1895,7 @@
 				8D595D9420372FE20031988A /* FireMaterialViewRenderer.h in Headers */,
 				B72F821F239F813F00C2BFB3 /* BaseConverter.h in Headers */,
 				8D595D9520372FE20031988A /* ArHosekSkyModelData_RGB.h in Headers */,
+				B7230A6223ACD82900E51BD1 /* ClampConverter.h in Headers */,
 				8D595D9620372FE20031988A /* FireRenderBump.h in Headers */,
 				8D595D9720372FE20031988A /* FireRenderChecker.h in Headers */,
 				8D595D9820372FE20031988A /* MaterialLoader.h in Headers */,
@@ -1918,7 +1940,9 @@
 				8D595DB320372FE20031988A /* IESLightRepresentationCalc.h in Headers */,
 				8D595DB420372FE20031988A /* FireRenderPBRMaterial.h in Headers */,
 				B7D1F0172367616000BB07CE /* InstancerMASH.h in Headers */,
+				B7230A6623ACD82900E51BD1 /* HSVToRGBConverter.h in Headers */,
 				8D595DB520372FE20031988A /* FireRenderMath.h in Headers */,
+				B7230A6823ACD82900E51BD1 /* RGBToHSVConverter.h in Headers */,
 				8D595DB620372FE20031988A /* SkyGen.h in Headers */,
 				8D595DB720372FE20031988A /* resource.h in Headers */,
 				8D595DB820372FE20031988A /* FireRenderMaterial.h in Headers */,
@@ -1946,6 +1970,7 @@
 				8D595DC620372FE20031988A /* FireRenderLocationCmd.h in Headers */,
 				B72F8204239F813F00C2BFB3 /* AddDoubleLinearConverter.h in Headers */,
 				8D595DC720372FE20031988A /* GLTFTranslator.h in Headers */,
+				B7230A6423ACD82900E51BD1 /* ColorMathConverter.h in Headers */,
 				8D595DC820372FE20031988A /* FireRenderBlendValue.h in Headers */,
 				8D595DC920372FE20031988A /* ArHosekSkyModelData_Spectral.h in Headers */,
 				8D595DCA20372FE20031988A /* ShadersManager.h in Headers */,
@@ -2007,6 +2032,7 @@
 				8DBCC2A422304666003EE361 /* PhysicalLightData.h in Headers */,
 				8DBCC2A522304666003EE361 /* SkyBuilder.h in Headers */,
 				8DBCC2A622304666003EE361 /* base_mesh.h in Headers */,
+				B7230A6B23ACD82A00E51BD1 /* BlendTwoAttrConverter.h in Headers */,
 				8DBCC2A722304666003EE361 /* FireRenderBlendMaterial.h in Headers */,
 				8DBCC2A822304666003EE361 /* FireRenderImportCmd.h in Headers */,
 				8DBCC2A922304666003EE361 /* FireRenderCmd.h in Headers */,
@@ -2015,6 +2041,7 @@
 				8DBCC2AB22304666003EE361 /* FireMaterialViewRenderer.h in Headers */,
 				B72F8220239F813F00C2BFB3 /* BaseConverter.h in Headers */,
 				8DBCC2AC22304666003EE361 /* ArHosekSkyModelData_RGB.h in Headers */,
+				B7230A6D23ACD82A00E51BD1 /* ClampConverter.h in Headers */,
 				8DBCC2AD22304666003EE361 /* FireRenderBump.h in Headers */,
 				8DBCC2AE22304666003EE361 /* FireRenderChecker.h in Headers */,
 				8DBCC2AF22304666003EE361 /* MaterialLoader.h in Headers */,
@@ -2059,7 +2086,9 @@
 				8DBCC2C922304666003EE361 /* IESLightRepresentationCalc.h in Headers */,
 				8DBCC2CA22304666003EE361 /* FireRenderPBRMaterial.h in Headers */,
 				B7D1F0182367616000BB07CE /* InstancerMASH.h in Headers */,
+				B7230A7123ACD82A00E51BD1 /* HSVToRGBConverter.h in Headers */,
 				8DBCC2CB22304666003EE361 /* FireRenderMath.h in Headers */,
+				B7230A7323ACD82A00E51BD1 /* RGBToHSVConverter.h in Headers */,
 				8DBCC2CC22304666003EE361 /* SkyGen.h in Headers */,
 				8DBCC2CD22304666003EE361 /* resource.h in Headers */,
 				8DBCC2CE22304666003EE361 /* FireRenderMaterial.h in Headers */,
@@ -2087,6 +2116,7 @@
 				8DBCC2DC22304666003EE361 /* FireRenderLocationCmd.h in Headers */,
 				B72F8205239F813F00C2BFB3 /* AddDoubleLinearConverter.h in Headers */,
 				8DBCC2DD22304666003EE361 /* GLTFTranslator.h in Headers */,
+				B7230A6F23ACD82A00E51BD1 /* ColorMathConverter.h in Headers */,
 				8DBCC2DE22304666003EE361 /* FireRenderBlendValue.h in Headers */,
 				8DBCC2DF22304666003EE361 /* ArHosekSkyModelData_Spectral.h in Headers */,
 				8DBCC2E022304666003EE361 /* ShadersManager.h in Headers */,
@@ -2378,6 +2408,7 @@
 				8DB9AEAD2256531600543147 /* FireRenderVolumeLocator.cpp in Sources */,
 				8DB9AEAC2256531100543147 /* FireRenderVolumeOverride.cpp in Sources */,
 				8DB9AEAB2256530A00543147 /* VolumeAttributes.cpp in Sources */,
+				B7230A6523ACD82900E51BD1 /* HSVToRGBConverter.cpp in Sources */,
 				B7D1F01A2367616000BB07CE /* FireRenderMeshMASH.cpp in Sources */,
 				8D9116A02225850B0083881D /* XMLMaterialExportCommon.cpp in Sources */,
 				8D28372F2199D7480004852B /* OptionVarHelpers.cpp in Sources */,
@@ -2395,6 +2426,7 @@
 				8D8CA4B820BC72AA00A90237 /* PhysicalLightData.cpp in Sources */,
 				B7EC453A23743C9C001E49F7 /* HybridContext.cpp in Sources */,
 				8DB6234820755B4400841D10 /* FireRenderIESLight.cpp in Sources */,
+				B7230A5F23ACD82900E51BD1 /* BlendTwoAttrConverter.cpp in Sources */,
 				8DB6234220755B2800841D10 /* FireRenderPhysicalLightLocator.cpp in Sources */,
 				8DB6234320755B2800841D10 /* FireRenderPhysicalOverride.cpp in Sources */,
 				8DB6234420755B2800841D10 /* PhysicalLightAttributes.cpp in Sources */,
@@ -2404,6 +2436,7 @@
 				CEED8EC9227346E900136DEF /* FireRenderVolume.cpp in Sources */,
 				B7EDEA72237C2A02003060F1 /* athenaSystemInfo.m in Sources */,
 				8DB6234620755B2800841D10 /* IESLightLocatorMesh.cpp in Sources */,
+				B7230A6323ACD82900E51BD1 /* ColorMathConverter.cpp in Sources */,
 				B7701DE1235DE0380072482F /* StartupContextChecker.cpp in Sources */,
 				8DB6234720755B2800841D10 /* RprTools.cpp in Sources */,
 				B7EC453223743C93001E49F7 /* TahoeContext.cpp in Sources */,
@@ -2441,6 +2474,7 @@
 				8D595DFF20372FE20031988A /* SkyLocatorMesh.cpp in Sources */,
 				8D595E0020372FE20031988A /* RenderProgressBars.cpp in Sources */,
 				8D595E0120372FE20031988A /* SkyBuilder.cpp in Sources */,
+				B7230A6723ACD82900E51BD1 /* RGBToHSVConverter.cpp in Sources */,
 				8D595E0220372FE20031988A /* FireRenderAOVs.cpp in Sources */,
 				8D595E0320372FE20031988A /* FireRenderArithmetic.cpp in Sources */,
 				8D595E0420372FE20031988A /* FireRenderImageComparing.cpp in Sources */,
@@ -2459,6 +2493,7 @@
 				B773D2B023A36DB8009FC79C /* RemapHSVConverter.cpp in Sources */,
 				B72F81FE239F813F00C2BFB3 /* NodeConverterUtil.cpp in Sources */,
 				8D595E1120372FE20031988A /* FireRenderConvertVRayCmd.cpp in Sources */,
+				B7230A6123ACD82900E51BD1 /* ClampConverter.cpp in Sources */,
 				8D595E1220372FE20031988A /* VRay.cpp in Sources */,
 				B7EC453823743C9C001E49F7 /* FireRenderContext.cpp in Sources */,
 				B72F81F2239F813F00C2BFB3 /* VectorProductConverter.cpp in Sources */,
@@ -2516,6 +2551,7 @@
 				8DB9AEB02256533300543147 /* FireRenderVolumeLocator.cpp in Sources */,
 				8DB9AEAF2256532D00543147 /* FireRenderVolumeOverride.cpp in Sources */,
 				8DB9AEAE2256532500543147 /* VolumeAttributes.cpp in Sources */,
+				B7230A7023ACD82A00E51BD1 /* HSVToRGBConverter.cpp in Sources */,
 				B7D1F01B2367616000BB07CE /* FireRenderMeshMASH.cpp in Sources */,
 				8DBCC2FD22304666003EE361 /* XMLMaterialExportCommon.cpp in Sources */,
 				8DBCC2FE22304666003EE361 /* OptionVarHelpers.cpp in Sources */,
@@ -2533,6 +2569,7 @@
 				8DBCC30522304666003EE361 /* PhysicalLightData.cpp in Sources */,
 				B7EC453F23743C9D001E49F7 /* HybridContext.cpp in Sources */,
 				8DBCC30622304666003EE361 /* FireRenderIESLight.cpp in Sources */,
+				B7230A6A23ACD82A00E51BD1 /* BlendTwoAttrConverter.cpp in Sources */,
 				8DBCC30722304666003EE361 /* FireRenderPhysicalLightLocator.cpp in Sources */,
 				8DBCC30822304666003EE361 /* FireRenderPhysicalOverride.cpp in Sources */,
 				8DBCC30922304666003EE361 /* PhysicalLightAttributes.cpp in Sources */,
@@ -2542,6 +2579,7 @@
 				CEED8ECA227346E900136DEF /* FireRenderVolume.cpp in Sources */,
 				B7EDEA73237C2A02003060F1 /* athenaSystemInfo.m in Sources */,
 				8DBCC30B22304666003EE361 /* IESLightLocatorMesh.cpp in Sources */,
+				B7230A6E23ACD82A00E51BD1 /* ColorMathConverter.cpp in Sources */,
 				B7701DE2235DE0380072482F /* StartupContextChecker.cpp in Sources */,
 				8DBCC30C22304666003EE361 /* RprTools.cpp in Sources */,
 				B7EC453323743C94001E49F7 /* TahoeContext.cpp in Sources */,
@@ -2579,6 +2617,7 @@
 				8DBCC32322304666003EE361 /* SkyLocatorMesh.cpp in Sources */,
 				8DBCC32422304666003EE361 /* RenderProgressBars.cpp in Sources */,
 				8DBCC32522304666003EE361 /* SkyBuilder.cpp in Sources */,
+				B7230A7223ACD82A00E51BD1 /* RGBToHSVConverter.cpp in Sources */,
 				8DBCC32622304666003EE361 /* FireRenderAOVs.cpp in Sources */,
 				8DBCC32722304666003EE361 /* FireRenderArithmetic.cpp in Sources */,
 				8DBCC32822304666003EE361 /* FireRenderImageComparing.cpp in Sources */,
@@ -2597,6 +2636,7 @@
 				B773D2B123A36DB8009FC79C /* RemapHSVConverter.cpp in Sources */,
 				B72F81FF239F813F00C2BFB3 /* NodeConverterUtil.cpp in Sources */,
 				8DBCC33422304666003EE361 /* FireRenderConvertVRayCmd.cpp in Sources */,
+				B7230A6C23ACD82A00E51BD1 /* ClampConverter.cpp in Sources */,
 				8DBCC33522304666003EE361 /* VRay.cpp in Sources */,
 				B7EC453D23743C9D001E49F7 /* FireRenderContext.cpp in Sources */,
 				B72F81F3239F813F00C2BFB3 /* VectorProductConverter.cpp in Sources */,
