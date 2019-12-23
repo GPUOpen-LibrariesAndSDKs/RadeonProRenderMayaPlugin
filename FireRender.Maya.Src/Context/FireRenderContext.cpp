@@ -25,6 +25,8 @@
 #include "ImageFilter/ImageFilter.h"
 
 #include "RprComposite.h"
+#include <iostream>
+#include <fstream>
 
 #include "FireRenderThread.h"
 #include "FireRenderMaterialSwatchRender.h"
@@ -273,6 +275,16 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 	}
 
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags(m_RenderType);
+
+#ifdef DBG_LOG_RENDER_TYPE
+	{
+		std::ofstream loggingFile;
+		loggingFile.open("C:\\temp\\dbg\\render_flags_log.txt", std::ofstream::out | std::ofstream::app);
+		loggingFile << "m_RenderType = " << (int)m_RenderType << "\n";
+		loggingFile << "createFlags = " << createFlags << "\n\n";
+		loggingFile.close();
+	}
+#endif
 
 	{
 		LOCKMUTEX(this);
