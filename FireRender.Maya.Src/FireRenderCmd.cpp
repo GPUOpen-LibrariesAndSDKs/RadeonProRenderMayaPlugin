@@ -356,6 +356,7 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		aovs.applyToContext(context);
 
 		// Initialize the scene.
+		context.SetRenderType(RenderType::ProductionRender);
 		context.buildScene();
 		context.updateLimitsFromGlobalData(globals, false, true);
 		context.setResolution(settings.width, settings.height, true);
@@ -372,6 +373,13 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		RenderRegion region(0, settings.width - 1, settings.height - 1, 0);
 		aovs.setRegion(region, settings.width, settings.height);
 		aovs.allocatePixels();
+
+		// Setup render stamp
+		if (globals.useRenderStamp)
+		{
+			MString renderStamp = globals.renderStampText;
+			aovs.setRenderStamp(renderStamp);
+		}
 
 		// Get the list of cameras to render frames for.
 		MDagPathArray renderableCameras = getRenderableCameras();

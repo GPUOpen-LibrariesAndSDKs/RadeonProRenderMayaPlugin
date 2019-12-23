@@ -11,6 +11,7 @@ source "SystemTab.mel";
 source "RenderSamplingTab.mel";
 source "RenderQualityTab.mel";
 source "RenderEffectsTab.mel";
+source "rprCmdRenderUtils.mel";
 
 // Override Maya's default implementation for setting up render
 // settings tabs. This is required because Maya does not automatically
