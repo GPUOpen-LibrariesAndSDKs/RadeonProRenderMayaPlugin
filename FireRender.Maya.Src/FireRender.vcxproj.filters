@@ -653,6 +653,9 @@
     <ClCompile Include="MayaStandardNodesSupport\RGBToHSVConverter.cpp">
       <Filter>MayaStandardNodesSupport</Filter>
     </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\ProjectionNodeConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -1145,6 +1148,9 @@
       <Filter>MayaStandardNodesSupport</Filter>
     </ClInclude>
     <ClInclude Include="MayaStandardNodesSupport\RGBToHSVConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\ProjectionNodeConverter.h">
       <Filter>MayaStandardNodesSupport</Filter>
     </ClInclude>
   </ItemGroup>

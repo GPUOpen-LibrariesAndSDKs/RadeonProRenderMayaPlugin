@@ -142,6 +142,8 @@ namespace frw
 		ValueTypeFresnelSchlick = RPR_MATERIAL_NODE_FRESNEL_SCHLICK,
 		ValueTypePassthrough = RPR_MATERIAL_NODE_PASSTHROUGH, // legacy, substituted with flat color shader
         ValueTypeAOMap = RPR_MATERIAL_NODE_AO_MAP,
+		ValueTypeUVProcedural = RPR_MATERIAL_NODE_UV_PROCEDURAL,
+		ValueTypeUVTriplanar = RPR_MATERIAL_NODE_UV_TRIPLANAR
 	};
 
 	enum ShaderType
@@ -317,6 +319,13 @@ namespace frw
 
 		NodeInputFresnelSchlikApproximation = RPR_UBER_MATERIAL_INPUT_FRESNEL_SCHLICK_APPROXIMATION,
 #endif
+
+		NodeInputUVType = RPR_MATERIAL_INPUT_UV_TYPE,
+		NodeInputOffsset = RPR_MATERIAL_INPUT_OFFSET,
+		NodeInputZAxis = RPR_MATERIAL_INPUT_ZAXIS,
+		NodeInputXAxis = RPR_MATERIAL_INPUT_XAXIS,
+		NodeInputOrigin = RPR_MATERIAL_INPUT_ORIGIN,
+		NodeInputThreshold = RPR_MATERIAL_INPUT_THRESHOLD
 	};
 	enum NodeInputInfo
 	{
@@ -394,6 +403,14 @@ namespace frw
 	enum Constant
 	{
 		MaximumSubdividedFacecount = 100000,
+	};
+
+	enum class UVTypeValue
+	{
+		Planar = RPR_MATERIAL_NODE_UVTYPE_PLANAR,
+		Cylindrical = RPR_MATERIAL_NODE_UVTYPE_CYLINDICAL,
+		Spherical = RPR_MATERIAL_NODE_UVTYPE_SPHERICAL,
+		Project = RPR_MATERIAL_NODE_UVTYPE_PROJECT
 	};
 
 	class Matrix
@@ -664,7 +681,10 @@ namespace frw
 		Node(const MaterialSystem& ms, int type, bool destroyOnDelete = true, Data* data = nullptr);	// not typesafe
 
 		bool SetValue(const char* key, const Value& v);
+		bool SetValue(rpr_material_node_input key, const Value& v);
+
 		bool SetValueInt(const char* key, int);
+		bool SetValueInt(rpr_material_node_input key, rpr_uint value);
 
 		MaterialSystem GetMaterialSystem() const;
 
@@ -3360,6 +3380,40 @@ namespace frw
 		void SetColor(Value value) { SetValue("color", value); }
 	};
 
+	class BaseUVNode : public ValueNode
+	{
+	public:
+		BaseUVNode(const MaterialSystem& h, ValueType nodeType) : ValueNode(h, nodeType)
+		{
+		}
+
+		virtual void SetOrigin(const frw::Value& value) = 0;
+		void SetInputZAxis(const frw::Value& value);
+		void SetInputXAxis(const frw::Value& value);
+		void SetInputUVScale(const frw::Value& value);
+	};
+
+	class UVProceduralNode : public BaseUVNode
+	{
+	public:
+		UVProceduralNode(const MaterialSystem& h, UVTypeValue type) : BaseUVNode(h, ValueTypeUVProcedural)
+		{
+			SetValueInt(NodeInputUVType, static_cast<int>(type));
+		}
+
+		virtual void SetOrigin(const frw::Value& value) override;
+	};
+
+	class UVTriplanarNode : public BaseUVNode
+	{
+	public:
+		class UVTriplanarNode(const MaterialSystem& h) : BaseUVNode(h, ValueTypeUVTriplanar)
+		{
+		}
+
+		virtual void SetOrigin(const frw::Value& value) override;
+	};
+
 	// inline definitions
 	static int allocatedObjects = 0;
 
@@ -3460,9 +3514,32 @@ namespace frw
 		return false;
 	}
 
+	inline bool Node::SetValue(rpr_material_node_input key, const Value& v)
+	{
+		switch (v.type)
+		{
+			case Value::FLOAT:
+				return RPR_SUCCESS == rprMaterialNodeSetInputFByKey(Handle(), key, v.x, v.y, v.z, v.w);
+			case Value::NODE:
+			{
+				if (!v.node)	// in theory we should now allow this, as setting a NULL input is legal (as of FRSDK 1.87)
+					return false;
+				AddReference(v.node);
+				return RPR_SUCCESS == rprMaterialNodeSetInputNByKey(Handle(), key, v.node.Handle());	// should be ok to set null here now
+			}
+		}
+		assert(!"bad type");
+		return false;
+	}
+
 	inline bool Node::SetValueInt(const char* key, int v)
 	{
 		return RPR_SUCCESS == rprMaterialNodeSetInputU(Handle(), key, v);
+	}
+
+	inline bool Node::SetValueInt(rpr_material_node_input key, rpr_uint value)
+	{
+		return RPR_SUCCESS == rprMaterialNodeSetInputUByKey(Handle(), key, value);
 	}
 
 	inline MaterialSystem Node::GetMaterialSystem() const
