@@ -1,10 +1,47 @@
+global proc FinalRender_onTileRenderChanged()
+{
+    $enabled = `getAttr RadeonProRenderGlobals.tileRenderEnabled`;
+
+    attrControlGrp -e -en $enabled tileRenderX;
+    attrControlGrp -e -en $enabled tileRenderY;
+}
+
+
 global proc createRenderSamplingTab()
 {
     setUITemplate -pushTemplate attributeEditorTemplate;
 
     string $parentForm = `setParent -query`;
+
+
     scrollLayout -w 375 -horizontalScrollBarThickness 0 RenderSamplingScrollLayout;
     columnLayout -w 375 -adjustableColumn true RenderSamplingTabColumn;
+
+
+    frameLayout -label "Tile Rendering" -cll true -cl 0 RenderSamplingTileRendering;
+    columnLayout -cat left 20;
+
+    attrControlGrp
+    	-label "Tile Render Enabled"
+		-attribute "RadeonProRenderGlobals.tileRenderEnabled"
+        -cc FinalRender_onTileRenderChanged
+        tileRenderEnabled
+	;  
+
+    attrControlGrp
+    	-label "Tile X"
+		-attribute "RadeonProRenderGlobals.tileRenderX"
+        tileRenderX
+	;
+
+    attrControlGrp
+    	-label "Tile Y"
+		-attribute "RadeonProRenderGlobals.tileRenderY"
+        tileRenderY
+	;
+
+    setParent ..;
+    setParent ..;
 
     frameLayout -label "Anti-Aliasing" -cll true -cl 0 RenderSamplingAASettings;
     columnLayout -cat left 20;
@@ -22,21 +59,24 @@ global proc createRenderSamplingTab()
     setParent ..;
     setParent ..;
 
-    frameLayout -label "Adaptive Sampling" -cll true -cl 0 AdaptiveSamplingCCSettings;
+
+    frameLayout -label "Final Render Adaptive Sampling" -cll true -cl 0 FinalRenderAdaptiveSamplingCCSettings;
 	attrControlGrp
 		-label "Threshold"
 		-attribute "RadeonProRenderGlobals.adaptiveThreshold" adaptiveThreshold;
-    setParent ..;	
 
-    frameLayout -label "Final Render Completion Criteria" -cll true -cl 0 RenderSamplingCCSettings;
+    setParent ..;
+
+
+    frameLayout -label "Final Render Sampling" -cll true -cl 0 RenderSamplingCCSettings;
     columnLayout -cat left 20;
 
 	attrControlGrp
-		-label "Max Iterations"
+		-label "Max Samples"
 		-attribute "RadeonProRenderGlobals.completionCriteriaIterations" completionCriteriaMaxIterations;
 
 	attrControlGrp
-		-label "Min Iterations"
+		-label "Min Samples"
 		-attribute "RadeonProRenderGlobals.completionCriteriaMinIterations" completionCriteriaMinIterations;
 
 	attrControlGrp
@@ -55,13 +95,25 @@ global proc createRenderSamplingTab()
     setParent ..;
     setParent ..;
 
+    frameLayout -label "Viewport Adaptive Sampling" -cll true -cl 0 ViewportAdaptiveSamplingCCSettings;
+	attrControlGrp
+		-label "Threshold"
+		-attribute "RadeonProRenderGlobals.adaptiveThresholdViewport" adaptiveThreshold;
+
+    setParent ..;
+
+
 	//viewport compeltion criteria
-    frameLayout -label "Viewport Completion Criteria" -cll true -cl 0 ViewportRenderCCSettings;
+    frameLayout -label "Viewport Sampling" -cll true -cl 0 ViewportRenderCCSettings;
     columnLayout -cat left 20;
 
 	attrControlGrp
-		-label "Max Iterations"
+		-label "Max Samples"
 		-attribute "RadeonProRenderGlobals.completionCriteriaIterationsViewport" viewportCompletionCriteriaMaxIterations;
+
+	attrControlGrp
+		-label "Min Samples"
+		-attribute "RadeonProRenderGlobals.completionCriteriaMinIterationsViewport" viewportCompletionCriteriaMinIterations;
 
 	attrControlGrp
 		-label "Max Time Hours"
@@ -81,6 +133,8 @@ global proc createRenderSamplingTab()
 
     setParent ..;
     setParent ..;
+
+    FinalRender_onTileRenderChanged();
 
     formLayout
 		-edit

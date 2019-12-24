@@ -47,13 +47,13 @@ void* FireMaya::Lookup::creator()
 	return new Lookup;
 }
 
-frw::Value FireMaya::Lookup::GetValue(Scope& scope)
+frw::Value FireMaya::Lookup::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 
 	auto type = frw::LookupTypeUV0;
 
-	MPlug plug = shaderNode.findPlug(Attribute::type);
+	MPlug plug = shaderNode.findPlug(Attribute::type, false);
 	if (!plug.isNull())
 	{
 		type = static_cast<frw::LookupType>(plug.asInt());

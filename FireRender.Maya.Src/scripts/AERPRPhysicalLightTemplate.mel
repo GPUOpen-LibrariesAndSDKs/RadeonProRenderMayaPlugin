@@ -10,12 +10,12 @@ global proc AERPRPhysicalLightTemplate( string $nodeName )
 		editorTemplate -endLayout;
 
 		editorTemplate -beginLayout "Intensity" -collapse 0 plIntensitySection;
-			editorTemplate -addControl "lightIntensity";
+			editorTemplate -label "Light Intensity" -addControl "intensity";
 			//editorTemplate -addControl "intensityUnits" onIntensityUnitsChanged;
 			editorTemplate -callCustom "intensityUnitsNew" "intensityUnitsReplace" "intensityUnits";
 			editorTemplate -addControl "luminousEfficacy";
 			editorTemplate -addControl "colorMode" onColorModeChanged;
-			editorTemplate -addControl "colorPicker";
+			editorTemplate -label "Color Picker" -addControl "color";
 			editorTemplate -addControl "temperature" onTemperatureChanged;
 			editorTemplate -label " " -addControl "temperatureColor";
 		editorTemplate -endLayout;

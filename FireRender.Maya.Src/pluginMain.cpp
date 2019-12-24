@@ -565,7 +565,7 @@ MStatus initializePlugin(MObject obj)
 		MPxNode::kLocatorNode, &iblClassification));
 
 	CHECK_MSTATUS(MHWRender::MDrawRegistry::registerGeometryOverrideCreator(
-		FireRenderIBL::drawDbClassification,
+		FireRenderIBL::drawDbGeomClassification,
 		FireRenderIBL::drawRegistrantId,
 		FireRenderIBLOverride::Creator));
 
@@ -574,7 +574,7 @@ MStatus initializePlugin(MObject obj)
 		MPxNode::kLocatorNode, &skyClassification));
 
 	CHECK_MSTATUS(MHWRender::MDrawRegistry::registerGeometryOverrideCreator(
-		FireRenderSkyLocator::drawDbClassification,
+		FireRenderSkyLocator::drawDbGeomClassification,
 		FireRenderSkyLocator::drawRegistrantId,
 		FireRenderSkyLocatorOverride::Creator));
 
@@ -583,7 +583,7 @@ MStatus initializePlugin(MObject obj)
 		MPxNode::kLocatorNode, &iesClassification));
 
 	CHECK_MSTATUS(MHWRender::MDrawRegistry::registerGeometryOverrideCreator(
-		FireRenderIESLightLocator::drawDbClassification,
+		FireRenderIESLightLocator::drawDbGeomClassification,
 		FireRenderIESLightLocator::drawRegistrantId,
 		FireRenderIESLightLocatorOverride::Creator));
 
@@ -592,7 +592,7 @@ MStatus initializePlugin(MObject obj)
 		MPxNode::kLocatorNode, &physicalClassification));
 
 	CHECK_MSTATUS(MHWRender::MDrawRegistry::registerGeometryOverrideCreator(
-		FireRenderPhysicalLightLocator::drawDbClassification,
+		FireRenderPhysicalLightLocator::drawDbGeomClassification,
 		FireRenderPhysicalLightLocator::drawRegistrantId,
 		FireRenderPhysicalOverride::Creator));
 

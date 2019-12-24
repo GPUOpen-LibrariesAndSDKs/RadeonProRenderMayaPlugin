@@ -55,6 +55,7 @@
 FireRenderGlobalsData::FireRenderGlobalsData() :
 	adaptiveTileSize(1),
 	adaptiveThreshold(0.0f),
+	adaptiveThresholdViewport(0.0f),
 	textureCompression(false),
 	giClampIrradiance(true),
 	giClampIrradianceValue(1.0),
@@ -184,6 +185,10 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("adaptiveThreshold");
 		if (!plug.isNull())
 			adaptiveThreshold = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("adaptiveThresholdViewport");
+		if (!plug.isNull())
+			adaptiveThresholdViewport = plug.asFloat();
 
 		plug = frGlobalsNode.findPlug("textureCompression");
 		if (!plug.isNull())

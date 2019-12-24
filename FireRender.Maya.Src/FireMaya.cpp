@@ -4,6 +4,7 @@
 #include "FireRenderThread.h"
 #include "VRay.h"
 #include "Context/FireRenderContext.h"
+#include "MayaStandardNodesSupport/NodeConverterUtil.h"
 
 #include <maya/MImage.h>
 #include <maya/MPlugArray.h>
@@ -864,7 +865,7 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 	return retImage;
 }
 
-frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, const MString& ownerNodeName)
+frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, const MString& ownerNodeName) const
 {
 	if (texturePath.length() == 0)
 	{
@@ -907,7 +908,7 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 	return retImage;
 }
 
-frw::Image FireMaya::Scope::LoadImageUsingMTexture(MString texturePath, MString colorSpace, const MString& ownerNodeName)
+frw::Image FireMaya::Scope::LoadImageUsingMTexture(MString texturePath, MString colorSpace, const MString& ownerNodeName) const
 {
 	frw::Image img;
 
@@ -984,7 +985,7 @@ frw::Image FireMaya::Scope::CreateImageInternal(MString colorSpace,
 												unsigned int channels,
 												unsigned int componentSize,
 												unsigned int rowPitch,
-												bool flipY)
+												bool flipY) const
 {
 	int srcRowPitch = rowPitch;// desc.fBytesPerRow;
 
@@ -1046,16 +1047,6 @@ frw::Image FireMaya::Scope::CreateImageInternal(MString colorSpace,
 
 	convertColorSpace(colorSpace, format, img_desc, buffer);
 	return frw::Image(m->context, format, img_desc, buffer.data());
-}
-
-template <class T>
-const T& Clamp(const T& v, const T& mn, const T& mx)
-{
-	if (v < mn)
-		return mn;
-	if (mx < v)
-		return mx;
-	return v;
 }
 
 frw::Image FireMaya::Scope::GetAdjustedImage(MString texturePath,
@@ -1301,287 +1292,33 @@ frw::Image FireMaya::Scope::GetAdjustedImage(MString texturePath,
 		});
 	}
 
-
-frw::Value FireMaya::Scope::convertMayaAddDoubleLinear(const MFnDependencyNode &node)
-{
-	auto input1 = GetValueWithCheck(node, "input1");
-	auto input2 = GetValueWithCheck(node, "input2");
-	return m->materialSystem.ValueAdd(input1, input2);
-}
-
-
-frw::Value FireMaya::Scope::convertMayaBlendColors(const MFnDependencyNode &node)
-{
-	auto color1 = GetValueWithCheck(node, "color1");
-	auto color2 = GetValueWithCheck(node, "color2");
-	auto blender = GetValueWithCheck(node, "blender");
-
-	return m->materialSystem.ValueBlend(color1, color2, blender);
-}
-
-
-double calcContrast(double value, double bias, double contrast)
-{
-	double res = 0;
-	double factor = 1.0;
-	bool inv = value > bias;
-
-	if (inv)
-	{
-		factor = bias / 0.25 * 0.5;
-		value = 1 - value;
-		bias = 1 - bias;
-	}
-
-	res = pow(bias * pow((value / bias), contrast * factor), log(0.5) / log(bias));
-	return inv ? 1 - res : res;
-}
-
-frw::Value FireMaya::Scope::convertMayaContrast(const MFnDependencyNode &node)
-{
-	auto value = GetValueWithCheck(node, "value");
-	auto bias = GetValueWithCheck(node, "bias");
-	auto contrast = GetValueWithCheck(node, "contrast");
-
-	// renderPassMode
-
-	auto x = calcContrast(value.GetX(), bias.GetX(), contrast.GetX());
-	auto y = calcContrast(value.GetY(), bias.GetY(), contrast.GetY());
-	auto z = calcContrast(value.GetZ(), bias.GetZ(), contrast.GetZ());
-
-	return frw::Value(x, y, z);
-}
-
-frw::Value FireMaya::Scope::convertMayaMultDoubleLinear(const MFnDependencyNode &node)
-{
-	auto input1 = GetValueWithCheck(node, "input1");
-	auto input2 = GetValueWithCheck(node, "input2");
-	return m->materialSystem.ValueMul(input1, input2);
-}
-
-frw::Value FireMaya::Scope::convertMayaMultiplyDivide(const MFnDependencyNode &node)
-{
-	enum
-	{
-		OpNone = 0,
-		OpMul,
-		OpDiv,
-		OpPow
-	};
-
-	auto input1 = GetValueWithCheck(node, "input1");
-	auto input2 = GetValueWithCheck(node, "input2");
-	auto operation = GetValueWithCheck(node, "operation");
-	int op = operation.GetInt();
-	switch (op)
-	{
-	case OpMul: return m->materialSystem.ValueMul(input1, input2);
-	case OpDiv: return m->materialSystem.ValueDiv(input1, input2);
-	case OpPow: return m->materialSystem.ValuePow(input1, input2);
-	}
-
-	return input1;
-}
-
-void FireMaya::Scope::GetArrayOfValues(const MFnDependencyNode &node, const char * plugName, ArrayOfValues &arr)
-{
-	MStatus status;
-	MPlug plug = node.findPlug(plugName, &status);
-	assert(status == MStatus::kSuccess);
-
-	if (plug.isNull())
-		return;
-
-	for (unsigned int i = 0; i < plug.numElements(); i++)
-	{
-		MPlug elementPlug = plug[i];
-		frw::Value val = GetValue(elementPlug);
-		arr.push_back(val);
-	}
-}
-
-frw::Value FireMaya::Scope::calcElements(const ArrayOfValues &arr, bool substract)
-{
-	if (arr.size() == 0)
-		return frw::Value(0.0);
-
-	frw::Value res = arr[0];
-
-	frw::MaterialSystem materialSystem = m->materialSystem;
-
-	if (substract)
-	{
-		for (size_t i = 1; i < arr.size(); i++)
-			res = materialSystem.ValueSub(res, arr[i]);
-	}
-	else
-	{
-		for (size_t i = 1; i < arr.size(); i++)
-			res = materialSystem.ValueAdd(res, arr[i]);
-	}
-
-	return res;
-}
-
-frw::Value FireMaya::Scope::convertMayaPlusMinusAverage(const MFnDependencyNode &node, const MString &outPlugName)
-{
-	enum
-	{
-		OpNone = 0,
-		OpSum,
-		OpSubtract,
-		OpAverage,
-	};
-
-	const char * name = "input1D";
-	if (outPlugName.indexW("o2"_ms) == 0)
-		name = "input2D";
-	if (outPlugName.indexW("o3"_ms) == 0)
-		name = "input3D";
-
-	ArrayOfValues arr;
-	GetArrayOfValues(node, name, arr);
-	if (arr.size() == 0)
-		return frw::Value(0.0);
-
-	auto operation = GetValueWithCheck(node, "operation");
-	int op = operation.GetInt();
-	frw::Value res;
-
-	switch (op)
-	{
-	case OpNone:		res = arr[0]; break;
-	case OpSum:			res = calcElements(arr); break;
-	case OpSubtract:	res = calcElements(arr, true); break;
-	case OpAverage:		res = m->materialSystem.ValueDiv(calcElements(arr), frw::Value((double)arr.size())); break;
-	}
-
-	return res;
-}
-
-frw::Value FireMaya::Scope::convertMayaVectorProduct(const MFnDependencyNode &node)
-{
-	enum
-	{
-		OpNone = 0,
-		OpDotProduct,
-		OpCrossProduct,
-		OpVectorMatrixProduct, // Outvector = Input x Matrix
-		OpPointMatrixProduct, // Output = Input x Matrix
-	};
-
-	auto input1 = GetValueWithCheck(node, "input1");
-	auto input2 = GetValueWithCheck(node, "input2");
-	auto matrix = GetValueWithCheck(node, "matrix");
-	auto operation = GetValueWithCheck(node, "operation");
-	int op = operation.GetInt();
-
-	auto res = input1;
-	switch (op)
-	{
-	case OpDotProduct: res = m->materialSystem.ValueDot(input1, input2); break;
-	case OpCrossProduct: res = m->materialSystem.ValueCross(input1, input2); break;
-	}
-
-	auto normalizeOutput = GetValueWithCheck(node, "normalizeOutput");
-	if (normalizeOutput.GetBool())
-		return m->materialSystem.ValueNormalize(res);
-
-	return res;
-}
-
-float colorSpace2Gamma(const MString& colorSpace)
-{
-	if (colorSpace == "sRGB")
-		return 2.2f;
-
-	else if (colorSpace == "camera Rec 709")
-		return 2.2f;
-
-	else if (colorSpace == "Raw")
-		return 1.0f;
-
-	else if (colorSpace == "gamma 1.8 Rec 709")
-		return 1.8f;
-
-	else if (colorSpace == "gamma 2.2 Rec 709")
-		return 2.2f;
-
-	else if (colorSpace == "gamma 2.4 Rec 709 (video)")
-		return 2.4f;
-
-	// default
-	return 1.0f;
-}
-
-frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName)
+frw::Value FireMaya::Scope::ParseValue(MObject node, const MString &outPlugName) const
 {
 	if (node.isNull())
 	{
 		return nullptr;
 	}
 
-	frw::MaterialSystem materialSystem = m->materialSystem;
-
 	MFnDependencyNode shaderNode(node);
+
+	// handle native fire render value nodes
+	const FireMaya::ValueNode* valueNode = dynamic_cast<FireMaya::ValueNode*>(shaderNode.userNode());
+	if (valueNode != nullptr)
+	{
+		return valueNode->GetValue(*this);
+	}
 
 	MTypeId mayaId = shaderNode.typeId();
 	unsigned int intId = mayaId.id();
-	auto id = MayaValueId(intId);
-	auto name = shaderNode.typeName();
-
-	// handle native fire render value nodes
-	if (auto valueNode = dynamic_cast<FireMaya::ValueNode*>(shaderNode.userNode()))
-		return valueNode->GetValue(*this);
 
 	// interpret Maya nodes
-	switch (id)
-	{
-	case MayaAddDoubleLinear:	return convertMayaAddDoubleLinear(shaderNode);
-	case MayaBlendColors:		return convertMayaBlendColors(shaderNode);
-	case MayaContrast:			return convertMayaContrast(shaderNode);
-	case MayaMultDoubleLinear:	return convertMayaMultDoubleLinear(shaderNode);
-	case MayaMultiplyDivide:	return convertMayaMultiplyDivide(shaderNode);
-	case MayaPlusMinusAverage:	return convertMayaPlusMinusAverage(shaderNode, outPlugName);
-	case MayaVectorProduct:		return convertMayaVectorProduct(shaderNode);
-	case MayaNoise:				return convertMayaNoise(shaderNode);
-	case MayaBump2d:			return convertMayaBump2d(shaderNode);
-	case MayaNodePlace2dTexture:return convertMayaNodePlace2dTexture(node, shaderNode, materialSystem);
-	case MayaNodeFile:			return convertMayaNodeFile(shaderNode, materialSystem, outPlugName);
-	case MayaNodeChecker:		return convertMayaNodeChecker(shaderNode, materialSystem);
-	case MayaReverseMap:		return convertMayaReverseMap(shaderNode);
-	case MayaLayeredTexture:	return LayeredTextureConverter(shaderNode, materialSystem, *this, outPlugName).Convert();
-
-	case MayaNodeRamp:
-		//falling back onto rasterization:
-		return createImageFromShaderNode(node, MString("outColor"), 128, 128);
-
-	// Try to detect what is connected to this node to obtain a texture of proper size
-	case MayaNodeGammaCorrect:
-		return createImageFromShaderNodeUsingFileNode(node, MString("outValue"));
-
-	case MayaNodeRemapHSV:
-		return createImageFromShaderNodeUsingFileNode(node, MString("outColor"));
-
-	default:
-		if (FireMaya::TypeId::IsValidId(id))
-		{
-			DebugPrint("Error: Unhandled RPRMaya NodeId: %X", id);
-		}
-		else if (FireMaya::TypeId::IsReservedId(id))
-		{
-			DebugPrint("Error: Unrecognized RPRMaya NodeId: %X", id);
-		}
-		else
-		{
-			DebugPrint("Warning: Unhandled or Unknown RPRMaya Node: %X", id);
-			// I don't think we need this: Dump(shaderNode);
-		}
-		return createImageFromShaderNodeUsingFileNode(node, "outColor");
-	}
+	return MayaStandardNodeConverters::NodeConverterUtil::Convert(
+		{ shaderNode, *this, outPlugName }, 
+		MayaStandardNodeConverters::MayaValueId(intId)
+	);
 }
 
-frw::Value FireMaya::Scope::createImageFromShaderNodeUsingFileNode(MObject node, MString plugName)
+frw::Value FireMaya::Scope::createImageFromShaderNodeUsingFileNode(MObject node, MString plugName) const
 {
 	int width = 0;
 	int height = 0;
@@ -1597,7 +1334,7 @@ frw::Value FireMaya::Scope::createImageFromShaderNodeUsingFileNode(MObject node,
 	}
 }
 
-bool FireMaya::Scope::FindFileNodeRecursive(MObject objectNode, int& width, int& height)
+bool FireMaya::Scope::FindFileNodeRecursive(MObject objectNode, int& width, int& height) const
 {
 	if (!objectNode.hasFn(MFn::kDependencyNode))
 	{
@@ -1649,7 +1386,7 @@ bool FireMaya::Scope::FindFileNodeRecursive(MObject objectNode, int& width, int&
 	return false;
 }
 
-frw::Value FireMaya::Scope::createImageFromShaderNode(MObject node, MString plugName, int width, int height)
+frw::Value FireMaya::Scope::createImageFromShaderNode(MObject node, MString plugName, int width, int height) const
 {
 	unsigned int max_width = 1;
 	unsigned int max_height = 1;
@@ -1865,253 +1602,6 @@ frw::Shader FireMaya::Scope::convertMayaPhongE(const MFnDependencyNode &node)
 	return materialSystem.ShaderBlend(result, shader, blendVal);
 }
 
-
-frw::Value FireMaya::Scope::convertMayaNoise(const MFnDependencyNode &node)
-{
-	auto uv = GetValueWithCheck(node, "uvCoord");
-
-	auto threshold = GetValueWithCheck(node, "threshold");
-	auto amplitude = GetValueWithCheck(node, "amplitude");
-	auto ratio = GetValueWithCheck(node, "ratio");
-	auto frequencyRatio = GetValueWithCheck(node, "frequencyRatio");
-	auto depthMax = GetValueWithCheck(node, "depthMax");
-	auto time = GetValueWithCheck(node, "time");
-	auto frequency = GetValueWithCheck(node, "frequency");
-	// Implode - not implemented
-	// Implode Center - not implemented
-
-	frw::Value minScale(0.225f);
-
-	frw::MaterialSystem materialSystem = m->materialSystem;
-
-	// calc uv1
-	auto scaleUV1 = materialSystem.ValueMul(frequency, minScale);
-	auto uv1 = materialSystem.ValueMul(uv, scaleUV1);
-
-	// calc uv2
-	auto freqSq = materialSystem.ValuePow(frequencyRatio, frw::Value(1.4f));
-	auto freq = materialSystem.ValueMul(frequency, freqSq);
-	auto scaleUV2 = materialSystem.ValueMul(freq, minScale);
-
-	auto dephVal = materialSystem.ValueSub(depthMax, frw::Value(1.0));
-	dephVal = materialSystem.ValueDiv(dephVal, frw::Value(2.0));
-	scaleUV2 = materialSystem.ValueMul(scaleUV2, dephVal);
-
-	auto uv2 = materialSystem.ValueMul(uv, scaleUV2);
-
-	auto scaledTime = materialSystem.ValueMul(time, frw::Value(0.5));
-	auto offset1 = materialSystem.ValueMul(scaleUV1, scaledTime);
-	auto offset2 = materialSystem.ValueMul(scaleUV2, scaledTime);
-
-	frw::ValueNode node1(materialSystem, frw::ValueTypeNoiseMap);
-	uv1 = materialSystem.ValueAdd(uv1, offset1);
-	node1.SetValue("uv", uv1);
-
-	frw::ValueNode node2(materialSystem, frw::ValueTypeNoiseMap);
-	uv2 = materialSystem.ValueSub(uv2, offset2);
-	node2.SetValue("uv", uv2);
-
-	auto mulNoise = materialSystem.ValueMul(node1, node2);
-	auto v = materialSystem.ValueBlend(node1, mulNoise, ratio);
-
-
-	auto amplScaled = materialSystem.ValueMul(amplitude, frw::Value(0.5));
-	auto th = materialSystem.ValueAdd(threshold, frw::Value(0.5));
-
-	auto min = materialSystem.ValueSub(th, amplScaled);
-	auto max = materialSystem.ValueAdd(th, amplScaled);
-
-	frw::Value thresholdInv = materialSystem.ValueSub(frw::Value(1.0), threshold);
-	frw::Value v1 = materialSystem.ValueMin(v, thresholdInv);
-
-	return materialSystem.ValueBlend(min, max, v1);
-}
-
-frw::Value FireMaya::Scope::convertMayaBump2d(const MFnDependencyNode& shaderNode)
-{
-	if (auto bumpValue = GetConnectedValue(shaderNode.findPlug("bumpValue")))
-	{
-		// TODO: need to find a way to turn generic input color data
-		// into bump/normal format
-	}
-
-	return nullptr;
-}
-
-frw::Value FireMaya::Scope::convertMayaNodePlace2dTexture(MObject node, const MFnDependencyNode& shaderNode, frw::MaterialSystem materialSystem)
-{
-	// get connected texture
-	MString textureFile("");
-
-	MStatus status;
-	MItDependencyGraph it(node,
-		MFn::kFileTexture,
-		MItDependencyGraph::kDownstream,
-		MItDependencyGraph::kBreadthFirst,
-		MItDependencyGraph::kNodeLevel,
-		&status);
-	for (; !it.isDone(); it.next())
-	{
-		MFnDependencyNode fileNode(it.currentItem());
-		status = fileNode.findPlug("fileTextureName").getValue(textureFile);
-
-		if (!status) // texture file node not found, continue go down the graph
-			continue;
-
-		// texture node found => exit
-		break;
-	}
-
-	// get uv data
-	int uvIdx = 0;
-	const FireRenderMesh* pMesh = m->m_pCurrentlyParsedMesh;
-	if (pMesh != nullptr)
-	{
-		uvIdx = pMesh->GetAssignedUVMapIdx(textureFile);
-	}
-
-	if (uvIdx == -1)
-		uvIdx = 0;
-
-	// create node
-	auto value = materialSystem.ValueLookupUV(uvIdx);
-
-	// rotate frame
-	auto rotateFrame = GetValue(shaderNode.findPlug("rotateFrame"));
-	if (rotateFrame != 0.)
-		value = materialSystem.ValueRotateXY(value - 0.5, rotateFrame) + 0.5;
-
-	// translate frame
-	auto translateFrameU = GetValue(shaderNode.findPlug("translateFrameU"));
-	auto translateFrameV = GetValue(shaderNode.findPlug("translateFrameV"));
-	if (translateFrameU != 0. || translateFrameV != 0.)
-		value = value + materialSystem.ValueCombine(-translateFrameU, -translateFrameV);
-
-	// handle scale
-	auto repeatU = GetValue(shaderNode.findPlug("repeatU"));
-	auto repeatV = GetValue(shaderNode.findPlug("repeatV"));
-	if (repeatU != 1. || repeatV != 1.)
-		value = value * materialSystem.ValueCombine(repeatU, repeatV);
-
-	// handle offset
-	auto offsetU = GetValue(shaderNode.findPlug("offsetU"));
-	auto offsetV = GetValue(shaderNode.findPlug("offsetV"));
-	if (offsetU != 0. || offsetV != 0.)
-		value = value + materialSystem.ValueCombine(offsetU, offsetV);
-
-	// rotate
-	auto rotateUV = GetValue(shaderNode.findPlug("rotateUV"));
-	if (rotateUV != 0.)
-		value = materialSystem.ValueRotateXY(value - 0.5, rotateUV) + 0.5;
-
-	// TODO rotation, + "frame" settings
-
-	return value;
-}
-
-frw::Value FireMaya::Scope::convertMayaNodeFile(const MFnDependencyNode& shaderNode, const frw::MaterialSystem& materialSystem, const MString& outPlugName)
-{
-	MPlug texturePlug = shaderNode.findPlug("computedFileTextureNamePattern");
-	MString texturePath = texturePlug.asString();
-	
-	MPlug colorSpacePlug = shaderNode.findPlug("colorSpace");
-	MString colorSpace;
-	if (!colorSpacePlug.isNull())
-	{
-		colorSpace = colorSpacePlug.asString();
-	}
-
-	frw::Image image = GetImage(texturePath, colorSpace, shaderNode.name());
-	if (!image.IsValid())
-	{
-		m_IsLastPassTextureMissing = true;
-		return nullptr;
-	}
-
-	frw::ImageNode imageNode(materialSystem);
-	image.SetGamma(colorSpace2Gamma(colorSpace));
-	imageNode.SetMap(image);
-
-	frw::Value uvVal = GetConnectedValue(shaderNode.findPlug("uvCoord"));
-	if (uvVal.IsNull())
-	{
-		uvVal = GetConnectedValue(shaderNode.findPlug("uCoord")); // uvCoord, uCoord and vCoord are different fields. Hovewer RPR_MATERIAL_NODE_IMAGE_TEXTURE have only "uv" input, thus cCoord is ignored
-	}
-	imageNode.SetValue("uv", uvVal);
-
-	if (outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_COLOR)
-	{
-		return imageNode;
-	}
-	else if (outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_ALPHA)
-	{
-		MPlug alphaIsLuminancePlug = shaderNode.findPlug("alphaIsLuminance");
-		bool alphaIsLuminance = alphaIsLuminancePlug.asBool();
-
-		bool shouldUseAlphaIsLuminance = alphaIsLuminance || !image.HasAlphaChannel();
-		if (shouldUseAlphaIsLuminance)
-		{
-			// Calculate alpha is luminance value
-			return materialSystem.ValueConvertToLuminance(imageNode);
-		}
-		else
-		{
-			// Select the real alpha value
-			return frw::Value(imageNode).SelectW();
-		}
-	}
-
-	bool isColorComponentRequested =
-		outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_COLOR_COMPONENT_RED ||
-		outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_COLOR_COMPONENT_GREEN ||
-		outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_COLOR_COMPONENT_BLUE;
-
-	if (isColorComponentRequested)
-	{
-		// Component is selected later
-		return imageNode;
-	}
-
-	m_IsLastPassTextureMissing = true;
-	return nullptr;
-}
-
-frw::Value FireMaya::Scope::convertMayaNodeChecker(const MFnDependencyNode& shaderNode, frw::MaterialSystem materialSystem)
-{
-	frw::ValueNode map(materialSystem, frw::ValueTypeCheckerMap);
-	auto uv = (GetConnectedValue(shaderNode.findPlug("uvCoord")) | materialSystem.ValueLookupUV(0));
-	map.SetValue("uv", (uv * .25) + 128.);	// <- offset added because FR mirrors checker at origin
-
-	frw::Value color1 = GetValue(shaderNode.findPlug("color1"));
-	frw::Value color2 = GetValue(shaderNode.findPlug("color2"));
-	frw::Value contrast = GetValue(shaderNode.findPlug("contrast"));
-
-	return materialSystem.ValueBlend(color2, color1, map); // Reverse blend to match tile alignment
-}
-
-frw::Value FireMaya::Scope::convertMayaReverseMap(const MFnDependencyNode& shaderNode)
-{
-	MPlugArray nodes;
-	shaderNode.getConnections(nodes);
-
-	for (unsigned int idx = 0; idx < nodes.length(); ++idx)
-	{
-		const MPlug& connection = nodes[idx];
-		const MString partialName = connection.partialName();
-
-		if (partialName == "i") // name of "input" of the node
-		{
-			frw::Value mapValue = GetValue(connection);
-			frw::Value invertedMapValue = frw::Value(1) - mapValue;
-			return invertedMapValue;
-		}
-	}
-
-	return nullptr;
-}
-
-
-
 frw::Shader FireMaya::Scope::ParseShader(MObject node)
 {
 	if (node.isNull())
@@ -2307,8 +1797,8 @@ void FireMaya::Scope::AttributeChangedCallback(MNodeMessage::AttributeMessage ms
 
 void FireMaya::Scope::AttributeChangedCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug)
 {
-	bool connectionWasBroken = MNodeMessage::AttributeMessage::kConnectionBroken & msg;
-	bool newIncomingDirection = MNodeMessage::AttributeMessage::kIncomingDirection & msg;
+	bool connectionWasBroken = (MNodeMessage::AttributeMessage::kConnectionBroken & msg) > 0;
+	bool newIncomingDirection = (MNodeMessage::AttributeMessage::kIncomingDirection & msg) > 0;
 
 	if (connectionWasBroken & !newIncomingDirection)
 	{
@@ -2402,7 +1892,7 @@ frw::Image FireMaya::Scope::GetCachedImage(const MString& key) const
 	return nullptr;
 }
 
-void FireMaya::Scope::SetCachedImage(const MString& key, frw::Image img)
+void FireMaya::Scope::SetCachedImage(const MString& key, frw::Image img) const
 {
 	if (!img)
 		m->imageCache.erase(std::string(key.asChar()));
@@ -2496,12 +1986,12 @@ frw::Shader FireMaya::Scope::GetReflectionCatcherShader()
 	return nullptr;
 }
 
-frw::Value FireMaya::Scope::GetValue(MObject ob, const MString &outPlugName)
+frw::Value FireMaya::Scope::GetValue(MObject ob, const MString &outPlugName) const
 {
 	return ParseValue(ob, outPlugName);
 }
 
-frw::Value FireMaya::Scope::GetConnectedValue(const MPlug& plug)
+frw::Value FireMaya::Scope::GetConnectedValue(const MPlug& plug) const
 {
 	auto p = GetConnectedPlug(plug);
 	if (!p.isNull())
@@ -2547,7 +2037,7 @@ frw::Value FireMaya::Scope::GetConnectedValue(const MPlug& plug)
 	return nullptr;
 }
 
-frw::Value FireMaya::Scope::GetValue(const MPlug& plug)
+frw::Value FireMaya::Scope::GetValue(const MPlug& plug) const
 {
 	if (plug.isNull())
 		return nullptr;
@@ -2600,7 +2090,7 @@ frw::Value FireMaya::Scope::GetValueForDiffuseColor(const MPlug& plug)
 	return value;
 }
 
-frw::Value FireMaya::Scope::GetValueWithCheck(const MFnDependencyNode &node, const char * plugName)
+frw::Value FireMaya::Scope::GetValueWithCheck(const MFnDependencyNode &node, const char * plugName) const
 {
 	MStatus status;
 	MPlug plug = node.findPlug(plugName, &status);

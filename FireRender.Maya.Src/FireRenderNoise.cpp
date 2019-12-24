@@ -40,13 +40,13 @@ MStatus FireMaya::Noise::initialize()
 	return MS::kSuccess;
 }
 
-frw::Value FireMaya::Noise::GetValue(Scope& scope)
+frw::Value FireMaya::Noise::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 
 	frw::ValueNode valueNode(scope.MaterialSystem(), frw::ValueTypeNoiseMap);
-	valueNode.SetValue("uv", scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv)));
-	valueNode.SetValue("color", scope.GetValue(shaderNode.findPlug(Attribute::color)));
+	valueNode.SetValue("uv", scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv, false)));
+	valueNode.SetValue("color", scope.GetValue(shaderNode.findPlug(Attribute::color, false)));
 
 	return valueNode;
 }

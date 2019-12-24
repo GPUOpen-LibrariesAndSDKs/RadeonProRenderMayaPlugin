@@ -178,9 +178,9 @@ bool CopyAttribute(MFnDependencyNode& node, const MObject& srcAttr, const MObjec
 {
 	// Find plugs for both attributes
 	MStatus status;
-	MPlug src = node.findPlug(srcAttr, &status);
+	MPlug src = node.findPlug(srcAttr, false, &status);
 	CHECK_MSTATUS(status);
-	MPlug dst = node.findPlug(dstAttr, &status);
+	MPlug dst = node.findPlug(dstAttr, false, &status);
 	CHECK_MSTATUS(status);
 
 	MPlugArray connections;
@@ -215,7 +215,7 @@ bool CopyAttribute(MFnDependencyNode& node, const MObject& srcAttr, const MObjec
 void BreakConnections(MFnDependencyNode& node, const MObject& attr)
 {
 	MStatus status;
-	MPlug plug = node.findPlug(attr, &status);
+	MPlug plug = node.findPlug(attr, false, &status);
 	CHECK_MSTATUS(status);
 
 	MPlugArray connections;
@@ -237,7 +237,7 @@ void FireMaya::StandardMaterial::UpgradeMaterial()
 #if USE_RPRX
 	MFnDependencyNode shaderNode(thisMObject());
 
-	MPlug plug = shaderNode.findPlug(Attribute::version);
+	MPlug plug = shaderNode.findPlug(Attribute::version, false);
 	int version = plug.asInt();
 
 	if (version < VER_CURRENT && version == VER_INITIAL)
@@ -266,7 +266,7 @@ void FireMaya::StandardMaterial::UpgradeMaterial()
 		// Enable normal map if it is connected
 		if (hasNormal)
 		{
-			shaderNode.findPlug(Attribute::normalMapEnable).setBool(true);
+			shaderNode.findPlug(Attribute::normalMapEnable, false).setBool(true);
 		}
 
 		BreakConnections(shaderNode, Attribute::reflectionRoughnessX);
@@ -286,7 +286,7 @@ MStatus FireMaya::StandardMaterial::shouldSave(const MPlug& plug, bool& isSaving
 	if (plug.attribute() == Attribute::version)
 	{
 		MFnDependencyNode shaderNode(thisMObject());
-		MPlug plug2 = shaderNode.findPlug(Attribute::version);
+		MPlug plug2 = shaderNode.findPlug(Attribute::version, false);
 		CHECK_MSTATUS(plug2.setInt(VER_CURRENT));
 	}
 	// CaLL default implementation
@@ -840,7 +840,7 @@ bool FireMaya::StandardMaterial::IsNormalOrBumpMap(const MObject& attrNormal, No
 	if (!params.IsValid())
 		return false;
 
-	int type = params.scope.GetValue(params.shaderNode.findPlug(attrNormal)).GetNodeType();
+	int type = params.scope.GetValue(params.shaderNode.findPlug(attrNormal, false)).GetNodeType();
 
 	if (type == frw::ValueTypeNormalMap)
 		return true;
@@ -860,17 +860,17 @@ void FireMaya::StandardMaterial::ApplyNormalMap(NormalMapParams& params)
 	MObject normalMapEnable = Attribute::normalMapEnable;
 	MObject attrNormal = Attribute::normalMap;
 
-	if (params.shaderNode.findPlug(params.attrUseCommonNormalMap).asBool())
+	if (params.shaderNode.findPlug(params.attrUseCommonNormalMap, false).asBool())
 	{
-		if (params.shaderNode.findPlug(normalMapEnable).asBool() && IsNormalOrBumpMap(attrNormal, params))
+		if (params.shaderNode.findPlug(normalMapEnable, false).asBool() && IsNormalOrBumpMap(attrNormal, params))
 		{
-			frw::Value normalValue = params.scope.GetValue(params.shaderNode.findPlug(attrNormal));
+			frw::Value normalValue = params.scope.GetValue(params.shaderNode.findPlug(attrNormal, false));
 			params.material.xSetValue(params.param, normalValue);
 		}
 	}
 	else if (IsNormalOrBumpMap(params.mapPlug, params))
 	{
-		frw::Value normalValue = params.scope.GetValue(params.shaderNode.findPlug(params.mapPlug));
+		frw::Value normalValue = params.scope.GetValue(params.shaderNode.findPlug(params.mapPlug, false));
 		params.material.xSetValue(params.param, normalValue);
 	}
 }
@@ -896,10 +896,10 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	MFnDependencyNode shaderNode(thisMObject());
 
 #define GET_BOOL(_attrib_) \
-	shaderNode.findPlug(Attribute::_attrib_).asBool()
+	shaderNode.findPlug(Attribute::_attrib_, false).asBool()
 
 #define GET_VALUE(_attrib_) \
-	scope.GetValue(shaderNode.findPlug(Attribute::_attrib_))
+	scope.GetValue(shaderNode.findPlug(Attribute::_attrib_, false))
 
 #define GET_TYPE(_attrib_) \
 	GET_VALUE(_attrib_).GetNodeType()
@@ -914,7 +914,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	if (GET_BOOL(diffuseEnable))
 	{
 		// apply purple 1x1 image in case we missed a texture file
-		frw::Value value = scope.GetValueForDiffuseColor(shaderNode.findPlug(Attribute::diffuseColor));
+		frw::Value value = scope.GetValueForDiffuseColor(shaderNode.findPlug(Attribute::diffuseColor, false));
 		material.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_COLOR, value);
 		
 		SET_RPRX_VALUE(RPRX_UBER_MATERIAL_DIFFUSE_WEIGHT, diffuseWeight);
@@ -1030,12 +1030,12 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	// Emissive
 	if (GET_BOOL(emissiveEnable))
 	{
-		frw::Value valueEmissiveWeight = scope.GetValue(shaderNode.findPlug(Attribute::emissiveWeight));
+		frw::Value valueEmissiveWeight = scope.GetValue(shaderNode.findPlug(Attribute::emissiveWeight, false));
 		material.xSetValue(RPRX_UBER_MATERIAL_EMISSION_WEIGHT, valueEmissiveWeight);
 
-		frw::Value valueEmissiveColor = scope.GetValue(shaderNode.findPlug(Attribute::emissiveColor));
+		frw::Value valueEmissiveColor = scope.GetValue(shaderNode.findPlug(Attribute::emissiveColor, false));
 
-		frw::Value valueEmissiveIntensity = scope.GetValue(shaderNode.findPlug(Attribute::emissiveIntensity));
+		frw::Value valueEmissiveIntensity = scope.GetValue(shaderNode.findPlug(Attribute::emissiveIntensity, false));
 
 		const frw::MaterialSystem ms = scope.MaterialSystem();
 		valueEmissiveColor = ms.ValueMul(valueEmissiveColor, valueEmissiveIntensity);		
@@ -1254,7 +1254,7 @@ MObject FireMaya::StandardMaterial::GetDisplacementNode()
 	if (!GET_BOOL(displacementEnable))
 		return MObject::kNullObj;
 
-	MPlug plug = shaderNode.findPlug(Attribute::displacementMap);
+	MPlug plug = shaderNode.findPlug(Attribute::displacementMap, false);
 	if (plug.isNull())
 		return MObject::kNullObj;
 

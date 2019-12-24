@@ -163,11 +163,11 @@ frw::Shader FireMaya::SubsurfaceMaterial::GetShader(Scope& scope)
 	auto ms = scope.MaterialSystem();
 	MFnDependencyNode shaderNode(thisMObject());
 
-	auto k = shaderNode.findPlug(Attribute::surfaceIntensity).asFloat();
+	auto k = shaderNode.findPlug(Attribute::surfaceIntensity, false).asFloat();
 	if (k <= 0)
 		return frw::TransparentShader(ms);
 
-	auto surfacePlug = shaderNode.findPlug(Attribute::surfaceColor);
+	auto surfacePlug = shaderNode.findPlug(Attribute::surfaceColor, false);
 	auto shader = scope.GetShader(surfacePlug);
 
 	if (!shader)
@@ -195,13 +195,13 @@ frw::Shader FireMaya::SubsurfaceMaterial::GetVolumeShader(Scope& scope)
 
 	frw::Shader material = frw::Shader(ms, frw::ShaderTypeVolume);
 
-	auto scatterColor = scope.GetValue(shaderNode.findPlug(Attribute::scatterColor));
-	auto scatterAmount = scope.GetValue(shaderNode.findPlug(Attribute::scatterAmount));
-	auto subsurfaceColor = scope.GetValue(shaderNode.findPlug(Attribute::subsurfaceColor));
-	auto emissionColor = scope.GetValue(shaderNode.findPlug(Attribute::emissionColor));
-	auto k = shaderNode.findPlug(Attribute::density).asFloat();
-	auto scatteringDirection = shaderNode.findPlug(Attribute::scatteringDirection).asFloat();
-	auto multiScatter = shaderNode.findPlug(Attribute::multiScattering).asBool();
+	auto scatterColor = scope.GetValue(shaderNode.findPlug(Attribute::scatterColor, false));
+	auto scatterAmount = scope.GetValue(shaderNode.findPlug(Attribute::scatterAmount, false));
+	auto subsurfaceColor = scope.GetValue(shaderNode.findPlug(Attribute::subsurfaceColor, false));
+	auto emissionColor = scope.GetValue(shaderNode.findPlug(Attribute::emissionColor, false));
+	auto k = shaderNode.findPlug(Attribute::density, false).asFloat();
+	auto scatteringDirection = shaderNode.findPlug(Attribute::scatteringDirection, false).asFloat();
+	auto multiScatter = shaderNode.findPlug(Attribute::multiScattering, false).asBool();
 
 	// auto k = radius ? 1.0 / radius : 1000;	// avoid DBZ
 	// scattering

@@ -49,14 +49,14 @@ MStatus FireMaya::FresnelSchlick::initialize()
 	return MS::kSuccess;
 }
 
-frw::Value FireMaya::FresnelSchlick::GetValue(Scope& scope)
+frw::Value FireMaya::FresnelSchlick::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 
 	frw::ValueNode valueNode(scope.MaterialSystem(), frw::ValueTypeFresnelSchlick);
-	valueNode.SetValue("reflectance", scope.GetValue(shaderNode.findPlug(Attribute::reflectance)));
-	valueNode.SetValue("normal", scope.GetConnectedValue(shaderNode.findPlug(Attribute::normal)));
-	valueNode.SetValue("invec", scope.GetConnectedValue(shaderNode.findPlug(Attribute::inVec)));
+	valueNode.SetValue("reflectance", scope.GetValue(shaderNode.findPlug(Attribute::reflectance, false)));
+	valueNode.SetValue("normal", scope.GetConnectedValue(shaderNode.findPlug(Attribute::normal, false)));
+	valueNode.SetValue("invec", scope.GetConnectedValue(shaderNode.findPlug(Attribute::inVec, false)));
 
 	return valueNode;
 }

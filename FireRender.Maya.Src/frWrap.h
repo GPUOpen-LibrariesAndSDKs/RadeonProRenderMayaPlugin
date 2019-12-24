@@ -15,6 +15,7 @@
 #endif
 #include <set>
 #include <string>
+#include <array>
 #include <maya/MString.h>
 
 #include <math.h>
@@ -24,6 +25,8 @@
 
 #include <maya/MGlobal.h>
 #include <maya/MDistance.h>
+#include <maya/MColor.h>
+#include "FireRenderMath.h"
 
 //#define FRW_LOGGING 1
 
@@ -808,10 +811,22 @@ namespace frw
 
 		bool operator==(const Value& rhs) const
 		{
-			return type == rhs.type
-				&& (type == NODE
-					? (node == rhs.node)
-					: (x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w));
+			if (type != rhs.type)
+			{
+				return false;
+			}
+
+			if ((type == NODE) &&
+				(node == rhs.node))
+			{
+				return true;
+			}
+
+			// we should use correct float comparison method
+			return IsAlmostEqual(x, rhs.x) && 
+					IsAlmostEqual(y, rhs.y) && 
+					IsAlmostEqual(z, rhs.z) && 
+					IsAlmostEqual(w, rhs.w);
 		}
 
 		bool operator!=(const Value& rhs) const { return !(*this == rhs); }
@@ -1008,6 +1023,36 @@ namespace frw
 			else
 			{
 				checkStatus(res);
+			}
+		}
+
+		void SetVertexColors(const std::vector<int>& vertexIndices, const std::vector<MColor>& vertexColors, rpr_int indexCount)
+		{
+			std::vector<rpr_float> colors;
+			colors.resize(indexCount);
+
+			for (int colorComponent = 0; colorComponent < 4; colorComponent++)
+			{
+				for (int vertexIndex : vertexIndices)
+				{
+					switch (colorComponent)
+					{
+					case 0:
+						colors[vertexIndex] = vertexColors[vertexIndex].r;
+						break;
+					case 1:
+						colors[vertexIndex] = vertexColors[vertexIndex].g;
+						break;
+					case 2:
+						colors[vertexIndex] = vertexColors[vertexIndex].b;
+						break;
+					case 3:
+						colors[vertexIndex] = vertexColors[vertexIndex].a;
+						break;
+					}
+				}
+
+				rprShapeSetVertexValue(Handle(), colorComponent, vertexIndices.data(), colors.data(), indexCount);
 			}
 		}
 
@@ -1717,7 +1762,7 @@ namespace frw
 			rpr_int numberOfTexCoordLayers, const rpr_float** texcoords, const size_t* num_texcoords, const rpr_int* texcoord_stride,
 			const rpr_int* vertex_indices, rpr_int vidx_stride,
 			const rpr_int* normal_indices, rpr_int nidx_stride, const rpr_int** texcoord_indices,
-			const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces);
+			const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces) const;
 
 		PointLight CreatePointLight()
 		{
@@ -2737,10 +2782,9 @@ namespace frw
 			return ArithmeticNode(*this, OperatorMax, a, b);
 		}
 
-		// clamp components between 0 and 1
-		Value ValueClamp(const Value& v) const
+		Value ValueClamp(const Value& v, const Value& minValue = 0.0f, const Value& maxValue = 1.0f) const
 		{
-			return ValueMin(ValueMax(v, 0.), 1.);
+			return ValueMin(ValueMax(v, minValue), maxValue);
 		}
 
 		Shader ShaderBlend(const Shader& a, const Shader& b, const Value& t) const;
@@ -3820,7 +3864,7 @@ namespace frw
 		rpr_int numberOfTexCoordLayers, const rpr_float** texcoords, const size_t* num_texcoords, const rpr_int* texcoord_stride,
 		const rpr_int* vertex_indices, rpr_int vidx_stride,
 		const rpr_int* normal_indices, rpr_int nidx_stride, const rpr_int** texcoord_indices,
-		const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces)
+		const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces) const
 	{
 		FRW_PRINT_DEBUG("CreateMesh() - %d faces\n", num_faces);
 		rpr_shape shape = nullptr;

@@ -1,0 +1,43 @@
+
+<?xml version='1.0' encoding='UTF-8'?>
+<templates>
+	<using package='maya'/>
+	<template name='LERPRIES'>
+		<!-- 
+		Declaration of the attributes that should be visible for this light type in the Light Editor.
+		-->
+		<attribute name='color' type='maya.float3'>
+			<label>Color</label>
+		</attribute>
+		<attribute name='intensity' type='maya.float'>
+			<label>Intensity</label>
+		</attribute>
+		<attribute name='iesFile' type='maya.string'>
+			<label>Filename</label>
+		</attribute>
+		<!-- 
+		Attributes below are used to specify construction data to the Light Editor.
+		They are not existing node attributes.
+		-->
+		<!-- Custom creation MEL command for creating this light source -->
+		<!-- <attribute name='LEcreateCmd' type='maya.string'>
+			<description language="cb">CreatePointLight</description>
+		</attribute>-->
+		<!-- Custom icon bitmap to be used for button in Light Editor -->
+		<attribute name='LEicon' type='maya.string'>
+			<description language="cb">shelf/IESLight.png</description>
+		</attribute>
+	</template>
+	<view name='LEDefault' template='LERPRIES'>
+		<!-- 
+		The template view used by the Light Editor.
+		Should list all the attributes above, including LEcreateCmd and LEicon.
+		-->
+		<description>View used by Light Editor</description>
+		<property name='color'/>
+		<property name='intensity'/>
+		<property name='iesFile'/>
+		<!-- <property name='LEcreateCmd'/>-->
+		<property name='LEicon'/>
+	</view>
+</templates>
