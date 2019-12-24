@@ -1921,10 +1921,10 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMesh* pMesh
 	std::string shaderId = getNodeUUid(node);
 	frw::Shader shader = GetCachedShader(shaderId);
 
-	if (!forceUpdate && shader.IsValid() && !shader.IsDirty())
+	/*if (!forceUpdate && shader.IsValid() && !shader.IsDirty())
 	{
 		return shader;
-	}
+	}*/
 
 	// register callbacks if one doesn't already exist
 	if (!shader.IsValid())
@@ -1934,6 +1934,9 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMesh* pMesh
 
 	DebugPrint("Parsing shader: %s (forceUpdate=%d, shader.IsDirty()=%d)", shaderId.c_str(), forceUpdate, shader.IsDirty());
 	m->m_pCurrentlyParsedMesh = pMesh;
+
+	auto name = MFnDependencyNode(node).name().asChar();
+	auto name2 = MFnDependencyNode(pMesh->Object()).name().asChar();
 
 	// create now
 	shader = ParseShader(node);
