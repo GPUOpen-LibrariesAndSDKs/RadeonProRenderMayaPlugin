@@ -170,6 +170,7 @@ public:
 
 	int adaptiveTileSize;
 	float adaptiveThreshold;
+	float adaptiveThresholdViewport;
 
 	bool textureCompression;
 

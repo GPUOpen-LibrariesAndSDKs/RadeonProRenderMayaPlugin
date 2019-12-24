@@ -49,7 +49,7 @@ short DependencyNode::getShort(const MString& name, short defaultValue)
 MColor DependencyNode::getColor(const MString& name, MColor defaultValue)
 {
 	MColor color = defaultValue;
-	MPlug plug = m_node.findPlug(name);
+	MPlug plug = m_node.findPlug(name, false);
 
 	if (!plug.isNull())
 	{
@@ -70,7 +70,7 @@ template<typename T>
 T DependencyNode::getValue(const MString& name, T defaultValue)
 {
 	T v = defaultValue;
-	MPlug plug = m_node.findPlug(name);
+	MPlug plug = m_node.findPlug(name, false);
 
 	if (!plug.isNull())
 		plug.getValue(v);

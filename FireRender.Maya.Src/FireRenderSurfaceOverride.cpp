@@ -32,7 +32,7 @@ int FireRenderMaterialNodeOverride::getType() const
 	if (!m_shader.isNull())
 	{
 		MFnDependencyNode shaderNode(m_shader);
-		MPlug plug = shaderNode.findPlug("type");
+		MPlug plug = shaderNode.findPlug("type", false);
 		if (!plug.isNull())
 			plug.getValue(res);
 	}
@@ -208,7 +208,7 @@ MString FireRenderStandardMaterialNodeOverride::fragmentName() const
 }
 
 #define GET_BOOL(_attrib_) \
-	shaderNode.findPlug(_attrib_).asBool()
+	shaderNode.findPlug(_attrib_, false).asBool()
 
 void FireRenderStandardMaterialNodeOverride::getCustomMappings(MHWRender::MAttributeParameterMappingList& mappings)
 {
@@ -284,7 +284,7 @@ void FireRenderStandardMaterialNodeOverride::updateShader(MHWRender::MShaderInst
 		// value for translucency, automatic mapping stops working. And the code below makes material black instead
 		// of fully translucent, i.e. it seems blending is not set correctly.
 		float transp = 0.5f;
-		shaderNode.findPlug("transparencyLevel").getValue(transp);
+		shaderNode.findPlug("transparencyLevel", false).getValue(transp);
 		float tr[3];
 		tr[0] = tr[1] = tr[2] = transp;
 
@@ -324,7 +324,7 @@ void FireRenderStandardMaterialNodeOverride::updateShader(MHWRender::MShaderInst
 		if (fResolvedParamName.length() > 0)
 		{
 			float rr = 0.5f;
-			shaderNode.findPlug("reflectRoughness").getValue(rr);
+			shaderNode.findPlug("reflectRoughness", false).getValue(rr);
 
 			shader.setParameter(fResolvedParamName, rr);
 		}

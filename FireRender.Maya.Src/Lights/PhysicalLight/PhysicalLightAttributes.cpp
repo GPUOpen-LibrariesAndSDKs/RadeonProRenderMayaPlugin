@@ -141,7 +141,7 @@ void PhysicalLightAttributes::CreateIntensityAttributes()
 {
 	float maxVal = 100;
 
-	CreateFloatAttribute(lightIntensity, "lightIntensity", "li", 0.0f, maxVal, 1.0f);
+	CreateFloatAttribute(lightIntensity, "intensity", "li", 0.0f, maxVal, 1.0f);
 
 	CreateIntAttribute(intensityUnits, "intensityUnits", "iu", 0, 3, PLTIUWatts);
 
@@ -150,7 +150,7 @@ void PhysicalLightAttributes::CreateIntensityAttributes()
 	std::vector<const char*> colorValues = { "Color", "Temperature" };
 	CreateEnumAttribute(colorMode, "colorMode", "cm", colorValues, PLCColor);
 
-	CreateColor(colorPicker, "colorPicker", "cp");
+	CreateColor(colorPicker, "color", "cp");
 
 	CreateFloatAttribute(temperature, "temperature", "t", 0.0f, 40000.0f, 6500.0f);
 

@@ -25,8 +25,8 @@ MObject	FireRenderIESLightLocator::aIntensity;
 MObject	FireRenderIESLightLocator::aDisplay;
 MObject FireRenderIESLightLocator::aMeshRepresentationUpdated;
 MTypeId FireRenderIESLightLocator::id(FireMaya::TypeId::FireRenderIESLightLocator);
-
-MString FireRenderIESLightLocator::drawDbClassification("drawdb/geometry/FireRenderIESLightLocator");
+MString FireRenderIESLightLocator::drawDbClassification("light:drawdb/light/directionalLight:drawdb/geometry/FireRenderIESLightLocator");
+MString FireRenderIESLightLocator::drawDbGeomClassification("drawdb/geometry/FireRenderIESLightLocator");
 MString FireRenderIESLightLocator::drawRegistrantId("FireRenderIESLightNode");
 
 MStatus FireRenderIESLightLocator::compute(const MPlug& plug, MDataBlock& data)

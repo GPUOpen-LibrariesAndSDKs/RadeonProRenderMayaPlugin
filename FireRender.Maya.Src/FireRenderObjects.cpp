@@ -2498,14 +2498,14 @@ struct CurvesBatchData
 		, m_numPointsPerSegment()
 		, m_radiuses() // In RPR we set 2 widths per segment (segment is 4 points)
 		, m_uvCoord() // RPR accepts only one UV pair per curve
-		, m_pointCount(splineIt.vertexCount())
+		, m_pointCount(0) // splineIt.vertexCount() returns wrong number - it returns number of vertexes used, not size of vertex array, which is different number when density mask is used
 		, m_points(splineIt.positions(0))
 	{
 		const unsigned int  curveCount = splineIt.primitiveCount();
 
-		m_indicesData.reserve(m_pointCount*2);
+		m_indicesData.reserve(splineIt.vertexCount() *2);
 		m_numPointsPerSegment.reserve(curveCount);
-		m_radiuses.reserve(m_pointCount); // array of N float. If curve is not tapered, N = curveCount. If curve is tapered, N = 2*(number of segments)
+		m_radiuses.reserve(splineIt.vertexCount()); // array of N float. If curve is not tapered, N = curveCount. If curve is tapered, N = 2*(number of segments)
 		m_uvCoord.reserve(2 * curveCount);
 	}
 
@@ -2548,6 +2548,14 @@ frw::Curve ProcessCurvesBatch(const XGenSplineAPI::XgItSpline& splineIt, frw::Co
 
 		// Hair segments radiuses
 		ProcessHairWidth(batchData.m_radiuses, splineIt.width(), curveIndicesData);
+	}
+
+	// find size of points array 
+	// splineIt.vertexCount() returns wrong number - it returns number of vertexes used, not size of vertex array, which is different number when density mask is used
+	if (!batchData.m_indicesData.empty())
+	{
+		auto maxIndexElement = std::max_element(batchData.m_indicesData.begin(), batchData.m_indicesData.end());
+		batchData.m_pointCount = *maxIndexElement + 1;
 	}
 
 	// create RPR curve (create batch of hairs)

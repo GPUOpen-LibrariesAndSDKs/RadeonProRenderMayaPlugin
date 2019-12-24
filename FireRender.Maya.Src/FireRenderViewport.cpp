@@ -159,7 +159,15 @@ MStatus FireRenderViewport::doSetup()
 	if (status != MStatus::kSuccess)
 		return status;
 
-	FireRenderThread::RunItemsQueuedForTheMainThread();
+	// Force update viewport only if no production is running
+	// TODO: Use different threads for different tasks, so this check would be unneccessary
+	int isProductionRunning = 1;
+	MGlobal::executeCommand("fireRender -isProductionRunning", isProductionRunning);
+	if (0 == isProductionRunning)
+	{
+		FireRenderThread::RunItemsQueuedForTheMainThread();
+	}
+
 	// Check for errors again - the render thread may have
 	// encountered an error since the start of this method.
 	if (m_error.check())

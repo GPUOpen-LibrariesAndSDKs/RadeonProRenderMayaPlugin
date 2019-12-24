@@ -1,11 +1,3 @@
-global proc FinalRender_onTileRenderChanged()
-{
-    $enabled = `getAttr RadeonProRenderGlobals.tileRenderEnabled`;
-
-    attrControlGrp -e -en $enabled tileRenderX;
-    attrControlGrp -e -en $enabled tileRenderY;
-}
-
 global proc onSystemPreferencesModeChanged()
 {
     if (`menuItem -q -label RPR_FinalRenderRM` == `optionMenuGrp -q -v RPR_SystemTabRM`)
@@ -131,27 +123,6 @@ global proc createFinalRenderPart()
         -attribute "RadeonProRenderGlobals.samplesPerUpdate"
     ;
 
-    separator -height 5;
-
-    attrControlGrp
-    	-label "Tile Render Enabled"
-		-attribute "RadeonProRenderGlobals.tileRenderEnabled"
-        -cc FinalRender_onTileRenderChanged
-        tileRenderEnabled
-	;  
-
-    attrControlGrp
-    	-label "Tile X"
-		-attribute "RadeonProRenderGlobals.tileRenderX"
-        tileRenderX
-	;
-
-    attrControlGrp
-    	-label "Tile Y"
-		-attribute "RadeonProRenderGlobals.tileRenderY"
-        tileRenderY
-	;
-
     if (isMPSOptionNeeded())
     {
         separator -height 10;
@@ -160,8 +131,6 @@ global proc createFinalRenderPart()
             -label "Use Metal Performance Shaders"
             -attribute "RadeonProRenderGlobals.useMPS";
     }
-
-    FinalRender_onTileRenderChanged();
 
     setParent ..;
     setParent ..;

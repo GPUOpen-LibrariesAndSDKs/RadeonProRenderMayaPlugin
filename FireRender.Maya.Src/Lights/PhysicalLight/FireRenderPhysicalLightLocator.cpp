@@ -14,7 +14,8 @@
 #include "FireMaya.h"
 
 MTypeId FireRenderPhysicalLightLocator::id(FireMaya::TypeId::FireRenderPhysicalLightLocator);
-MString FireRenderPhysicalLightLocator::drawDbClassification("drawdb/geometry/FireRenderPhysicalLightLocator");
+MString FireRenderPhysicalLightLocator::drawDbClassification("light:drawdb/light/directionalLight:drawdb/geometry/FireRenderPhysicalLightLocator");
+MString FireRenderPhysicalLightLocator::drawDbGeomClassification("drawdb/geometry/FireRenderPhysicalLightLocator");
 MString FireRenderPhysicalLightLocator::drawRegistrantId("FireRenderPhysicalLightNode");
 
 FireRenderPhysicalLightLocator::FireRenderPhysicalLightLocator() :
@@ -171,14 +172,14 @@ void FireRenderPhysicalLightLocator::MakeSelectedMeshAsLight()
 
 			MFnMesh meshNode(shapeObject);
 
-			MPlug plugMeshVisibility = meshNode.findPlug("visibility");
+			MPlug plugMeshVisibility = meshNode.findPlug("visibility", false);
 			if (!plugMeshVisibility.isNull())
 			{
 				plugMeshVisibility.setBool(false);
 			}
 
 			MFnDependencyNode thisDepNode(nodeObject);
-			MPlug plug = thisDepNode.findPlug(PhysicalLightAttributes::areaLightMeshSelectedName);
+			MPlug plug = thisDepNode.findPlug(PhysicalLightAttributes::areaLightMeshSelectedName, false);
 
 			assert(!plug.isNull());
 

@@ -31,6 +31,7 @@
     <SuppressIces>ICE91;ICE64;ICE38</SuppressIces>
     <DefineConstants>
       Artefacts=$(SolutionDir)system\$(Name)\InputData\feature_Core;
+      ConvScripts=$(SolutionDir)system\$(Name)\InputData\feature_ConvScripts;
       Modules=.\Modules;
       Plugin2019=$(SolutionDir)system\$(Name)\InputData\feature_2019;
       Plugin2017=$(SolutionDir)system\$(Name)\InputData\feature_2017;
@@ -60,6 +61,7 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
     <Compile Include="Generated\Plugin2017.wxs" />
     <Compile Include="Generated\Plugin2018.wxs" />
     <Compile Include="Generated\Plugin2019.wxs" />
+    <Compile Include="Generated\ConvScripts.wxs" />
     <Compile Include="Wix files\CheckHardwareDlg.wxs" />
     <Compile Include="Wix files\PluginFinishDlg.wxs" />
     <Compile Include="Wix files\PluginWelcomeDlg.wxs" />
@@ -118,6 +120,8 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
       "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_2017" -cg CG_2017 -ag -scom -sreg -sfrag -srd -dr DR_PLUGINS -var var.Plugin2017 -out "$(ProjectDir)Generated\Plugin2017.wxs"
       "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_2018" -cg CG_2018 -ag -scom -sreg -sfrag -srd -dr DR_PLUGINS -var var.Plugin2018 -out "$(ProjectDir)Generated\Plugin2018.wxs"
       "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_2019" -cg CG_2019 -ag -scom -sreg -sfrag -srd -dr DR_PLUGINS -var var.Plugin2019 -out "$(ProjectDir)Generated\Plugin2019.wxs"
+
+      "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_ConvScripts" -cg CG_SCENE_CONV -ag -scom -sreg -sfrag -srd -dr DR_SCRIPTS_FIRE_RENDER -var var.ConvScripts -out "$(ProjectDir)Generated\ConvScripts.wxs"
 
 <!--
 EXCLUDE MATERIAL LIBRARY FROM INSTALLER

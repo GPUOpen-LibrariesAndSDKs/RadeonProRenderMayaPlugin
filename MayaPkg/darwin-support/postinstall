@@ -47,6 +47,8 @@ copyShelfForUser() {
         shelfDir=`printf "/Users/%s/Library/Preferences/Autodesk/maya/%s/prefs/shelves/" ${1} ${version}`
         if [ -d ${shelfDir} ];
         then
+            cp -R "/Users/Shared/RadeonProRender/Maya/plugin/shelves/" ${shelfDir}
+
             targetDir=`printf "/Applications/Autodesk/maya%s/Maya.app/Contents/bin" ${version}`
             installBoto3ForMaya ${targetDir}
         else

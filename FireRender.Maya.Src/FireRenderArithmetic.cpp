@@ -82,13 +82,13 @@ void* FireMaya::Arithmetic::creator()
 	return new Arithmetic;
 }
 
-frw::Value FireMaya::Arithmetic::GetValue(Scope& scope)
+frw::Value FireMaya::Arithmetic::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 
 	frw::Operator op = frw::OperatorAdd;
 
-	MPlug plug = shaderNode.findPlug(Attribute::operation);
+	MPlug plug = shaderNode.findPlug(Attribute::operation, false);
 	if (!plug.isNull())
 	{
 		int n = 0;
@@ -96,8 +96,8 @@ frw::Value FireMaya::Arithmetic::GetValue(Scope& scope)
 			op = static_cast<frw::Operator>(n);
 	}
 
-	auto a = scope.GetValue(shaderNode.findPlug(Attribute::inputA));
-	auto b = scope.GetValue(shaderNode.findPlug(Attribute::inputB));
+	auto a = scope.GetValue(shaderNode.findPlug(Attribute::inputA, false));
+	auto b = scope.GetValue(shaderNode.findPlug(Attribute::inputB, false));
 
 	frw::ArithmeticNode valueNode(scope.MaterialSystem(), op, a, b);
 

@@ -99,6 +99,7 @@ public:
     static void createFinalRenderAttributes();
 	static void createViewportAttributes();
 	static void createCompletionCriteriaAttributes();
+	static void createTileRenderAttributes();
 
 	static MObject createRenderModeAttr(const char* attrName, const char* attrNameShort, MFnEnumAttribute& eAttr);
 

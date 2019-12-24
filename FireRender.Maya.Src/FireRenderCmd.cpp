@@ -73,6 +73,7 @@ MSyntax FireRenderCmd::newSyntax()
 	CHECK_MSTATUS(syntax.addFlag(kStopFlag, kStopFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kRegionFlag, kRegionFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kIsRunningFlag, kIsRunningFlagLong, MSyntax::kNoArg));
+	CHECK_MSTATUS(syntax.addFlag(kProductionIsRunningFlag, kProductionIsRunningFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kBatchFlag, kBatchFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kFilenameFlag, kFilenameFlagLong, MSyntax::kString));
 	CHECK_MSTATUS(syntax.addFlag(kDebugTraceFlag, kDebugTraceFlagLong, MSyntax::kBoolean));
@@ -138,6 +139,13 @@ void FireRenderCmd::cleanUp()
 // -----------------------------------------------------------------------------
 MStatus FireRenderCmd::renderFrame(const MArgDatabase& argData)
 {
+	// Query production is running
+	if (argData.isFlagSet(kProductionIsRunningFlag))
+	{
+		setResult(s_production != nullptr && s_production->isRunning());
+		return MStatus::kSuccess;
+	}
+
 	// Only allow one render to be active at a time.
 	if (s_rendering)
 		return MS::kSuccess;
@@ -348,6 +356,7 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		aovs.applyToContext(context);
 
 		// Initialize the scene.
+		context.SetRenderType(RenderType::ProductionRender);
 		context.buildScene();
 		context.updateLimitsFromGlobalData(globals, false, true);
 		context.ContextSetResolution(settings.width, settings.height, true);
@@ -365,6 +374,13 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		RenderRegion region(0, settings.width - 1, settings.height - 1, 0);
 		aovs.setRegion(region, settings.width, settings.height);
 		aovs.allocatePixels();
+
+		// Setup render stamp
+		if (globals.useRenderStamp)
+		{
+			MString renderStamp = globals.renderStampText;
+			aovs.setRenderStamp(renderStamp);
+		}
 
 		// Get the list of cameras to render frames for.
 		MDagPathArray renderableCameras = getRenderableCameras();
