@@ -681,7 +681,7 @@ namespace frw
 		Node(const MaterialSystem& ms, int type, bool destroyOnDelete = true, Data* data = nullptr);	// not typesafe
 
 		bool SetValue(const char* key, const Value& v);
-		bool SetValue(rpr_material_node_input key, const Value& v);
+		bool SetValueInt(rpr_material_node_input key, const Value& v);
 
 		bool SetValueInt(const char* key, int);
 		bool SetValueInt(rpr_material_node_input key, rpr_uint value);
@@ -3514,7 +3514,7 @@ namespace frw
 		return false;
 	}
 
-	inline bool Node::SetValue(rpr_material_node_input key, const Value& v)
+	inline bool Node::SetValueInt(rpr_material_node_input key, const Value& v)
 	{
 		switch (v.type)
 		{
