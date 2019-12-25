@@ -2,6 +2,7 @@
 #include "FireMaya.h"
 #include "FireRenderObjects.h"
 #include "maya/MFnTransform.h"
+#include "maya/MFnMatrixData.h"
 #include "Context/FireRenderContext.h"
 
 MayaStandardNodeConverters::ProjectionNodeConverter::ProjectionNodeConverter(const ConverterParams& params) : BaseConverter(params)
@@ -11,10 +12,17 @@ MayaStandardNodeConverters::ProjectionNodeConverter::ProjectionNodeConverter(con
 frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::Convert() const
 {
 	ProjectionType projectionType = static_cast<ProjectionType>(m_params.scope.GetValueWithCheck(m_params.shaderNode, "projType").GetInt());
-	frw::Value image = m_params.scope.GetValueWithCheck(m_params.shaderNode, "image");
 	frw::Value transparency = m_params.scope.GetValueWithCheck(m_params.shaderNode, "transparency");
 	frw::Value uAngle = m_params.scope.GetValueWithCheck(m_params.shaderNode, "uAngle");
 	frw::Value vAngle = m_params.scope.GetValueWithCheck(m_params.shaderNode, "vAngle");
+
+	// We should get exactly frw::Image because it only could be set as map input for ImageNode
+	// In future we should use frw::Value from "image" node input
+	frw::Image imageFromDirectlyConnectedFileNode = GetImageFromConnectedFileNode();
+	if (!imageFromDirectlyConnectedFileNode.IsValid())
+	{
+		return frw::Value();
+	}
 
 	// Create UV node corresponding to projection type
 	std::unique_ptr<frw::BaseUVNode> proceduralUVResult = CreateUVNode(projectionType);
@@ -35,9 +43,24 @@ frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::Convert() const
 	}
 	else
 	{
-		requiredRotation = GetMeshRotation(projectionType);
-		requiredOrigin = GetMeshOrigin(projectionType);
-		requiredScale = GetMeshScale(projectionType);
+		MPlug placementMatrixPlug = m_params.shaderNode.findPlug("placementMatrix");
+		MTransformationMatrix placementMatrix = MFnMatrixData(placementMatrixPlug.asMObject()).transformation();
+
+		// Retrieve full matrix to get rotation
+		float matrix[4][4];
+		placementMatrix.asMatrix().get(matrix);
+
+		// Get translation
+		MVector translation = placementMatrix.getTranslation(MSpace::kTransform);
+
+		// Get scale
+		double scale[3];
+		placementMatrix.getScale(scale, MSpace::kTransform);
+
+		// Apply data
+		requiredRotation = {{ matrix[2][0], matrix[2][1], matrix[2][2], matrix[2][3] }, { matrix[0][0], matrix[0][1], matrix[0][2], matrix[0][3] }};
+		requiredOrigin = { -translation.x / (100.f * scale[0]), -translation.y / (100.f * scale[1]), -translation.z / (100.f * scale[2]) };
+		requiredScale = { scale[0] * 50.f, scale[1] * 50.f, scale[2] * 50.f };
 	}
 
 	// Apply data to core node
@@ -46,60 +69,11 @@ frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::Convert() const
 	proceduralUVResult->SetInputZAxis(requiredRotation.first);
 	proceduralUVResult->SetInputXAxis(requiredRotation.second);
 
-	MString tempPath = L"C:/Users/Aleksandr/Pictures/CheckerTexture.png";
-	frw::Image tempImage = m_params.scope.GetImage(tempPath, "sRGB", m_params.shaderNode.name());
-
 	frw::ImageNode imageNode(m_params.scope.MaterialSystem());
 	imageNode.SetValue("uv", *proceduralUVResult);
-	imageNode.SetMap(tempImage);
+	imageNode.SetMap(imageFromDirectlyConnectedFileNode);
 
 	return imageNode;
-}
-
-frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::GetMeshOrigin(ProjectionType projectionType) const
-{
-	if (projectionType == ProjectionType::TriPlanar)
-	{
-		const FireRenderMesh* mesh = m_params.scope.GetCurrentlyParsedMesh();
-		MObject parent = MFnDagNode(mesh->Object()).parent(0);
-		MFnTransform transform(parent);
-		MVector translation = transform.translation(MSpace::kTransform);
-		return { -translation.x / 100, -translation.y / 100, -translation.z / 100 };
-	}
-	else
-	{
-		return { 0.f, 0.f, 0.f };
-	}
-}
-
-frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::GetMeshScale(ProjectionType projectionType) const
-{
-	if (projectionType == ProjectionType::TriPlanar)
-	{
-		return { 50.f, 50.f, 50.f };
-	}
-	else
-	{
-		return { 50.f, 50.f, 50.f };
-	}
-}
-
-std::pair<frw::Value, frw::Value> MayaStandardNodeConverters::ProjectionNodeConverter::GetMeshRotation(ProjectionType projectionType) const
-{
-	if (projectionType == ProjectionType::TriPlanar)
-	{
-		return {
-			{ 0.f, 0.f, 1.f, 0.f },
-			{ 1.f, 0.f, 0.f, 0.f }
-		};
-	}
-	else
-	{
-		return {
-			{ 0.f, 0.f, 1.f, 0.f },
-			{ 1.f, 0.f, 0.f, 0.f }
-		};
-	}
 }
 
 frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::GetCameraOrigin(ProjectionType projectionType) const
@@ -113,7 +87,7 @@ frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::GetCameraOrigin(
 	MFnTransform cameraTransform(transformNode);
 
 	MVector translationData = cameraTransform.getTranslation(MSpace::kTransform);
-	return { translationData.x, translationData.y, translationData.z };
+	return { translationData.x / 100.f, translationData.y / 100.f, translationData.z / 100.f };
 }
 
 frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::GetCameraScale(ProjectionType projectionType) const
@@ -128,7 +102,7 @@ frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::GetCameraScale(P
 
 	double scaleData[3];
 	cameraTransform.getScale(scaleData);
-	return { scaleData[0], scaleData[1], scaleData[2] };
+	return { 50, 50, 50 };
 }
 
 std::pair<frw::Value, frw::Value> MayaStandardNodeConverters::ProjectionNodeConverter::GetCameraRotation(ProjectionType projectionType) const
@@ -189,4 +163,41 @@ std::unique_ptr<frw::BaseUVNode> MayaStandardNodeConverters::ProjectionNodeConve
 	}
 
 	return nullptr;
+}
+
+frw::Image MayaStandardNodeConverters::ProjectionNodeConverter::GetImageFromConnectedFileNode() const
+{
+	MPlug bumpValuePlug = m_params.shaderNode.findPlug("image");
+	MPlugArray connections;
+	bumpValuePlug.connectedTo(connections, true, false);
+
+	if (connections.length() != 1)
+	{
+		return frw::Image();
+	}
+
+	std::vector<MPlug> dest;
+	dest.resize(connections.length());
+	connections.get(dest.data());
+
+	MObject leftConnectedNode = dest.at(0).node();
+
+	if (!leftConnectedNode.hasFn(MFn::kFileTexture))
+	{
+		return frw::Image();
+	}
+
+	MFnDependencyNode fileTextureNode(leftConnectedNode);
+
+	MPlug texturePlug = fileTextureNode.findPlug("computedFileTextureNamePattern");
+	MString texturePath = texturePlug.asString();
+
+	MPlug colorSpacePlug = fileTextureNode.findPlug("colorSpace");
+	MString colorSpace;
+	if (!colorSpacePlug.isNull())
+	{
+		colorSpace = colorSpacePlug.asString();
+	}
+
+	return m_params.scope.GetImage(texturePath, colorSpace, fileTextureNode.name());
 }
