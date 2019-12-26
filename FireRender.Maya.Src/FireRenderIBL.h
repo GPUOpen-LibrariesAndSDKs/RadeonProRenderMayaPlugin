@@ -64,6 +64,7 @@ public:
 	static MObject	aFlipIBL;
 	static MObject  IBLSelectingPortalMesh;
 	static MObject aPortalHolder;
+	static MObject aColor;
 
 public:
 	static  MTypeId id;
