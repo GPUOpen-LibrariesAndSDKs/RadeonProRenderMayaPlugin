@@ -14,14 +14,17 @@
 #include <maya/MAnimControl.h>
 #include <maya/MRenderUtil.h>
 #include <maya/MCommonRenderSettingsData.h>
+#include <maya/MFnRenderLayer.h>
 
 #include <fstream>
+#include <regex>
 
 #ifdef __linux__
 	#include <../RprLoadStore.h>
 #else
 	#include <../inc/RprLoadStore.h>
 #endif
+#include <iomanip>
 
 FireRenderExportCmd::FireRenderExportCmd()
 {
@@ -167,25 +170,19 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		}
 
 		// process file path
-		MString name;
-		MString ext;
+		MString fileName;
+		MString fileExtension = "rpr";
 
-		int pos = filePath.rindexW(L".");
-		if (pos == -1)
+		// Remove extension from file name, because it would be added later
+		int fileExtensionIndex = filePath.rindexW("." + fileExtension);
+		bool fileExtensionNotProvided = fileExtensionIndex == -1;
+		if (fileExtensionNotProvided)
 		{
-			name = filePath;
-			ext = ".rpr";
+			fileName = filePath;
 		}
 		else
 		{
-			name = filePath.substringW(0, pos - 1);
-			ext = filePath.substringW(pos, filePath.length() - 1);
-
-			if (ext != ".rpr")
-			{
-				name += ext;
-				ext = ".rpr";
-			}
+			fileName = filePath.substringW(0, fileExtensionIndex - 1);
 		}
 
 		// process each frame
@@ -205,14 +202,27 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			MString newFilePath;
 			if (isSequenceExportEnabled)
 			{
-				newFilePath = name;
-				newFilePath += "_";
-				newFilePath += frame;
-				newFilePath += ext;
+				std::regex name_regex("\%s");
+				std::regex frame_regex("\%([0-9]|10)n");
+				std::regex extension_regex("\%e");
+
+				std::string pattern = settings.namePattern.asChar();
+
+				// Replace extension at first, because it shouldn't match name_regex or frame_regex for given .rpr format
+				std::string result = std::regex_replace(pattern, extension_regex, fileExtension.asChar());
+
+				std::stringstream frameStream;
+				frameStream << std::setfill('0') << std::setw(settings.framePadding) << frame;
+				result = std::regex_replace(result, frame_regex, frameStream.str().c_str());
+
+				// Replace name after all operations, because it could match frame or extension regex
+				result = std::regex_replace(result, name_regex, fileName.asChar());
+
+				newFilePath = result.c_str();
 			}
 			else
 			{
-				newFilePath = filePath;
+				newFilePath = fileName + "." + fileExtension;
 			}
 
 			unsigned int exportFlags = 0;
@@ -247,10 +257,10 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			#endif
 
 			// launch export
-			rpr_int statuExport = rprsExport(newFilePath.asChar(), context.context(), context.scene(),
+			rpr_int statusExport = rprsExport(newFilePath.asChar(), context.context(), context.scene(),
 				0, 0, 0, 0, 0, 0, exportFlags);
 
-			if (statuExport != RPR_SUCCESS)
+			if (statusExport != RPR_SUCCESS)
 			{
 				MGlobal::displayError("Unable to export fire render scene\n");
 				return MS::kFailure;
