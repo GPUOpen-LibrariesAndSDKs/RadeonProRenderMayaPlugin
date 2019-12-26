@@ -23,6 +23,7 @@ MObject	FireRenderIBL::aDisplay;
 MObject	FireRenderIBL::aFlipIBL;
 MObject FireRenderIBL::IBLSelectingPortalMesh;
 MObject FireRenderIBL::aPortalHolder;
+MObject FireRenderIBL::aColor;
 
 MTypeId FireRenderIBL::id(FireMaya::TypeId::FireRenderIBL);
 
@@ -98,11 +99,30 @@ MStatus FireRenderIBL::initialize()
 	nAttr.setReadable(true);
 	nAttr.setWritable(true);
 
-	addAttribute(aFilePath);
-	addAttribute(aIntensity);
-	addAttribute(aDisplay);
-	addAttribute(IBLSelectingPortalMesh);
-	addAttribute(aFlipIBL);
+	aColor = nAttr.createColor("color", "fc");
+	nAttr.setDefault(1.0f, 1.0f, 1.0f);
+	nAttr.setKeyable(true);
+	nAttr.setStorable(true);
+	nAttr.setReadable(true);
+	nAttr.setWritable(true);
+
+	MStatus status = addAttribute(aFilePath);
+	assert(status == MStatus::kSuccess);
+
+	status = addAttribute(aIntensity);
+	assert(status == MStatus::kSuccess);
+
+	status = addAttribute(aDisplay);
+	assert(status == MStatus::kSuccess);
+
+	status = addAttribute(IBLSelectingPortalMesh);
+	assert(status == MStatus::kSuccess);
+
+	status = addAttribute(aFlipIBL);
+	assert(status == MStatus::kSuccess);
+
+	status = addAttribute(aColor);
+	assert(status == MStatus::kSuccess);
 
 	return MS::kSuccess;
 }
