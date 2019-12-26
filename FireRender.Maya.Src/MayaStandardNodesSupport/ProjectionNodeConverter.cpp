@@ -32,42 +32,21 @@ frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::Convert() const
 	}
 
 	// Retrieve mesh or camera transform data
-	std::pair<frw::Value, frw::Value> requiredRotation;
-	frw::Value requiredOrigin;
-	frw::Value requiredScale;
+	MayaStandardNodeConverters::ProjectionNodeConverter::TransformInfo transformInfo;
 	if (projectionType == ProjectionType::Perspective)
 	{
-		requiredRotation = GetCameraRotation(projectionType);
-		requiredOrigin = GetCameraOrigin(projectionType);
-		requiredScale = GetCameraScale(projectionType);
+		transformInfo = GetCameraTransform();
 	}
 	else
 	{
-		MPlug placementMatrixPlug = m_params.shaderNode.findPlug("placementMatrix");
-		MTransformationMatrix placementMatrix = MFnMatrixData(placementMatrixPlug.asMObject()).transformation();
-
-		// Retrieve full matrix to get rotation
-		float matrix[4][4];
-		placementMatrix.asMatrix().get(matrix);
-
-		// Get translation
-		MVector translation = placementMatrix.getTranslation(MSpace::kTransform);
-
-		// Get scale
-		double scale[3];
-		placementMatrix.getScale(scale, MSpace::kTransform);
-
-		// Apply data
-		requiredRotation = {{ matrix[2][0], matrix[2][1], matrix[2][2], matrix[2][3] }, { matrix[0][0], matrix[0][1], matrix[0][2], matrix[0][3] }};
-		requiredOrigin = { -translation.x / (100.f * scale[0]), -translation.y / (100.f * scale[1]), -translation.z / (100.f * scale[2]) };
-		requiredScale = { scale[0] * 50.f, scale[1] * 50.f, scale[2] * 50.f };
+		transformInfo = GetPlaceTextureTransfrom();
 	}
 
 	// Apply data to core node
-	proceduralUVResult->SetOrigin(requiredOrigin);
-	proceduralUVResult->SetInputUVScale(requiredScale);
-	proceduralUVResult->SetInputZAxis(requiredRotation.first);
-	proceduralUVResult->SetInputXAxis(requiredRotation.second);
+	proceduralUVResult->SetOrigin(transformInfo.origin);
+	proceduralUVResult->SetInputUVScale(transformInfo.scale);
+	proceduralUVResult->SetInputXAxis(transformInfo.rotationX);
+	proceduralUVResult->SetInputZAxis(transformInfo.rotationZ);
 
 	frw::ImageNode imageNode(m_params.scope.MaterialSystem());
 	imageNode.SetValue("uv", *proceduralUVResult);
@@ -76,7 +55,7 @@ frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::Convert() const
 	return imageNode;
 }
 
-frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::GetCameraOrigin(ProjectionType projectionType) const
+MayaStandardNodeConverters::ProjectionNodeConverter::TransformInfo MayaStandardNodeConverters::ProjectionNodeConverter::GetCameraTransform() const
 {
 	const IFireRenderContextInfo* contextInfo = m_params.scope.GetContextInfo();
 	const FireRenderContext* context = dynamic_cast<const FireRenderContext*>(contextInfo);
@@ -86,45 +65,47 @@ frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::GetCameraOrigin(
 	MObject transformNode = cameraDAGNode.parent(0);
 	MFnTransform cameraTransform(transformNode);
 
-	MVector translationData = cameraTransform.getTranslation(MSpace::kTransform);
-	return { translationData.x / 100.f, translationData.y / 100.f, translationData.z / 100.f };
-}
-
-frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::GetCameraScale(ProjectionType projectionType) const
-{
-	const IFireRenderContextInfo* contextInfo = m_params.scope.GetContextInfo();
-	const FireRenderContext* context = dynamic_cast<const FireRenderContext*>(contextInfo);
-	const FireRenderCamera& camera = context->camera();
-
-	MFnDagNode cameraDAGNode(camera.Object());
-	MObject transformNode = cameraDAGNode.parent(0);
-	MFnTransform cameraTransform(transformNode);
-
-	double scaleData[3];
-	cameraTransform.getScale(scaleData);
-	return { 50, 50, 50 };
-}
-
-std::pair<frw::Value, frw::Value> MayaStandardNodeConverters::ProjectionNodeConverter::GetCameraRotation(ProjectionType projectionType) const
-{
-	const IFireRenderContextInfo* contextInfo = m_params.scope.GetContextInfo();
-	const FireRenderContext* context = dynamic_cast<const FireRenderContext*>(contextInfo);
-	const FireRenderCamera& camera = context->camera();
-
-	MFnDagNode cameraDAGNode(camera.Object());
-	MObject transformNode = cameraDAGNode.parent(0);
-	MFnTransform cameraTransform(transformNode);
-
-	bool isValid = transformNode.hasFn(MFn::kTransform);
-	bool isValid2 = camera.Object().hasFn(MFn::kTransform);
-
+	// Retrieve full matrix to get rotation
 	MMatrix transformMatrix = cameraTransform.transformationMatrix();
-	double transformData[4][4];
-	transformMatrix.get(transformData);
+	double matrix[4][4];
+	transformMatrix.transpose().get(matrix);
 
-	return {
-		{ transformData[2][0], transformData[2][1], transformData[2][2], transformData[2][3] },
-		{ transformData[0][0], transformData[0][1], transformData[0][2], transformData[0][3] }
+	// Get translation
+	MVector translation = cameraTransform.getTranslation(MSpace::kTransform);
+
+	// Get scale
+	double scale[3];
+	cameraTransform.getScale(scale);
+
+	return TransformInfo{
+		{ translation.x / (100.f * scale[0]), translation.y / (100.f * scale[1]), translation.z / (100.f * scale[2]) },
+		{ matrix[0][0], matrix[1][0], matrix[2][0], matrix[3][0] },
+		{ matrix[0][2], matrix[1][2], matrix[2][2], matrix[3][2] },
+		{ scale[0] * 50.f, scale[1] * 50.f, scale[2] * 50.f }
+	};
+}
+
+MayaStandardNodeConverters::ProjectionNodeConverter::TransformInfo MayaStandardNodeConverters::ProjectionNodeConverter::GetPlaceTextureTransfrom() const
+{
+	MPlug placementMatrixPlug = m_params.shaderNode.findPlug("placementMatrix");
+	MTransformationMatrix placementMatrix = MFnMatrixData(placementMatrixPlug.asMObject()).transformation();
+
+	// Retrieve full matrix to get rotation
+	float matrix[4][4];
+	placementMatrix.asMatrix().get(matrix);
+
+	// Get translation
+	MVector translation = placementMatrix.getTranslation(MSpace::kTransform);
+
+	// Get scale
+	double scale[3];
+	placementMatrix.getScale(scale, MSpace::kTransform);
+
+	return TransformInfo{
+		{ translation.x / (100.f * scale[0]), translation.y / (100.f * scale[1]), translation.z / (100.f * scale[2]) },
+		{ matrix[0][0], matrix[1][0], matrix[2][0], matrix[3][0] },
+		{ matrix[0][2], matrix[1][2], matrix[2][2], matrix[3][2] },
+		{ scale[0] * 50.f, scale[1] * 50.f, scale[2] * 50.f }
 	};
 }
 
