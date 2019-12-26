@@ -1759,6 +1759,8 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		MFnDagNode dagNode(node);
 		MDagPath dagPathTmp;
 
+		auto name = dagNode.name().asChar();
+
 		if (isGeometry(node))
 		{
 			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::AddPath>(dagPath);
