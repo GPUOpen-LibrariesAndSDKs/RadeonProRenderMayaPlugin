@@ -387,6 +387,10 @@ namespace FireMaya
 
 			if (node.apiType() == MFn::kAreaLight)
 			{
+				float mayaIntensity = fnLight.intensity(&mstatus);
+				physicalLightData.intensity = -0.000014f * std::pow(mayaIntensity, 3.f) + 0.000977f * std::pow(mayaIntensity, 2.f) + 0.005465f * mayaIntensity + 0.047492f;
+				physicalLightData.resultFrwColor = frw::Value(physicalLightData.colorBase.r, physicalLightData.colorBase.g, physicalLightData.colorBase.b);
+				
 				physicalLightData.lightType = PLTArea;
 				physicalLightData.areaLightShape = PLARectangle;
 			}
