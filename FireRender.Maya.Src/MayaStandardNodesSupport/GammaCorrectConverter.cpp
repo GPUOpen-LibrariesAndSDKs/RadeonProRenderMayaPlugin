@@ -7,5 +7,7 @@ MayaStandardNodeConverters::GammaCorrectConverter::GammaCorrectConverter(const C
 
 frw::Value MayaStandardNodeConverters::GammaCorrectConverter::Convert() const
 {
-	return m_params.scope.createImageFromShaderNodeUsingFileNode(m_params.shaderNode.object(), MString("outValue"));
+	frw::Value inputValue = m_params.scope.GetValueWithCheck(m_params.shaderNode, "value");
+	frw::Value gammaValue = m_params.scope.GetValueWithCheck(m_params.shaderNode, "gamma");
+	return m_params.scope.MaterialSystem().ValuePow(inputValue, 1.0f / gammaValue);
 }
