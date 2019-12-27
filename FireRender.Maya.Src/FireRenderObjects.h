@@ -312,17 +312,19 @@ public:
 
 	void AddMeshDependencyOnOtherObjectsCallback(MObject dependency)
 	{
-		m_MeshDependenciesOnOtherObjectsCallbacks.push_back(MNodeMessage::addNodeDirtyCallback(dependency, NodeDirtyCallback, this));
+		m_MeshDependenciesOnOtherObjectsCallbacks.push_back(MNodeMessage::addNodeDirtyCallback(dependency, ShaderDirtyCallback, this));
 	}
 
-	void ClearMeshDependenciesOnOtherObjectsCallbacks()
+	bool ClearMeshDependenciesOnOtherObjectsCallbacks()
 	{
+		bool wasDependOnOtherObject = !m_MeshDependenciesOnOtherObjectsCallbacks.empty();
 		for (MCallbackId callback : m_MeshDependenciesOnOtherObjectsCallbacks)
 		{
 			MNodeMessage::removeCallback(callback);
 		}
-
 		m_MeshDependenciesOnOtherObjectsCallbacks.clear();
+
+		return wasDependOnOtherObject;
 	}
 
 protected:

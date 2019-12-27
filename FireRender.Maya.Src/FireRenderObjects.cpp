@@ -1022,13 +1022,13 @@ void FireRenderMesh::ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngine
 	MFnDependencyNode nodeFn(Object());
 
 	// Shader on self creation would add neccessary callbacks
-	ClearMeshDependenciesOnOtherObjectsCallbacks();
+	bool wasDependOnOtherObject = ClearMeshDependenciesOnOtherObjectsCallbacks();
 
 	for (int i = 0; i < m.elements.size(); i++)
 	{
 		auto& element = m.elements[i];
 		element.shadingEngine = shadingEngines[i];
-		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this);
+		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this, wasDependOnOtherObject);
 		element.volumeShader = context->GetVolumeShader(getVolumeShader(element.shadingEngine));
 
 		setupDisplacement(element.shadingEngine, element.shape);
