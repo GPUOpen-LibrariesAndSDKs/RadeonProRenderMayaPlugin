@@ -1935,9 +1935,6 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMesh* pMesh
 	DebugPrint("Parsing shader: %s (forceUpdate=%d, shader.IsDirty()=%d)", shaderId.c_str(), forceUpdate, shader.IsDirty());
 	m->m_pCurrentlyParsedMesh = pMesh;
 
-	auto name = MFnDependencyNode(node).name().asChar();
-	auto name2 = MFnDependencyNode(pMesh->Object()).name().asChar();
-
 	// create now
 	shader = ParseShader(node);
 	if (shader.IsValid())
