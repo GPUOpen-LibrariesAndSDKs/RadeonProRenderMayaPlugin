@@ -310,6 +310,21 @@ public:
 
 	unsigned int GetAssignedUVMapIdx(const MString& textureFile) const;
 
+	void AddMeshDependencyOnOtherObjectsCallback(MObject dependency)
+	{
+		m_MeshDependenciesOnOtherObjectsCallbacks.push_back(MNodeMessage::addNodeDirtyCallback(dependency, NodeDirtyCallback, this));
+	}
+
+	void ClearMeshDependenciesOnOtherObjectsCallbacks()
+	{
+		for (MCallbackId callback : m_MeshDependenciesOnOtherObjectsCallbacks)
+		{
+			MNodeMessage::removeCallback(callback);
+		}
+
+		m_MeshDependenciesOnOtherObjectsCallbacks.clear();
+	}
+
 protected:
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;
 	virtual MMatrix GetSelfTransform();
@@ -343,8 +358,9 @@ private:
 	// this is the limitation of Maya's relationship editor
 	// thus, it is correct to match filename with UV map index
 	std::unordered_map<std::string /*texture file name*/, unsigned int /*UV map index*/ > m_uvSetCachedMappingData;
-};
 
+	std::vector<MCallbackId> m_MeshDependenciesOnOtherObjectsCallbacks;
+};
 
 // Fire render light
 // Bridge class between a Maya light node and a frw::Light

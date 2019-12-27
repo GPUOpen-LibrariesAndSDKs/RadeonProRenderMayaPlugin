@@ -57,13 +57,12 @@ frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::Convert() const
 
 MayaStandardNodeConverters::ProjectionNodeConverter::TransformInfo MayaStandardNodeConverters::ProjectionNodeConverter::GetCameraTransform() const
 {
-	const IFireRenderContextInfo* contextInfo = m_params.scope.GetContextInfo();
-	const FireRenderContext* context = dynamic_cast<const FireRenderContext*>(contextInfo);
-	const FireRenderCamera& camera = context->camera();
-
-	MFnDagNode cameraDAGNode(camera.Object());
+	MFnDagNode cameraDAGNode(GetConnectedCamera());
 	MObject transformNode = cameraDAGNode.parent(0);
 	MFnTransform cameraTransform(transformNode);
+
+	FireRenderMesh* mesh = const_cast<FireRenderMesh*>(m_params.scope.GetCurrentlyParsedMesh());
+	mesh->AddMeshDependencyOnOtherObjectsCallback(transformNode);
 
 	// Retrieve full matrix to get rotation
 	MMatrix transformMatrix = cameraTransform.transformationMatrix();
@@ -181,4 +180,26 @@ frw::Image MayaStandardNodeConverters::ProjectionNodeConverter::GetImageFromConn
 	}
 
 	return m_params.scope.GetImage(texturePath, colorSpace, fileTextureNode.name());
+}
+
+MObject MayaStandardNodeConverters::ProjectionNodeConverter::GetConnectedCamera() const
+{
+	// Retrieve selected camera from maya
+	MStatus status;
+	MPlug plug = m_params.shaderNode.findPlug("linkedCamera", &status);
+
+	assert(status == MStatus::kSuccess);
+
+	MPlugArray connections;
+	plug.connectedTo(connections, true, false);
+	if (connections.length() == 1)
+	{
+		return connections[0].node();
+	}
+
+	// If no camera specified return context camera
+	const IFireRenderContextInfo* contextInfo = m_params.scope.GetContextInfo();
+	const FireRenderContext* context = dynamic_cast<const FireRenderContext*>(contextInfo);
+	const FireRenderCamera& camera = context->camera();
+	return camera.Object();
 }

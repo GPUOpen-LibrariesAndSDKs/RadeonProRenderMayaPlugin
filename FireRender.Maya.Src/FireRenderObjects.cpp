@@ -1021,6 +1021,9 @@ void FireRenderMesh::ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngine
 
 	MFnDependencyNode nodeFn(Object());
 
+	// Shader on self creation would add neccessary callbacks
+	ClearMeshDependenciesOnOtherObjectsCallbacks();
+
 	for (int i = 0; i < m.elements.size(); i++)
 	{
 		auto& element = m.elements[i];
