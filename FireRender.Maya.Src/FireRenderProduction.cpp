@@ -790,7 +790,7 @@ void FireRenderProduction::RenderTiles()
 	m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov) 
 	{
 		auto ret = outBuffers.insert(std::pair<unsigned int, PixelBuffer>(aov.id, PixelBuffer()));
-		ret.first->second.resize(m_width*m_height);
+		ret.first->second.resize(m_width, m_height);
 	});
 
 	m_contextPtr->setSamplesPerUpdate(m_globals.completionCriteriaFinalRender.completionCriteriaMaxIterations);
@@ -865,11 +865,13 @@ void FireRenderProduction::RenderTiles()
 	m_contextPtr->ConsiderSetupDenoiser(true);
 
 	RV_PIXEL* data = nullptr;
+	std::vector<float> vecData;
+
 	if (m_contextPtr->IsDenoiserEnabled())
 	{
 		// run denoiser on cached data if necessary
 		bool denoiseResult = false;
-		std::vector<float> vecData = m_contextPtr->GetDenoisedData(denoiseResult);
+		vecData = m_contextPtr->GetDenoisedData(denoiseResult);
 		data = (RV_PIXEL*)&vecData[0];
 	}
 	else
