@@ -36,11 +36,15 @@ class PixelBuffer
 {
 	RV_PIXEL * m_pBuffer;
 	size_t m_size;
+	size_t m_width;
+	size_t m_height;
 
 public:
-	PixelBuffer() :
-		m_pBuffer(nullptr),
-		m_size(0)
+	PixelBuffer() 
+		:	m_pBuffer(nullptr)
+		,	m_size(0)
+		,	m_width(0)
+		,	m_height(0)
 	{
 	}
 	virtual ~PixelBuffer()
@@ -59,7 +63,35 @@ public:
 		return m_pBuffer;
 	}
 
+	size_t size() const
+	{
+		return m_size;
+	}
+
+	size_t width() const
+	{
+		return m_width;
+	}
+
+	size_t height() const
+	{
+		return m_height;
+	}
+
+	float* data()
+	{
+		return (float*)m_pBuffer;
+	}
+
 	void resize(size_t newCount);
+
+	void resize(size_t width, size_t height)
+	{
+		m_width = width;
+		m_height = height;
+
+		resize(width*height);
+	}
 
 	void reset()
 	{
