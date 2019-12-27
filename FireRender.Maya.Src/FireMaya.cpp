@@ -1921,10 +1921,10 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMesh* pMesh
 	std::string shaderId = getNodeUUid(node);
 	frw::Shader shader = GetCachedShader(shaderId);
 
-	/*if (!forceUpdate && shader.IsValid() && !shader.IsDirty())
+	if (!forceUpdate && shader.IsValid() && !shader.IsDirty())
 	{
 		return shader;
-	}*/
+	}
 
 	// register callbacks if one doesn't already exist
 	if (!shader.IsValid())
