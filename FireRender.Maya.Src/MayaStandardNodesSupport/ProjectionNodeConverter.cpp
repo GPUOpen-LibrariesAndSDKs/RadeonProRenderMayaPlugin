@@ -102,7 +102,7 @@ MayaStandardNodeConverters::ProjectionNodeConverter::TransformInfo MayaStandardN
 	placementMatrix.getScale(scale, MSpace::kTransform);
 
 	return TransformInfo{
-		{ translation.x / (100.f * scale[0]), translation.y / (100.f * scale[1]), translation.z / (100.f * scale[2]) },
+		{ -translation.x / (100.f * scale[0]), -translation.y / (100.f * scale[1]), -translation.z / (100.f * scale[2]) },
 		{ matrix[0][0], matrix[1][0], matrix[2][0], matrix[3][0] },
 		{ matrix[0][2], matrix[1][2], matrix[2][2], matrix[3][2] },
 		{ scale[0] * 50.f, scale[1] * 50.f, scale[2] * 50.f }
