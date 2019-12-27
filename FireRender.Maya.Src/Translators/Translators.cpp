@@ -298,49 +298,59 @@ namespace FireMaya
 			float mfloats[4][4];
 			ScaleMatrixFromCmToMFloats(matrix, mfloats);
 
-			if (lightData.lightType == PLTSpot)
+			switch (lightData.lightType)
 			{
-				if (!update)
-					frlight.light = frcontext.CreateSpotLight();
+				case PLTSpot:
+				{
+					if (!update)
+					{
+						frlight.light = frcontext.CreateSpotLight();
+					}
+					frstatus = rprSpotLightSetConeShape(frlight.light.Handle(), lightData.spotInnerAngle, lightData.spotOuterFallOff);
+					checkStatus(frstatus);
 
-				frstatus = rprSpotLightSetConeShape(frlight.light.Handle(), lightData.spotInnerAngle, lightData.spotOuterFallOff);
-				checkStatus(frstatus);
+					float factor = 1.0f;// MDistance::uiToInternal(0.01);
+					frstatus = rprSpotLightSetRadiantPower3f(frlight.light.Handle(),
+						static_cast<float>(color.r * factor),
+						static_cast<float>(color.g * factor),
+						static_cast<float>(color.b * factor));
+					checkStatus(frstatus);
+					break;
+				}
 
-				float factor = 1.0f;// MDistance::uiToInternal(0.01);
-				frstatus = rprSpotLightSetRadiantPower3f(frlight.light.Handle(),
-					static_cast<float>(color.r * factor),
-					static_cast<float>(color.g * factor),
-					static_cast<float>(color.b * factor));
-				checkStatus(frstatus);
-			}
-			else if (lightData.lightType == PLTDirectional)
-			{
-				if (!update)
-					frlight.light = frcontext.CreateDirectionalLight();
+				case PLTDirectional:
+				{
+					if (!update)
+					{
+						frlight.light = frcontext.CreateDirectionalLight();
+					}
+					frstatus = rprDirectionalLightSetRadiantPower3f(frlight.light.Handle(), color.r, color.g, color.b);
+					checkStatus(frstatus);
 
-				frstatus = rprDirectionalLightSetRadiantPower3f(frlight.light.Handle(), color.r, color.g, color.b);
-				checkStatus(frstatus);
+					float softness = lightData.shadowsEnabled ? lightData.shadowsSoftness : 0.0f;
 
-				float softness = lightData.shadowsEnabled ? lightData.shadowsSoftness : 0.0f;
-				
-				frstatus = rprDirectionalLightSetShadowSoftness(frlight.light.Handle(), softness);
-				checkStatus(frstatus);
-			}
-			else if (lightData.lightType == PLTPoint)
-			{
-				if (!update)
-					frlight.light = frcontext.CreatePointLight();
+					frstatus = rprDirectionalLightSetShadowSoftness(frlight.light.Handle(), softness);
+					checkStatus(frstatus);
+					break;
+				}
 
-				float factor = 1.0f;// MDistance::uiToInternal(0.01);
-				frstatus = rprPointLightSetRadiantPower3f(frlight.light.Handle(),
-					static_cast<float>(color.r * factor * factor),
-					static_cast<float>(color.g * factor * factor),
-					static_cast<float>(color.b * factor * factor));
-				checkStatus(frstatus);
-			}
-			else if (lightData.lightType == PLTUnknown)
-			{
-				return false;
+				case PLTPoint:
+				{
+					if (!update)
+					{
+						frlight.light = frcontext.CreatePointLight();
+					}
+					float factor = 1.0f;// MDistance::uiToInternal(0.01);
+					frstatus = rprPointLightSetRadiantPower3f(frlight.light.Handle(),
+						static_cast<float>(color.r * factor * factor),
+						static_cast<float>(color.g * factor * factor),
+						static_cast<float>(color.b * factor * factor));
+					checkStatus(frstatus);
+					break;
+				}
+
+				case PLTUnknown:
+					return false;
 			}
 
 			frlight.light.SetTransform((rpr_float*)mfloats);
@@ -372,10 +382,28 @@ namespace FireMaya
 			physicalLightData.intensityUnits = PLTIUWatts;
 			physicalLightData.luminousEfficacy = PhysicalLightData::defaultLuminousEfficacy;
 			physicalLightData.colorBase = fnLight.color();
-			physicalLightData.intensity = fnLight.intensity(&mstatus) * LIGHT_SCALE;
 
-			physicalLightData.resultFrwColor = frw::Value(physicalLightData.colorBase.r, physicalLightData.colorBase.g,
-															physicalLightData.colorBase.b) * physicalLightData.intensity;
+			float mayaIntensity = fnLight.intensity(&mstatus);
+
+			if (node.apiType() == MFn::kAreaLight)
+			{
+				physicalLightData.intensity = -0.000014f * std::pow(mayaIntensity, 3.f) + 0.000977f * std::pow(mayaIntensity, 2.f) + 0.005465f * mayaIntensity + 0.047492f;
+				// For area light intensity would be used later
+				physicalLightData.resultFrwColor = frw::Value(
+					physicalLightData.colorBase.r, 
+					physicalLightData.colorBase.g, 
+					physicalLightData.colorBase.b
+				);
+			}
+			else
+			{
+				physicalLightData.intensity = mayaIntensity * LIGHT_SCALE;
+				physicalLightData.resultFrwColor = frw::Value(
+					physicalLightData.colorBase.r, 
+					physicalLightData.colorBase.g, 
+					physicalLightData.colorBase.b
+				) * physicalLightData.intensity;
+			}
 
 			physicalLightData.areaWidth = 1.0f;
 			physicalLightData.areaLength = 1.0f;
@@ -385,44 +413,44 @@ namespace FireMaya
 
 			assert(mstatus == MStatus::kSuccess);
 
-			if (node.apiType() == MFn::kAreaLight)
+			switch (node.apiType())
 			{
-				float mayaIntensity = fnLight.intensity(&mstatus);
-				physicalLightData.intensity = -0.000014f * std::pow(mayaIntensity, 3.f) + 0.000977f * std::pow(mayaIntensity, 2.f) + 0.005465f * mayaIntensity + 0.047492f;
-				physicalLightData.resultFrwColor = frw::Value(physicalLightData.colorBase.r, physicalLightData.colorBase.g, physicalLightData.colorBase.b);
-				
-				physicalLightData.lightType = PLTArea;
-				physicalLightData.areaLightShape = PLARectangle;
-			}
-			else if (node.apiType() == MFn::kSpotLight)
-			{
-				physicalLightData.lightType = PLTSpot;
+				case MFn::kAreaLight:
+					physicalLightData.lightType = PLTArea;
+					physicalLightData.areaLightShape = PLARectangle;
+					break;
 
-				MFnSpotLight fnSpotLight(node);
-				double coneAngle = fnSpotLight.coneAngle(&mstatus) * 0.5;
-				assert(mstatus == MStatus::kSuccess);
+				case MFn::kSpotLight:
+				{
+					physicalLightData.lightType = PLTSpot;
 
-				double penumbraAngle = coneAngle + fnSpotLight.penumbraAngle(&mstatus);
-				assert(mstatus == MStatus::kSuccess);
+					MFnSpotLight fnSpotLight(node);
+					double coneAngle = fnSpotLight.coneAngle(&mstatus) * 0.5;
+					assert(mstatus == MStatus::kSuccess);
 
-				physicalLightData.spotInnerAngle = (float)coneAngle;
-				physicalLightData.spotOuterFallOff = (float) penumbraAngle;
-			}
-			else if (node.apiType() == MFn::kDirectionalLight)
-			{
-				physicalLightData.lightType = PLTDirectional;
-			}
-			else if (node.apiType() == MFn::kPointLight)
-			{
-				physicalLightData.lightType = PLTPoint;
-			}
-			else if (node.apiType() == MFn::kAmbientLight)
-			{
-				physicalLightData.lightType = PLTUnknown;
-			}
-			else if (node.apiType() == MFn::kVolumeLight)
-			{
-				physicalLightData.lightType = PLTUnknown;
+					double penumbraAngle = coneAngle + fnSpotLight.penumbraAngle(&mstatus);
+					assert(mstatus == MStatus::kSuccess);
+
+					physicalLightData.spotInnerAngle = (float)coneAngle;
+					physicalLightData.spotOuterFallOff = (float)penumbraAngle;
+					break;
+				}
+
+				case MFn::kDirectionalLight:
+					physicalLightData.lightType = PLTDirectional;
+					break;
+
+				case MFn::kPointLight:
+					physicalLightData.lightType = PLTPoint;
+					break;
+
+				case MFn::kAmbientLight:
+					physicalLightData.lightType = PLTUnknown;
+					break;
+
+				case MFn::kVolumeLight:
+					physicalLightData.lightType = PLTUnknown;
+					break;
 			}
 		}
 		// RPR physical light
