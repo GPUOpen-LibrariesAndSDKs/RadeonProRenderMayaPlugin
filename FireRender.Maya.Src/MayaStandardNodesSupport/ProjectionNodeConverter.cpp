@@ -3,7 +3,7 @@
 #include "FireRenderObjects.h"
 #include "maya/MFnTransform.h"
 #include "maya/MFnMatrixData.h"
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 
 MayaStandardNodeConverters::ProjectionNodeConverter::ProjectionNodeConverter(const ConverterParams& params) : BaseConverter(params)
 {
