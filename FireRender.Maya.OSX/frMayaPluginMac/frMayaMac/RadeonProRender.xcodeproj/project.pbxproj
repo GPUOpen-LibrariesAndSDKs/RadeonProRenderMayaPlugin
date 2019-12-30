@@ -784,6 +784,12 @@
 		B773D2DA23A912AF009FC79C /* ClampConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2D023A912AF009FC79C /* ClampConverter.cpp */; };
 		B773D2DB23A912AF009FC79C /* ClampConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2D123A912AF009FC79C /* ClampConverter.h */; };
 		B773D2DC23A912AF009FC79C /* RGBToHSVConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2D223A912AF009FC79C /* RGBToHSVConverter.h */; };
+		B7BB4DDA23B9B9150045B762 /* ProjectionNodeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7BB4DD723B9B9150045B762 /* ProjectionNodeConverter.cpp */; };
+		B7BB4DDB23B9B9150045B762 /* ProjectionNodeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7BB4DD723B9B9150045B762 /* ProjectionNodeConverter.cpp */; };
+		B7BB4DDC23B9B9150045B762 /* ProjectionNodeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7BB4DD723B9B9150045B762 /* ProjectionNodeConverter.cpp */; };
+		B7BB4DDD23B9B9150045B762 /* ProjectionNodeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B7BB4DD923B9B9150045B762 /* ProjectionNodeConverter.h */; };
+		B7BB4DDE23B9B9150045B762 /* ProjectionNodeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B7BB4DD923B9B9150045B762 /* ProjectionNodeConverter.h */; };
+		B7BB4DDF23B9B9150045B762 /* ProjectionNodeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B7BB4DD923B9B9150045B762 /* ProjectionNodeConverter.h */; };
 		B7D1F0102367616000BB07CE /* FireRenderMeshMASH.h in Headers */ = {isa = PBXBuildFile; fileRef = B7D1F00C2367615F00BB07CE /* FireRenderMeshMASH.h */; };
 		B7D1F0112367616000BB07CE /* FireRenderMeshMASH.h in Headers */ = {isa = PBXBuildFile; fileRef = B7D1F00C2367615F00BB07CE /* FireRenderMeshMASH.h */; };
 		B7D1F0122367616000BB07CE /* FireRenderMeshMASH.h in Headers */ = {isa = PBXBuildFile; fileRef = B7D1F00C2367615F00BB07CE /* FireRenderMeshMASH.h */; };
@@ -1212,6 +1218,8 @@
 		B773D2D023A912AF009FC79C /* ClampConverter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ClampConverter.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/ClampConverter.cpp; sourceTree = "<group>"; };
 		B773D2D123A912AF009FC79C /* ClampConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ClampConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/ClampConverter.h; sourceTree = "<group>"; };
 		B773D2D223A912AF009FC79C /* RGBToHSVConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RGBToHSVConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/RGBToHSVConverter.h; sourceTree = "<group>"; };
+		B7BB4DD723B9B9150045B762 /* ProjectionNodeConverter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProjectionNodeConverter.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/ProjectionNodeConverter.cpp; sourceTree = "<group>"; };
+		B7BB4DD923B9B9150045B762 /* ProjectionNodeConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ProjectionNodeConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/ProjectionNodeConverter.h; sourceTree = "<group>"; };
 		B7D1F00C2367615F00BB07CE /* FireRenderMeshMASH.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderMeshMASH.h; path = ../../../FireRender.Maya.Src/FireRenderMeshMASH.h; sourceTree = "<group>"; };
 		B7D1F00D2367616000BB07CE /* InstancerMASH.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = InstancerMASH.cpp; path = ../../../FireRender.Maya.Src/InstancerMASH.cpp; sourceTree = "<group>"; };
 		B7D1F00E2367616000BB07CE /* InstancerMASH.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InstancerMASH.h; path = ../../../FireRender.Maya.Src/InstancerMASH.h; sourceTree = "<group>"; };
@@ -1657,6 +1665,8 @@
 		B773D2C823A9123B009FC79C /* StandardMayaNodesIntegration */ = {
 			isa = PBXGroup;
 			children = (
+				B7BB4DD723B9B9150045B762 /* ProjectionNodeConverter.cpp */,
+				B7BB4DD923B9B9150045B762 /* ProjectionNodeConverter.h */,
 				B773D2CD23A912AF009FC79C /* BlendTwoAttrConverter.cpp */,
 				B773D2CE23A912AF009FC79C /* BlendTwoAttrConverter.h */,
 				B773D2D023A912AF009FC79C /* ClampConverter.cpp */,
@@ -1788,6 +1798,7 @@
 				B773D2DC23A912AF009FC79C /* RGBToHSVConverter.h in Headers */,
 				4DE5087F1D9950A1009B2BD6 /* resource.h in Headers */,
 				8DD65238211499D000DB2804 /* SPA.h in Headers */,
+				B7BB4DDD23B9B9150045B762 /* ProjectionNodeConverter.h in Headers */,
 				4DE508801D9950A1009B2BD6 /* FireRenderMaterial.h in Headers */,
 				8D28372D2199D6C90004852B /* OptionVarHelpers.h in Headers */,
 				4DE508811D9950A1009B2BD6 /* FireRenderSkyLocator.h in Headers */,
@@ -1886,6 +1897,7 @@
 				8D8CA4B720BC729D00A90237 /* PhysicalLightData.h in Headers */,
 				8D595D8D20372FE20031988A /* SkyBuilder.h in Headers */,
 				8D595D8E20372FE20031988A /* base_mesh.h in Headers */,
+				B7BB4DDE23B9B9150045B762 /* ProjectionNodeConverter.h in Headers */,
 				B7230A6023ACD82900E51BD1 /* BlendTwoAttrConverter.h in Headers */,
 				8D595D9020372FE20031988A /* FireRenderBlendMaterial.h in Headers */,
 				8D595D9120372FE20031988A /* FireRenderImportCmd.h in Headers */,
@@ -2032,6 +2044,7 @@
 				8DBCC2A422304666003EE361 /* PhysicalLightData.h in Headers */,
 				8DBCC2A522304666003EE361 /* SkyBuilder.h in Headers */,
 				8DBCC2A622304666003EE361 /* base_mesh.h in Headers */,
+				B7BB4DDF23B9B9150045B762 /* ProjectionNodeConverter.h in Headers */,
 				B7230A6B23ACD82A00E51BD1 /* BlendTwoAttrConverter.h in Headers */,
 				8DBCC2A722304666003EE361 /* FireRenderBlendMaterial.h in Headers */,
 				8DBCC2A822304666003EE361 /* FireRenderImportCmd.h in Headers */,
@@ -2296,6 +2309,7 @@
 				4DE508A31D9950A1009B2BD6 /* frWrap.cpp in Sources */,
 				4DE508A41D9950A1009B2BD6 /* FireRenderDot.cpp in Sources */,
 				4DE508A51D9950A1009B2BD6 /* FireRenderIpr.cpp in Sources */,
+				B7BB4DDA23B9B9150045B762 /* ProjectionNodeConverter.cpp in Sources */,
 				CE9B693D2359B76600B45249 /* athenaWrap.cpp in Sources */,
 				8D9B7C9F1F6B00440040975D /* RprComposite.cpp in Sources */,
 				B773D2DA23A912AF009FC79C /* ClampConverter.cpp in Sources */,
@@ -2460,6 +2474,7 @@
 				8D595DF620372FE20031988A /* FireRenderBlendValue.cpp in Sources */,
 				8D595DF720372FE20031988A /* frWrap.cpp in Sources */,
 				B72F81F5239F813F00C2BFB3 /* MultiplyDivideConverter.cpp in Sources */,
+				B7BB4DDB23B9B9150045B762 /* ProjectionNodeConverter.cpp in Sources */,
 				8D595DF820372FE20031988A /* FireRenderDot.cpp in Sources */,
 				8D595DF920372FE20031988A /* FireRenderIpr.cpp in Sources */,
 				B7D1F025236B466D00BB07CE /* FireRenderLayeredTextureUtils.cpp in Sources */,
@@ -2603,6 +2618,7 @@
 				8DBCC31B22304666003EE361 /* FireRenderBlendValue.cpp in Sources */,
 				8DBCC31C22304666003EE361 /* frWrap.cpp in Sources */,
 				B72F81F6239F813F00C2BFB3 /* MultiplyDivideConverter.cpp in Sources */,
+				B7BB4DDC23B9B9150045B762 /* ProjectionNodeConverter.cpp in Sources */,
 				8DBCC31D22304666003EE361 /* FireRenderDot.cpp in Sources */,
 				8DBCC31E22304666003EE361 /* FireRenderIpr.cpp in Sources */,
 				B7D1F026236B466D00BB07CE /* FireRenderLayeredTextureUtils.cpp in Sources */,
