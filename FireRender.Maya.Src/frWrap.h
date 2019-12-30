@@ -3407,7 +3407,7 @@ namespace frw
 	class UVTriplanarNode : public BaseUVNode
 	{
 	public:
-		class UVTriplanarNode(const MaterialSystem& h) : BaseUVNode(h, ValueTypeUVTriplanar)
+        UVTriplanarNode(const MaterialSystem& h) : BaseUVNode(h, ValueTypeUVTriplanar)
 		{
 		}
 
