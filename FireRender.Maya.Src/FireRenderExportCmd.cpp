@@ -202,9 +202,9 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			MString newFilePath;
 			if (isSequenceExportEnabled)
 			{
-				std::regex name_regex("\%s");
-				std::regex frame_regex("\%([0-9]|10)n");
-				std::regex extension_regex("\%e");
+				std::regex name_regex("\\%s");
+				std::regex frame_regex("\\%([0-9]|10)n");
+				std::regex extension_regex("\\%e");
 
 				std::string pattern = settings.namePattern.asChar();
 
