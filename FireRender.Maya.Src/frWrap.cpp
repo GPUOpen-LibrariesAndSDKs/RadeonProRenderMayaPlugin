@@ -110,27 +110,27 @@ namespace frw
 
 	void UVProceduralNode::SetOrigin(const frw::Value& value)
 	{
-		SetValueInt(NodeInputOrigin, value);
+		SetValueByKey(NodeInputOrigin, value);
 	}
 
 	void UVTriplanarNode::SetOrigin(const frw::Value& value)
 	{
-		SetValueInt(NodeInputOffsset, value);
+		SetValueByKey(NodeInputOffsset, value);
 	}
 
 	void BaseUVNode::SetInputZAxis(const frw::Value& value)
 	{
-		SetValueInt(NodeInputZAxis, value);
+		SetValueByKey(NodeInputZAxis, value);
 	}
 
 	void BaseUVNode::SetInputXAxis(const frw::Value& value)
 	{
-		SetValueInt(NodeInputXAxis, value);
+		SetValueByKey(NodeInputXAxis, value);
 	}
 
 	void BaseUVNode::SetInputUVScale(const frw::Value& value)
 	{
-		SetValueInt(NodeInputUVScale, value);
+		SetValueByKey(NodeInputUVScale, value);
 	}
 
 }
