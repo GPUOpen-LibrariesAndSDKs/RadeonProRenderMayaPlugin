@@ -12,6 +12,8 @@ MayaStandardNodeConverters::ProjectionNodeConverter::ProjectionNodeConverter(con
 frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::Convert() const
 {
 	ProjectionType projectionType = static_cast<ProjectionType>(m_params.scope.GetValueWithCheck(m_params.shaderNode, "projType").GetInt());
+	
+	// Unused for now
 	frw::Value transparency = m_params.scope.GetValueWithCheck(m_params.shaderNode, "transparency");
 	frw::Value uAngle = m_params.scope.GetValueWithCheck(m_params.shaderNode, "uAngle");
 	frw::Value vAngle = m_params.scope.GetValueWithCheck(m_params.shaderNode, "vAngle");

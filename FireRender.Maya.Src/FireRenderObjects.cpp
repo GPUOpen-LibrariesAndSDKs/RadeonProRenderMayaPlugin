@@ -1024,7 +1024,7 @@ void FireRenderMesh::ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngine
 	for (int i = 0; i < m.elements.size(); i++)
 	{
 		auto& element = m.elements[i];
-		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this, false);
+		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this);
 		element.volumeShader = context->GetVolumeShader(getVolumeShader(element.shadingEngine));
 
 		setupDisplacement(element.shadingEngine, element.shape);
@@ -1174,7 +1174,7 @@ void FireRenderMesh::Rebuild()
 
 void FireRenderMesh::ForceShaderDirtyCallback(MObject& node, void* clientData)
 {
-	if (clientData == nullptr)
+	if (nullptr == clientData)
 	{
 		return;
 	}
