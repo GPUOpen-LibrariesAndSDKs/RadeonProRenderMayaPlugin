@@ -254,8 +254,6 @@ public:
 
 	// Return the render camera
 	FireRenderCamera& camera();
-	const FireRenderCamera& camera() const;
-
 
 	// Get a render object
 	// \param name Uuid string of the object

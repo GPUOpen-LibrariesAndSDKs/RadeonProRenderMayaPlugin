@@ -681,10 +681,10 @@ namespace frw
 		Node(const MaterialSystem& ms, int type, bool destroyOnDelete = true, Data* data = nullptr);	// not typesafe
 
 		bool SetValue(const char* key, const Value& v);
-		bool SetValueInt(rpr_material_node_input key, const Value& v);
+		bool SetValueByKey(rpr_material_node_input key, const Value& v);
 
 		bool SetValueInt(const char* key, int);
-		bool SetValueInt(rpr_material_node_input key, rpr_uint value);
+		bool SetValueIntByKey(rpr_material_node_input key, rpr_uint value);
 
 		MaterialSystem GetMaterialSystem() const;
 
@@ -3398,7 +3398,7 @@ namespace frw
 	public:
 		UVProceduralNode(const MaterialSystem& h, UVTypeValue type) : BaseUVNode(h, ValueTypeUVProcedural)
 		{
-			SetValueInt(NodeInputUVType, static_cast<int>(type));
+			SetValueIntByKey(NodeInputUVType, static_cast<int>(type));
 		}
 
 		virtual void SetOrigin(const frw::Value& value) override;
@@ -3514,7 +3514,7 @@ namespace frw
 		return false;
 	}
 
-	inline bool Node::SetValueInt(rpr_material_node_input key, const Value& v)
+	inline bool Node::SetValueByKey(rpr_material_node_input key, const Value& v)
 	{
 		switch (v.type)
 		{
@@ -3537,7 +3537,7 @@ namespace frw
 		return RPR_SUCCESS == rprMaterialNodeSetInputU(Handle(), key, v);
 	}
 
-	inline bool Node::SetValueInt(rpr_material_node_input key, rpr_uint value)
+	inline bool Node::SetValueIntByKey(rpr_material_node_input key, rpr_uint value)
 	{
 		return RPR_SUCCESS == rprMaterialNodeSetInputUByKey(Handle(), key, value);
 	}

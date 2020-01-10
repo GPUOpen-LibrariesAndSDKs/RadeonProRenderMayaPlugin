@@ -1452,11 +1452,6 @@ FireRenderCamera & FireRenderContext::camera()
 	return m_camera;
 }
 
-const FireRenderCamera& FireRenderContext::camera() const
-{
-	return m_camera;
-}
-
 void FireRenderContext::attachCallbacks()
 {
 	DebugPrint("FireRenderContext(context=%p)::attachCallbacks()", this);
