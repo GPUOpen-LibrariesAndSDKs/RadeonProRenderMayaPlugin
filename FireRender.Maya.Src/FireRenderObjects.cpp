@@ -316,6 +316,11 @@ void FireRenderObject::RegisterCallbacks()
 	}
 }
 
+size_t FireRenderObject::CallbackCount() const
+{
+	return m.callbackId.size();
+}
+
 void FireRenderObject::ClearCallbacks()
 {
 	if (m.callbackId.empty())
@@ -1015,20 +1020,16 @@ bool IsUberEmissive(frw::Shader shader)
 	return false;
 }
 
-void FireRenderMesh::ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngines)
+void FireRenderMesh::ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngines, bool forceUpdate)
 {
 	FireRenderContext *context = this->context();
 
 	MFnDependencyNode nodeFn(Object());
 
-	// Shader on self creation would add neccessary callbacks
-	bool wasDependOnOtherObject = ClearMeshDependenciesOnOtherObjectsCallbacks();
-
 	for (int i = 0; i < m.elements.size(); i++)
 	{
 		auto& element = m.elements[i];
-		element.shadingEngine = shadingEngines[i];
-		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this, wasDependOnOtherObject);
+		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this, forceUpdate);
 		element.volumeShader = context->GetVolumeShader(getVolumeShader(element.shadingEngine));
 
 		setupDisplacement(element.shadingEngine, element.shape);
@@ -1153,9 +1154,19 @@ void FireRenderMesh::Rebuild()
 		ReloadMesh(meshPath, shadingEngines);
 	}
 
+	size_t callbackCountBeforeReset = CallbackCount();
+	RegisterCallbacks();	// we need to do this in case the shaders change (ie we will need to attach new callbacks)
+	size_t callbackCountAfterReset = CallbackCount();
+
+	bool shouldForceRedrawShader = false;
+	if (callbackCountBeforeReset != callbackCountAfterReset)
+	{
+		shouldForceRedrawShader = true;
+	}
+
 	if (meshPath.isValid())
 	{
-		ProcessMesh(meshPath, shadingEngines);
+		ProcessMesh(meshPath, shadingEngines, shouldForceRedrawShader);
 	}
 
 	if (this->context()->iblLight)
@@ -1171,8 +1182,6 @@ void FireRenderMesh::Rebuild()
 	m.changed.mesh = false;
 	m.changed.transform = false;
 	m.changed.shader = false;
-
-	RegisterCallbacks();	// we need to do this in case the shaders change (ie we will need to attach new callbacks)
 }
 
 bool FireRenderMesh::IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const

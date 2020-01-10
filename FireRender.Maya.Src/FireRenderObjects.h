@@ -128,6 +128,7 @@ public:
 	void AddCallback(MCallbackId id);
 	void ClearCallbacks();
 	virtual void RegisterCallbacks();
+	size_t CallbackCount() const;
 
 	template <class T>
 	static T GetPlugValue(const MObject& ob, const char* name, T defaultValue)
@@ -296,7 +297,7 @@ public:
 	void setupDisplacement(MObject shadingEngine, frw::Shape shape);
 	void Rebuild(void);
 	void ReloadMesh(MDagPath& meshPath, MObjectArray& shadingEngines);
-	void ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngines);
+	void ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngines, bool forceUpdate);
 	void ProcessIBLLight(void);
 	void ProcessSkyLight(void);
 	void RebuildTransforms(void);
@@ -312,19 +313,7 @@ public:
 
 	void AddMeshDependencyOnOtherObjectsCallback(MObject dependency)
 	{
-		m_MeshDependenciesOnOtherObjectsCallbacks.push_back(MNodeMessage::addNodeDirtyCallback(dependency, ShaderDirtyCallback, this));
-	}
-
-	bool ClearMeshDependenciesOnOtherObjectsCallbacks()
-	{
-		bool wasDependOnOtherObject = !m_MeshDependenciesOnOtherObjectsCallbacks.empty();
-		for (MCallbackId callback : m_MeshDependenciesOnOtherObjectsCallbacks)
-		{
-			MNodeMessage::removeCallback(callback);
-		}
-		m_MeshDependenciesOnOtherObjectsCallbacks.clear();
-
-		return wasDependOnOtherObject;
+		AddCallback(MNodeMessage::addNodeDirtyCallback(dependency, ShaderDirtyCallback, this));
 	}
 
 protected:
@@ -360,8 +349,6 @@ private:
 	// this is the limitation of Maya's relationship editor
 	// thus, it is correct to match filename with UV map index
 	std::unordered_map<std::string /*texture file name*/, unsigned int /*UV map index*/ > m_uvSetCachedMappingData;
-
-	std::vector<MCallbackId> m_MeshDependenciesOnOtherObjectsCallbacks;
 };
 
 // Fire render light
