@@ -128,7 +128,6 @@ public:
 	void AddCallback(MCallbackId id);
 	void ClearCallbacks();
 	virtual void RegisterCallbacks();
-	size_t CallbackCount() const;
 
 	template <class T>
 	static T GetPlugValue(const MObject& ob, const char* name, T defaultValue)
@@ -297,7 +296,7 @@ public:
 	void setupDisplacement(MObject shadingEngine, frw::Shape shape);
 	void Rebuild(void);
 	void ReloadMesh(MDagPath& meshPath, MObjectArray& shadingEngines);
-	void ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngines, bool forceUpdate);
+	void ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngines);
 	void ProcessIBLLight(void);
 	void ProcessSkyLight(void);
 	void RebuildTransforms(void);
@@ -311,10 +310,8 @@ public:
 
 	unsigned int GetAssignedUVMapIdx(const MString& textureFile) const;
 
-	void AddMeshDependencyOnOtherObjectsCallback(MObject dependency)
-	{
-		AddCallback(MNodeMessage::addNodeDirtyCallback(dependency, ShaderDirtyCallback, this));
-	}
+	static void ForceShaderDirtyCallback(MObject& node, void* clientData);
+	void AddForceShaderDirtyDependOnOtherObjectCallback(MObject dependency);
 
 protected:
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;

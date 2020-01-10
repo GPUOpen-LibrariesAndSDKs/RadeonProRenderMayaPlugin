@@ -35,6 +35,7 @@ frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::Convert() const
 	MayaStandardNodeConverters::ProjectionNodeConverter::TransformInfo transformInfo;
 	if (projectionType == ProjectionType::Perspective)
 	{
+		const_cast<ProjectionNodeConverter*>(this)->SubscribeCurrentMeshToCameraUpdates();
 		transformInfo = GetCameraTransform();
 	}
 	else
@@ -60,9 +61,6 @@ MayaStandardNodeConverters::ProjectionNodeConverter::TransformInfo MayaStandardN
 	MFnDagNode cameraDAGNode(GetConnectedCamera());
 	MObject transformNode = cameraDAGNode.parent(0);
 	MFnTransform cameraTransform(transformNode);
-
-	FireRenderMesh* mesh = const_cast<FireRenderMesh*>(m_params.scope.GetCurrentlyParsedMesh());
-	mesh->AddMeshDependencyOnOtherObjectsCallback(transformNode);
 
 	// Retrieve full matrix to get rotation
 	MMatrix transformMatrix = cameraTransform.transformationMatrix();
@@ -184,10 +182,10 @@ frw::Image MayaStandardNodeConverters::ProjectionNodeConverter::GetImageFromConn
 
 MObject MayaStandardNodeConverters::ProjectionNodeConverter::GetConnectedCamera() const
 {
-	// Retrieve selected camera from maya
 	MStatus status;
-	MPlug plug = m_params.shaderNode.findPlug("linkedCamera", &status);
 
+	// Retrieve selected camera from maya
+	MPlug plug = m_params.shaderNode.findPlug("linkedCamera", &status);
 	assert(status == MStatus::kSuccess);
 
 	MPlugArray connections;
@@ -197,9 +195,22 @@ MObject MayaStandardNodeConverters::ProjectionNodeConverter::GetConnectedCamera(
 		return connections[0].node();
 	}
 
-	// If no camera specified return context camera
-	const IFireRenderContextInfo* contextInfo = m_params.scope.GetContextInfo();
-	const FireRenderContext* context = dynamic_cast<const FireRenderContext*>(contextInfo);
-	const FireRenderCamera& camera = context->camera();
-	return camera.Object();
+	// If no camera specified return default camera
+	M3dView view = M3dView::active3dView(&status);
+	assert(status == MStatus::kSuccess);
+
+	MDagPath cameraPath;
+	status = view.getCamera(cameraPath);
+	assert(status == MStatus::kSuccess);
+
+	return cameraPath.node();
+}
+
+void MayaStandardNodeConverters::ProjectionNodeConverter::SubscribeCurrentMeshToCameraUpdates()
+{
+	MFnDagNode cameraDAGNode(GetConnectedCamera());
+	MObject transformNode = cameraDAGNode.parent(0);
+	MFnTransform cameraTransform(transformNode);
+	FireRenderMesh* mesh = const_cast<FireRenderMesh*>(m_params.scope.GetCurrentlyParsedMesh());
+	mesh->AddForceShaderDirtyDependOnOtherObjectCallback(transformNode);
 }
