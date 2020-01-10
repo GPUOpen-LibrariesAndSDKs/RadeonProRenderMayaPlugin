@@ -316,11 +316,6 @@ void FireRenderObject::RegisterCallbacks()
 	}
 }
 
-size_t FireRenderObject::CallbackCount() const
-{
-	return m.callbackId.size();
-}
-
 void FireRenderObject::ClearCallbacks()
 {
 	if (m.callbackId.empty())
@@ -1020,7 +1015,7 @@ bool IsUberEmissive(frw::Shader shader)
 	return false;
 }
 
-void FireRenderMesh::ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngines, bool forceUpdate)
+void FireRenderMesh::ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngines)
 {
 	FireRenderContext *context = this->context();
 
@@ -1029,7 +1024,7 @@ void FireRenderMesh::ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngine
 	for (int i = 0; i < m.elements.size(); i++)
 	{
 		auto& element = m.elements[i];
-		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this, forceUpdate);
+		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this, false);
 		element.volumeShader = context->GetVolumeShader(getVolumeShader(element.shadingEngine));
 
 		setupDisplacement(element.shadingEngine, element.shape);
@@ -1154,19 +1149,12 @@ void FireRenderMesh::Rebuild()
 		ReloadMesh(meshPath, shadingEngines);
 	}
 
-	size_t callbackCountBeforeReset = CallbackCount();
+	// Callback registering should be before ProcessMesh() because shaders could add own callbacks that would be erased by RegisterCallbacks()
 	RegisterCallbacks();	// we need to do this in case the shaders change (ie we will need to attach new callbacks)
-	size_t callbackCountAfterReset = CallbackCount();
-
-	bool shouldForceRedrawShader = false;
-	if (callbackCountBeforeReset != callbackCountAfterReset)
-	{
-		shouldForceRedrawShader = true;
-	}
-
+	
 	if (meshPath.isValid())
 	{
-		ProcessMesh(meshPath, shadingEngines, shouldForceRedrawShader);
+		ProcessMesh(meshPath, shadingEngines);
 	}
 
 	if (this->context()->iblLight)
@@ -1182,6 +1170,31 @@ void FireRenderMesh::Rebuild()
 	m.changed.mesh = false;
 	m.changed.transform = false;
 	m.changed.shader = false;
+}
+
+void FireRenderMesh::ForceShaderDirtyCallback(MObject& node, void* clientData)
+{
+	if (clientData == nullptr)
+	{
+		return;
+	}
+
+	// clientData should be FireRenderMesh
+	FireRenderMesh* self = static_cast<FireRenderMesh*>(clientData);
+
+	for (auto& it : self->m.elements)
+	{
+		if (!it.shadingEngine.isNull())
+		{
+			MObject shaderOb = getSurfaceShader(it.shadingEngine);
+			MGlobal::executeCommand("dgdirty " + MFnDependencyNode(shaderOb).name());
+		}
+	}
+}
+
+void FireRenderMesh::AddForceShaderDirtyDependOnOtherObjectCallback(MObject dependency)
+{
+	AddCallback(MNodeMessage::addNodeDirtyCallback(dependency, ForceShaderDirtyCallback, this));
 }
 
 bool FireRenderMesh::IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const

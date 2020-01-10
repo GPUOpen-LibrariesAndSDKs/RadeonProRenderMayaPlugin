@@ -40,6 +40,7 @@ namespace MayaStandardNodeConverters
 		std::unique_ptr<frw::BaseUVNode> CreateUVNode(ProjectionType projectionType) const;
 		frw::Image GetImageFromConnectedFileNode() const;
 		MObject GetConnectedCamera() const;
+		void SubscribeCurrentMeshToCameraUpdates();
 	};
 
 }
