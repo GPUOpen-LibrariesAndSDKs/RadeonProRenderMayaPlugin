@@ -30,6 +30,7 @@ namespace MayaStandardNodeConverters
 		MultiplyDivide = 0x524d4449,
 		PlusMinusAverage = 0x52504d41,
 		VectorProduct = 0x52564543,
+		BlendTwoAttr = 0x41424C32,
 		Clamp = 0x52434c33
 	};
 
