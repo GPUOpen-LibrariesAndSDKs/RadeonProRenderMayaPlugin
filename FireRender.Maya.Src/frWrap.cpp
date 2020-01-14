@@ -180,21 +180,9 @@ frw::Shader::Shader(const MaterialSystem& ms, ShaderType type, bool destroyOnDel
 	data().shaderType = type;
 }
 
-frw::Shader::Shader(const MaterialSystem& ms, const Context& context) : Node(context, new Data())
+frw::Shader::Shader(const MaterialSystem& ms, const Context& context) : Node(ms, ShaderType::ShaderTypeStandard, false, new Data())
 {
-	Data& d = data();
-	rpr_material_node materialSystemHandle = ms.Handle();
-	d.context = materialSystemHandle;
-
-	rpr_material_node material;
-	rpr_int status = rprMaterialSystemCreateNode(materialSystemHandle, RPR_MATERIAL_NODE_UBERV2, &material);
-	checkStatusThrow(status, "Unable to create rprx material");
-	d.shaderType = ShaderTypeStandard;
-	d.bDirty = false;
-
-	SetHandle(material);
-
-	FRW_PRINT_DEBUG("\tCreated RPRX material 0x%016llX of type: 0x%X", Handle(), type);
+	data().shaderType = ShaderType::ShaderTypeStandard;
 }
 
 void frw::Shader::_SetInputNode(rpr_material_node_input key, const Shader& shader)

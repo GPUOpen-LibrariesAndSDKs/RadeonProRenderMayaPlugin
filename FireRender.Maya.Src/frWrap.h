@@ -650,12 +650,6 @@ namespace frw
 			int type;
 		};
 
-	protected:
-		// This constructor is used by Shader, when RPRX material created
-		Node(const Context& context, Data* data)
-		: Object(nullptr, context, true, data)
-		{}
-
 	public:
 		Node(const MaterialSystem& ms, int type, bool destroyOnDelete = true, Data* data = nullptr);	// not typesafe
 
@@ -2926,7 +2920,6 @@ namespace frw
 			std::vector<frw::Shader> dependentShaders;
 			int numAttachedShapes = 0;
 			ShaderType shaderType = ShaderTypeInvalid;
-			rpr_material_system context = nullptr;
 			std::map<rpr_material_node_input, rpr_material_node> inputs;
 			bool isShadowCatcher = false;
 			ShadowCatcherParams mShadowCatcherParams;
