@@ -1853,7 +1853,6 @@ void FireMaya::Scope::CommitShaders()
 	{
 		DebugPrint("Exporting shader %s, number %d", it->first.c_str(), count);
 		frw::Shader& shdr = it->second;
-		shdr.Commit();
 		count++;
 	}
 }
