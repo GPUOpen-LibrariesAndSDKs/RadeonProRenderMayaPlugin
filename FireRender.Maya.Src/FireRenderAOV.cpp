@@ -31,7 +31,7 @@ void PixelBuffer::resize(size_t newCount)
 	}
 }
 
-void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, unsigned int totalHeight, unsigned int totalWidth)
+void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, unsigned int totalHeight, unsigned int totalWidth, int aov_id /*= 0*/)
 {
 	// ensure valid input
 	assert(input != nullptr);
@@ -60,9 +60,11 @@ void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, u
 		memcpy(&m_pBuffer[destIndex], &input[inputIndex], sizeof(RV_PIXEL) * regionWidth);
 	}
 
+
+#define DUMP_PIXELS_PIXELBUFF
 #ifdef _DEBUG
 #ifdef DUMP_PIXELS_PIXELBUFF
-	debugDump(totalHeight, totalWidth);
+	debugDump(totalHeight, totalWidth, std::string(FireRenderAOV::GetAOVName(aov_id) + "_tile_"));
 #endif
 #endif
 }
@@ -71,8 +73,7 @@ void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, u
 void generateBitmapImage(unsigned char *image, int height, int width, int pitch, const char* imageFileName);
 #endif
 
-#define DUMP_PIXELS_PIXELBUFF
-void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth)
+void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, std::string& fbName)
 {
 #ifdef _DEBUG
 #ifdef DUMP_PIXELS_PIXELBUFF
@@ -98,15 +99,15 @@ void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth)
 			char g = 255 * pixel.g;
 			char b = 255 * pixel.b;
 
-			buffer2.push_back(r);
-			buffer2.push_back(g);
 			buffer2.push_back(b);
+			buffer2.push_back(g);
+			buffer2.push_back(r);
 			buffer2.push_back(255);
 		}
 	}
 
 	static int debugDumpIdx = 0;
-	std::string dumpAddr = "C:\\temp\\dbg\\" + std::to_string(debugDumpIdx++) + ".bmp";
+	std::string dumpAddr = "C:\\temp\\dbg\\" + fbName +std::to_string(debugDumpIdx++) + ".bmp";
 	unsigned char* dst2 = buffer2.data();
 	generateBitmapImage(dst2, totalHeight, totalWidth, totalWidth * 4, dumpAddr.c_str());
 #endif
@@ -327,6 +328,52 @@ bool FireRenderAOV::writeToFile(const MString& filePath, bool colorOnly, unsigne
 	return true;
 }
 
+const std::string& FireRenderAOV::GetAOVName(int aov_id)
+{
+	static std::map<unsigned int, std::string> id2name =
+	{
+		 {RPR_AOV_COLOR, "RPR_AOV_COLOR"}
+		,{RPR_AOV_OPACITY, "RPR_AOV_OPACITY" }
+		,{RPR_AOV_WORLD_COORDINATE, "RPR_AOV_WORLD_COORDINATE" }
+		,{RPR_AOV_UV, "RPR_AOV_UV" }
+		,{RPR_AOV_MATERIAL_IDX, "RPR_AOV_MATERIAL_IDX" }
+		,{RPR_AOV_GEOMETRIC_NORMAL, "RPR_AOV_GEOMETRIC_NORMAL" }
+		,{RPR_AOV_SHADING_NORMAL, "RPR_AOV_SHADING_NORMAL" }
+		,{RPR_AOV_DEPTH, "RPR_AOV_DEPTH" }
+		,{RPR_AOV_OBJECT_ID, "RPR_AOV_OBJECT_ID" }
+		,{RPR_AOV_OBJECT_GROUP_ID, "RPR_AOV_OBJECT_GROUP_ID" }
+		,{RPR_AOV_SHADOW_CATCHER, "RPR_AOV_SHADOW_CATCHER" }
+		,{RPR_AOV_BACKGROUND, "RPR_AOV_BACKGROUND" }
+		,{RPR_AOV_EMISSION, "RPR_AOV_EMISSION" }
+		,{RPR_AOV_VELOCITY, "RPR_AOV_VELOCITY" }
+		,{RPR_AOV_DIRECT_ILLUMINATION, "RPR_AOV_DIRECT_ILLUMINATION" }
+		,{RPR_AOV_INDIRECT_ILLUMINATION, "RPR_AOV_INDIRECT_ILLUMINATION"}
+		,{RPR_AOV_AO, "RPR_AOV_AO" }
+		,{RPR_AOV_DIRECT_DIFFUSE, "RPR_AOV_DIRECT_DIFFUSE" }
+		,{RPR_AOV_DIRECT_REFLECT, "RPR_AOV_DIRECT_REFLECT" }
+		,{RPR_AOV_INDIRECT_DIFFUSE, "RPR_AOV_INDIRECT_DIFFUSE" }
+		,{RPR_AOV_INDIRECT_REFLECT, "RPR_AOV_INDIRECT_REFLECT" }
+		,{RPR_AOV_REFRACT, "RPR_AOV_REFRACT" }
+		,{RPR_AOV_VOLUME, "RPR_AOV_VOLUME" }
+		,{RPR_AOV_LIGHT_GROUP0, "RPR_AOV_LIGHT_GROUP0" }
+		,{RPR_AOV_LIGHT_GROUP1, "RPR_AOV_LIGHT_GROUP1" }
+		,{RPR_AOV_LIGHT_GROUP2, "RPR_AOV_LIGHT_GROUP2" }
+		,{RPR_AOV_LIGHT_GROUP3, "RPR_AOV_LIGHT_GROUP3" }
+		,{RPR_AOV_DIFFUSE_ALBEDO, "RPR_AOV_DIFFUSE_ALBEDO" }
+		,{RPR_AOV_VARIANCE, "RPR_AOV_VARIANCE" }
+		,{RPR_AOV_VIEW_SHADING_NORMAL, "RPR_AOV_VIEW_SHADING_NORMAL" }
+		,{RPR_AOV_REFLECTION_CATCHER, "RPR_AOV_REFLECTION_CATCHER" }
+		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
+	};
+
+	auto it = id2name.find(aov_id);
+
+	if (it != id2name.end())
+		return it->second;
+
+	static std::string errorMsg("ERROR");
+	return errorMsg;
+}
 
 // Private Methods
 // -----------------------------------------------------------------------------

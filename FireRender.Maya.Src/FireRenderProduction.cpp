@@ -827,7 +827,7 @@ void FireRenderProduction::RenderTiles()
 			if (it == out.end())
 				return;
 
-			it->second.overwrite(aov.pixels.get(), region, info.totalHeight, info.totalWidth);
+			it->second.overwrite(aov.pixels.get(), region, info.totalHeight, info.totalWidth, aov.id);
 		});
 
 		// send data to Maya render view
@@ -858,8 +858,8 @@ void FireRenderProduction::RenderTiles()
 	);
 
 	// debug dump resulting AOVs
-	for (auto& tmp : outBuffers)
-		tmp.second.debugDump(m_height, m_width);
+	/*for (auto& tmp : outBuffers)
+		tmp.second.debugDump(m_height, m_width);*/
 
 	// setup denoiser if necessary
 	m_contextPtr->ConsiderSetupDenoiser(true);
