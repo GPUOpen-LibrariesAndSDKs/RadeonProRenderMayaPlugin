@@ -22,7 +22,7 @@ namespace frw
 	}
 
 	template <typename... Args>
-	inline void DebugPrint(const char *format, const Args&... args)
+	inline void DebugPrint(const char* format, const Args&... args)
 	{
 #ifdef _DEBUG
 #ifdef _WIN32
@@ -107,4 +107,401 @@ namespace frw
 			}
 		}
 	}
+}
+
+
+void frw::Shader::SetShadowCatcher(bool isShadowCatcher)
+{
+	data().isShadowCatcher = isShadowCatcher;
+}
+
+bool frw::Shader::IsShadowCatcher() const
+{
+	return data().isShadowCatcher;
+}
+
+void frw::Shader::SetShadowColor(float r, float g, float b, float a)
+{
+	data().mShadowCatcherParams.mShadowR = r;
+	data().mShadowCatcherParams.mShadowG = g;
+	data().mShadowCatcherParams.mShadowB = b;
+	data().mShadowCatcherParams.mShadowA = a;
+}
+void frw::Shader::GetShadowColor(float* r, float* g, float* b, float* a) const
+{
+	*r = data().mShadowCatcherParams.mShadowR;
+	*g = data().mShadowCatcherParams.mShadowG;
+	*b = data().mShadowCatcherParams.mShadowB;
+	*a = data().mShadowCatcherParams.mShadowA;
+}
+
+void frw::Shader::SetShadowWeight(float w) { 
+	data().mShadowCatcherParams.mShadowWeight = w; 
+}
+
+float frw::Shader::GetShadowWeight() const { 
+	return data().mShadowCatcherParams.mShadowWeight; 
+}
+
+void frw::Shader::SetBackgroundIsEnvironment(bool bgIsEnv) { 
+	data().mShadowCatcherParams.mBgIsEnv = bgIsEnv; 
+}
+
+bool frw::Shader::BgIsEnv() const { 
+	return data().mShadowCatcherParams.mBgIsEnv; 
+}
+
+void frw::Shader::ClearDependencies(void) { 
+	data().ClearDependencies(); 
+}
+
+void frw::Shader::SetReflectionCatcher(bool isReflectionCatcher) { 
+	data().isReflectionCatcher = isReflectionCatcher; 
+}
+
+bool frw::Shader::IsReflectionCatcher(void) const { 
+	return data().isReflectionCatcher; 
+}
+
+frw::Shader::Shader(DataPtr p)
+{
+	m = p;
+}
+
+frw::Shader::Shader(const MaterialSystem& ms, ShaderType type, bool destroyOnDelete) : Node(ms, type, destroyOnDelete, new Data())
+{
+	data().shaderType = type;
+}
+
+frw::Shader::Shader(const MaterialSystem& ms, const Context& context) : Node(context, new Data())
+{
+	Data& d = data();
+	rpr_material_node materialSystemHandle = ms.Handle();
+	d.context = materialSystemHandle;
+	rpr_int status = rprMaterialSystemCreateNode(materialSystemHandle, RPR_MATERIAL_NODE_UBERV2, &d.materialNodeHandle);
+	checkStatusThrow(status, "Unable to create rprx material");
+	d.shaderType = ShaderTypeRprx;
+	d.bDirty = false;
+
+	FRW_PRINT_DEBUG("\tCreated RPRX material 0x%016llX of type: 0x%X", d.materialNodeHandle, type);
+}
+
+void frw::Shader::_SetInputNode(rpr_material_node_input key, const Shader& shader)
+{
+	Node::_SetInputNode(key, shader);
+
+	if (shader)
+	{
+		AddDependentShader(shader);
+	}
+}
+
+void frw::Shader::AddDependentShader(frw::Shader shader)
+{
+	data().dependentShaders.push_back(shader);
+}
+
+frw::ShaderType frw::Shader::GetShaderType() const
+{
+	if (!IsValid())
+		return ShaderTypeInvalid;
+	return data().shaderType;
+}
+
+bool frw::Shader::IsRprxMaterial() const
+{
+	return data().materialNodeHandle != nullptr;
+}
+
+void frw::Shader::SetMaterialName(const char* name)
+{
+	if (IsRprxMaterial())
+	{
+		rprObjectSetName(data().materialNodeHandle, name);
+	}
+	else
+	{
+		SetName(name);
+	}
+}
+
+rpr_material_node frw::Shader::GetMaterialHandle() const
+{
+	return data().materialNodeHandle;
+}
+
+void frw::Shader::SetDirty(bool value)
+{
+	data().bDirty = value;
+
+	if (value)
+	{
+		data().SetCommittedState(false);
+	}
+}
+
+bool frw::Shader::IsDirty() const
+{
+	return data().bDirty;
+}
+
+void frw::Shader::xMaterialCommit() const
+{
+	Data& d = data();
+
+	if (d.materialNodeHandle)
+	{
+		try
+		{
+			if (d.IsCommitted())
+			{
+				return;
+			}
+			d.SetCommittedState(true);
+		}
+		catch (...)
+		{
+			DebugPrint("Failed to rprx commit: Context=0x%016llX x_material=0x%016llX", d.context, d.materialNodeHandle);
+
+			throw;
+		}
+	}
+}
+
+void frw::Shader::AttachToShape(Shape::Data& shape)
+{
+	Data& d = data();
+	d.numAttachedShapes++;
+	rpr_int res;
+	if (d.materialNodeHandle)
+	{
+		FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX x_material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.materialNodeHandle);
+		res = rprShapeSetMaterial(shape.Handle(), d.materialNodeHandle);
+		checkStatus(res);
+
+		if (d.isShadowCatcher)
+		{
+			res = rprShapeSetShadowCatcher(shape.Handle(), true);
+			if (res != RPR_ERROR_UNSUPPORTED)
+			{
+				checkStatus(res);
+			}
+		}
+
+		if (d.isReflectionCatcher)
+		{
+			res = rprShapeSetReflectionCatcher(shape.Handle(), true);
+			checkStatus(res);
+		}
+	}
+	else
+	{
+		FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX material=0x%016llX", d, d.numAttachedShapes, shape.Handle(), d.Handle());
+		res = rprShapeSetMaterial(shape.Handle(), d.Handle());
+		checkStatus(res);
+	}
+
+	d.SetCommittedState(false);
+}
+void frw::Shader::DetachFromShape(Shape::Data& shape)
+{
+	Data& d = data();
+	d.numAttachedShapes--;
+	FRW_PRINT_DEBUG("\tShape.DetachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX, material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.materialNodeHandle);
+	if (d.materialNodeHandle)
+	{
+		rpr_int res = rprShapeSetMaterial(shape.Handle(), nullptr);
+		checkStatus(res);
+
+		if (d.isShadowCatcher)
+		{
+			res = rprShapeSetShadowCatcher(shape.Handle(), false);
+
+			if (res != RPR_ERROR_UNSUPPORTED)
+			{
+				checkStatus(res);
+			}
+		}
+	}
+	//			else -- RPR 1.262 crashes when changing any RPRX parameter (when creating new material and replacing old one); mirroring call to rpr API fixes that
+	{
+		rpr_int res = rprShapeSetMaterial(shape.Handle(), nullptr);
+		checkStatus(res);
+	}
+}
+
+void frw::Shader::AttachToCurve(frw::Curve::Data& crv)
+{
+	Data& d = data();
+	d.numAttachedShapes++;
+
+	if (d.materialNodeHandle)
+	{
+		FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX x_material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.materialNodeHandle);
+		rpr_int res;
+		res = rprCurveSetMaterial(crv.Handle(), d.materialNodeHandle);
+		checkStatus(res);
+	}
+	else
+	{
+		FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX material=0x%016llX", d, d.numAttachedShapes, shape.Handle(), d.Handle());
+		rpr_int res;
+		res = rprCurveSetMaterial(crv.Handle(), d.materialNodeHandle);
+		checkStatus(res);
+	}
+
+	d.SetCommittedState(false);
+}
+
+void frw::Shader::DetachFromCurve(frw::Curve::Data& crv)
+{
+	Data& d = data();
+	d.numAttachedShapes--;
+	FRW_PRINT_DEBUG("\tShape.DetachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX, material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.materialNodeHandle);
+
+	if (d.materialNodeHandle)
+	{
+		rpr_int res;
+		res = rprCurveSetMaterial(crv.Handle(), nullptr);
+		checkStatus(res);
+	}
+
+	{
+		rpr_int res;
+		res = rprCurveSetMaterial(crv.Handle(), nullptr);
+		checkStatus(res);
+	}
+}
+
+void frw::Shader::Commit()
+{
+	Data& d = data();
+	rpr_int res = RPR_SUCCESS;
+
+	if (d.IsCommitted())
+	{
+		return;
+	}
+
+	if (!d.context || !d.materialNodeHandle)
+	{
+		return;
+	}
+
+	d.SetCommittedState(true);
+	checkStatus(res);
+}
+
+void frw::Shader::AttachToMaterialInput(rpr_material_node node, rpr_material_node_input inputKey) const
+{
+	auto& d = data();
+	rpr_int res;
+	FRW_PRINT_DEBUG("\tShape.AttachToMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, d.materialNodeHandle, inputKey);
+	if (d.materialNodeHandle)
+	{
+		// Attach rpr shader output to some material's input
+		auto it = d.inputs.find(inputKey);
+		if (it != d.inputs.end())
+			DetachFromMaterialInput(it->second, it->first);
+
+		res = rprMaterialNodeSetInputNByKey(node, inputKey, d.materialNodeHandle);
+		checkStatus(res);
+		d.inputs.emplace(inputKey, node);
+	}
+	else
+	{
+		res = rprMaterialNodeSetInputNByKey(node, inputKey, d.Handle());
+	}
+	checkStatus(res);
+}
+
+void frw::Shader::DetachFromAllMaterialInputs()
+{
+	auto& d = data();
+	rpr_int res = RPR_ERROR_INVALID_PARAMETER;
+	for (const auto& input : d.inputs)
+	{
+		res = rprMaterialNodeSetInputNByKey(input.second, input.first, nullptr);
+		checkStatus(res);
+	}
+	d.inputs.clear();
+}
+
+void frw::Shader::DetachFromMaterialInput(rpr_material_node node, rpr_material_node_input inputKey) const
+{
+	auto& d = data();
+	rpr_int res = RPR_ERROR_INVALID_PARAMETER;
+	FRW_PRINT_DEBUG("\tShape.DetachFromMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, d.materialNodeHandle, inputKey);
+	if (d.materialNodeHandle)
+	{
+		// Detach rpr shader output from some material's input
+		res = rprMaterialNodeSetInputNByKey(node, inputKey, nullptr);
+		d.inputs.erase(inputKey);
+	}
+	checkStatus(res);
+}
+
+void frw::Shader::xSetParameterN(rpr_material_node_input parameter, rpr_material_node node)
+{
+	const Data& d = data();
+	rpr_int res = rprMaterialNodeSetInputNByKey(d.materialNodeHandle, parameter, node);
+
+	if (res == RPR_ERROR_UNSUPPORTED ||
+		res == RPR_ERROR_INVALID_PARAMETER)
+	{
+		// print error/warning if needed
+	}
+	else
+	{
+		checkStatus(res);
+	}
+}
+void frw::Shader::xSetParameterU(rpr_material_node_input parameter, rpr_uint value)
+{
+	const Data& d = data();
+	rpr_int res = rprMaterialNodeSetInputUByKey(d.materialNodeHandle, parameter, value);
+	if (res == RPR_ERROR_UNSUPPORTED ||
+		res == RPR_ERROR_INVALID_PARAMETER)
+	{
+		// print error/warning if needed
+	}
+	else
+	{
+		checkStatus(res);
+	}
+
+}
+void frw::Shader::xSetParameterF(rpr_material_node_input parameter, rpr_float x, rpr_float y, rpr_float z, rpr_float w)
+{
+	const Data& d = data();
+	rpr_int res = rprMaterialNodeSetInputFByKey(d.materialNodeHandle, parameter, x, y, z, w);
+	if (res == RPR_ERROR_UNSUPPORTED ||
+		res == RPR_ERROR_INVALID_PARAMETER)
+	{
+		// print error/warning if needed
+	}
+	else
+	{
+		checkStatus(res);
+	}
+}
+
+bool frw::Shader::xSetValue(rpr_material_node_input parameter, const Value& v)
+{
+	switch (v.type)
+	{
+		case Value::FLOAT:
+			xSetParameterF(parameter, v.x, v.y, v.z, v.w);
+			return true;
+		case Value::NODE:
+		{
+			if (!v.node)	// in theory we should now allow this, as setting a NULL input is legal (as of FRSDK 1.87)
+				return false;
+			AddReference(v.node);
+			xSetParameterN(parameter, v.node.Handle());	// should be ok to set null here now
+			return true;
+		}
+	}
+	assert(!"bad type");
+	return false;
 }
