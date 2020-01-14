@@ -107,9 +107,9 @@ public:
 		m_size = 0;
 	}
 
-	void overwrite(const RV_PIXEL* input, const RenderRegion& region, unsigned int totalHeight, unsigned int totalWidth);
+	void overwrite(const RV_PIXEL* input, const RenderRegion& region, unsigned int totalHeight, unsigned int totalWidth, int aov_id = 0);
 
-	void debugDump(unsigned int totalHeight, unsigned int totalWidth);
+	void debugDump(unsigned int totalHeight, unsigned int totalWidth, std::string& fbName);
 };
 
 /** AOV data. */
@@ -189,6 +189,8 @@ public:
 
 	/** Getting settings for making post processing*/
 	virtual void ReadFromGlobals(const MFnDependencyNode& globals) {}
+
+	static const std::string& GetAOVName(int aov_id);
 
 protected:
 	/** Make post processing for the specific AOV if required*/
