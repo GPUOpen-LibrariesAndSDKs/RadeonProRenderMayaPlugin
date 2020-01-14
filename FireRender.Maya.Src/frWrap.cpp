@@ -135,31 +135,38 @@ void frw::Shader::GetShadowColor(float* r, float* g, float* b, float* a) const
 	*a = data().mShadowCatcherParams.mShadowA;
 }
 
-void frw::Shader::SetShadowWeight(float w) { 
+void frw::Shader::SetShadowWeight(float w) 
+{ 
 	data().mShadowCatcherParams.mShadowWeight = w; 
 }
 
-float frw::Shader::GetShadowWeight() const { 
+float frw::Shader::GetShadowWeight() const 
+{ 
 	return data().mShadowCatcherParams.mShadowWeight; 
 }
 
-void frw::Shader::SetBackgroundIsEnvironment(bool bgIsEnv) { 
+void frw::Shader::SetBackgroundIsEnvironment(bool bgIsEnv) 
+{ 
 	data().mShadowCatcherParams.mBgIsEnv = bgIsEnv; 
 }
 
-bool frw::Shader::BgIsEnv() const { 
+bool frw::Shader::BgIsEnv() const 
+{ 
 	return data().mShadowCatcherParams.mBgIsEnv; 
 }
 
-void frw::Shader::ClearDependencies(void) { 
+void frw::Shader::ClearDependencies(void) 
+{ 
 	data().ClearDependencies(); 
 }
 
-void frw::Shader::SetReflectionCatcher(bool isReflectionCatcher) { 
+void frw::Shader::SetReflectionCatcher(bool isReflectionCatcher) 
+{ 
 	data().isReflectionCatcher = isReflectionCatcher; 
 }
 
-bool frw::Shader::IsReflectionCatcher(void) const { 
+bool frw::Shader::IsReflectionCatcher(void) const 
+{ 
 	return data().isReflectionCatcher; 
 }
 
@@ -178,12 +185,16 @@ frw::Shader::Shader(const MaterialSystem& ms, const Context& context) : Node(con
 	Data& d = data();
 	rpr_material_node materialSystemHandle = ms.Handle();
 	d.context = materialSystemHandle;
-	rpr_int status = rprMaterialSystemCreateNode(materialSystemHandle, RPR_MATERIAL_NODE_UBERV2, &d.materialNodeHandle);
+
+	rpr_material_node material;
+	rpr_int status = rprMaterialSystemCreateNode(materialSystemHandle, RPR_MATERIAL_NODE_UBERV2, &material);
 	checkStatusThrow(status, "Unable to create rprx material");
-	d.shaderType = ShaderTypeRprx;
+	d.shaderType = ShaderTypeStandard;
 	d.bDirty = false;
 
-	FRW_PRINT_DEBUG("\tCreated RPRX material 0x%016llX of type: 0x%X", d.materialNodeHandle, type);
+	SetHandle(material);
+
+	FRW_PRINT_DEBUG("\tCreated RPRX material 0x%016llX of type: 0x%X", Handle(), type);
 }
 
 void frw::Shader::_SetInputNode(rpr_material_node_input key, const Shader& shader)
@@ -208,28 +219,6 @@ frw::ShaderType frw::Shader::GetShaderType() const
 	return data().shaderType;
 }
 
-bool frw::Shader::IsRprxMaterial() const
-{
-	return data().materialNodeHandle != nullptr;
-}
-
-void frw::Shader::SetMaterialName(const char* name)
-{
-	if (IsRprxMaterial())
-	{
-		rprObjectSetName(data().materialNodeHandle, name);
-	}
-	else
-	{
-		SetName(name);
-	}
-}
-
-rpr_material_node frw::Shader::GetMaterialHandle() const
-{
-	return data().materialNodeHandle;
-}
-
 void frw::Shader::SetDirty(bool value)
 {
 	data().bDirty = value;
@@ -249,7 +238,7 @@ void frw::Shader::xMaterialCommit() const
 {
 	Data& d = data();
 
-	if (d.materialNodeHandle)
+	if (Handle())
 	{
 		try
 		{
@@ -261,7 +250,7 @@ void frw::Shader::xMaterialCommit() const
 		}
 		catch (...)
 		{
-			DebugPrint("Failed to rprx commit: Context=0x%016llX x_material=0x%016llX", d.context, d.materialNodeHandle);
+			DebugPrint("Failed to rprx commit: Context=0x%016llX x_material=0x%016llX", d.context, Handle());
 
 			throw;
 		}
@@ -273,10 +262,10 @@ void frw::Shader::AttachToShape(Shape::Data& shape)
 	Data& d = data();
 	d.numAttachedShapes++;
 	rpr_int res;
-	if (d.materialNodeHandle)
+	if (Handle())
 	{
-		FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX x_material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.materialNodeHandle);
-		res = rprShapeSetMaterial(shape.Handle(), d.materialNodeHandle);
+		FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX x_material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), Handle());
+		res = rprShapeSetMaterial(shape.Handle(), Handle());
 		checkStatus(res);
 
 		if (d.isShadowCatcher)
@@ -307,8 +296,8 @@ void frw::Shader::DetachFromShape(Shape::Data& shape)
 {
 	Data& d = data();
 	d.numAttachedShapes--;
-	FRW_PRINT_DEBUG("\tShape.DetachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX, material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.materialNodeHandle);
-	if (d.materialNodeHandle)
+	FRW_PRINT_DEBUG("\tShape.DetachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX, material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), Handle());
+	if (Handle())
 	{
 		rpr_int res = rprShapeSetMaterial(shape.Handle(), nullptr);
 		checkStatus(res);
@@ -335,18 +324,18 @@ void frw::Shader::AttachToCurve(frw::Curve::Data& crv)
 	Data& d = data();
 	d.numAttachedShapes++;
 
-	if (d.materialNodeHandle)
+	if (Handle())
 	{
-		FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX x_material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.materialNodeHandle);
+		FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX x_material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), Handle());
 		rpr_int res;
-		res = rprCurveSetMaterial(crv.Handle(), d.materialNodeHandle);
+		res = rprCurveSetMaterial(crv.Handle(), Handle());
 		checkStatus(res);
 	}
 	else
 	{
 		FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX material=0x%016llX", d, d.numAttachedShapes, shape.Handle(), d.Handle());
 		rpr_int res;
-		res = rprCurveSetMaterial(crv.Handle(), d.materialNodeHandle);
+		res = rprCurveSetMaterial(crv.Handle(), Handle());
 		checkStatus(res);
 	}
 
@@ -357,9 +346,9 @@ void frw::Shader::DetachFromCurve(frw::Curve::Data& crv)
 {
 	Data& d = data();
 	d.numAttachedShapes--;
-	FRW_PRINT_DEBUG("\tShape.DetachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX, material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.materialNodeHandle);
+	FRW_PRINT_DEBUG("\tShape.DetachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX, material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), Handle());
 
-	if (d.materialNodeHandle)
+	if (Handle())
 	{
 		rpr_int res;
 		res = rprCurveSetMaterial(crv.Handle(), nullptr);
@@ -383,7 +372,7 @@ void frw::Shader::Commit()
 		return;
 	}
 
-	if (!d.context || !d.materialNodeHandle)
+	if (!d.context || !Handle())
 	{
 		return;
 	}
@@ -396,15 +385,15 @@ void frw::Shader::AttachToMaterialInput(rpr_material_node node, rpr_material_nod
 {
 	auto& d = data();
 	rpr_int res;
-	FRW_PRINT_DEBUG("\tShape.AttachToMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, d.materialNodeHandle, inputKey);
-	if (d.materialNodeHandle)
+	FRW_PRINT_DEBUG("\tShape.AttachToMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, Handle(), inputKey);
+	if (Handle())
 	{
 		// Attach rpr shader output to some material's input
 		auto it = d.inputs.find(inputKey);
 		if (it != d.inputs.end())
 			DetachFromMaterialInput(it->second, it->first);
 
-		res = rprMaterialNodeSetInputNByKey(node, inputKey, d.materialNodeHandle);
+		res = rprMaterialNodeSetInputNByKey(node, inputKey, Handle());
 		checkStatus(res);
 		d.inputs.emplace(inputKey, node);
 	}
@@ -431,8 +420,8 @@ void frw::Shader::DetachFromMaterialInput(rpr_material_node node, rpr_material_n
 {
 	auto& d = data();
 	rpr_int res = RPR_ERROR_INVALID_PARAMETER;
-	FRW_PRINT_DEBUG("\tShape.DetachFromMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, d.materialNodeHandle, inputKey);
-	if (d.materialNodeHandle)
+	FRW_PRINT_DEBUG("\tShape.DetachFromMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, Handle(), inputKey);
+	if (Handle())
 	{
 		// Detach rpr shader output from some material's input
 		res = rprMaterialNodeSetInputNByKey(node, inputKey, nullptr);
@@ -444,7 +433,7 @@ void frw::Shader::DetachFromMaterialInput(rpr_material_node node, rpr_material_n
 void frw::Shader::xSetParameterN(rpr_material_node_input parameter, rpr_material_node node)
 {
 	const Data& d = data();
-	rpr_int res = rprMaterialNodeSetInputNByKey(d.materialNodeHandle, parameter, node);
+	rpr_int res = rprMaterialNodeSetInputNByKey(Handle(), parameter, node);
 
 	if (res == RPR_ERROR_UNSUPPORTED ||
 		res == RPR_ERROR_INVALID_PARAMETER)
@@ -459,7 +448,7 @@ void frw::Shader::xSetParameterN(rpr_material_node_input parameter, rpr_material
 void frw::Shader::xSetParameterU(rpr_material_node_input parameter, rpr_uint value)
 {
 	const Data& d = data();
-	rpr_int res = rprMaterialNodeSetInputUByKey(d.materialNodeHandle, parameter, value);
+	rpr_int res = rprMaterialNodeSetInputUByKey(Handle(), parameter, value);
 	if (res == RPR_ERROR_UNSUPPORTED ||
 		res == RPR_ERROR_INVALID_PARAMETER)
 	{
@@ -474,7 +463,7 @@ void frw::Shader::xSetParameterU(rpr_material_node_input parameter, rpr_uint val
 void frw::Shader::xSetParameterF(rpr_material_node_input parameter, rpr_float x, rpr_float y, rpr_float z, rpr_float w)
 {
 	const Data& d = data();
-	rpr_int res = rprMaterialNodeSetInputFByKey(d.materialNodeHandle, parameter, x, y, z, w);
+	rpr_int res = rprMaterialNodeSetInputFByKey(Handle(), parameter, x, y, z, w);
 	if (res == RPR_ERROR_UNSUPPORTED ||
 		res == RPR_ERROR_INVALID_PARAMETER)
 	{

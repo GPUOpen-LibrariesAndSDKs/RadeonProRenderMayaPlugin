@@ -545,6 +545,7 @@ namespace frw
 		bool operator<(const Object& rhs) const { return (size_t)m.get() < (size_t)rhs.m.get(); };
 
 		void* Handle() const { return m->Handle(); }
+		void SetHandle(void* data) { m->handle = data; }
 
 		Context GetContext() const;
 
@@ -2880,28 +2881,18 @@ namespace frw
 			};
 
 		public:
-			virtual ~Data()
-			{
-				if (materialNodeHandle)
-				{
-					FRW_PRINT_DEBUG("\tDeleting RPRX material 0x%016llX (from context 0x%016llX)", materialNodeHandle, context);
-					rpr_int res = rprObjectDelete(materialNodeHandle);
-					checkStatus(res);
-					FRW_PRINT_DEBUG("\tDeleted RPRX material 0x%016llX", materialNodeHandle);
-				}
-			}
 
 			virtual bool IsValid() const
 			{
-				if (Handle() != nullptr) return true;
-				if (materialNodeHandle != nullptr) return true;
-				return false;
+				return Handle() != nullptr;
 			}
 
 			void ClearDependencies(void)
 			{
-				if (!materialNodeHandle)
+				if (Handle() == nullptr)
+				{
 					return;
+				}
 
 				for (const auto& input : inputs)
 				{
@@ -2936,7 +2927,6 @@ namespace frw
 			int numAttachedShapes = 0;
 			ShaderType shaderType = ShaderTypeInvalid;
 			rpr_material_system context = nullptr;
-			rpr_material_node materialNodeHandle = nullptr; // RPRX material
 			std::map<rpr_material_node_input, rpr_material_node> inputs;
 			bool isShadowCatcher = false;
 			ShadowCatcherParams mShadowCatcherParams;
@@ -2965,9 +2955,6 @@ namespace frw
 		void _SetInputNode(rpr_material_node_input key, const Shader& shader);
 		void AddDependentShader(frw::Shader shader);
 		ShaderType GetShaderType() const;
-		bool IsRprxMaterial() const;
-		void SetMaterialName(const char* name);
-		rpr_material_node GetMaterialHandle() const;
 		void SetDirty(bool value = true);
 		bool IsDirty() const;
 		void xMaterialCommit() const;
@@ -3236,7 +3223,7 @@ namespace frw
 		AddReference(shader);
 		data().volumeShader = shader;
 
-		if (!shader.IsRprxMaterial())
+		if (shader.GetShaderType() != ShaderType::ShaderTypeStandard)
 		{
 			auto res = rprShapeSetVolumeMaterial(Handle(), shader.Handle());
 

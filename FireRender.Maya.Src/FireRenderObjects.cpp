@@ -1100,10 +1100,12 @@ rpr_int rprxMaterialGetParameterValue(rpr_material_node material, rpr_uint param
 bool IsUberEmissive(frw::Shader shader)
 {
 	// back-off
-	if (!shader.IsRprxMaterial())
+	if (!shader)
+	{
 		return false;
+	}
 
-	rpr_material_node mHandle = shader.GetMaterialHandle();
+	rpr_material_node mHandle = shader.Handle();
 
 	rpr_parameter_type rprType = 0;
 	rpr_int res = rprxMaterialGetParameterType(
