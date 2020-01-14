@@ -2898,25 +2898,9 @@ namespace frw
 				inputs.clear();
 			}
 
-			void SetCommittedState(bool flag)
-			{
-				bCommitted = flag;
-
-				if (flag == false)
-				{
-					for (frw::Shader& dependentShader : dependentShaders)
-					{
-						dependentShader.data().SetCommittedState(flag);
-					}
-				}
-			}
-
-			bool IsCommitted() const { return bCommitted; }
-
 			bool bDirty = true;
 
 			// Useful in case of BlendMaterial shader. 
-			// We need to mark dependent shaders as "not committed" when we change mesh assignment on the main shader
 			std::vector<frw::Shader> dependentShaders;
 			int numAttachedShapes = 0;
 			ShaderType shaderType = ShaderTypeInvalid;
@@ -2924,9 +2908,6 @@ namespace frw
 			bool isShadowCatcher = false;
 			ShadowCatcherParams mShadowCatcherParams;
 			bool isReflectionCatcher = false;
-
-		private:
-			bool bCommitted = false;
 		};
 
 	public:
@@ -2950,12 +2931,10 @@ namespace frw
 		ShaderType GetShaderType() const;
 		void SetDirty(bool value = true);
 		bool IsDirty() const;
-		void xMaterialCommit() const;
 		void AttachToShape(Shape::Data& shape);
 		void DetachFromShape(Shape::Data& shape);
 		void AttachToCurve(frw::Curve::Data& crv);
 		void DetachFromCurve(frw::Curve::Data& crv);
-		void Commit();
 		void AttachToMaterialInput(rpr_material_node node, rpr_material_node_input inputKey) const;
 		void DetachFromAllMaterialInputs();
 		void DetachFromMaterialInput(rpr_material_node node, rpr_material_node_input inputKey) const;
@@ -3107,26 +3086,18 @@ namespace frw
 		// in theory a null could be considered a transparent material, but would create unexpected node
 		if (!a.IsValid())
 		{
-			b.xMaterialCommit();
 			return b;
 		}
 
 		if (!b.IsValid())
 		{
-			a.xMaterialCommit();
 			return a;
 		}
 
 		Shader node(*this, ShaderTypeBlend);
 		node._SetInputNode(RPR_MATERIAL_INPUT_COLOR0, a);
 		node._SetInputNode(RPR_MATERIAL_INPUT_COLOR1, b);
-
 		node.SetValue(RPR_MATERIAL_INPUT_WEIGHT, t);
-
-		node.xMaterialCommit();
-
-		a.xMaterialCommit();
-		b.xMaterialCommit();
 
 		node.SetDirty(false);
 

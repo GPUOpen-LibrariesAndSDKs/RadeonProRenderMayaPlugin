@@ -210,39 +210,11 @@ frw::ShaderType frw::Shader::GetShaderType() const
 void frw::Shader::SetDirty(bool value)
 {
 	data().bDirty = value;
-
-	if (value)
-	{
-		data().SetCommittedState(false);
-	}
 }
 
 bool frw::Shader::IsDirty() const
 {
 	return data().bDirty;
-}
-
-void frw::Shader::xMaterialCommit() const
-{
-	Data& d = data();
-
-	if (Handle())
-	{
-		try
-		{
-			if (d.IsCommitted())
-			{
-				return;
-			}
-			d.SetCommittedState(true);
-		}
-		catch (...)
-		{
-			DebugPrint("Failed to rprx commit: Context=0x%016llX x_material=0x%016llX", d.context, Handle());
-
-			throw;
-		}
-	}
 }
 
 void frw::Shader::AttachToShape(Shape::Data& shape)
@@ -271,15 +243,8 @@ void frw::Shader::AttachToShape(Shape::Data& shape)
 			checkStatus(res);
 		}
 	}
-	else
-	{
-		FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX material=0x%016llX", d, d.numAttachedShapes, shape.Handle(), d.Handle());
-		res = rprShapeSetMaterial(shape.Handle(), d.Handle());
-		checkStatus(res);
-	}
-
-	d.SetCommittedState(false);
 }
+
 void frw::Shader::DetachFromShape(Shape::Data& shape)
 {
 	Data& d = data();
@@ -300,11 +265,6 @@ void frw::Shader::DetachFromShape(Shape::Data& shape)
 			}
 		}
 	}
-	//			else -- RPR 1.262 crashes when changing any RPRX parameter (when creating new material and replacing old one); mirroring call to rpr API fixes that
-	{
-		rpr_int res = rprShapeSetMaterial(shape.Handle(), nullptr);
-		checkStatus(res);
-	}
 }
 
 void frw::Shader::AttachToCurve(frw::Curve::Data& crv)
@@ -319,15 +279,6 @@ void frw::Shader::AttachToCurve(frw::Curve::Data& crv)
 		res = rprCurveSetMaterial(crv.Handle(), Handle());
 		checkStatus(res);
 	}
-	else
-	{
-		FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX material=0x%016llX", d, d.numAttachedShapes, shape.Handle(), d.Handle());
-		rpr_int res;
-		res = rprCurveSetMaterial(crv.Handle(), Handle());
-		checkStatus(res);
-	}
-
-	d.SetCommittedState(false);
 }
 
 void frw::Shader::DetachFromCurve(frw::Curve::Data& crv)
@@ -342,31 +293,6 @@ void frw::Shader::DetachFromCurve(frw::Curve::Data& crv)
 		res = rprCurveSetMaterial(crv.Handle(), nullptr);
 		checkStatus(res);
 	}
-
-	{
-		rpr_int res;
-		res = rprCurveSetMaterial(crv.Handle(), nullptr);
-		checkStatus(res);
-	}
-}
-
-void frw::Shader::Commit()
-{
-	Data& d = data();
-	rpr_int res = RPR_SUCCESS;
-
-	if (d.IsCommitted())
-	{
-		return;
-	}
-
-	if (!d.context || !Handle())
-	{
-		return;
-	}
-
-	d.SetCommittedState(true);
-	checkStatus(res);
 }
 
 void frw::Shader::AttachToMaterialInput(rpr_material_node node, rpr_material_node_input inputKey) const
@@ -384,10 +310,6 @@ void frw::Shader::AttachToMaterialInput(rpr_material_node node, rpr_material_nod
 		res = rprMaterialNodeSetInputNByKey(node, inputKey, Handle());
 		checkStatus(res);
 		d.inputs.emplace(inputKey, node);
-	}
-	else
-	{
-		res = rprMaterialNodeSetInputNByKey(node, inputKey, d.Handle());
 	}
 	checkStatus(res);
 }

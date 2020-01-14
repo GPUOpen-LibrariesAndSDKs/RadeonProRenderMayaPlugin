@@ -214,8 +214,6 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 		if (objectsProcessed.count(shader))
 			continue;	// already handled
 
-		shader.Commit();
-
 		objectsProcessed.insert(shader);
 
 		rpr_material_node mat_rprx_context = nullptr;
