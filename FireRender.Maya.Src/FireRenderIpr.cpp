@@ -228,11 +228,11 @@ void FireRenderIpr::SetupOOC(FireRenderGlobalsData& globals)
 
 	if (globals.enableOOC)
 	{
-		rprContextSetParameter1u(frcontext, "ooctexcache", globals.oocTexCache);
+		rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_OOC_TEXTURE_CACHE, globals.oocTexCache);
 	}
 	else
 	{
-		rprContextSetParameter1u(frcontext, "ooctexcache", 0);
+		rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_OOC_TEXTURE_CACHE, 0);
 	}
 }
 

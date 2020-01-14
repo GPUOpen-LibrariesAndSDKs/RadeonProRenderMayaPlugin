@@ -4,7 +4,7 @@
 // RprSupport and RadeonProRender_GL needs to be included manually
 #include <RadeonProRender.h>
 #include <RadeonProRender_GL.h>
-#include <rprDeprecatedApi.h>
+// #include <rprDeprecatedApi.h>
 
 #include <list>
 #include <map>
@@ -299,23 +299,19 @@ namespace frw
 		NodeInputStandardTransparencyColor = RPR_MATERIAL_STANDARD_INPUT_TRANSPARENCY_COLOR,
 		NodeInputStandardRefractionRoughness = RPR_MATERIAL_STANDARD_INPUT_REFRACTION_ROUGHNESS,
 #else
-		NodeInputStandardDiffuseColor = RPR_UBER_MATERIAL_INPUT_DIFFUSE_COLOR,
-		NodeInputStandardDiffuseNormal = RPR_UBER_MATERIAL_INPUT_DIFFUSE_NORMAL,
-		NodeInputStandardGlossyColor = RPR_UBER_MATERIAL_INPUT_SHEEN,
-		//NodeInputStandardGlossyNormal = RPR_MATERIAL_STANDARD_INPUT_GLOSSY_NORMAL,
-		NodeInputStandardClearcoatColor = RPR_UBER_MATERIAL_INPUT_COATING_COLOR,
-		NodeInputStandardClearcoatNormal = RPR_UBER_MATERIAL_INPUT_COATING_NORMAL,
-		NodeInputStandardRefractionColor = RPR_UBER_MATERIAL_INPUT_REFRACTION_COLOR,
-		NodeInputStandardRefractionNormal = RPR_UBER_MATERIAL_INPUT_REFRACTION_NORMAL,
-		NodeInputStandardRefractionIOR = RPR_UBER_MATERIAL_INPUT_REFRACTION_IOR,
-		NodeInputStandardDiffuseToRefractionWeight = RPR_UBER_MATERIAL_INPUT_REFRACTION_WEIGHT,
-		NodeInputStandardGlossyToDiffuseWeight = RPR_UBER_MATERIAL_INPUT_COATING_WEIGHT,
-		//NodeInputStandardClearcoatToGlossyWeight = RPR_MATERIAL_STANDARD_INPUT_CLEARCOAT_TO_GLOSSY_WEIGHT,
-		NodeInputStandardTransparency = RPR_UBER_MATERIAL_INPUT_TRANSPARENCY,
-		//NodeInputStandardTransparencyColor = RPR_MATERIAL_STANDARD_INPUT_TRANSPARENCY_COLOR,
-		NodeInputStandardRefractionRoughness = RPR_UBER_MATERIAL_INPUT_REFRACTION_ROUGHNESS,
-
-		NodeInputFresnelSchlikApproximation = RPR_UBER_MATERIAL_INPUT_FRESNEL_SCHLICK_APPROXIMATION,
+		NodeInputStandardDiffuseColor = RPR_MATERIAL_INPUT_UBER_DIFFUSE_COLOR,
+		NodeInputStandardDiffuseNormal = RPR_MATERIAL_INPUT_UBER_DIFFUSE_NORMAL,
+		NodeInputStandardGlossyColor = RPR_MATERIAL_INPUT_UBER_SHEEN,
+		NodeInputStandardClearcoatColor = RPR_MATERIAL_INPUT_UBER_COATING_COLOR,
+		NodeInputStandardClearcoatNormal = RPR_MATERIAL_INPUT_UBER_COATING_NORMAL,
+		NodeInputStandardRefractionColor = RPR_MATERIAL_INPUT_UBER_REFRACTION_COLOR,
+		NodeInputStandardRefractionNormal = RPR_MATERIAL_INPUT_UBER_REFRACTION_NORMAL,
+		NodeInputStandardRefractionIOR = RPR_MATERIAL_INPUT_UBER_REFRACTION_IOR,
+		NodeInputStandardDiffuseToRefractionWeight = RPR_MATERIAL_INPUT_UBER_REFRACTION_WEIGHT,
+		NodeInputStandardGlossyToDiffuseWeight = RPR_MATERIAL_INPUT_UBER_COATING_WEIGHT,
+		NodeInputStandardTransparency = RPR_MATERIAL_INPUT_UBER_TRANSPARENCY,
+		NodeInputStandardRefractionRoughness = RPR_MATERIAL_INPUT_UBER_REFRACTION_ROUGHNESS,
+		NodeInputFresnelSchlikApproximation = RPR_MATERIAL_INPUT_UBER_FRESNEL_SCHLICK_APPROXIMATION,
 #endif
 	};
 	enum NodeInputInfo
@@ -663,13 +659,13 @@ namespace frw
 	public:
 		Node(const MaterialSystem& ms, int type, bool destroyOnDelete = true, Data* data = nullptr);	// not typesafe
 
-		bool SetValue(const char* key, const Value& v);
-		bool SetValueInt(const char* key, int);
+		bool SetValue(rpr_material_node_input key, const Value& v);
+		bool SetValueInt(rpr_material_node_input key, int);
 
 		MaterialSystem GetMaterialSystem() const;
 
 		/// do not use if you can avoid it (unsafe)
-		void _SetInputNode(const char* key, const Shader& shader);
+		void _SetInputNode(rpr_material_node_input key, const Shader& shader);
 
 		int GetType() const
 		{
@@ -1649,9 +1645,9 @@ namespace frw
 		}
 
 //#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
-		void SetParameter(const char * sz, rpr_uint v)
+		void SetParameter(rpr_context_info parameter, rpr_uint value)
 		{
-			auto res = rprContextSetParameter1u(Handle(), sz, v);
+			auto res = rprContextSetParameterByKey1u(Handle(), parameter, value);
 
 			if (res == RPR_ERROR_UNSUPPORTED ||
 				res == RPR_ERROR_INVALID_PARAMETER)
@@ -1664,9 +1660,10 @@ namespace frw
 			}
 
 		}
-		void SetParameter(const char * sz, int v)
+
+		void SetParameter(rpr_context_info parameter, int value)
 		{
-			auto res = rprContextSetParameter1u(Handle(), sz, v);
+			auto res = rprContextSetParameterByKey1u(Handle(), parameter, value);
 
 			if (res == RPR_ERROR_UNSUPPORTED ||
 				res == RPR_ERROR_INVALID_PARAMETER)
@@ -1678,9 +1675,10 @@ namespace frw
 				checkStatus(res);
 			}
 		}
-		void SetParameter(const char * sz, double v)
+
+		void SetParameter(rpr_context_info parameter, double value)
 		{
-			auto res = rprContextSetParameter1f(Handle(), sz, (rpr_float)v);
+			auto res = rprContextSetParameterByKey1f(Handle(), parameter, (rpr_float)value);
 
 			if (res == RPR_ERROR_UNSUPPORTED ||
 				res == RPR_ERROR_INVALID_PARAMETER)
@@ -1692,9 +1690,10 @@ namespace frw
 				checkStatus(res);
 			}
 		}
-		void SetParameter(const char * sz, double x, double y, double z)
+
+		void SetParameter(rpr_context_info parameter, double x, double y, double z)
 		{
-			auto res = rprContextSetParameter3f(Handle(), sz, (rpr_float)x, (rpr_float)y, (rpr_float)z);
+			auto res = rprContextSetParameterByKey3f(Handle(), parameter, (rpr_float)x, (rpr_float)y, (rpr_float)z);
 
 			if (res == RPR_ERROR_UNSUPPORTED ||
 				res == RPR_ERROR_INVALID_PARAMETER)
@@ -1706,9 +1705,10 @@ namespace frw
 				checkStatus(res);
 			}
 		}
-		void SetParameter(const char * sz, double x, double y, double z, double w)
+
+		void SetParameter(rpr_context_info parameter, double x, double y, double z, double w)
 		{
-			auto res = rprContextSetParameter4f(Handle(), sz, (rpr_float)x, (rpr_float)y, (rpr_float)z, (rpr_float)w);
+			auto res = rprContextSetParameterByKey4f(Handle(), parameter, (rpr_float)x, (rpr_float)y, (rpr_float)z, (rpr_float)w);
 
 			if (res == RPR_ERROR_UNSUPPORTED ||
 				res == RPR_ERROR_INVALID_PARAMETER)
@@ -1835,7 +1835,7 @@ namespace frw
 			bool isGridDataValid = numberOfVoxels == gridSizeX * gridSizeY * gridSizeZ;
 			if (!isGridDataValid)
 			{
-				checkStatusThrow(FR_ERROR_INVALID_PARAMETER, "Unable to create Hetero Volume - invalid indices data!");
+				checkStatusThrow(RPR_ERROR_INVALID_PARAMETER, "Unable to create Hetero Volume - invalid indices data!");
 			}
 
 			// create indices array 
@@ -1971,7 +1971,7 @@ namespace frw
 
 			if (num_indices != (totalSegmentsCount * pointsPerSegment))
 			{
-				checkStatusThrow(FR_ERROR_INVALID_PARAMETER, "Unable to create Hair Curve - invalid indices data!");
+				checkStatusThrow(RPR_ERROR_INVALID_PARAMETER, "Unable to create Hair Curve - invalid indices data!");
 			}
 
 			// create curve
@@ -2156,7 +2156,7 @@ namespace frw
 		rpr_int SetMap(Image v)
 		{
 			AddReference(v);
-			return rprMaterialNodeSetInputImageData(Handle(), "data", v.Handle());
+			return rprMaterialNodeSetInputImageDataByKey(Handle(), RPR_MATERIAL_INPUT_DATA, v.Handle());
 		}
 	};
 
@@ -2165,7 +2165,7 @@ namespace frw
 	public:
 		LookupNode(const MaterialSystem& h, LookupType v) : ValueNode(h, ValueTypeLookup)
 		{
-			SetValueInt("value", v);
+			SetValueInt(RPR_MATERIAL_INPUT_VALUE, v);
 		}
 	};
 
@@ -2174,26 +2174,26 @@ namespace frw
 	public:
 		ArithmeticNode(const MaterialSystem& h, Operator op) : ValueNode(h, ValueTypeArithmetic)
 		{
-			SetValueInt("op", op);
+			SetValueInt(RPR_MATERIAL_INPUT_OP, op);
 		}
 		ArithmeticNode(const MaterialSystem& h, Operator op, const Value& a) : ValueNode(h, ValueTypeArithmetic)
 		{
-			SetValueInt("op", op);
-			SetValue("color0", a);
+			SetValueInt(RPR_MATERIAL_INPUT_OP, op);
+			SetValue(RPR_MATERIAL_INPUT_COLOR0, a);
 		}
 		ArithmeticNode(const MaterialSystem& h, Operator op, const Value& a, const Value& b) : ValueNode(h, ValueTypeArithmetic)
 		{
-			SetValueInt("op", op);
-			SetValue("color0", a);
-			SetValue("color1", b);
+			SetValueInt(RPR_MATERIAL_INPUT_OP, op);
+			SetValue(RPR_MATERIAL_INPUT_COLOR0, a);
+			SetValue(RPR_MATERIAL_INPUT_COLOR1, b);
 		}
 		// arithmetic node doesn't support 3 operators
 		void SetArgument(int i, const Value& v)
 		{
 			switch (i)
 			{
-			case 0: SetValue("color0", v); break;
-			case 1: SetValue("color1", v); break;
+			case 0: SetValue(RPR_MATERIAL_INPUT_COLOR0, v); break;
+			case 1: SetValue(RPR_MATERIAL_INPUT_COLOR1, v); break;
 			}
 		}
 	};
@@ -2209,7 +2209,7 @@ namespace frw
 			{
 				Node n = v.GetNode();
 				AddReference(n);
-				auto res = rprMaterialNodeSetInputN(Handle(), "color", n.Handle());
+				auto res = rprMaterialNodeSetInputNByKey(Handle(), RPR_MATERIAL_INPUT_COLOR, n.Handle());
 				checkStatus(res);
 			}
 		}
@@ -2226,7 +2226,7 @@ namespace frw
 			{
 				Node n = v.GetNode();
 				AddReference(n);
-				auto res = rprMaterialNodeSetInputN(Handle(), "color", n.Handle());
+				auto res = rprMaterialNodeSetInputNByKey(Handle(), RPR_MATERIAL_INPUT_COLOR, n.Handle());
 				checkStatus(res);
 			}
 		}
@@ -2243,13 +2243,9 @@ namespace frw
 		public:
 			virtual ~Data()
 			{
-				if (rprxContext)
-				{
-					rprxDeleteContext(rprxContext);
-					FRW_PRINT_DEBUG("\tDeleted RPRX context 0x%016llX", rprxContext);
-				}
+				// rprxDeleteContext() wasn't do anything
 			}
-			rprx_context rprxContext = nullptr;
+			rpr_material_system m_materialSystemHandle = nullptr;
 		};
 
 	protected:
@@ -2258,7 +2254,11 @@ namespace frw
 		{
 			FRW_PRINT_DEBUG("CreateNode(%d) in MaterialSystem: 0x%016llX", type, Handle());
 			rpr_material_node node = nullptr;
-			auto res = rprMaterialSystemCreateNode(Handle(), type, &node);
+			int a = 3;
+			auto h = GetMaterialSystem();
+			int b = 4;
+			rpr_int res = rprMaterialSystemCreateNode(h, type, &node);
+
 			if (res != RPR_ERROR_UNSUPPORTED &&
 				res != RPR_ERROR_INVALID_PARAMETER)
 			{
@@ -2279,17 +2279,22 @@ namespace frw
 			if (!h)
 			{
 				FRW_PRINT_DEBUG("CreateMaterialSystem()");
-				rpr_material_system hMS = nullptr;
-				rpr_int res = rprContextCreateMaterialSystem(c.Handle(), 0, &hMS);
+				rpr_material_system m_materialSystemHandle = nullptr;
+				rpr_int res = rprContextCreateMaterialSystem(c.Handle(), 0, &data().m_materialSystemHandle);
 				checkStatus(res);
-				m->Attach(hMS, destroyOnDelete);
-				res = rprxCreateContext(Handle(), 0, &data().rprxContext);
+				m->Attach(&data().m_materialSystemHandle, destroyOnDelete);
+
+				if (Handle() == nullptr)
+				{
+					res = RPR_ERROR_INVALID_PARAMETER;
+				}
+
 				checkStatus(res);
-				FRW_PRINT_DEBUG("\tCreated RPRX context 0x%016llX", data().rprxContext);
+				FRW_PRINT_DEBUG("\tCreated RPRX context 0x%016llX", data().m_materialSystemHandle);
 			}
 		}
 
-		rprx_context GetRprxContext() const { return data().rprxContext; }
+		rpr_material_system GetMaterialSystem() const { return data().m_materialSystemHandle; }
 
 		Value ValueBlend(const Value& a, const Value& b, const Value& t) const
 		{
@@ -2315,9 +2320,9 @@ namespace frw
 			}
 
 			ValueNode node(*this, ValueTypeBlend);
-			node.SetValue("color0", a);
-			node.SetValue("color1", b);
-			node.SetValue("weight", t);
+			node.SetValue(RPR_MATERIAL_INPUT_COLOR0, a);
+			node.SetValue(RPR_MATERIAL_INPUT_COLOR1, b);
+			node.SetValue(RPR_MATERIAL_INPUT_WEIGHT, t);
 			return node;
 		}
 
@@ -2698,10 +2703,10 @@ namespace frw
 		{
 			ValueNode node(*this, ValueTypeFresnel);
 
-			node.SetValue("ior", ior);
+			node.SetValue(RPR_MATERIAL_INPUT_IOR, ior);
 			// TODO the following fail if set to expected lookup values
-			node.SetValue("invec", v);
-			node.SetValue("normal", n);
+			node.SetValue(RPR_MATERIAL_INPUT_INVEC, v);
+			node.SetValue(RPR_MATERIAL_INPUT_NORMAL, n);
 			return node;
 		}
 
@@ -2709,10 +2714,10 @@ namespace frw
 		{
 			ValueNode node(*this, ValueTypeFresnelSchlick);
 
-			node.SetValue("reflectance", reflectance);
+			node.SetValue(RPR_MATERIAL_INPUT_REFLECTANCE, reflectance);
 			// TODO the following fail if set to expected lookup values
-			node.SetValue("invec", v);
-			node.SetValue("normal", n);
+			node.SetValue(RPR_MATERIAL_INPUT_INVEC, v);
+			node.SetValue(RPR_MATERIAL_INPUT_NORMAL, n);
 			return node;
 		}
 
@@ -2796,14 +2801,14 @@ namespace frw
     public:
         explicit AOMapNode(const MaterialSystem& h, const Value& radius, const Value& side, const Value& samplesCount) : ValueNode(h, ValueTypeAOMap)
         {
-            SetValue("radius", radius);
-            SetValue("side", side);
+            SetValue(RPR_MATERIAL_INPUT_RADIUS, radius);
+            SetValue(RPR_MATERIAL_INPUT_SIDE, side);
 
 			// set node value is temporarily commented out, because at the moment (core 1325) number of samples for ao is a parameter of context instead of parameter of node
 			// this was discussed with Takahiro
 			//SetValueInt("aoraycount", samplesCount.GetInt());
 			Context ctx = h.GetContext();
-			ctx.SetParameter("aoraycount", samplesCount.GetInt());
+			ctx.SetParameter(RPR_CONTEXT_AO_RAY_COUNT, samplesCount.GetInt());
         }
     };
 
@@ -2887,13 +2892,13 @@ namespace frw
 		public:
 			virtual ~Data()
 			{
-				if (material)
+				/*if (material)
 				{
 					FRW_PRINT_DEBUG("\tDeleting RPRX material 0x%016llX (from context 0x%016llX)", material, context);
-					rpr_int res = rprxMaterialDelete(context, material);
+					rpr_int res = rprObjectDelete(material);
 					checkStatus(res);
 					FRW_PRINT_DEBUG("\tDeleted RPRX material 0x%016llX", material);
-				}
+				}*/
 			}
 
 			virtual bool IsValid() const
@@ -2908,12 +2913,10 @@ namespace frw
 				if (!material)
 					return;
 
-				for (auto kvp : inputs)
+				for (const auto& input : inputs)
 				{
 					// rprxMaterialDetachMaterial
-					rpr_material_node node = kvp.second;
-					rpr_char const * parameter = kvp.first.c_str();
-					rpr_int res = rprMaterialNodeSetInputN(node, parameter, (rpr_material_node)NULL);
+					rpr_int res = rprMaterialNodeSetInputNByKey(input.second, input.first, (rpr_material_node)NULL);
 					checkStatus(res);
 				}
 
@@ -2942,9 +2945,9 @@ namespace frw
 			std::vector<frw::Shader> dependentShaders;
 			int numAttachedShapes = 0;
 			ShaderType shaderType = ShaderTypeInvalid;
-			rprx_context context = nullptr;
-			rprx_material material = nullptr; // RPRX material
-			std::map<std::string, rpr_material_node> inputs;
+			rpr_material_system context = nullptr;
+			rpr_material_node material = nullptr; // RPRX material
+			std::map<rpr_material_node_input, rpr_material_node> inputs;
 			bool isShadowCatcher = false;
 			ShadowCatcherParams mShadowCatcherParams;
 			bool isReflectionCatcher = false;
@@ -2991,20 +2994,20 @@ namespace frw
 		{
 			data().shaderType = type;
 		}
-		explicit Shader(const MaterialSystem& ms, const Context& context, rprx_material_type type)
+		explicit Shader(const MaterialSystem& ms, const Context& context)
 		: Node(context, new Data())
 		{
 			Data& d = data();
-			rprx_context rprxContext = ms.GetRprxContext();
-			d.context = rprxContext;
-			auto status = rprxCreateMaterial(rprxContext, type, &d.material);
+			rpr_material_system rprMaterialSystem = ms.GetMaterialSystem();
+			d.context = rprMaterialSystem;
+			rpr_int status = rprMaterialSystemCreateNode(rprMaterialSystem, RPR_MATERIAL_NODE_UBERV2, &d.material);
 			checkStatusThrow(status, "Unable to create rprx material");
 			d.shaderType = ShaderTypeRprx;
 			d.bDirty = false;
 			FRW_PRINT_DEBUG("\tCreated RPRX material 0x%016llX of type: 0x%X", d.material, type);
 		}
 
-		void _SetInputNode(const char* key, const Shader& shader)
+		void _SetInputNode(rpr_material_node_input key, const Shader& shader)
 		{
 			Node::_SetInputNode(key, shader);
 
@@ -3035,7 +3038,7 @@ namespace frw
 		{
 			if (IsRprxMaterial())
 			{
-				rprxMaterialSetName(data().context, data().material, name);
+				rprObjectSetName(data().material, name);
 			}
 			else
 			{
@@ -3043,14 +3046,9 @@ namespace frw
 			}
 		}
 
-		rprx_material GetHandleRPRXmaterial() const
+		rpr_material_node GetMaterialHandle() const
 		{
 			return data().material;
-		}
-
-		rprx_context GetHandleRPRXcontext() const
-		{
-			return data().context;
 		}
 
 		void SetDirty(bool value = true)
@@ -3080,11 +3078,8 @@ namespace frw
 					{
 						return;
 					}
-
-					rpr_int res = rprxMaterialCommit(d.context, d.material);
-
+					// rprxMaterialCommit() wasn't do anything
 					d.SetCommittedState(true);
-					checkStatus(res);
 				}
 				catch (...)
 				{
@@ -3103,7 +3098,7 @@ namespace frw
 			if (d.material)
 			{
 				FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX x_material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.material);
-				res = rprxShapeAttachMaterial(d.context, shape.Handle(), d.material);
+				res = rprShapeSetMaterial(shape.Handle(), d.material);
 				checkStatus(res);
 
 				if (d.isShadowCatcher)
@@ -3137,7 +3132,7 @@ namespace frw
 			FRW_PRINT_DEBUG("\tShape.DetachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX, material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.material);
 			if (d.material)
 			{
-				rpr_int res = rprxShapeDetachMaterial(d.context, shape.Handle(), d.material);
+				rpr_int res = rprShapeSetMaterial(shape.Handle(), nullptr);
 				checkStatus(res);
 
 				if (d.isShadowCatcher)
@@ -3166,7 +3161,7 @@ namespace frw
 			{
 				FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX x_material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), d.material);
 				rpr_int res;
-				res = rprxCurveAttachMaterial(d.context, crv.Handle(), d.material);
+				res = rprCurveSetMaterial(crv.Handle(), d.material);
 				checkStatus(res);
 			}
 			else
@@ -3189,7 +3184,7 @@ namespace frw
 			if (d.material)
 			{
 				rpr_int res;
-				res = rprxCurveDetachMaterial(d.context, crv.Handle(), d.material);
+				res = rprCurveSetMaterial(crv.Handle(), nullptr);
 				checkStatus(res);
 			}
 
@@ -3203,7 +3198,7 @@ namespace frw
 		void Commit()
 		{
 			Data& d = data();
-			rpr_int res;
+			rpr_int res = RPR_SUCCESS;
 
 			if (d.IsCommitted())
 			{
@@ -3211,33 +3206,35 @@ namespace frw
 			}
 
 			if (!d.context || !d.material)
+			{
 				return;
+			}
 
-			res = rprxMaterialCommit(d.context, d.material);
+			// rprxMaterialCommit() wasn't do anything
 
 			d.SetCommittedState(true);
 			checkStatus(res);
 		}
 
-		void AttachToMaterialInput(rpr_material_node node, const char* inputName) const
+		void AttachToMaterialInput(rpr_material_node node, rpr_material_node_input inputKey) const
 		{
 			auto& d = data();
 			rpr_int res;
-			FRW_PRINT_DEBUG("\tShape.AttachToMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, d.material, inputName);
+			FRW_PRINT_DEBUG("\tShape.AttachToMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, d.material, inputKey);
 			if (d.material)
 			{
 				// attach rprx shader output to some material's input
-				auto it = d.inputs.find(inputName);
+				auto it = d.inputs.find(inputKey);
 				if (it != d.inputs.end())
-					DetachFromMaterialInput(it->second, it->first.c_str());
+					DetachFromMaterialInput(it->second, it->first);
 
-				res = rprxMaterialAttachMaterial(d.context, node, inputName, d.material);
+				res = rprMaterialNodeSetInputNByKey(node, inputKey, d.material);
 				checkStatus(res);
-				d.inputs.emplace(inputName, node);
+				d.inputs.emplace(inputKey, node);
 			}
 			else
 			{
-				res = rprMaterialNodeSetInputN(node, inputName, d.Handle());
+				res = rprMaterialNodeSetInputNByKey(node, inputKey, d.Handle());
 			}
 			checkStatus(res);
 		}
@@ -3248,30 +3245,30 @@ namespace frw
 			rpr_int res = RPR_ERROR_INVALID_PARAMETER;
 			for (const auto& input : d.inputs)
 			{
-				res = rprxMaterialDetachMaterial(d.context, input.second, input.first.c_str(), d.material);
+				res = rprMaterialNodeSetInputNByKey(input.second, input.first, nullptr);
 				checkStatus(res);
 			}
 			d.inputs.clear();
 		}
 
-		void DetachFromMaterialInput(rpr_material_node node, const char* inputName) const
+		void DetachFromMaterialInput(rpr_material_node node, rpr_material_node_input inputKey) const
 		{
 			auto& d = data();
 			rpr_int res = RPR_ERROR_INVALID_PARAMETER;
-			FRW_PRINT_DEBUG("\tShape.DetachFromMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, d.material, inputName);
+			FRW_PRINT_DEBUG("\tShape.DetachFromMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, d.material, inputKey);
 			if (d.material)
 			{
 				// detach rprx shader output to some material's input
-				res = rprxMaterialDetachMaterial(d.context, node, inputName, d.material);
-				d.inputs.erase(inputName);
+				res = rprMaterialNodeSetInputNByKey(node, inputKey, nullptr);
+				d.inputs.erase(inputKey);
 			}
 			checkStatus(res);
 		}
 
-		void xSetParameterN(rprx_parameter parameter, rpr_material_node node)
+		void xSetParameterN(rpr_material_node_input parameter, rpr_material_node node)
 		{
 			const Data& d = data();
-			rpr_int res = rprxMaterialSetParameterN(d.context, d.material, parameter, node);
+			rpr_int res = rprMaterialNodeSetInputNByKey(d.material, parameter, node);
 
 			if (res == RPR_ERROR_UNSUPPORTED ||
 				res == RPR_ERROR_INVALID_PARAMETER)
@@ -3283,10 +3280,10 @@ namespace frw
 				checkStatus(res);
 			}
 		}
-		void xSetParameterU(rprx_parameter parameter, rpr_uint value)
+		void xSetParameterU(rpr_material_node_input parameter, rpr_uint value)
 		{
 			const Data& d = data();
-			rpr_int res = rprxMaterialSetParameterU(d.context, d.material, parameter, value);
+			rpr_int res = rprMaterialNodeSetInputUByKey(d.material, parameter, value);
 			if (res == RPR_ERROR_UNSUPPORTED ||
 				res == RPR_ERROR_INVALID_PARAMETER)
 			{
@@ -3298,10 +3295,10 @@ namespace frw
 			}
 
 		}
-		void xSetParameterF(rprx_parameter parameter, rpr_float x, rpr_float y, rpr_float z, rpr_float w)
+		void xSetParameterF(rpr_material_node_input parameter, rpr_float x, rpr_float y, rpr_float z, rpr_float w)
 		{
 			const Data& d = data();
-			rpr_int res = rprxMaterialSetParameterF(d.context, d.material, parameter, x, y, z, w);
+			rpr_int res = rprMaterialNodeSetInputFByKey(d.material, parameter, x, y, z, w);
 			if (res == RPR_ERROR_UNSUPPORTED ||
 				res == RPR_ERROR_INVALID_PARAMETER)
 			{
@@ -3313,7 +3310,7 @@ namespace frw
 			}
 		}
 
-		bool xSetValue(rprx_parameter parameter, const Value& v)
+		bool xSetValue(rpr_material_node_input parameter, const Value& v)
 		{
 			switch (v.type)
 			{
@@ -3339,9 +3336,9 @@ namespace frw
 	public:
 		explicit DiffuseShader(const MaterialSystem& h) : Shader(h, ShaderTypeDiffuse) {}
 
-		void SetColor(Value value) { SetValue("color", value); }
-		void SetNormal(Value value) { SetValue("normal", value); }
-		void SetRoughness(Value value) { SetValue("roughness", value); }
+		void SetColor(Value value) { SetValue(RPR_MATERIAL_INPUT_COLOR, value); }
+		void SetNormal(Value value) { SetValue(RPR_MATERIAL_INPUT_NORMAL, value); }
+		void SetRoughness(Value value) { SetValue(RPR_MATERIAL_INPUT_ROUGHNESS, value); }
 	};
 
 	class EmissiveShader : public Shader
@@ -3349,7 +3346,7 @@ namespace frw
 	public:
 		explicit EmissiveShader(MaterialSystem& h) : Shader(h, ShaderTypeEmissive) {}
 
-		void SetColor(Value value) { SetValue("color", value); }
+		void SetColor(Value value) { SetValue(RPR_MATERIAL_INPUT_COLOR, value); }
 	};
 
 	class TransparentShader : public Shader
@@ -3357,7 +3354,7 @@ namespace frw
 	public:
 		explicit TransparentShader(const MaterialSystem& h) : Shader(h, ShaderTypeTransparent) {}
 
-		void SetColor(Value value) { SetValue("color", value); }
+		void SetColor(Value value) { SetValue(RPR_MATERIAL_INPUT_COLOR, value); }
 	};
 
 	// inline definitions
@@ -3433,7 +3430,7 @@ namespace frw
 		data().type = type;
 	}
 
-	inline void Node::_SetInputNode(const char* key, const Shader& shader)
+	inline void Node::_SetInputNode(rpr_material_node_input key, const Shader& shader)
 	{
 		if (shader)
 		{
@@ -3442,27 +3439,27 @@ namespace frw
 		}
 	}
 
-	inline bool Node::SetValue(const char* key, const Value& v)
+	inline bool Node::SetValue(rpr_material_node_input key, const Value& v)
 	{
 		switch (v.type)
 		{
 			case Value::FLOAT:
-				return RPR_SUCCESS == rprMaterialNodeSetInputF(Handle(), key, v.x, v.y, v.z, v.w);
+				return RPR_SUCCESS == rprMaterialNodeSetInputFByKey(Handle(), key, v.x, v.y, v.z, v.w);
 			case Value::NODE:
 			{
 				if (!v.node)	// in theory we should now allow this, as setting a NULL input is legal (as of FRSDK 1.87)
 					return false;
 				AddReference(v.node);
-				return RPR_SUCCESS == rprMaterialNodeSetInputN(Handle(), key, v.node.Handle());	// should be ok to set null here now
+				return RPR_SUCCESS == rprMaterialNodeSetInputNByKey(Handle(), key, v.node.Handle());	// should be ok to set null here now
 			}
 		}
 		assert(!"bad type");
 		return false;
 	}
 
-	inline bool Node::SetValueInt(const char* key, int v)
+	inline bool Node::SetValueInt(rpr_material_node_input key, int v)
 	{
-		return RPR_SUCCESS == rprMaterialNodeSetInputU(Handle(), key, v);
+		return RPR_SUCCESS == rprMaterialNodeSetInputUByKey(Handle(), key, v);
 	}
 
 	inline MaterialSystem Node::GetMaterialSystem() const
@@ -3487,10 +3484,10 @@ namespace frw
 		}
 
 		Shader node(*this, ShaderTypeBlend);
-		node._SetInputNode("color0", a);
-		node._SetInputNode("color1", b);
+		node._SetInputNode(RPR_MATERIAL_INPUT_COLOR0, a);
+		node._SetInputNode(RPR_MATERIAL_INPUT_COLOR1, b);
 
-		node.SetValue("weight", t);
+		node.SetValue(RPR_MATERIAL_INPUT_WEIGHT, t);
 
 		node.xMaterialCommit();
 
@@ -3510,8 +3507,8 @@ namespace frw
 			return a;
 
 		Shader node(*this, ShaderTypeAdd);
-		node._SetInputNode("color0", a);
-		node._SetInputNode("color1", b);
+		node._SetInputNode(RPR_MATERIAL_INPUT_COLOR0, a);
+		node._SetInputNode(RPR_MATERIAL_INPUT_COLOR1, b);
 		return node;
 	}
 

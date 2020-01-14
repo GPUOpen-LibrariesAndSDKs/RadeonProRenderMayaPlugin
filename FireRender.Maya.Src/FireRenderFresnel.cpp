@@ -54,9 +54,9 @@ frw::Value FireMaya::Fresnel::GetValue(const Scope& scope) const
 	MFnDependencyNode shaderNode(thisMObject());
 
 	frw::ValueNode valueNode(scope.MaterialSystem(), frw::ValueTypeFresnel);
-	valueNode.SetValue("ior", scope.GetValue(shaderNode.findPlug(Attribute::ior, false)));
-	valueNode.SetValue("normal", scope.GetConnectedValue(shaderNode.findPlug(Attribute::normal, false)));
-	valueNode.SetValue("invec", scope.GetConnectedValue(shaderNode.findPlug(Attribute::inVec, false)));
+	valueNode.SetValue(RPR_MATERIAL_INPUT_IOR, scope.GetValue(shaderNode.findPlug(Attribute::ior, false)));
+	valueNode.SetValue(RPR_MATERIAL_INPUT_NORMAL, scope.GetConnectedValue(shaderNode.findPlug(Attribute::normal, false)));
+	valueNode.SetValue(RPR_MATERIAL_INPUT_INVEC, scope.GetConnectedValue(shaderNode.findPlug(Attribute::inVec, false)));
 
 	return valueNode;
 }

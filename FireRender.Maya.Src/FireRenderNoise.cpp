@@ -45,8 +45,8 @@ frw::Value FireMaya::Noise::GetValue(const Scope& scope) const
 	MFnDependencyNode shaderNode(thisMObject());
 
 	frw::ValueNode valueNode(scope.MaterialSystem(), frw::ValueTypeNoiseMap);
-	valueNode.SetValue("uv", scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv, false)));
-	valueNode.SetValue("color", scope.GetValue(shaderNode.findPlug(Attribute::color, false)));
+	valueNode.SetValue(RPR_MATERIAL_INPUT_UV, scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv, false)));
+	valueNode.SetValue(RPR_MATERIAL_INPUT_COLOR, scope.GetValue(shaderNode.findPlug(Attribute::color, false)));
 
 	return valueNode;
 }
