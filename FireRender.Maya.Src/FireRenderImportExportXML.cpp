@@ -227,7 +227,7 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 
 		bool exportImageUV = false; // ignore UV for IMAGE_TEXTURE nodes.  Because UV is exported with "tiling_u" & "tiling_v" in XML
 
-		rpr_material_node materialNodeRPR = shader.IsRprxMaterial() ? shader.GetMaterialHandle() : shader.Handle();
+		rpr_material_node materialNodeRPR = shader.Handle();
 
 		bool success = ParseRPR(
 			materialNodeRPR,

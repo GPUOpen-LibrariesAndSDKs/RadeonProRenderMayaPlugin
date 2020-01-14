@@ -2701,7 +2701,7 @@ frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMesh* pMesh
 
 	frw::Shader shader = scope.GetShader(ob, pMesh, forceUpdate);
 
-	shader.SetMaterialName(node.name().asChar());
+	shader.SetName(node.name().asChar());
 
 	return shader;
 }
