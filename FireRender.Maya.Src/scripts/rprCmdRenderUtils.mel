@@ -1,0 +1,27 @@
+// function for -devc flag input string processing.
+global proc considerRenderDevices(string $devices)
+{
+	optionVar -rm "RPR_DevicesSelected";
+	int $deviceCount = size(`optionVar -q RPR_DevicesName`);
+	
+	for( $i=1; $i<($deviceCount+1); ++$i )
+	{
+		if (`match ("gpu" + string($i)) $devices` == "")
+		{
+			optionVar -iva "RPR_DevicesSelected" 0;
+		}
+		else
+		{
+			optionVar -iva "RPR_DevicesSelected" 1;
+		}
+	}
+	
+	if (`match "cpu" $devices` == "cpu")
+	{
+		optionVar -iva "RPR_DevicesSelected" 1;
+	}
+	else
+	{
+		optionVar -iva "RPR_DevicesSelected" 0;
+	}
+}
