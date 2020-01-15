@@ -90,6 +90,11 @@
 	<attr n="mrd" s=".maxRayDepth" t="boolean" h="Max ray depth"/>
 	<sep/>
   <!-- ______________________________________________________________ -->
+	<sep desc="System:"/>
+	<attr n="stmp" s=".useRenderStamp" t="boolean" h="Enable or disable render stamp"/> 
+	<mel n="devc" s='considerRenderDevices("%1")' p="1" t="string" h="Use to list enabled render devices. Format is gpu1;cpu;gpu2 where gpu1 and gpu2 are enabled GPUs and cpu is CPU. Delimiter symbol and order of devices are irrelevant"/>
+	<sep/>
+  <!-- ______________________________________________________________ -->
   <sep desc="Utils:"/>
   <attr n="port" s=".commandPort" t="int" h="Command port"/>
   <sep/>

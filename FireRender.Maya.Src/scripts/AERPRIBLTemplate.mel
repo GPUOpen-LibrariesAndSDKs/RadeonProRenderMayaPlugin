@@ -112,6 +112,7 @@ global proc AERPRIBLTemplate( string $nodeName )
 	editorTemplate -beginScrollLayout;
 	editorTemplate -beginLayout "IBL Map" -collapse 0;
 		editorTemplate -addControl "filePath";
+		editorTemplate -addControl "color";
 		editorTemplate -addControl "intensity";
 		editorTemplate -addControl "display";
 		editorTemplate -callCustom "IBLPortalMeshSelectNew" "IBLPortaltMeshSelectReplace" "IBLSelectingPortalMesh";
