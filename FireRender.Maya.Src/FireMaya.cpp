@@ -1765,10 +1765,10 @@ void FireMaya::Scope::NodeDirtyCallback(MObject& ob)
 
 		auto shaderId = getNodeUUid(ob);
 		if (auto shader = GetCachedShader(shaderId)) {
-			shader.SetDirty();
+			shader.SetDirty(true);
 		}
 		if (auto shader = GetCachedVolumeShader(shaderId)) {
-			shader.SetDirty();
+			shader.SetDirty(true);
 		}
 	}
 	catch (const std::exception & ex)
