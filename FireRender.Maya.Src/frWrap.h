@@ -552,7 +552,6 @@ namespace frw
 		bool operator<(const Object& rhs) const { return (size_t)m.get() < (size_t)rhs.m.get(); };
 
 		void* Handle() const { return m->Handle(); }
-		void SetHandle(void* data) { m->handle = data; }
 
 		Context GetContext() const;
 
@@ -2241,9 +2240,6 @@ namespace frw
 		class Data : public Object::Data
 		{
 			DECLARE_OBJECT_DATA;
-		public:
-
-			// rpr_material_node rprxContext = nullptr;
 		};
 
 	protected:
