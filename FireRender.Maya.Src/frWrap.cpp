@@ -127,6 +127,7 @@ void frw::Shader::SetShadowColor(float r, float g, float b, float a)
 	data().mShadowCatcherParams.mShadowB = b;
 	data().mShadowCatcherParams.mShadowA = a;
 }
+
 void frw::Shader::GetShadowColor(float* r, float* g, float* b, float* a) const
 {
 	*r = data().mShadowCatcherParams.mShadowR;
@@ -403,4 +404,68 @@ bool frw::Shader::xSetValue(rpr_material_node_input parameter, const Value& v)
 	}
 	assert(!"bad type");
 	return false;
+}
+
+inline void frw::Object::Data::Init(void* h, const Context& c, bool destroy)
+{
+	handle = h;
+	context = c.m;
+	destroyOnDelete = destroy;
+	if (h)
+	{
+		allocatedObjects++;
+#if FRW_LOGGING
+		typeNameMirror = GetTypeName();
+#endif
+		FRW_PRINT_DEBUG("\tFR+ %s 0x%016llX%s (%d total)", GetTypeName(), h, destroyOnDelete ? "" : "*", allocatedObjects);
+	}
+}
+
+inline frw::Object::Data::~Data()
+{
+	if (handle)
+	{
+		// Clear references before destroying the object itself. For example, Scene has referenced Shapes,
+		// and these shapes better to be destroyed before the scene itself.
+		references.clear();
+
+		if (destroyOnDelete)
+		{
+			rprObjectDelete(handle);
+			handle = nullptr;
+		}
+
+		allocatedObjects--;
+
+		// Can't use virtual GetTypeName() in destructor, so using "mirrored" type name
+		FRW_PRINT_DEBUG("\tFR- %s 0x%016llX%s (%d total)", typeNameMirror, handle, destroyOnDelete ? "" : "*", allocatedObjects);
+	}
+}
+
+inline void frw::Object::Data::Attach(void* h, bool destroy)
+{
+	if (handle)
+	{
+		if (destroyOnDelete)
+		{
+			rprObjectDelete(handle);
+			handle = nullptr;
+		}
+
+		allocatedObjects--;
+
+		FRW_PRINT_DEBUG("\tFR- %s 0x%016llX%s (%d total)", GetTypeName(), handle, destroyOnDelete ? "" : "*", allocatedObjects);
+	}
+
+	if (h)
+	{
+		destroyOnDelete = destroy;
+		handle = h;
+		allocatedObjects++;
+
+#if FRW_LOGGING
+		typeNameMirror = GetTypeName();
+#endif
+		FRW_PRINT_DEBUG("\tFR+ %s 0x%016llX%s (%d total)", GetTypeName(), h, destroyOnDelete ? "" : "*", allocatedObjects);
+	}
 }
