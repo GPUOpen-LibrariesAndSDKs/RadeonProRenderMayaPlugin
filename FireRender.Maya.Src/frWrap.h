@@ -3248,6 +3248,68 @@ namespace frw
 	// inline definitions
 	static int allocatedObjects = 0;
 
+	inline void Object::Data::Init(void* h, const Context& c, bool destroy)
+	{
+		handle = h;
+		context = c.m;
+		destroyOnDelete = destroy;
+		if (h)
+		{
+			allocatedObjects++;
+#if FRW_LOGGING
+			typeNameMirror = GetTypeName();
+#endif
+			FRW_PRINT_DEBUG("\tFR+ %s 0x%016llX%s (%d total)", GetTypeName(), h, destroyOnDelete ? "" : "*", allocatedObjects);
+		}
+	}
+
+	inline Object::Data::~Data()
+	{
+		if (handle)
+		{
+			// Clear references before destroying the object itself. For example, Scene has referenced Shapes,
+			// and these shapes better to be destroyed before the scene itself.
+			references.clear();
+
+			if (destroyOnDelete)
+			{
+				DeleteAndClear();
+			}
+
+			allocatedObjects--;
+
+			// Can't use virtual GetTypeName() in destructor, so using "mirrored" type name
+			FRW_PRINT_DEBUG("\tFR- %s 0x%016llX%s (%d total)", typeNameMirror, handle, destroyOnDelete ? "" : "*", allocatedObjects);
+		}
+	}
+
+	inline void Object::Data::Attach(void* h, bool destroy)
+	{
+		if (handle)
+		{
+			if (destroyOnDelete)
+			{
+				DeleteAndClear();
+			}
+
+			allocatedObjects--;
+
+			FRW_PRINT_DEBUG("\tFR- %s 0x%016llX%s (%d total)", GetTypeName(), handle, destroyOnDelete ? "" : "*", allocatedObjects);
+		}
+
+		if (h)
+		{
+			destroyOnDelete = destroy;
+			handle = h;
+			allocatedObjects++;
+
+#if FRW_LOGGING
+			typeNameMirror = GetTypeName();
+#endif
+			FRW_PRINT_DEBUG("\tFR+ %s 0x%016llX%s (%d total)", GetTypeName(), h, destroyOnDelete ? "" : "*", allocatedObjects);
+		}
+	}
+
 	inline Context Object::GetContext() const
 	{
 		return Context(m->context);
