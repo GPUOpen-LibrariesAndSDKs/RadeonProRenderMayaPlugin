@@ -715,7 +715,6 @@ namespace frw
 		ParameterInfo GetParameterInfo(int i) const
 		{
 			ParameterInfo info = {};
-			size_t size = 0;
 			rpr_int res = RPR_SUCCESS;
 
 			res = rprMaterialNodeGetInputInfo(Handle(), i, NodeInputInfoId, sizeof(info.id), &info.id, nullptr);
@@ -2041,7 +2040,7 @@ namespace frw
 				if (status2 == RPR_SUCCESS && length > 0)
 				{
 					path.resize(length);
-					rpr_int status3 = rprContextGetInfo(Handle(), RPR_CONTEXT_LAST_ERROR_MESSAGE, path.size(), &path[0], nullptr);
+					rprContextGetInfo(Handle(), RPR_CONTEXT_LAST_ERROR_MESSAGE, path.size(), &path[0], nullptr);
 				}
 
 				std::string error_msg(path.begin(), path.end());

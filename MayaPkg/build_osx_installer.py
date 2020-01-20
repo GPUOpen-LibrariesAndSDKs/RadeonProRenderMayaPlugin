@@ -10,6 +10,9 @@ from pathlib import Path
 
 import create_osx_build_output
 
+sys.path.insert(1, '../FireRender.Maya.OSX/frMayaPluginMac')
+import remappath
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--sign', action='store_true')
 parser.add_argument('--nomatlib', action='store_true')
@@ -110,49 +113,13 @@ create_osx_build_output.copy_libs(libs_files_dist_dir)
 opath = "/Users/Shared/RadeonProRender/lib"
 npath = "/Users/Shared/RadeonProRender/Maya/lib"
 
-def remapLibraryPaths(dpath,strEnding):
-    print("\nRemapping paths %s\n" % str(dpath))
-    # Hande ids first
-    for lib in os.listdir(str(dpath)):
-        if lib.endswith(strEnding):
-            cmd=['install_name_tool','-id', str(npath +str("/") + lib), str(dpath / lib)]
-            print(cmd)
-            result = subprocess.check_output(cmd)
+#gather all libs npath
+library_list = []
+for name in os.listdir((str(libs_files_dist_dir))):
+    if name.endswith(".dylib"):
+        library_list.append(name)
 
-    # Change paths
-    print("\nChange paths begin\n")
-
-    for lib in os.listdir(str(dpath)):
-        print(lib)
-        if lib.endswith(strEnding):
-            cmd=['otool','-L', str(dpath / lib)]
-            result = subprocess.check_output(cmd)
-            tokens = result.split()
-            for t in tokens:
-                #print("%s" % t)
-                if t.find(b'/Users/Shared/RadeonProRender/lib') != -1:
-                    print("found: %s" % t)
-                    dependentlib = os.path.basename(t).decode('utf-8')
-                    print("lib %s" % dependentlib)
-                    cmd=['install_name_tool','-change', str(opath +str("/") + dependentlib), str(npath +str("/") + dependentlib), str(dpath / lib)]
-                    print(cmd)
-                    result = subprocess.check_output(cmd)
-                    print(result)
-                    print("\n")
-
-    print("\nChange paths End\n")
-
-    # Check and make sure we remapped everything
-    for lib in os.listdir(str(dpath)):
-        if lib.endswith(strEnding):
-            cmd=['otool','-L', str(dpath / lib)]
-            result = subprocess.check_output(cmd)
-            if result.find(b'/Users/Shared/RadeonProRender/lib') != -1:
-                print("ERROR: Dynamic library %s not fully remapped" % str(dpath / lib))
-                print("\t %s\n" % result)
-                sys.exit(-1)
-
-remapLibraryPaths(libs_files_dist_dir,".dylib")
+remappath.remapLibraryPaths(library_list, Path(libs_files_dist_dir), ".dylib", Path(npath))
 
 # Add the plugin files
 
@@ -160,7 +127,8 @@ for name in ['icons','images','plug-ins','renderDesc','scripts','shaders','shelv
     shutil.copytree(str(build_output_dir / name), str(addon_files_dist_dir / name))
 
 for dirlib in os.listdir(str(addon_files_dist_dir/"plug-ins")):
-    remapLibraryPaths(Path(addon_files_dist_dir/"plug-ins"/dirlib),".bundle")
+    if (dirlib != ".DS_Store"):
+        remappath.remapLibraryPaths(library_list, Path(addon_files_dist_dir/"plug-ins"/dirlib), ".bundle", Path(npath))
 
 for name in ['modules']:
     shutil.copytree(str(build_output_dir / name), str(modules_dist_dir))

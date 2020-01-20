@@ -13,7 +13,7 @@
 #include <thread>
 #include <string>
 #include <thread>
-#include <StartupContextChecker.h>
+#include "StartupContextChecker.h"
 
 #define DEFAULT_RENDER_STAMP "Radeon ProRender for Maya %b | %h | Time: %pt | Passes: %pp | Objects: %so | Lights: %sl"
 
