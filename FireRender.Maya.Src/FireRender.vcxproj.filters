@@ -102,6 +102,9 @@
     <Filter Include="MayaStandardNodesSupport">
       <UniqueIdentifier>{4691976c-14e4-49e6-a828-972389286dd3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FireRender.Components\Utils">
+      <UniqueIdentifier>{71f57e19-1856-44ee-87d1-3f9b603bc501}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="python\__init__.py">
@@ -641,6 +644,9 @@
     <ClCompile Include="RadeonProRender.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\FireRender.Components\cpp\Utils\Utils.cpp">
+      <Filter>FireRender.Components\Utils</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -1074,6 +1080,9 @@
     </ClInclude>
     <ClInclude Include="MayaStandardNodesSupport\RGBToHSVConverter.h">
       <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="..\FireRender.Components\cpp\Utils\Utils.h">
+      <Filter>FireRender.Components\Utils</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
