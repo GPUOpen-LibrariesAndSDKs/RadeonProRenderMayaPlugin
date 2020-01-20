@@ -39,9 +39,6 @@
     <Filter Include="AOVs">
       <UniqueIdentifier>{93ee02a9-5915-43b3-99f4-5815f56352b4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="RadeonProRender">
-      <UniqueIdentifier>{21e33a08-88c3-4f00-aac7-3ca69ebe86bf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Viewport">
       <UniqueIdentifier>{b2126bbb-8b08-4a1b-9b5b-8e7e8496e073}</UniqueIdentifier>
     </Filter>
@@ -53,12 +50,6 @@
     </Filter>
     <Filter Include="Resources\Icons\Shelf">
       <UniqueIdentifier>{907232ca-1017-4443-8ee3-5a2aef9f3c2e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="RadeonProRender\RPR API">
-      <UniqueIdentifier>{5270b028-4dd1-4a66-a0b5-b341ba9390d7}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="RadeonProRender\RPR API\Math">
-      <UniqueIdentifier>{b43dd465-0bd3-47a8-94d6-5f0ce0e2b7ec}</UniqueIdentifier>
     </Filter>
     <Filter Include="Environment">
       <UniqueIdentifier>{ff5e5c44-e31f-4e1d-9a6a-a5d73852597b}</UniqueIdentifier>
@@ -158,9 +149,6 @@
     <None Include="frMaya.module" />
     <None Include="python\fireRender\rpr_material_browser.py">
       <Filter>Resources\Python</Filter>
-    </None>
-    <None Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\Rebuild Wrappers.cmd">
-      <Filter>RadeonProRender</Filter>
     </None>
     <None Include="shaders\rprBlitColor.ogsfx">
       <Filter>Resources\Shaders</Filter>
@@ -341,12 +329,6 @@
     <ClCompile Include="FireRenderAOVs.cpp">
       <Filter>AOVs</Filter>
     </ClCompile>
-    <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.cpp">
-      <Filter>RadeonProRender</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.cpp">
-      <Filter>RadeonProRender</Filter>
-    </ClCompile>
     <ClCompile Include="FireRenderViewport.cpp">
       <Filter>Viewport</Filter>
     </ClCompile>
@@ -367,9 +349,6 @@
     </ClCompile>
     <ClCompile Include="FireRenderViewportUI.cpp">
       <Filter>Viewport</Filter>
-    </ClCompile>
-    <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\half.cpp">
-      <Filter>RadeonProRender\RPR API\Math</Filter>
     </ClCompile>
     <ClCompile Include="FireRenderVolumeMaterial.cpp">
       <Filter>Materials</Filter>
@@ -575,9 +554,6 @@
     <ClCompile Include="FireRenderLayeredTextureUtils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
-    <ClCompile Include="..\ThirdParty\RadeonProRender SDK\Win\RPRStringIDMapper.cpp">
-      <Filter>RadeonProRender</Filter>
-    </ClCompile>
     <ClCompile Include="Translators\MultipleShaderMeshTranslator.cpp">
       <Filter>Translators</Filter>
     </ClCompile>
@@ -655,6 +631,18 @@
     </ClCompile>
     <ClCompile Include="MayaStandardNodesSupport\ProjectionNodeConverter.cpp">
       <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RadeonProRenderSDK\RadeonProRender\inc\Math\half.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RadeonProRenderSDK\RadeonProRender\rprTools\RPRStringIDMapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RadeonProRenderSDK\RadeonProRender\rprTools\RprTools.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RadeonProRender.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -772,18 +760,6 @@
     <ClInclude Include="RenderRegion.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\RprTools.h">
-      <Filter>RadeonProRender</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedDefinitions.h">
-      <Filter>RadeonProRender</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedFunctions.h">
-      <Filter>RadeonProRender</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\RadeonProRender.h">
-      <Filter>RadeonProRender</Filter>
-    </ClInclude>
     <ClInclude Include="FireRenderOverride.h">
       <Filter>Viewport</Filter>
     </ClInclude>
@@ -804,45 +780,6 @@
     </ClInclude>
     <ClInclude Include="FireRenderViewportUI.h">
       <Filter>Viewport</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\RadeonProRender_CL.h">
-      <Filter>RadeonProRender\RPR API</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\RadeonProRender_GL.h">
-      <Filter>RadeonProRender\RPR API</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\RprLoadStore.h">
-      <Filter>RadeonProRender\RPR API</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\RadeonProRender.h">
-      <Filter>RadeonProRender\RPR API</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\eLut.h">
-      <Filter>RadeonProRender\RPR API\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\float2.h">
-      <Filter>RadeonProRender\RPR API\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\float3.h">
-      <Filter>RadeonProRender\RPR API\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\half.h">
-      <Filter>RadeonProRender\RPR API\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\int2.h">
-      <Filter>RadeonProRender\RPR API\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\mathutils.h">
-      <Filter>RadeonProRender\RPR API\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\matrix.h">
-      <Filter>RadeonProRender\RPR API\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\quaternion.h">
-      <Filter>RadeonProRender\RPR API\Math</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc\Math\toFloat.h">
-      <Filter>RadeonProRender\RPR API\Math</Filter>
     </ClInclude>
     <ClInclude Include="FireRenderVolumeMaterial.h">
       <Filter>Materials</Filter>
@@ -870,12 +807,6 @@
     </ClInclude>
     <ClInclude Include="SkyLocatorMesh.h">
       <Filter>Environment</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedDefinitions_GL.h">
-      <Filter>RadeonProRender</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\inc_dynamic\.WrappedFunctions_GL.h">
-      <Filter>RadeonProRender</Filter>
     </ClInclude>
     <ClInclude Include="FireRenderViewportOperation.h">
       <Filter>Viewport</Filter>
@@ -1071,9 +1002,6 @@
     </ClInclude>
     <ClInclude Include="FireRenderLayeredTextureUtils.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\ThirdParty\RadeonProRender SDK\Win\RPRStringIDMapper.h">
-      <Filter>RadeonProRender</Filter>
     </ClInclude>
     <ClInclude Include="Translators\MultipleShaderMeshTranslator.h">
       <Filter>Translators</Filter>
