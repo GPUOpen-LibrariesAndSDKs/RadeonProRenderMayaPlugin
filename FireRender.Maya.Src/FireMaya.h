@@ -10,7 +10,7 @@
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MNodeMessage.h>
-#include "FireRenderContextIFace.h"
+#include "Context/FireRenderContextIFace.h"
 
 class FireRenderMesh;
 
