@@ -1,6 +1,6 @@
 #include "FireMaya.h"
 #include "common.h"
-#include "../ThirdParty/RadeonProRender SDK/Win/inc/Math/half.h"
+#include "Math/half.h"
 #include "FireRenderThread.h"
 #include "VRay.h"
 #include "Context/FireRenderContext.h"

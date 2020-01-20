@@ -14,7 +14,7 @@
 #include "FileSystemUtils.h"
 #include "FireRenderImportExportXML.h"
 #include "XMLMaterialExport/XMLMaterialExportCommon.h"
-#include <../RPRStringIDMapper.h>
+#include "RPRStringIDMapper.h"
 
 using namespace std;
 
