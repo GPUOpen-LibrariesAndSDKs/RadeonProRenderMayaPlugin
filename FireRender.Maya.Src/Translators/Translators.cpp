@@ -769,22 +769,38 @@ namespace FireMaya
 	{
 		MFnDependencyNode nodeFn(object);
 
+		const int numChannels = 4;
+
 		float intensity = 1.0;
-		MPlug intensityPlug = nodeFn.findPlug("intensity");
+		MPlug intensityPlug = nodeFn.findPlug("intensity", false);
 		intensityPlug.getValue(intensity);
 
+		MPlug colorPlug = nodeFn.findPlug("color", false);
+
+		RV_PIXEL color = { 1.0f, 1.0f, 1.0f, 1.0f };
+
+		if (!colorPlug.isNull())
+		{
+			// this color plug has 3 components that's why -1 is applied
+			colorPlug.child(0).getValue(color.r);
+			colorPlug.child(1).getValue(color.g);
+			colorPlug.child(2).getValue(color.b);
+		}
+
 		if (!update)
+		{
 			frlight = frcontext.CreateEnvironmentLight();
+		}
 
 		rpr_image_desc imgDesc;
-		rpr_uint channels = 4;
+		rpr_uint channels = numChannels;
 		imgDesc.image_width = 64;
 		imgDesc.image_height = 64;
 		imgDesc.image_depth = 0;
 		imgDesc.image_row_pitch = imgDesc.image_width * sizeof(rpr_float) * channels;
 		imgDesc.image_slice_pitch = 0;
 
-		std::vector<float> imgData(imgDesc.image_width * imgDesc.image_height * channels, 1.f);
+		std::vector<RV_PIXEL> imgData(imgDesc.image_width * imgDesc.image_height * channels, color);
 
 		frw::Image frImage(frcontext, { channels, RPR_COMPONENT_TYPE_FLOAT32 }, imgDesc, imgData.data());
 

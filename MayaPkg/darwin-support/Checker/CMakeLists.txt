@@ -11,8 +11,8 @@ set(SOURCE_FILES
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../../ThirdParty/RadeonProRender SDK/Mac/inc"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../../ThirdParty/RadeonProRender SDK/Mac"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../RadeonProRenderSDK/RadeonProRender/inc"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../RadeonProRenderSDK/RadeonProRender/rprTools"
     )
 
 add_executable(checker  ${SOURCE_FILES})

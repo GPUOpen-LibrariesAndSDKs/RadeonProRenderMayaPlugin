@@ -19,7 +19,7 @@ xcopy $(TargetPath) $(SolutionDir)output\$(ProjectName)\* /Y
       <Outputs>file not exist</Outputs>
     </CustomBuildStep>
     <ClCompile>
-      <AdditionalIncludeDirectories>../../ThirdParty/OpenCL/include;../../ThirdParty/RadeonProRender SDK/Win/inc</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\ThirdParty\OpenCL\include;..\..\RadeonProRenderSDK\RadeonProRender\inc</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup />

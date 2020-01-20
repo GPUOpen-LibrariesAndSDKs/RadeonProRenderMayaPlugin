@@ -33,7 +33,7 @@
 #include <future>
 
 #include "FireRenderUtils.h"
-#include "FireRenderContextIFace.h"
+#include "../FireRenderContextIFace.h"
 #include <InstancerMASH.h>
 
 // Forward declarations.
