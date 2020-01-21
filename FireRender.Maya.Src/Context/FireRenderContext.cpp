@@ -128,15 +128,15 @@ int FireRenderContext::initializeContext()
 	return res;
 }
 
-void FireRenderContext::ResizeContext(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture)
+void FireRenderContext::resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture)
 {
 	RPR_THREAD_ONLY;
 
 	// Set the context resolution.
-	ContextSetResolution(w, h, renderView, glTexture);
+	setResolution(w, h, renderView, glTexture);
 }
 
-void FireRenderContext::ContextSetResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture)
+void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture)
 {
 	RPR_THREAD_ONLY;
 	DebugPrint("FireRenderContext::setResolution(%d,%d)", w, h);

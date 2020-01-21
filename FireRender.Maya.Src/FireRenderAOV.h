@@ -112,6 +112,8 @@ public:
 	void debugDump(unsigned int totalHeight, unsigned int totalWidth, std::string& fbName);
 };
 
+typedef std::map<unsigned int, PixelBuffer> AOVPixelBuffers;
+
 /** AOV data. */
 class FireRenderAOV
 {

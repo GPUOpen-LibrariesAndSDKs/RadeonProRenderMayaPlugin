@@ -598,7 +598,7 @@ MStatus FireRenderViewport::resize(unsigned int width, unsigned int height)
 void FireRenderViewport::resizeFrameBufferStandard(unsigned int width, unsigned int height)
 {
 	// Update the RPR context dimensions.
-	m_contextPtr->ResizeContext(width, height, false);
+	m_contextPtr->resize(width, height, false);
 	m_contextPtr->ConsiderSetupDenoiser();
 
 	// Resize the pixel buffer that
@@ -625,7 +625,7 @@ void FireRenderViewport::resizeFrameBufferGLInterop(unsigned int width, unsigned
 	if (m_texture.texture != nullptr)
 	{
 		// Update the RPR context.
-		m_contextPtr->ResizeContext(width, height, false, GetGlTexture());
+		m_contextPtr->resize(width, height, false, GetGlTexture());
 		m_contextPtr->ConsiderSetupDenoiser();
 	}
 }
@@ -721,17 +721,18 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 	// Read the frame buffer.
 	RenderRegion region(0, m_contextPtr->width() - 1, 0, m_contextPtr->height() - 1);
 
+	FireRenderContext::ReadFrameBufferRequestParams params(region);
+	params.aov = m_currentAOV;
+	params.width = m_contextPtr->width();
+	params.height = m_contextPtr->height();
+	params.flip = false;
+	params.mergeOpacity = false;
+
 	// Read to a cached frame if supplied.
 	if (storedFrame)
 	{
 		// setup params
-		FireRenderContext::ReadFrameBufferRequestParams params(region);
 		params.pixels = reinterpret_cast<RV_PIXEL*>(storedFrame->data());
-		params.aov = m_currentAOV;
-		params.width = m_contextPtr->width();
-		params.height = m_contextPtr->height();
-		params.flip = false;
-		params.mergeOpacity = false;
 		params.mergeShadowCatcher = false;
 
 		// process frame buffer	
@@ -742,13 +743,7 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 	else
 	{
 		// setup params
-		FireRenderContext::ReadFrameBufferRequestParams params(region);
 		params.pixels = m_pixels.data();
-		params.aov = m_currentAOV;
-		params.width = m_contextPtr->width();
-		params.height = m_contextPtr->height();
-		params.flip = false;
-		params.mergeOpacity = false;
 		params.mergeShadowCatcher = true;
 
 		// process frame buffer

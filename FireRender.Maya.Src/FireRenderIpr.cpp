@@ -169,7 +169,7 @@ bool FireRenderIpr::start()
 		SetupOOC(globals);
 
 		m_needsContextRefresh = true;
-		m_contextPtr->ContextSetResolution(m_width, m_height, true);
+		m_contextPtr->setResolution(m_width, m_height, true);
 		m_contextPtr->ConsiderSetupDenoiser();
 		m_contextPtr->setCamera(m_camera, true);
 		m_contextPtr->setStartedRendering();

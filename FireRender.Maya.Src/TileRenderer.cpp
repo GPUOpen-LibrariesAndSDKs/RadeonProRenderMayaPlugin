@@ -11,7 +11,7 @@ TileRenderer::~TileRenderer()
 {
 }
 
-void TileRenderer::Render(FireRenderContext& renderContext, const TileRenderInfo& info, std::map<unsigned int, PixelBuffer>& outBuffer, TileRenderingCallback callbackFunc)
+void TileRenderer::Render(FireRenderContext& renderContext, const TileRenderInfo& info, AOVPixelBuffers& outBuffer, TileRenderingCallback callbackFunc)
 {
 	float tilesXf = info.totalWidth / (float)info.tileSizeX;
 	float tilesYf = info.totalHeight / (float)info.tileSizeY;
