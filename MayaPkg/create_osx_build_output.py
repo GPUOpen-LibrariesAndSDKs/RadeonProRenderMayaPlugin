@@ -76,17 +76,16 @@ target=%s
     version_dict = {}
     exec(version_text, {}, version_dict)
     assert version == version_dict['version']
-
     if lib_path:
         for name in os.listdir(lib_path):
             yield Path(lib_path)/name, name
     else:
-        rprsdk_bin = repo_root / 'ThirdParty/RadeonProRender SDK/Mac/lib'
+        rprsdk_bin = repo_root / 'RadeonProRenderSDK/RadeonProRender/binMacOS'
         for name in os.listdir((str(rprsdk_bin))):
             yield Path(rprsdk_bin)/name, name
 
         name_ending = ""
-        rpipsdk_bin = repo_root / 'ThirdParty/RadeonProImageProcessing/Mac/lib'
+        rpipsdk_bin = repo_root / 'RadeonProImageProcessingSDK/radeonimagefilters-1.4.3-2839b0-OSX-rel/bin'
         name_ending = ".dylib"
         for name in os.listdir((str(rpipsdk_bin))):
             if name.endswith(name_ending):
@@ -244,16 +243,20 @@ def create_zip_addon(lib_path,package_name, version, target='windows'):
 
 def enumerate_lib_data():
     name_ending = ".dylib"
-    rprsdk_bin = repo_root / 'ThirdParty/RadeonProRender SDK/Mac/lib'
+    rprsdk_bin = repo_root / 'RadeonProRenderSDK/RadeonProRender/binMacOS'
     for name in os.listdir((str(rprsdk_bin))):
         if name.endswith(name_ending):
             yield Path(rprsdk_bin)/name, name
     
-    rpipsdk_bin = repo_root / 'ThirdParty/RadeonProImageProcessing/Mac/lib'
+    rpipsdk_bin = repo_root / 'RadeonProImageProcessingSDK/radeonimagefilters-1.4.3-2839b0-OSX-rel/bin'
     for name in os.listdir((str(rpipsdk_bin))):
         if name.endswith(name_ending):
             yield Path(rpipsdk_bin)/name, name
 
+    oiio_bin = repo_root / 'ThirdParty/oiio-mac/bin'
+    for name in os.listdir((str(oiio_bin))):
+        if name.endswith(name_ending):
+            yield Path(oiio_bin)/name, name
 
 def copy_libs(libpath):
     for src, package_path in enumerate_lib_data():
