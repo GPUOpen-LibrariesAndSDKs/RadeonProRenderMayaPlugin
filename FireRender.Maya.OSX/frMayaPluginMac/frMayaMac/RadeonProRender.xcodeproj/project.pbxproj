@@ -756,6 +756,12 @@
 		B7542DF4238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */; };
 		B7542DF5238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */; };
 		B7542DF6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */; };
+		B76BA48123D09445008E1D68 /* Utils.h in Headers */ = {isa = PBXBuildFile; fileRef = B76BA47E23D09445008E1D68 /* Utils.h */; };
+		B76BA48223D09445008E1D68 /* Utils.h in Headers */ = {isa = PBXBuildFile; fileRef = B76BA47E23D09445008E1D68 /* Utils.h */; };
+		B76BA48323D09445008E1D68 /* Utils.h in Headers */ = {isa = PBXBuildFile; fileRef = B76BA47E23D09445008E1D68 /* Utils.h */; };
+		B76BA48423D09445008E1D68 /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B76BA48023D09445008E1D68 /* Utils.cpp */; };
+		B76BA48523D09445008E1D68 /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B76BA48023D09445008E1D68 /* Utils.cpp */; };
+		B76BA48623D09445008E1D68 /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B76BA48023D09445008E1D68 /* Utils.cpp */; };
 		B7701DDD235DE0380072482F /* StartupContextChecker.h in Headers */ = {isa = PBXBuildFile; fileRef = B7701DDA235DE0380072482F /* StartupContextChecker.h */; };
 		B7701DDE235DE0380072482F /* StartupContextChecker.h in Headers */ = {isa = PBXBuildFile; fileRef = B7701DDA235DE0380072482F /* StartupContextChecker.h */; };
 		B7701DDF235DE0380072482F /* StartupContextChecker.h in Headers */ = {isa = PBXBuildFile; fileRef = B7701DDA235DE0380072482F /* StartupContextChecker.h */; };
@@ -1202,6 +1208,8 @@
 		B7542DE8238FE61B00ACBE7C /* SingleShaderMeshTranslator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SingleShaderMeshTranslator.h; path = ../../../FireRender.Maya.Src/Translators/SingleShaderMeshTranslator.h; sourceTree = "<group>"; };
 		B7542DE9238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SingleShaderMeshTranslator.cpp; path = ../../../FireRender.Maya.Src/Translators/SingleShaderMeshTranslator.cpp; sourceTree = "<group>"; };
 		B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MultipleShaderMeshTranslator.h; path = ../../../FireRender.Maya.Src/Translators/MultipleShaderMeshTranslator.h; sourceTree = "<group>"; };
+		B76BA47E23D09445008E1D68 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Utils.h; path = ../../../FireRender.Components/cpp/Utils/Utils.h; sourceTree = "<group>"; };
+		B76BA48023D09445008E1D68 /* Utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Utils.cpp; path = ../../../FireRender.Components/cpp/Utils/Utils.cpp; sourceTree = "<group>"; };
 		B7701DDA235DE0380072482F /* StartupContextChecker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StartupContextChecker.h; path = ../../../FireRender.Maya.Src/StartupContextChecker.h; sourceTree = "<group>"; };
 		B7701DDC235DE0380072482F /* StartupContextChecker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StartupContextChecker.cpp; path = ../../../FireRender.Maya.Src/StartupContextChecker.cpp; sourceTree = "<group>"; };
 		B773D2A223A36DB7009FC79C /* RampNodeConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RampNodeConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/RampNodeConverter.h; sourceTree = "<group>"; };
@@ -1298,6 +1306,8 @@
 		08FB7794FE84155DC02AAC07 /* helloWorldCmdPlugin */ = {
 			isa = PBXGroup;
 			children = (
+				B76BA48023D09445008E1D68 /* Utils.cpp */,
+				B76BA47E23D09445008E1D68 /* Utils.h */,
 				CE1ECBC122EB8F7E0074C7E7 /* GlobalRenderUtilsDataHolder.cpp */,
 				CE1ECBC322EB8F7F0074C7E7 /* GlobalRenderUtilsDataHolder.h */,
 				CE600BD022A182E100362CF7 /* RenderStampUtils.cpp */,
@@ -1726,6 +1736,7 @@
 			files = (
 				8D77AEAE1F4361E2008E88FB /* SkyBuilder.h in Headers */,
 				4DE508651D9950A1009B2BD6 /* base_mesh.h in Headers */,
+				B76BA48123D09445008E1D68 /* Utils.h in Headers */,
 				4DE508661D9950A1009B2BD6 /* FireRenderBlendMaterial.h in Headers */,
 				4DE508671D9950A1009B2BD6 /* FireRenderImportCmd.h in Headers */,
 				4DE508681D9950A1009B2BD6 /* FireRenderCmd.h in Headers */,
@@ -1898,6 +1909,7 @@
 				8D595D8D20372FE20031988A /* SkyBuilder.h in Headers */,
 				8D595D8E20372FE20031988A /* base_mesh.h in Headers */,
 				B74223D223D5CB1500C0F554 /* ProjectionNodeConverter.h in Headers */,
+				B76BA48223D09445008E1D68 /* Utils.h in Headers */,
 				B7230A6023ACD82900E51BD1 /* BlendTwoAttrConverter.h in Headers */,
 				8D595D9020372FE20031988A /* FireRenderBlendMaterial.h in Headers */,
 				8D595D9120372FE20031988A /* FireRenderImportCmd.h in Headers */,
@@ -2045,6 +2057,7 @@
 				8DBCC2A522304666003EE361 /* SkyBuilder.h in Headers */,
 				8DBCC2A622304666003EE361 /* base_mesh.h in Headers */,
 				B74223D323D5CB1500C0F554 /* ProjectionNodeConverter.h in Headers */,
+				B76BA48323D09445008E1D68 /* Utils.h in Headers */,
 				B7230A6B23ACD82A00E51BD1 /* BlendTwoAttrConverter.h in Headers */,
 				8DBCC2A722304666003EE361 /* FireRenderBlendMaterial.h in Headers */,
 				8DBCC2A822304666003EE361 /* FireRenderImportCmd.h in Headers */,
@@ -2330,6 +2343,7 @@
 				CEED8EC8227346E900136DEF /* FireRenderVolume.cpp in Sources */,
 				8D91AC37203C76A800E6226B /* RprTools.cpp in Sources */,
 				B72F81D9239F813F00C2BFB3 /* PlusMinusAverageConverter.cpp in Sources */,
+				B76BA48423D09445008E1D68 /* Utils.cpp in Sources */,
 				8D843D6D1F98F5470068CB2D /* IESLightRepresentationCalc.cpp in Sources */,
 				4DE508AB1D9950A1009B2BD6 /* FireRenderIBL.cpp in Sources */,
 				B72F81FD239F813F00C2BFB3 /* NodeConverterUtil.cpp in Sources */,
@@ -2499,6 +2513,7 @@
 				8D595E0820372FE20031988A /* FireRenderFresnel.cpp in Sources */,
 				8D595E0920372FE20031988A /* FireRenderTextureCache.cpp in Sources */,
 				8D595E0A20372FE20031988A /* DependencyNode.cpp in Sources */,
+				B76BA48523D09445008E1D68 /* Utils.cpp in Sources */,
 				8D595E0B20372FE20031988A /* FireRenderBlendOverride.cpp in Sources */,
 				8D595E0C20372FE20031988A /* FireRenderTexture.cpp in Sources */,
 				8D595E0D20372FE20031988A /* FileSystemUtils.cpp in Sources */,
@@ -2643,6 +2658,7 @@
 				8DBCC32B22304666003EE361 /* FireRenderFresnel.cpp in Sources */,
 				8DBCC32C22304666003EE361 /* FireRenderTextureCache.cpp in Sources */,
 				8DBCC32D22304666003EE361 /* DependencyNode.cpp in Sources */,
+				B76BA48623D09445008E1D68 /* Utils.cpp in Sources */,
 				8DBCC32E22304666003EE361 /* FireRenderBlendOverride.cpp in Sources */,
 				8DBCC32F22304666003EE361 /* FireRenderTexture.cpp in Sources */,
 				8DBCC33022304666003EE361 /* FileSystemUtils.cpp in Sources */,

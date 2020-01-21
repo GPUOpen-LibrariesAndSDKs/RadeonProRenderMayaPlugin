@@ -83,7 +83,7 @@
 #include "FireRenderThread.h"
 
 #include "GLTFTranslator.h"
-#include <StartupContextChecker.h>
+#include "StartupContextChecker.h"
 
 #ifdef _WIN32
 #pragma warning( disable : 4091 )
