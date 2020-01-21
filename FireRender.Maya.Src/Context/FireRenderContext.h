@@ -175,12 +175,12 @@ public:
 	void enableAOVAndReset(int index, bool flag, rpr_GLuint* glTexture);
 
 	// Sets the resolution and perform an initial render and frame buffer resolve.
-	void ResizeContext(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
-	// - Setup denoiser if necessary (this function was used to be called from ResizeContext and ContextSetResolution)
+	void resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
+	// - Setup denoiser if necessary (this function was used to be called from resize and setResolution)
 	bool ConsiderSetupDenoiser(bool useRAMBufer = false);
 
 	// Set the frame buffer resolution
-	void ContextSetResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
+	void setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
 
 	void enableAOV(int aov, bool flag = true);
 	bool isAOVEnabled(int aov);
@@ -247,7 +247,7 @@ public:
 			, isDenoiserDisabled(false)
 		{};
 
-		int PixelCount(void) const { return (width*height); }
+		unsigned int PixelCount(void) const { return (width*height); }
 		bool UseTempData(void) const { return (flip || region.getWidth() < width || region.getHeight() < height); }
 	};
 
@@ -707,7 +707,7 @@ private:
 	bool m_DoesContextSupportCurrentSettings = true;
 
 	// buffer to dump data from frame buffers, if needed
-	std::map<unsigned int, PixelBuffer> m_pixelBuffers;
+	AOVPixelBuffers m_pixelBuffers;
 
 public:
 	FireRenderEnvLight *iblLight = nullptr;
@@ -797,7 +797,7 @@ public:
 
 	void setSamplesPerUpdate(int samplesPerUpdate);
 
-	std::map<unsigned int, PixelBuffer>& PixelBuffers(void) { return m_pixelBuffers; }
+	AOVPixelBuffers& PixelBuffers(void) { return m_pixelBuffers; }
     
 	class Lock
 	{

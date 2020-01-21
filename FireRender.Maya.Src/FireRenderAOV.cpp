@@ -60,8 +60,6 @@ void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, u
 		memcpy(&m_pBuffer[destIndex], &input[inputIndex], sizeof(RV_PIXEL) * regionWidth);
 	}
 
-
-#define DUMP_PIXELS_PIXELBUFF
 #ifdef _DEBUG
 #ifdef DUMP_PIXELS_PIXELBUFF
 	debugDump(totalHeight, totalWidth, std::string(FireRenderAOV::GetAOVName(aov_id) + "_tile_"));
@@ -80,6 +78,8 @@ void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, s
 	assert(sizeof(RV_PIXEL) * totalHeight * totalWidth == m_size);
 
 	std::vector<RV_PIXEL> sourcePixels;
+	sourcePixels.reserve(totalHeight * totalWidth);
+
 	for (unsigned int y = 0; y < totalHeight; y++)
 	{
 		for (unsigned int x = 0; x < totalWidth; x++)
@@ -90,6 +90,8 @@ void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, s
 	}
 
 	std::vector<unsigned char> buffer2;
+	buffer2.reserve(totalHeight * totalWidth);
+
 	for (unsigned int y = 0; y < totalHeight; y++)
 	{
 		for (unsigned int x = 0; x < totalWidth; x++)

@@ -217,7 +217,7 @@ bool FireRenderProduction::start()
 		m_aovs->setFromContext(*m_contextPtr);
 
 		m_needsContextRefresh = true;
-		m_contextPtr->ContextSetResolution(contextWidth, contextHeight, true);
+		m_contextPtr->setResolution(contextWidth, contextHeight, true);
 		m_contextPtr->ConsiderSetupDenoiser();
 		m_contextPtr->setCamera(m_camera, true);
 
@@ -785,7 +785,7 @@ void FireRenderProduction::RenderTiles()
 	info.totalWidth = m_width;
 	info.totalHeight = m_height;
 
-	std::map<unsigned int, PixelBuffer>& outBuffers = m_contextPtr->PixelBuffers();
+	AOVPixelBuffers& outBuffers = m_contextPtr->PixelBuffers();
 	outBuffers.clear();
 	m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov) 
 	{
@@ -798,13 +798,13 @@ void FireRenderProduction::RenderTiles()
 	// we need to resetup camera because total width and height differs with tileSizeX and tileSizeY
 	m_contextPtr->camera().TranslateCameraExplicit(info.totalWidth, info.totalHeight);
 
-	tileRenderer.Render(*m_contextPtr, info, outBuffers, [&](RenderRegion& region, int progress, std::map<unsigned int, PixelBuffer>& out)
+	tileRenderer.Render(*m_contextPtr, info, outBuffers, [&](RenderRegion& region, int progress, AOVPixelBuffers& out)
 	{
 		// make proper size
 		unsigned int width = region.getWidth();
 		unsigned int height = region.getHeight();
 
-		m_contextPtr->ResizeContext(width, height, true);
+		m_contextPtr->resize(width, height, true);
 
 		m_aovs->setRegion(RenderRegion(width, height), region.getWidth(), region.getHeight());
 		m_aovs->allocatePixels();
@@ -857,9 +857,13 @@ void FireRenderProduction::RenderTiles()
 	}
 	);
 
+#ifdef _DEBUG
+#ifdef DUMP_TILES_AOVS_ALL
 	// debug dump resulting AOVs
-	/*for (auto& tmp : outBuffers)
-		tmp.second.debugDump(m_height, m_width);*/
+	for (auto& tmp : outBuffers)
+		tmp.second.debugDump(m_height, m_width);
+#endif
+#endif
 
 	// setup denoiser if necessary
 	m_contextPtr->ConsiderSetupDenoiser(true);
@@ -872,7 +876,7 @@ void FireRenderProduction::RenderTiles()
 		// run denoiser on cached data if necessary
 		bool denoiseResult = false;
 		vecData = m_contextPtr->GetDenoisedData(denoiseResult);
-		data = (RV_PIXEL*)&vecData[0];
+		data = (RV_PIXEL*)vecData.data();
 	}
 	else
 	{

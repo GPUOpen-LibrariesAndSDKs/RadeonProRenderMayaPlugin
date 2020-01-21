@@ -359,7 +359,7 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		context.SetRenderType(RenderType::ProductionRender);
 		context.buildScene();
 		context.updateLimitsFromGlobalData(globals, false, true);
-		context.ContextSetResolution(settings.width, settings.height, true);
+		context.setResolution(settings.width, settings.height, true);
 		context.ConsiderSetupDenoiser();
 
 		// Ensure display gamma correction is enabled for image file output. It
