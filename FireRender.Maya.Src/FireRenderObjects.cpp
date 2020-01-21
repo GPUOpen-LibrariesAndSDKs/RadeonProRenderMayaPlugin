@@ -48,6 +48,7 @@
 #ifndef MAYA2015
 #include <maya/MUuid.h>
 #endif
+#include "Lights/PhysicalLight/PhysicalLightAttributes.h"
 
 #ifndef PI
 #define PI 3.14159265358979323846
@@ -1574,14 +1575,22 @@ void FireRenderLight::attachToScene()
 void FireRenderLight::UpdateTransform(const MMatrix& matrix)
 {
 	float matrixfloats[4][4];
-	FireMaya::ScaleMatrixFromCmToMFloats(matrix, matrixfloats);
 
 	if (!m_light.areaLight)
 	{
+		FireMaya::ScaleMatrixFromCmToMFloats(matrix, matrixfloats);
 		m_light.light.SetTransform((rpr_float*)matrixfloats);
 	}
 	else
 	{
+		// For area light we should apply areaWidth and areaLength to transform matrix in order to correctly pass it into core
+		MTransformationMatrix transformation;
+		float areaWidth = PhysicalLightAttributes::GetAreaWidth(Object());
+		float areaLength = PhysicalLightAttributes::GetAreaLength(Object());
+		double scale[3]{ areaWidth, areaWidth, areaLength };
+		transformation.setScale(scale, MSpace::Space::kObject);
+		FireMaya::ScaleMatrixFromCmToMFloats(transformation.asMatrix() * matrix, matrixfloats);
+
 		m_light.areaLight.SetTransform((rpr_float*)matrixfloats);
 	}
 }
@@ -1590,33 +1599,39 @@ void FireRenderLight::Freshen()
 {
 	if (m_bIsTransformChanged)
 	{
-		auto dagPath = DagPath();
-		MMatrix matrix = dagPath.inclusiveMatrix();
-
+		MMatrix matrix = DagPath().inclusiveMatrix();
 		UpdateTransform(matrix);
-
 		m_bIsTransformChanged = false;
 		return;
 	}
 
 	detachFromScene();
 	m_light = FrLight();
-	auto node = Object();
-	auto dagPath = DagPath();
+	const MObject& node = Object();
+	const MDagPath& dagPath = DagPath();
+
 	if (dagPath.isValid())
 	{
 		MMatrix mMtx = dagPath.inclusiveMatrix();
-
 		MFnDependencyNode depNode(node);
+
 		if (depNode.typeId() == FireMaya::TypeId::FireRenderPhysicalLightLocator)
+		{
 			FireMaya::translateLight(m_light, context()->GetScope(), Context(), node, mMtx);
+		}
 		else if (node.hasFn(MFn::kPluginLocatorNode) || node.hasFn(MFn::kPluginTransformNode))
+		{
 			FireMaya::translateVrayLight(m_light, context()->GetMaterialSystem(), Context(), node, mMtx);
+		}
 		else
+		{
 			FireMaya::translateLight(m_light, context()->GetScope(), Context(), node, mMtx);
+		}
 
 		if (dagPath.isVisible())
+		{
 			attachToScene();
+		}
 	}
 
 	FireRenderNode::Freshen();
