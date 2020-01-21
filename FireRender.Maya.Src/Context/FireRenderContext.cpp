@@ -438,8 +438,6 @@ bool FireRenderContext::CanCreateAiDenoiser() const
 
 void FireRenderContext::setupDenoiserRAM()
 {
-#define DUMP_RAMBUFF
-
 	bool canCreateAiDenoiser = CanCreateAiDenoiser();
 	bool useOpenImageDenoise = !canCreateAiDenoiser;
 
@@ -451,8 +449,8 @@ void FireRenderContext::setupDenoiserRAM()
 
 		m_denoiserFilter = std::shared_ptr<ImageFilter>(new ImageFilter(
 			context(), 
-			m_pixelBuffers[RPR_AOV_COLOR].width(), 
-			m_pixelBuffers[RPR_AOV_COLOR].height(), 
+			(uint32_t)m_pixelBuffers[RPR_AOV_COLOR].width(),
+			(uint32_t)m_pixelBuffers[RPR_AOV_COLOR].height(),
 			mlModelsFolder.asChar()
 		));
 
@@ -539,8 +537,6 @@ void FireRenderContext::setupDenoiserFB()
 	const rpr_framebuffer fbObjectId = m.framebufferAOV_resolved[RPR_AOV_OBJECT_ID].Handle();
 	const rpr_framebuffer fbDiffuseAlbedo = m.framebufferAOV_resolved[RPR_AOV_DIFFUSE_ALBEDO].Handle();
 	const rpr_framebuffer fbTrans = fbObjectId;
-
-#define DUMP_FRAMEBUFF
 
 	bool canCreateAiDenoiser = CanCreateAiDenoiser();
 	bool useOpenImageDenoise = !canCreateAiDenoiser;
@@ -1282,21 +1278,15 @@ void FireRenderContext::DebugDumpAOV(int aov) const
 
 std::vector<float> FireRenderContext::GetDenoisedData(bool& result)
 {	
-	switch (m_globals.denoiserSettings.type)
-	{
-	case FireRenderGlobals::kBilateral:
-
 #ifdef _DEBUG
 #ifdef DUMP_FRAMEBUFF
+	if (m_globals.denoiserSettings.type == FireRenderGlobals::kBilateral)
+	{
 		m.framebufferAOV_resolved[RPR_AOV_COLOR].DebugDumpFrameBufferToFile(std::string("RPR_AOV_COLOR"));
 		m.framebufferAOV_resolved[RPR_AOV_SHADING_NORMAL].DebugDumpFrameBufferToFile(std::string("RPR_AOV_SHADING_NORMAL"));
 		m.framebufferAOV_resolved[RPR_AOV_WORLD_COORDINATE].DebugDumpFrameBufferToFile(std::string("RPR_AOV_WORLD_COORDINATE"));
 		m.framebufferAOV_resolved[RPR_AOV_DEPTH].DebugDumpFrameBufferToFile(std::string("RPR_AOV_DEPTH"));
-#endif // DUMP_FRAMEBUFF
-#endif // DEBUG
 
-#ifdef _DEBUG
-#ifdef DUMP_RAMBUFF
 		m_pixelBuffers[RPR_AOV_COLOR].debugDump(m_pixelBuffers[
 			RPR_AOV_COLOR].height(),
 				m_pixelBuffers[RPR_AOV_COLOR].width(),
@@ -1316,9 +1306,9 @@ std::vector<float> FireRenderContext::GetDenoisedData(bool& result)
 			RPR_AOV_DEPTH].height(),
 				m_pixelBuffers[RPR_AOV_DEPTH].width(),
 				std::string("RPR_AOV_DEPTH"));
+	}
 #endif // DUMP_FRAMEBUFF
 #endif // DEBUG
-	}
 
 	try
 	{
