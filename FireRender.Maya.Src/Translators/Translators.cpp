@@ -309,11 +309,7 @@ namespace FireMaya
 					frstatus = rprSpotLightSetConeShape(frlight.light.Handle(), lightData.spotInnerAngle, lightData.spotOuterFallOff);
 					checkStatus(frstatus);
 
-					float factor = 1.0f;// MDistance::uiToInternal(0.01);
-					frstatus = rprSpotLightSetRadiantPower3f(frlight.light.Handle(),
-						static_cast<float>(color.r * factor),
-						static_cast<float>(color.g * factor),
-						static_cast<float>(color.b * factor));
+					frstatus = rprSpotLightSetRadiantPower3f(frlight.light.Handle(), color.r, color.g, color.b);
 					checkStatus(frstatus);
 					break;
 				}
@@ -340,11 +336,8 @@ namespace FireMaya
 					{
 						frlight.light = frcontext.CreatePointLight();
 					}
-					float factor = 1.0f;// MDistance::uiToInternal(0.01);
-					frstatus = rprPointLightSetRadiantPower3f(frlight.light.Handle(),
-						static_cast<float>(color.r * factor * factor),
-						static_cast<float>(color.g * factor * factor),
-						static_cast<float>(color.b * factor * factor));
+
+					frstatus = rprPointLightSetRadiantPower3f(frlight.light.Handle(), color.r, color.g, color.b);
 					checkStatus(frstatus);
 					break;
 				}
@@ -384,6 +377,7 @@ namespace FireMaya
 			physicalLightData.colorBase = fnLight.color();
 
 			float mayaIntensity = fnLight.intensity(&mstatus);
+			checkStatus(mstatus);
 
 			if (node.apiType() == MFn::kAreaLight)
 			{
