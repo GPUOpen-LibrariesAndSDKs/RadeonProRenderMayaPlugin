@@ -28,7 +28,7 @@
 #include "FireRenderGlobals.h"
 #include "Logger.h"
 #include <chrono>
-#include <../RprTools.h>
+#include "RprTools.h"
 #include <algorithm>
 #include <iterator>
 #include <array>

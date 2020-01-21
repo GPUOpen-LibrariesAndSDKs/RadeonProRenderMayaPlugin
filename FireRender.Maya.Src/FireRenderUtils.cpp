@@ -1,5 +1,5 @@
 #include <GL/glew.h>
-#include <../RprTools.h>
+#include "RprTools.h"
 
 #include "FireRenderUtils.h"
 #include <maya/MPlug.h>
