@@ -750,6 +750,12 @@
 		B7542DF4238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */; };
 		B7542DF5238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */; };
 		B7542DF6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */; };
+		B76BA48123D09445008E1D68 /* Utils.h in Headers */ = {isa = PBXBuildFile; fileRef = B76BA47E23D09445008E1D68 /* Utils.h */; };
+		B76BA48223D09445008E1D68 /* Utils.h in Headers */ = {isa = PBXBuildFile; fileRef = B76BA47E23D09445008E1D68 /* Utils.h */; };
+		B76BA48323D09445008E1D68 /* Utils.h in Headers */ = {isa = PBXBuildFile; fileRef = B76BA47E23D09445008E1D68 /* Utils.h */; };
+		B76BA48423D09445008E1D68 /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B76BA48023D09445008E1D68 /* Utils.cpp */; };
+		B76BA48523D09445008E1D68 /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B76BA48023D09445008E1D68 /* Utils.cpp */; };
+		B76BA48623D09445008E1D68 /* Utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B76BA48023D09445008E1D68 /* Utils.cpp */; };
 		B7701DDD235DE0380072482F /* StartupContextChecker.h in Headers */ = {isa = PBXBuildFile; fileRef = B7701DDA235DE0380072482F /* StartupContextChecker.h */; };
 		B7701DDE235DE0380072482F /* StartupContextChecker.h in Headers */ = {isa = PBXBuildFile; fileRef = B7701DDA235DE0380072482F /* StartupContextChecker.h */; };
 		B7701DDF235DE0380072482F /* StartupContextChecker.h in Headers */ = {isa = PBXBuildFile; fileRef = B7701DDA235DE0380072482F /* StartupContextChecker.h */; };
@@ -945,8 +951,8 @@
 		4DE6450A1DA2774A0076E6A7 /* RenderProgressBars.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RenderProgressBars.cpp; path = ../../../FireRender.Maya.Src/RenderProgressBars.cpp; sourceTree = "<group>"; };
 		4DE6450D1DA277BC0076E6A7 /* RenderProgressBars.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RenderProgressBars.h; path = ../../../FireRender.Maya.Src/RenderProgressBars.h; sourceTree = "<group>"; };
 		4DE645101DA339A60076E6A7 /* Readme.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Readme.txt; path = ../../Readme.txt; sourceTree = "<group>"; };
-		4DF942491DD09DE300E69ED3 /* libOpenImageIO.1.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libOpenImageIO.1.6.dylib; path = "../../../ThirdParty/RadeonProRender SDK/Mac/lib/libOpenImageIO.1.6.dylib"; sourceTree = "<group>"; };
-		8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRprLoadStore64.dylib; path = "../../../ThirdParty/RadeonProRender SDK/Mac/lib/libRprLoadStore64.dylib"; sourceTree = "<group>"; };
+		4DF942491DD09DE300E69ED3 /* libOpenImageIO.1.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libOpenImageIO.1.6.dylib; path = "../../../ThirdParty/oiio-mac/bin/libOpenImageIO.1.6.dylib"; sourceTree = "<group>"; };
+		8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRprLoadStore64.dylib; path = ../../../RadeonProRenderSDK/RadeonProRender/binMacOS/libRprLoadStore64.dylib; sourceTree = "<group>"; };
 		8D1E289B2034A0550060BB11 /* FireRenderPBRMaterial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderPBRMaterial.h; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.h; sourceTree = "<group>"; };
 		8D1E289D2034A0550060BB11 /* FireRenderPBRMaterial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderPBRMaterial.cpp; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.cpp; sourceTree = "<group>"; };
 		8D2837292199D6C90004852B /* OptionVarHelpers.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OptionVarHelpers.cpp; path = ../../../FireRender.Maya.Src/OptionVarHelpers.cpp; sourceTree = "<group>"; };
@@ -1021,7 +1027,7 @@
 		8D91169A222584450083881D /* XMLMaterialExportCommon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = XMLMaterialExportCommon.cpp; path = ../../../FireRender.Components/cpp/XMLMaterialExport/XMLMaterialExportCommon.cpp; sourceTree = "<group>"; };
 		8D91169C222584460083881D /* XMLMaterialExportCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = XMLMaterialExportCommon.h; path = ../../../FireRender.Components/cpp/XMLMaterialExport/XMLMaterialExportCommon.h; sourceTree = "<group>"; };
 		8D91AC33203C76A700E6226B /* RprTools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RprTools.h; path = "../../../ThirdParty/RadeonProRender SDK/Mac/RprTools.h"; sourceTree = "<group>"; };
-		8D91AC35203C76A800E6226B /* RprTools.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RprTools.cpp; path = "../../../ThirdParty/RadeonProRender SDK/Mac/RprTools.cpp"; sourceTree = "<group>"; };
+		8D91AC35203C76A800E6226B /* RprTools.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RprTools.cpp; path = ../../../RadeonProRenderSDK/RadeonProRender/rprTools/RprTools.cpp; sourceTree = "<group>"; };
 		8D9B7C9D1F6B00440040975D /* RprComposite.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RprComposite.cpp; path = ../../../FireRender.Maya.Src/RprComposite.cpp; sourceTree = "<group>"; };
 		8D9B7C9E1F6B00440040975D /* RprComposite.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RprComposite.h; path = ../../../FireRender.Maya.Src/RprComposite.h; sourceTree = "<group>"; };
 		8DB623282075582100841D10 /* FireRenderIESLight.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderIESLight.cpp; path = ../../../FireRender.Maya.Src/Lights/IES/FireRenderIESLight.cpp; sourceTree = "<group>"; };
@@ -1049,15 +1055,15 @@
 		8DBC06F1215E68BF006ECC17 /* FireRenderSwatchInstance.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderSwatchInstance.cpp; path = ../../../FireRender.Maya.Src/FireRenderSwatchInstance.cpp; sourceTree = "<group>"; };
 		8DBC06F2215E68C0006ECC17 /* FireRenderSwatchInstance.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderSwatchInstance.h; path = ../../../FireRender.Maya.Src/FireRenderSwatchInstance.h; sourceTree = "<group>"; };
 		8DBCC36922304666003EE361 /* RadeonProRender.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = RadeonProRender.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
-		8DCBE5052072777400F79E06 /* libRadeonImageFilters64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonImageFilters64.dylib; path = ../../../ThirdParty/RadeonProImageProcessing/Mac/lib/libRadeonImageFilters64.dylib; sourceTree = "<group>"; };
+		8DCBE5052072777400F79E06 /* libRadeonImageFilters64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonImageFilters64.dylib; path = "../../../RadeonProImageProcessingSDK/radeonimagefilters-1.4.3-2839b0-OSX-rel/bin/libRadeonImageFilters64.dylib"; sourceTree = "<group>"; };
 		8DCBE5082072780E00F79E06 /* ImageFilter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ImageFilter.h; path = ../../../FireRender.Components/cpp/ImageFilter/ImageFilter.h; sourceTree = "<group>"; };
 		8DCBE5092072780E00F79E06 /* ImageFilter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ImageFilter.cpp; path = ../../../FireRender.Components/cpp/ImageFilter/ImageFilter.cpp; sourceTree = "<group>"; };
 		8DD65237211499D000DB2804 /* SPA.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SPA.h; path = ../../../FireRender.Components/cpp/SunPosition/SPA.h; sourceTree = "<group>"; };
 		8DD65239211499E300DB2804 /* SPA.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SPA.cpp; path = ../../../FireRender.Components/cpp/SunPosition/SPA.cpp; sourceTree = "<group>"; };
 		8DE9B55B2191DD7100ED8555 /* FireRenderImportXML.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderImportXML.cpp; path = ../../../FireRender.Maya.Src/FireRenderImportXML.cpp; sourceTree = "<group>"; };
 		9FA69E301D58D89B00E218C8 /* OpenCL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenCL.framework; path = System/Library/Frameworks/OpenCL.framework; sourceTree = SDKROOT; };
-		9FA69E321D58D8AD00E218C8 /* libRadeonProRender64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonProRender64.dylib; path = "../../../ThirdParty/RadeonProRender SDK/Mac/lib/libRadeonProRender64.dylib"; sourceTree = "<group>"; };
-		9FA69E331D58D8AD00E218C8 /* libTahoe64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libTahoe64.dylib; path = "../../../ThirdParty/RadeonProRender SDK/Mac/lib/libTahoe64.dylib"; sourceTree = "<group>"; };
+		9FA69E321D58D8AD00E218C8 /* libRadeonProRender64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonProRender64.dylib; path = ../../../RadeonProRenderSDK/RadeonProRender/binMacOS/libRadeonProRender64.dylib; sourceTree = "<group>"; };
+		9FA69E331D58D8AD00E218C8 /* libTahoe64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libTahoe64.dylib; path = ../../../RadeonProRenderSDK/RadeonProRender/binMacOS/libTahoe64.dylib; sourceTree = "<group>"; };
 		9FB8E5251D80643600D6DB73 /* base_mesh.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = base_mesh.h; path = ../../../FireRender.Maya.Src/base_mesh.h; sourceTree = "<group>"; };
 		9FB8E5271D80643600D6DB73 /* common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = common.h; path = ../../../FireRender.Maya.Src/common.h; sourceTree = "<group>"; };
 		9FB8E5281D80643600D6DB73 /* docs */ = {isa = PBXFileReference; lastKnownFileType = folder; name = docs; path = ../../../FireRender.Maya.Src/docs; sourceTree = "<group>"; };
@@ -1194,6 +1200,8 @@
 		B7542DE8238FE61B00ACBE7C /* SingleShaderMeshTranslator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SingleShaderMeshTranslator.h; path = ../../../FireRender.Maya.Src/Translators/SingleShaderMeshTranslator.h; sourceTree = "<group>"; };
 		B7542DE9238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SingleShaderMeshTranslator.cpp; path = ../../../FireRender.Maya.Src/Translators/SingleShaderMeshTranslator.cpp; sourceTree = "<group>"; };
 		B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MultipleShaderMeshTranslator.h; path = ../../../FireRender.Maya.Src/Translators/MultipleShaderMeshTranslator.h; sourceTree = "<group>"; };
+		B76BA47E23D09445008E1D68 /* Utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Utils.h; path = ../../../FireRender.Components/cpp/Utils/Utils.h; sourceTree = "<group>"; };
+		B76BA48023D09445008E1D68 /* Utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Utils.cpp; path = ../../../FireRender.Components/cpp/Utils/Utils.cpp; sourceTree = "<group>"; };
 		B7701DDA235DE0380072482F /* StartupContextChecker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = StartupContextChecker.h; path = ../../../FireRender.Maya.Src/StartupContextChecker.h; sourceTree = "<group>"; };
 		B7701DDC235DE0380072482F /* StartupContextChecker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StartupContextChecker.cpp; path = ../../../FireRender.Maya.Src/StartupContextChecker.cpp; sourceTree = "<group>"; };
 		B773D2A223A36DB7009FC79C /* RampNodeConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RampNodeConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/RampNodeConverter.h; sourceTree = "<group>"; };
@@ -1290,6 +1298,8 @@
 		08FB7794FE84155DC02AAC07 /* helloWorldCmdPlugin */ = {
 			isa = PBXGroup;
 			children = (
+				B76BA48023D09445008E1D68 /* Utils.cpp */,
+				B76BA47E23D09445008E1D68 /* Utils.h */,
 				CE1ECBC122EB8F7E0074C7E7 /* GlobalRenderUtilsDataHolder.cpp */,
 				CE1ECBC322EB8F7F0074C7E7 /* GlobalRenderUtilsDataHolder.h */,
 				CE600BD022A182E100362CF7 /* RenderStampUtils.cpp */,
@@ -1716,6 +1726,7 @@
 			files = (
 				8D77AEAE1F4361E2008E88FB /* SkyBuilder.h in Headers */,
 				4DE508651D9950A1009B2BD6 /* base_mesh.h in Headers */,
+				B76BA48123D09445008E1D68 /* Utils.h in Headers */,
 				4DE508661D9950A1009B2BD6 /* FireRenderBlendMaterial.h in Headers */,
 				4DE508671D9950A1009B2BD6 /* FireRenderImportCmd.h in Headers */,
 				4DE508681D9950A1009B2BD6 /* FireRenderCmd.h in Headers */,
@@ -1886,6 +1897,7 @@
 				8D8CA4B720BC729D00A90237 /* PhysicalLightData.h in Headers */,
 				8D595D8D20372FE20031988A /* SkyBuilder.h in Headers */,
 				8D595D8E20372FE20031988A /* base_mesh.h in Headers */,
+				B76BA48223D09445008E1D68 /* Utils.h in Headers */,
 				B7230A6023ACD82900E51BD1 /* BlendTwoAttrConverter.h in Headers */,
 				8D595D9020372FE20031988A /* FireRenderBlendMaterial.h in Headers */,
 				8D595D9120372FE20031988A /* FireRenderImportCmd.h in Headers */,
@@ -2032,6 +2044,7 @@
 				8DBCC2A422304666003EE361 /* PhysicalLightData.h in Headers */,
 				8DBCC2A522304666003EE361 /* SkyBuilder.h in Headers */,
 				8DBCC2A622304666003EE361 /* base_mesh.h in Headers */,
+				B76BA48323D09445008E1D68 /* Utils.h in Headers */,
 				B7230A6B23ACD82A00E51BD1 /* BlendTwoAttrConverter.h in Headers */,
 				8DBCC2A722304666003EE361 /* FireRenderBlendMaterial.h in Headers */,
 				8DBCC2A822304666003EE361 /* FireRenderImportCmd.h in Headers */,
@@ -2316,6 +2329,7 @@
 				CEED8EC8227346E900136DEF /* FireRenderVolume.cpp in Sources */,
 				8D91AC37203C76A800E6226B /* RprTools.cpp in Sources */,
 				B72F81D9239F813F00C2BFB3 /* PlusMinusAverageConverter.cpp in Sources */,
+				B76BA48423D09445008E1D68 /* Utils.cpp in Sources */,
 				8D843D6D1F98F5470068CB2D /* IESLightRepresentationCalc.cpp in Sources */,
 				4DE508AB1D9950A1009B2BD6 /* FireRenderIBL.cpp in Sources */,
 				B72F81FD239F813F00C2BFB3 /* NodeConverterUtil.cpp in Sources */,
@@ -2484,6 +2498,7 @@
 				8D595E0820372FE20031988A /* FireRenderFresnel.cpp in Sources */,
 				8D595E0920372FE20031988A /* FireRenderTextureCache.cpp in Sources */,
 				8D595E0A20372FE20031988A /* DependencyNode.cpp in Sources */,
+				B76BA48523D09445008E1D68 /* Utils.cpp in Sources */,
 				8D595E0B20372FE20031988A /* FireRenderBlendOverride.cpp in Sources */,
 				8D595E0C20372FE20031988A /* FireRenderTexture.cpp in Sources */,
 				8D595E0D20372FE20031988A /* FileSystemUtils.cpp in Sources */,
@@ -2627,6 +2642,7 @@
 				8DBCC32B22304666003EE361 /* FireRenderFresnel.cpp in Sources */,
 				8DBCC32C22304666003EE361 /* FireRenderTextureCache.cpp in Sources */,
 				8DBCC32D22304666003EE361 /* DependencyNode.cpp in Sources */,
+				B76BA48623D09445008E1D68 /* Utils.cpp in Sources */,
 				8DBCC32E22304666003EE361 /* FireRenderBlendOverride.cpp in Sources */,
 				8DBCC32F22304666003EE361 /* FireRenderTexture.cpp in Sources */,
 				8DBCC33022304666003EE361 /* FileSystemUtils.cpp in Sources */,
@@ -2711,24 +2727,16 @@
 					MAYA_PLUGIN,
 				);
 				HEADER_SEARCH_PATHS = (
-					"../../../ThirdParty/RadeonProRender\\ SDK/Mac/inc",
-					../../../ThirdParty/json/include,
-					../../../ThirdParty/glew/include,
-					"../../../ThirdParty/oiio-mac",
-					../../../FireRender.Components/cpp,
 					"$(MAYA_DIRECTORY)/devkit/include",
-					../../../ThirdParty/RadeonProImageProcessing/Mac/inc,
 					"$(MAYA_DIRECTORY)/plug-ins/xgen/include",
-					../../../ThirdParty/aws/Mac/include,
+					"$(inherited)",
 				);
 				INSTALL_PATH = /usr/local/lib;
 				"LD_RUNPATH_SEARCH_PATHS[arch=*]" = "/Applications/Autodesk/maya2017/plug-ins/xgen/lib";
 				LIBRARY_SEARCH_PATHS = (
-					"\"../../../ThirdParty/RadeonProRender SDK/Mac/lib\"",
 					"$(MAYA_DIRECTORY)/Maya.app/Contents/MacOS",
-					../../../ThirdParty/RadeonProImageProcessing/Mac/lib,
-					"\"../../../ThirdParty/aws/Mac/bin\"",
 					"$(MAYA_DIRECTORY)/plug-ins/xgen/lib",
+					"$(inherited)",
 				);
 				LIBRARY_STYLE = BUNDLE;
 				MACH_O_TYPE = mh_bundle;
@@ -2749,6 +2757,7 @@
 					OpenGL,
 					"-ltbb",
 					"-lglew",
+					"-headerpad_max_install_names",
 				);
 				PREBINDING = NO;
 				ZERO_LINK = YES;
@@ -2775,24 +2784,16 @@
 					MAYA_PLUGIN,
 				);
 				HEADER_SEARCH_PATHS = (
-					"../../../ThirdParty/RadeonProRender\\ SDK/Mac/inc",
-					../../../ThirdParty/json/include,
-					../../../ThirdParty/glew/include,
-					"../../../ThirdParty/oiio-mac",
-					../../../FireRender.Components/cpp,
 					"$(MAYA_DIRECTORY)/devkit/include",
-					../../../ThirdParty/RadeonProImageProcessing/Mac/inc,
 					"$(MAYA_DIRECTORY)/plug-ins/xgen/include",
-					../../../ThirdParty/aws/Mac/include,
+					"$(inherited)",
 				);
 				INSTALL_PATH = /usr/local/lib;
 				"LD_RUNPATH_SEARCH_PATHS[arch=*]" = "/Applications/Autodesk/maya2017/plug-ins/xgen/lib";
 				LIBRARY_SEARCH_PATHS = (
-					"\"../../../ThirdParty/RadeonProRender SDK/Mac/lib\"",
 					"$(MAYA_DIRECTORY)/Maya.app/Contents/MacOS",
-					../../../ThirdParty/RadeonProImageProcessing/Mac/lib,
-					"\"../../../ThirdParty/aws/Mac/bin\"",
 					"$(MAYA_DIRECTORY)/plug-ins/xgen/lib",
+					"$(inherited)",
 				);
 				LIBRARY_STYLE = BUNDLE;
 				MACH_O_TYPE = mh_bundle;
@@ -2813,6 +2814,7 @@
 					OpenGL,
 					"-ltbb",
 					"-lglew",
+					"-headerpad_max_install_names",
 				);
 				PREBINDING = NO;
 				ZERO_LINK = NO;
@@ -2849,8 +2851,22 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "";
-				LIBRARY_SEARCH_PATHS = "";
+				HEADER_SEARCH_PATHS = (
+					../../../RadeonProRenderSDK/RadeonProRender/inc,
+					../../../RadeonProRenderSDK/RadeonProRender/rprTools,
+					"../../../RadeonProImageProcessingSDK/radeonimagefilters-1.4.3-2839b0-OSX-rel/include",
+					../../../ThirdParty/json/include,
+					../../../ThirdParty/glew/include,
+					"../../../ThirdParty/oiio-mac",
+					../../../ThirdParty/aws/Mac/include,
+					../../../FireRender.Components/cpp,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					../../../RadeonProRenderSDK/RadeonProRender/binMacOS,
+					"../../../RadeonProImageProcessingSDK/radeonimagefilters-1.4.3-2839b0-OSX-rel/bin",
+					../../../ThirdParty/aws/Mac/bin,
+					"../../../ThirdParty/oiio-mac/bin",
+				);
 				LIBRARY_STYLE = BUNDLE;
 				MAYA_DIRECTORY = "";
 				ONLY_ACTIVE_ARCH = YES;
@@ -2888,8 +2904,22 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				HEADER_SEARCH_PATHS = "";
-				LIBRARY_SEARCH_PATHS = "";
+				HEADER_SEARCH_PATHS = (
+					../../../RadeonProRenderSDK/RadeonProRender/inc,
+					../../../RadeonProRenderSDK/RadeonProRender/rprTools,
+					"../../../RadeonProImageProcessingSDK/radeonimagefilters-1.4.3-2839b0-OSX-rel/include",
+					../../../ThirdParty/json/include,
+					../../../ThirdParty/glew/include,
+					"../../../ThirdParty/oiio-mac",
+					../../../ThirdParty/aws/Mac/include,
+					../../../FireRender.Components/cpp,
+				);
+				LIBRARY_SEARCH_PATHS = (
+					../../../RadeonProRenderSDK/RadeonProRender/binMacOS,
+					"../../../RadeonProImageProcessingSDK/radeonimagefilters-1.4.3-2839b0-OSX-rel/bin",
+					../../../ThirdParty/aws/Mac/bin,
+					"../../../ThirdParty/oiio-mac/bin",
+				);
 				LIBRARY_STYLE = BUNDLE;
 				MAYA_DIRECTORY = "";
 				OTHER_LDFLAGS = "";
@@ -2918,24 +2948,16 @@
 					MAYA_PLUGIN,
 				);
 				HEADER_SEARCH_PATHS = (
-					"../../../ThirdParty/RadeonProRender\\ SDK/Mac/inc",
-					../../../ThirdParty/json/include,
-					../../../ThirdParty/glew/include,
-					"../../../ThirdParty/oiio-mac",
-					../../../FireRender.Components/cpp,
 					"$(MAYA_DIRECTORY)/include",
-					../../../ThirdParty/RadeonProImageProcessing/Mac/inc,
 					"$(MAYA_DIRECTORY)/plug-ins/xgen/include",
-					../../../ThirdParty/aws/Mac/include,
+					"$(inherited)",
 				);
 				INSTALL_PATH = /usr/local/lib;
 				"LD_RUNPATH_SEARCH_PATHS[arch=*]" = "/Applications/Autodesk/maya2018/plug-ins/xgen/lib";
 				LIBRARY_SEARCH_PATHS = (
-					"\"../../../ThirdParty/RadeonProRender SDK/Mac/lib\"",
 					"$(MAYA_DIRECTORY)/Maya.app/Contents/MacOS",
-					../../../ThirdParty/RadeonProImageProcessing/Mac/lib,
-					"\"../../../ThirdParty/aws/Mac/bin\"",
 					"$(MAYA_DIRECTORY)/plug-ins/xgen/lib",
+					"$(inherited)",
 				);
 				LIBRARY_STYLE = BUNDLE;
 				MACH_O_TYPE = mh_bundle;
@@ -2956,6 +2978,7 @@
 					"-ltbb",
 					"-lglew",
 					"-lOpenMayaFX",
+					"-headerpad_max_install_names",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = RadeonProRender;
@@ -2983,24 +3006,16 @@
 					MAYA_PLUGIN,
 				);
 				HEADER_SEARCH_PATHS = (
-					"../../../ThirdParty/RadeonProRender\\ SDK/Mac/inc",
-					../../../ThirdParty/json/include,
-					../../../ThirdParty/glew/include,
-					"../../../ThirdParty/oiio-mac",
-					../../../FireRender.Components/cpp,
 					"$(MAYA_DIRECTORY)/include",
-					../../../ThirdParty/RadeonProImageProcessing/Mac/inc,
 					"$(MAYA_DIRECTORY)/plug-ins/xgen/include",
-					../../../ThirdParty/aws/Mac/include,
+					"$(inherited)",
 				);
 				INSTALL_PATH = /usr/local/lib;
 				"LD_RUNPATH_SEARCH_PATHS[arch=*]" = "/Applications/Autodesk/maya2018/plug-ins/xgen/lib";
 				LIBRARY_SEARCH_PATHS = (
-					"\"../../../ThirdParty/RadeonProRender SDK/Mac/lib\"",
 					"$(MAYA_DIRECTORY)/Maya.app/Contents/MacOS",
-					../../../ThirdParty/RadeonProImageProcessing/Mac/lib,
-					"\"../../../ThirdParty/aws/Mac/bin\"",
 					"$(MAYA_DIRECTORY)/plug-ins/xgen/lib",
+					"$(inherited)",
 				);
 				LIBRARY_STYLE = BUNDLE;
 				MACH_O_TYPE = mh_bundle;
@@ -3021,6 +3036,7 @@
 					"-ltbb",
 					"-lglew",
 					"-lOpenMayaFX",
+					"-headerpad_max_install_names",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = RadeonProRender;
@@ -3050,24 +3066,16 @@
 					MAYA_PLUGIN,
 				);
 				HEADER_SEARCH_PATHS = (
-					"../../../ThirdParty/RadeonProRender\\ SDK/Mac/inc",
-					../../../ThirdParty/json/include,
-					../../../ThirdParty/glew/include,
-					"../../../ThirdParty/oiio-mac",
-					../../../FireRender.Components/cpp,
 					"$(MAYA_DIRECTORY)/include",
-					../../../ThirdParty/RadeonProImageProcessing/Mac/inc,
 					"$(MAYA_DIRECTORY)/plug-ins/xgen/include",
-					../../../ThirdParty/aws/Mac/include,
+					"$(inherited)",
 				);
 				INSTALL_PATH = /usr/local/lib;
 				"LD_RUNPATH_SEARCH_PATHS[arch=*]" = "/Applications/Autodesk/maya2019/plug-ins/xgen/lib";
 				LIBRARY_SEARCH_PATHS = (
-					"\"../../../ThirdParty/RadeonProRender SDK/Mac/lib\"",
 					"$(MAYA_DIRECTORY)/Maya.app/Contents/MacOS",
-					../../../ThirdParty/RadeonProImageProcessing/Mac/lib,
-					"\"../../../ThirdParty/aws/Mac/bin\"",
 					"$(MAYA_DIRECTORY)/plug-ins/xgen/lib",
+					"$(inherited)",
 				);
 				LIBRARY_STYLE = BUNDLE;
 				MACH_O_TYPE = mh_bundle;
@@ -3087,6 +3095,7 @@
 					"-ltbb",
 					"-lglew",
 					"-lOpenMayaFX",
+					"-headerpad_max_install_names",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = RadeonProRender;
@@ -3114,24 +3123,16 @@
 					MAYA_PLUGIN,
 				);
 				HEADER_SEARCH_PATHS = (
-					"../../../ThirdParty/RadeonProRender\\ SDK/Mac/inc",
-					../../../ThirdParty/json/include,
-					../../../ThirdParty/glew/include,
-					"../../../ThirdParty/oiio-mac",
-					../../../FireRender.Components/cpp,
 					"$(MAYA_DIRECTORY)/include",
-					../../../ThirdParty/RadeonProImageProcessing/Mac/inc,
 					"$(MAYA_DIRECTORY)/plug-ins/xgen/include",
-					../../../ThirdParty/aws/Mac/include,
+					"$(inherited)",
 				);
 				INSTALL_PATH = /usr/local/lib;
 				"LD_RUNPATH_SEARCH_PATHS[arch=*]" = "/Applications/Autodesk/maya2019/plug-ins/xgen/lib";
 				LIBRARY_SEARCH_PATHS = (
-					"\"../../../ThirdParty/RadeonProRender SDK/Mac/lib\"",
 					"$(MAYA_DIRECTORY)/Maya.app/Contents/MacOS",
-					../../../ThirdParty/RadeonProImageProcessing/Mac/lib,
-					"\"../../../ThirdParty/aws/Mac/bin\"",
 					"$(MAYA_DIRECTORY)/plug-ins/xgen/lib",
+					"$(inherited)",
 				);
 				LIBRARY_STYLE = BUNDLE;
 				MACH_O_TYPE = mh_bundle;
@@ -3151,6 +3152,7 @@
 					"-ltbb",
 					"-lglew",
 					"-lOpenMayaFX",
+					"-headerpad_max_install_names",
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = RadeonProRender;
