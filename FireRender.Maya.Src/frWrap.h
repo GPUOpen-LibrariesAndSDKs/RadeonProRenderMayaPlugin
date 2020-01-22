@@ -3382,9 +3382,8 @@ namespace frw
 	class BaseUVNode : public ValueNode
 	{
 	public:
-		BaseUVNode(const MaterialSystem& h, ValueType nodeType) : ValueNode(h, nodeType)
-		{
-		}
+		BaseUVNode(const MaterialSystem& h, ValueType nodeType) : ValueNode(h, nodeType) {}
+		virtual ~BaseUVNode() = default;
 
 		virtual void SetOrigin(const frw::Value& value) = 0;
 		void SetInputZAxis(const frw::Value& value);
@@ -3406,9 +3405,7 @@ namespace frw
 	class UVTriplanarNode : public BaseUVNode
 	{
 	public:
-        UVTriplanarNode(const MaterialSystem& h) : BaseUVNode(h, ValueTypeUVTriplanar)
-		{
-		}
+        UVTriplanarNode(const MaterialSystem& h) : BaseUVNode(h, ValueTypeUVTriplanar) {}
 
 		virtual void SetOrigin(const frw::Value& value) override;
 	};
