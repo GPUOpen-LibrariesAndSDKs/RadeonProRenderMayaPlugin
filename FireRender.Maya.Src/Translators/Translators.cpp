@@ -377,7 +377,7 @@ namespace FireMaya
 			physicalLightData.colorBase = fnLight.color();
 
 			float mayaIntensity = fnLight.intensity(&mstatus);
-			checkStatus(mstatus);
+			assert(mstatus == MStatus::kSuccess);
 
 			if (node.apiType() == MFn::kAreaLight)
 			{
