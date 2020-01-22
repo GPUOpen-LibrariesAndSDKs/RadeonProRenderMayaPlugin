@@ -1474,8 +1474,22 @@ void FireRenderLight::UpdateTransform(const MMatrix& matrix)
 	{
 		// For area light we should apply areaWidth and areaLength to transform matrix in order to correctly pass it into core
 		MTransformationMatrix transformation;
-		float areaWidth = PhysicalLightAttributes::GetAreaWidth(Object());
-		float areaLength = PhysicalLightAttributes::GetAreaLength(Object());
+
+		float areaWidth = 0.0f;
+		float areaLength = 0.0f;
+
+		if (Object().hasFn(MFn::kAreaLight))
+		{
+			// Maya light has no physical light attributes, width and length should be default
+			areaWidth = 1.0f;
+			areaLength = 1.0f;
+		}
+		else
+		{
+			areaWidth = PhysicalLightAttributes::GetAreaWidth(Object());
+			areaLength = PhysicalLightAttributes::GetAreaLength(Object());
+		}
+
 		double scale[3]{ areaWidth, areaWidth, areaLength };
 		transformation.setScale(scale, MSpace::Space::kObject);
 		FireMaya::ScaleMatrixFromCmToMFloats(transformation.asMatrix() * matrix, matrixfloats);
