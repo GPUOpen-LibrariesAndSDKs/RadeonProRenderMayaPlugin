@@ -228,6 +228,7 @@
     <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.cpp" />
     <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESprocessor.cpp" />
     <ClCompile Include="..\FireRender.Components\cpp\ImageFilter\ImageFilter.cpp" />
+    <ClCompile Include="..\FireRender.Components\cpp\Utils\Utils.cpp" />
     <ClCompile Include="..\FireRender.Components\cpp\XMLMaterialExport\XMLMaterialExportCommon.cpp" />
     <ClCompile Include="..\RadeonProRenderSDK\RadeonProRender\inc\Math\half.cpp" />
     <ClCompile Include="..\RadeonProRenderSDK\RadeonProRender\rprTools\RPRStringIDMapper.cpp" />
@@ -376,6 +377,7 @@
     <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.h" />
     <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESprocessor.h" />
     <ClInclude Include="..\FireRender.Components\cpp\ImageFilter\ImageFilter.h" />
+    <ClInclude Include="..\FireRender.Components\cpp\Utils\Utils.h" />
     <ClInclude Include="..\FireRender.Components\cpp\XMLMaterialExport\XMLMaterialExportCommon.h" />
     <ClInclude Include="athenaCmd.h" />
     <ClInclude Include="athenaSystemInfo_Win.h" />
