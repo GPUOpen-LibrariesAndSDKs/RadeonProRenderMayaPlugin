@@ -19,6 +19,7 @@
 #include <maya/MPlug.h>
 #include <maya/MItDependencyNodes.h>
 #include <maya/MUserEventMessage.h>
+#include <maya/MItDependencyGraph.h>
 
 #include "AutoLock.h"
 #include "VRay.h"
@@ -1746,6 +1747,41 @@ bool FireRenderContext::AddSceneObject(FireRenderObject* ob)
 	return true;
 }
 
+bool IsXgenGuides(MObject& node)
+{
+	MFnDependencyNode fnNode(node);
+	MStatus returnStatus;
+
+	// - get out attribute
+	MObject attr = fnNode.attribute("outSplineData", &returnStatus);
+	CHECK_MSTATUS(returnStatus)
+
+	MPlug plug = fnNode.findPlug(attr, false, &returnStatus);
+	CHECK_MSTATUS(returnStatus)
+
+	// - iterate through node connections; search for connected xgmSplineDescription
+	MItDependencyGraph itdep(
+		plug,
+		MFn::kPluginDependNode,
+		MItDependencyGraph::kDownstream,
+		MItDependencyGraph::kDepthFirst,
+		MItDependencyGraph::kPlugLevel,
+		&returnStatus);
+	CHECK_MSTATUS(returnStatus)
+
+	for (; !itdep.isDone(); itdep.next())
+	{
+		MFnDependencyNode connectionNode(itdep.currentItem());
+		MString connectionNode_typename = connectionNode.typeName();
+
+		// xgmSplineDescription found => this is guides => shouldn't create hairs
+		if (connectionNode_typename == "xgmSplineDescription")
+			return true;
+	}
+
+	return false;
+}
+
 bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 {
 	MAIN_THREAD_ONLY;
@@ -1806,10 +1842,14 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		}
 		else
 		{
-			MTypeId type_id = dagNode.typeId();
 			if (dagNode.typeName() == "xgmSplineDescription")
 			{
-				ob = CreateSceneObject<FireRenderHair, NodeCachingOptions::AddPath>(dagPath);
+				if (!IsXgenGuides(node))
+				{
+					// check if xgmSplineDescription is a guides for other xgmSplineDescription
+					// don't need to create hair object if that is the case
+					ob = CreateSceneObject<FireRenderHair, NodeCachingOptions::AddPath>(dagPath);
+				}
 			}
 			else if (dagNode.typeName() == "transform")
 			{
