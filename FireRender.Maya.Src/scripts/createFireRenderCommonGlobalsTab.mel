@@ -1160,7 +1160,6 @@ global proc buildFireRenderImageFormatsMenu(
 	if ($wantMovie && `about -nt`) {
 		menuItem -label (uiRes("m_buildImageFormatsMenu.kAVI")) 				              -data 23;
 	}
-	menuItem -label (uiRes("m_buildImageFormatsMenu.kCineon")) 				          -data 11;
 	menuItem -label (uiRes("m_buildImageFormatsMenu.kDDS")) 					              -data 35;
 	if (!$wantVector)
 	{
