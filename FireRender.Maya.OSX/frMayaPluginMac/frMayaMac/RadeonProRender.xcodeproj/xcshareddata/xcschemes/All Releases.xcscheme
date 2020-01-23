@@ -64,9 +64,23 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "4DE508631D9950A1009B2BD6"
+               BlueprintIdentifier = "8DBCC29B22304666003EE361"
                BuildableName = "RadeonProRender.bundle"
-               BlueprintName = "Maya2017"
+               BlueprintName = "Maya2019"
+               ReferencedContainer = "container:RadeonProRender.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "NO"
+            buildForRunning = "YES"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "B7531FC923D9ED5600246738"
+               BuildableName = "RadeonProRender.bundle"
+               BlueprintName = "Maya2020"
                ReferencedContainer = "container:RadeonProRender.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -76,7 +90,6 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      language = ""
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
       </Testables>
@@ -96,7 +109,6 @@
       buildConfiguration = "Release"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      language = ""
       launchStyle = "1"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
@@ -127,6 +139,15 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "8D595D8B20372FE20031988A"
+            BuildableName = "RadeonProRender.bundle"
+            BlueprintName = "Maya2018"
+            ReferencedContainer = "container:RadeonProRender.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">
