@@ -165,15 +165,6 @@
     <None Include="scripts\common.mel">
       <Filter>Resources\Scripts</Filter>
     </None>
-    <None Include="scripts\rprUnifiedRenderGlobalsWindow201600.mel">
-      <Filter>Resources\Scripts</Filter>
-    </None>
-    <None Include="scripts\rprUnifiedRenderGlobalsWindow201650.mel">
-      <Filter>Resources\Scripts</Filter>
-    </None>
-    <None Include="scripts\rprUnifiedRenderGlobalsWindow201700.mel">
-      <Filter>Resources\Scripts</Filter>
-    </None>
     <None Include="python\fireRender\rpr_location_selector.py">
       <Filter>Resources\Python</Filter>
     </None>
@@ -181,9 +172,6 @@
       <Filter>Resources\Scripts</Filter>
     </None>
     <None Include="scripts\shelfCommands.mel">
-      <Filter>Resources\Scripts</Filter>
-    </None>
-    <None Include="scripts\rprUnifiedRenderGlobalsWindow201500.mel">
       <Filter>Resources\Scripts</Filter>
     </None>
     <None Include="scripts\AERPRAddMaterialTemplate.mel">
@@ -223,6 +211,15 @@
       <Filter>Resources\Scripts\AttributeEditorTemplates</Filter>
     </None>
     <None Include="scripts\physicalLightScripts.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\rprUnifiedRenderGlobalsWindow201800.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\rprUnifiedRenderGlobalsWindow201900.mel">
+      <Filter>Resources\Scripts</Filter>
+    </None>
+    <None Include="scripts\rprUnifiedRenderGlobalsWindow202000.mel">
       <Filter>Resources\Scripts</Filter>
     </None>
   </ItemGroup>
