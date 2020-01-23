@@ -861,7 +861,7 @@ void FireRenderProduction::RenderTiles()
 #ifdef DUMP_TILES_AOVS_ALL
 	// debug dump resulting AOVs
 	for (auto& tmp : outBuffers)
-		tmp.second.debugDump(m_height, m_width);
+		tmp.second.debugDump(m_height, m_width, std::string(FireRenderAOV::GetAOVName(tmp.first)));
 #endif
 #endif
 
@@ -871,7 +871,7 @@ void FireRenderProduction::RenderTiles()
 	RV_PIXEL* data = nullptr;
 	std::vector<float> vecData;
 
-	if (m_contextPtr->IsDenoiserEnabled())
+	if (m_contextPtr->IsDenoiserEnabled() && (m_renderViewAOV->id == RPR_AOV_COLOR))
 	{
 		// run denoiser on cached data if necessary
 		bool denoiseResult = false;
