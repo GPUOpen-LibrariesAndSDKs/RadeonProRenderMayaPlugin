@@ -15,7 +15,7 @@ using namespace chrono;
 // Static Initialization
 // -----------------------------------------------------------------------------
 time_point<steady_clock> FireRenderError::s_lastDialogTime;
-MMutexLock FireRenderError::s_lock;
+std::mutex FireRenderError::s_lock;
 bool FireRenderError::s_lastDialogCritical = false;
 
 
@@ -94,7 +94,7 @@ void FireRenderError::setError(const ErrorInfo& error, bool showDialog)
 	m_error = true;
 
 	// Acquire the lock.
-	auto lock = RPR::AutoMutexLock(s_lock);
+	auto lock = RPR::AutoLock<std::mutex>(s_lock);
 
 	// Log the error.
 	logError(error);

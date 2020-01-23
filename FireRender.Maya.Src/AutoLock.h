@@ -1,10 +1,5 @@
 #pragma once
 
-#if MAYA_API_VERSION < 20180000
-class MSpinLock;
-class MMutexLock;
-#endif
-
 namespace RPR
 {
 
