@@ -9,7 +9,7 @@ frw::Value MayaStandardNodeConverters::NodeCheckerConverter::Convert() const
 {
 	frw::ValueNode map(m_params.scope.MaterialSystem(), frw::ValueTypeCheckerMap);
 	auto uv = (m_params.scope.GetConnectedValue(m_params.shaderNode.findPlug("uvCoord")) | m_params.scope.MaterialSystem().ValueLookupUV(0));
-	map.SetValue("uv", (uv * .25) + 128.);	// <- offset added because FR mirrors checker at origin
+	map.SetValue(RPR_MATERIAL_INPUT_UV, (uv * .25) + 128.);	// <- offset added because FR mirrors checker at origin
 
 	frw::Value color1 = m_params.scope.GetValue(m_params.shaderNode.findPlug("color1"));
 	frw::Value color2 = m_params.scope.GetValue(m_params.shaderNode.findPlug("color2"));

@@ -52,7 +52,7 @@ frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::Convert() const
 	proceduralUVResult->SetInputZAxis(transformInfo.rotationZ);
 
 	frw::ImageNode imageNode(m_params.scope.MaterialSystem());
-	imageNode.SetValue("uv", *proceduralUVResult);
+	imageNode.SetValue(RPR_MATERIAL_INPUT_UV, *proceduralUVResult);
 	imageNode.SetMap(imageFromDirectlyConnectedFileNode);
 
 	return imageNode;

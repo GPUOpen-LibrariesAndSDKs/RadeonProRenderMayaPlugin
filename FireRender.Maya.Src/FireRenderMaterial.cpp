@@ -240,15 +240,15 @@ frw::Shader FireMaya::Material::GetShader(Scope& scope)
 
 	frw::Shader shader(scope.MaterialSystem(), shaderType);
 
-	static struct { const MObject& attribute; const char* frName; } attributes[] =
+	static struct { const MObject& attribute; rpr_material_node_input inputKey; } attributes[] =
 	{
-		{ Attribute::color, "color" },
-		{ Attribute::normalMap, "normal" },
-		{ Attribute::roughness, "roughness" },
-		{ Attribute::roughnessX, "roughness_x" },
-		{ Attribute::roughnessY, "roughness_y" },
-		{ Attribute::rotation, "rotation" },
-		{ Attribute::refractiveIndex, "ior" }
+		{ Attribute::color, RPR_MATERIAL_INPUT_COLOR },
+		{ Attribute::normalMap, RPR_MATERIAL_INPUT_NORMAL },
+		{ Attribute::roughness, RPR_MATERIAL_INPUT_ROUGHNESS },
+		{ Attribute::roughnessX, RPR_MATERIAL_INPUT_ROUGHNESS_X },
+		{ Attribute::roughnessY, RPR_MATERIAL_INPUT_ROUGHNESS_Y },
+		{ Attribute::rotation, RPR_MATERIAL_INPUT_ROTATION },
+		{ Attribute::refractiveIndex, RPR_MATERIAL_INPUT_IOR }
 	};
 
 	for (auto it : attributes)
@@ -261,7 +261,7 @@ frw::Shader FireMaya::Material::GetShader(Scope& scope)
 			if (shaderType == frw::ShaderTypeEmissive && it.attribute == Attribute::color)
 				value = value * intensity;
 
-			shader.SetValue(it.frName, value);
+			shader.SetValue(it.inputKey, value);
 		}
 	}
 
