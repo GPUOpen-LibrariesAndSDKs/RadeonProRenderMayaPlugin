@@ -777,6 +777,9 @@
 		B75320E623D9ED5600246738 /* libRadeonProRender64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FA69E321D58D8AD00E218C8 /* libRadeonProRender64.dylib */; };
 		B75320E723D9ED5600246738 /* libTahoe64.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FA69E331D58D8AD00E218C8 /* libTahoe64.dylib */; };
 		B75320E823D9ED5600246738 /* OpenCL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9FA69E301D58D89B00E218C8 /* OpenCL.framework */; };
+		B75320FB23DB143800246738 /* RadeonProRender.bundle in Copy Files (copy product to plug-ins) */ = {isa = PBXBuildFile; fileRef = 8D595E4620372FE20031988A /* RadeonProRender.bundle */; };
+		B75320FC23DB144700246738 /* RadeonProRender.bundle in Copy Files (copy product to plug-ins) */ = {isa = PBXBuildFile; fileRef = 8DBCC36922304666003EE361 /* RadeonProRender.bundle */; };
+		B75320FD23DB145800246738 /* RadeonProRender.bundle in Copy Files (copy product to plug-ins) */ = {isa = PBXBuildFile; fileRef = B75320EE23D9ED5600246738 /* RadeonProRender.bundle */; };
 		B7542DEC238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7542DE6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp */; };
 		B7542DED238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7542DE6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp */; };
 		B7542DEF238FE61B00ACBE7C /* SingleShaderMeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = B7542DE8238FE61B00ACBE7C /* SingleShaderMeshTranslator.h */; };
@@ -878,6 +881,7 @@
 			dstPath = "/Users/Shared/RadeonProRender/plug-ins/2018";
 			dstSubfolderSpec = 0;
 			files = (
+				B75320FB23DB143800246738 /* RadeonProRender.bundle in Copy Files (copy product to plug-ins) */,
 			);
 			name = "Copy Files (copy product to plug-ins)";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -888,6 +892,7 @@
 			dstPath = "/Users/Shared/RadeonProRender/plug-ins/2019";
 			dstSubfolderSpec = 0;
 			files = (
+				B75320FC23DB144700246738 /* RadeonProRender.bundle in Copy Files (copy product to plug-ins) */,
 			);
 			name = "Copy Files (copy product to plug-ins)";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -898,6 +903,7 @@
 			dstPath = "/Users/Shared/RadeonProRender/plug-ins/2020";
 			dstSubfolderSpec = 0;
 			files = (
+				B75320FD23DB145800246738 /* RadeonProRender.bundle in Copy Files (copy product to plug-ins) */,
 			);
 			name = "Copy Files (copy product to plug-ins)";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -927,9 +933,6 @@
 		4D6C22041DEBFAF500D745F8 /* RadeonProRender.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = RadeonProRender.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		4D6C22071DEBFE8800D745F8 /* FireRenderError.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderError.cpp; path = ../../../FireRender.Maya.Src/FireRenderError.cpp; sourceTree = "<group>"; };
 		4D6C22081DEBFE8800D745F8 /* FireRenderError.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderError.h; path = ../../../FireRender.Maya.Src/FireRenderError.h; sourceTree = "<group>"; };
-		4D6C22121DEC00BA00D745F8 /* rpr2016.5.mod */ = {isa = PBXFileReference; explicitFileType = text; fileEncoding = 4; name = rpr2016.5.mod; path = ../rpr2016.5.mod; sourceTree = "<group>"; };
-		4DD22AD81D9E140A00A5BBF6 /* rpr2016.mod */ = {isa = PBXFileReference; explicitFileType = text; fileEncoding = 4; name = rpr2016.mod; path = ../rpr2016.mod; sourceTree = "<group>"; };
-		4DD22AD91D9E140A00A5BBF6 /* rpr2017.mod */ = {isa = PBXFileReference; explicitFileType = text; fileEncoding = 4; name = rpr2017.mod; path = ../rpr2017.mod; sourceTree = "<group>"; };
 		4DE508621D995080009B2BD6 /* RadeonProRender.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = RadeonProRender.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		4DE645071DA218F90076E6A7 /* postbuild_debug.sh */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.script.sh; name = postbuild_debug.sh; path = ../postbuild_debug.sh; sourceTree = "<group>"; };
 		4DE6450A1DA2774A0076E6A7 /* RenderProgressBars.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RenderProgressBars.cpp; path = ../../../FireRender.Maya.Src/RenderProgressBars.cpp; sourceTree = "<group>"; };
@@ -1181,6 +1184,9 @@
 		B72F81CE239F813E00C2BFB3 /* NoiseConverter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NoiseConverter.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/NoiseConverter.cpp; sourceTree = "<group>"; };
 		B72F81CF239F813E00C2BFB3 /* Bump2dConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Bump2dConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/Bump2dConverter.h; sourceTree = "<group>"; };
 		B75320EE23D9ED5600246738 /* RadeonProRender.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = RadeonProRender.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
+		B75320F723DAFBD900246738 /* rpr2020.mod */ = {isa = PBXFileReference; lastKnownFileType = text; name = rpr2020.mod; path = ../rpr2020.mod; sourceTree = "<group>"; };
+		B75320F923DAFBDA00246738 /* rpr2019.mod */ = {isa = PBXFileReference; lastKnownFileType = text; name = rpr2019.mod; path = ../rpr2019.mod; sourceTree = "<group>"; };
+		B75320FA23DAFBDA00246738 /* rpr2018.mod */ = {isa = PBXFileReference; lastKnownFileType = text; name = rpr2018.mod; path = ../rpr2018.mod; sourceTree = "<group>"; };
 		B7542DE6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MultipleShaderMeshTranslator.cpp; path = ../../../FireRender.Maya.Src/Translators/MultipleShaderMeshTranslator.cpp; sourceTree = "<group>"; };
 		B7542DE8238FE61B00ACBE7C /* SingleShaderMeshTranslator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SingleShaderMeshTranslator.h; path = ../../../FireRender.Maya.Src/Translators/SingleShaderMeshTranslator.h; sourceTree = "<group>"; };
 		B7542DE9238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SingleShaderMeshTranslator.cpp; path = ../../../FireRender.Maya.Src/Translators/SingleShaderMeshTranslator.cpp; sourceTree = "<group>"; };
@@ -1626,6 +1632,9 @@
 		8A7F063308688F580064D097 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				B75320FA23DAFBDA00246738 /* rpr2018.mod */,
+				B75320F923DAFBDA00246738 /* rpr2019.mod */,
+				B75320F723DAFBD900246738 /* rpr2020.mod */,
 				9FB8E5281D80643600D6DB73 /* docs */,
 				9FB8E5781D80643600D6DB73 /* icons */,
 				9FB8E5791D80643600D6DB73 /* images */,
@@ -1634,9 +1643,6 @@
 				9FB8E5891D80643600D6DB73 /* scripts */,
 				4D55F2591DDB511600FD945D /* shaders */,
 				9FB8E58C1D80643600D6DB73 /* Shelfs */,
-				4DD22AD81D9E140A00A5BBF6 /* rpr2016.mod */,
-				4D6C22121DEC00BA00D745F8 /* rpr2016.5.mod */,
-				4DD22AD91D9E140A00A5BBF6 /* rpr2017.mod */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
