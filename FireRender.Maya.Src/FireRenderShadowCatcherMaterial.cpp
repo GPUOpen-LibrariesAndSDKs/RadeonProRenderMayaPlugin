@@ -159,7 +159,7 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 	
 	MFnDependencyNode shaderNode(thisMObject());
 
-	frw::Shader shader(scope.MaterialSystem(), scope.Context(), RPRX_MATERIAL_UBER);
+	frw::Shader shader(scope.MaterialSystem(), scope.Context());
 	
 	if (shaderNode.findPlug(Attribute::scenabled, false).asBool())
 	{
@@ -220,9 +220,9 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 	
 		if (!bgIsEnv)
 		{
-			shader.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_COLOR, scope.GetValue(shaderNode.findPlug(Attribute::bgColor, false)));
-			shader.xSetValue(RPRX_UBER_MATERIAL_DIFFUSE_WEIGHT, scope.GetValue(shaderNode.findPlug(Attribute::bgWeight, false)));
-			shader.xSetValue(RPRX_UBER_MATERIAL_TRANSPARENCY, scope.GetValue(shaderNode.findPlug(Attribute::bgTransparency, false)));
+			shader.xSetValue(RPR_MATERIAL_INPUT_UBER_DIFFUSE_COLOR, scope.GetValue(shaderNode.findPlug(Attribute::bgColor, false)));
+			shader.xSetValue(RPR_MATERIAL_INPUT_UBER_DIFFUSE_WEIGHT, scope.GetValue(shaderNode.findPlug(Attribute::bgWeight, false)));
+			shader.xSetValue(RPR_MATERIAL_INPUT_UBER_TRANSPARENCY, scope.GetValue(shaderNode.findPlug(Attribute::bgTransparency, false)));
 		}
 
 		shader.SetShadowCatcher(true);
@@ -231,14 +231,14 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 	if (shaderNode.findPlug(Attribute::rcenabled, false).asBool())
 	{
 		// general ubermaterial params
-		shader.xSetValue(RPR_UBER_MATERIAL_INPUT_DIFFUSE_COLOR, frw::Value(1.0f, 1.0f, 1.0f));
-		shader.xSetValue(RPR_UBER_MATERIAL_INPUT_DIFFUSE_WEIGHT, frw::Value(1.0f, 1.0f, 1.0f));
-		shader.xSetValue(RPR_UBER_MATERIAL_INPUT_DIFFUSE_ROUGHNESS, frw::Value(0.0f, 0.0f, 0.0f));
-		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_COLOR, frw::Value(1.0f, 1.0f, 1.0f));
-		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_WEIGHT, scope.GetValue(shaderNode.findPlug(Attribute::reflectionWeight, false)));
-		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_ROUGHNESS, scope.GetValue(shaderNode.findPlug(Attribute::reflectionRoughness, false)));
-		shader.xSetParameterU(RPRX_UBER_MATERIAL_REFLECTION_MODE, RPRX_UBER_MATERIAL_REFLECTION_MODE_METALNESS);
-		shader.xSetValue(RPRX_UBER_MATERIAL_REFLECTION_METALNESS, frw::Value(1.0f, 1.0f, 1.0f));
+		shader.xSetValue(RPR_MATERIAL_INPUT_UBER_DIFFUSE_COLOR, frw::Value(1.0f, 1.0f, 1.0f));
+		shader.xSetValue(RPR_MATERIAL_INPUT_UBER_DIFFUSE_WEIGHT, frw::Value(1.0f, 1.0f, 1.0f));
+		shader.xSetValue(RPR_MATERIAL_INPUT_UBER_DIFFUSE_ROUGHNESS, frw::Value(0.0f, 0.0f, 0.0f));
+		shader.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_COLOR, frw::Value(1.0f, 1.0f, 1.0f));
+		shader.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_WEIGHT, scope.GetValue(shaderNode.findPlug(Attribute::reflectionWeight, false)));
+		shader.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_ROUGHNESS, scope.GetValue(shaderNode.findPlug(Attribute::reflectionRoughness, false)));
+		shader.xSetParameterU(RPR_MATERIAL_INPUT_UBER_REFLECTION_MODE, RPR_UBER_MATERIAL_IOR_MODE_METALNESS);
+		shader.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_METALNESS, frw::Value(1.0f, 1.0f, 1.0f));
 
 		// reflection catcher specific params
 		shader.SetReflectionCatcher(true);

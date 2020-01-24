@@ -37,7 +37,7 @@ frw::Value MayaStandardNodeConverters::Bump2dConverter::GetBumpValue(const frw::
 
 	if (strength != 1.0f)
 	{
-		imageNode.SetValue("bumpscale", strength);
+		imageNode.SetValue(RPR_MATERIAL_INPUT_SCALE, strength);
 	}
 
 	return imageNode;
@@ -80,7 +80,7 @@ frw::Value MayaStandardNodeConverters::Bump2dConverter::GetNormalValue(const frw
 
 	if (strength != 1.0f)
 	{
-		imageNode.SetValue("bumpscale", strength);
+		imageNode.SetValue(RPR_MATERIAL_INPUT_SCALE, strength);
 	}
 
 	return imageNode;

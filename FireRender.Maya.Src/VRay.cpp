@@ -172,7 +172,7 @@ namespace FireMaya
 				frlight.areaLight.SetTransform((rpr_float*)mfloats);
 
 				if (frlight.emissive)
-					frlight.emissive.SetValue("color", frw::Value(color.r, color.g, color.b));
+					frlight.emissive.SetValue(RPR_MATERIAL_INPUT_COLOR, frw::Value(color.r, color.g, color.b));
 			}
 			else
 			{
@@ -182,7 +182,7 @@ namespace FireMaya
 				if (!frlight.transparent)
 				{
 					frlight.transparent = frw::TransparentShader(frMatsys);
-					frlight.transparent.SetValue("color", 1.0f);
+					frlight.transparent.SetValue(RPR_MATERIAL_INPUT_COLOR, 1.0f);
 				}
 
 				//create transparent shader for portals
@@ -225,7 +225,7 @@ namespace FireMaya
 				frlight.areaLight.SetShader(frlight.emissive);
 				frlight.areaLight.SetShadowCatcherFlag(false);
 				frlight.areaLight.SetShadowFlag(false);
-				frlight.emissive.SetValue("color", frw::Value(color.r, color.g, color.b));
+				frlight.emissive.SetValue(RPR_MATERIAL_INPUT_COLOR, frw::Value(color.r, color.g, color.b));
 				frlight.isAreaLight = true;
 			}
 
@@ -626,7 +626,7 @@ namespace FireMaya
 				frlight.areaLight.SetTransform((rpr_float*)mfloats);
 
 				if (frlight.emissive)
-					frlight.emissive.SetValue("color", frw::Value(color.r, color.g, color.b));
+					frlight.emissive.SetValue(RPR_MATERIAL_INPUT_COLOR, frw::Value(color.r, color.g, color.b));
 			}
 			else
 			{
@@ -635,7 +635,7 @@ namespace FireMaya
 				if (!frlight.transparent)
 				{
 					frlight.transparent = frw::TransparentShader(frMatsys);
-					frlight.transparent.SetValue("color", 1.0f);
+					frlight.transparent.SetValue(RPR_MATERIAL_INPUT_COLOR, 1.0f);
 				}
 
 				frlight.areaLight = frcontext.CreateMesh(
@@ -651,7 +651,7 @@ namespace FireMaya
 				frlight.areaLight.SetShader(frlight.emissive);
 				frlight.areaLight.SetShadowCatcherFlag(false);
 				frlight.areaLight.SetShadowFlag(false);
-				frlight.emissive.SetValue("color", frw::Value(color.r, color.g, color.b));
+				frlight.emissive.SetValue(RPR_MATERIAL_INPUT_COLOR, frw::Value(color.r, color.g, color.b));
 				frlight.isAreaLight = true;
 			}
 

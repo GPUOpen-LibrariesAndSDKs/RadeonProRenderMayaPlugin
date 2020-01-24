@@ -88,10 +88,10 @@ void HybridContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsD
 		maxRecursion = fireRenderGlobalsData.viewportMaxRayDepth;
 	}
 
-	frstatus = rprContextSetParameter1u(frcontext, "maxRecursion", maxRecursion);
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_RECURSION, maxRecursion);
 	checkStatus(frstatus);
 
-	frstatus = frContextSetParameterByKey1u(frcontext, RPR_CONTEXT_Y_FLIP, 1);
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_Y_FLIP, 1);
 	checkStatus(frstatus);
 
 	SetRenderQuality(GetRenderQualityForRenderType(GetRenderType()));
@@ -107,7 +107,7 @@ void HybridContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlo
 	rpr_int frstatus = RPR_SUCCESS;
 
 	float displayGammaValue = fireRenderGlobalsData.applyGammaToMayaViews ? fireRenderGlobalsData.displayGamma : 1.0f;
-	frstatus = rprContextSetParameter1f(frcontext, "displaygamma", displayGammaValue);
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_DISPLAY_GAMMA, displayGammaValue);
 	checkStatus(frstatus);
 
 	m_restartRender = true;

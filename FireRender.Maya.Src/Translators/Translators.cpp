@@ -535,7 +535,7 @@ namespace FireMaya
 			frlight.areaLight.SetTransform((rpr_float*)matrixfloats);
 			if (frlight.emissive)
 			{
-				frlight.emissive.SetValue("color", 
+				frlight.emissive.SetValue(RPR_MATERIAL_INPUT_COLOR,
 					areaLightData.resultFrwColor * areaLightData.GetCalculatedIntensity(calculatedArea));
 			}
 

@@ -223,7 +223,7 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 void FireRenderContext::enableDisplayGammaCorrection(const FireRenderGlobalsData &globals)
 {
 	RPR_THREAD_ONLY;
-	GetContext().SetParameter("displaygamma", globals.displayGamma);
+	GetContext().SetParameter(RPR_CONTEXT_DISPLAY_GAMMA, globals.displayGamma);
 }
 
 void FireRenderContext::setCamera(MDagPath& cameraPath, bool useNonDefaultCameraType)
@@ -597,14 +597,14 @@ void FireRenderContext::setRenderMode(RenderMode renderMode)
 	RPR_THREAD_ONLY;
 	DebugPrint("FireRenderContext::setRenderMode( %d )", renderMode);
 
-	GetContext().SetParameter("rendermode", renderMode);
+	GetContext().SetParameter(RPR_CONTEXT_RENDER_MODE, renderMode);
 	setDirty();
 }
 
 void FireRenderContext::setPreview()
 {
 	int preview = m_interactive || (m_RenderType == RenderType::Thumbnail); 
-	GetContext().SetParameter("preview", preview);
+	GetContext().SetParameter(RPR_CONTEXT_PREVIEW, preview);
 }
 
 void FireRenderContext::cleanScene()
@@ -787,7 +787,7 @@ void FireRenderContext::render(bool lock)
 		}
 	}
 
-	context.SetParameter("iterations", iterationStep);
+	context.SetParameter(RPR_CONTEXT_ITERATIONS, iterationStep);
 
 	if (m_useRegion)
 		context.RenderTile(m_region.left, m_region.right+1, m_height - m_region.top - 1, m_height - m_region.bottom);
@@ -2741,7 +2741,7 @@ frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMesh* pMesh
 
 	frw::Shader shader = scope.GetShader(ob, pMesh, forceUpdate);
 
-	shader.SetMaterialName(node.name().asChar());
+	shader.SetName(node.name().asChar());
 
 	return shader;
 }
