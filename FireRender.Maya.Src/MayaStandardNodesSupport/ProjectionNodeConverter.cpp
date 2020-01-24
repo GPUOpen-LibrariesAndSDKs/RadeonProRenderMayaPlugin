@@ -37,7 +37,7 @@ frw::Value MayaStandardNodeConverters::ProjectionNodeConverter::Convert() const
 	MayaStandardNodeConverters::ProjectionNodeConverter::TransformInfo transformInfo;
 	if (projectionType == ProjectionType::Perspective)
 	{
-		const_cast<ProjectionNodeConverter*>(this)->SubscribeCurrentMeshToCameraUpdates();
+		SubscribeCurrentMeshToCameraUpdates();
 		transformInfo = GetCameraTransform();
 	}
 	else
@@ -208,11 +208,37 @@ MObject MayaStandardNodeConverters::ProjectionNodeConverter::GetConnectedCamera(
 	return cameraPath.node();
 }
 
-void MayaStandardNodeConverters::ProjectionNodeConverter::SubscribeCurrentMeshToCameraUpdates()
+void MayaStandardNodeConverters::ProjectionNodeConverter::SubscribeCurrentMeshToCameraUpdates() const
 {
 	MFnDagNode cameraDAGNode(GetConnectedCamera());
 	MObject transformNode = cameraDAGNode.parent(0);
 	MFnTransform cameraTransform(transformNode);
+
+	//    We have some architecture problems here, so we use const_cast to highlight them
+	//
+	// 1. GetCurrentlyParsedMesh() from Scope initially was used to retrieve mesh info inside shader parsing stage.
+	//
+	//    It used like that:
+	//        m_currentlyParsedMesh = *some mesh*;
+	//        ParseShader(...); // here GetCurrentlyParsedMesh() is valid
+	//        m_currentlyParsedMesh = nullptr;
+	//
+	//    With that getter there's no need to pass current mesh to all the function stack from shader parsing.
+	//    Shader shouldn't affect any specific mesh, therefore GetCurrentlyParsedMesh() was marked as const.
+	//    We need more discussion about that method because we almost use global variable that's not really safe.
+	//
+	// 2. We should subscribe shader to camera updates in order to projection node in perspective mode work correctly.
+	//    Currently there no shader class that could store callbacks from maya objects.
+	//    For now all the callbacks could be only stored in mesh objects, or derivatives from FireRenderObject.
+	//    So we need to add callback to currently parsed mesh, because there are no other ways to store it.
+	//    Therefore const_cast was used to indicate the problem that we modify some mesh from almost global variable in shader parsing code.
+	//    It would be good to have a shader class that could have stored callbacks.
+
 	FireRenderMesh* mesh = const_cast<FireRenderMesh*>(m_params.scope.GetCurrentlyParsedMesh());
-	mesh->AddForceShaderDirtyDependOnOtherObjectCallback(transformNode);
+
+	// Swatch render returns nullptr for current mesh
+	if (mesh != nullptr)
+	{
+		mesh->AddForceShaderDirtyDependOnOtherObjectCallback(transformNode);
+	}
 }
