@@ -81,7 +81,7 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 
 	rpr_int frstatus = RPR_SUCCESS;
 
-	frstatus = rprContextSetParameter1f(frcontext, "pdfthreshold", 0.0000f);
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_PDF_THRESHOLD, 0.0000f);
 	checkStatus(frstatus);
 
 	if (GetRenderType() == RenderType::Thumbnail)
@@ -90,122 +90,122 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 		return;
 	}
 
-	frstatus = rprContextSetParameter1f(frcontext, "radianceclamp", fireRenderGlobalsData.giClampIrradiance ? fireRenderGlobalsData.giClampIrradianceValue : FLT_MAX);
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_RADIANCE_CLAMP, fireRenderGlobalsData.giClampIrradiance ? fireRenderGlobalsData.giClampIrradianceValue : FLT_MAX);
 	checkStatus(frstatus);
 
-	frstatus = rprContextSetParameter1u(frcontext, "texturecompression", fireRenderGlobalsData.textureCompression);
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_TEXTURE_COMPRESSION, fireRenderGlobalsData.textureCompression);
 	checkStatus(frstatus);
 
-	frstatus = rprContextSetParameter1u(frcontext, "as.tilesize", fireRenderGlobalsData.adaptiveTileSize);
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_TILE_SIZE, fireRenderGlobalsData.adaptiveTileSize);
 	checkStatus(frstatus);
 
 	if (GetRenderType() == RenderType::ProductionRender) // production (final) rendering
 	{
-		frstatus = rprContextSetParameter1f(frcontext, "as.threshold", fireRenderGlobalsData.adaptiveThreshold);
+		frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_THRESHOLD, fireRenderGlobalsData.adaptiveThreshold);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "rendermode", fireRenderGlobalsData.renderMode);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_RENDER_MODE, fireRenderGlobalsData.renderMode);
 		checkStatus(frstatus);
 
 		setSamplesPerUpdate(fireRenderGlobalsData.samplesPerUpdate);
 
-		frstatus = rprContextSetParameter1u(frcontext, "maxRecursion", fireRenderGlobalsData.maxRayDepth);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_RECURSION, fireRenderGlobalsData.maxRayDepth);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.diffuse", fireRenderGlobalsData.maxRayDepthDiffuse);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_DEPTH_DIFFUSE, fireRenderGlobalsData.maxRayDepthDiffuse);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.glossy", fireRenderGlobalsData.maxRayDepthGlossy);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_DEPTH_GLOSSY, fireRenderGlobalsData.maxRayDepthGlossy);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction", fireRenderGlobalsData.maxRayDepthRefraction);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_DEPTH_REFRACTION, fireRenderGlobalsData.maxRayDepthRefraction);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction.glossy", fireRenderGlobalsData.maxRayDepthGlossyRefraction);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_DEPTH_GLOSSY_REFRACTION, fireRenderGlobalsData.maxRayDepthGlossyRefraction);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.shadow", fireRenderGlobalsData.maxRayDepthShadow);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_DEPTH_SHADOW, fireRenderGlobalsData.maxRayDepthShadow);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "as.minspp", fireRenderGlobalsData.completionCriteriaFinalRender.completionCriteriaMinIterations);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_MIN_SPP, fireRenderGlobalsData.completionCriteriaFinalRender.completionCriteriaMinIterations);
 		checkStatus(frstatus);
 	}
 	else if (isInteractive())
 	{
 		setSamplesPerUpdate(1);
 
-		frstatus = rprContextSetParameter1f(frcontext, "as.threshold", fireRenderGlobalsData.adaptiveThresholdViewport);
+		frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_THRESHOLD, fireRenderGlobalsData.adaptiveThresholdViewport);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "rendermode", fireRenderGlobalsData.viewportRenderMode);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_RENDER_MODE, fireRenderGlobalsData.viewportRenderMode);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "maxRecursion", fireRenderGlobalsData.viewportMaxRayDepth);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_RECURSION, fireRenderGlobalsData.viewportMaxRayDepth);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.diffuse", fireRenderGlobalsData.viewportMaxDiffuseRayDepth);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_DEPTH_DIFFUSE, fireRenderGlobalsData.viewportMaxDiffuseRayDepth);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.glossy", fireRenderGlobalsData.viewportMaxReflectionRayDepth);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_DEPTH_GLOSSY, fireRenderGlobalsData.viewportMaxReflectionRayDepth);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction", fireRenderGlobalsData.viewportMaxReflectionRayDepth);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_DEPTH_REFRACTION, fireRenderGlobalsData.viewportMaxReflectionRayDepth);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.refraction.glossy", fireRenderGlobalsData.viewportMaxReflectionRayDepth);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_DEPTH_GLOSSY_REFRACTION, fireRenderGlobalsData.viewportMaxReflectionRayDepth);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "maxdepth.shadow", fireRenderGlobalsData.viewportMaxDiffuseRayDepth);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_DEPTH_SHADOW, fireRenderGlobalsData.viewportMaxDiffuseRayDepth);
 		checkStatus(frstatus);
 
-		frstatus = rprContextSetParameter1u(frcontext, "as.minspp", fireRenderGlobalsData.completionCriteriaViewport.completionCriteriaMinIterations);
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_MIN_SPP, fireRenderGlobalsData.completionCriteriaViewport.completionCriteriaMinIterations);
 		checkStatus(frstatus);
 	}
 
-	frstatus = rprContextSetParameter1f(frcontext, "raycastepsilon", fireRenderGlobalsData.raycastEpsilon);
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_RAY_CAST_EPISLON, fireRenderGlobalsData.raycastEpsilon);
 	checkStatus(frstatus);
 
-	frstatus = rprContextSetParameter1u(frcontext, "imagefilter.type", fireRenderGlobalsData.filterType);
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_IMAGE_FILTER_TYPE, fireRenderGlobalsData.filterType);
 	checkStatus(frstatus);
 
 	//
 
-	std::string filterAttrName = "imagefilter.box.radius";
+	rpr_material_node_input filterAttrName = RPR_CONTEXT_IMAGE_FILTER_BOX_RADIUS;
 	switch (fireRenderGlobalsData.filterType)
 	{
 	case 2:
 	{
-		filterAttrName = "imagefilter.triangle.radius";
+		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_TRIANGLE_RADIUS;
 		break;
 	}
 	case 3:
 	{
-		filterAttrName = "imagefilter.gaussian.radius";
+		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_GAUSSIAN_RADIUS;
 		break;
 	}
 	case 4:
 	{
-		filterAttrName = "imagefilter.mitchell.radius";
+		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_MITCHELL_RADIUS;
 		break;
 	}
 	case 5:
 	{
-		filterAttrName = "imagefilter.lanczos.radius";
+		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_LANCZOS_RADIUS;
 		break;
 	}
 	case 6:
 	{
-		filterAttrName = "imagefilter.blackmanharris.radius";
+		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_BLACKMANHARRIS_RADIUS;
 		break;
 	}
 	default:
 		break;
 	}
 
-	frstatus = rprContextSetParameter1f(frcontext, filterAttrName.c_str(), fireRenderGlobalsData.filterSize);
+	frstatus = rprContextSetParameterByKey1f(frcontext, filterAttrName, fireRenderGlobalsData.filterSize);
 	checkStatus(frstatus);
 
-	frstatus = rprContextSetParameter1u(frcontext, "metalperformanceshader", fireRenderGlobalsData.useMPS ? 1 : 0);
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_METAL_PERFORMANCE_SHADER, fireRenderGlobalsData.useMPS ? 1 : 0);
 	checkStatus(frstatus);
 
 	updateTonemapping(fireRenderGlobalsData, disableWhiteBalance);
@@ -218,13 +218,13 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 
 	rpr_int frstatus = RPR_SUCCESS;
 
-	frstatus = rprContextSetParameter1f(frcontext, "texturegamma", fireRenderGlobalsData.textureGamma);
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_TEXTURE_GAMMA, fireRenderGlobalsData.textureGamma);
 	checkStatus(frstatus);
 
 	// Disable display gamma correction unless it is being applied
 	// to Maya views. It will be always be enabled before file output.
 	auto displayGammaValue = fireRenderGlobalsData.applyGammaToMayaViews ? fireRenderGlobalsData.displayGamma : 1.0f;
-	frstatus = rprContextSetParameter1f(frcontext, "displaygamma", displayGammaValue);
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_DISPLAY_GAMMA, displayGammaValue);
 	checkStatus(frstatus);
 
 	// Release existing effects
@@ -277,8 +277,8 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
 			context.Attach(tonemap);
 		}
-		context.SetParameter("tonemapping.type", RPR_TONEMAPPING_OPERATOR_LINEAR);
-		context.SetParameter("tonemapping.linear.scale", fireRenderGlobalsData.toneMappingLinearScale);
+		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_LINEAR);
+		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_LINEAR_SCALE, fireRenderGlobalsData.toneMappingLinearScale);
 		break;
 
 	case 2:
@@ -287,10 +287,10 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
 			context.Attach(tonemap);
 		}
-		context.SetParameter("tonemapping.type", RPR_TONEMAPPING_OPERATOR_PHOTOLINEAR);
-		context.SetParameter("tonemapping.photolinear.sensitivity", fireRenderGlobalsData.toneMappingPhotolinearSensitivity);
-		context.SetParameter("tonemapping.photolinear.fstop", fireRenderGlobalsData.toneMappingPhotolinearFstop);
-		context.SetParameter("tonemapping.photolinear.exposure", fireRenderGlobalsData.toneMappingPhotolinearExposure);
+		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_PHOTOLINEAR);
+		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_SENSITIVITY, fireRenderGlobalsData.toneMappingPhotolinearSensitivity);
+		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_FSTOP, fireRenderGlobalsData.toneMappingPhotolinearFstop);
+		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_EXPOSURE, fireRenderGlobalsData.toneMappingPhotolinearExposure);
 		break;
 
 	case 3:
@@ -299,7 +299,7 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
 			context.Attach(tonemap);
 		}
-		context.SetParameter("tonemapping.type", RPR_TONEMAPPING_OPERATOR_AUTOLINEAR);
+		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_AUTOLINEAR);
 		break;
 
 	case 4:
@@ -308,7 +308,7 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
 			context.Attach(tonemap);
 		}
-		context.SetParameter("tonemapping.type", RPR_TONEMAPPING_OPERATOR_MAXWHITE);
+		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_MAXWHITE);
 		break;
 
 	case 5:
@@ -317,10 +317,10 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
 			context.Attach(tonemap);
 		}
-		context.SetParameter("tonemapping.type", RPR_TONEMAPPING_OPERATOR_REINHARD02);
-		context.SetParameter("tonemapping.reinhard02.prescale", fireRenderGlobalsData.toneMappingReinhard02Prescale);
-		context.SetParameter("tonemapping.reinhard02.postscale", fireRenderGlobalsData.toneMappingReinhard02Postscale);
-		context.SetParameter("tonemapping.reinhard02.burn", fireRenderGlobalsData.toneMappingReinhard02Burn);
+		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_REINHARD02);
+		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_REINHARD02_PRE_SCALE, fireRenderGlobalsData.toneMappingReinhard02Prescale);
+		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_REINHARD02_POST_SCALE, fireRenderGlobalsData.toneMappingReinhard02Postscale);
+		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_REINHARD02_BURN, fireRenderGlobalsData.toneMappingReinhard02Burn);
 		break;
 
 	case 6:

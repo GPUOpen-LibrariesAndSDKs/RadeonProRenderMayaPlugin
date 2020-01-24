@@ -214,11 +214,9 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 		if (objectsProcessed.count(shader))
 			continue;	// already handled
 
-		shader.Commit();
-
 		objectsProcessed.insert(shader);
 
-		rprx_context mat_rprx_context = nullptr;
+		rpr_material_node mat_rprx_context = nullptr;
 		std::set<rpr_material_node> nodeList;
 		std::unordered_map<rpr_image, RPR_MATERIAL_XML_EXPORT_TEXTURE_PARAM> textureParameter;
 
@@ -227,7 +225,7 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 
 		bool exportImageUV = false; // ignore UV for IMAGE_TEXTURE nodes.  Because UV is exported with "tiling_u" & "tiling_v" in XML
 
-		rpr_material_node materialNodeRPR = shader.IsRprxMaterial() ? shader.GetHandleRPRXmaterial() : shader.Handle();
+		rpr_material_node materialNodeRPR = shader.Handle();
 
 		bool success = ParseRPR(
 			materialNodeRPR,
@@ -788,7 +786,7 @@ void FireRenderXmlImportCmd::parseAttributeParam(MObject shaderNode,
 			// handle special case (for uber)
 			if (attrName == "reflection.mode")
 			{
-				if (value == RPRX_UBER_MATERIAL_REFLECTION_MODE_PBR)
+				if (value == RPR_UBER_MATERIAL_IOR_MODE_PBR)
 				{
 					MPlug metallnessPlug = nodeFn.findPlug("reflectMetalness");
 					if (!metallnessPlug.isNull())
@@ -798,7 +796,7 @@ void FireRenderXmlImportCmd::parseAttributeParam(MObject shaderNode,
 
 					attributePlug.setValue(false);
 				}
-				else if (value == RPRX_UBER_MATERIAL_REFLECTION_MODE_METALNESS)
+				else if (value == RPR_UBER_MATERIAL_IOR_MODE_METALNESS)
 				{
 					MPlug iorPlug = nodeFn.findPlug("reflectIOR");
 					if (!iorPlug.isNull())
@@ -813,9 +811,9 @@ void FireRenderXmlImportCmd::parseAttributeParam(MObject shaderNode,
 			}
 			else if (attrName == "emission.mode")
 			{
-				if (value == RPRX_UBER_MATERIAL_EMISSION_MODE_SINGLESIDED)
+				if (value == RPR_UBER_MATERIAL_EMISSION_MODE_SINGLESIDED)
 					attributePlug.setValue(false);
-				else if (value == RPRX_UBER_MATERIAL_EMISSION_MODE_DOUBLESIDED)
+				else if (value == RPR_UBER_MATERIAL_EMISSION_MODE_DOUBLESIDED)
 					attributePlug.setValue(true);
 			}
 			else

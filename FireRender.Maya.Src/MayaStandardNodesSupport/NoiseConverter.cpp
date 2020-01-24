@@ -44,11 +44,11 @@ frw::Value MayaStandardNodeConverters::NoiseConverter::Convert() const
 
 	frw::ValueNode node1(materialSystem, frw::ValueTypeNoiseMap);
 	uv1 = materialSystem.ValueAdd(uv1, offset1);
-	node1.SetValue("uv", uv1);
+	node1.SetValue(RPR_MATERIAL_INPUT_UV, uv1);
 
 	frw::ValueNode node2(materialSystem, frw::ValueTypeNoiseMap);
 	uv2 = materialSystem.ValueSub(uv2, offset2);
-	node2.SetValue("uv", uv2);
+	node2.SetValue(RPR_MATERIAL_INPUT_UV, uv2);
 
 	auto mulNoise = materialSystem.ValueMul(node1, node2);
 	auto v = materialSystem.ValueBlend(node1, mulNoise, ratio);

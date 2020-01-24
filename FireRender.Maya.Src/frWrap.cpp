@@ -22,7 +22,7 @@ namespace frw
 	}
 
 	template <typename... Args>
-	inline void DebugPrint(const char *format, const Args&... args)
+	inline void DebugPrint(const char* format, const Args&... args)
 	{
 #ifdef _DEBUG
 #ifdef _WIN32

@@ -1519,19 +1519,19 @@ frw::Shader FireMaya::Scope::convertMayaBlinn(const MFnDependencyNode &node)
 	frw::Shader result(materialSystem, frw::ShaderTypeDiffuse);
 
 	auto res = materialSystem.ValueMul(color, diffuse);
-	result.SetValue("color", res);
+	result.SetValue(RPR_MATERIAL_INPUT_COLOR, res);
 
 	frw::Shader shader(materialSystem, frw::ShaderTypeMicrofacet);
 
-	shader.SetValue("color", specularColor);
+	shader.SetValue(RPR_MATERIAL_INPUT_COLOR, specularColor);
 
 	auto val = materialSystem.ValuePow(eccentricity, frw::Value(0.5));
 	val = materialSystem.ValueSub(val, frw::Value(0.1));
 	val = materialSystem.ValueMax(val, frw::Value(0.0));
 	val = materialSystem.ValueMul(val, 0.45f);
 
-	shader.SetValue("roughness", val);
-	shader.SetValue("ior", frw::Value(1.0f));
+	shader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS, val);
+	shader.SetValue(RPR_MATERIAL_INPUT_IOR, frw::Value(1.0f));
 
 	auto blendVal = materialSystem.ValueMul(specularRollOff, specularRollOff);
 	blendVal = materialSystem.ValueMul(blendVal, frw::Value(0.15));
@@ -1553,15 +1553,15 @@ frw::Shader FireMaya::Scope::convertMayaPhong(const MFnDependencyNode &node)
 	frw::Shader result(materialSystem, frw::ShaderTypeDiffuse);
 
 	auto res = materialSystem.ValueMul(color, diffuse);
-	result.SetValue("color", res);
+	result.SetValue(RPR_MATERIAL_INPUT_COLOR, res);
 
 	frw::Shader shader(materialSystem, frw::ShaderTypeMicrofacet);
 
-	shader.SetValue("color", specularColor);
+	shader.SetValue(RPR_MATERIAL_INPUT_COLOR, specularColor);
 
 	auto val = CosinePowerToRoughness(cosinePower);
-	shader.SetValue("roughness", val);
-	shader.SetValue("ior", frw::Value(1.0f));
+	shader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS, val);
+	shader.SetValue(RPR_MATERIAL_INPUT_IOR, frw::Value(1.0f));
 
 	return materialSystem.ShaderBlend(result, shader, frw::Value(0.35, 0.35, 0.35));
 }
@@ -1581,20 +1581,20 @@ frw::Shader FireMaya::Scope::convertMayaPhongE(const MFnDependencyNode &node)
 	frw::Shader result(materialSystem, frw::ShaderTypeDiffuse);
 
 	auto res = materialSystem.ValueMul(color, diffuse);
-	result.SetValue("color", res);
+	result.SetValue(RPR_MATERIAL_INPUT_COLOR, res);
 
 	frw::Shader shader(materialSystem, frw::ShaderTypeMicrofacet);
 
 	auto secondColor = materialSystem.ValueMul(specularColor, whiteness);
 	specularColor = materialSystem.ValueMix(specularColor, secondColor, frw::Value(0.4));
 
-	shader.SetValue("color", specularColor);
+	shader.SetValue(RPR_MATERIAL_INPUT_COLOR, specularColor);
 
 	auto val = materialSystem.ValueMul(roughness, highlightSize);
 	val = materialSystem.ValueMul(val, 0.5f);
 
-	shader.SetValue("roughness", val);
-	shader.SetValue("ior", frw::Value(1.0f));
+	shader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS, val);
+	shader.SetValue(RPR_MATERIAL_INPUT_IOR, frw::Value(1.0f));
 
 	auto blendVal = materialSystem.ValueMul(roughness, frw::Value(0.3));
 	blendVal = materialSystem.ValueAdd(blendVal, frw::Value(0.01));
@@ -1683,13 +1683,13 @@ frw::Shader FireMaya::Scope::ParseShader(MObject node)
 			frw::Value spreadX = materialSystem.ValueMul(roughness, 1.0 - mayaSpreadX / 100.0);
 			frw::Value spreadY = materialSystem.ValueMul(roughness, 1.0 - mayaSpreadY / 100.0);
 
-			wardShader.SetValue("color", specularColor);
+			wardShader.SetValue(RPR_MATERIAL_INPUT_COLOR, specularColor);
 			double rads = -1.0 * angle.GetX() * M_PI / 180.0;
 			frw::Value radians = frw::Value(rads, rads, rads);
-			wardShader.SetValue("rotation", radians);
+			wardShader.SetValue(RPR_MATERIAL_INPUT_ROTATION, radians);
 
-			wardShader.SetValue("roughness_x", spreadX);
-			wardShader.SetValue("roughness_y", spreadY);
+			wardShader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS_X, spreadX);
+			wardShader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS_Y, spreadY);
 
 			result = materialSystem.ShaderBlend(diffuseShader, wardShader, 0.5);
 		} break;
@@ -1713,7 +1713,7 @@ frw::Shader FireMaya::Scope::ParseShader(MObject node)
 
 		if (auto normals = GetConnectedValue(shaderNode.findPlug("normalCamera")))
 		{
-			result.SetValue("normal", normals);
+			result.SetValue(RPR_MATERIAL_INPUT_NORMAL, normals);
 		}
 	}
 	else if (auto value = GetValue(node)) // else try getting a simple value instead (and use it as a diffuse color)
@@ -1765,10 +1765,10 @@ void FireMaya::Scope::NodeDirtyCallback(MObject& ob)
 
 		auto shaderId = getNodeUUid(ob);
 		if (auto shader = GetCachedShader(shaderId)) {
-			shader.SetDirty();
+			shader.SetDirty(true);
 		}
 		if (auto shader = GetCachedVolumeShader(shaderId)) {
-			shader.SetDirty();
+			shader.SetDirty(true);
 		}
 	}
 	catch (const std::exception & ex)
@@ -1853,7 +1853,6 @@ void FireMaya::Scope::CommitShaders()
 	{
 		DebugPrint("Exporting shader %s, number %d", it->first.c_str(), count);
 		frw::Shader& shdr = it->second;
-		shdr.Commit();
 		count++;
 	}
 }
