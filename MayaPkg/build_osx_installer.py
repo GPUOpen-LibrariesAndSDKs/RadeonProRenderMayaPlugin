@@ -141,7 +141,7 @@ for name in ['rprUnifiedRenderGlobalsWindow201500.mel','rprUnifiedRenderGlobalsW
     os.remove(str(addon_files_dist_dir/'scripts'/name))
 
 # Remap the directory for the installed plugin
-for name in ['rpr2017.mod','rpr2018.mod','rpr2019.mod']:
+for name in ['rpr2018.mod','rpr2019.mod','rpr2020.mod']:
     module_file = modules_dist_dir/name;
     module_file_content = module_file.read_text()
     os.remove(str(module_file))
