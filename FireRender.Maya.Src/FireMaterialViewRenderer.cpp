@@ -95,7 +95,7 @@ FireMaterialViewRenderer::FireMaterialViewRenderer() :
 	FireRenderContext& inContext = m_renderData.m_context;
 	frw::Context context = inContext.GetContext();
 	rpr_context frcontext = context.Handle();
-	rprContextSetParameter1u(frcontext, "maxRecursion", defaultMaterialViewRayDepth);
+	rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_RECURSION, defaultMaterialViewRayDepth);
 }
 
 MStatus FireMaterialViewRenderer::startAsync(const JobParams& params)

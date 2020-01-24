@@ -33,7 +33,7 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 	{
 		uvVal = m_params.scope.GetConnectedValue(m_params.shaderNode.findPlug("uCoord")); // uvCoord, uCoord and vCoord are different fields. Hovewer RPR_MATERIAL_NODE_IMAGE_TEXTURE have only "uv" input, thus cCoord is ignored
 	}
-	imageNode.SetValue("uv", uvVal);
+	imageNode.SetValue(RPR_MATERIAL_INPUT_UV, uvVal);
 
 	if (m_params.outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_COLOR)
 	{

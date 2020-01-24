@@ -987,27 +987,138 @@ void FireRenderMesh::ReloadMesh(MDagPath& meshPath, MObjectArray& shadingEngines
 	}
 }
 
+rpr_int rprxMaterialGetParameterType(rpr_material_node material, rpr_uint parameter, rpr_parameter_type* out_type)
+{
+	rpr_int status = RPR_SUCCESS;
+	rpr_material_node material_RPR = (rpr_material_node)material;
+
+	uint64_t nbInput = 0;
+	status = rprMaterialNodeGetInfo(material_RPR, RPR_MATERIAL_NODE_INPUT_COUNT, sizeof(nbInput), &nbInput, NULL);
+	if (status != RPR_SUCCESS)
+		return status;
+
+	int input_idx = 0;
+	bool found = false;
+	for (input_idx = 0; input_idx < nbInput; input_idx++)
+	{
+		rpr_uint inputName = 0;
+		status = rprMaterialNodeGetInputInfo(material_RPR, input_idx, RPR_MATERIAL_NODE_INPUT_NAME, sizeof(inputName), &inputName, NULL);
+
+		if (status != RPR_SUCCESS)
+			return status;
+
+		if (inputName == parameter)
+		{
+			found = true;
+			break;
+		}
+	}
+
+	if (!found)
+		return RPR_ERROR_INVALID_PARAMETER;
+
+	status = rprMaterialNodeGetInputInfo(material_RPR, input_idx, RPR_MATERIAL_NODE_INPUT_TYPE, sizeof(rpr_parameter_type), out_type, NULL);
+	return status;
+}
+
+
+rpr_int rprxMaterialGetParameterValue(rpr_material_node material, rpr_uint parameter, void* out_value)
+{
+	rpr_int status = RPR_SUCCESS;
+	rpr_material_node material_RPR = (rpr_material_node)material;
+
+	uint64_t nbInput = 0;
+	status = rprMaterialNodeGetInfo(material_RPR, RPR_MATERIAL_NODE_INPUT_COUNT, sizeof(nbInput), &nbInput, NULL);
+	if (status != RPR_SUCCESS)
+		return status;
+
+	int input_idx = 0;
+	bool found = false;
+	for (input_idx = 0; input_idx < nbInput; input_idx++)
+	{
+		rpr_uint inputName = 0;
+		status = rprMaterialNodeGetInputInfo(material_RPR, input_idx, RPR_MATERIAL_NODE_INPUT_NAME, sizeof(inputName), &inputName, NULL);
+
+		if (status != RPR_SUCCESS)
+			return status;
+
+		if (inputName == parameter)
+		{
+			found = true;
+			break;
+		}
+	}
+
+	if (!found)
+		return RPR_ERROR_INVALID_PARAMETER;
+
+	rpr_parameter_type out_type = (rpr_parameter_type)0;
+	status = rprMaterialNodeGetInputInfo(material_RPR, input_idx, RPR_MATERIAL_NODE_INPUT_TYPE, sizeof(rpr_parameter_type), &out_type, NULL);
+	if (status != RPR_SUCCESS)
+		return status;
+
+	size_t value_size = 0;
+	status = rprMaterialNodeGetInputInfo(material_RPR, input_idx, RPR_MATERIAL_NODE_INPUT_VALUE, 0, NULL, &value_size);
+	if (status != RPR_SUCCESS)
+		return status;
+
+	switch (out_type)
+	{
+		case RPR_MATERIAL_NODE_INPUT_TYPE_FLOAT4:
+		{
+			auto out_ptr = reinterpret_cast<float*>(out_value);
+			status = rprMaterialNodeGetInputInfo(material_RPR, input_idx, RPR_MATERIAL_NODE_INPUT_VALUE, value_size, out_ptr, NULL);
+			if (status != RPR_SUCCESS)
+				return status;
+
+			break;
+		}
+		case RPR_MATERIAL_NODE_INPUT_TYPE_UINT:
+		{
+			auto out_ptr = reinterpret_cast<rpr_uint*>(out_value);
+			status = rprMaterialNodeGetInputInfo(material_RPR, input_idx, RPR_MATERIAL_NODE_INPUT_VALUE, value_size, out_ptr, NULL);
+			if (status != RPR_SUCCESS)
+				return status;
+
+			break;
+		}
+		case RPR_MATERIAL_NODE_INPUT_TYPE_NODE:
+		{
+			auto out_ptr = reinterpret_cast<rpr_material_node*>(out_value);
+			status = rprMaterialNodeGetInputInfo(material_RPR, input_idx, RPR_MATERIAL_NODE_INPUT_VALUE, value_size, out_ptr, NULL);
+			if (status != RPR_SUCCESS)
+				return status;
+
+			break;
+		}
+		default:
+			break;
+	}
+
+	return status;
+}
+
 bool IsUberEmissive(frw::Shader shader)
 {
 	// back-off
-	if (!shader.IsRprxMaterial())
+	if (!shader)
+	{
 		return false;
+	}
 
-	rprx_material mHandle = shader.GetHandleRPRXmaterial();
+	rpr_material_node mHandle = shader.Handle();
 
 	rpr_parameter_type rprType = 0;
 	rpr_int res = rprxMaterialGetParameterType(
-		(rprx_context)shader.GetContext().Handle(),
 		mHandle,
-		RPRX_UBER_MATERIAL_EMISSION_WEIGHT,
+		RPR_MATERIAL_INPUT_UBER_EMISSION_WEIGHT,
 		&rprType);
 
 	float emissionWeightValue[] = { 0.0f, 0.0f, 0.0f, 0.0f };
 
 	res = rprxMaterialGetParameterValue(
-		(rprx_context)shader.GetContext().Handle(),
 		mHandle,
-		RPRX_UBER_MATERIAL_EMISSION_WEIGHT,
+		RPR_MATERIAL_INPUT_UBER_EMISSION_WEIGHT,
 		&emissionWeightValue);
 
 	if (emissionWeightValue[0] > 0.0f)

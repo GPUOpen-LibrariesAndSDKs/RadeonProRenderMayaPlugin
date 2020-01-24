@@ -85,7 +85,7 @@ namespace FireMaya
 				}
 			}
 
-			imageNode.SetValue("uv", scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv, false)) | scope.MaterialSystem().ValueLookupUV(mapChannel));
+			imageNode.SetValue(RPR_MATERIAL_INPUT_UV, scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv, false)) | scope.MaterialSystem().ValueLookupUV(mapChannel));
 
 			return imageNode;
 		}
