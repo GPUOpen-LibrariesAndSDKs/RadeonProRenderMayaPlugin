@@ -295,11 +295,12 @@ public:
 
 	void setupDisplacement(MObject shadingEngine, frw::Shape shape);
 	void Rebuild(void);
-	void ReloadMesh(MDagPath& meshPath, MObjectArray& shadingEngines);
-	void ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngines);
+	void ReloadMesh(const MDagPath& meshPath);
+	void ProcessMesh(const MDagPath& meshPath);
 	void ProcessIBLLight(void);
 	void ProcessSkyLight(void);
 	void RebuildTransforms(void);
+	void AssignShadingEngines(const MObjectArray& shadingEngines);
 
 	// Mesh bits (each one may have separate shading engine)
 	std::vector<FrElement>& Elements() { return m.elements; }
