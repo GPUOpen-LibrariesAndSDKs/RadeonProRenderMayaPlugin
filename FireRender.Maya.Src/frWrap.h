@@ -2856,6 +2856,13 @@ namespace frw
 			auto status = rprFrameBufferClear(Handle());
 			checkStatusThrow(status, "Unable to clear frame buffer");
 		}
+
+		void DebugDumpFrameBufferToFile(std::string& fbName)
+		{
+			static int debugDumpIdx = 100;
+			std::string dumpAddr = "C:\\temp\\dbg\\" + fbName + std::to_string(debugDumpIdx++) + ".bmp";
+			rpr_int status = rprFrameBufferSaveToFile(Handle(), dumpAddr.c_str());
+		}
 	};
 
 	// this cannot be used for standard inputs!
