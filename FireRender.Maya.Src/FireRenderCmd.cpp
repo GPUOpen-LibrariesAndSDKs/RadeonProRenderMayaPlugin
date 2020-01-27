@@ -360,6 +360,7 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		context.buildScene();
 		context.updateLimitsFromGlobalData(globals, false, true);
 		context.setResolution(settings.width, settings.height, true);
+		context.ConsiderSetupDenoiser();
 
 		// Ensure display gamma correction is enabled for image file output. It
 		// may be disabled initially if it's not set to be applied to Maya views.

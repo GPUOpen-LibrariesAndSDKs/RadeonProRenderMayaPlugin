@@ -31,6 +31,91 @@ void PixelBuffer::resize(size_t newCount)
 	}
 }
 
+void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, unsigned int totalHeight, unsigned int totalWidth, int aov_id /*= 0*/)
+{
+	// ensure valid input
+	assert(input != nullptr);
+
+	if (region.top > totalHeight)
+		return;
+
+	if (region.right > totalWidth)
+		return;
+
+	// Get region dimensions.
+	unsigned int regionWidth = region.getWidth();
+	unsigned int regionHeight = region.getHeight();
+
+	// copy line by line
+	for (unsigned int y = 0; y < regionHeight; y++)
+	{
+		unsigned int inputIndex = (regionHeight - 1 - y) * regionWidth; // writing to self
+
+		// - keep in mind that y is inverted
+		//unsigned int destShiftY = (totalHeight - 1) - region.top;
+		//unsigned int destIndex = region.left + (destShiftY + y) * totalWidth;
+		unsigned int destShiftY = region.top - y;
+		unsigned int destIndex = region.left + (destShiftY) * totalWidth;
+
+		memcpy(&m_pBuffer[destIndex], &input[inputIndex], sizeof(RV_PIXEL) * regionWidth);
+	}
+
+#ifdef _DEBUG
+#ifdef DUMP_PIXELS_PIXELBUFF
+	debugDump(totalHeight, totalWidth, std::string(FireRenderAOV::GetAOVName(aov_id) + "_tile_"));
+#endif
+#endif
+}
+
+#ifdef _DEBUG
+void generateBitmapImage(unsigned char *image, int height, int width, int pitch, const char* imageFileName);
+#endif
+
+void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, std::string& fbName)
+{
+#ifdef _DEBUG
+#ifdef DUMP_PIXELS_PIXELBUFF
+	assert(sizeof(RV_PIXEL) * totalHeight * totalWidth == m_size);
+
+	std::vector<RV_PIXEL> sourcePixels;
+	sourcePixels.reserve(totalHeight * totalWidth);
+
+	for (unsigned int y = 0; y < totalHeight; y++)
+	{
+		for (unsigned int x = 0; x < totalWidth; x++)
+		{
+			RV_PIXEL pixel = m_pBuffer[x + y * totalWidth];
+			sourcePixels.push_back(pixel);
+		}
+	}
+
+	std::vector<unsigned char> buffer2;
+	buffer2.reserve(totalHeight * totalWidth);
+
+	for (unsigned int y = 0; y < totalHeight; y++)
+	{
+		for (unsigned int x = 0; x < totalWidth; x++)
+		{
+			RV_PIXEL& pixel = sourcePixels[x + y * totalWidth];
+			char r = 255 * pixel.r;
+			char g = 255 * pixel.g;
+			char b = 255 * pixel.b;
+
+			buffer2.push_back(b);
+			buffer2.push_back(g);
+			buffer2.push_back(r);
+			buffer2.push_back(255);
+		}
+	}
+
+	static int debugDumpIdx = 0;
+	std::string dumpAddr = "C:\\temp\\dbg\\" + fbName +std::to_string(debugDumpIdx++) + ".bmp";
+	unsigned char* dst2 = buffer2.data();
+	generateBitmapImage(dst2, totalHeight, totalWidth, totalWidth * 4, dumpAddr.c_str());
+#endif
+#endif
+}
+
 // Life Cycle
 // -----------------------------------------------------------------------------
 FireRenderAOV::FireRenderAOV(const FireRenderAOV& other):
@@ -123,15 +208,37 @@ void FireRenderAOV::freePixels()
 	m_renderStamp.reset();
 }
 
+// Check that the AOV is active and in a valid state.
+bool FireRenderAOV::IsValid(const FireRenderContext& context) const
+{
+	if (!active || !pixels || m_region.isZeroArea() || !context.IsAOVSupported(id))
+		return false;
+
+	return true;
+}
+
 // -----------------------------------------------------------------------------
-void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip)
+void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip, bool isDenoiserDisabled /*= false*/)
 {
 	// Check that the AOV is active and in a valid state.
 	if (!active || !pixels || m_region.isZeroArea() || !context.IsAOVSupported(id))
 		return;
 
 	bool opacityMerge = context.camera().GetAlphaMask() && context.isAOVEnabled(RPR_AOV_OPACITY);
-	context.readFrameBuffer(pixels.get(), id, m_frameWidth, m_frameHeight, m_region, flip, opacityMerge, true);
+
+	// setup params
+	FireRenderContext::ReadFrameBufferRequestParams params(m_region);
+	params.pixels = pixels.get();
+	params.aov = id;
+	params.width = m_frameWidth;
+	params.height = m_frameHeight;
+	params.flip = flip;
+	params.mergeOpacity = context.camera().GetAlphaMask() && context.isAOVEnabled(RPR_AOV_OPACITY);
+	params.mergeShadowCatcher = true;
+	params.isDenoiserDisabled = isDenoiserDisabled;
+
+	// process frame buffer
+	context.readFrameBuffer(params);
 
 	PostProcess();
 
@@ -223,6 +330,52 @@ bool FireRenderAOV::writeToFile(const MString& filePath, bool colorOnly, unsigne
 	return true;
 }
 
+const std::string& FireRenderAOV::GetAOVName(int aov_id)
+{
+	static std::map<unsigned int, std::string> id2name =
+	{
+		 {RPR_AOV_COLOR, "RPR_AOV_COLOR"}
+		,{RPR_AOV_OPACITY, "RPR_AOV_OPACITY" }
+		,{RPR_AOV_WORLD_COORDINATE, "RPR_AOV_WORLD_COORDINATE" }
+		,{RPR_AOV_UV, "RPR_AOV_UV" }
+		,{RPR_AOV_MATERIAL_IDX, "RPR_AOV_MATERIAL_IDX" }
+		,{RPR_AOV_GEOMETRIC_NORMAL, "RPR_AOV_GEOMETRIC_NORMAL" }
+		,{RPR_AOV_SHADING_NORMAL, "RPR_AOV_SHADING_NORMAL" }
+		,{RPR_AOV_DEPTH, "RPR_AOV_DEPTH" }
+		,{RPR_AOV_OBJECT_ID, "RPR_AOV_OBJECT_ID" }
+		,{RPR_AOV_OBJECT_GROUP_ID, "RPR_AOV_OBJECT_GROUP_ID" }
+		,{RPR_AOV_SHADOW_CATCHER, "RPR_AOV_SHADOW_CATCHER" }
+		,{RPR_AOV_BACKGROUND, "RPR_AOV_BACKGROUND" }
+		,{RPR_AOV_EMISSION, "RPR_AOV_EMISSION" }
+		,{RPR_AOV_VELOCITY, "RPR_AOV_VELOCITY" }
+		,{RPR_AOV_DIRECT_ILLUMINATION, "RPR_AOV_DIRECT_ILLUMINATION" }
+		,{RPR_AOV_INDIRECT_ILLUMINATION, "RPR_AOV_INDIRECT_ILLUMINATION"}
+		,{RPR_AOV_AO, "RPR_AOV_AO" }
+		,{RPR_AOV_DIRECT_DIFFUSE, "RPR_AOV_DIRECT_DIFFUSE" }
+		,{RPR_AOV_DIRECT_REFLECT, "RPR_AOV_DIRECT_REFLECT" }
+		,{RPR_AOV_INDIRECT_DIFFUSE, "RPR_AOV_INDIRECT_DIFFUSE" }
+		,{RPR_AOV_INDIRECT_REFLECT, "RPR_AOV_INDIRECT_REFLECT" }
+		,{RPR_AOV_REFRACT, "RPR_AOV_REFRACT" }
+		,{RPR_AOV_VOLUME, "RPR_AOV_VOLUME" }
+		,{RPR_AOV_LIGHT_GROUP0, "RPR_AOV_LIGHT_GROUP0" }
+		,{RPR_AOV_LIGHT_GROUP1, "RPR_AOV_LIGHT_GROUP1" }
+		,{RPR_AOV_LIGHT_GROUP2, "RPR_AOV_LIGHT_GROUP2" }
+		,{RPR_AOV_LIGHT_GROUP3, "RPR_AOV_LIGHT_GROUP3" }
+		,{RPR_AOV_DIFFUSE_ALBEDO, "RPR_AOV_DIFFUSE_ALBEDO" }
+		,{RPR_AOV_VARIANCE, "RPR_AOV_VARIANCE" }
+		,{RPR_AOV_VIEW_SHADING_NORMAL, "RPR_AOV_VIEW_SHADING_NORMAL" }
+		,{RPR_AOV_REFLECTION_CATCHER, "RPR_AOV_REFLECTION_CATCHER" }
+		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
+	};
+
+	auto it = id2name.find(aov_id);
+
+	if (it != id2name.end())
+		return it->second;
+
+	static std::string errorMsg("ERROR");
+	return errorMsg;
+}
 
 // Private Methods
 // -----------------------------------------------------------------------------
