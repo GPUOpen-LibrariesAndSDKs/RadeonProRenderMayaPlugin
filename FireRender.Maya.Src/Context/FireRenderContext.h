@@ -176,6 +176,8 @@ public:
 
 	// Sets the resolution and perform an initial render and frame buffer resolve.
 	void resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
+	// - Setup denoiser if necessary (this function was used to be called from resize and setResolution)
+	bool ConsiderSetupDenoiser(bool useRAMBufer = false);
 
 	// Set the frame buffer resolution
 	void setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
@@ -221,10 +223,52 @@ public:
 	rpr_framebuffer frameBufferAOV(int aov) const;
 	rpr_framebuffer frameBufferAOV_Resolved(int aov);
 
+	struct ReadFrameBufferRequestParams
+	{
+		RV_PIXEL* pixels; 
+		int aov;
+		unsigned int width;
+		unsigned int height;
+		const RenderRegion& region;
+		bool flip;
+		bool mergeOpacity;
+		bool mergeShadowCatcher;
+		bool isDenoiserDisabled;
+
+		ReadFrameBufferRequestParams(const RenderRegion& _region)
+			: pixels(nullptr)
+			, aov(RPR_AOV_MAX)
+			, width(0)
+			, height(0)
+			, region(_region)
+			, flip(false)
+			, mergeOpacity(false)
+			, mergeShadowCatcher(false)
+			, isDenoiserDisabled(false)
+		{};
+
+		unsigned int PixelCount(void) const { return (width*height); }
+		bool UseTempData(void) const { return (flip || region.getWidth() < width || region.getHeight() < height); }
+	};
+
 	// Read frame buffer pixels and optionally normalize and flip the image.
-	void readFrameBuffer(RV_PIXEL* pixels, int aov,
-		unsigned int width, unsigned int height, const RenderRegion& region,
-		bool flip, bool mergeOpacity = false, bool mergeShadowCatcher = false);
+	void readFrameBuffer(ReadFrameBufferRequestParams& params);
+
+	// will process frame as shadow and/or reflection catcher
+	bool ConsiderShadowReflectionCatcherOverride(const ReadFrameBufferRequestParams& params);
+
+	// writes input aov frame bufer on disk (both resolved and not resolved)
+	void DebugDumpAOV(int aov) const;
+
+	// runs denoiser, returns pixel array as float vector if denoiser runs succesfully
+	std::vector<float> GetDenoisedData(bool& result);
+
+	// reads aov directly into internal storage
+	RV_PIXEL* GetAOVData(const ReadFrameBufferRequestParams& params);
+
+	void MergeOpacity(const ReadFrameBufferRequestParams& params, size_t dataSize);
+
+	void CombineOpacity(ReadFrameBufferRequestParams& params);
 
 	// Composite image for Shadow Catcher
 	void compositeShadowCatcherOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region,
@@ -431,6 +475,8 @@ public:
 	// Returns true if context was recently Freshen and needs redraw
 	bool needsRedraw(bool setNotUpdatedOnExit = true);
 
+	bool IsDenoiserEnabled(void) { return m_denoiserFilter != nullptr; }
+
 	frw::PostEffect white_balance;
 	frw::PostEffect simple_tonemap;			
 	frw::PostEffect tonemap;
@@ -550,7 +596,8 @@ private:
 
 	void turnOnAOVsForDenoiser(bool allocBuffer = false);
 	bool CanCreateAiDenoiser() const;
-	void setupDenoiser();
+	void setupDenoiserFB(void);
+	void setupDenoiserRAM(void);
 	void BuildLateinitObjects();
 
 private:
@@ -662,6 +709,9 @@ private:
 	std::vector<MDagPath> m_LateinitMASHInstancers;
 	bool m_DoesContextSupportCurrentSettings = true;
 
+	// buffer to dump data from frame buffers, if needed
+	AOVPixelBuffers m_pixelBuffers;
+
 public:
 	FireRenderEnvLight *iblLight = nullptr;
 	MObject iblTransformObject = MObject();
@@ -749,6 +799,8 @@ public:
 	bool updateOutput();
 
 	void setSamplesPerUpdate(int samplesPerUpdate);
+
+	AOVPixelBuffers& PixelBuffers(void) { return m_pixelBuffers; }
     
 	class Lock
 	{
