@@ -110,6 +110,8 @@ public:
 	static void Dump(const MObject& ob, int depth = 0, int maxDepth = 4);
 	static HashValue GetHash(const MObject& ob);
 
+	static std::string uuidWithoutInstanceNumberForString(const std::string& uuid);
+
 	// update fire render objects using Maya objects, then marks as clean
 	virtual void Freshen();
 

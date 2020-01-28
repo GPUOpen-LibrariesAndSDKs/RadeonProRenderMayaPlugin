@@ -487,7 +487,7 @@ public:
 	{
 		assert(!uuid.empty());
 
-		auto it = m_mainMeshesDictionary.find(splitString(uuid, ':')[0]);
+		auto it = m_mainMeshesDictionary.find(FireRenderObject::uuidWithoutInstanceNumberForString(uuid));
 
 		if (it != m_mainMeshesDictionary.end())
 		{
