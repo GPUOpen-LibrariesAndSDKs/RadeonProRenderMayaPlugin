@@ -9,7 +9,7 @@
 #include <msi.h>
 #include <msiquery.h>
 #include <Shellapi.h>
-#include "checkCompatibility.h"
+//#include "checkCompatibility.h"
 #include <RadeonProRender.h> // for get RPR_API_VERSION
 
 
@@ -45,53 +45,6 @@ std::vector<std::wstring> getMayaVersionWithInstalledPlugin(MSIHANDLE hInstall)
 	}
 
 	return res;
-}
-
-
-std::wstring getRegistationLink(MSIHANDLE hInstall)
-{
-	GetSystemInfo();
-
-	// get Maya version with installed plugin
-	std::wstring appversion;
-	std::vector<std::wstring> versions = getMayaVersionWithInstalledPlugin(hInstall);
-	for (size_t i = 0; i < versions.size(); i++)
-	{
-		if (i > 0)
-			appversion += L";";
-		appversion += versions[i];
-	}
-
-	// get FireRender version
-	uint32_t majorVersion = RPR_VERSION_MAJOR;
-	uint32_t minorVersion = RPR_VERSION_MINOR;
-	uint32_t revisionVersion = RPR_VERSION_REVISION;
-	TCHAR paramVal[MAX_PATH];
-	wsprintf(paramVal, L"%X.%X.%X", majorVersion, minorVersion, revisionVersion);
-	std::wstring frVersion = paramVal;
-
-	std::wstring registrationid = L"5A1E27D27D97ECF5";
-	std::wstring appname = L"autodeskmaya";
-	std::wstring osVersion = g_systemInfo.osversion;
-	std::wstring driverVersion = g_systemInfo.gpuDriver.size() > 0 ? g_systemInfo.gpuDriver[0] : std::wstring(L"");
-	std::wstring gfxcard = g_systemInfo.gpuName.size()   > 0 ? g_systemInfo.gpuName[0] : std::wstring(L"");
-
-	//link must look like :
-	//"https://feedback.amd.com/se/5A1E27D23E8EC664?registrationid=5A1E27D27D97ECF5&appname=autodeskmaya&appversion=2016&frversion=1.6.30&os=win6.1.7601&gfxcard=AMD_FirePro_W8000__FireGL_V_&driverversion=15.201.2401.0"
-
-	std::wstring sLink = L"https://feedback.amd.com/se/5A1E27D23E8EC664";
-
-	sLink += L"?registrationid=" + URLfirendly(registrationid);
-	sLink += L"&appname="		+ URLfirendly(appname);
-	sLink += L"&appversion="	+ URLfirendly(appversion);
-	sLink += L"&frversion="		+ URLfirendly(frVersion);
-	sLink += L"&os="			+ URLfirendly(osVersion);
-	sLink += L"&gfxcard="		+ URLfirendly(gfxcard);
-	sLink += L"&driverversion=" + URLfirendly(driverVersion);
-
-	LogSystem("getRegistationLink return: %s", WstringToString(sLink).c_str());
-
-	return sLink;
 }
 
 bool getMayaPythonDirectory(const std::string& dirName_in, std::string& retPath)
@@ -209,87 +162,6 @@ void setAutoloadPlugin(const std::wstring &maya_version)
 		oFile << autoLoadLine << std::endl;
 	}
 }
-
-
-extern "C" __declspec(dllexport) UINT userRegister(MSIHANDLE hInstall) 
-{
-	LogSystem("userRegister...");
-
-	std::wstring sLink = getRegistationLink(hInstall);
-
-	HINSTANCE hIst = ShellExecute(NULL, L"open", sLink.c_str(), NULL, NULL, SW_SHOW);
-
-	MsiSetProperty(hInstall, L"REGISTER_LINK", sLink.c_str());
-
-	LogSystem("userRegister OK.");
-	return ERROR_SUCCESS;
-}
-
-
-extern "C" __declspec(dllexport) UINT checkActivationKey(MSIHANDLE hInstall) 
-{
-	LogSystem("checkActivationKey...");
-	TCHAR key[MAX_PATH];
-	DWORD keyLen = MAX_PATH;
-
-	MsiGetProperty(hInstall, L"ACTIVATION_KEY", key, &keyLen);
-
-	LogSystem("   activation key: %s", WstringToString(key).c_str());
-
-	std::wstring activationKey = L"TagYourRenders#ProRender";
-	bool checkOk = (activationKey == key);
-
-	LogSystem("   activation %s", checkOk ? "pass" : "failed");
-	MsiSetProperty(hInstall, L"ACTIVATION_KEY_ACCEPTED", checkOk ? L"1" : L"0");
-
-	// for error window
-	if (!checkOk)
-	{
-		std::wstring sLink = getRegistationLink(hInstall);
-
-		copyStringToClipboard(sLink);
-		MsiSetProperty(hInstall, L"REGISTER_LINK", sLink.c_str());
-	}
-
-	RegSetKeyValue(HKEY_CURRENT_USER, L"SOFTWARE\\AMD\\RadeonProRender\\Maya", L"ACTIVATION_KEY_ACCEPTED", REG_SZ, checkOk ? L"1" : L"0", 2);
-
-	LogSystem("checkActivationKey OK.");
-	return ERROR_SUCCESS;
-}
-
-
-extern "C" __declspec(dllexport) UINT hardwareCheck(MSIHANDLE hInstall) 
-{
-	std::wstring hw_message;
-	bool hw_res = checkCompatibility_hardware(hw_message);
-
-	std::wstring sw_message;
-	bool sw_res = checkCompatibility_driver(sw_message);
-
-	std::wstring add_message(L"");
-
-	MsiSetProperty(hInstall, L"HARDWARECHECK_RESULT", hw_res ? L"1" : L"0");
-	MsiSetProperty(hInstall, L"SOFTWARECHECK_RESULT", sw_res ? L"1" : L"0");
-	MsiSetProperty(hInstall, L"ADDITIONALCHECK_RESULT", L"1");
-
-	if (!hw_res || !sw_res)
-	{
-		std::wstring text;
-
-		if (!hw_res)
-			text += L"\r\n" + hw_message;
-
-		if (!sw_res)
-			text += L"\r\n" + sw_message;
-
-		std::wstring s = L"Detail info:" + text;
-
-		MsiSetProperty(hInstall, L"CHECK_RESULT_TEXT", s.c_str());
-	}
-
-	return ERROR_SUCCESS;
-}
-
 
 extern "C" __declspec(dllexport) UINT postInstall(MSIHANDLE hInstall) 
 {
