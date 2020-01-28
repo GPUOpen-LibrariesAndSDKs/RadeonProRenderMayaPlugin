@@ -36,11 +36,15 @@ class PixelBuffer
 {
 	RV_PIXEL * m_pBuffer;
 	size_t m_size;
+	size_t m_width;
+	size_t m_height;
 
 public:
-	PixelBuffer() :
-		m_pBuffer(nullptr),
-		m_size(0)
+	PixelBuffer() 
+		:	m_pBuffer(nullptr)
+		,	m_size(0)
+		,	m_width(0)
+		,	m_height(0)
 	{
 	}
 	virtual ~PixelBuffer()
@@ -59,7 +63,35 @@ public:
 		return m_pBuffer;
 	}
 
+	size_t size() const
+	{
+		return m_size;
+	}
+
+	size_t width() const
+	{
+		return m_width;
+	}
+
+	size_t height() const
+	{
+		return m_height;
+	}
+
+	float* data()
+	{
+		return (float*)m_pBuffer;
+	}
+
 	void resize(size_t newCount);
+
+	void resize(size_t width, size_t height)
+	{
+		m_width = width;
+		m_height = height;
+
+		resize(width*height);
+	}
 
 	void reset()
 	{
@@ -74,7 +106,13 @@ public:
 		m_pBuffer = nullptr;
 		m_size = 0;
 	}
+
+	void overwrite(const RV_PIXEL* input, const RenderRegion& region, unsigned int totalHeight, unsigned int totalWidth, int aov_id = 0);
+
+	void debugDump(unsigned int totalHeight, unsigned int totalWidth, std::string& fbName);
 };
+
+typedef std::map<unsigned int, PixelBuffer> AOVPixelBuffers;
 
 /** AOV data. */
 class FireRenderAOV
@@ -95,6 +133,8 @@ public:
 
 	// Public Methods
 	// -----------------------------------------------------------------------------
+	/** Check that the AOV is active and in a valid state. */
+	bool IsValid(const FireRenderContext& context) const;
 
 	/** Set the size of the AOVs, including the full frame buffer size. */
 	void setRegion(const RenderRegion& region,
@@ -107,7 +147,7 @@ public:
 	void freePixels();
 
 	/** Read the frame buffer pixels for this AOV. */
-	void readFrameBuffer(FireRenderContext& context, bool flip);
+	void readFrameBuffer(FireRenderContext& context, bool flip, bool isDenoiserDisabled = false);
 
 	/** Send the AOV pixels to the Maya render view. */
 	void sendToRenderView();
@@ -151,6 +191,8 @@ public:
 
 	/** Getting settings for making post processing*/
 	virtual void ReadFromGlobals(const MFnDependencyNode& globals) {}
+
+	static const std::string& GetAOVName(int aov_id);
 
 protected:
 	/** Make post processing for the specific AOV if required*/

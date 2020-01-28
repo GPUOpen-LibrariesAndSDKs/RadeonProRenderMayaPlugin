@@ -599,6 +599,7 @@ void FireRenderViewport::resizeFrameBufferStandard(unsigned int width, unsigned 
 {
 	// Update the RPR context dimensions.
 	m_contextPtr->resize(width, height, false);
+	m_contextPtr->ConsiderSetupDenoiser();
 
 	// Resize the pixel buffer that
 	// will receive frame buffer data.
@@ -625,6 +626,7 @@ void FireRenderViewport::resizeFrameBufferGLInterop(unsigned int width, unsigned
 	{
 		// Update the RPR context.
 		m_contextPtr->resize(width, height, false, GetGlTexture());
+		m_contextPtr->ConsiderSetupDenoiser();
 	}
 }
 
@@ -719,18 +721,33 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 	// Read the frame buffer.
 	RenderRegion region(0, m_contextPtr->width() - 1, 0, m_contextPtr->height() - 1);
 
+	FireRenderContext::ReadFrameBufferRequestParams params(region);
+	params.aov = m_currentAOV;
+	params.width = m_contextPtr->width();
+	params.height = m_contextPtr->height();
+	params.flip = false;
+	params.mergeOpacity = false;
+
 	// Read to a cached frame if supplied.
 	if (storedFrame)
 	{
-		m_contextPtr->readFrameBuffer(reinterpret_cast<RV_PIXEL*>(storedFrame->data()),
-			m_currentAOV, m_contextPtr->width(), m_contextPtr->height(), region, false);
+		// setup params
+		params.pixels = reinterpret_cast<RV_PIXEL*>(storedFrame->data());
+		params.mergeShadowCatcher = false;
+
+		// process frame buffer	
+		m_contextPtr->readFrameBuffer(params);
 	}
 
 	// Otherwise, read to a temporary buffer.
 	else
 	{
-		//m_context.enableAOV
-		m_contextPtr->readFrameBuffer(m_pixels.data(), m_currentAOV, m_contextPtr->width(), m_contextPtr->height(), region, false);
+		// setup params
+		params.pixels = m_pixels.data();
+		params.mergeShadowCatcher = true;
+
+		// process frame buffer
+		m_contextPtr->readFrameBuffer(params);
 
 		// Flag as updated so the pixels will
 		// be copied to the viewport texture.
