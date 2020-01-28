@@ -1939,6 +1939,7 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMesh* pMesh
 	if (shader.IsValid())
 	{
 		SetCachedShader(shaderId, shader);
+		shader.SetDirty(false);
 	}
 
 	m->m_pCurrentlyParsedMesh = nullptr;
