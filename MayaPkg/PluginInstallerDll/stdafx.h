@@ -29,7 +29,6 @@ inline void LogSystem(const char *format, const Args&... args)
 }
 
 std::vector<std::wstring> split(const std::wstring &s, wchar_t delim);
-void copyStringToClipboard(const std::wstring &str);
 std::string WstringToString(const std::wstring& wstr);
 std::wstring GetSystemFolderPaths(int csidl);
 std::wstring & URLfirendly(std::wstring & str);
