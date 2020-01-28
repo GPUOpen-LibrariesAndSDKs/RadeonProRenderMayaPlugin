@@ -983,3 +983,15 @@ std::vector<MString> dumpAttributeNamesDbg(MObject node);
 
 RenderQuality GetRenderQualityFromPlug(const char* plugName);
 RenderQuality GetRenderQualityForRenderType(RenderType renderType);
+
+template <class T>
+std::vector<T> splitString(const T& s, typename T::traits_type::_Elem delim)
+{
+	std::vector<T> elems;
+	for (size_t p = 0, q = 0; p != s.npos; p = q)
+	{
+		elems.push_back(s.substr(p + (p != 0), (q = s.find(delim, p + 1)) - p - (p != 0)));
+	}
+
+	return elems;
+}

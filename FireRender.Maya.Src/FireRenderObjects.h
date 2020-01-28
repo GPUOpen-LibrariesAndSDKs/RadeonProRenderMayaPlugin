@@ -102,6 +102,7 @@ public:
 
 	// uuid
 	std::string uuid() const;
+	std::string uuidWithoutInstanceNumber() const;
 
 	// Set dirty
 	void setDirty();

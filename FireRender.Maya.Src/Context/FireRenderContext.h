@@ -437,9 +437,11 @@ public:
 	frw::PostEffect normalization;
 	frw::PostEffect gamma_correction;
 
-	const FireRenderMesh* GetMainMesh(const std::string& uuid) const 
-	{ 
-		auto it = m_mainMeshesDictionary.find(uuid);
+	const FireRenderMesh* GetMainMesh(const std::string& uuid) const
+	{
+		assert(!uuid.empty());
+
+		auto it = m_mainMeshesDictionary.find(splitString(uuid, ':')[0]);
 
 		if (it != m_mainMeshesDictionary.end())
 		{
@@ -451,21 +453,22 @@ public:
 
 	void AddMainMesh(const FireRenderMesh* mainMesh)
 	{
-		auto uuid = mainMesh->uuid();
-		const FireRenderMesh* alreadyHas = GetMainMesh(mainMesh->uuid());
+		std::string uuid = mainMesh->uuidWithoutInstanceNumber();
+
+		const FireRenderMesh* alreadyHas = GetMainMesh(uuid);
 		assert(!alreadyHas);
 
-		m_mainMeshesDictionary[mainMesh->uuid()] = mainMesh;
+		m_mainMeshesDictionary[uuid] = mainMesh;
 	}
 
 	void RemoveMainMesh(const FireRenderMesh* mainMesh)
 	{
-		auto uuid = mainMesh->uuid();
-		auto found = m_mainMeshesDictionary.find(mainMesh->uuid());
+		std::string uuid = mainMesh->uuidWithoutInstanceNumber();
+		auto found = m_mainMeshesDictionary.find(uuid);
 
 		if (found != m_mainMeshesDictionary.end())
 		{
-			m_mainMeshesDictionary.erase(mainMesh->uuid());
+			m_mainMeshesDictionary.erase(found);
 		}
 	}
 
