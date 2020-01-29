@@ -985,7 +985,7 @@ RenderQuality GetRenderQualityFromPlug(const char* plugName);
 RenderQuality GetRenderQualityForRenderType(RenderType renderType);
 
 template <class T>
-std::vector<T> splitString(const T& s, typename T::traits_type::_Elem delim)
+std::vector<T> splitString(const T& s, typename T::traits_type::char_type delim)
 {
 	std::vector<T> elems;
 	for (size_t p = 0, q = 0; p != s.npos; p = q)
