@@ -969,7 +969,7 @@ void FireRenderMesh::setupDisplacement(MObject shadingEngine, frw::Shape shape)
 	}
 }
 
-void FireRenderMesh::ReloadMesh(MDagPath& meshPath, MObjectArray& shadingEngines)
+void FireRenderMesh::ReloadMesh(const MDagPath& meshPath)
 {
 	MMatrix mMtx = meshPath.inclusiveMatrix();
 	setVisibility(false);
@@ -994,7 +994,6 @@ void FireRenderMesh::ReloadMesh(MDagPath& meshPath, MObjectArray& shadingEngines
 	for (unsigned int i = 0; i < shapes.size(); i++)
 	{
 		m.elements[i].shape = shapes[i];
-		m.elements[i].shadingEngine = shadingEngines[i < shadingEngines.length() ? i : 0];
 	}
 }
 
@@ -1138,7 +1137,7 @@ bool IsUberEmissive(frw::Shader shader)
 	return false;
 }
 
-void FireRenderMesh::ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngines)
+void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 {
 	FireRenderContext *context = this->context();
 
@@ -1147,7 +1146,6 @@ void FireRenderMesh::ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngine
 	for (int i = 0; i < m.elements.size(); i++)
 	{
 		auto& element = m.elements[i];
-		element.shadingEngine = shadingEngines[i];
 		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this);
 		element.volumeShader = context->GetVolumeShader(getVolumeShader(element.shadingEngine));
 
@@ -1270,12 +1268,18 @@ void FireRenderMesh::Rebuild()
 	if (m.changed.mesh || (shadingEngines.length() != m.elements.size()))
 	{
 		// the number of shader has changed so reload the mesh
-		ReloadMesh(meshPath, shadingEngines);
+		ReloadMesh(meshPath);
 	}
 
+	// Assignment should be before callbacks registering, because RegisterCallbacks() use them
+	AssignShadingEngines(shadingEngines);
+
+	// Callback registering should be before ProcessMesh() because shaders could add own callbacks that would be erased by RegisterCallbacks()
+	RegisterCallbacks();	// we need to do this in case the shaders change (ie we will need to attach new callbacks)
+	
 	if (meshPath.isValid())
 	{
-		ProcessMesh(meshPath, shadingEngines);
+		ProcessMesh(meshPath);
 	}
 
 	if (this->context()->iblLight)
@@ -1291,8 +1295,31 @@ void FireRenderMesh::Rebuild()
 	m.changed.mesh = false;
 	m.changed.transform = false;
 	m.changed.shader = false;
+}
 
-	RegisterCallbacks();	// we need to do this in case the shaders change (ie we will need to attach new callbacks)
+void FireRenderMesh::ForceShaderDirtyCallback(MObject& node, void* clientData)
+{
+	if (nullptr == clientData)
+	{
+		return;
+	}
+
+	// clientData should be FireRenderMesh
+	FireRenderMesh* self = static_cast<FireRenderMesh*>(clientData);
+
+	for (auto& it : self->m.elements)
+	{
+		if (!it.shadingEngine.isNull())
+		{
+			MObject shaderOb = getSurfaceShader(it.shadingEngine);
+			MGlobal::executeCommand("dgdirty " + MFnDependencyNode(shaderOb).name());
+		}
+	}
+}
+
+void FireRenderMesh::AddForceShaderDirtyDependOnOtherObjectCallback(MObject dependency)
+{
+	AddCallback(MNodeMessage::addNodeDirtyCallback(dependency, ForceShaderDirtyCallback, this));
 }
 
 bool FireRenderMesh::IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const
@@ -1464,6 +1491,14 @@ void FireRenderMesh::RebuildTransforms()
 			element.shape.SetLinearMotion(float(linearMotion.x), float(linearMotion.y), float(linearMotion.z));
 			element.shape.SetAngularMotion(float(rotationAxis.x), float(rotationAxis.y), float(rotationAxis.z), float(rotationAngle));
 		}
+	}
+}
+
+void FireRenderMesh::AssignShadingEngines(const MObjectArray& shadingEngines)
+{
+	for (unsigned int i = 0; i < m.elements.size(); i++)
+	{
+		m.elements[i].shadingEngine = shadingEngines[i < shadingEngines.length() ? i : 0];
 	}
 }
 
