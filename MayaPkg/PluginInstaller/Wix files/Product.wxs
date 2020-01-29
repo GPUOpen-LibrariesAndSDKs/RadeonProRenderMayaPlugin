@@ -33,13 +33,14 @@
 -->
     
 		<CustomAction Id='UserRegister' BinaryKey='InstallerDll' DllEntry='userRegister' Return="ignore" />
-		<CustomAction Id='HardwareCheck' BinaryKey='InstallerDll' DllEntry='hardwareCheck' Return="ignore" />
 		<CustomAction Id='PostInstall' BinaryKey='InstallerDll' DllEntry='postInstall' Return="ignore" />
 		<CustomAction Id='BotoInstall' BinaryKey='InstallerDll' DllEntry='botoInstall' Execute="deferred" Impersonate="no" Return="ignore" />
 
 		<CustomAction Id='maya2017WasInstalled' Property='MAYA2017_INSTALLED'  Value='true'/>
 		<CustomAction Id='maya2018WasInstalled' Property='MAYA2018_INSTALLED'  Value='true'/>
 		<CustomAction Id='maya2019WasInstalled' Property='MAYA2019_INSTALLED'  Value='true'/>
+
+                <CustomAction Id='SetInstallCustomMode' Property="WixUI_InstallMode" Value="InstallCustom"/>
 <!--	
 		<Property Id='ACTIVATION_KEY_ACCEPTED'>
 			<RegistrySearch Id='regSearchForActivationKey' Root='HKCU' Key='Software\AMD\RadeonProRender\Maya' Name='ACTIVATION_KEY_ACCEPTED' Type='raw'/>
