@@ -87,6 +87,17 @@ std::string FireRenderObject::uuid() const
 	return m.uuid;
 }
 
+std::string FireRenderObject::uuidWithoutInstanceNumber() const
+{
+	// We assume that real guid and instance number are separated by colon
+	return FireRenderObject::uuidWithoutInstanceNumberForString(m.uuid);
+}
+
+std::string FireRenderObject::uuidWithoutInstanceNumberForString(const std::string& uuid)
+{
+	return splitString<std::string>(uuid, ':')[0];
+}
+
 void FireRenderObject::setDirty()
 {
 	context()->setDirtyObject(this);
