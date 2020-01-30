@@ -133,15 +133,8 @@ for dirlib in os.listdir(str(addon_files_dist_dir/"plug-ins")):
 for name in ['modules']:
     shutil.copytree(str(build_output_dir / name), str(modules_dist_dir))
 
-# Remove modules and scripts for unsupported versions of Maya
-for name in ['rpr2016.5.mod','rpr2016.mod']:
-    os.remove(str(modules_dist_dir/name))
-
-for name in ['rprUnifiedRenderGlobalsWindow201500.mel','rprUnifiedRenderGlobalsWindow201600.mel','rprUnifiedRenderGlobalsWindow201650.mel']:
-    os.remove(str(addon_files_dist_dir/'scripts'/name))
-
 # Remap the directory for the installed plugin
-for name in ['rpr2017.mod','rpr2018.mod','rpr2019.mod']:
+for name in ['rpr2018.mod','rpr2019.mod','rpr2020.mod']:
     module_file = modules_dist_dir/name;
     module_file_content = module_file.read_text()
     os.remove(str(module_file))

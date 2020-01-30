@@ -440,9 +440,6 @@ void FireRenderIpr::updateRenderView()
 		// Acquire the pixels lock.
 		AutoMutexLock pixelsLock(m_pixelsLock);
 
-		// Prepare to update the Maya view.
-		beginMayaUpdate();
-
 		// Update the render view pixels.
 		MRenderView::updatePixels(
 			m_region.left, m_region.right,
@@ -453,9 +450,6 @@ void FireRenderIpr::updateRenderView()
 		MRenderView::refresh(
 			m_region.left, m_region.right,
 			m_region.bottom, m_region.top);
-
-		// Complete the Maya view update.
-		endMayaUpdate();
 
 		updateMayaRenderInfo();
 
@@ -514,51 +508,6 @@ void FireRenderIpr::stopMayaRender()
 	// Stop the render and clear the started flag.
 	MRenderView::endRender();
 	m_renderStarted = false;
-}
-
-// -----------------------------------------------------------------------------
-void FireRenderIpr::beginMayaUpdate()
-{
-	// No action is required for Maya versions higher than 2016.
-	if (MGlobal::apiVersion() >= 201650)
-		return;
-
-#ifndef MAYA2015
-	// Action is only required for the core profile renderer.
-	MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
-	if (renderer->drawAPI() != MHWRender::kOpenGLCoreProfile)
-		return;
-
-	// No action is required if the render has already been started.
-	if (m_renderStarted)
-		return;
-
-	// Start the render.
-	startMayaRender();
-#endif
-}
-
-// -----------------------------------------------------------------------------
-void FireRenderIpr::endMayaUpdate()
-{
-	// No action is required for Maya versions higher than 2016.
-	if (MGlobal::apiVersion() >= 201650)
-		return;
-
-#ifndef MAYA2015
-
-	// Action is only required for the core profile renderer.
-	MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
-	if (renderer->drawAPI() != MHWRender::kOpenGLCoreProfile)
-		return;
-
-	// Stop the render. This forces a render view
-	// refresh that is not correctly performed by the
-	// MRenderView::refresh in Maya 2016 when using the
-	// Core OpenGL rendering engine. This also prevents
-	// a memory leak in Maya.
-	stopMayaRender();
-#endif
 }
 
 // -----------------------------------------------------------------------------

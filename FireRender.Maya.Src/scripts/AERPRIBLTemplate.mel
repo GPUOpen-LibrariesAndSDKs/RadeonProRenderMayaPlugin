@@ -1,5 +1,4 @@
 source "fireRenderEnvironment.mel";
-source "AEnewNonNumericMulti.mel";
 
 global proc AERefreshObjectListSetup_IBL(  )
 {
