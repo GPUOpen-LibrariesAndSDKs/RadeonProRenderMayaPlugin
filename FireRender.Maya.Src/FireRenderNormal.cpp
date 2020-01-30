@@ -76,7 +76,7 @@ frw::Value FireMaya::Normal::GetValue(const Scope& scope) const
 
 		frw::Value strength = scope.GetValue(shaderNode.findPlug(Attribute::strength, false));
 		if (strength != 1.)
-			imageNode.SetValue("bumpscale", strength);
+			imageNode.SetValue(RPR_MATERIAL_INPUT_SCALE, strength);
 
 		return imageNode;
 	}

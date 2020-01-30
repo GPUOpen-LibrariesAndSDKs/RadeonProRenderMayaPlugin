@@ -65,7 +65,7 @@ frw::Value FireMaya::Checker::GetValue(const Scope& scope) const
 	}
 
 	auto uv = scope.GetConnectedValue(shaderNode.findPlug("uvCoord", false)) | scope.MaterialSystem().ValueLookupUV(mapChannel);
-	valueNode.SetValue("uv", uv + 128.);	// <- offset added because FR mirrors checker at origin
+	valueNode.SetValue(RPR_MATERIAL_INPUT_UV, uv + 128.);	// <- offset added because FR mirrors checker at origin
 
 	return valueNode;
 }

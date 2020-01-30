@@ -74,11 +74,11 @@ frw::Value FireMaya::Dot::GetValue(const Scope& scope) const
 		}
 	}
 
-	valueNode.SetValue("uv", scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv, false)) | scope.MaterialSystem().ValueLookupUV(mapChannel));
+	valueNode.SetValue(RPR_MATERIAL_INPUT_UV, scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv, false)) | scope.MaterialSystem().ValueLookupUV(mapChannel));
 
 	auto uvScale = scope.GetValue(shaderNode.findPlug(Attribute::uvScale, false));
 	if (uvScale != 1.)
-		valueNode.SetValue("uv_scale", uvScale);
+		valueNode.SetValue(RPR_MATERIAL_INPUT_UV_SCALE, uvScale);
 
 	return valueNode;
 }

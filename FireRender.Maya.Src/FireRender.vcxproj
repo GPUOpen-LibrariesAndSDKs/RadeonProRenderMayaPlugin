@@ -251,6 +251,7 @@
     <ClCompile Include="MayaStandardNodesSupport\NoiseConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\Place2dTextureConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\PlusMinusAverageConverter.cpp" />
+    <ClCompile Include="MayaStandardNodesSupport\ProjectionNodeConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\RampNodeConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\RemapHSVConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\ReverseMapConverter.cpp" />
@@ -404,6 +405,7 @@
     <ClInclude Include="MayaStandardNodesSupport\NoiseConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\Place2dTextureConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\PlusMinusAverageConverter.h" />
+    <ClInclude Include="MayaStandardNodesSupport\ProjectionNodeConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\RampNodeConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\RemapHSVConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\ReverseMapConverter.h" />
