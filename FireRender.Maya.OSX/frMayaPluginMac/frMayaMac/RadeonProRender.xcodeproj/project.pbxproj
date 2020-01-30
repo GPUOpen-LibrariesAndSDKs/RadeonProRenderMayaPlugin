@@ -493,6 +493,12 @@
 		B72F8226239F813F00C2BFB3 /* NoiseConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B72F81CE239F813E00C2BFB3 /* NoiseConverter.cpp */; };
 		B72F8228239F813F00C2BFB3 /* Bump2dConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B72F81CF239F813E00C2BFB3 /* Bump2dConverter.h */; };
 		B72F8229239F813F00C2BFB3 /* Bump2dConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B72F81CF239F813E00C2BFB3 /* Bump2dConverter.h */; };
+		B7498DD323E2D97700248217 /* ProjectionNodeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7498DD023E2D97700248217 /* ProjectionNodeConverter.cpp */; };
+		B7498DD423E2D97700248217 /* ProjectionNodeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7498DD023E2D97700248217 /* ProjectionNodeConverter.cpp */; };
+		B7498DD523E2D97700248217 /* ProjectionNodeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7498DD023E2D97700248217 /* ProjectionNodeConverter.cpp */; };
+		B7498DD623E2D97700248217 /* ProjectionNodeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B7498DD223E2D97700248217 /* ProjectionNodeConverter.h */; };
+		B7498DD723E2D97700248217 /* ProjectionNodeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B7498DD223E2D97700248217 /* ProjectionNodeConverter.h */; };
+		B7498DD823E2D97700248217 /* ProjectionNodeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B7498DD223E2D97700248217 /* ProjectionNodeConverter.h */; };
 		B7531FCB23D9ED5600246738 /* FireRenderVolumeLocator.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE98225551B300543147 /* FireRenderVolumeLocator.h */; };
 		B7531FCC23D9ED5600246738 /* MultDoubleLinearConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B72F81C5239F813E00C2BFB3 /* MultDoubleLinearConverter.h */; };
 		B7531FCD23D9ED5600246738 /* TileRenderer.h in Headers */ = {isa = PBXBuildFile; fileRef = CE5E271122804A3E00F3B6D7 /* TileRenderer.h */; };
@@ -1183,6 +1189,8 @@
 		B72F81CD239F813E00C2BFB3 /* Bump2dConverter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Bump2dConverter.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/Bump2dConverter.cpp; sourceTree = "<group>"; };
 		B72F81CE239F813E00C2BFB3 /* NoiseConverter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NoiseConverter.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/NoiseConverter.cpp; sourceTree = "<group>"; };
 		B72F81CF239F813E00C2BFB3 /* Bump2dConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Bump2dConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/Bump2dConverter.h; sourceTree = "<group>"; };
+		B7498DD023E2D97700248217 /* ProjectionNodeConverter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ProjectionNodeConverter.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/ProjectionNodeConverter.cpp; sourceTree = "<group>"; };
+		B7498DD223E2D97700248217 /* ProjectionNodeConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ProjectionNodeConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/ProjectionNodeConverter.h; sourceTree = "<group>"; };
 		B75320EE23D9ED5600246738 /* RadeonProRender.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = RadeonProRender.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		B75320F723DAFBD900246738 /* rpr2020.mod */ = {isa = PBXFileReference; lastKnownFileType = text; name = rpr2020.mod; path = ../rpr2020.mod; sourceTree = "<group>"; };
 		B75320F923DAFBDA00246738 /* rpr2019.mod */ = {isa = PBXFileReference; lastKnownFileType = text; name = rpr2019.mod; path = ../rpr2019.mod; sourceTree = "<group>"; };
@@ -1658,6 +1666,8 @@
 		B773D2C823A9123B009FC79C /* StandardMayaNodesIntegration */ = {
 			isa = PBXGroup;
 			children = (
+				B7498DD023E2D97700248217 /* ProjectionNodeConverter.cpp */,
+				B7498DD223E2D97700248217 /* ProjectionNodeConverter.h */,
 				B773D2CD23A912AF009FC79C /* BlendTwoAttrConverter.cpp */,
 				B773D2CE23A912AF009FC79C /* BlendTwoAttrConverter.h */,
 				B773D2D023A912AF009FC79C /* ClampConverter.cpp */,
@@ -1769,6 +1779,7 @@
 				AD18135D22E6A0EC00BB2B78 /* athenaCmd.h in Headers */,
 				8D595DA920372FE20031988A /* FireRenderTextureCache.h in Headers */,
 				B72F81EC239F813F00C2BFB3 /* NoiseConverter.h in Headers */,
+				B7498DD623E2D97700248217 /* ProjectionNodeConverter.h in Headers */,
 				8D595DAA20372FE20031988A /* FireRenderImportExportXML.h in Headers */,
 				B773D2B923A36DB8009FC79C /* GammaCorrectConverter.h in Headers */,
 				8D595DAB20372FE20031988A /* ArHosekSkyModel.h in Headers */,
@@ -1916,6 +1927,7 @@
 				AD18135E22E6A0EC00BB2B78 /* athenaCmd.h in Headers */,
 				8DBCC2BF22304666003EE361 /* FireRenderTextureCache.h in Headers */,
 				B72F81ED239F813F00C2BFB3 /* NoiseConverter.h in Headers */,
+				B7498DD723E2D97700248217 /* ProjectionNodeConverter.h in Headers */,
 				8DBCC2C022304666003EE361 /* FireRenderImportExportXML.h in Headers */,
 				B773D2BA23A36DB8009FC79C /* GammaCorrectConverter.h in Headers */,
 				8DBCC2C122304666003EE361 /* ArHosekSkyModel.h in Headers */,
@@ -2063,6 +2075,7 @@
 				B7531FFE23D9ED5600246738 /* athenaCmd.h in Headers */,
 				B7531FFF23D9ED5600246738 /* FireRenderTextureCache.h in Headers */,
 				B753200023D9ED5600246738 /* NoiseConverter.h in Headers */,
+				B7498DD823E2D97700248217 /* ProjectionNodeConverter.h in Headers */,
 				B753200123D9ED5600246738 /* FireRenderImportExportXML.h in Headers */,
 				B753200223D9ED5600246738 /* GammaCorrectConverter.h in Headers */,
 				B753200323D9ED5600246738 /* ArHosekSkyModel.h in Headers */,
@@ -2292,6 +2305,7 @@
 				B7701DE1235DE0380072482F /* StartupContextChecker.cpp in Sources */,
 				8DB6234720755B2800841D10 /* RprTools.cpp in Sources */,
 				B7EC453223743C93001E49F7 /* TahoeContext.cpp in Sources */,
+				B7498DD323E2D97700248217 /* ProjectionNodeConverter.cpp in Sources */,
 				8DCBE50C20727FEF00F79E06 /* ImageFilter.cpp in Sources */,
 				8D595DE920372FE20031988A /* FireRenderGlobals.cpp in Sources */,
 				CE600BD522A182E100362CF7 /* RenderStampUtils.cpp in Sources */,
@@ -2436,6 +2450,7 @@
 				B7701DE2235DE0380072482F /* StartupContextChecker.cpp in Sources */,
 				8DBCC30C22304666003EE361 /* RprTools.cpp in Sources */,
 				B7EC453323743C94001E49F7 /* TahoeContext.cpp in Sources */,
+				B7498DD423E2D97700248217 /* ProjectionNodeConverter.cpp in Sources */,
 				8DBCC30D22304666003EE361 /* ImageFilter.cpp in Sources */,
 				8DBCC30E22304666003EE361 /* FireRenderGlobals.cpp in Sources */,
 				CE600BD622A182E100362CF7 /* RenderStampUtils.cpp in Sources */,
@@ -2580,6 +2595,7 @@
 				B753207823D9ED5600246738 /* StartupContextChecker.cpp in Sources */,
 				B753207923D9ED5600246738 /* RprTools.cpp in Sources */,
 				B753207A23D9ED5600246738 /* TahoeContext.cpp in Sources */,
+				B7498DD523E2D97700248217 /* ProjectionNodeConverter.cpp in Sources */,
 				B753207B23D9ED5600246738 /* ImageFilter.cpp in Sources */,
 				B753207C23D9ED5600246738 /* FireRenderGlobals.cpp in Sources */,
 				B753207D23D9ED5600246738 /* RenderStampUtils.cpp in Sources */,
