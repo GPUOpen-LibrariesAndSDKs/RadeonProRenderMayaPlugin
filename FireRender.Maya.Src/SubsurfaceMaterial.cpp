@@ -204,18 +204,13 @@ frw::Shader FireMaya::SubsurfaceMaterial::GetVolumeShader(Scope& scope)
 	auto multiScatter = shaderNode.findPlug(Attribute::multiScattering, false).asBool();
 
 	// auto k = radius ? 1.0 / radius : 1000;	// avoid DBZ
-	// scattering
-	material.SetValue("sigmas", scatterAmount * k * scatterColor);
-
-	// absorption
-	material.SetValue("sigmaa", (1 - subsurfaceColor) * k);
-
-	// emission
-	material.SetValue("emission", emissionColor * k);
+	material.SetValue(RPR_MATERIAL_INPUT_SCATTERING, scatterAmount * k * scatterColor);
+	material.SetValue(RPR_MATERIAL_INPUT_ABSORBTION, (1 - subsurfaceColor) * k);
+	material.SetValue(RPR_MATERIAL_INPUT_EMISSION, emissionColor * k);
 
 	// phase and multi on/off
-	material.SetValue("g", scatteringDirection);
-	material.SetValue("multiscatter", multiScatter ? 1.f : 0.f);
+	material.SetValue(RPR_MATERIAL_INPUT_G, scatteringDirection);
+	material.SetValue(RPR_MATERIAL_INPUT_MULTISCATTER, multiScatter ? 1.f : 0.f);
 
 	return material;
 }

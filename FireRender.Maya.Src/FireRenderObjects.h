@@ -102,12 +102,15 @@ public:
 
 	// uuid
 	std::string uuid() const;
+	std::string uuidWithoutInstanceNumber() const;
 
 	// Set dirty
 	void setDirty();
 
 	static void Dump(const MObject& ob, int depth = 0, int maxDepth = 4);
 	static HashValue GetHash(const MObject& ob);
+
+	static std::string uuidWithoutInstanceNumberForString(const std::string& uuid);
 
 	// update fire render objects using Maya objects, then marks as clean
 	virtual void Freshen();
@@ -295,11 +298,12 @@ public:
 
 	void setupDisplacement(MObject shadingEngine, frw::Shape shape);
 	void Rebuild(void);
-	void ReloadMesh(MDagPath& meshPath, MObjectArray& shadingEngines);
-	void ProcessMesh(MDagPath& meshPath, MObjectArray& shadingEngines);
+	void ReloadMesh(const MDagPath& meshPath);
+	void ProcessMesh(const MDagPath& meshPath);
 	void ProcessIBLLight(void);
 	void ProcessSkyLight(void);
 	void RebuildTransforms(void);
+	void AssignShadingEngines(const MObjectArray& shadingEngines);
 
 	// Mesh bits (each one may have separate shading engine)
 	std::vector<FrElement>& Elements() { return m.elements; }
@@ -309,6 +313,9 @@ public:
 	bool IsMainInstance() const { return m.isMainInstance; }
 
 	unsigned int GetAssignedUVMapIdx(const MString& textureFile) const;
+
+	static void ForceShaderDirtyCallback(MObject& node, void* clientData);
+	void AddForceShaderDirtyDependOnOtherObjectCallback(MObject dependency);
 
 protected:
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;
@@ -344,7 +351,6 @@ private:
 	// thus, it is correct to match filename with UV map index
 	std::unordered_map<std::string /*texture file name*/, unsigned int /*UV map index*/ > m_uvSetCachedMappingData;
 };
-
 
 // Fire render light
 // Bridge class between a Maya light node and a frw::Light

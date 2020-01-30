@@ -22,7 +22,7 @@ namespace frw
 	}
 
 	template <typename... Args>
-	inline void DebugPrint(const char *format, const Args&... args)
+	inline void DebugPrint(const char* format, const Args&... args)
 	{
 #ifdef _DEBUG
 #ifdef _WIN32
@@ -107,4 +107,30 @@ namespace frw
 			}
 		}
 	}
+
+	void UVProceduralNode::SetOrigin(const frw::Value& value)
+	{
+		SetValue(NodeInputOrigin, value);
+	}
+
+	void UVTriplanarNode::SetOrigin(const frw::Value& value)
+	{
+		SetValue(NodeInputOffsset, value);
+	}
+
+	void BaseUVNode::SetInputZAxis(const frw::Value& value)
+	{
+		SetValue(NodeInputZAxis, value);
+	}
+
+	void BaseUVNode::SetInputXAxis(const frw::Value& value)
+	{
+		SetValue(NodeInputXAxis, value);
+	}
+
+	void BaseUVNode::SetInputUVScale(const frw::Value& value)
+	{
+		SetValue(NodeInputUVScale, value);
+	}
+
 }

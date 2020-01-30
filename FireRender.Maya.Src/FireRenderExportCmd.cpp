@@ -147,6 +147,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		context.buildScene();
 
 		context.setResolution(settings.width, settings.height, true);
+		context.ConsiderSetupDenoiser();
 
 		MDagPathArray cameras = getRenderableCameras();
 

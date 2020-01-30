@@ -3,6 +3,7 @@
 #include <functional>
 
 #include "RenderRegion.h"
+#include "FireRenderAOV.h"
 
 class FireRenderContext;
 
@@ -24,7 +25,7 @@ struct TileRenderInfo
 	TileRenderFillType tilesFillType;
 };
 
-typedef std::function<bool(RenderRegion&, int)> TileRenderingCallback;
+typedef std::function<bool(RenderRegion&, int, AOVPixelBuffers& out)> TileRenderingCallback;
 
 class TileRenderer
 {
@@ -32,6 +33,6 @@ public:
 	TileRenderer();
 	~TileRenderer();
 
-	void Render(FireRenderContext& renderContext, const TileRenderInfo& info, TileRenderingCallback callbackFunc);
+	void Render(FireRenderContext& renderContext, const TileRenderInfo& info, AOVPixelBuffers& outBuffer, TileRenderingCallback callbackFunc);
 };
 

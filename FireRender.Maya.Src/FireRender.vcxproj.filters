@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <Filter Include="Source Files">
@@ -629,6 +629,9 @@
     <ClCompile Include="MayaStandardNodesSupport\RGBToHSVConverter.cpp">
       <Filter>MayaStandardNodesSupport</Filter>
     </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\ProjectionNodeConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
     <ClCompile Include="..\RadeonProRenderSDK\RadeonProRender\inc\Math\half.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -1076,6 +1079,9 @@
       <Filter>MayaStandardNodesSupport</Filter>
     </ClInclude>
     <ClInclude Include="MayaStandardNodesSupport\RGBToHSVConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\ProjectionNodeConverter.h">
       <Filter>MayaStandardNodesSupport</Filter>
     </ClInclude>
     <ClInclude Include="..\FireRender.Components\cpp\Utils\Utils.h">

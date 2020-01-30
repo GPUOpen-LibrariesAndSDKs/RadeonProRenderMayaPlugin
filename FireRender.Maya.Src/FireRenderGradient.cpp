@@ -49,9 +49,9 @@ frw::Value FireMaya::Gradient::GetValue(const Scope& scope) const
 
 	frw::ValueNode valueNode(scope.MaterialSystem(), frw::ValueTypeGradientMap);
 
-	valueNode.SetValue("uv", scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv, false)));
-	valueNode.SetValue("color0", scope.GetValue(shaderNode.findPlug(Attribute::color0, false)));
-	valueNode.SetValue("color1", scope.GetValue(shaderNode.findPlug(Attribute::color1, false)));
+	valueNode.SetValue(RPR_MATERIAL_INPUT_UV, scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv, false)));
+	valueNode.SetValue(RPR_MATERIAL_INPUT_COLOR0, scope.GetValue(shaderNode.findPlug(Attribute::color0, false)));
+	valueNode.SetValue(RPR_MATERIAL_INPUT_COLOR1, scope.GetValue(shaderNode.findPlug(Attribute::color1, false)));
 
 	return valueNode;
 }
