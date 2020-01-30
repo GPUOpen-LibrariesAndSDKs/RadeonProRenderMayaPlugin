@@ -10,7 +10,7 @@ amIRoot() {
 
 copyModuleFiles() {
     echo "Copying module files ..."
-    for version in 2017 2018 2019
+    for version in 2018 2019 2020
     do
         modulesDir=`printf "/Users/Shared/Autodesk/modules/maya/%s" ${version}`
         if [ -d ${modulesDir} ];
@@ -42,7 +42,7 @@ installBoto3ForMaya () {
 
 copyShelfForUser() {
     echo "User: " $1
-    for version in 2017 2018 2019
+    for version in 2018 2019 2020
     do
         shelfDir=`printf "/Users/%s/Library/Preferences/Autodesk/maya/%s/prefs/shelves/" ${1} ${version}`
         if [ -d ${shelfDir} ];

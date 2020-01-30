@@ -28,9 +28,9 @@ popd
 :build_installer
 echo Building Radeon ProRender for Maya installer %MAYA_PLUGIN_VERSION%
 
-call create_module.cmd 2017
 call create_module.cmd 2018
 call create_module.cmd 2019
+call create_module.cmd 2020
 
 :: update ThirdParty
 set ThirdPartyDir="..\ThirdParty"
@@ -43,9 +43,9 @@ xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\renderDesc" "system\PluginInst
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\scripts" "system\PluginInstaller\InputData\feature_Core\scripts\*"
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\shaders" "system\PluginInstaller\InputData\feature_Core\shaders\*"
 
-xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2017" "system\PluginInstaller\InputData\feature_2017\2017\*"
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2018" "system\PluginInstaller\InputData\feature_2018\2018\*"
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2019" "system\PluginInstaller\InputData\feature_2019\2019\*"
+xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2020" "system\PluginInstaller\InputData\feature_2020\2020\*"
 
 :: scene convertion scripts
 mkdir "system\PluginInstaller\InputData\feature_ConvScripts"

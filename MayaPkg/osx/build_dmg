@@ -1,2 +1,0 @@
-rm RadeonProRenderForMayaInstaller.dmg
-hdiutil create -fs HFS+ -srcFolder output/RadeonProRenderForMayaInstaller.app/ -volname RadeonProRenderForMayaInstaller RadeonProRenderForMayaInstaller.dmg

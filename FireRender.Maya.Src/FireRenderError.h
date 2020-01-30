@@ -8,6 +8,8 @@
 #include <tbb/tbb_thread.h>
 #include <tbb/atomic.h>
 
+#include <mutex>
+
 
 class FireRenderException : public std::exception
 {
@@ -108,7 +110,7 @@ private:
 	 * Sharing the lock between all instances of the class
 	 * ensures that multiple dialogs won't be shown to the user.
 	 */
-	static MMutexLock s_lock;
+	static std::mutex s_lock;
 
 	/**
 	 * The time of the most recent error dialog across all error

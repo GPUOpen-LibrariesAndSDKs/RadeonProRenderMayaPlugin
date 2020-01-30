@@ -9,8 +9,8 @@ MayaStandardNodeConverters::Bump2dConverter::Bump2dConverter(const ConverterPara
 
 frw::Value MayaStandardNodeConverters::Bump2dConverter::Convert() const
 {
-	frw::Value bumpDepth = m_params.scope.GetValue(m_params.shaderNode.findPlug("bumpDepth"));
-	UseAs useAs = static_cast<UseAs>(m_params.shaderNode.findPlug("bumpInterp").asInt());
+	frw::Value bumpDepth = m_params.scope.GetValue(m_params.shaderNode.findPlug("bumpDepth", false));
+	UseAs useAs = static_cast<UseAs>(m_params.shaderNode.findPlug("bumpInterp", false).asInt());
 
 	switch (useAs)
 	{
@@ -25,7 +25,7 @@ frw::Value MayaStandardNodeConverters::Bump2dConverter::Convert() const
 
 frw::Value MayaStandardNodeConverters::Bump2dConverter::GetBumpValue(const frw::Value& strength) const
 {
-	frw::Value color = m_params.scope.GetConnectedValue(m_params.shaderNode.findPlug("bumpValue"));
+	frw::Value color = m_params.scope.GetConnectedValue(m_params.shaderNode.findPlug("bumpValue", false));
 
 	if (!color)
 	{
@@ -51,7 +51,7 @@ frw::Value MayaStandardNodeConverters::Bump2dConverter::GetNormalValue(const frw
 	// Normal node should expect float3 as input but this node could have only float as input
 	// In maya, if this node connected directly to file node, visually there's connection between outAlpha and bumpValue
 	// But under hood it retieves outColor from file node
-	MPlug bumpValuePlug = m_params.shaderNode.findPlug("bumpValue");
+	MPlug bumpValuePlug = m_params.shaderNode.findPlug("bumpValue", false);
 	MPlugArray connections;
 	bumpValuePlug.connectedTo(connections, true, false);
 

@@ -23,9 +23,9 @@
 std::vector<std::wstring> getMayaVersionWithInstalledPlugin(MSIHANDLE hInstall)
 {
 	std::vector<std::wstring> versions = {
-		L"2017",
 		L"2018",
-		L"2019"
+		L"2019",
+		L"2020"
 	};
 
 	std::vector<std::wstring> res;
@@ -148,9 +148,9 @@ void installBoto3()
 	LogSystem("installBoto3\n");
 
 	const static std::vector<std::string> versions = {
-		{"2017"},
 		{"2018"},
-		{"2019"}
+		{"2019"},
+		{"2020"}
 	};
 
 	for (const std::string& version : versions)
