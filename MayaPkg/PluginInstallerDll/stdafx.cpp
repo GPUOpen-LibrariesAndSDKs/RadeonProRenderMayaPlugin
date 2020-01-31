@@ -10,19 +10,6 @@ std::vector<std::wstring> split(const std::wstring &s, wchar_t delim)
 	return elems;
 }
 
-
-void copyStringToClipboard(const std::wstring &str)
-{
-	size_t len = (str.length() + 1) * sizeof(wchar_t);
-	HGLOBAL hMem = GlobalAlloc(GMEM_MOVEABLE, len);
-	memcpy(GlobalLock(hMem), str.c_str(), len);
-	GlobalUnlock(hMem);
-	OpenClipboard(0);
-	EmptyClipboard();
-	SetClipboardData(CF_UNICODETEXT, hMem);
-	CloseClipboard();
-}
-
 std::string WstringToString(const std::wstring& wstr)
 {
 	std::string res;

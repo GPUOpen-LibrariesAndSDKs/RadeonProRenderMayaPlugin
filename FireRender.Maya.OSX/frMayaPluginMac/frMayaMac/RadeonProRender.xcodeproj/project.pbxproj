@@ -2746,7 +2746,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					../../../RadeonProRenderSDK/RadeonProRender/binMacOS,
 					"../../../RadeonProImageProcessingSDK/radeonimagefilters-1.4.3-2839b0-OSX-rel/bin",
-					../../../ThirdParty/aws/Mac/bin,
 					"../../../ThirdParty/oiio-mac/bin",
 				);
 				LIBRARY_STYLE = BUNDLE;
@@ -2799,7 +2798,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					../../../RadeonProRenderSDK/RadeonProRender/binMacOS,
 					"../../../RadeonProImageProcessingSDK/radeonimagefilters-1.4.3-2839b0-OSX-rel/bin",
-					../../../ThirdParty/aws/Mac/bin,
 					"../../../ThirdParty/oiio-mac/bin",
 				);
 				LIBRARY_STYLE = BUNDLE;
