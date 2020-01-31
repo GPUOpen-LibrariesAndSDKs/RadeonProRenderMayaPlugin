@@ -9,7 +9,6 @@
 #include <msi.h>
 #include <msiquery.h>
 #include <Shellapi.h>
-//#include "checkCompatibility.h"
 #include <RadeonProRender.h> // for get RPR_API_VERSION
 
 
