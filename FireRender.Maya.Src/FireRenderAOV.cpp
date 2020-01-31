@@ -258,35 +258,6 @@ void FireRenderAOV::sendToRenderView()
 
 	// Refresh the render view.
 	MRenderView::refresh(0, m_frameWidth - 1, 0, m_frameHeight - 1);
-
-	// No further action is required for Maya versions higher than 2016.
-	if (MGlobal::apiVersion() >= 201650)
-		return;
-
-#ifndef MAYA2015
-
-	// Further action is only required for the core profile renderer.
-	MHWRender::MRenderer* renderer = MHWRender::MRenderer::theRenderer();
-	if (renderer->drawAPI() != MHWRender::kOpenGLCoreProfile)
-		return;
-
-	// Stop the render. This forces a render view
-	// refresh that is not correctly performed by the
-	// MRenderView::refresh in Maya 2016 when using the
-	// Core OpenGL rendering engine. This also prevents
-	// a memory leak in Maya.
-	MRenderView::endRender();
-
-	// Restart the render.
-	if (m_region.getWidth() == m_frameWidth && m_region.getHeight() == m_frameHeight)
-	{
-		MRenderView::startRegionRender(m_frameWidth, m_frameHeight,
-			m_region.left, m_region.right,
-			m_region.bottom, m_region.top, true, false);
-	}
-	else
-		MRenderView::startRender(m_frameWidth, m_frameHeight, true, false);
-#endif
 }
 
 // -----------------------------------------------------------------------------

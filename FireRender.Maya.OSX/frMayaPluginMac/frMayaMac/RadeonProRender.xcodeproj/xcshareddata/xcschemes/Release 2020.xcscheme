@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "0830"
+   LastUpgradeVersion = "1030"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -10,13 +10,13 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Script"
-               scriptText = "&quot;$PROJECT_DIR/../prebuild.sh&quot;">
+               scriptText = "&quot;$PROJECT_DIR/../prebuild.sh&quot;&#10;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
-                     BlueprintIdentifier = "4DE508631D9950A1009B2BD6"
+                     BlueprintIdentifier = "B7531FC923D9ED5600246738"
                      BuildableName = "RadeonProRender.bundle"
-                     BlueprintName = "Maya2017"
+                     BlueprintName = "Maya2020"
                      ReferencedContainer = "container:RadeonProRender.xcodeproj">
                   </BuildableReference>
                </EnvironmentBuildable>
@@ -28,16 +28,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Script"
-               scriptText = "&quot;$PROJECT_DIR/../postbuild_debug.sh&quot;">
-               <EnvironmentBuildable>
-                  <BuildableReference
-                     BuildableIdentifier = "primary"
-                     BlueprintIdentifier = "4DE508631D9950A1009B2BD6"
-                     BuildableName = "RadeonProRender.bundle"
-                     BlueprintName = "Maya2017"
-                     ReferencedContainer = "container:RadeonProRender.xcodeproj">
-                  </BuildableReference>
-               </EnvironmentBuildable>
+               scriptText = "&quot;$PROJECT_DIR/../postbuild_release.sh&quot;&#10;">
             </ActionContent>
          </ExecutionAction>
       </PostActions>
@@ -50,9 +41,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "4DE508631D9950A1009B2BD6"
+               BlueprintIdentifier = "B7531FC923D9ED5600246738"
                BuildableName = "RadeonProRender.bundle"
-               BlueprintName = "Maya2017"
+               BlueprintName = "Maya2020"
                ReferencedContainer = "container:RadeonProRender.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -62,58 +53,31 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      language = ""
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
       </Testables>
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "4D9BE2691D8A65A600EC540E"
-            BuildableName = "RPRMaya2017.bundle"
-            BlueprintName = "RPRMaya2017"
-            ReferencedContainer = "container:RadeonProRender.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
       <AdditionalOptions>
       </AdditionalOptions>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Debug"
+      buildConfiguration = "Release"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      language = ""
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <PathRunnable
-         runnableDebuggingMode = "0"
-         FilePath = "/Applications/Autodesk/maya2017/Maya.app/Contents/MacOS/Maya">
-      </PathRunnable>
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "4DE508631D9950A1009B2BD6"
+            BlueprintIdentifier = "B7531FC923D9ED5600246738"
             BuildableName = "RadeonProRender.bundle"
-            BlueprintName = "Maya2017"
+            BlueprintName = "Maya2020"
             ReferencedContainer = "container:RadeonProRender.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
-      <EnvironmentVariables>
-         <EnvironmentVariable
-            key = "DYLD_LIBRARY_PATH"
-            value = "/Users/Shared/RadeonProRender/lib:$DYLD_LIBRARY_PATH"
-            isEnabled = "NO">
-         </EnvironmentVariable>
-         <EnvironmentVariable
-            key = "RPR_MATERIAL_LIBRARY_PATH"
-            value = "ProRenderMaxMaterialLibrary/exported"
-            isEnabled = "NO">
-         </EnvironmentVariable>
-      </EnvironmentVariables>
       <AdditionalOptions>
       </AdditionalOptions>
    </LaunchAction>
@@ -123,6 +87,15 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "B7531FC923D9ED5600246738"
+            BuildableName = "RadeonProRender.bundle"
+            BlueprintName = "Maya2020"
+            ReferencedContainer = "container:RadeonProRender.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

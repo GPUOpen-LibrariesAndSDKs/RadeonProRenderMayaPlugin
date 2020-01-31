@@ -20,16 +20,12 @@ proc overrideUnifiedRenderGlobalsWindow()
 {
 	int $mayaVersion=`about -apiVersion`;
 
-	if ($mayaVersion >= 201800)
+	if ($mayaVersion >= 202000)
+		eval("source \"rprUnifiedRenderGlobalsWindow202000.mel\"");
+	else if ($mayaVersion >= 201900)
+		eval("source \"rprUnifiedRenderGlobalsWindow201900.mel\"");
+	else if ($mayaVersion >= 201800)
 		eval("source \"rprUnifiedRenderGlobalsWindow201800.mel\"");
-	else if ($mayaVersion >= 201700)
-		eval("source \"rprUnifiedRenderGlobalsWindow201700.mel\"");
-	else if($mayaVersion >= 201650)
-		eval("source \"rprUnifiedRenderGlobalsWindow201650.mel\"");
-	else if($mayaVersion >= 201600)
-		eval("source \"rprUnifiedRenderGlobalsWindow201600.mel\"");
-	else if($mayaVersion >= 201500)
-		eval("source \"rprUnifiedRenderGlobalsWindow201500.mel\"");
 }
 
 global proc registerFireRender(int $mlDenoiserSupportedCPU)

@@ -141,6 +141,8 @@ namespace frw
 		ValueTypeFresnelSchlick = RPR_MATERIAL_NODE_FRESNEL_SCHLICK,
 		ValueTypePassthrough = RPR_MATERIAL_NODE_PASSTHROUGH, // legacy, substituted with flat color shader
         ValueTypeAOMap = RPR_MATERIAL_NODE_AO_MAP,
+		ValueTypeUVProcedural = RPR_MATERIAL_NODE_UV_PROCEDURAL,
+		ValueTypeUVTriplanar = RPR_MATERIAL_NODE_UV_TRIPLANAR
 	};
 
 	enum ShaderType
@@ -312,6 +314,13 @@ namespace frw
 		NodeInputStandardRefractionRoughness = RPR_MATERIAL_INPUT_UBER_REFRACTION_ROUGHNESS,
 		NodeInputFresnelSchlikApproximation = RPR_MATERIAL_INPUT_UBER_FRESNEL_SCHLICK_APPROXIMATION,
 #endif
+
+		NodeInputUVType = RPR_MATERIAL_INPUT_UV_TYPE,
+		NodeInputOffsset = RPR_MATERIAL_INPUT_OFFSET,
+		NodeInputZAxis = RPR_MATERIAL_INPUT_ZAXIS,
+		NodeInputXAxis = RPR_MATERIAL_INPUT_XAXIS,
+		NodeInputOrigin = RPR_MATERIAL_INPUT_ORIGIN,
+		NodeInputThreshold = RPR_MATERIAL_INPUT_THRESHOLD
 	};
 	enum NodeInputInfo
 	{
@@ -389,6 +398,14 @@ namespace frw
 	enum Constant
 	{
 		MaximumSubdividedFacecount = 100000,
+	};
+
+	enum class UVTypeValue
+	{
+		Planar = RPR_MATERIAL_NODE_UVTYPE_PLANAR,
+		Cylindrical = RPR_MATERIAL_NODE_UVTYPE_CYLINDICAL,
+		Spherical = RPR_MATERIAL_NODE_UVTYPE_SPHERICAL,
+		Project = RPR_MATERIAL_NODE_UVTYPE_PROJECT
 	};
 
 	class Matrix
@@ -3247,6 +3264,37 @@ namespace frw
 		void SetColor(Value value) { SetValue(RPR_MATERIAL_INPUT_COLOR, value); }
 	};
 
+	class BaseUVNode : public ValueNode
+	{
+	public:
+		BaseUVNode(const MaterialSystem& h, ValueType nodeType) : ValueNode(h, nodeType) {}
+		virtual ~BaseUVNode() = default;
+
+		virtual void SetOrigin(const frw::Value& value) = 0;
+		void SetInputZAxis(const frw::Value& value);
+		void SetInputXAxis(const frw::Value& value);
+		void SetInputUVScale(const frw::Value& value);
+	};
+
+	class UVProceduralNode : public BaseUVNode
+	{
+	public:
+		UVProceduralNode(const MaterialSystem& h, UVTypeValue type) : BaseUVNode(h, ValueTypeUVProcedural)
+		{
+			SetValueInt(NodeInputUVType, static_cast<int>(type));
+		}
+
+		virtual void SetOrigin(const frw::Value& value) override;
+	};
+
+	class UVTriplanarNode : public BaseUVNode
+	{
+	public:
+        UVTriplanarNode(const MaterialSystem& h) : BaseUVNode(h, ValueTypeUVTriplanar) {}
+
+		virtual void SetOrigin(const frw::Value& value) override;
+	};
+
 	// inline definitions
 	static int allocatedObjects = 0;
 
@@ -3350,6 +3398,7 @@ namespace frw
 		assert(!"bad type");
 		return false;
 	}
+
 
 	inline bool Node::SetValueInt(rpr_material_node_input key, int v)
 	{
