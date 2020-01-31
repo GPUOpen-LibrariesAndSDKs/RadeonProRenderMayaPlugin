@@ -21,12 +21,14 @@ namespace MayaStandardNodeConverters
 
 	class BaseConverter
 	{
-	protected:
-		const ConverterParams& m_params;
-	
 	public:
 		BaseConverter(const ConverterParams& params);
+		virtual ~BaseConverter() = default;
+
 		virtual frw::Value Convert() const = 0;
+
+	protected:
+		const ConverterParams& m_params;
 	};
 
 }

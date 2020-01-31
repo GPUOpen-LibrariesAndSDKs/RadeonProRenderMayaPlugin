@@ -21,6 +21,7 @@ namespace MayaStandardNodeConverters
 		GammaCorrect = 0x5247414d,
 		ReverseMap = 0x52525653,
 		LayeredTexture = 0x4c595254,
+		Projection = 0x5250524A,
 
 		// arithmetic
 		AddDoubleLinear = 0x4441444c,
