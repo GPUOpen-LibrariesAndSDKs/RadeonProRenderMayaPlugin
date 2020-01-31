@@ -63,7 +63,6 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
     <Compile Include="Generated\Plugin2019.wxs" />
     <Compile Include="Generated\Plugin2020.wxs" />
     <Compile Include="Generated\ConvScripts.wxs" />
-    <Compile Include="Wix files\CheckHardwareDlg.wxs" />
     <Compile Include="Wix files\PluginFinishDlg.wxs" />
     <Compile Include="Wix files\PluginWelcomeDlg.wxs" />
     <Compile Include="Wix files\Product.wxs" />
