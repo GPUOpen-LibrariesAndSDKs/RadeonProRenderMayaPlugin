@@ -51,8 +51,6 @@ IF EXIST "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)-x64\prefs\shelves" COP
 COPY $(SolutionDir)ThirdParty\AxfPackage\ReleaseDll\AxfDll\*.dll $(SolutionDir)dist\bin\ /Y
 COPY $(SolutionDir)ThirdParty\AxfPackage\ReleaseDll\AxfDll\*.def $(SolutionDir)dist\bin\ /Y
 
-COPY "$(SolutionDir)ThirdParty\aws\Win\bin\*.dll" $(SolutionDir)dist\bin\ /Y
-
 </Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
