@@ -5,9 +5,7 @@ include_directories(${OpenCL_INCLUDE_DIRS})
 #link_directories(${OpenCL_LIBRARY})
 
 set(SOURCE_FILES
-  checker.cpp
-  formSelect.cpp
-  formSelect.h)
+  checker.cpp)
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
