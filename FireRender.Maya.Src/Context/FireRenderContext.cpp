@@ -2037,8 +2037,12 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 				{
 					// check if xgmSplineDescription is a guides for other xgmSplineDescription
 					// don't need to create hair object if that is the case
-					ob = CreateSceneObject<FireRenderHair, NodeCachingOptions::AddPath>(dagPath);
+					ob = CreateSceneObject<FireRenderHairXGenGrooming, NodeCachingOptions::AddPath>(dagPath);
 				}
+			}
+			else if (dagNode.typeName() == "HairShape")
+			{
+				ob = CreateSceneObject<FireRenderHairOrnatrix, NodeCachingOptions::AddPath>(dagPath);
 			}
 			else if (dagNode.typeName() == "transform")
 			{

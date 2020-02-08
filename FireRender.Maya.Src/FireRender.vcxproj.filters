@@ -647,6 +647,9 @@
     <ClCompile Include="..\FireRender.Components\cpp\Utils\Utils.cpp">
       <Filter>FireRender.Components\Utils</Filter>
     </ClCompile>
+    <ClCompile Include="FireRenderHairs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
