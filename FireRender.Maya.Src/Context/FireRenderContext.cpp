@@ -279,7 +279,7 @@ void FireRenderContext::updateLimitsFromGlobalData(const FireRenderGlobalsData &
 	setCompletionCriteria(params);
 }
 
-bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewport, bool freshen)
+bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshen, BuildSceneProgressCallback progressCallback)
 {
 	MAIN_THREAD_ONLY;
 	DebugPrint("FireRenderContext::buildScene()");
@@ -376,7 +376,7 @@ bool FireRenderContext::buildScene(bool animation, bool isViewport, bool glViewp
 	}
 
 	if(freshen)
-		Freshen();
+		Freshen(true, [] { return false; }, progressCallback);
 
 	return true;
 }
@@ -2137,7 +2137,7 @@ HashValue FireRenderContext::GetStateHash()
 	return hash;
 }
 
-bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
+bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled, BuildSceneProgressCallback progressCallback)
 {
 	MAIN_THREAD_ONLY;
 
@@ -2191,7 +2191,8 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 	auto start = std::chrono::steady_clock::now();
 #endif
-
+	size_t dirtyObjectsSize = m_dirtyObjects.size();
+	size_t currentIndex = 0;
 	for (auto it = m_dirtyObjects.begin(); it != m_dirtyObjects.end(); )
 	{
 		if ((state != FireRenderContext::StateRendering) && (state != FireRenderContext::StateUpdating))
@@ -2218,6 +2219,13 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 			ptr->Freshen();
 			changed = true;
 
+			currentIndex++;
+
+			if (progressCallback)
+			{
+				progressCallback((int)(100 * currentIndex / dirtyObjectsSize));
+			}
+
 #ifdef OPTIMIZATION_CLOCK
 			auto end_iter = std::chrono::steady_clock::now();
 			auto elapsed_iter = std::chrono::duration_cast<std::chrono::milliseconds>(end_iter - start_iter);
@@ -2241,13 +2249,6 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 	int ms = elapsed.count();
 	LogPrint("time spent in Freshen = %d ms", overallFreshen);
-#endif
-
-	scope.CommitShaders();
-
-#ifdef OPTIMIZATION_CLOCK
-	auto after_commit_shd = std::chrono::steady_clock::now();
-	LogPrint("time spent in CommitShaders = %d ms", std::chrono::duration_cast<std::chrono::milliseconds>(after_commit_shd - end));
 #endif
 
 	if (changed)

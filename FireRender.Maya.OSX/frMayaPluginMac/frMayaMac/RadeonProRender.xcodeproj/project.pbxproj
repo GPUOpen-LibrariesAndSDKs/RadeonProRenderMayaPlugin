@@ -826,6 +826,9 @@
 		B7D1F026236B466D00BB07CE /* FireRenderLayeredTextureUtils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7D1F022236B466C00BB07CE /* FireRenderLayeredTextureUtils.cpp */; };
 		B7D1F028236B466D00BB07CE /* FireRenderLayeredTextureUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = B7D1F023236B466C00BB07CE /* FireRenderLayeredTextureUtils.h */; };
 		B7D1F029236B466D00BB07CE /* FireRenderLayeredTextureUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = B7D1F023236B466C00BB07CE /* FireRenderLayeredTextureUtils.h */; };
+		B7D5515A23EB152A00F9E160 /* libProRenderGLTF.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B7D5515823EB152A00F9E160 /* libProRenderGLTF.dylib */; };
+		B7D5515B23EB152E00F9E160 /* libProRenderGLTF.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B7D5515823EB152A00F9E160 /* libProRenderGLTF.dylib */; };
+		B7D5515C23EB152F00F9E160 /* libProRenderGLTF.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B7D5515823EB152A00F9E160 /* libProRenderGLTF.dylib */; };
 		B7EC452F23743C91001E49F7 /* TahoeContext.h in Headers */ = {isa = PBXBuildFile; fileRef = B7EC452023743ACC001E49F7 /* TahoeContext.h */; };
 		B7EC453123743C91001E49F7 /* TahoeContext.h in Headers */ = {isa = PBXBuildFile; fileRef = B7EC452023743ACC001E49F7 /* TahoeContext.h */; };
 		B7EC453223743C93001E49F7 /* TahoeContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7EC451E23743ACC001E49F7 /* TahoeContext.cpp */; };
@@ -1225,6 +1228,7 @@
 		B7D1F00F2367616000BB07CE /* FireRenderMeshMASH.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderMeshMASH.cpp; path = ../../../FireRender.Maya.Src/FireRenderMeshMASH.cpp; sourceTree = "<group>"; };
 		B7D1F022236B466C00BB07CE /* FireRenderLayeredTextureUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderLayeredTextureUtils.cpp; path = ../../../FireRender.Maya.Src/FireRenderLayeredTextureUtils.cpp; sourceTree = "<group>"; };
 		B7D1F023236B466C00BB07CE /* FireRenderLayeredTextureUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderLayeredTextureUtils.h; path = ../../../FireRender.Maya.Src/FireRenderLayeredTextureUtils.h; sourceTree = "<group>"; };
+		B7D5515823EB152A00F9E160 /* libProRenderGLTF.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libProRenderGLTF.dylib; path = ../../../RadeonProRenderSDK/RadeonProRender/binMacOS/libProRenderGLTF.dylib; sourceTree = "<group>"; };
 		B7EC451E23743ACC001E49F7 /* TahoeContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TahoeContext.cpp; path = ../../../FireRender.Maya.Src/Context/TahoeContext.cpp; sourceTree = "<group>"; };
 		B7EC451F23743ACC001E49F7 /* ContextCreator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ContextCreator.h; path = ../../../FireRender.Maya.Src/Context/ContextCreator.h; sourceTree = "<group>"; };
 		B7EC452023743ACC001E49F7 /* TahoeContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TahoeContext.h; path = ../../../FireRender.Maya.Src/Context/TahoeContext.h; sourceTree = "<group>"; };
@@ -1258,6 +1262,7 @@
 				8D595E3B20372FE20031988A /* libRprLoadStore64.dylib in Frameworks */,
 				8D595E3D20372FE20031988A /* libOpenImageIO.1.6.dylib in Frameworks */,
 				8D595E3E20372FE20031988A /* libRadeonProRender64.dylib in Frameworks */,
+				B7D5515A23EB152A00F9E160 /* libProRenderGLTF.dylib in Frameworks */,
 				8D595E3F20372FE20031988A /* libTahoe64.dylib in Frameworks */,
 				8D595E4020372FE20031988A /* OpenCL.framework in Frameworks */,
 			);
@@ -1272,6 +1277,7 @@
 				8DBCC35E22304666003EE361 /* libRprLoadStore64.dylib in Frameworks */,
 				8DBCC36022304666003EE361 /* libOpenImageIO.1.6.dylib in Frameworks */,
 				8DBCC36122304666003EE361 /* libRadeonProRender64.dylib in Frameworks */,
+				B7D5515B23EB152E00F9E160 /* libProRenderGLTF.dylib in Frameworks */,
 				8DBCC36222304666003EE361 /* libTahoe64.dylib in Frameworks */,
 				8DBCC36322304666003EE361 /* OpenCL.framework in Frameworks */,
 			);
@@ -1286,6 +1292,7 @@
 				B75320E423D9ED5600246738 /* libRprLoadStore64.dylib in Frameworks */,
 				B75320E523D9ED5600246738 /* libOpenImageIO.1.6.dylib in Frameworks */,
 				B75320E623D9ED5600246738 /* libRadeonProRender64.dylib in Frameworks */,
+				B7D5515C23EB152F00F9E160 /* libProRenderGLTF.dylib in Frameworks */,
 				B75320E723D9ED5600246738 /* libTahoe64.dylib in Frameworks */,
 				B75320E823D9ED5600246738 /* OpenCL.framework in Frameworks */,
 			);
@@ -1613,6 +1620,7 @@
 		4DE645121DA349C10076E6A7 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				B7D5515823EB152A00F9E160 /* libProRenderGLTF.dylib */,
 				AD18134322E6A0D900BB2B78 /* libaws-c-common.a */,
 				AD18134422E6A0DA00BB2B78 /* libaws-c-event-stream.a */,
 				AD18134722E6A0DA00BB2B78 /* libaws-checksums.a */,

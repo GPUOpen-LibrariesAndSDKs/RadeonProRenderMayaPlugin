@@ -209,7 +209,7 @@ bool FireRenderProduction::start()
 			return false;
 
 		m_contextPtr->setCallbackCreationDisabled(true);
-		if (!m_contextPtr->buildScene(false, false, false, false))
+		if (!m_contextPtr->buildScene(false, false, false))
 		{
 			return false;
 		}
@@ -236,6 +236,7 @@ bool FireRenderProduction::start()
 	{
 		// Initialize the render progress bar UI.
 		m_progressBars = make_unique<RenderProgressBars>(m_contextPtr->isUnlimited());
+		m_progressBars->SetPreparingSceneText(true);
 
 		FireRenderThread::KeepRunningOnMainThread([this]() -> bool { return mainThreadPump(); });
 
@@ -264,9 +265,10 @@ bool FireRenderProduction::start()
 
 		m_isRunning = true;
 
-		refreshContext();
+		refreshContext( [this](int progress) { m_progressBars->update(progress); });
 		m_needsContextRefresh = false;
 
+		m_progressBars->SetRenderingText(true);
 		m_contextPtr->setStartedRendering();
 
 		// Start the render
@@ -1059,7 +1061,7 @@ bool FireRenderProduction::mainThreadPump()
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderProduction::refreshContext()
+void FireRenderProduction::refreshContext(FireRenderContext::BuildSceneProgressCallback progressCallback)
 {
 #ifdef OPTIMIZATION_CLOCK
 	auto start = std::chrono::steady_clock::now();
@@ -1072,9 +1074,10 @@ void FireRenderProduction::refreshContext()
 	{
 		m_contextPtr->Freshen(false,
 			[this]() -> bool
-		{
-			return m_cancelled;
-		});
+			{
+				return m_cancelled;
+			}, 
+			progressCallback);
 	}
 	catch (...)
 	{

@@ -341,8 +341,6 @@ MStatus FireMaterialViewRenderer::translateShader(const MUuid& id, const MObject
 			m_renderData.m_shape.SetVolumeShader(m_renderData.m_volumeShader);
 		}
 
-        m_renderData.m_context.GetScope().CommitShaders();
-
 		return MS::kSuccess;
 	});
 }

@@ -161,7 +161,7 @@ bool FireRenderIpr::start()
 		if (globals.aovs.getAOV(RPR_AOV_REFLECTION_CATCHER)->active)
 			m_contextPtr->enableAOV(RPR_AOV_REFLECTION_CATCHER);
 		
-		if (!m_contextPtr->buildScene(false, false, false, false))
+		if (!m_contextPtr->buildScene(false, false, false))
 		{
 			return false;
 		}

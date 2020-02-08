@@ -4,6 +4,8 @@
 #include "FireRenderThread.h"
 #include <assert.h>
 
+#include <sstream>
+
 // Life Cycle
 // -----------------------------------------------------------------------------
 RenderProgressBars::RenderProgressBars(bool unlimited) :
@@ -19,7 +21,9 @@ RenderProgressBars::RenderProgressBars(bool unlimited) :
 	MGlobal::executeCommand("window -title \"Rendering...\" -widthHeight 250 250 -tlc 0 0 rprProductionRenderingInfoWindow;");
 	MGlobal::executeCommand("window -edit -height 35 rprProductionRenderingInfoWindow;");
 	MGlobal::executeCommand("columnLayout - adjustableColumn true rprProductionRenderingInfoWindow;");
-	MGlobal::executeCommand("text -label \"Rendering...[Press ESC to Cancel]\" rprProductionRenderingInfoWindow;");
+	MGlobal::executeCommand("text rprRenderingInfoWindowText;");
+
+	SetRenderingText();
 
 	// Show an 'Unlimited render time' label
 	// instead of a progress bar if completion
@@ -73,11 +77,55 @@ RenderProgressBars::RenderProgressBars(bool unlimited) :
 	// Perform an initial update.
 	update(0);
 
-	// Force a Maya UI refresh.
-	MGlobal::executeCommand("refresh -f;");
+	ForceUIUpdate();
 
 	m_lastCanceledCheck = clock();
 }
+
+void RenderProgressBars::SetPreparingSceneText(bool forceUpdate)
+{
+	SetTextAboveProgress("Preparing scene...", forceUpdate);
+}
+
+void RenderProgressBars::SetRenderingText(bool forceUpdate)
+{
+	SetTextAboveProgress("Rendering...[Press ESC to Cancel]", forceUpdate);
+}
+
+void RenderProgressBars::ForceUIUpdate()
+{
+	// Force a Maya UI refresh.
+	MGlobal::executeCommand("refresh -f;");
+}
+
+void RenderProgressBars::SetWindowsTitleText(const std::string& title, bool forceUpdate)
+{
+	std::ostringstream stream;
+
+	stream << "window -edit -title \"" << title.c_str() << "\" rprProductionRenderingInfoWindow;";
+
+	MGlobal::executeCommand(stream.str().c_str());
+
+	if (forceUpdate)
+	{
+		ForceUIUpdate();
+	}
+}
+
+void RenderProgressBars::SetTextAboveProgress(const std::string& title, bool forceUpdate)
+{
+	std::ostringstream stream;
+
+	stream << "text -edit -label \"" << title.c_str() << "\" rprRenderingInfoWindowText";
+
+	MGlobal::executeCommand(stream.str().c_str());
+
+	if (forceUpdate)
+	{
+		ForceUIUpdate();
+	}
+}
+
 
 // -----------------------------------------------------------------------------
 RenderProgressBars::~RenderProgressBars()

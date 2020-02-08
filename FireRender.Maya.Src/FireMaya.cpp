@@ -1844,19 +1844,6 @@ void FireMaya::Scope::SetCachedShader(const NodeId& id, frw::Shader shader)
 		m->shaderMap[id] = shader;
 }
 
-void FireMaya::Scope::CommitShaders()
-{
-	DebugPrint("Begin export materials, amount of materials: %d", m->shaderMap.size());
-
-	size_t count = 0;
-	for (auto it = m->shaderMap.begin(); it != m->shaderMap.end(); ++it)
-	{
-		DebugPrint("Exporting shader %s, number %d", it->first.c_str(), count);
-		frw::Shader& shdr = it->second;
-		count++;
-	}
-}
-
 void FireMaya::Scope::SetCachedVolumeShader(const NodeId& id, frw::Shader shader)
 {
 	if (!shader)

@@ -5,6 +5,8 @@
 
 #include <maya/MFnAnimCurve.h>
 
+#include "RenderProgressBars.h"
+
 namespace FireMaya
 {
 	// Probably we should move cleanScene call in the destructor of FireRenderContext
@@ -23,6 +25,54 @@ namespace FireMaya
 	private:
 		FireRenderContext* m_Context;
 	};
+
+	class ExportCancelledException
+	{
+
+	};
+
+	class TimeKeyStruct
+	{
+	public:
+		TimeKeyStruct(MTime time, int attributeId) : m_Time(time)
+		{
+			m_AttributeId.insert(attributeId);
+		}
+
+		bool operator == (const TimeKeyStruct& rhs) const
+		{
+			return m_Time == rhs.m_Time;
+		}
+
+		bool operator < (const TimeKeyStruct& rhs) const
+		{
+			return m_Time < rhs.m_Time;
+		}
+
+
+		// Make modifier as const because of use of mutable m_AttributeId member. It is needed because we need to modify it in a "std::set" container
+		void AddNewAttribute(int attributeId) const
+		{
+			m_AttributeId.insert(attributeId);
+		}
+
+		bool DoesAttributeIdPresent(int attributeId) const
+		{
+			return m_AttributeId.find(attributeId) != m_AttributeId.end();
+		}
+
+		MTime GetTime() const { return m_Time; }
+		const std::set<int>& GetAttributeSetRef() const { return m_AttributeId; }
+
+	private:
+		MTime m_Time;
+
+		// Use set of attribute Ids because  RPRGLTF_ANIMATION_MOVEMENTTYPE_TRANSLATION, 
+		// RPRGLTF_ANIMATION_MOVEMENTTYPE_ROTATION, RPRGLTF_ANIMATION_MOVEMENTTYPE_SCALE cannot be combined in a flag mask				
+		mutable std::set<int> m_AttributeId;
+	};
+
+	typedef std::set<TimeKeyStruct> TimeKeySet;
 	
 	class GLTFTranslator : public MPxFileTranslator
 	{
@@ -73,7 +123,7 @@ namespace FireMaya
 		void assignMeshes(FireRenderContext& context);
 		
 		// addAdditionalKeys param means that we need to add additional keys for Rotation, 
-		void addTimesFromCurve(const MFnAnimCurve& curve, std::set<MTime>& outUniqueTimeKeySet, bool addAdditionalKeys = false);
+		void addTimesFromCurve(const MFnAnimCurve& curve, TimeKeySet& outUniqueTimeKeySet, int attributeId);
 
 		int getOutputComponentCount(int attrId);
 		inline float getValueForTime(const MPlug& plug, const MFnAnimCurve& curve, const MTime& time);
@@ -82,5 +132,11 @@ namespace FireMaya
 		void reportGLTFExportError(MString strPath);
 
 		bool isNeedToSetANameForTransform(const MDagPath& dagPath);
+
+		void ReportProgress(int progress);
+		void ReportDataChunk(size_t dataChunkIndex, size_t count);
+
+	private:
+		RenderProgressBars* m_progressBars;
 	};
 }

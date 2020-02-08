@@ -108,7 +108,7 @@ private:
 	void readFrameBuffer();
 
 	/** Refresh the context. */
-	void refreshContext();
+	void refreshContext(FireRenderContext::BuildSceneProgressCallback progressCallback = nullptr);
 
 	/* Gather and send render data by Athena */
 	void UploadAthenaData();

@@ -110,6 +110,8 @@ public:
 	static int deleteNodes;
 #endif
 
+	typedef std::function<void(int)> BuildSceneProgressCallback;
+
 	bool createContext(rpr_creation_flags createFlags, rpr_context& result, int* pOutRes = nullptr);
 
 	enum RenderMode {
@@ -147,7 +149,8 @@ public:
 	// Build the scene from the current Maya scene attaching all the callbacks needed
 	void updateLimits(bool animation = false);
 	void updateLimitsFromGlobalData(const FireRenderGlobalsData& globalData, bool animation = false, bool batch = false);
-	bool buildScene(bool animation = false, bool isViewport = false, bool glViewport = false, bool freshen = true);
+
+	bool buildScene(bool isViewport = false, bool glViewport = false, bool freshen = true, BuildSceneProgressCallback progressCallback = nullptr);
 
 	// Clean scene
 	void cleanScene();
@@ -410,7 +413,10 @@ public:
 	bool isDirty();
 
 	// refresh/rebuild anything we require
-	bool Freshen(bool lock = true, std::function<bool()> cancelled = [] { return false; });
+	bool Freshen(bool lock = true, 
+					std::function<bool()> cancelled = [] { return false; }, 
+					BuildSceneProgressCallback progressCallback = nullptr);
+
 	HashValue GetStateHash();
 
 	// Add a node to the scene.
