@@ -475,7 +475,7 @@ bool FireRenderViewport::initialize()
 				m_contextPtr->enableAOV(m_currentAOV);
 			}
 
-			if (!m_contextPtr->buildScene(animating, true, glViewport))
+			if (!m_contextPtr->buildScene(true, glViewport))
 				return false;
 		}
 		catch (...)

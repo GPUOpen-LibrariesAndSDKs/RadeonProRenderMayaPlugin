@@ -637,10 +637,7 @@ MStatus initializePlugin(MObject obj)
 
 	MGlobal::executeCommand("setupFireRenderNodeClassification()");
 
-#ifndef OSMac_
-	// Enable GLTF by default
 	MGlobal::executeCommand("rprExportsGLTF(1)");
-#endif
 
 	// register shaders
 

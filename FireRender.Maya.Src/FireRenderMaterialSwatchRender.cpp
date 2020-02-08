@@ -130,7 +130,6 @@ void FireRenderMaterialSwatchRender::processFromBackgroundThread()
 		}
 
 		swatchInstance.getContext().setDirty();
-		swatchInstance.getContext().GetScope().CommitShaders();
 		swatchInstance.getContext().m_restartRender = true;
 
 		while (swatchInstance.getContext().keepRenderRunning())

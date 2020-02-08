@@ -1,6 +1,9 @@
 #pragma once
 
 #include <ctime>
+#include <string>
+
+#include "RenderProgressBars.h"
 
 /**
  * Manage the display of the render progress window
@@ -31,6 +34,12 @@ public:
 	/** Return true if the user has canceled the render. */
 	bool isCancelled();
 
+	void ForceUIUpdate();
+	void SetWindowsTitleText(const std::string& title, bool forceUpdate = false);
+	void SetTextAboveProgress(const std::string& title, bool forceUpdate = false);
+
+	void SetPreparingSceneText(bool forceUpdate = false);
+	void SetRenderingText(bool forceUpdate = false);
 
 private:
 

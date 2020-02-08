@@ -319,7 +319,6 @@ namespace FireMaya
 
 		void Reset();
 		void Init(rpr_context handle, bool destroyMaterialSystemOnDelete = true);
-		void CommitShaders(void);
 
 		void SetContextInfo (IFireRenderContextInfo* pCtxInfo);
 		const IFireRenderContextInfo* GetContextInfo (void) const;

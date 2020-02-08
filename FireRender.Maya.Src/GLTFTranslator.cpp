@@ -16,17 +16,12 @@
 #include <maya/MFnMatrixData.h>
 #include <maya/MPlugArray.h>
 
-
+#include <memory>
 #include <array>
-
 #include <thread>
-
 #include <float.h>
 
-#ifdef OPAQUE
-#undef OPAQUE
 #include "ProRenderGLTF.h"
-#endif
 
 using namespace FireMaya;
 
@@ -48,15 +43,19 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	const MString& optionsString,
 	FileAccessMode mode)
 {
-#if defined(OSMac_)
-    return MStatus::kFailure;
-#else
 	// Create new context and fill it with scene
 	std::unique_ptr<TahoeContext> fireRenderContext = std::make_unique<TahoeContext>();
 	ContextAutoCleaner contextAutoCleaner(fireRenderContext.get());
 
+	// to be sure RenderProgressBars will be closed upon function exit
+	std::unique_ptr<RenderProgressBars> progressBars = std::make_unique<RenderProgressBars>(false);
+	m_progressBars = progressBars.get();
+
+	m_progressBars->SetWindowsTitleText("GLTF Export");
+	m_progressBars->SetPreparingSceneText(true);
+
 	fireRenderContext->setCallbackCreationDisabled(true);
-	if (!fireRenderContext->buildScene(false, false, false, true))
+	if (!fireRenderContext->buildScene(false, false, true, [this](int progress) { m_progressBars->update(progress); } ))
 		return MS::kFailure;
 
 	// Some resolution should be set. It's requred to retrieve background image.
@@ -78,7 +77,7 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	fireRenderContext->state = FireRenderContext::StateRendering;
 
 	//Populate rpr scene with actual data
-	if (!fireRenderContext->Freshen(false, [this]() { return false; }))
+	if (!fireRenderContext->Freshen(false))
 		return MS::kFailure;
 
 	frw::Scene scene = fireRenderContext->GetScene();
@@ -88,28 +87,39 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	if (!scene || !context || !materialSystem)
 		return MS::kFailure;
 
-	GLTFDataHolderStruct dataHolder;
-	dataHolder.inputRenderableCameras = &renderableCameras;
-	addGLTFAnimations(dataHolder, *fireRenderContext);
-
-	std::vector<rpr_scene> scenes;
-	scenes.push_back(scene.Handle());
-
-	int err = rprExportToGLTF(
-		file.expandedFullName().asChar(), 
-		context.Handle(), 
-		materialSystem.Handle(),
-		scenes.data(), 
-		scenes.size(), 
-		RPRGLTF_EXPORTFLAG_COPY_IMAGES_USING_OBJECTNAME);
-
-	if (err != GLTF_SUCCESS)
+	try
 	{
+		m_progressBars->SetTextAboveProgress("Preparing Animation...", true);
+		GLTFDataHolderStruct dataHolder;
+		dataHolder.inputRenderableCameras = &renderableCameras;
+		addGLTFAnimations(dataHolder, *fireRenderContext);
+
+		std::vector<rpr_scene> scenes;
+		scenes.push_back(scene.Handle());
+
+		m_progressBars->SetTextAboveProgress("Saving to GLTF file", true);
+		int err = rprExportToGLTF(
+			file.expandedFullName().asChar(),
+			context.Handle(),
+			materialSystem.Handle(),
+			scenes.data(),
+			scenes.size(),
+			RPRGLTF_EXPORTFLAG_COPY_IMAGES_USING_OBJECTNAME);
+
+		if (err != GLTF_SUCCESS)
+		{
+			return MS::kFailure;
+		}
+
+		m_progressBars->SetTextAboveProgress("Done.");
+	}
+	catch (ExportCancelledException)
+	{
+		MGlobal::displayWarning("GLTF export was cancelled by the user");
 		return MS::kFailure;
 	}
 
 	return MS::kSuccess;
-#endif
 }
 
 MString GLTFTranslator::getGroupNameForDagPath(MDagPath dagPath, int pop)
@@ -153,7 +163,6 @@ void FillArrayWithScaledMMatrixData(std::array<float, 16>& arr, float coeff = 0.
 
 void GLTFTranslator::assignCameras(GLTFDataHolderStruct& dataHolder, FireRenderContext& context)
 {
-#if !defined(OSMac_)
 	MDagPathArray& renderableCameras = *dataHolder.inputRenderableCameras;
 	bool mainCameraSet = false;
 
@@ -189,7 +198,6 @@ void GLTFTranslator::assignCameras(GLTFDataHolderStruct& dataHolder, FireRenderC
 		MString camGroupName = getGroupNameForDagPath(dagPath);
 		rprGLTF_AssignCameraToGroup(rprCamera, camGroupName.asChar());
 	}
-#endif
 }
 
 int getUVLightGroup(const MDagPath& inDagPath)
@@ -215,7 +223,6 @@ int getUVLightGroup(const MDagPath& inDagPath)
 
 void GLTFTranslator::assignMeshes(FireRenderContext& context)
 {
-#if !defined(OSMac_)
 	FireRenderContext::FireRenderObjectMap& sceneObjects = context.GetSceneObjects();
 	// set gltf group name for meshes
 	for (FireRenderContext::FireRenderObjectMap::iterator it = sceneObjects.begin(); it != sceneObjects.end(); ++it)
@@ -253,7 +260,6 @@ void GLTFTranslator::assignMeshes(FireRenderContext& context)
 			}
 		}
 	}
-#endif
 }
 
 void GLTFTranslator::addGLTFAnimations(GLTFDataHolderStruct& dataHolder, FireRenderContext& context)
@@ -280,7 +286,6 @@ bool GLTFTranslator::isNeedToSetANameForTransform(const MDagPath& dagPath)
 
 void GLTFTranslator::setGLTFTransformationForNode(MObject transform, const char* groupName)
 {
-#if !defined(OSMac_)
 	MFnDependencyNode fnTransform(transform);
 
 	MPlug matrixPlug = fnTransform.findPlug("matrix");
@@ -322,13 +327,13 @@ void GLTFTranslator::setGLTFTransformationForNode(MObject transform, const char*
 	}
 
 	rprGLTF_SetTransformGroup(groupName, arr.data());
-#endif
 }
 
 void GLTFTranslator::animateGLTFGroups(GLTFAnimationDataHolderVector& dataHolder)
 {
-#if !defined(OSMac_)
 	MStatus status;
+
+	std::vector<MDagPath> groupDagPathVector;
 
 	MItDag itDag(MItDag::kDepthFirst, MFn::kDagNode, &status);
 	if (MStatus::kSuccess != status)
@@ -344,12 +349,20 @@ void GLTFTranslator::animateGLTFGroups(GLTFAnimationDataHolderVector& dataHolder
 			continue;
 		}
 
-		MObject transform = dagPath.transform();
-
 		if (!isNeedToSetANameForTransform(dagPath))
 		{
 			continue;
 		}
+
+		groupDagPathVector.push_back(dagPath);
+	}
+
+	MDagPath dagPath;
+	for (size_t i = 0; i < groupDagPathVector.size(); ++i)
+	{
+		dagPath = groupDagPathVector[i];
+
+		MObject transform = dagPath.transform();
 
 		MString transformGroupName = getGroupNameForDagPath(dagPath);
 
@@ -375,13 +388,13 @@ void GLTFTranslator::animateGLTFGroups(GLTFAnimationDataHolderVector& dataHolder
 		}
 
 		applyGLTFAnimationForTransform(dagPath, dataHolder);
+
+		ReportProgress((int)(100 * (i + 1) / groupDagPathVector.size()));
 	}
-#endif
 }
 
 MString GLTFTranslator::getGLTFAttributeNameById(int id)
 {
-#if !defined(OSMac_)
 	switch (id)
 	{
 	case RPRGLTF_ANIMATION_MOVEMENTTYPE_TRANSLATION:
@@ -391,7 +404,6 @@ MString GLTFTranslator::getGLTFAttributeNameById(int id)
 	case RPRGLTF_ANIMATION_MOVEMENTTYPE_SCALE:
 		return "scale";
 	}
-#endif
     
 	assert(false);
 	return "";
@@ -399,7 +411,6 @@ MString GLTFTranslator::getGLTFAttributeNameById(int id)
 
 int GLTFTranslator::getOutputComponentCount(int attrId)
 {
-#if !defined(OSMac_)
 	switch (attrId)
 	{
 	case RPRGLTF_ANIMATION_MOVEMENTTYPE_TRANSLATION:
@@ -409,23 +420,39 @@ int GLTFTranslator::getOutputComponentCount(int attrId)
 	case RPRGLTF_ANIMATION_MOVEMENTTYPE_ROTATION:
 		return COMPONENT_COUNT_ROTATION;
 	}
-#endif
     
 	assert(false);
 	return 0;
 }
 
-void GLTFTranslator::addTimesFromCurve(const MFnAnimCurve& curve, std::set<MTime>& outUniqueTimeKeySet, bool addAdditionalKeys)
+void GLTFTranslator::addTimesFromCurve(const MFnAnimCurve& curve, TimeKeySet& outUniqueTimeKeySet, int attributeId)
 {
 	int keyCount = curve.numKeys();
+
 	for (int keyIndex = 0; keyIndex < keyCount; ++keyIndex)
 	{
 		MTime time = curve.time(keyIndex);
 
-		outUniqueTimeKeySet.insert(time);
+		TimeKeyStruct timeKey(time, attributeId);
 
+		TimeKeySet::iterator it = outUniqueTimeKeySet.find(timeKey);
+		if (it != outUniqueTimeKeySet.end())
+		{
+			it->AddNewAttribute(attributeId);
+		}
+		else
+		{
+			it = outUniqueTimeKeySet.insert(timeKey).first;
+		}
+
+		// if we process rotation attribute we should as translation as well because in some complex rotations translation might be changed as well
+		if (attributeId == RPRGLTF_ANIMATION_MOVEMENTTYPE_ROTATION)
+		{
+			it->AddNewAttribute(RPRGLTF_ANIMATION_MOVEMENTTYPE_TRANSLATION);
+		}
+		
 		// keys autogeneration for rotation
-		if (addAdditionalKeys && keyIndex > 0)
+		if ((attributeId == RPRGLTF_ANIMATION_MOVEMENTTYPE_ROTATION) && (keyIndex > 0))
 		{
 			double maxValue = curve.value(keyIndex);
 			double minValue = curve.value(keyIndex - 1);
@@ -437,7 +464,7 @@ void GLTFTranslator::addTimesFromCurve(const MFnAnimCurve& curve, std::set<MTime
 			while (currentValue < maxValue)
 			{
 				MTime additionalTimePoint = prevTime + (maxTime - prevTime) * (currentValue - minValue) / (maxValue - minValue);
-				outUniqueTimeKeySet.insert(additionalTimePoint);
+				outUniqueTimeKeySet.insert(TimeKeyStruct(additionalTimePoint, attributeId));
 
 				currentValue += step;
 			}
@@ -453,13 +480,12 @@ inline float GLTFTranslator::getValueForTime(const MPlug& plug, const MFnAnimCur
 	}
 	else
 	{
-		return plug.asFloat();
+	return plug.asFloat();
 	}
 }
 
 void GLTFTranslator::addAnimationToGLTFRPR(GLTFAnimationDataHolderStruct& gltfDataHolderStruct, int attrId)
 {
-#if !defined(OSMac_)
 	size_t keyCount = gltfDataHolderStruct.m_timePoints.size();
 
 	rprgltf_animation gltfAnimData;
@@ -469,8 +495,8 @@ void GLTFTranslator::addAnimationToGLTFRPR(GLTFAnimationDataHolderStruct& gltfDa
 	gltfAnimData.groupName = const_cast<char*>(gltfDataHolderStruct.groupName.asChar());
 	gltfAnimData.movementType = attrId;
 	gltfAnimData.interpolationType = 0;
-	gltfAnimData.nbTimeKeys = (unsigned int) keyCount;
-	gltfAnimData.nbTransformValues = (unsigned int) keyCount;
+	gltfAnimData.nbTimeKeys = (unsigned int)keyCount;
+	gltfAnimData.nbTransformValues = (unsigned int)keyCount;
 	gltfAnimData.timeKeys = gltfDataHolderStruct.m_timePoints.data();
 	gltfAnimData.transformValues = gltfDataHolderStruct.m_values.data();
 
@@ -479,12 +505,10 @@ void GLTFTranslator::addAnimationToGLTFRPR(GLTFAnimationDataHolderStruct& gltfDa
 	{
 		MGlobal::displayError("rprGLTF_AddAnimation returned error: ");
 	}
-#endif
 }
 
 void GLTFTranslator::applyGLTFAnimationForTransform(const MDagPath& dagPath, GLTFAnimationDataHolderVector& gltfDataHolder)
 {
-#if !defined(OSMac_)
 	// do not change order
 	const int attrCount = 3;
 	int attrIds[attrCount] = { RPRGLTF_ANIMATION_MOVEMENTTYPE_TRANSLATION,
@@ -501,8 +525,10 @@ void GLTFTranslator::applyGLTFAnimationForTransform(const MDagPath& dagPath, GLT
 	MStatus status;
 
 	MFnAnimCurve tempCurve;
-	std::set<MTime> uniqueTimeKeys;
 
+	TimeKeySet uniqueTimeKeys;
+
+	// Gather Unique key points
 	MString componentNames[inputPlugCount] = { "X", "Y", "Z" };
 	for (int attributeId : attrIds)
 	{
@@ -526,7 +552,7 @@ void GLTFTranslator::applyGLTFAnimationForTransform(const MDagPath& dagPath, GLT
 			if (MAnimUtil::findAnimation(plug, curveObj, &status))
 			{
 				tempCurve.setObject(curveObj[0]);
-				addTimesFromCurve(tempCurve, uniqueTimeKeys, attributeId == RPRGLTF_ANIMATION_MOVEMENTTYPE_ROTATION);
+				addTimesFromCurve(tempCurve, uniqueTimeKeys, attributeId);
 			}
 		}
 	}
@@ -535,14 +561,25 @@ void GLTFTranslator::applyGLTFAnimationForTransform(const MDagPath& dagPath, GLT
 
 	size_t keyCount = uniqueTimeKeys.size();
 
+	// this is just for progress reporting
+	size_t dataChunkIndex = 0;
+
+	// Export necessary attributes
 	for (int attributeId : attrIds)
 	{
 		gltfDataHolder.emplace(gltfDataHolder.end());
 		GLTFAnimationDataHolderStruct& gltfDataHolderStruct = gltfDataHolder.back();
 
-		for (std::set<MTime>::iterator it = uniqueTimeKeys.begin(); it != uniqueTimeKeys.end(); it++)
+		for (TimeKeySet::iterator it = uniqueTimeKeys.begin(); it != uniqueTimeKeys.end(); it++)
 		{
-			MTime time = *it;
+			dataChunkIndex++;
+
+			if (!it->DoesAttributeIdPresent(attributeId))
+			{
+				continue;
+			}
+
+			MTime time = it->GetTime();
 			MDGContext dgContext(time);
 
 			MMatrix newMatrix;
@@ -553,7 +590,7 @@ void GLTFTranslator::applyGLTFAnimationForTransform(const MDagPath& dagPath, GLT
 
 			MTransformationMatrix transformMatrix(newMatrix);
 
-			gltfDataHolderStruct.m_timePoints.push_back((float) it->as(MTime::Unit::kSeconds));
+			gltfDataHolderStruct.m_timePoints.push_back((float) it->GetTime().as(MTime::Unit::kSeconds));
 
 			switch (attributeId)
 			{
@@ -589,12 +626,39 @@ void GLTFTranslator::applyGLTFAnimationForTransform(const MDagPath& dagPath, GLT
 				break;
 			}
 			}
+
+			if (m_progressBars->isCancelled())
+			{
+				throw ExportCancelledException();
+			}
+
+			if (dataChunkIndex % 100 == 0)
+			{
+				ReportDataChunk(dataChunkIndex, attrCount * uniqueTimeKeys.size());
+			}
 		}
 
 		gltfDataHolderStruct.groupName = groupName;
-		addAnimationToGLTFRPR(gltfDataHolderStruct, attributeId);
+
+		if (gltfDataHolderStruct.m_timePoints.size() > 0)
+		{
+			addAnimationToGLTFRPR(gltfDataHolderStruct, attributeId);
+		}
 	}
-#endif
+}
+
+void GLTFTranslator::ReportDataChunk(size_t dataChunkIndex, size_t count)
+{
+	std::ostringstream stream;
+
+	stream << "Preparing Animation...current object: " << dataChunkIndex << " / " << count;
+	
+	m_progressBars->SetTextAboveProgress(stream.str(), true);
+}
+
+void GLTFTranslator::ReportProgress(int progress)
+{
+	m_progressBars->update(progress);
 }
 
 void GLTFTranslator::reportGLTFExportError(MString strPath)
