@@ -182,6 +182,7 @@
     <ClCompile Include="FireRenderFresnelSchlick.cpp" />
     <ClCompile Include="FireRenderGlobals.cpp" />
     <ClCompile Include="FireRenderGradient.cpp" />
+    <ClCompile Include="FireRenderHairs.cpp" />
     <ClCompile Include="FireRenderIBL.cpp" />
     <ClCompile Include="FireRenderImageComparing.cpp" />
     <ClCompile Include="FireRenderImageUtil.cpp" />

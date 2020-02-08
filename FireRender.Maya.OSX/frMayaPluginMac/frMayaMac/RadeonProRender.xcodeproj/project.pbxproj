@@ -433,6 +433,9 @@
 		B7230A7123ACD82A00E51BD1 /* HSVToRGBConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2CA23A912AF009FC79C /* HSVToRGBConverter.h */; };
 		B7230A7223ACD82A00E51BD1 /* RGBToHSVConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2CB23A912AF009FC79C /* RGBToHSVConverter.cpp */; };
 		B7230A7323ACD82A00E51BD1 /* RGBToHSVConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2D223A912AF009FC79C /* RGBToHSVConverter.h */; };
+		B72E5C8223EA294B00374742 /* FireRenderHairs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B72E5C8023EA294A00374742 /* FireRenderHairs.cpp */; };
+		B72E5C8323EA294B00374742 /* FireRenderHairs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B72E5C8023EA294A00374742 /* FireRenderHairs.cpp */; };
+		B72E5C8423EA294B00374742 /* FireRenderHairs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B72E5C8023EA294A00374742 /* FireRenderHairs.cpp */; };
 		B72F81D1239F813F00C2BFB3 /* VectorProductConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B72F81B1239F813C00C2BFB3 /* VectorProductConverter.h */; };
 		B72F81D2239F813F00C2BFB3 /* VectorProductConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B72F81B1239F813C00C2BFB3 /* VectorProductConverter.h */; };
 		B72F81D4239F813F00C2BFB3 /* NodeConverterUtil.h in Headers */ = {isa = PBXBuildFile; fileRef = B72F81B3239F813D00C2BFB3 /* NodeConverterUtil.h */; };
@@ -1162,6 +1165,7 @@
 		AD18136022E6A0F700BB2B78 /* athenaWrap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = athenaWrap.cpp; path = ../../../FireRender.Components/cpp/Athena/athenaWrap.cpp; sourceTree = "<group>"; };
 		AD18136122E6A0F800BB2B78 /* RprAthena.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RprAthena.cpp; path = ../../../FireRender.Components/cpp/Athena/RprAthena.cpp; sourceTree = "<group>"; };
 		AD18136222E6A0F800BB2B78 /* RprAthena.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RprAthena.h; path = ../../../FireRender.Components/cpp/Athena/RprAthena.h; sourceTree = "<group>"; };
+		B72E5C8023EA294A00374742 /* FireRenderHairs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderHairs.cpp; path = ../../../FireRender.Maya.Src/FireRenderHairs.cpp; sourceTree = "<group>"; };
 		B72F81B1239F813C00C2BFB3 /* VectorProductConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VectorProductConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/VectorProductConverter.h; sourceTree = "<group>"; };
 		B72F81B3239F813D00C2BFB3 /* NodeConverterUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NodeConverterUtil.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/NodeConverterUtil.h; sourceTree = "<group>"; };
 		B72F81B4239F813D00C2BFB3 /* Place2dTextureConverter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Place2dTextureConverter.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/Place2dTextureConverter.cpp; sourceTree = "<group>"; };
@@ -1327,6 +1331,7 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				B72E5C8023EA294A00374742 /* FireRenderHairs.cpp */,
 				B773D2C823A9123B009FC79C /* StandardMayaNodesIntegration */,
 				B7542DE6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp */,
 				B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */,
@@ -2312,6 +2317,7 @@
 				B7230A6323ACD82900E51BD1 /* ColorMathConverter.cpp in Sources */,
 				B7701DE1235DE0380072482F /* StartupContextChecker.cpp in Sources */,
 				8DB6234720755B2800841D10 /* RprTools.cpp in Sources */,
+				B72E5C8223EA294B00374742 /* FireRenderHairs.cpp in Sources */,
 				B7EC453223743C93001E49F7 /* TahoeContext.cpp in Sources */,
 				B7498DD323E2D97700248217 /* ProjectionNodeConverter.cpp in Sources */,
 				8DCBE50C20727FEF00F79E06 /* ImageFilter.cpp in Sources */,
@@ -2457,6 +2463,7 @@
 				B7230A6E23ACD82A00E51BD1 /* ColorMathConverter.cpp in Sources */,
 				B7701DE2235DE0380072482F /* StartupContextChecker.cpp in Sources */,
 				8DBCC30C22304666003EE361 /* RprTools.cpp in Sources */,
+				B72E5C8323EA294B00374742 /* FireRenderHairs.cpp in Sources */,
 				B7EC453323743C94001E49F7 /* TahoeContext.cpp in Sources */,
 				B7498DD423E2D97700248217 /* ProjectionNodeConverter.cpp in Sources */,
 				8DBCC30D22304666003EE361 /* ImageFilter.cpp in Sources */,
@@ -2602,6 +2609,7 @@
 				B753207723D9ED5600246738 /* ColorMathConverter.cpp in Sources */,
 				B753207823D9ED5600246738 /* StartupContextChecker.cpp in Sources */,
 				B753207923D9ED5600246738 /* RprTools.cpp in Sources */,
+				B72E5C8423EA294B00374742 /* FireRenderHairs.cpp in Sources */,
 				B753207A23D9ED5600246738 /* TahoeContext.cpp in Sources */,
 				B7498DD523E2D97700248217 /* ProjectionNodeConverter.cpp in Sources */,
 				B753207B23D9ED5600246738 /* ImageFilter.cpp in Sources */,
@@ -2750,6 +2758,7 @@
 					"../../../ThirdParty/oiio-mac",
 					../../../ThirdParty/aws/Mac/include,
 					../../../FireRender.Components/cpp,
+					"\"../../../ThirdParty/Ornatrix SDK\"",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					../../../RadeonProRenderSDK/RadeonProRender/binMacOS,
@@ -2802,6 +2811,7 @@
 					"../../../ThirdParty/oiio-mac",
 					../../../ThirdParty/aws/Mac/include,
 					../../../FireRender.Components/cpp,
+					"\"../../../ThirdParty/Ornatrix SDK\"",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					../../../RadeonProRenderSDK/RadeonProRender/binMacOS,

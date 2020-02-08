@@ -697,18 +697,18 @@ public:
 	virtual ~FireRenderHair();
 
 	// Refresh the curves
-	virtual void Freshen() override;
+	virtual void Freshen(void) override;
 
 	// clear
-	virtual void clear() override;
+	virtual void clear(void) override;
 
 	// detach from the scene
-	virtual void detachFromScene() override;
+	virtual void detachFromScene(void) override;
 
 	// attach to the scene
-	virtual void attachToScene() override;
+	virtual void attachToScene(void) override;
 
-private:
+protected:
 	// applies transform to node
 	void ApplyTransform(void);
 
@@ -726,7 +726,7 @@ private:
 	// NIY
 	// tries to load curves data and creates rpr curve (batch) if succesfull
 	// returns false if failed to create curves
-	bool CreateCurves(void);
+	virtual bool CreateCurves(void) = 0;
 
 	// transform matrix
 	MMatrix m_matrix;
@@ -735,4 +735,28 @@ private:
 	std::vector<frw::Curve> m_Curves;
 };
 
+class FireRenderHairXGenGrooming : public FireRenderHair
+{
+public:
+	// Constructor
+	FireRenderHairXGenGrooming(FireRenderContext* context, const MDagPath& dagPath);
 
+	// Destructor
+	virtual ~FireRenderHairXGenGrooming();
+
+protected:
+	virtual bool CreateCurves(void);
+};
+
+class FireRenderHairOrnatrix : public FireRenderHair
+{
+public:
+	// Constructor
+	FireRenderHairOrnatrix(FireRenderContext* context, const MDagPath& dagPath);
+
+	// Destructor
+	virtual ~FireRenderHairOrnatrix();
+
+protected:
+	virtual bool CreateCurves(void);
+};
