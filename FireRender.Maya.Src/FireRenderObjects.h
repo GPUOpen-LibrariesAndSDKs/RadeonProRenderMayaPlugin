@@ -708,6 +708,12 @@ public:
 	// attach to the scene
 	virtual void attachToScene(void) override;
 
+	// Register the callback
+	virtual void RegisterCallbacks(void) override;
+	
+	// node dirty
+	virtual void OnShaderDirty(void);
+
 protected:
 	// applies transform to node
 	void ApplyTransform(void);
