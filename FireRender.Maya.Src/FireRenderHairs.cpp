@@ -378,6 +378,7 @@ bool GetCurvesData(XGenSplineAPI::XgFnSpline& out, MFnDagNode& curvesNode)
 
 void FireRenderHair::Freshen()
 {
+	detachFromScene();
 	clear();
 
 	auto node = Object();
@@ -480,10 +481,6 @@ bool EnsureValidOrnatrixHairBatch(const std::shared_ptr<Ephere::Plugins::Ornatri
 	if (!hasStrand2ObjTransforms)
 		return false;
 
-	Ephere::Ornatrix::IHair::CoordinateSpace corrdSpace = sourceHair->GetCoordinateSpace();
-	if (corrdSpace != Ephere::Ornatrix::IHair::Strand)
-		return false;
-
 	if (!sourceHair->HasWidths())
 		return false;
 
@@ -560,6 +557,7 @@ frw::Curve ProcessCurvesBatch(const std::shared_ptr<Ephere::Plugins::Ornatrix::I
 	// for each primitive (for each hair in batch)
 	unsigned int offset = 0;
 	int currStrandVertexCount = 0;
+
 	for (int currCurveIdx = 0; currCurveIdx < strandCount; ++currCurveIdx, offset += currStrandVertexCount)
 	{
 		// get current curve
@@ -620,4 +618,41 @@ bool FireRenderHairOrnatrix::CreateCurves()
 	ApplyMaterial();
 
 	return (m_Curves.size() > 0);
+}
+
+static void HairShaderDirtyCallback(MObject& node, void* clientData)
+{
+	DebugPrint("CALLBACK > HairShaderDirtyCallback(%s)", node.apiTypeStr());
+	if (auto self = static_cast<FireRenderHair*>(clientData))
+	{
+		assert(node != self->Object());
+		self->OnShaderDirty();
+	}
+}
+
+void FireRenderHair::OnShaderDirty()
+{
+	setDirty();
+}
+
+void FireRenderHair::RegisterCallbacks()
+{
+	FireRenderNode::RegisterCallbacks();
+
+	if (m_Curves.empty())
+		return;
+
+	MObject node = Object();
+	MDagPath path = MDagPath::getAPathTo(node);
+
+	// get hair shader node
+	MObjectArray shdrs = getConnectedShaders(path);
+	if (shdrs.length() == 0)
+		return;
+
+	MObject surfaceShader = shdrs[0];
+	if (!surfaceShader.isNull())
+	{
+		AddCallback(MNodeMessage::addNodeDirtyCallback(surfaceShader, HairShaderDirtyCallback, this));
+	}
 }
