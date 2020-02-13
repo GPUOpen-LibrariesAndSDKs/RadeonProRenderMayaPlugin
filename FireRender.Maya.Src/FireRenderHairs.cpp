@@ -499,6 +499,8 @@ void ProcessOrnatrixTextureCoordinates(
 {
 	// texture coords
 	int countTextureChannels = sourceHair->GetTextureCoordinateChannelCount();
+	if (countTextureChannels == 0)
+		return;
 
 	// RPR supports only 1 channel!
 	/*if (countTextureChannels > 1)
