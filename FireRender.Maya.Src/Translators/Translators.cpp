@@ -323,9 +323,9 @@ namespace FireMaya
 					frstatus = rprDirectionalLightSetRadiantPower3f(frlight.light.Handle(), color.r, color.g, color.b);
 					checkStatus(frstatus);
 
-					float softness = lightData.shadowsEnabled ? lightData.shadowsSoftness : 0.0f;
+					float softnessAngle = toRadians(lightData.shadowsEnabled ? lightData.shadowsSoftnessAngle : 0.0f);
 
-					frstatus = rprDirectionalLightSetShadowSoftness(frlight.light.Handle(), softness);
+					frstatus = rprDirectionalLightSetShadowSoftnessAngle(frlight.light.Handle(), softnessAngle);
 					checkStatus(frstatus);
 					break;
 				}
@@ -411,7 +411,7 @@ namespace FireMaya
 			physicalLightData.areaLength = 1.0f;
 
 			physicalLightData.shadowsEnabled = true;
-			physicalLightData.shadowsSoftness = 0.0f;
+			physicalLightData.shadowsSoftnessAngle = 0.0f;
 
 			assert(mstatus == MStatus::kSuccess);
 

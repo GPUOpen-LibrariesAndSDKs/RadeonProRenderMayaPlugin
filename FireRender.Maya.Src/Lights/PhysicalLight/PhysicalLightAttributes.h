@@ -33,8 +33,10 @@ public:
 	static void GetSpotLightSettings(const MFnDependencyNode& node, float& innerAngle, float& outerfalloff);
 
 	static bool GetShadowsEnabled(const MFnDependencyNode& node);
-	static float GetShadowsSoftness(const MFnDependencyNode& node);
+	static float GetShadowsSoftnessAngle(const MFnDependencyNode& node);
 	static MString GetAreaLightMeshSelectedName(const MFnDependencyNode& node);
+
+	static void CreateLegacyAttributes();
 
 public:
 	// General
@@ -73,7 +75,7 @@ public:
 
 	// Shadows
 	static MObject shadowsEnabled;
-	static MObject shadowsSoftness;
+	static MObject shadowsSoftnessAngle;
 	static MObject shadowsTransparency;
 
 	// Volume

@@ -73,7 +73,7 @@ struct PhysicalLightData
 	float spotOuterFallOff;
 
 	bool shadowsEnabled;
-	float shadowsSoftness;
+	float shadowsSoftnessAngle;
 
 	MColor GetChosenColor() const;
 	float GetCalculatedIntensity(float area = 1.0f) const;
