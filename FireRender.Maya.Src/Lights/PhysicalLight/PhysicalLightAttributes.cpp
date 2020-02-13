@@ -43,7 +43,7 @@ MObject PhysicalLightAttributes::decayFalloffEnd;
 
 // Shadows
 MObject PhysicalLightAttributes::shadowsEnabled;
-MObject PhysicalLightAttributes::shadowsSoftness;
+MObject PhysicalLightAttributes::shadowsSoftnessAngle;
 MObject PhysicalLightAttributes::shadowsTransparency;
 
 // Volume
@@ -119,6 +119,8 @@ void PhysicalLightAttributes::Initialize()
 	CreateShadowsAttrbutes();
 	CreateVolumeAttrbutes();
 	CreateHiddenAttributes();
+
+	CreateLegacyAttributes();
 }
 
 void PhysicalLightAttributes::CreateGeneralAttributes()
@@ -190,7 +192,10 @@ void PhysicalLightAttributes::CreateShadowsAttrbutes()
 {
 	CreateBoolAttribute(shadowsEnabled, "shadowsEnabled", "se", true);
 
-	CreateFloatAttribute(shadowsSoftness, "shadowsSoftness", "ss", 0.0f, 1.0f, 0.02f);
+	// give name "sssa" because name "ssa" crashes later for some reason
+	CreateFloatAttribute(shadowsSoftnessAngle, "shadowsSoftnessAngle", "sssa", 0.0f, 90.0f, 0.0f);
+	MFnNumericAttribute(shadowsSoftnessAngle).setMax(90.0f);
+	
 	CreateFloatAttribute(shadowsTransparency, "shadowsTransparency", "st", 0.0f, 1.0f, 1.0f);
 }
 
@@ -206,19 +211,24 @@ void PhysicalLightAttributes::CreateHiddenAttributes()
 
 	CreateBoolAttribute(areaLightSelectingMesh, "areaLightSelectingMesh", "alsm", false);
 
-
 	areaLightMeshSelectedName = tAttr.create("areaLightMeshSelectedName", "almsn", MFnData::kString, &status);
 	tAttr.setHidden(true);
 	setAttribProps(tAttr, areaLightMeshSelectedName);
 }
 
+void PhysicalLightAttributes::CreateLegacyAttributes()
+{
+	MObject legacyShadowSoftness;
+	CreateFloatAttribute(legacyShadowSoftness, "shadowsSoftness", "ss", 0.0f, 1.0f, 0.02f);
+}
+
 int GetIntAttribute(const MFnDependencyNode& node, const MObject& attribute)
 {
-	MPlug plug = node.findPlug(attribute);
+	MPlug plug = node.findPlug(attribute, false); 
 
 	assert(!plug.isNull());
 
-	if (!plug.isNull())
+	if (!plug.isNull()) 
 	{
 		return plug.asInt();
 	}
@@ -228,7 +238,10 @@ int GetIntAttribute(const MFnDependencyNode& node, const MObject& attribute)
 
 float GetFloatAttribute(const MFnDependencyNode& node, const MObject& attribute)
 {
-	MPlug plug = node.findPlug(attribute);
+	MPlug plug = node.findPlug(attribute, false);
+
+	MString name1 = MFnNumericAttribute(attribute).name();
+	MString name2 = plug.name();
 
 	assert(!plug.isNull());
 	if (!plug.isNull())
@@ -241,7 +254,7 @@ float GetFloatAttribute(const MFnDependencyNode& node, const MObject& attribute)
 
 bool GetBoolAttribute(const MFnDependencyNode& node, const MObject& attribute)
 {
-	MPlug plug = node.findPlug(attribute);
+	MPlug plug = node.findPlug(attribute, false);
 
 	assert(!plug.isNull());
 	if (!plug.isNull())
@@ -254,7 +267,7 @@ bool GetBoolAttribute(const MFnDependencyNode& node, const MObject& attribute)
 
 MString GetStringAttribute(const MFnDependencyNode& node, const MObject& attribute)
 {
-	MPlug plug = node.findPlug(attribute);
+	MPlug plug = node.findPlug(attribute, false);
 
 	assert(!plug.isNull());
 	if (!plug.isNull())
@@ -337,9 +350,9 @@ bool PhysicalLightAttributes::GetShadowsEnabled(const MFnDependencyNode& node)
 	return GetBoolAttribute(node, PhysicalLightAttributes::shadowsEnabled);
 }
 
-float PhysicalLightAttributes::GetShadowsSoftness(const MFnDependencyNode& node)
+float PhysicalLightAttributes::GetShadowsSoftnessAngle(const MFnDependencyNode& node)
 {
-	return GetFloatAttribute(node, PhysicalLightAttributes::shadowsSoftness);
+	return GetFloatAttribute(node, PhysicalLightAttributes::shadowsSoftnessAngle);
 }
 
 MString PhysicalLightAttributes::GetAreaLightMeshSelectedName(const MFnDependencyNode& node)
@@ -367,7 +380,7 @@ void PhysicalLightAttributes::FillPhysicalLightData(PhysicalLightData& physicalL
 	physicalLightData.areaLength = GetAreaLength(node);
 
 	physicalLightData.shadowsEnabled = GetShadowsEnabled(node);
-	physicalLightData.shadowsSoftness = GetShadowsSoftness(node);
+	physicalLightData.shadowsSoftnessAngle = GetShadowsSoftnessAngle(node);
 
 	if (physicalLightData.lightType == PLTArea)
 	{
@@ -379,7 +392,7 @@ void PhysicalLightAttributes::FillPhysicalLightData(PhysicalLightData& physicalL
 			frw::Value frwColor;
 			if (physicalLightData.colorMode == PLCColor)
 			{
-				MPlug plug = MFnDependencyNode(node).findPlug(PhysicalLightAttributes::colorPicker);
+				MPlug plug = MFnDependencyNode(node).findPlug(PhysicalLightAttributes::colorPicker, false);
 				frwColor = scope->GetValue(plug);
 			}
 			else
