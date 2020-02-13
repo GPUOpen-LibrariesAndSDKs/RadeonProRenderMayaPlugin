@@ -174,8 +174,8 @@ global proc exportSceneRPR()
 	if (!checkPluginLoadedRPR())
 		return;
 
-	python("import sys");
-	int $maxIntVal = python("sys.maxint");
+	// Real maximum value that can be set forIntSlider is 0x7FFFFFFF (maximum 32-bit signed int)
+	int $maxIntVal = 0x7FFFFFFF;
 
 	window -title "RPR Scene Export" -width 350 -height 110 exWindow;
 		columnLayout -rowSpacing 5 -adjustableColumn true -columnOffset "left" 10;
