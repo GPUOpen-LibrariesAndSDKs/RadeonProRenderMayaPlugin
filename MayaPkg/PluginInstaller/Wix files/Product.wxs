@@ -165,7 +165,16 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 		<DirectoryRef Id="DOCUMENTS_MAYA">
 			<Component Id="SceneConv" Guid="127BA071-5452-943B-2C8E-ABFE39ED9FD9" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes" KeyPath="yes" />
 		</DirectoryRef>
-		
+
+		<DirectoryRef Id="DR_ARTEFACTS">
+			<Component Id="notices.txt" Guid="FEAB5FA6-9072-4619-AC3F-4D61B82C0571" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes">
+				<RegistryKey Root="HKCU" Key="Software\AMD\RadeonProRender\Maya">
+					<RegistryValue Name="notices" Value="1" Type="integer" KeyPath="yes" />
+				</RegistryKey>
+				<File Id="file_notices.txt" DiskId="1" Hidden="no" ReadOnly="no" TrueType="no" System="no" Vital="yes" Name="notices.txt" Source="..\notices.txt"/>
+			</Component>
+		</DirectoryRef>
+
 		<DirectoryRef Id="DOCUMENTS_MAYA_2018_PREFS_SHELVES">
 			<Component Id="shelf_Radeon_ProRender_2018.mel" Guid="27700FAD-0E12-460D-93B7-E5D65723ED39" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes">
 				<RegistryKey Root="HKCU" Key="Software\AMD\RadeonProRender\Maya">
@@ -189,7 +198,7 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 				<RegistryKey Root="HKCU" Key="Software\AMD\RadeonProRender\Maya">
 					<RegistryValue Name="shelf_Radeon_ProRender_2020" Value="1" Type="integer" KeyPath="yes" />
 				</RegistryKey>
-				<File Id="file_shelf_Radeon_ProRender_2020.mel" DiskId="1" Hidden="no" ReadOnly="no" TrueType="no" System="no" Vital="yes" Name="shelf_Radeon_ProRender.mel" Source="..\..\..\RadeonProRenderMayaPlugin\FireRender.Maya.Src\Shelfs\shelf_Radeon_ProRender.mel" />
+			<File Id="file_shelf_Radeon_ProRender_2020.mel" DiskId="1" Hidden="no" ReadOnly="no" TrueType="no" System="no" Vital="yes" Name="shelf_Radeon_ProRender.mel" Source="..\..\..\RadeonProRenderMayaPlugin\FireRender.Maya.Src\Shelfs\shelf_Radeon_ProRender.mel" />
 			</Component>
 		</DirectoryRef>
 
@@ -210,6 +219,7 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 
 			<Feature Id="RprCore" Title="Radeon ProRender Core" Description="$(var.ProductLongName) Core" Level="1" Absent="disallow" AllowAdvertise="no">
 				<ComponentRef Id="RprCore"/>
+				<ComponentRef Id="notices.txt"/>				
 			</Feature>
 
 			<Feature Id="Product2018" Title="Support Maya 2018" Description="$(var.ProductLongName) 2018" Level="1">
