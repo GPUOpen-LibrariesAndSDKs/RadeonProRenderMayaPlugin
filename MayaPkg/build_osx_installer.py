@@ -92,6 +92,9 @@ for name in ['postinstall', 'uninstall']:
 for name in ['postinstall-checker']:
     shutil.copy(str(support_path / name), str(scripts_files_dist_dir) + str("/postinstall"))
 
+#copy notices.txt
+shutil.copy(str("./notices.txt"), str(dist_dir / "Maya/notices.txt"))
+
 # Build the checker
 
 lib_path_hint = ''
