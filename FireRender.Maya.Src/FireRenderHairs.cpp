@@ -507,23 +507,20 @@ void ProcessOrnatrixTextureCoordinates(
 		display some warning; */
 
 	int channel = 0;
-	Ephere::Ornatrix::IHair::StrandDataType strandDataType = sourceHair->GetTextureCoordinateDataType(channel);
-	if (strandDataType == Ephere::Ornatrix::IHair::PerVertex)
-	{
-		std::vector<Ephere::Ornatrix::TextureCoordinate> coords(currStrandVertexCount);
-		sourceHair->GetTextureCoordinates(
-			channel,
-			firstVertexIndices[currCurveIdx],
-			currStrandVertexCount,
-			coords.data(),
-			Ephere::Ornatrix::IHair::PerVertex);
 
-		// RPR supports only one uv coordinate pair per hair strand! Thus we pass UV of the root point
-		batchData.m_uvCoord.push_back(coords[0].x());
-		batchData.m_uvCoord.push_back(coords[0].y());
-		batchData.m_uvCoord.push_back(coords[1].x());
-		batchData.m_uvCoord.push_back(coords[1].y());
-	}
+	Ephere::Ornatrix::IHair::StrandDataType strandDataType = sourceHair->GetTextureCoordinateDataType(channel);
+
+	std::vector<Ephere::Ornatrix::TextureCoordinate> coords(currStrandVertexCount);
+	sourceHair->GetTextureCoordinates(
+		channel,
+		firstVertexIndices[currCurveIdx],
+		currStrandVertexCount,
+		coords.data(),
+		Ephere::Ornatrix::IHair::PerVertex);
+
+	// RPR supports only one uv coordinate pair per hair strand! Thus we pass UV of the root point
+	batchData.m_uvCoord.push_back(coords[0].x());
+	batchData.m_uvCoord.push_back(coords[0].y());
 }
 
 frw::Curve ProcessCurvesBatch(const std::shared_ptr<Ephere::Plugins::Ornatrix::IHair>& sourceHair, frw::Context currContext)
