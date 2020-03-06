@@ -2,27 +2,27 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <templates>
 	<using package='maya'/>
-	<template name='LERPRIES'>
+	<template name='LERPRSky'>
 		<!-- 
 		Declaration of the attributes that should be visible for this light type in the Light Editor.
 		-->
-		<attribute name='color' type='maya.float3'>
-			<label>Color</label>
+		<attribute name='filterColor' type='maya.float3'>
+			<label>Filter Color</label>
+		</attribute>
+		<attribute name='groundColor' type='maya.float3'>
+			<label>Ground Color</label>
 		</attribute>
 		<attribute name='intensity' type='maya.float'>
 			<label>Intensity</label>
 		</attribute>
-		<attribute name='iesFile' type='maya.string'>
-			<label>IES File</label>
+		<attribute name='turbidity' type='maya.float'>
+			<label>Turbidity</label>
 		</attribute>
-		<attribute name='xRotation' type='maya.float'>
-			<label>X Rotation</label>
+		<attribute name='azimuth' type='maya.float'>
+			<label>Azimuth</label>
 		</attribute>
-		<attribute name='yRotation' type='maya.float'>
-			<label>Y Rotation</label>
-		</attribute>
-		<attribute name='zRotation' type='maya.float'>
-			<label>Z Rotation</label>
+		<attribute name='altitude' type='maya.float'>
+			<label>Altitude</label>
 		</attribute>
 		<!-- 
 		Attributes below are used to specify construction data to the Light Editor.
@@ -30,25 +30,25 @@
 		-->
 		<!-- Custom creation MEL command for creating this light source -->
 		<attribute name='LEcreateCmd' type='maya.string'>
-			<description language="cb">createIESLight</description>
+			<description language="cb">createSkyRPR</description>
 		</attribute>
 		<!-- Custom icon bitmap to be used for button in Light Editor -->
 		<attribute name='LEicon' type='maya.string'>
-			<description language="cb">shelf/IESLight.png</description>
+			<description language="cb">shelf/RPRSky.png</description>
 		</attribute>
 	</template>
-	<view name='LEDefault' template='LERPRIES'>
+	<view name='LEDefault' template='LERPRSky'>
 		<!-- 
 		The template view used by the Light Editor.
 		Should list all the attributes above, including LEcreateCmd and LEicon.
 		-->
 		<description>View used by Light Editor</description>
-		<property name='color'/>
+		<property name='filterColor'/>
 		<property name='intensity'/>
-		<property name='iesFile'/>
-		<property name='xRotation'/>
-		<property name='yRotation'/>
-		<property name='zRotation'/>
+		<property name='groundColor'/>
+		<property name='turbidity'/>
+		<property name='azimuth'/>
+		<property name='altitude'/>
 		<property name='LEcreateCmd'/>
 		<property name='LEicon'/>
 	</view>

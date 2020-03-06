@@ -2,7 +2,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <templates>
 	<using package='maya'/>
-	<template name='LERPRIES'>
+	<template name='LERPRIBL'>
 		<!-- 
 		Declaration of the attributes that should be visible for this light type in the Light Editor.
 		-->
@@ -12,17 +12,11 @@
 		<attribute name='intensity' type='maya.float'>
 			<label>Intensity</label>
 		</attribute>
-		<attribute name='iesFile' type='maya.string'>
-			<label>IES File</label>
+		<attribute name='filePath' type='maya.string'>
+			<label>File Path</label>
 		</attribute>
-		<attribute name='xRotation' type='maya.float'>
-			<label>X Rotation</label>
-		</attribute>
-		<attribute name='yRotation' type='maya.float'>
-			<label>Y Rotation</label>
-		</attribute>
-		<attribute name='zRotation' type='maya.float'>
-			<label>Z Rotation</label>
+		<attribute name='display' type='maya.bool'>
+			<label>Display</label>
 		</attribute>
 		<!-- 
 		Attributes below are used to specify construction data to the Light Editor.
@@ -30,11 +24,11 @@
 		-->
 		<!-- Custom creation MEL command for creating this light source -->
 		<attribute name='LEcreateCmd' type='maya.string'>
-			<description language="cb">createIESLight</description>
+			<description language="cb">createIBLRPR</description>
 		</attribute>
 		<!-- Custom icon bitmap to be used for button in Light Editor -->
 		<attribute name='LEicon' type='maya.string'>
-			<description language="cb">shelf/IESLight.png</description>
+			<description language="cb">shelf/RPRIBL.png</description>
 		</attribute>
 	</template>
 	<view name='LEDefault' template='LERPRIES'>
@@ -45,10 +39,8 @@
 		<description>View used by Light Editor</description>
 		<property name='color'/>
 		<property name='intensity'/>
-		<property name='iesFile'/>
-		<property name='xRotation'/>
-		<property name='yRotation'/>
-		<property name='zRotation'/>
+		<property name='filePath'/>
+		<property name='display'/>
 		<property name='LEcreateCmd'/>
 		<property name='LEicon'/>
 	</view>
