@@ -125,6 +125,8 @@ namespace FireMaya
 		// addAdditionalKeys param means that we need to add additional keys for Rotation, 
 		void addTimesFromCurve(const MFnAnimCurve& curve, TimeKeySet& outUniqueTimeKeySet, int attributeId);
 
+		void addOneTimePoint(const MTime time, const MFnAnimCurve& curve, TimeKeySet& outUniqueTimeKeySet, int attributeId, int keyIndex);
+
 		int getOutputComponentCount(int attrId);
 		inline float getValueForTime(const MPlug& plug, const MFnAnimCurve& curve, const MTime& time);
 		void addAnimationToGLTFRPR(GLTFAnimationDataHolderStruct& gltfDataHolderStruct, int attrId);
