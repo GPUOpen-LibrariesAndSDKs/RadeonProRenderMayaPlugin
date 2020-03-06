@@ -825,6 +825,27 @@ MStatus initializePlugin(MObject obj)
 		CHECK_MSTATUS(status);
 	}
 
+	// Set values to special Maya environmental variables
+	// - path to RPR Templates folder
+#if not defined(__APPLE__) // setenv command doesn't work on MAC; we set enviromental variable value via .mod file instead
+	{
+		MString command =
+			"string $pathToPlugin = `pluginInfo - query - path RadeonProRender`; \n"
+			"string $tail = \"/plug-ins/20XX/RadeonProRender.mll\"; \n"
+			"int $len = size($pathToPlugin); \n"
+			"int $newLen = $len - size($tail); \n"
+			"string $pathToTemplates = `substring $pathToPlugin 1 $newLen`; \n"
+			"$pathToTemplates = $pathToTemplates + \"/scripts/Templates\"; \n"
+			"string $currPathValue =  `getenv MAYA_CUSTOM_TEMPLATE_PATH`; \n"
+			"string $newPathValue = \";\" + $pathToTemplates; \n"
+			"$newPathValue = $currPathValue + $newPathValue; \n"
+			"print $newPathValue; \n"
+			"putenv \"MAYA_CUSTOM_TEMPLATE_PATH\" $newPathValue; \n";
+		status = MGlobal::executeCommandOnIdle(command);
+		CHECK_MSTATUS(status);
+	}
+#endif
+
 	return status;
 }
 
