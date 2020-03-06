@@ -15,6 +15,7 @@
 
 #include <maya/MFnMatrixData.h>
 #include <maya/MPlugArray.h>
+#include <maya/MAnimControl.h>
 
 #include <memory>
 #include <array>
@@ -429,45 +430,62 @@ void GLTFTranslator::addTimesFromCurve(const MFnAnimCurve& curve, TimeKeySet& ou
 {
 	int keyCount = curve.numKeys();
 
+	MTime startTime = MAnimControl::animationStartTime();
+	MTime endTime = MAnimControl::animationEndTime();
+
 	for (int keyIndex = 0; keyIndex < keyCount; ++keyIndex)
 	{
 		MTime time = curve.time(keyIndex);
 
-		TimeKeyStruct timeKey(time, attributeId);
-
-		TimeKeySet::iterator it = outUniqueTimeKeySet.find(timeKey);
-		if (it != outUniqueTimeKeySet.end())
+		if ((time < startTime) || (time > endTime))
 		{
-			it->AddNewAttribute(attributeId);
-		}
-		else
-		{
-			it = outUniqueTimeKeySet.insert(timeKey).first;
+			continue;
 		}
 
-		// if we process rotation attribute we should as translation as well because in some complex rotations translation might be changed as well
-		if (attributeId == RPRGLTF_ANIMATION_MOVEMENTTYPE_ROTATION)
-		{
-			it->AddNewAttribute(RPRGLTF_ANIMATION_MOVEMENTTYPE_TRANSLATION);
-		}
-		
-		// keys autogeneration for rotation
-		if ((attributeId == RPRGLTF_ANIMATION_MOVEMENTTYPE_ROTATION) && (keyIndex > 0))
-		{
-			double maxValue = curve.value(keyIndex);
-			double minValue = curve.value(keyIndex - 1);
+		addOneTimePoint(time, curve, outUniqueTimeKeySet, attributeId, keyIndex);
+	}
 
-			double step = M_PI / 2;
-			double currentValue = minValue + step;
-			MTime prevTime = curve.time(keyIndex - 1);
-			MTime maxTime = time;
-			while (currentValue < maxValue)
-			{
-				MTime additionalTimePoint = prevTime + (maxTime - prevTime) * (currentValue - minValue) / (maxValue - minValue);
-				outUniqueTimeKeySet.insert(TimeKeyStruct(additionalTimePoint, attributeId));
+	// Add auto point for the start and end animation point
+	addOneTimePoint(startTime, curve, outUniqueTimeKeySet, attributeId, 0);
+	addOneTimePoint(endTime, curve, outUniqueTimeKeySet, attributeId, keyCount - 1);
+}
 
-				currentValue += step;
-			}
+void GLTFTranslator::addOneTimePoint(const MTime time, const MFnAnimCurve& curve, TimeKeySet& outUniqueTimeKeySet, int attributeId, int keyIndex)
+{
+	TimeKeyStruct timeKey(time, attributeId);
+
+	TimeKeySet::iterator it = outUniqueTimeKeySet.find(timeKey);
+	if (it != outUniqueTimeKeySet.end())
+	{
+		it->AddNewAttribute(attributeId);
+	}
+	else
+	{
+		it = outUniqueTimeKeySet.insert(timeKey).first;
+	}
+
+	// if we process rotation attribute we should as translation as well because in some complex rotations translation might be changed as well
+	if (attributeId == RPRGLTF_ANIMATION_MOVEMENTTYPE_ROTATION)
+	{
+		it->AddNewAttribute(RPRGLTF_ANIMATION_MOVEMENTTYPE_TRANSLATION);
+	}
+
+	// keys autogeneration for rotation
+	if ((attributeId == RPRGLTF_ANIMATION_MOVEMENTTYPE_ROTATION) && (keyIndex > 0))
+	{
+		double maxValue = curve.value(keyIndex);
+		double minValue = curve.value(keyIndex - 1);
+
+		double step = M_PI / 2;
+		double currentValue = minValue + step;
+		MTime prevTime = curve.time(keyIndex - 1);
+		MTime maxTime = time;
+		while (currentValue < maxValue)
+		{
+			MTime additionalTimePoint = prevTime + (maxTime - prevTime) * (currentValue - minValue) / (maxValue - minValue);
+			outUniqueTimeKeySet.insert(TimeKeyStruct(additionalTimePoint, attributeId));
+
+			currentValue += step;
 		}
 	}
 }
