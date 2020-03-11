@@ -28,6 +28,8 @@ limitations under the License.
 #define kFramesFlagLong "-frames"
 #define kCompressionFlag "-cs"
 #define kCompressionFlagLong "-compress"
+#define kPadding "-p"
+#define kPaddingLong "-padding"
 
 class FireRenderExportCmd : public MPxCommand
 {
