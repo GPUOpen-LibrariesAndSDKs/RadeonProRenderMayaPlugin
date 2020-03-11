@@ -62,6 +62,7 @@ MSyntax FireRenderExportCmd::newSyntax()
 	CHECK_MSTATUS(syntax.addFlag(kAllFlag, kAllFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kFramesFlag, kFramesFlagLong, MSyntax::kBoolean, MSyntax::kLong, MSyntax::kLong, MSyntax::kBoolean));
 	CHECK_MSTATUS(syntax.addFlag(kCompressionFlag, kCompressionFlagLong, MSyntax::kString));
+	CHECK_MSTATUS(syntax.addFlag(kPadding, kPaddingLong, MSyntax::kString, MSyntax::kLong));
 
 	return syntax;
 }
@@ -198,6 +199,18 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			fileName = filePath.substringW(0, fileExtensionIndex - 1);
 		}
 
+		// read file name pattern and padding
+		if (isSequenceExportEnabled && !argData.isFlagSet(kPadding))
+		{
+			MGlobal::displayError("Can't export sequence without setting name pattern and padding!");
+			return MS::kFailure;
+		}
+
+		MString namePattern;
+		argData.getFlagArgument(kPadding, 0, namePattern);
+		unsigned int framePadding = 0;
+		argData.getFlagArgument(kPadding, 1, framePadding);
+
 		// process each frame
 		for (int frame = firstFrame; frame <= lastFrame; ++frame)
 		{
@@ -215,17 +228,17 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			MString newFilePath;
 			if (isSequenceExportEnabled)
 			{
-				std::regex name_regex("\\%s");
-				std::regex frame_regex("\\%([0-9]|10)n");
-				std::regex extension_regex("\\%e");
+				std::regex name_regex("name");
+				std::regex frame_regex("#");
+				std::regex extension_regex("ext");
 
-				std::string pattern = settings.namePattern.asChar();
+				std::string pattern = namePattern.asChar();
 
 				// Replace extension at first, because it shouldn't match name_regex or frame_regex for given .rpr format
 				std::string result = std::regex_replace(pattern, extension_regex, fileExtension.asChar());
 
 				std::stringstream frameStream;
-				frameStream << std::setfill('0') << std::setw(settings.framePadding) << frame;
+				frameStream << std::setfill('0') << std::setw(framePadding) << frame;
 				result = std::regex_replace(result, frame_regex, frameStream.str().c_str());
 
 				// Replace name after all operations, because it could match frame or extension regex
