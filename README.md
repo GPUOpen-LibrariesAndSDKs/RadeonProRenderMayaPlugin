@@ -1,6 +1,6 @@
 # Radeon ProRender Maya Plugin
 
-Development requires Maya 2017 or later.
+Development requires Maya 2018 or later.
 
 Dependencies
 ============
@@ -39,10 +39,20 @@ You need to restart Developer Studio to .
 
 Submodules
 =====================
-Plugin includes several shared source files from Shared Components repository as a submodule. You may need to get an
-access to the https://github.com/Radeon-Pro/RadeonProRenderSharedComponents.
+Plugin includes 4 submodules:
+RadeonProRender SDK:
+git@github.com:Radeon-Pro/RadeonProRenderSDK.git
 
-Shared components submodule is included to the project via SSH protocol. You will need to create and install SSH keys
+Image Processing Library:
+git@github.com:Radeon-Pro/RadeonProImageProcessingSDK.git
+
+Shared Components:
+git@github.com:Radeon-Pro/RadeonProRenderSharedComponents.git
+
+ThirdParty components and miscellaneous tools
+git@github.com:Radeon-Pro/RadeonProRenderThirdPartyComponents.git
+
+All of them are included via SSH protocol. You will need to create and install SSH keys
 to access submodules. OpenSSH can be installed along with Git.
 
 At first you need to generate SSH key pair:
