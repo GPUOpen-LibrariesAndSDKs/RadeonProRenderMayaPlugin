@@ -845,7 +845,6 @@ MStatus initializePlugin(MObject obj)
 			"string $currPathValue =  `getenv MAYA_CUSTOM_TEMPLATE_PATH`; \n"
 			"string $newPathValue = \";\" + $pathToTemplates; \n"
 			"$newPathValue = $currPathValue + $newPathValue; \n"
-			"print $newPathValue; \n"
 			"putenv \"MAYA_CUSTOM_TEMPLATE_PATH\" $newPathValue; \n";
 		status = MGlobal::executeCommandOnIdle(command);
 		CHECK_MSTATUS(status);
