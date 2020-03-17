@@ -374,10 +374,6 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		context.setResolution(settings.width, settings.height, true);
 		context.ConsiderSetupDenoiser();
 
-		// Ensure display gamma correction is enabled for image file output. It
-		// may be disabled initially if it's not set to be applied to Maya views.
-		context.enableDisplayGammaCorrection(globals);
-
 		// Initialize the command port so the
 		// batch process can communicate with Maya.
 		initializeCommandPort(globals.commandPort);

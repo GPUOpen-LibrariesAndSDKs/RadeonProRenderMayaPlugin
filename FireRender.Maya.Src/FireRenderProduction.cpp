@@ -930,10 +930,6 @@ void FireRenderProduction::RenderFullFrame()
 			rcWarningDialog.close();
 	});
 
-	// Ensure display gamma correction is enabled for image file output. It
-	// may be disabled initially if it's not set to be applied to Maya views.
-	m_contextPtr->enableDisplayGammaCorrection(m_globals);
-
 	// _TODO Investigate this, looks like this call is performance waste. Why we need to read all AOVs on every render call ?
 	m_aovs->readFrameBuffers(*m_contextPtr, false);
 
