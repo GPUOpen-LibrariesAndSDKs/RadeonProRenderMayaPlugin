@@ -191,12 +191,6 @@ public:
 	void enableAOV(int aov, bool flag = true);
 	bool isAOVEnabled(int aov);
 
-	/**
-	 * Enable FireRender gamma correction
-	 * by applying the current global value.
-	 */
-	void enableDisplayGammaCorrection(const FireRenderGlobalsData& globals);
-
 	// Set camera
 	void setCamera(MDagPath& cameraPath, bool useNonDefaultCameraType = false);
 
