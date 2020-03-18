@@ -248,12 +248,6 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 	}
 }
 
-void FireRenderContext::enableDisplayGammaCorrection(const FireRenderGlobalsData &globals)
-{
-	RPR_THREAD_ONLY;
-	GetContext().SetParameter(RPR_CONTEXT_DISPLAY_GAMMA, globals.displayGamma);
-}
-
 void FireRenderContext::setCamera(MDagPath& cameraPath, bool useNonDefaultCameraType)
 {
 	MAIN_THREAD_ONLY;
