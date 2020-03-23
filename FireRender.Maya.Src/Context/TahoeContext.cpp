@@ -233,12 +233,6 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_TEXTURE_GAMMA, fireRenderGlobalsData.textureGamma);
 	checkStatus(frstatus);
 
-	// Disable display gamma correction unless it is being applied
-	// to Maya views. It will be always be enabled before file output.
-	auto displayGammaValue = fireRenderGlobalsData.applyGammaToMayaViews ? fireRenderGlobalsData.displayGamma : 1.0f;
-	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_DISPLAY_GAMMA, displayGammaValue);
-	checkStatus(frstatus);
-
 	// Release existing effects
 	if (white_balance)
 	{
@@ -357,7 +351,8 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 		context.Attach(gamma_correction);
 	}
 
-	if (fireRenderGlobalsData.toneMappingWhiteBalanceEnabled && !disableWhiteBalance)
+	bool wbApplied = fireRenderGlobalsData.toneMappingWhiteBalanceEnabled && !disableWhiteBalance;
+	if (wbApplied)
 	{
 		if (!white_balance)
 		{
@@ -368,6 +363,11 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 		white_balance.SetParameter("colorspace", RPR_COLOR_SPACE_SRGB); // check: Max uses Adobe SRGB here
 		white_balance.SetParameter("colortemp", temperature);
 	}
+
+	bool setDisplayGamma = fireRenderGlobalsData.applyGammaToMayaViews || simple_tonemap || tonemap || wbApplied;
+	float displayGammaValue = setDisplayGamma ? fireRenderGlobalsData.displayGamma : 1.0f;
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_DISPLAY_GAMMA, displayGammaValue);
+	checkStatus(frstatus);
 }
 
 bool TahoeContext::needResolve() const
