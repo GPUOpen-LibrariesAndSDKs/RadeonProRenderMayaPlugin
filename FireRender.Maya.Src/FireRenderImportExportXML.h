@@ -50,23 +50,7 @@ public:
 };
 
 ////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////
 
-const bool doesAxfConverterDllExists();
-
-class FireRenderAxfDLLExists : public MPxCommand
-{
-public:
-	FireRenderAxfDLLExists();
-
-	virtual ~FireRenderAxfDLLExists();
-
-	static void* creator();
-
-	static MSyntax  newSyntax();
-
-	MStatus doIt(const MArgList& args);
-};
 
 #define useNewImport
 

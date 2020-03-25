@@ -79,24 +79,12 @@ global proc importMaterialRPR()
 	if (!checkPluginLoadedRPR())
 		return;
 
-
 	int $importImages = importImagesEnabledRPR();
 
-	if (`exists RPRAxfDLLDoesNotExist`)
+	string $filename[] = `fileDialog2 - fileMode 4 - okCaption "Import" -caption "Import Radeon ProRender Material" -fileFilter "XML Material Files (*.xml);;All Files (*.*)"`;
+	for ($i = 0; $i < `size($filename)`; $i++)
 	{
-		string $filename[] = `fileDialog2 - fileMode 4 - okCaption "Import" -caption "Import Radeon ProRender Material" -fileFilter "XML Material Files (*.xml);;All Files (*.*)"`;
-		for ($i = 0; $i < `size($filename)`; $i++)
-		{
-			RPRXMLImport - file $filename[$i];
-		}
-	}
-	else
-	{
-		string $filenameWithAxf[] = `fileDialog2 - fileMode 4 - okCaption "Import" -caption "Import Radeon ProRender and Appearance eXchange Format Material" -fileFilter "XML Material Files (*.xml);;Appearance eXchange Format Material Files (*.axf);;All Files (*.*)"`;
-		for ($i = 0; $i < `size($filenameWithAxf)`; $i++)
-		{
-			RPRXMLImport - file $filenameWithAxf[$i];
-		}
+		RPRXMLImport - file $filename[$i];
 	}
 }
 
