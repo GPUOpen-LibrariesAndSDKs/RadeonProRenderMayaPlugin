@@ -57,8 +57,9 @@ def exportRPRMaterialsXml(data):
 def importRPRMaterialsXml(data):
     basicFilter = "*.xml;;All Files (*.*)"
     filePath = maya.cmds.fileDialog2(fileFilter=basicFilter, dialogStyle=0, fileMode=1)
-    for fileN in filePath :
-        maya.cmds.RPRXMLImport(file=fileN)
+    if (filePath is not None) :
+        for fileN in filePath :
+            maya.cmds.RPRXMLImport(file=fileN)
 
 def showRPRMaterialLibrary(value):
     mel.eval('source shelfCommands.mel; openMaterialLibraryRPR();')

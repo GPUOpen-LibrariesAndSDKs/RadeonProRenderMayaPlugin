@@ -557,10 +557,7 @@ MStatus initializePlugin(MObject obj)
 
 	////
 	CHECK_MSTATUS(plugin.registerCommand(namePrefix + "XMLExport", FireRenderXmlExportCmd::creator, FireRenderXmlExportCmd::newSyntax));
-	//TODO: find a more elegant solution:
-	if (!doesAxfConverterDllExists()) {
-		CHECK_MSTATUS(plugin.registerCommand(namePrefix + "AxfDLLDoesNotExist", FireRenderAxfDLLExists::creator, FireRenderAxfDLLExists::newSyntax));
-	}
+
 	CHECK_MSTATUS(plugin.registerCommand(namePrefix + "XMLImport", FireRenderXmlImportCmd::creator, FireRenderXmlImportCmd::newSyntax));
 	////
 

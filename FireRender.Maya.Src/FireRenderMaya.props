@@ -5,7 +5,7 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>.;..\RadeonProRenderSDK\RadeonProRender\inc;..\RadeonProRenderSDK\RadeonProRender\rprTools;..\ThirdParty\glew\include;..\ThirdParty\oiio\include;..\ThirdParty\AxfPackage\AxfInclude\;..\ThirdParty\AxfPackage\include\;..\ThirdParty\json\include\;..\FireRender.Components\cpp\;Lights\PhysicalLight\;..\FireRender.Components\cpp\ImageFilter\;..\RadeonProImageProcessingSDK\radeonimagefilters-1.4.3-2839b0-Windows-rel\include\;..\ThirdParty\aws\Win\include\;..\ThirdParty\Ornatrix SDK\;..\ThirdParty\Ornatrix SDK\Ephere\</AdditionalIncludeDirectories>    <PreprocessorDefinitions>MAYA_PLUGIN;GL_INTEROP;WIN32;_WINDOWS;_USRDLL;NT_PLUGIN;_HAS_ITERATOR_DEBUGGING=0;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;__TBB_LIB_NAME=tbb.lib;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;..\RadeonProRenderSDK\RadeonProRender\inc;..\RadeonProRenderSDK\RadeonProRender\rprTools;..\ThirdParty\glew\include;..\ThirdParty\oiio\include;..\ThirdParty\json\include\;..\FireRender.Components\cpp\;Lights\PhysicalLight\;..\FireRender.Components\cpp\ImageFilter\;..\RadeonProImageProcessingSDK\radeonimagefilters-1.4.3-2839b0-Windows-rel\include\;..\ThirdParty\aws\Win\include\;..\ThirdParty\Ornatrix SDK\;..\ThirdParty\Ornatrix SDK\Ephere\</AdditionalIncludeDirectories>    <PreprocessorDefinitions>MAYA_PLUGIN;GL_INTEROP;WIN32;_WINDOWS;_USRDLL;NT_PLUGIN;_HAS_ITERATOR_DEBUGGING=0;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;__TBB_LIB_NAME=tbb.lib;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>..\ThirdParty\glew\lib\x64;..\ThirdParty\oiio\lib;..\RadeonProRenderSDK\RadeonProRender\libWin64;..\RadeonProImageProcessingSDK\radeonimagefilters-1.4.3-2839b0-Windows-rel\bin\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
@@ -47,9 +47,6 @@ IF EXIST "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)\prefs\shelves\" COPY $
 
 IF EXIST "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)-x64\prefs\shelves" COPY $(ProjectDir)\Shelfs\* "%USERPROFILE%\Documents\maya\$(FR_MAYA_VERSION)-x64\prefs\shelves\" /Y
 
-
-COPY $(SolutionDir)ThirdParty\AxfPackage\ReleaseDll\AxfDll\*.dll $(SolutionDir)dist\bin\ /Y
-COPY $(SolutionDir)ThirdParty\AxfPackage\ReleaseDll\AxfDll\*.def $(SolutionDir)dist\bin\ /Y
 
 </Command>
     </PostBuildEvent>

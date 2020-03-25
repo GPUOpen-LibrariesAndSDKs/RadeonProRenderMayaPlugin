@@ -284,68 +284,6 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 
 
 ////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////
-
-#if defined(LINUX) || defined(OSMac_)
-#else
-extern "C" {
-#include "AxfConverterDll.h"
-}
-
-#pragma comment (lib, "../ThirdParty/AxfPackage/ReleaseDll/AxfLib/AxFDecoding_r.lib")
-#pragma comment (lib, "../ThirdParty/AxfPackage/ReleaseDll/AxfLib/FreeImage.lib")
-#pragma comment (lib, "../ThirdParty/AxfPackage/ReleaseDll/AxfLib/libboost_filesystem-vc140-mt-1_62.lib")
-#pragma comment (lib, "../ThirdParty/AxfPackage/ReleaseDll/AxfLib/libboost_program_options-vc140-mt-1_62.lib")
-#pragma comment (lib, "../ThirdParty/AxfPackage/ReleaseDll/AxfLib/libboost_regex-vc140-mt-1_62.lib")
-#pragma comment (lib, "../ThirdParty/AxfPackage/ReleaseDll/AxfLib/libboost_system-vc140-mt-1_62.lib")
-
-#endif
-
-const bool doesAxfConverterDllExists() {
-#if defined(LINUX) || defined(OSMac_)
-	return false;
-#else
-
-	HINSTANCE hGetProcIDDLL = LoadLibrary(_T("AxfConverter.dll"));
-
-	if (hGetProcIDDLL)
-	{
-		FreeLibrary(hGetProcIDDLL);
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-#endif
-}
-
-FireRenderAxfDLLExists::FireRenderAxfDLLExists()
-{
-}
-
-FireRenderAxfDLLExists::~FireRenderAxfDLLExists()
-{
-}
-
-void * FireRenderAxfDLLExists::creator()
-{
-	return new FireRenderAxfDLLExists;
-}
-
-MSyntax FireRenderAxfDLLExists::newSyntax()
-{
-	MStatus status;
-	MSyntax syntax;
-
-	CHECK_MSTATUS(syntax.addFlag(kAllFlag, kAllFlagLong, MSyntax::kNoArg));
-
-	return syntax;
-}
-
-MStatus FireRenderAxfDLLExists::doIt(const MArgList& args) {
-	return MS::kSuccess;
-}
 
 FireRenderXmlImportCmd::FireRenderXmlImportCmd()
 	: m_importImages(false)
