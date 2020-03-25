@@ -149,13 +149,15 @@ global proc launchSceneExport()
 	string $selectedOption = `optionMenu -query -value compressionOption`;
 	string $namePattern = `optionMenu -query -value frameExtentionOption`;
 	int $framePadding = `getAttr defaultRenderGlobals.extensionPadding`;
+	string $selectedCam = `optionMenu -query -value selectedCamera`;
 
 	fireRenderExport 
 		-scene 
 		-file $result 
 		-frames $isSqExEnabled $firstFrameIdx $lastFrameIdx $isSingleFileEnabled 
 		-compress $selectedOption
-		-padding $namePattern $framePadding;
+		-padding $namePattern $framePadding
+		-camera $selectedCam;
 
 	deleteUI exWindow;
 }
@@ -282,12 +284,29 @@ global proc exportSceneRPR()
 				-label "Level 1";
             menuItem 
 				-label "Level 2";
-            menuItem -
-				label "Level 3";
+            menuItem
+				-label "Level 3";
 				
             optionMenu -e 
 				-value "Level 1" 
 				compressionOption;
+
+			optionMenu 
+				-label "Select Camera" 
+				selectedCamera;
+
+				$layers = `ls -type "renderLayer"`;
+				for( $layer in $layers )
+				{
+					editRenderLayerGlobals -currentRenderLayer $layer;     
+					string $camerasShapes[] = `ls -type camera`;
+					string $cameras[] = `listRelatives -p $camerasShapes`;
+					for ($camera in $cameras)
+					{
+						menuItem 
+							-label $camera;
+					}
+				}
 
 			columnLayout -columnOffset "left" 120;
 				button -label "Launch Export" -command "launchSceneExport";

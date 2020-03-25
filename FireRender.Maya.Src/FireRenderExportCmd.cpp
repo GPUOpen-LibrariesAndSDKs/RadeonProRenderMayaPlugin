@@ -63,6 +63,7 @@ MSyntax FireRenderExportCmd::newSyntax()
 	CHECK_MSTATUS(syntax.addFlag(kFramesFlag, kFramesFlagLong, MSyntax::kBoolean, MSyntax::kLong, MSyntax::kLong, MSyntax::kBoolean));
 	CHECK_MSTATUS(syntax.addFlag(kCompressionFlag, kCompressionFlagLong, MSyntax::kString));
 	CHECK_MSTATUS(syntax.addFlag(kPadding, kPaddingLong, MSyntax::kString, MSyntax::kLong));
+	CHECK_MSTATUS(syntax.addFlag(kSelectedCamera, kSelectedCameraLong, MSyntax::kString));
 
 	return syntax;
 }
@@ -163,8 +164,9 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		context.ConsiderSetupDenoiser();
 
 		MDagPathArray cameras = getRenderableCameras();
+		unsigned int countCameras = cameras.length();
 
-		if (cameras.length() == 0)
+		if (countCameras == 0)
 		{
 			MGlobal::displayError("Renderable cameras haven't been found! Using default camera!");
 
@@ -174,7 +176,28 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		}
 		else  // (cameras.length() >= 1)
 		{
-			context.setCamera(cameras[0], true);
+			MString selectedCameraName;
+			MStatus res = argData.getFlagArgument(kSelectedCamera, 0, selectedCameraName);
+			if (res != MStatus::kSuccess)
+			{
+				context.setCamera(cameras[0], true);
+			}
+			else
+			{
+				unsigned int selectedCameraIdx = 0;
+				context.setCamera(cameras[selectedCameraIdx], true);
+
+				for (; selectedCameraIdx < countCameras; ++selectedCameraIdx)
+				{
+					MDagPath& cameraPath = cameras[selectedCameraIdx];
+					MString cameraName = getNameByDagPath(cameraPath);
+					if (std::string(selectedCameraName.asChar()).find(std::string(cameraName.asChar())) != std::string::npos)
+					{
+						context.setCamera(cameras[selectedCameraIdx], true);
+						break;
+					}
+				}
+			}
 		}
 
 		// setup frame ranges
