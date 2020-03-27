@@ -117,6 +117,8 @@ namespace FireMaya
 
 	void FillLightData(PhysicalLightData& physicalLightData, const MObject& object, Scope& scope);
 
+	void CalculateMotionBlurParams(const MFnDependencyNode& nodeFn, const MMatrix& inMatrix, MVector& outLinearMotion, MVector& outAngularMotion, double& outRotationAngle);
+
 	template<typename T,
 		// Enable this function for floating point types only
 		class = std::enable_if_t<std::is_floating_point<T>::value>>

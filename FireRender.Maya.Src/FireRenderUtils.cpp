@@ -100,6 +100,7 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	toneMappingSimpleContrast(1.0f),
 	toneMappingSimpleTonemap(true),
 	motionBlur(false),
+	cameraMotionBlur(false),
 	motionBlurCameraExposure(0.0f),
 	tileRenderingEnabled(false),
 	tileSizeX(0),
@@ -381,6 +382,14 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			motionBlur = plug.asBool();
 
+		plug = frGlobalsNode.findPlug("cameraMotionBlur");
+		if (!plug.isNull())
+			cameraMotionBlur = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("motionBlurViewport");
+		if (!plug.isNull())
+			viewportMotionBlur = plug.asBool();
+		
 		plug = frGlobalsNode.findPlug("motionBlurCameraExposure");
 		if (!plug.isNull())
 			motionBlurCameraExposure = plug.asFloat();
@@ -535,6 +544,15 @@ bool FireRenderGlobalsData::isDenoiser(MString name)
 	}
 
 	return false;
+}
+
+bool FireRenderGlobalsData::IsMotionBlur(MString name)
+{
+	name = GetPropertyNameFromPlugName(name);
+
+	static const std::set<std::string> propNames { "motionBlur", "cameraMotionBlur", "motionBlurCameraExposure", "viewportMotionBlur"};
+
+	return propNames.find(name.asChar()) != propNames.end();
 }
 
 void FireRenderGlobalsData::getCPUThreadSetup(bool& overriden, int& cpuThreadCount, RenderType renderType)

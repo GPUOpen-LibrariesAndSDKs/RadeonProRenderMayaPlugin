@@ -162,7 +162,8 @@ public:
 	void cleanSceneAsync(std::shared_ptr<FireRenderContext> refToKeepAlive);
 
 	// Setup the motion blur
-	void setMotionBlur(bool doBlur);
+	void updateMotionBlurParameters(const FireRenderGlobalsData& globalData);
+	void setMotionBlurParameters(const FireRenderGlobalsData& globalData);
 
 	/** Return true if the render is interactive (Viewport or IPR). */
 	bool isInteractive() const;
@@ -453,6 +454,7 @@ public:
 
 	// Check if motion blur is active
 	bool motionBlur() const;
+	bool cameraMotionBlur() const;
 
 	// Getting camera exposure for motion blur
 	float motionBlurCameraExposure() const;
@@ -644,6 +646,11 @@ private:
 
 	// Motion blur flag
 	bool m_motionBlur;
+
+	// Camera motion blur flag
+	bool m_cameraMotionBlur;
+
+	bool m_viewportMotionBlur;
 
 	// Motion blur camera exposure
 	float m_motionBlurCameraExposure;

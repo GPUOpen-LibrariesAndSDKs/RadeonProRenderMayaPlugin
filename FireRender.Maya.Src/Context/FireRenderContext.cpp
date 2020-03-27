@@ -90,6 +90,9 @@ FireRenderContext::FireRenderContext() :
 	m_height(0),
 	m_useRegion(false),
 	m_motionBlur(false),
+	m_cameraMotionBlur(false),
+	m_viewportMotionBlur(false),
+	m_motionBlurCameraExposure(0.0f),
 	m_cameraAttributeChanged(false),
 	m_startTime(0),
 	m_samplesPerUpdate(1),
@@ -348,7 +351,7 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 		updateLimitsFromGlobalData(m_globals);
 		setupContext(m_globals);
 
-		setMotionBlur(m_globals.motionBlur);
+		setMotionBlurParameters(m_globals);
 
 		// Update render selected objects only flag
 		int isRenderSelectedOnly = 0;
@@ -1808,7 +1811,7 @@ void FireRenderContext::updateFromGlobals(bool applyLock)
 	setupContext(m_globals);
 
 	updateLimitsFromGlobalData(m_globals);
-	setMotionBlur(m_globals.motionBlur);
+	updateMotionBlurParameters(m_globals);
 
 	m_camera.setType(m_globals.cameraType);
 
@@ -1847,7 +1850,7 @@ void FireRenderContext::updateRenderLayers()
 	m_renderLayersChanged = false;
 }
 
-
+// TODO Need to be refactored in a more flexible way
 void FireRenderContext::globalsChangedCallback(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
 {
 	MAIN_THREAD_ONLY
@@ -1858,15 +1861,22 @@ void FireRenderContext::globalsChangedCallback(MNodeMessage::AttributeMessage ms
 	{
 		AutoMutexLock lock(frContext->m_dirtyMutex);
 
+		bool restartRender = false;
 		if (FireRenderGlobalsData::isTonemapping(plug.name()))
 		{
 			frContext->m_tonemappingChanged = true;
+			restartRender = true;
 		}
 		else
 		{
 			if (FireRenderGlobalsData::isDenoiser(plug.name()))
 			{
 				frContext->m_denoiserChanged = true;
+				restartRender = true;
+			}
+			else if (FireRenderGlobalsData::IsMotionBlur(plug.name()))
+			{
+				restartRender = true;
 			}
 
 			RenderType renderType = frContext->GetRenderType();
@@ -1881,25 +1891,80 @@ void FireRenderContext::globalsChangedCallback(MNodeMessage::AttributeMessage ms
 			frContext->m_globalsChanged = true;
 
 			frContext->setDirty();
+
+			if (restartRender)
+			{
+				frContext->m_restartRender = restartRender;
+			}
 		}
 	}
 }
 
-void FireRenderContext::setMotionBlur(bool doBlur)
+void FireRenderContext::updateMotionBlurParameters(const FireRenderGlobalsData& globalData)
 {
 	RPR_THREAD_ONLY;
 
-	if (m_motionBlur == doBlur)
-		return;
+	bool updateMeshes = false;
+	bool updateCamera = false;
 
-	m_motionBlur = doBlur;
-	m_motionBlurCameraExposure = m_globals.motionBlurCameraExposure;
-
-	for (const auto& it : m_sceneObjects)
+	// Here is logic about proper update only necessary objects depending of type of Context
+	if (isInteractive())
 	{
-		if (auto frMesh = dynamic_cast<FireRenderMesh*>(it.second.get()))
-			frMesh->setDirty();
+		if (m_viewportMotionBlur != globalData.viewportMotionBlur)
+		{
+			updateMeshes = true;
+			updateCamera = true;
+		}
 	}
+	else
+	{
+		if (m_motionBlur == false && globalData.motionBlur == false)
+		{
+			return;
+		}
+
+		if (m_motionBlur != globalData.motionBlur)
+		{
+			updateMeshes = true;
+			updateCamera = true;
+		}
+
+		if (m_cameraMotionBlur != m_globals.cameraMotionBlur)
+		{
+			updateCamera = true;
+		}
+	}
+
+	if (m_motionBlurCameraExposure != m_globals.motionBlurCameraExposure)
+	{
+		updateCamera = true;
+	}
+
+	if (updateMeshes)
+	{
+		for (const auto& it : m_sceneObjects)
+		{
+			if (auto frMesh = dynamic_cast<FireRenderMesh*>(it.second.get()))
+			{
+				frMesh->setDirty();
+			}
+		}
+	}
+
+	if (updateCamera)
+	{
+		m_camera.setDirty();
+	}
+
+	setMotionBlurParameters(globalData);
+}
+
+void FireRenderContext::setMotionBlurParameters(const FireRenderGlobalsData& globalData)
+{
+	m_motionBlur = globalData.motionBlur;
+	m_cameraMotionBlur = m_globals.cameraMotionBlur;
+	m_motionBlurCameraExposure = m_globals.motionBlurCameraExposure;
+	m_viewportMotionBlur = globalData.viewportMotionBlur;
 }
 
 bool FireRenderContext::isInteractive() const
@@ -2339,7 +2404,12 @@ bool FireRenderContext::renderSelectedObjectsOnly() const
 
 bool FireRenderContext::motionBlur() const
 {
-	return m_motionBlur;
+	return !isInteractive() ? m_motionBlur : m_viewportMotionBlur;
+}
+
+bool FireRenderContext::cameraMotionBlur() const
+{
+	return !isInteractive() ? m_cameraMotionBlur : m_viewportMotionBlur;
 }
 
 float FireRenderContext::motionBlurCameraExposure() const

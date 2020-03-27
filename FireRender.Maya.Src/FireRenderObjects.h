@@ -216,6 +216,7 @@ public:
 	MDagPath DagPath();
 	unsigned int Instance() const { return m.instance; }
 
+	virtual MMatrix GetSelfTransform();
 
 	// Record the state of a portal
 	// node before it is used as a portal.
@@ -324,7 +325,6 @@ public:
 
 protected:
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;
-	virtual MMatrix GetSelfTransform();
 	void SaveUsedUV(const MObject& meshNode);
 
 	struct

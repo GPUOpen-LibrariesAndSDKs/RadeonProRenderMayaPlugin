@@ -90,6 +90,7 @@ namespace
 		MObject toneMappingWhiteBalanceValue;
 
 		MObject motionBlur;
+		MObject cameraMotionBlur;
 		MObject motionBlurCameraExposure;
 		MObject cameraType;
 
@@ -395,6 +396,9 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::motionBlur = nAttr.create("motionBlur", "mblr", MFnNumericData::kBoolean, 0, &status);
 	MAKE_INPUT(nAttr);
 
+	Attribute::cameraMotionBlur = nAttr.create("cameraMotionBlur", "cmb", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+
 	Attribute::motionBlurCameraExposure = nAttr.create("motionBlurCameraExposure", "mbce", MFnNumericData::kFloat, 0.1f, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0.0);
@@ -442,6 +446,7 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::sky));
 	CHECK_MSTATUS(addAttribute(Attribute::commandPort));
 	CHECK_MSTATUS(addAttribute(Attribute::motionBlur));
+	CHECK_MSTATUS(addAttribute(Attribute::cameraMotionBlur));
 	CHECK_MSTATUS(addAttribute(Attribute::motionBlurCameraExposure));
 
 	CHECK_MSTATUS(addAttribute(Attribute::applyGammaToMayaViews));

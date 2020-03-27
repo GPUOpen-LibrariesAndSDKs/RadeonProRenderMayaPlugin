@@ -73,13 +73,19 @@ global proc createFireRenderMotionBlurFrame(string $parent)
 
 	attrControlGrp
 		 -label "Enable"
-		 -attribute "RadeonProRenderGlobals.motionBlur";
+		 -attribute "RadeonProRenderGlobals.motionBlur"
+		 -changeCommand "onUpdateMotionBlur";
+	attrControlGrp
+		 -label "Camera Motion Blur"
+		 -attribute "RadeonProRenderGlobals.cameraMotionBlur" cameraMotionBlur;
 	attrControlGrp
 		 -label "Camera Exposure"
-		 -attribute "RadeonProRenderGlobals.motionBlurCameraExposure";
+		 -attribute "RadeonProRenderGlobals.motionBlurCameraExposure" cameraExposure;
 
 	setParent ..;
 	setUITemplate -popTemplate;
+
+	onUpdateMotionBlur();
 }
 
 global proc createFireRenderDenoiserFrame(string $parent)
@@ -528,4 +534,11 @@ global proc onFireRenderEffectsSelected()
 	{
 		menuItem -edit -enable 1 RPR_MLItem;
 	}
+}
+
+global proc onUpdateMotionBlur()
+{
+	$enabled = `getAttr RadeonProRenderGlobals.motionBlur`;
+
+	attrControlGrp -edit -enable $enabled cameraMotionBlur;
 }
