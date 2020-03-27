@@ -391,7 +391,7 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		}
 
 		// Get the list of cameras to render frames for.
-		MDagPathArray renderableCameras = getRenderableCameras();
+		MDagPathArray renderableCameras = GetSceneCameras(true);
 
 		// Process each render-able camera.
 		for (MDagPath camera : renderableCameras)

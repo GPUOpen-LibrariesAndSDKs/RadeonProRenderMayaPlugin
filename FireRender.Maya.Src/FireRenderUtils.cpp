@@ -1353,12 +1353,14 @@ MDagPath getDefaultCamera()
 	return result;
 }
 
-MDagPathArray getRenderableCameras()
+MDagPathArray GetSceneCameras(bool renderableOnly /*= false*/)
 {
 	MDagPathArray cameras;
 	MStatus status;
+
 	MItDag itDag(MItDag::kDepthFirst, MFn::kCamera, &status);
-	if (MStatus::kFailure == status) {
+	if (MStatus::kFailure == status) 
+	{
 		MGlobal::displayError("MItDag::MItDag");
 		return cameras;
 	}
@@ -1367,25 +1369,30 @@ MDagPathArray getRenderableCameras()
 	{
 		MDagPath dagPath;
 		status = itDag.getPath(dagPath);
-		if (MStatus::kSuccess != status) {
+
+		if (MStatus::kSuccess != status) 
+		{
 			MGlobal::displayError("MDagPath::getPath");
-			return cameras;
+			continue;
 		}
 
-		MFnDependencyNode camFn(dagPath.node());
-		bool renderable = false;
-		MPlug renderablePlug = camFn.findPlug("renderable");
-		if (!renderablePlug.isNull())
+		if (renderableOnly)
 		{
-			renderablePlug.getValue(renderable);
+			MFnDependencyNode camFn(dagPath.node());
+			bool renderable = false;
+			MPlug renderablePlug = camFn.findPlug("renderable");
+			if (!renderablePlug.isNull())
+			{
+				renderablePlug.getValue(renderable);
+			}
+
+			if (!renderable)
+				continue;
 		}
 
-		if (renderable)
-		{
-			cameras.append(dagPath);
-		}
-
+		cameras.append(dagPath);
 	}
+
 	return cameras;
 }
 
