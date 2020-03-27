@@ -370,8 +370,9 @@ MObject getDisplacementShader(MObject& shadingEngine);
 MObjectArray GetShadingEngines(MFnDagNode& node, uint instance);
 int GetFaceMaterials(MFnMesh& mesh, MIntArray& faceList);
 
-// Get render-able cameras
-MDagPathArray getRenderableCameras();
+// Get All Cameras
+// - renderableOnly - Get only render-able cameras
+MDagPathArray GetSceneCameras(bool renderableOnly = false);
 
 // get shape name by dag path
 MString getNameByDagPath(const MDagPath& cameraPath);

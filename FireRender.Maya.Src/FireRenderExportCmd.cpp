@@ -163,7 +163,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		context.setResolution(settings.width, settings.height, true);
 		context.ConsiderSetupDenoiser();
 
-		MDagPathArray cameras = getRenderableCameras();
+		MDagPathArray cameras = GetSceneCameras();
 		unsigned int countCameras = cameras.length();
 
 		if (countCameras == 0)
@@ -326,7 +326,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		context.setCallbackCreationDisabled(true);
 		context.buildScene();
 
-		MDagPathArray cameras = getRenderableCameras();
+		MDagPathArray cameras = GetSceneCameras(true);
 		if ( cameras.length() >= 1 )
 		{
 			context.setCamera(cameras[0]);

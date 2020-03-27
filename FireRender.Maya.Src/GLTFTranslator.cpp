@@ -78,7 +78,7 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 
 	MStatus status;
 
-	MDagPathArray renderableCameras = getRenderableCameras();
+	MDagPathArray renderableCameras = GetSceneCameras(true);
 	if (renderableCameras.length() == 0)
 	{
 		MGlobal::displayError("No renderable cameras! Please setup at least one to be exported in GLTF!");
