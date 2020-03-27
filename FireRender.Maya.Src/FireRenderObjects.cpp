@@ -58,10 +58,6 @@ limitations under the License.
 #include <maya/MUuid.h>
 #include "Lights/PhysicalLight/PhysicalLightAttributes.h"
 
-#ifndef PI
-#define PI 3.14159265358979323846
-#endif
-
 FireRenderObject::FireRenderObject(FireRenderContext* context, const MObject& ob)
 {
 	m.context = context;
@@ -176,6 +172,28 @@ HashValue FireRenderNode::CalculateHash()
 		hash << dagPath.inclusiveMatrix();
 	}
 	return hash;
+}
+
+void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
+{
+	FireRenderObject::OnPlugDirty(node, plug);
+
+	MString partialShortName = plug.partialName();
+	if (partialShortName == "fruuid")
+		return;
+
+	setDirty();
+}
+
+void FireRenderNode::OnWorldMatrixChanged()
+{
+	m_bIsTransformChanged = true;
+	setDirty();
+}
+
+MMatrix FireRenderNode::GetSelfTransform()
+{
+	return DagPath().inclusiveMatrix();
 }
 
 HashValue GetHashValue(const MPlug& plug)
@@ -1348,11 +1366,6 @@ bool FireRenderMesh::IsMeshVisible(const MDagPath& meshPath, const FireRenderCon
 	return isVisible;
 }
 
-MMatrix FireRenderMesh::GetSelfTransform()
-{
-	return DagPath().inclusiveMatrix();
-}
-
 void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 {
 	FireRenderContext* context = this->context();
@@ -1436,8 +1449,7 @@ void FireRenderMesh::RebuildTransforms()
 	auto meshPath = DagPath();
 
 	MMatrix matrix = GetSelfTransform();
-	MMatrix nextFrameMatrix = matrix;
-
+	
 	// convert Maya mesh in cm to m
 	MMatrix scaleM;
 	scaleM.setToIdentity();
@@ -1450,45 +1462,18 @@ void FireRenderMesh::RebuildTransforms()
 	MVector rotationAxis(1, 0, 0);
 	double rotationAngle = 0.0;
 
-	MTime nextTime = MAnimControl::currentTime();
-	MTime minTime = MAnimControl::minTime();
+	// Checking of MotionBlur parameter in RenderStats group of mesh
+	bool objectMotionBlur = true;
+	MPlug objectMBPlug = meshFn.findPlug("motionBlur");
 
-	if (context()->motionBlur() && (nextTime != minTime))
+	if (!objectMBPlug.isNull())
 	{
-		nextTime--;
-		MDGContext dgcontext(nextTime);
-		MObject val;
-		MFnDependencyNode nodeFn(meshPath.node());
-		MPlug matrixPlug = nodeFn.findPlug("worldMatrix");
-		matrixPlug = matrixPlug.elementByLogicalIndex(0);
-		matrixPlug.getValue(val, dgcontext);
-		nextFrameMatrix = MFnMatrixData(val).matrix();
-		if (nextFrameMatrix != matrix)
-		{
-			MTime time = MAnimControl::currentTime();
-			MTime t2 = MTime(1.0, time.unit());
-			float timeMultiplier = (float) (1.0f / t2.asUnits(MTime::kSeconds));
+		objectMotionBlur = objectMBPlug.asBool();
+	}
 
-			MMatrix nextMatrix = nextFrameMatrix;
-			nextMatrix *= scaleM;
-
-			// get linear motion
-			linearMotion = MVector(nextMatrix[3][0] - matrix[3][0], nextMatrix[3][1] - matrix[3][1], nextMatrix[3][2] - matrix[3][2]);
-			linearMotion *= timeMultiplier;
-
-			MTransformationMatrix transformationMatrix(matrix);
-			MQuaternion currentRotation = transformationMatrix.rotation();
-
-			MTransformationMatrix transformationMatrixNext(nextMatrix);
-			MQuaternion nextRotation = transformationMatrixNext.rotation();
-
-			MQuaternion dispRotation = nextRotation * currentRotation.inverse();
-
-			dispRotation.getAxisAngle(rotationAxis, rotationAngle);
-			if (rotationAngle > PI)
-				rotationAngle -= 2 * PI;
-			rotationAngle *= timeMultiplier;
-		}
+	if (context()->motionBlur() && objectMotionBlur)
+	{
+		FireMaya::CalculateMotionBlurParams(meshFn, GetSelfTransform(), linearMotion, rotationAxis, rotationAngle);
 	}
 
 	for (auto& element : m.elements)
@@ -1516,12 +1501,6 @@ void FireRenderMesh::OnNodeDirty()
 	setDirty();
 }
 
-void FireRenderNode::OnWorldMatrixChanged()
-{
-	m_bIsTransformChanged = true;
-	setDirty();
-}
-
 void FireRenderMesh::OnShaderDirty()
 {
 	m.changed.shader = true;
@@ -1546,17 +1525,6 @@ unsigned int FireRenderMesh::GetAssignedUVMapIdx(const MString& textureFile) con
 		return -1;
 
 	return it->second;
-}
-
-void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
-{
-	FireRenderObject::OnPlugDirty(node, plug);
-
-	MString partialShortName = plug.partialName();
-	if (partialShortName == "fruuid")
-		return;
-
-	setDirty();
 }
 
 void FireRenderMesh::Freshen()
@@ -2119,6 +2087,20 @@ void FireRenderCamera::Freshen()
 		{
 			rprCameraSetExposure(m_camera.Handle(), context()->motionBlurCameraExposure());
 		}
+
+		bool cameraMotionBlur = context()->cameraMotionBlur() && context()->motionBlur();
+
+		MVector linearVector = MVector(0, 0, 0);
+		MVector angularVector = MVector(1, 0, 0);
+		double rotationAngle = 0.0;
+
+		if (cameraMotionBlur)
+		{
+			FireMaya::CalculateMotionBlurParams(dagNode, GetSelfTransform(), linearVector, angularVector, rotationAngle);
+		}
+
+		m_camera.SetLinearMotion((float) linearVector.x, (float) linearVector.y, (float) linearVector.z);
+		m_camera.SetAngularMotion((float) angularVector.x, (float) angularVector.y, (float) angularVector.z, (float) rotationAngle);
 	}
 	else
 	{

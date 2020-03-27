@@ -39,6 +39,10 @@ limitations under the License.
 #include <functional>
 #include <float.h>
 
+#ifndef PI
+#define PI 3.14159265358979323846
+#endif
+
 // FireRenderGlobals
 // Utility class used to read attributes form the render global node
 // and configure the rpr_context
@@ -162,6 +166,8 @@ public:
 	// Checks if name is one of the options are denoiser options
 	static bool isDenoiser(MString name);
 
+	static bool IsMotionBlur(MString name);
+
 	static void getCPUThreadSetup(bool& overriden, int& cpuThreadCount, RenderType renderType);
 	static int getThumbnailIterCount();
 	static bool isExrMultichannelEnabled(void);
@@ -263,6 +269,8 @@ public:
 
 	// Motion blur
 	bool motionBlur;
+	bool cameraMotionBlur;
+	bool viewportMotionBlur;
 	float motionBlurCameraExposure;
 
 	// Camera type.

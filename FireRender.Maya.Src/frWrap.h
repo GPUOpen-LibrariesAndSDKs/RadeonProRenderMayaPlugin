@@ -1374,6 +1374,35 @@ namespace frw
 
 			data().m_mode = mode;
 		}
+
+		void SetLinearMotion(float x, float y, float z)
+		{
+			auto res = rprCameraSetLinearMotion(Handle(), x, y, z);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
+		void SetAngularMotion(float x, float y, float z, float w)
+		{
+			auto res = rprCameraSetAngularMotion(Handle(), x, y, z, w);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
 	};
 
 	class Volume : public Object

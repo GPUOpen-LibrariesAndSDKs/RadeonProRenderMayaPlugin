@@ -31,6 +31,7 @@ limitations under the License.
 #include <maya/MQuaternion.h>
 #include <maya/MAnimControl.h>
 #include <maya/MEulerRotation.h>
+#include <maya/MFnMatrixData.h>
 
 
 #include <functional>
@@ -269,8 +270,62 @@ namespace FireMaya
 
 		// set rpr name
 		frw_camera.SetName(fnCamera.name().asChar());
-
+		
 		return true;
+	}
+
+	void CalculateMotionBlurParams(const MFnDependencyNode& nodeFn, const MMatrix& inMatrix, MVector& outLinearMotion, MVector& outAngularMotion, double& outRotationAngle)
+	{
+		// convert Maya mesh in cm to m
+		MMatrix scaleM;
+		scaleM.setToIdentity();
+		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+		MMatrix matrix = inMatrix;
+		matrix *= scaleM;
+
+		MTime nextTime = MAnimControl::currentTime();
+		MTime minTime = MAnimControl::minTime();
+
+		if ((nextTime != minTime))
+		{
+			nextTime--;
+			MDGContext dgcontext(nextTime);
+			MObject val;
+			MPlug matrixPlug = nodeFn.findPlug("worldMatrix");
+			matrixPlug = matrixPlug.elementByLogicalIndex(0);
+			matrixPlug.getValue(val, dgcontext);
+			MMatrix nextFrameMatrix = MFnMatrixData(val).matrix();
+			if (nextFrameMatrix != matrix)
+			{
+				MTime time = MAnimControl::currentTime();
+				MTime t2 = MTime(1.0, time.unit());
+				float timeMultiplier = (float)(1.0f / t2.asUnits(MTime::kSeconds));
+
+				MMatrix nextMatrix = nextFrameMatrix;
+				nextMatrix *= scaleM;
+
+				// get linear motion
+				outLinearMotion = MVector(nextMatrix[3][0] - matrix[3][0], nextMatrix[3][1] - matrix[3][1], nextMatrix[3][2] - matrix[3][2]);
+				outLinearMotion *= timeMultiplier;
+
+				MTransformationMatrix transformationMatrix(matrix);
+				MQuaternion currentRotation = transformationMatrix.rotation();
+
+				MTransformationMatrix transformationMatrixNext(nextMatrix);
+				MQuaternion nextRotation = transformationMatrixNext.rotation();
+
+				MQuaternion dispRotation = nextRotation * currentRotation.inverse();
+
+				dispRotation.getAxisAngle(outAngularMotion, outRotationAngle);
+
+				if (outRotationAngle > PI)
+				{
+					outRotationAngle -= 2 * PI;
+				}
+				outRotationAngle *= timeMultiplier;
+			}
+		}
+
 	}
 
 	bool translateLight(FrLight& frlight, Scope& scope, frw::Context frcontext, const MObject& object, const MMatrix& matrix, bool update)
