@@ -413,6 +413,12 @@
 		AD18136522E6A0F800BB2B78 /* athenaWrap.h in Headers */ = {isa = PBXBuildFile; fileRef = AD18135F22E6A0F700BB2B78 /* athenaWrap.h */; };
 		AD18136D22E6A0F800BB2B78 /* RprAthena.h in Headers */ = {isa = PBXBuildFile; fileRef = AD18136222E6A0F800BB2B78 /* RprAthena.h */; };
 		AD18136E22E6A0F800BB2B78 /* RprAthena.h in Headers */ = {isa = PBXBuildFile; fileRef = AD18136222E6A0F800BB2B78 /* RprAthena.h */; };
+		B7200CD224328131009F608C /* athenaSystemInfo_Mac.h in Headers */ = {isa = PBXBuildFile; fileRef = B7200CD124328131009F608C /* athenaSystemInfo_Mac.h */; };
+		B7200CD324328131009F608C /* athenaSystemInfo_Mac.h in Headers */ = {isa = PBXBuildFile; fileRef = B7200CD124328131009F608C /* athenaSystemInfo_Mac.h */; };
+		B7200CD424328131009F608C /* athenaSystemInfo_Mac.h in Headers */ = {isa = PBXBuildFile; fileRef = B7200CD124328131009F608C /* athenaSystemInfo_Mac.h */; };
+		B7200CD624328145009F608C /* athenaSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = B7200CD524328145009F608C /* athenaSystemInfo.m */; };
+		B7200CD724328145009F608C /* athenaSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = B7200CD524328145009F608C /* athenaSystemInfo.m */; };
+		B7200CD824328145009F608C /* athenaSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = B7200CD524328145009F608C /* athenaSystemInfo.m */; };
 		B7230A5F23ACD82900E51BD1 /* BlendTwoAttrConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2CD23A912AF009FC79C /* BlendTwoAttrConverter.cpp */; };
 		B7230A6023ACD82900E51BD1 /* BlendTwoAttrConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = B773D2CE23A912AF009FC79C /* BlendTwoAttrConverter.h */; };
 		B7230A6123ACD82900E51BD1 /* ClampConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2D023A912AF009FC79C /* ClampConverter.cpp */; };
@@ -594,7 +600,6 @@
 		B753202423D9ED5600246738 /* ContextCreator.h in Headers */ = {isa = PBXBuildFile; fileRef = B7EC451F23743ACC001E49F7 /* ContextCreator.h */; };
 		B753202523D9ED5600246738 /* FireRenderViewportCmd.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E5731D80643600D6DB73 /* FireRenderViewportCmd.h */; };
 		B753202623D9ED5600246738 /* FireRenderViewportManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 4D44B1621DD9F2C9004A482F /* FireRenderViewportManager.h */; };
-		B753202723D9ED5600246738 /* athenaSystemInfo_Mac.h in Headers */ = {isa = PBXBuildFile; fileRef = B7EDEA6B237C2A01003060F1 /* athenaSystemInfo_Mac.h */; };
 		B753202823D9ED5600246738 /* FireRenderError.h in Headers */ = {isa = PBXBuildFile; fileRef = 4D6C22081DEBFE8800D745F8 /* FireRenderError.h */; };
 		B753202923D9ED5600246738 /* FireRenderNormal.h in Headers */ = {isa = PBXBuildFile; fileRef = 9FB8E55D1D80643600D6DB73 /* FireRenderNormal.h */; };
 		B753202A23D9ED5600246738 /* RenderStampFont.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D77AEDD1F436244008E88FB /* RenderStampFont.h */; };
@@ -671,7 +676,6 @@
 		B753207223D9ED5600246738 /* TileRenderer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE5E271322804A3E00F3B6D7 /* TileRenderer.cpp */; };
 		B753207323D9ED5600246738 /* PhysicalLightGeometryUtility.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB623382075583C00841D10 /* PhysicalLightGeometryUtility.cpp */; };
 		B753207423D9ED5600246738 /* FireRenderVolume.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */; };
-		B753207523D9ED5600246738 /* athenaSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = B7EDEA6D237C2A02003060F1 /* athenaSystemInfo.m */; };
 		B753207623D9ED5600246738 /* IESLightLocatorMesh.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8DB6232A2075582100841D10 /* IESLightLocatorMesh.cpp */; };
 		B753207723D9ED5600246738 /* ColorMathConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B773D2CC23A912AF009FC79C /* ColorMathConverter.cpp */; };
 		B753207823D9ED5600246738 /* StartupContextChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7701DDC235DE0380072482F /* StartupContextChecker.cpp */; };
@@ -848,10 +852,6 @@
 		B7EC453D23743C9D001E49F7 /* FireRenderContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7EC452323743ACC001E49F7 /* FireRenderContext.cpp */; };
 		B7EC453E23743C9D001E49F7 /* FireRenderContext.h in Headers */ = {isa = PBXBuildFile; fileRef = B7EC452123743ACC001E49F7 /* FireRenderContext.h */; };
 		B7EC453F23743C9D001E49F7 /* HybridContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B7EC452523743ACC001E49F7 /* HybridContext.cpp */; };
-		B7EDEA6F237C2A02003060F1 /* athenaSystemInfo_Mac.h in Headers */ = {isa = PBXBuildFile; fileRef = B7EDEA6B237C2A01003060F1 /* athenaSystemInfo_Mac.h */; };
-		B7EDEA70237C2A02003060F1 /* athenaSystemInfo_Mac.h in Headers */ = {isa = PBXBuildFile; fileRef = B7EDEA6B237C2A01003060F1 /* athenaSystemInfo_Mac.h */; };
-		B7EDEA72237C2A02003060F1 /* athenaSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = B7EDEA6D237C2A02003060F1 /* athenaSystemInfo.m */; };
-		B7EDEA73237C2A02003060F1 /* athenaSystemInfo.m in Sources */ = {isa = PBXBuildFile; fileRef = B7EDEA6D237C2A02003060F1 /* athenaSystemInfo.m */; };
 		CE1ECBC522EB8F7F0074C7E7 /* GlobalRenderUtilsDataHolder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE1ECBC122EB8F7E0074C7E7 /* GlobalRenderUtilsDataHolder.cpp */; };
 		CE1ECBC622EB8F7F0074C7E7 /* GlobalRenderUtilsDataHolder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE1ECBC122EB8F7E0074C7E7 /* GlobalRenderUtilsDataHolder.cpp */; };
 		CE1ECBC822EB8F7F0074C7E7 /* GlobalRenderUtilsDataHolder.h in Headers */ = {isa = PBXBuildFile; fileRef = CE1ECBC322EB8F7F0074C7E7 /* GlobalRenderUtilsDataHolder.h */; };
@@ -1165,6 +1165,8 @@
 		AD18136022E6A0F700BB2B78 /* athenaWrap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = athenaWrap.cpp; path = ../../../FireRender.Components/cpp/Athena/athenaWrap.cpp; sourceTree = "<group>"; };
 		AD18136122E6A0F800BB2B78 /* RprAthena.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RprAthena.cpp; path = ../../../FireRender.Components/cpp/Athena/RprAthena.cpp; sourceTree = "<group>"; };
 		AD18136222E6A0F800BB2B78 /* RprAthena.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RprAthena.h; path = ../../../FireRender.Components/cpp/Athena/RprAthena.h; sourceTree = "<group>"; };
+		B7200CD124328131009F608C /* athenaSystemInfo_Mac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = athenaSystemInfo_Mac.h; path = ../athenaSystemInfo_Mac.h; sourceTree = "<group>"; };
+		B7200CD524328145009F608C /* athenaSystemInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = athenaSystemInfo.m; path = ../athenaSystemInfo.m; sourceTree = "<group>"; };
 		B72E5C8023EA294A00374742 /* FireRenderHairs.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderHairs.cpp; path = ../../../FireRender.Maya.Src/FireRenderHairs.cpp; sourceTree = "<group>"; };
 		B72F81B1239F813C00C2BFB3 /* VectorProductConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VectorProductConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/VectorProductConverter.h; sourceTree = "<group>"; };
 		B72F81B3239F813D00C2BFB3 /* NodeConverterUtil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NodeConverterUtil.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/NodeConverterUtil.h; sourceTree = "<group>"; };
@@ -1241,8 +1243,6 @@
 		B7EC452323743ACC001E49F7 /* FireRenderContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderContext.cpp; path = ../../../FireRender.Maya.Src/Context/FireRenderContext.cpp; sourceTree = "<group>"; };
 		B7EC452423743ACC001E49F7 /* ContextCreator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ContextCreator.cpp; path = ../../../FireRender.Maya.Src/Context/ContextCreator.cpp; sourceTree = "<group>"; };
 		B7EC452523743ACC001E49F7 /* HybridContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HybridContext.cpp; path = ../../../FireRender.Maya.Src/Context/HybridContext.cpp; sourceTree = "<group>"; };
-		B7EDEA6B237C2A01003060F1 /* athenaSystemInfo_Mac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = athenaSystemInfo_Mac.h; path = ../../../sources/athenaSystemInfo_Mac.h; sourceTree = "<group>"; };
-		B7EDEA6D237C2A02003060F1 /* athenaSystemInfo.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = athenaSystemInfo.m; path = ../../../sources/athenaSystemInfo.m; sourceTree = "<group>"; };
 		CE1ECBC122EB8F7E0074C7E7 /* GlobalRenderUtilsDataHolder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GlobalRenderUtilsDataHolder.cpp; path = ../../../FireRender.Maya.Src/GlobalRenderUtilsDataHolder.cpp; sourceTree = "<group>"; };
 		CE1ECBC322EB8F7F0074C7E7 /* GlobalRenderUtilsDataHolder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = GlobalRenderUtilsDataHolder.h; path = ../../../FireRender.Maya.Src/GlobalRenderUtilsDataHolder.h; sourceTree = "<group>"; };
 		CE5E271122804A3E00F3B6D7 /* TileRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TileRenderer.h; path = ../../../FireRender.Maya.Src/TileRenderer.h; sourceTree = "<group>"; };
@@ -1337,11 +1337,11 @@
 				B7542DEA238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h */,
 				B7542DE9238FE61B00ACBE7C /* SingleShaderMeshTranslator.cpp */,
 				B7542DE8238FE61B00ACBE7C /* SingleShaderMeshTranslator.h */,
-				B7EDEA6B237C2A01003060F1 /* athenaSystemInfo_Mac.h */,
-				B7EDEA6D237C2A02003060F1 /* athenaSystemInfo.m */,
+				B7200CD124328131009F608C /* athenaSystemInfo_Mac.h */,
 				B7D1F00F2367616000BB07CE /* FireRenderMeshMASH.cpp */,
 				B7D1F00C2367615F00BB07CE /* FireRenderMeshMASH.h */,
 				B7D1F00D2367616000BB07CE /* InstancerMASH.cpp */,
+				B7200CD524328145009F608C /* athenaSystemInfo.m */,
 				B7D1F00E2367616000BB07CE /* InstancerMASH.h */,
 				B7EC452423743ACC001E49F7 /* ContextCreator.cpp */,
 				B7EC451F23743ACC001E49F7 /* ContextCreator.h */,
@@ -1759,6 +1759,7 @@
 				B76BA48223D09445008E1D68 /* Utils.h in Headers */,
 				B7230A6023ACD82900E51BD1 /* BlendTwoAttrConverter.h in Headers */,
 				8D595D9020372FE20031988A /* FireRenderBlendMaterial.h in Headers */,
+				B7200CD224328131009F608C /* athenaSystemInfo_Mac.h in Headers */,
 				8D595D9120372FE20031988A /* FireRenderImportCmd.h in Headers */,
 				8D595D9220372FE20031988A /* FireRenderCmd.h in Headers */,
 				B72F81D1239F813F00C2BFB3 /* VectorProductConverter.h in Headers */,
@@ -1831,7 +1832,6 @@
 				B7EC453723743C9C001E49F7 /* ContextCreator.h in Headers */,
 				8D595DC020372FE20031988A /* FireRenderViewportCmd.h in Headers */,
 				8D595DC120372FE20031988A /* FireRenderViewportManager.h in Headers */,
-				B7EDEA6F237C2A02003060F1 /* athenaSystemInfo_Mac.h in Headers */,
 				8D595DC220372FE20031988A /* FireRenderError.h in Headers */,
 				8D595DC320372FE20031988A /* FireRenderNormal.h in Headers */,
 				8D595DC420372FE20031988A /* RenderStampFont.h in Headers */,
@@ -1907,6 +1907,7 @@
 				B76BA48323D09445008E1D68 /* Utils.h in Headers */,
 				B7230A6B23ACD82A00E51BD1 /* BlendTwoAttrConverter.h in Headers */,
 				8DBCC2A722304666003EE361 /* FireRenderBlendMaterial.h in Headers */,
+				B7200CD324328131009F608C /* athenaSystemInfo_Mac.h in Headers */,
 				8DBCC2A822304666003EE361 /* FireRenderImportCmd.h in Headers */,
 				8DBCC2A922304666003EE361 /* FireRenderCmd.h in Headers */,
 				B72F81D2239F813F00C2BFB3 /* VectorProductConverter.h in Headers */,
@@ -1979,7 +1980,6 @@
 				B7EC453C23743C9D001E49F7 /* ContextCreator.h in Headers */,
 				8DBCC2D622304666003EE361 /* FireRenderViewportCmd.h in Headers */,
 				8DBCC2D722304666003EE361 /* FireRenderViewportManager.h in Headers */,
-				B7EDEA70237C2A02003060F1 /* athenaSystemInfo_Mac.h in Headers */,
 				8DBCC2D822304666003EE361 /* FireRenderError.h in Headers */,
 				8DBCC2D922304666003EE361 /* FireRenderNormal.h in Headers */,
 				8DBCC2DA22304666003EE361 /* RenderStampFont.h in Headers */,
@@ -2055,6 +2055,7 @@
 				B7531FDD23D9ED5600246738 /* Utils.h in Headers */,
 				B7531FDE23D9ED5600246738 /* BlendTwoAttrConverter.h in Headers */,
 				B7531FDF23D9ED5600246738 /* FireRenderBlendMaterial.h in Headers */,
+				B7200CD424328131009F608C /* athenaSystemInfo_Mac.h in Headers */,
 				B7531FE023D9ED5600246738 /* FireRenderImportCmd.h in Headers */,
 				B7531FE123D9ED5600246738 /* FireRenderCmd.h in Headers */,
 				B7531FE223D9ED5600246738 /* VectorProductConverter.h in Headers */,
@@ -2127,7 +2128,6 @@
 				B753202423D9ED5600246738 /* ContextCreator.h in Headers */,
 				B753202523D9ED5600246738 /* FireRenderViewportCmd.h in Headers */,
 				B753202623D9ED5600246738 /* FireRenderViewportManager.h in Headers */,
-				B753202723D9ED5600246738 /* athenaSystemInfo_Mac.h in Headers */,
 				B753202823D9ED5600246738 /* FireRenderError.h in Headers */,
 				B753202923D9ED5600246738 /* FireRenderNormal.h in Headers */,
 				B753202A23D9ED5600246738 /* RenderStampFont.h in Headers */,
@@ -2312,7 +2312,6 @@
 				CE5E271822804A3E00F3B6D7 /* TileRenderer.cpp in Sources */,
 				8DB6234520755B2800841D10 /* PhysicalLightGeometryUtility.cpp in Sources */,
 				CEED8EC9227346E900136DEF /* FireRenderVolume.cpp in Sources */,
-				B7EDEA72237C2A02003060F1 /* athenaSystemInfo.m in Sources */,
 				8DB6234620755B2800841D10 /* IESLightLocatorMesh.cpp in Sources */,
 				B7230A6323ACD82900E51BD1 /* ColorMathConverter.cpp in Sources */,
 				B7701DE1235DE0380072482F /* StartupContextChecker.cpp in Sources */,
@@ -2341,6 +2340,7 @@
 				8D595DF720372FE20031988A /* frWrap.cpp in Sources */,
 				B72F81F5239F813F00C2BFB3 /* MultiplyDivideConverter.cpp in Sources */,
 				8D595DF820372FE20031988A /* FireRenderDot.cpp in Sources */,
+				B7200CD624328145009F608C /* athenaSystemInfo.m in Sources */,
 				8D595DF920372FE20031988A /* FireRenderIpr.cpp in Sources */,
 				B7D1F025236B466D00BB07CE /* FireRenderLayeredTextureUtils.cpp in Sources */,
 				B773D2B623A36DB8009FC79C /* GammaCorrectConverter.cpp in Sources */,
@@ -2458,7 +2458,6 @@
 				CE5E271922804A3E00F3B6D7 /* TileRenderer.cpp in Sources */,
 				8DBCC30A22304666003EE361 /* PhysicalLightGeometryUtility.cpp in Sources */,
 				CEED8ECA227346E900136DEF /* FireRenderVolume.cpp in Sources */,
-				B7EDEA73237C2A02003060F1 /* athenaSystemInfo.m in Sources */,
 				8DBCC30B22304666003EE361 /* IESLightLocatorMesh.cpp in Sources */,
 				B7230A6E23ACD82A00E51BD1 /* ColorMathConverter.cpp in Sources */,
 				B7701DE2235DE0380072482F /* StartupContextChecker.cpp in Sources */,
@@ -2487,6 +2486,7 @@
 				8DBCC31C22304666003EE361 /* frWrap.cpp in Sources */,
 				B72F81F6239F813F00C2BFB3 /* MultiplyDivideConverter.cpp in Sources */,
 				8DBCC31D22304666003EE361 /* FireRenderDot.cpp in Sources */,
+				B7200CD724328145009F608C /* athenaSystemInfo.m in Sources */,
 				8DBCC31E22304666003EE361 /* FireRenderIpr.cpp in Sources */,
 				B7D1F026236B466D00BB07CE /* FireRenderLayeredTextureUtils.cpp in Sources */,
 				B773D2B723A36DB8009FC79C /* GammaCorrectConverter.cpp in Sources */,
@@ -2604,7 +2604,6 @@
 				B753207223D9ED5600246738 /* TileRenderer.cpp in Sources */,
 				B753207323D9ED5600246738 /* PhysicalLightGeometryUtility.cpp in Sources */,
 				B753207423D9ED5600246738 /* FireRenderVolume.cpp in Sources */,
-				B753207523D9ED5600246738 /* athenaSystemInfo.m in Sources */,
 				B753207623D9ED5600246738 /* IESLightLocatorMesh.cpp in Sources */,
 				B753207723D9ED5600246738 /* ColorMathConverter.cpp in Sources */,
 				B753207823D9ED5600246738 /* StartupContextChecker.cpp in Sources */,
@@ -2633,6 +2632,7 @@
 				B753208D23D9ED5600246738 /* frWrap.cpp in Sources */,
 				B753208E23D9ED5600246738 /* MultiplyDivideConverter.cpp in Sources */,
 				B753208F23D9ED5600246738 /* FireRenderDot.cpp in Sources */,
+				B7200CD824328145009F608C /* athenaSystemInfo.m in Sources */,
 				B753209023D9ED5600246738 /* FireRenderIpr.cpp in Sources */,
 				B753209123D9ED5600246738 /* FireRenderLayeredTextureUtils.cpp in Sources */,
 				B753209223D9ED5600246738 /* GammaCorrectConverter.cpp in Sources */,
