@@ -130,22 +130,28 @@ global proc launchSceneExport()
 	string $basicFilter = "*.rpr;;All Files (*.*)";
 	string $result[] = `fileDialog2 -fileFilter $basicFilter -dialogStyle 0`;
 
-	$isSqExEnabled = `checkBox  -query -value exportSqCheckBx`;
-	int $firstFrameIdx = `intSliderGrp -query -value sliderFirstFrameName`;
-	int $lastFrameIdx = `intSliderGrp -query -value sliderLastFrameName`;
-	$isSingleFileEnabled = `checkBox  -query -value singleFileCheckBx`;
-	string $selectedOption = `optionMenu -query -value compressionOption`;
-	string $namePattern = `optionMenu -query -value frameExtentionOption`;
-	int $framePadding = `getAttr defaultRenderGlobals.extensionPadding`;
-	string $selectedCam = `optionMenu -query -value selectedCamera`;
+	$countPaths = size($result);
 
-	fireRenderExport 
-		-scene 
-		-file $result 
-		-frames $isSqExEnabled $firstFrameIdx $lastFrameIdx $isSingleFileEnabled 
-		-compress $selectedOption
-		-padding $namePattern $framePadding
-		-camera $selectedCam;
+	if ($countPaths > 0)
+	{
+		$isSqExEnabled = `checkBox  -query -value exportSqCheckBx`;
+		int $firstFrameIdx = `intSliderGrp -query -value sliderFirstFrameName`;
+		int $lastFrameIdx = `intSliderGrp -query -value sliderLastFrameName`;
+		$isSingleFileEnabled = `checkBox  -query -value singleFileCheckBx`;
+		string $selectedOption = `optionMenu -query -value compressionOption`;
+		string $namePattern = `optionMenu -query -value frameExtentionOption`;
+		int $framePadding = `getAttr defaultRenderGlobals.extensionPadding`;
+		string $selectedCam = `optionMenu -query -value selectedCamera`;
+
+		fireRenderExport 
+			-scene 
+			-file $result 
+			-frames $isSqExEnabled $firstFrameIdx $lastFrameIdx $isSingleFileEnabled 
+			-compress $selectedOption
+			-padding $namePattern $framePadding
+			-camera $selectedCam;
+
+	}
 
 	deleteUI exWindow;
 }
