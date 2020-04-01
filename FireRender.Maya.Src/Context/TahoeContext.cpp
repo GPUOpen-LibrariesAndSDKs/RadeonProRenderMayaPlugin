@@ -12,16 +12,24 @@ limitations under the License.
 ********************************************************************/
 #include "TahoeContext.h"
 
-rpr_int TahoeContext::m_gTahoePluginID = -1;
+TahoeContext::LoadedPluginMap TahoeContext::m_gLoadedPluginsIDsMap;
 
-TahoeContext::TahoeContext()
+TahoeContext::TahoeContext() :
+	m_PluginVersion(TahoePluginVersion::RPR1)
 {
 
 }
 
-rpr_int TahoeContext::GetPluginID()
+void TahoeContext::SetPluginEngine(TahoePluginVersion version)
 {
-	if (m_gTahoePluginID == -1)
+	m_PluginVersion = version;
+}
+
+rpr_int TahoeContext::GetPluginID(TahoePluginVersion version)
+{
+	rpr_int pluginId = INCORRECT_PLUGIN_ID;
+	LoadedPluginMap::const_iterator it = m_gLoadedPluginsIDsMap.find(version);
+	if (it == m_gLoadedPluginsIDsMap.end())
 	{
 #ifdef OSMac_
 		std::string pathToTahoeDll = "/Users/Shared/RadeonProRender/Maya/lib/libTahoe64.dylib";
@@ -29,25 +37,38 @@ rpr_int TahoeContext::GetPluginID()
 		{
 			pathToTahoeDll = "/Users/Shared/RadeonProRender/lib/libTahoe64.dylib";
 		}
-		m_gTahoePluginID = rprRegisterPlugin(pathToTahoeDll.c_str());
+		pluginId = rprRegisterPlugin(pathToTahoeDll.c_str());
 #elif __linux__
-		m_gTahoePluginID = rprRegisterPlugin("libTahoe64.so");
+		pluginId = rprRegisterPlugin("libTahoe64.so");
 #else
-		m_gTahoePluginID = rprRegisterPlugin("Tahoe64.dll");
+		if (version == TahoePluginVersion::RPR1)
+		{
+			pluginId = rprRegisterPlugin("Tahoe64.dll");
+		}
+		else if (version == TahoePluginVersion::RPR2)
+		{
+			pluginId = rprRegisterPlugin("NorthStar64.dll");
+		}
 #endif
+
+		m_gLoadedPluginsIDsMap[version] = pluginId;
+	}
+	else
+	{
+		pluginId = it->second;
 	}
 
-	return m_gTahoePluginID;
+	return pluginId;
 }
 
 rpr_int TahoeContext::CreateContextInternal(rpr_creation_flags createFlags, rpr_context* pContext)
 {
-	rpr_int pluginID = GetPluginID();
+	rpr_int pluginID = GetPluginID(m_PluginVersion);
 
-	if (pluginID == -1)
+	if (pluginID == INCORRECT_PLUGIN_ID)
 	{
 		MGlobal::displayError("Unable to register Radeon ProRender plug-in.");
-		return -1;
+		return RPR_ERROR_INVALID_PARAMETER;
 	}
 
 	rpr_int plugins[] = { pluginID };

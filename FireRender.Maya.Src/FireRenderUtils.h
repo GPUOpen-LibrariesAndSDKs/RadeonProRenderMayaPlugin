@@ -140,6 +140,12 @@ enum RenderQuality
 	RenderQualityLow
 };
 
+enum TahoePluginVersion
+{
+	RPR1 = 1,	// Tahoe 1.X
+	RPR2 = 2,	// Tahoe 2.X
+};
+
 
 class FireRenderGlobalsData
 {
@@ -996,6 +1002,8 @@ std::vector<MString> dumpAttributeNamesDbg(MObject node);
 
 RenderQuality GetRenderQualityFromPlug(const char* plugName);
 RenderQuality GetRenderQualityForRenderType(RenderType renderType);
+
+TahoePluginVersion GetTahoeVersionToUse();
 
 template <class T>
 std::vector<T> splitString(const T& s, typename T::traits_type::char_type delim)

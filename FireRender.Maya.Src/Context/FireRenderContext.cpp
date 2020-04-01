@@ -85,6 +85,8 @@ std::map<FireRenderContext*,FireRenderContext::Lock::frcinfo> FireRenderContext:
 	int FireRenderContext::deleteNodes;
 #endif
 
+int FireRenderContext::INCORRECT_PLUGIN_ID = -1;
+
 FireRenderContext::FireRenderContext() :
 	m_width(0),
 	m_height(0),

@@ -21,5 +21,5 @@ public:
 
 private:
 	static FireRenderContextPtr CreateHybridContext();
-	static FireRenderContextPtr CreateTahoeContext();
+	static FireRenderContextPtr CreateTahoeContext(TahoePluginVersion version);
 };
