@@ -14,7 +14,7 @@ limitations under the License.
 #include "RadeonProRender_Baikal.h"
 #include "ContextCreator.h"
 
-rpr_int HybridContext::m_gHybridPluginID = -1;
+rpr_int HybridContext::m_gHybridPluginID = INCORRECT_PLUGIN_ID;
 
 HybridContext::HybridContext()
 {
@@ -23,7 +23,7 @@ HybridContext::HybridContext()
 
 rpr_int HybridContext::GetPluginID()
 {
-	if (m_gHybridPluginID == -1)
+	if (m_gHybridPluginID == INCORRECT_PLUGIN_ID)
 	{
 #ifdef OSMac_
 		m_gHybridPluginID = rprRegisterPlugin("/Users/Shared/RadeonProRender/lib/libHybrid.dylib");
@@ -46,10 +46,10 @@ rpr_int HybridContext::CreateContextInternal(rpr_creation_flags createFlags, rpr
 {
 	rpr_int pluginID = GetPluginID();
 
-	if (pluginID == -1)
+	if (pluginID == INCORRECT_PLUGIN_ID)
 	{
 		MGlobal::displayError("Unable to register Radeon ProRender plug-in.");
-		return -1;
+		return RPR_ERROR_INVALID_PARAMETER;
 	}
 
 	rpr_int plugins[] = { pluginID };

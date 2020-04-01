@@ -21,9 +21,12 @@ FireRenderContextPtr ContextCreator::CreateHybridContext()
 	return std::make_shared<HybridContext>();
 }
 
-FireRenderContextPtr ContextCreator::CreateTahoeContext()
+FireRenderContextPtr ContextCreator::CreateTahoeContext(TahoePluginVersion version)
 {
-	return std::make_shared<TahoeContext>();
+	std::shared_ptr<TahoeContext> instance = std::make_shared<TahoeContext>();
+	instance->SetPluginEngine(version);
+
+	return instance;
 }
 
 FireRenderContextPtr ContextCreator::CreateAppropriateContextForRenderQuality(RenderQuality quality)
@@ -31,7 +34,7 @@ FireRenderContextPtr ContextCreator::CreateAppropriateContextForRenderQuality(Re
 #ifdef WIN32
 	if (quality == RenderQuality::RenderQualityFull)
 	{
-		return CreateTahoeContext();
+		return CreateTahoeContext(GetTahoeVersionToUse());
 	}
 	else
 	{
@@ -39,7 +42,7 @@ FireRenderContextPtr ContextCreator::CreateAppropriateContextForRenderQuality(Re
 	}
 #endif
 
-	return CreateTahoeContext();
+	return CreateTahoeContext(TahoePluginVersion::RPR1);
 }
 
 FireRenderContextPtr ContextCreator::CreateAppropriateContextForRenderType(RenderType renderType)

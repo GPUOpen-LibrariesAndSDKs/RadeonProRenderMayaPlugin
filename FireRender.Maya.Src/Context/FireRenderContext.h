@@ -569,6 +569,9 @@ public:
 	virtual bool IsRenderRegionSupported() const { return true; }
 
 protected:
+	static int INCORRECT_PLUGIN_ID;
+
+protected:
 	virtual rpr_int CreateContextInternal(rpr_creation_flags createFlags, rpr_context* pContext) = 0;
 	virtual void updateTonemapping(const FireRenderGlobalsData&, bool disableWhiteBalance = false) {}
 

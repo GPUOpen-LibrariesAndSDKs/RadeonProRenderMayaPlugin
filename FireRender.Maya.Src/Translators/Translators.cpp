@@ -394,6 +394,7 @@ namespace FireMaya
 
 					frstatus = rprDirectionalLightSetShadowSoftnessAngle(frlight.light.Handle(), softnessAngle);
 					checkStatus(frstatus);
+
 					break;
 				}
 

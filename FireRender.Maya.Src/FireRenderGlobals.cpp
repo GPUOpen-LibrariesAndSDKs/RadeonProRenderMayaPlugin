@@ -125,6 +125,8 @@ namespace
 		MObject renderaGlobalsExrMultilayerEnabled;
 
 		MObject renderQuality;
+
+		MObject tahoeVersion;
 	}
 
     struct RenderingDeviceAttributes
@@ -431,6 +433,11 @@ MStatus FireRenderGlobals::initialize()
 	addRenderQualityModes(eAttr);
 	MAKE_INPUT_CONST(eAttr);
 
+	Attribute::tahoeVersion = eAttr.create("tahoeVersion", "tahv", TahoePluginVersion::RPR1, &status);
+	eAttr.addField("RPR 1", TahoePluginVersion::RPR1);
+	eAttr.addField("RPR 2 (Experimental)", TahoePluginVersion::RPR2);
+	MAKE_INPUT_CONST(eAttr);
+	addAsGlobalAttribute(eAttr);
 
 	CHECK_MSTATUS(addAttribute(Attribute::textureCompression));
 

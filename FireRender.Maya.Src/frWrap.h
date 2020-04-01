@@ -2123,11 +2123,12 @@ namespace frw
 			rpr_uint activePixelCount;
 			rpr_int res = rprContextGetInfo(Handle(), RPR_CONTEXT_ACTIVE_PIXEL_COUNT, sizeof(activePixelCount), &activePixelCount, 0);
 
-			if (res == RPR_ERROR_UNSUPPORTED)
+			if (res == RPR_ERROR_UNSUPPORTED || res == RPR_ERROR_UNIMPLEMENTED)
 			{
 				return false;
 			}
 
+			// comment this code to avoid error messages since northstar (tahoe 2.0) does not support contextgetinfo call
 			if (!checkStatus(res))
 			{
 				return false;

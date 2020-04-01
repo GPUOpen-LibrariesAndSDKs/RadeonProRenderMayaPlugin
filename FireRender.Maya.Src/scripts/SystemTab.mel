@@ -39,6 +39,10 @@ global proc createSystemTab()
     setParent ..;
 
     separator -height 10;
+	attrControlGrp
+		 -label "Tahoe Engine:"
+		 -attribute "RadeonProRenderGlobals.tahoeVersion";
+    separator -height 10;
 
     optionMenuGrp -label "Preferences for: " -changeCommand "onSystemPreferencesModeChanged" RPR_SystemTabRM;
 		menuItem -label "Final Render" -data 1 RPR_FinalRenderRM;
