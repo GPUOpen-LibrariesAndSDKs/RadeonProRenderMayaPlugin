@@ -27,7 +27,7 @@ cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/python/" "/Users/Shared/RadeonP
 cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/shelfs/" "/Users/Shared/RadeonProRender/shelves/"
 
 cp -r "$PROJECT_DIR/../../../RadeonProRenderSDK/RadeonProRender/binMacOS/" "/Users/Shared/RadeonProRender/lib/"
-cp    "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/radeonimagefilters-1.4.3-2839b0-OSX-rel/bin/libRadeonImageFilters64.1.4.3.dylib" "/Users/Shared/RadeonProRender/lib/libRadeonImageFilters64.1.4.3.dylib"
+cp    "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/OSX/libRadeonImageFilters64.1.5.0.dylib" "/Users/Shared/RadeonProRender/lib/libRadeonImageFilters64.1.5.0.dylib"
 cp -r  "$PROJECT_DIR/../../../ThirdParty/oiio-mac/bin/" "/Users/Shared/RadeonProRender/lib"
 
 #cp    "$PROJECT_DIR/../../../ThirdParty/aws/Mac/bin/*" "/Users/Shared/RadeonProRender/lib"

@@ -97,7 +97,7 @@ target=%s
             yield Path(rprsdk_bin)/name, name
 
         name_ending = ""
-        rpipsdk_bin = repo_root / 'RadeonProImageProcessingSDK/radeonimagefilters-1.4.3-2839b0-OSX-rel/bin'
+        rpipsdk_bin = repo_root / 'RadeonProImageProcessingSDK/OSX'
         name_ending = ".dylib"
         for name in os.listdir((str(rpipsdk_bin))):
             if name.endswith(name_ending):
@@ -260,7 +260,7 @@ def enumerate_lib_data():
         if name.endswith(name_ending):
             yield Path(rprsdk_bin)/name, name
     
-    rpipsdk_bin = repo_root / 'RadeonProImageProcessingSDK/radeonimagefilters-1.4.3-2839b0-OSX-rel/bin'
+    rpipsdk_bin = repo_root / 'RadeonProImageProcessingSDK/OSX'
     for name in os.listdir((str(rpipsdk_bin))):
         if name.endswith(name_ending):
             yield Path(rpipsdk_bin)/name, name

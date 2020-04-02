@@ -5,10 +5,10 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>.;..\RadeonProRenderSDK\RadeonProRender\inc;..\RadeonProRenderSDK\RadeonProRender\rprTools;..\ThirdParty\glew\include;..\ThirdParty\oiio\include;..\ThirdParty\json\include\;..\FireRender.Components\cpp\;Lights\PhysicalLight\;..\FireRender.Components\cpp\ImageFilter\;..\RadeonProImageProcessingSDK\radeonimagefilters-1.4.3-2839b0-Windows-rel\include\;..\ThirdParty\aws\Win\include\;..\ThirdParty\Ornatrix SDK\;..\ThirdParty\Ornatrix SDK\Ephere\</AdditionalIncludeDirectories>    <PreprocessorDefinitions>MAYA_PLUGIN;GL_INTEROP;WIN32;_WINDOWS;_USRDLL;NT_PLUGIN;_HAS_ITERATOR_DEBUGGING=0;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;__TBB_LIB_NAME=tbb.lib;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;..\RadeonProRenderSDK\RadeonProRender\inc;..\RadeonProRenderSDK\RadeonProRender\rprTools;..\ThirdParty\glew\include;..\ThirdParty\oiio\include;..\ThirdParty\json\include\;..\FireRender.Components\cpp\;Lights\PhysicalLight\;..\FireRender.Components\cpp\ImageFilter\;..\RadeonProImageProcessingSDK\include\;..\ThirdParty\aws\Win\include\;..\ThirdParty\Ornatrix SDK\;..\ThirdParty\Ornatrix SDK\Ephere\</AdditionalIncludeDirectories>    <PreprocessorDefinitions>MAYA_PLUGIN;GL_INTEROP;WIN32;_WINDOWS;_USRDLL;NT_PLUGIN;_HAS_ITERATOR_DEBUGGING=0;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;__TBB_LIB_NAME=tbb.lib;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>..\ThirdParty\glew\lib\x64;..\ThirdParty\oiio\lib;..\RadeonProRenderSDK\RadeonProRender\libWin64;..\RadeonProImageProcessingSDK\radeonimagefilters-1.4.3-2839b0-Windows-rel\bin\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\ThirdParty\glew\lib\x64;..\ThirdParty\oiio\lib;..\RadeonProRenderSDK\RadeonProRender\libWin64;..\RadeonProImageProcessingSDK\Windows\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>RadeonProRender64.lib;RprLoadStore64.lib;ProRenderGLTF.lib;RadeonImageFilters64.lib;OpenImageIO_RPR.lib;Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaRender.lib;Image.lib;glew.lib;glu32.lib;OpenGL32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
       <DelayLoadDLLs>RadeonProRender64.dll</DelayLoadDLLs>
@@ -38,7 +38,7 @@ COPY $(ProjectDir)\shaders\* $(SolutionDir)dist\shaders\ /Y
 COPY $(ProjectDir)\renderDesc\* $(SolutionDir)dist\renderDesc\ /Y
 
 COPY "$(SolutionDir)RadeonProRenderSDK\RadeonProRender\binWin64\*.dll" $(SolutionDir)dist\bin\ /Y
-COPY "$(SolutionDir)RadeonProImageProcessingSDK\radeonimagefilters-1.4.3-2839b0-Windows-rel\bin\*.dll" $(SolutionDir)dist\bin\ /Y
+COPY "$(SolutionDir)RadeonProImageProcessingSDK\Windows\*.dll" $(SolutionDir)dist\bin\ /Y
 COPY "$(SolutionDir)ThirdParty\oiio\bin\*.dll" $(SolutionDir)dist\bin\ /Y
 XCOPY /S /Y /I "$(SolutionDir)RadeonProImageProcessingSDK\models" $(SolutionDir)dist\data\models
 
