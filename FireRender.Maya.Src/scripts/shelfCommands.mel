@@ -143,6 +143,8 @@ global proc launchSceneExport()
 		int $framePadding = `getAttr defaultRenderGlobals.extensionPadding`;
 		string $selectedCam = `optionMenu -query -value selectedCamera`;
 
+		catch ( `OxSetIsRendering(true)` );
+
 		fireRenderExport 
 			-scene 
 			-file $result 
@@ -150,6 +152,8 @@ global proc launchSceneExport()
 			-compress $selectedOption
 			-padding $namePattern $framePadding
 			-camera $selectedCam;
+
+		catch ( `OxSetIsRendering(false)` );
 
 	}
 
