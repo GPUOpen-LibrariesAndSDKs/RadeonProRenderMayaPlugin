@@ -1772,12 +1772,12 @@ void FireRenderEnvLight::attachToScene()
 void FireRenderEnvLight::attachToSceneInternal()
 {
 	Scene().Attach(m.light);
-	Scene().SetEnvironmentOverride(frw::EnvironmentOverrideBackground, m.bgOverride);
+	m.light.SetEnvironmentOverride(frw::EnvironmentOverrideBackground, m.bgOverride);
 }
 
 void FireRenderEnvLight::detachFromSceneInternal()
 {
-	Scene().SetEnvironmentOverride(frw::EnvironmentOverrideBackground, frw::EnvironmentLight());
+	m.light.SetEnvironmentOverride(frw::EnvironmentOverrideBackground, frw::EnvironmentLight());
 	Scene().Detach(m.light);
 }
 

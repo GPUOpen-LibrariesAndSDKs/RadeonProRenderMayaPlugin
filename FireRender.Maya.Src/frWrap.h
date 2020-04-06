@@ -357,10 +357,10 @@ namespace frw
 
 	enum EnvironmentOverride
 	{
-		EnvironmentOverrideReflection = RPR_SCENE_ENVIRONMENT_OVERRIDE_REFLECTION,
-		EnvironmentOverrideRefraction = RPR_SCENE_ENVIRONMENT_OVERRIDE_REFRACTION,
-		EnvironmentOverrideTransparency = RPR_SCENE_ENVIRONMENT_OVERRIDE_TRANSPARENCY,
-		EnvironmentOverrideBackground = RPR_SCENE_ENVIRONMENT_OVERRIDE_BACKGROUND,
+		EnvironmentOverrideReflection = RPR_ENVIRONMENT_LIGHT_OVERRIDE_REFLECTION,
+		EnvironmentOverrideRefraction = RPR_ENVIRONMENT_LIGHT_OVERRIDE_REFRACTION,
+		EnvironmentOverrideTransparency = RPR_ENVIRONMENT_LIGHT_OVERRIDE_TRANSPARENCY,
+		EnvironmentOverrideBackground = RPR_ENVIRONMENT_LIGHT_OVERRIDE_BACKGROUND,
 	};
 
 	enum PostEffectType
@@ -1305,6 +1305,8 @@ namespace frw
 		public:
 			Image image;
 			bool isAmbientLight = false;
+
+			std::map<EnvironmentOverride, EnvironmentLight> overrides;
 		};
 	public:
 		EnvironmentLight(rpr_light h, const Context &context) : Light(h, context, new Data()) {}
@@ -1323,6 +1325,13 @@ namespace frw
 		bool IsAmbientLight() const
 		{
 			return data().isAmbientLight;
+		}
+
+		void SetEnvironmentOverride(EnvironmentOverride e, EnvironmentLight light)
+		{
+			auto res = rprEnvironmentLightSetEnvironmentLightOverride(Handle(), e, light.Handle());
+			checkStatus(res);
+			data().overrides[e] = light;
 		}
 	};
 
@@ -1434,7 +1443,9 @@ namespace frw
 		public:
 			Camera camera;
 			Image backgroundImage;
-			std::map<EnvironmentOverride, EnvironmentLight> overrides;
+
+			EnvironmentLight environmentLight;
+			
 			int mAreaLightCount = 0;
 			int mShapeCount = 0;
 			int mLightCount = 0;
@@ -1449,7 +1460,11 @@ namespace frw
 			auto res = rprSceneAttachShape(Handle(), v.Handle());
 			checkStatus(res);
 
-			if (v.IsAreaLight()) data().mAreaLightCount++;
+			if (v.IsAreaLight())
+			{
+				data().mAreaLightCount++;
+			}
+
 			data().mShapeCount++;
 		}
 		void Attach(Light v)
@@ -1526,7 +1541,6 @@ namespace frw
 			Data& d = data();
 			d.camera = Camera();
 			d.backgroundImage = Image();
-			d.overrides.clear();
 
 			data().mAreaLightCount = data().mLightCount = data().mShapeCount = 0;
 		}
@@ -1618,45 +1632,22 @@ namespace frw
 			data().mLightCount = 0;
 		}
 
-		void SetEnvironmentOverride(EnvironmentOverride e, EnvironmentLight light)
-		{
-			auto res = rprSceneSetEnvironmentOverride(Handle(), e, light.Handle());
-			checkStatus(res);
-			data().overrides[e] = light;
-		}
-
 		// Used for Hybrid
 		void SetEnvironmentLight(EnvironmentLight light)
 		{
+			rpr_uint res = rprSceneSetEnvironmentLight(Handle(), light.Handle());
+			checkStatus(res);
+
+			data().environmentLight = light;
+
 			if (light.IsValid())
 			{
-				rpr_uint res = rprSceneSetEnvironmentLight(Handle(), light.Handle());
-				checkStatus(res);
-
-				AddReference(light);
-				data().overrides[EnvironmentOverrideBackground] = light;
 				data().mLightCount++;
 			}
-			else if (data().overrides[EnvironmentOverrideBackground].IsValid())
+			else
 			{
-				rpr_uint res = rprSceneSetEnvironmentLight(Handle(), nullptr);
-				checkStatus(res);
-
 				data().mLightCount--;
-				RemoveReference(data().overrides[EnvironmentOverrideBackground]);
-				data().overrides[EnvironmentOverrideBackground] = nullptr;
 			}
-
-		}
-
-		void ClearEnvironmentOverrides()
-		{
-			for (const auto& it : data().overrides)
-			{
-				auto res = rprSceneSetEnvironmentOverride(Handle(), it.first, nullptr);
-				checkStatus(res);
-			}
-			data().overrides.clear();
 		}
 
 		rpr_int SetBackgroundImage(Image v)

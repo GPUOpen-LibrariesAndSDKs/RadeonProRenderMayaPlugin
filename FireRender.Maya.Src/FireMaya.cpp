@@ -1542,7 +1542,8 @@ frw::Shader FireMaya::Scope::convertMayaBlinn(const MFnDependencyNode &node)
 	val = materialSystem.ValueMax(val, frw::Value(0.0));
 	val = materialSystem.ValueMul(val, 0.45f);
 
-	shader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS, val);
+	// since Core 1.35 we need to pass square root of initial roughness
+	shader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS, materialSystem.ValuePow(val, 0.5));
 	shader.SetValue(RPR_MATERIAL_INPUT_IOR, frw::Value(1.0f));
 
 	auto blendVal = materialSystem.ValueMul(specularRollOff, specularRollOff);
@@ -1572,7 +1573,10 @@ frw::Shader FireMaya::Scope::convertMayaPhong(const MFnDependencyNode &node)
 	shader.SetValue(RPR_MATERIAL_INPUT_COLOR, specularColor);
 
 	auto val = CosinePowerToRoughness(cosinePower);
-	shader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS, val);
+
+	// since Core 1.35 we need to pass square root of initial roughness
+	shader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS, materialSystem.ValuePow(val, 0.5));
+
 	shader.SetValue(RPR_MATERIAL_INPUT_IOR, frw::Value(1.0f));
 
 	return materialSystem.ShaderBlend(result, shader, frw::Value(0.35, 0.35, 0.35));
@@ -1605,7 +1609,9 @@ frw::Shader FireMaya::Scope::convertMayaPhongE(const MFnDependencyNode &node)
 	auto val = materialSystem.ValueMul(roughness, highlightSize);
 	val = materialSystem.ValueMul(val, 0.5f);
 
-	shader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS, val);
+	// since Core 1.35 we need to pass square root of initial roughness
+	shader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS, materialSystem.ValuePow(val, 0.5));
+
 	shader.SetValue(RPR_MATERIAL_INPUT_IOR, frw::Value(1.0f));
 
 	auto blendVal = materialSystem.ValueMul(roughness, frw::Value(0.3));
