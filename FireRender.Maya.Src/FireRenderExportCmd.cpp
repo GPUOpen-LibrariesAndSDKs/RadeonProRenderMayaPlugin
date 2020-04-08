@@ -240,7 +240,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			// Move the animation to the next frame.
 			MTime time;
 			time.setValue(static_cast<double>(frame));
-			MStatus isTimeSet = MAnimControl::setCurrentTime(time);
+			MStatus isTimeSet = MGlobal::viewFrame(time);
 			CHECK_MSTATUS(isTimeSet);
 
 			// Refresh the context so it matches the
