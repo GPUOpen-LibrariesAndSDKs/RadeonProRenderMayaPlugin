@@ -132,7 +132,7 @@ enum class RenderType
 	Thumbnail // swatch
 };
 
-enum RenderQuality
+enum class RenderQuality
 {
 	RenderQualityFull = 0,
 	RenderQualityHigh,

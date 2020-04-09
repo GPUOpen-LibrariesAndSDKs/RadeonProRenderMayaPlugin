@@ -33,6 +33,16 @@ public:
 
 	bool IsRenderQualitySupported(RenderQuality quality) const override;
 
+	bool IsDenoiserSupported() const override { return false; }
+	bool IsDisplacementSupported() const override { return false; }
+
+	bool IsHairSupported() const override { return false; }
+	bool IsVolumeSupported() const override { return false; }
+
+	bool IsShaderSupported(frw::ShaderType type) const override;
+	bool IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) const override;
+	frw::Shader GetDefaultColorShader(frw::Value color) override;
+
 protected:
 	rpr_int CreateContextInternal(rpr_creation_flags createFlags, rpr_context* pContext) override;
 	void updateTonemapping(const FireRenderGlobalsData&, bool disableWhiteBalance) override;

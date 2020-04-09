@@ -226,7 +226,7 @@ public:
 
 	struct ReadFrameBufferRequestParams
 	{
-		RV_PIXEL* pixels; 
+		RV_PIXEL* pixels;
 		int aov;
 		unsigned int width;
 		unsigned int height;
@@ -282,7 +282,7 @@ public:
 	// Composite image for Shadow+Reflection Catcher
 	void compositeReflectionShadowCatcherOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region,
 		bool flip);
-	
+
 	// Copy pixels from the source buffer to the destination buffer.
 	void copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 		unsigned int sourceWidth, unsigned int sourceHeight,
@@ -411,9 +411,9 @@ public:
 	bool isDirty();
 
 	// refresh/rebuild anything we require
-	bool Freshen(bool lock = true, 
-					std::function<bool()> cancelled = [] { return false; }, 
-					BuildSceneProgressCallback progressCallback = nullptr);
+	bool Freshen(bool lock = true,
+		std::function<bool()> cancelled = [] { return false; },
+		BuildSceneProgressCallback progressCallback = nullptr);
 
 	HashValue GetStateHash();
 
@@ -483,7 +483,7 @@ public:
 	bool IsDenoiserEnabled(void) { return m_denoiserFilter != nullptr; }
 
 	frw::PostEffect white_balance;
-	frw::PostEffect simple_tonemap;			
+	frw::PostEffect simple_tonemap;
 	frw::PostEffect tonemap;
 	frw::PostEffect normalization;
 	frw::PostEffect gamma_correction;
@@ -561,12 +561,21 @@ public:
 	virtual bool ShouldResizeTexture(unsigned int& max_width, unsigned int& max_height) const;
 
 	virtual rpr_int SetRenderQuality(RenderQuality quality) { return RPR_SUCCESS; }
-	virtual bool IsRenderQualitySupported(RenderQuality quality) const = 0;
 
 	virtual void setupContext(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) {}
 	virtual bool IsAOVSupported(int aov) const { return true; }
 
-	virtual bool IsRenderRegionSupported() const { return true; }
+	virtual bool IsRenderQualitySupported(RenderQuality quality) const override = 0;
+	virtual bool IsRenderRegionSupported() const override { return true; }
+	virtual bool IsDenoiserSupported() const override { return true; }
+	virtual bool IsDisplacementSupported() const override { return true; }
+	virtual bool IsHairSupported() const override { return true; }
+	virtual bool IsVolumeSupported() const override { return true; }
+
+	virtual bool IsShaderSupported(frw::ShaderType type) const override { return true; }
+
+	virtual bool IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) const override { return true; }
+	virtual frw::Shader GetDefaultColorShader(frw::Value color) override;
 
 protected:
 	static int INCORRECT_PLUGIN_ID;

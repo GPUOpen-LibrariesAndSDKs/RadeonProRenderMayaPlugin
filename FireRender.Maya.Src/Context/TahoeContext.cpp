@@ -380,6 +380,7 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 			white_balance = frw::PostEffect(context, frw::PostEffectTypeWhiteBalance);
 			context.Attach(white_balance);
 		}
+
 		float temperature = fireRenderGlobalsData.toneMappingWhiteBalanceValue;
 		white_balance.SetParameter("colorspace", RPR_COLOR_SPACE_SRGB); // check: Max uses Adobe SRGB here
 		white_balance.SetParameter("colortemp", temperature);

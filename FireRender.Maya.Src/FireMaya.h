@@ -333,7 +333,8 @@ namespace FireMaya
 		void Init(rpr_context handle, bool destroyMaterialSystemOnDelete = true);
 
 		void SetContextInfo (IFireRenderContextInfo* pCtxInfo);
-		const IFireRenderContextInfo* GetContextInfo (void) const;
+		const IFireRenderContextInfo* GetIContextInfo() const;
+		IFireRenderContextInfo* GetIContextInfo();
 	};
 
 #ifdef DEBUG

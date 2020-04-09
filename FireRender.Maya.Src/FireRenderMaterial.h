@@ -43,5 +43,7 @@ namespace FireMaya
 		static MTypeId FRTypeID() { return FireMaya::TypeId::FireRenderMaterial; }
 
 		frw::Shader GetShader(Scope& scope) override;
+
+		Type GetMayaShaderType() const;
 	};
 }

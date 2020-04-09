@@ -199,21 +199,29 @@ MStatus FireMaya::Material::compute(const MPlug& plug, MDataBlock& block)
 	return MS::kSuccess;
 }
 
-frw::Shader FireMaya::Material::GetShader(Scope& scope)
+FireMaya::Material::Type FireMaya::Material::GetMayaShaderType() const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 
 	Type mayaType = kDiffuse;
 
+	MPlug plug = shaderNode.findPlug("type", false);
+	if (!plug.isNull())
 	{
-		MPlug plug = shaderNode.findPlug("type", false);
-		if (!plug.isNull())
-		{
-			int n = 0;
-			if (MStatus::kSuccess == plug.getValue(n))
-				mayaType = static_cast<Type>(n);
-		}
+		int n = 0;
+		if (MStatus::kSuccess == plug.getValue(n))
+			mayaType = static_cast<Type>(n);
 	}
+
+	return mayaType;
+}
+
+
+frw::Shader FireMaya::Material::GetShader(Scope& scope)
+{
+	MFnDependencyNode shaderNode(thisMObject());
+
+	Type mayaType = GetMayaShaderType();
 
 	float intensity = 1.0f;
 	if (mayaType == kEmissive)
@@ -263,19 +271,27 @@ frw::Shader FireMaya::Material::GetShader(Scope& scope)
 		{ Attribute::refractiveIndex, RPR_MATERIAL_INPUT_IOR }
 	};
 
-	for (auto it : attributes)
+	if (shaderType == frw::ShaderTypeEmissive)
 	{
-		if (auto value = (it.attribute == Attribute::normalMap)
-			? scope.GetConnectedValue(shaderNode.findPlug(it.attribute, false))
-			: scope.GetValue(shaderNode.findPlug(it.attribute, false))
-			)
-		{
-			if (shaderType == frw::ShaderTypeEmissive && it.attribute == Attribute::color)
-				value = value * intensity;
+		frw::Value colorValue = scope.GetValue(shaderNode.findPlug(Attribute::color, false));
+		colorValue = colorValue * intensity;
 
-			shader.SetValue(it.inputKey, value);
+		shader.SetValue(RPR_MATERIAL_INPUT_COLOR, colorValue);
+	}
+	else
+	{
+		for (auto it : attributes)
+		{
+			if (auto value = (it.attribute == Attribute::normalMap)
+				? scope.GetConnectedValue(shaderNode.findPlug(it.attribute, false))
+				: scope.GetValue(shaderNode.findPlug(it.attribute, false))
+				)
+			{
+				shader.SetValue(it.inputKey, value);
+			}
 		}
 	}
+
 
 	auto roughnessPlug = shaderNode.findPlug(Attribute::roughness, false);
 	auto roughnessVal = scope.GetValue(roughnessPlug).GetX();
