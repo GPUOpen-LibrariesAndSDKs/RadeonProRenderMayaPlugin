@@ -46,7 +46,8 @@
 	<attr n="rfb" s="defaultRenderGlobals.byExtension" t="int" h="Renumber Frame By (or step) used for renumbering frames"/>
 	<sep/>
 	<mel n="cam" s='makeCameraRenderable("%1")' p="1" t="name" h="Specify which camera to be rendered"/>
-	<mel n="rgb" s='applyOnCameras("image", "%1")' p="1" t="boolean" h="Turn RGB output on or off"/>
+  <mel n="g" s='enableGamma()' p="0" t="bool" h="Apply gamma from render settings in the scene"/>
+  <mel n="set_gamma" s='setGamma("%1")' p="1" t="float" h="Gamma to be applied to saved image"/>
 	<mel n="alpha" s='applyOnCameras("mask", "%1")' p="1" t="boolean" h="Turn Alpha output on or off"/>
 	<mel n="depth" s='applyOnCameras("depth", "%1")' p="1" t="boolean" h="Turn Depth output on or off"/>
 	<mel n="iip" s="disableImagePlanes" p="0" t="" h="Ignore Image Planes turn off all image planes before\n\trendering"/>
