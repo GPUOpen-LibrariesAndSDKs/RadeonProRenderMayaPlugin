@@ -14,7 +14,13 @@ limitations under the License.
 #include "RadeonProRender_Baikal.h"
 #include "ContextCreator.h"
 
+#include "../FireRenderMaterial.h"
+#include "../FireRenderStandardMaterial.h"
+
+#include "../FireRenderPBRMaterial.h"
+
 rpr_int HybridContext::m_gHybridPluginID = INCORRECT_PLUGIN_ID;
+
 
 HybridContext::HybridContext()
 {
@@ -179,4 +185,39 @@ FireRenderSky* HybridContext::CreateSky(const MDagPath& dagPath)
 bool HybridContext::IsRenderQualitySupported(RenderQuality quality) const
 {
 	return quality != RenderQuality::RenderQualityFull;
+}
+
+bool HybridContext::IsShaderSupported(frw::ShaderType type) const 
+{
+	// Hybrid supports only Uber and Emissive shaders
+
+	return type == frw::ShaderType::ShaderTypeEmissive ||
+			type == frw::ShaderType::ShaderTypeStandard;
+}
+
+frw::Shader HybridContext::GetDefaultColorShader(frw::Value color)
+{
+	frw::Shader shader (GetMaterialSystem(), GetContext());
+	shader.xSetValue(RPR_MATERIAL_INPUT_UBER_DIFFUSE_COLOR, color);
+
+	return shader;
+}
+
+bool HybridContext::IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) const
+{
+	FireMaya::Material* pMaterial = dynamic_cast<FireMaya::Material*> (shaderNode);
+	FireMaya::StandardMaterial* pUberMaterial = dynamic_cast<FireMaya::StandardMaterial*> (shaderNode);
+	FireMaya::FireRenderPBRMaterial* pPRBMaterial = dynamic_cast<FireMaya::FireRenderPBRMaterial*> (shaderNode);
+
+	if (pUberMaterial != nullptr || pPRBMaterial != nullptr)
+	{
+		return true;
+	}
+
+	if (pMaterial != nullptr)
+	{
+		return pMaterial->GetMayaShaderType() == FireMaya::Material::kEmissive;
+	}
+
+	return false;
 }

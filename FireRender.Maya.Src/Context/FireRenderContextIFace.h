@@ -11,20 +11,35 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ********************************************************************/
 #pragma once
-//
-// Copyright (C) AMD
-//
-// File: FireRenderContextIFace.h
-//
-// Abstract interface class for FireRenderContext class
-//
 
 enum class RenderType;
+enum class RenderQuality;
+
+namespace frw
+{
+	enum ShaderType;
+}
+
+namespace FireMaya
+{
+	class ShaderNode;
+}
 
 class IFireRenderContextInfo
 {
 public:
 	virtual RenderType GetRenderType(void) const = 0;
 	virtual bool ShouldResizeTexture(unsigned int& width, unsigned int& height) const = 0;
-};
 
+	virtual bool IsRenderQualitySupported(RenderQuality quality) const = 0;
+	virtual bool IsRenderRegionSupported() const = 0;
+	virtual bool IsDenoiserSupported() const = 0;
+	virtual bool IsDisplacementSupported() const = 0;
+	virtual bool IsHairSupported() const = 0;
+	virtual bool IsVolumeSupported() const = 0;
+
+	virtual bool IsShaderSupported(frw::ShaderType) const = 0;
+	virtual bool IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) const = 0;
+	
+	virtual frw::Shader GetDefaultColorShader(frw::Value color) = 0;
+};

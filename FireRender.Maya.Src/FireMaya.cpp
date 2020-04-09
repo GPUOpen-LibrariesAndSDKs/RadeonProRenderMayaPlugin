@@ -1402,7 +1402,7 @@ frw::Value FireMaya::Scope::createImageFromShaderNode(MObject node, MString plug
 {
 	unsigned int max_width = 1;
 	unsigned int max_height = 1;
-	bool shouldResize = GetContextInfo() && GetContextInfo()->ShouldResizeTexture(max_width, max_height);
+	bool shouldResize = GetIContextInfo() && GetIContextInfo()->ShouldResizeTexture(max_width, max_height);
 
 	return FireRenderThread::RunOnMainThread<frw::Value>([&]()
 	{
@@ -1636,7 +1636,15 @@ frw::Shader FireMaya::Scope::ParseShader(MObject node)
 
 	if (auto n = dynamic_cast<FireMaya::ShaderNode*>(shaderNode.userNode()))
 	{
-		result = n->GetShader(*this);
+		if (m_pContextInfo->IsShaderNodeSupported(n))
+		{
+			result = n->GetShader(*this);
+		}
+		else
+		{
+			frw::Value color = GetValueForDiffuseColor(shaderNode.findPlug("color"));
+			result = m_pContextInfo->GetDefaultColorShader(color);
+		}
 	}
 	else
 	{
@@ -1646,6 +1654,15 @@ frw::Shader FireMaya::Scope::ParseShader(MObject node)
 		auto name = shaderNode.typeName();
 
 		DebugPrint("Shader: %s [0x%x]", name.asUTF8(), id);
+
+		if (!m_pContextInfo->IsShaderSupported(frw::ShaderType::ShaderTypeDiffuse))
+		{
+			// This is Hybrid related code pass
+			frw::Value color = GetValueForDiffuseColor(shaderNode.findPlug("color"));
+			frw::Shader shader = m_pContextInfo->GetDefaultColorShader(color);
+
+			return shader;
+		}
 
 		switch (id)
 		{
@@ -2074,8 +2091,6 @@ frw::Value FireMaya::Scope::GetValue(const MPlug& plug) const
 
 frw::Value FireMaya::Scope::GetValueForDiffuseColor(const MPlug& plug)
 {
-	assert(!plug.isNull());
-
 	m_IsLastPassTextureMissing = false;
 	frw::Value value = GetValue(plug);
 
@@ -2194,7 +2209,12 @@ void FireMaya::Scope::SetContextInfo(IFireRenderContextInfo* pCtxInfo)
 	m_pContextInfo = pCtxInfo;
 }
 
-const IFireRenderContextInfo* FireMaya::Scope::GetContextInfo(void) const
+const IFireRenderContextInfo* FireMaya::Scope::GetIContextInfo(void) const
+{
+	return m_pContextInfo;
+}
+
+IFireRenderContextInfo* FireMaya::Scope::GetIContextInfo()
 {
 	return m_pContextInfo;
 }

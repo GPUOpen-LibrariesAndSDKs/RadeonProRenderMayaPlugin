@@ -1165,7 +1165,7 @@ bool IsUberEmissive(frw::Shader shader)
 
 void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 {
-	FireRenderContext *context = this->context();
+	FireRenderContext* context = this->context();
 
 	MFnDependencyNode nodeFn(Object());
 
@@ -1175,7 +1175,10 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this);
 		element.volumeShader = context->GetVolumeShader(getVolumeShader(element.shadingEngine));
 
-		setupDisplacement(element.shadingEngine, element.shape);
+		if (context->IsDisplacementSupported())
+		{
+			setupDisplacement(element.shadingEngine, element.shape);
+		}
 
 		if (!element.volumeShader)
 			element.volumeShader = context->GetVolumeShader(getSurfaceShader(element.shadingEngine));

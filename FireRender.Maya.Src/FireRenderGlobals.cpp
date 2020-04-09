@@ -425,11 +425,11 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::renderaGlobalsExrMultilayerEnabled = nAttr.create("enableExrMultilayer", "eeml", MFnNumericData::kBoolean, 0, &status);
 	MAKE_INPUT(nAttr);
 
-	Attribute::renderQuality = eAttr.create("renderQualityFinalRender", "rqfr", RenderQuality::RenderQualityFull, &status);
+	Attribute::renderQuality = eAttr.create("renderQualityFinalRender", "rqfr", (short) RenderQuality::RenderQualityFull, &status);
 	addRenderQualityModes(eAttr);
 	MAKE_INPUT_CONST(eAttr);
 
-	ViewportRenderAttributes::renderQuality = eAttr.create("renderQualityViewport", "rqv", RenderQuality::RenderQualityFull, &status);
+	ViewportRenderAttributes::renderQuality = eAttr.create("renderQualityViewport", "rqv", (short) RenderQuality::RenderQualityFull, &status);
 	addRenderQualityModes(eAttr);
 	MAKE_INPUT_CONST(eAttr);
 
@@ -497,12 +497,12 @@ MStatus FireRenderGlobals::initialize()
 
 void FireRenderGlobals::addRenderQualityModes(MFnEnumAttribute& eAttr)
 {
-	eAttr.addField("Full", RenderQuality::RenderQualityFull);
+	eAttr.addField("Full", (short) RenderQuality::RenderQualityFull);
 
 #ifdef WIN32
-	eAttr.addField("High", RenderQuality::RenderQualityHigh);
-	eAttr.addField("Medium", RenderQuality::RenderQualityMedium);
-	eAttr.addField("Low", RenderQuality::RenderQualityLow);
+	eAttr.addField("High", (short) RenderQuality::RenderQualityHigh);
+	eAttr.addField("Medium", (short) RenderQuality::RenderQualityMedium);
+	eAttr.addField("Low", (short) RenderQuality::RenderQualityLow);
 #endif
 }
 

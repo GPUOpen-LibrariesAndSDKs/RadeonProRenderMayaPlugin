@@ -175,7 +175,10 @@ void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool rende
 
 bool FireRenderContext::ConsiderSetupDenoiser(bool useRAMBufer /* = false*/)
 {
-	bool shouldDenoise = m_globals.denoiserSettings.enabled && ((m_RenderType == RenderType::ProductionRender) || (m_RenderType == RenderType::IPR));
+	bool shouldDenoise = IsDenoiserSupported() &&
+						(m_globals.denoiserSettings.enabled && 
+						((m_RenderType == RenderType::ProductionRender) || 
+						(m_RenderType == RenderType::IPR)));
 
 	if (!shouldDenoise)
 		return false;
@@ -2052,6 +2055,9 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 	FireRenderObject* ob = nullptr;
 	MObject node = dagPath.node();
 
+	bool volumeSupported = IsVolumeSupported();
+	bool hairSupported = IsHairSupported();
+
 	if (node.hasFn(MFn::kDagNode))
 	{
 		MFnDagNode dagNode(node);
@@ -2090,11 +2096,11 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			ob = CreateSky(dagPath);
 		}
-		else if (dagNode.typeName() == "fluidShape")
+		else if (dagNode.typeName() == "fluidShape" && volumeSupported)
 		{
 			ob = CreateSceneObject<FireRenderVolume, NodeCachingOptions::AddPath>(dagPath);
 		}
-		else if (dagNode.typeName() == "RPRVolume")
+		else if (dagNode.typeName() == "RPRVolume" && volumeSupported)
 		{
 			ob = CreateSceneObject<FireRenderRPRVolume, NodeCachingOptions::AddPath>(dagPath);
 		}
@@ -2106,14 +2112,14 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			if (dagNode.typeName() == "xgmSplineDescription")
 			{
-				if (!IsXgenGuides(node))
+				if (!IsXgenGuides(node) && hairSupported)
 				{
 					// check if xgmSplineDescription is a guides for other xgmSplineDescription
 					// don't need to create hair object if that is the case
 					ob = CreateSceneObject<FireRenderHairXGenGrooming, NodeCachingOptions::AddPath>(dagPath);
 				}
 			}
-			else if (dagNode.typeName() == "HairShape")
+			else if (dagNode.typeName() == "HairShape" && hairSupported)
 			{
 				ob = CreateSceneObject<FireRenderHairOrnatrix, NodeCachingOptions::AddPath>(dagPath);
 			}
@@ -3029,4 +3035,12 @@ void FireRenderContext::enableAOV(int aov, bool flag)
 bool FireRenderContext::isAOVEnabled(int aov) 
 {
 	return aovEnabled[aov];
+}
+
+frw::Shader FireRenderContext::GetDefaultColorShader(frw::Value color)
+{
+	frw::DiffuseShader shader(GetMaterialSystem());
+	shader.SetColor(color);
+
+	return shader;
 }

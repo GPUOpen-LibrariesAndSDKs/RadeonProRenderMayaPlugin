@@ -186,30 +186,6 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 				ErrorPrint("%s NormalMap: invalid node type %d\n", shaderNode.name().asChar(), value.GetNodeType());
 		}
 
-	#if (RPR_VERSION_MINOR < 34) // <= replaced by rprShapeSetDisplacementMaterial since Core v 1.34
-		// Special code for displacement map. We're using GetDisplacementNode() function which is called twice:
-		// from this function, and from FireRenderMesh::setupDisplacement(). This is done because RPRX UberMaterial
-		// doesn't have capabilities to set any displacement parameters except map image, so we're setting other
-		// parameters from FireRenderMesh. If we'll skip setting RPRX_UBER_MATERIAL_DISPLACEMENT parameter here,
-		// RPRX will reset displacement map in some unpredicted cases.
-		MObject displacementNode = GetDisplacementNode();
-		if (displacementNode != MObject::kNullObj)
-		{
-			MFnDependencyNode dispShaderNode(displacementNode);
-			FireMaya::Displacement* displacement = dynamic_cast<FireMaya::Displacement*>(dispShaderNode.userNode());
-			if (displacement)
-			{
-				Displacement::DisplacementParams params;
-
-				bool haveDisplacement = displacement->getValues(scope, params);
-				if (haveDisplacement)
-				{
-					shader.xSetValue(RPRX_UBER_MATERIAL_DISPLACEMENT, params.map);
-				}
-			}
-		}
-	#endif
-	
 		frw::Value shadowColor = scope.GetValue(shaderNode.findPlug(Attribute::shadowColor, false));
 		frw::Value shadowAlpha = scope.GetValue(shaderNode.findPlug(Attribute::shadowTransparency, false));
 		if (shadowColor.IsFloat())
