@@ -37,3 +37,15 @@ global proc considerRenderDevices(string $devices)
 		optionVar -iva "RPR_DevicesSelected" 0;
 	}
 }
+
+// functions to enable gamma correction
+global proc enableGamma()
+{
+	setAttr RadeonProRenderGlobals.applyGammaToMayaViews 1;
+}
+
+global proc setGamma(float $gamma)
+{
+	setAttr RadeonProRenderGlobals.applyGammaToMayaViews 1;
+	setAttr RadeonProRenderGlobals.displayGamma $gamma;
+}
