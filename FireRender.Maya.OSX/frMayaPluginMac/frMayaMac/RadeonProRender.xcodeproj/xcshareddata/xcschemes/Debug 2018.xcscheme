@@ -14,9 +14,9 @@
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
-                     BlueprintIdentifier = "4DE508631D9950A1009B2BD6"
+                     BlueprintIdentifier = "8D595D8B20372FE20031988A"
                      BuildableName = "RadeonProRender.bundle"
-                     BlueprintName = "Maya2017"
+                     BlueprintName = "Maya2018"
                      ReferencedContainer = "container:RadeonProRender.xcodeproj">
                   </BuildableReference>
                </EnvironmentBuildable>
