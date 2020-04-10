@@ -14,6 +14,7 @@ limitations under the License.
 
 #include "FireMaya.h"
 #include "FireRenderUtils.h"
+#include "FireRenderVolumeLocator.h"
 
 #include <maya/MObject.h>
 #include <maya/MColor.h>
@@ -21,7 +22,23 @@ limitations under the License.
 #include <maya/MDataHandle.h>
 #include <maya/MRampAttribute.h>
 
+#include <pluginUtils.h>
+
 #include <vector>
+#include <array>
+
+class VDBVolumeData // will be templatized to be able to use grids of different type, not just float grids as now
+{
+public:
+
+	VDBGrid<float> densityGrid;
+	VDBGrid<float> albedoGrid;
+	VDBGrid<float> emissionGrid;
+
+	bool HasAlbedo(void)	{ return albedoGrid.IsValid();		}
+	bool HasEmission(void)	{ return emissionGrid.IsValid();	}
+	bool IsValid(void)		{ return densityGrid.IsValid();		} // volume won't exist without density input
+};
 
 // This is the data fields for Volume representation used by RPR Volume Node.
 // These are also all data values that are supported by RPR.
@@ -171,44 +188,57 @@ public:
 	RPRVolumeAttributes();
 	~RPRVolumeAttributes();
 
-	virtual void postConstructor() override;
-
 	static void Initialize();
 
 	static MDataHandle GetVolumeGridDimentions(const MFnDependencyNode& node);
+	static MString GetVDBFilePath(const MFnDependencyNode& node);
 
 	static bool GetAlbedoEnabled(const MFnDependencyNode& node);
 	static VolumeGradient GetAlbedoGradientType(const MFnDependencyNode& node);
 	static MPlug GetAlbedoRamp(const MFnDependencyNode& node);
+	static MString GetSelectedAlbedoGridName(const MFnDependencyNode& node);
 
 	static bool GetEmissionEnabled(const MFnDependencyNode& node);
 	static VolumeGradient GetEmissionGradientType(const MFnDependencyNode& node);
 	static MPlug GetEmissionValueRamp(const MFnDependencyNode& node);
 	static float GetEmissionIntensity(const MFnDependencyNode& node);
 	static MPlug GetEmissionIntensityRamp(const MFnDependencyNode& node);
+	static MString GetSelectedEmissionGridName(const MFnDependencyNode& node);
 
 	static bool GetDensityEnabled(const MFnDependencyNode& node);
 	static VolumeGradient GetDensityGradientType(const MFnDependencyNode& node);
 	static MPlug GetDensityRamp(const MFnDependencyNode& node);
 	static float GetDensityMultiplier(const MFnDependencyNode& node);
+	static MString GetSelectedDensityGridName(const MFnDependencyNode& node);
 
 	static void FillVolumeData(VolumeData& data, const MObject& node, FireMaya::Scope* scope);
 
+	static void SetupVolumeFromFile(MObject& node, FireRenderVolumeLocator::GridParams& gridParams);
+	static void SetupGridSizeFromFile(MObject& node, MPlug& plug, FireRenderVolumeLocator::GridParams& gridParams);
+
+	static void FillVolumeData(VDBVolumeData& data, const MObject& node);
+
 public:
 	// General
-	static MObject volumeDimentions;
+	// - VDB file
+	static MObject vdbFile;
+	static MObject loadedGrids;
 
 	/*
-	We will probably add noise parameters to each of inputs below
+	We will probably eventually add noise parameters to each of inputs below
 	*/
 
 	// Albedo
 	static MObject albedoEnabled;
+	static MObject volumeDimensionsAlbedo; // selected grid dimesions
+	static MObject albedoSelectedGrid; // selected grid
 	static MObject albedoGradType; // gradient type
 	static MObject albedoValue;    // values ramp
 
 	// Emission
 	static MObject emissionEnabled;
+	static MObject volumeDimensionsEmission; // selected grid dimesions
+	static MObject emissionSelectedGrid; //  selected grid
 	static MObject emissionGradType; // gradient type
 	static MObject emissionValue;    // values ramp
 	static MObject emissionIntensity; // intensity of emission light source
@@ -216,6 +246,8 @@ public:
 
 	// Density
 	static MObject densityEnabled;
+	static MObject volumeDimensionsDensity; // selected grid dimesions
+	static MObject densitySelectedGrid; // selected grid
 	static MObject densityGradType; // gradient type
 	static MObject densityValue;    // values ramp
 	static MObject densityMultiplier; // density is multiplied by this value

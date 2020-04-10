@@ -1392,6 +1392,15 @@ namespace frw
 
 	};
 
+	class VolumeGrid : public Object
+	{
+		DECLARE_OBJECT_NO_DATA(VolumeGrid, Object);
+
+	public:
+		VolumeGrid(rpr_grid h, const Context &context) : Object(h, context, true, new Data()) {}
+
+	};
+
 	class Volume : public Object
 	{
 		DECLARE_OBJECT_NO_DATA(Volume, Object);
@@ -1838,6 +1847,61 @@ namespace frw
 			checkStatusThrow(status, "Unable to create IES light");
 
 			return IESLight(h, *this);
+		}
+
+		VolumeGrid CreateVolumeGrid(size_t gridSizeX, size_t gridSizeY,	size_t gridSizeZ,
+			const std::vector<uint32_t>& gridOnIndices, const std::vector<float>& gridOnValueIndices, 
+			rpr_grid_indices_topology indicesListTopology)
+		{
+			rpr_grid h = 0;
+
+			rpr_int status = rprContextCreateGrid(Handle(), &h
+				, gridSizeX, gridSizeY, gridSizeZ
+				, &gridOnIndices[0], gridOnIndices.size() / 3, indicesListTopology
+				, &gridOnValueIndices[0], gridOnValueIndices.size() * sizeof(gridOnValueIndices[0])
+				, 0);
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to create albedo grid!");
+
+			return VolumeGrid(h, *this);
+		}
+
+		Volume CreateVolume(rpr_grid densityGrid, rpr_grid albedoGrid, rpr_grid emissionGrid,
+			const std::vector<float>& densityGridValues, 
+			const std::vector<float>& albedoGridValues,
+			const std::vector<float>& emissiveGridValues)
+		{
+			rpr_hetero_volume h = 0;
+			rpr_int status = rprContextCreateHeteroVolume(Handle(), &h);
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR create volume failed!");
+
+			if (densityGrid != nullptr)
+			{
+				status = rprHeteroVolumeSetDensityGrid(h, densityGrid);
+				checkStatusThrow(status, "Unable to set densiy grid - RPR create volume failed!");
+
+				status = rprHeteroVolumeSetDensityLookup(h, &densityGridValues[0], (rpr_uint)densityGridValues.size() / 3);
+				checkStatusThrow(status, "Unable to set densiy lookup table - RPR create volume failed!");
+			}
+
+			if (albedoGrid != nullptr)
+			{
+				status = rprHeteroVolumeSetAlbedoGrid(h, albedoGrid);
+				checkStatusThrow(status, "Unable to set albedo grid - RPR create volume failed!");
+
+				status = rprHeteroVolumeSetAlbedoLookup(h, &albedoGridValues[0], (rpr_uint)albedoGridValues.size() / 3);
+				checkStatusThrow(status, "Unable to set albedo lookup table - RPR create volume failed!");
+			}
+
+			if (emissionGrid != nullptr)
+			{
+				status = rprHeteroVolumeSetEmissionGrid(h, emissionGrid);
+				checkStatusThrow(status, "Unable to set emission grid - RPR create volume failed!");
+
+				status = rprHeteroVolumeSetEmissionLookup(h, &emissiveGridValues[0], (rpr_uint)emissiveGridValues.size() / 3);
+				checkStatusThrow(status, "Unable to set emission lookup table - RPR create volume failed!");
+			}
+
+			return Volume(h, *this);
 		}
 
 		Volume CreateVolume(size_t gridSizeX,

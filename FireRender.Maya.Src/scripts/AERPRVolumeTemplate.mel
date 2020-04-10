@@ -15,56 +15,366 @@ global proc AEVolumeCheckEnableAlbedo(string $nodeName)
 	string $nodeAttr = $nodeName + ".albedoEnabled";
 	int $enabled = `getAttr $nodeAttr`;
 
-	editorTemplate -dimControl $nodeName "albedoGradType" ($enabled == 0);
-	editorTemplate -dimControl $nodeName "albedoValue" ($enabled == 0);
+	editorTemplate -dimControl $nodeName "albedoSelectedGrid" ($enabled == 0);
+	editorTemplate -dimControl $nodeName "volumeDimensionsAlbedo" true;
 }
 
 global proc AEVolumeCheckEnableEmission(string $nodeName)
 {
 	string $nodeAttr = $nodeName + ".emissionEnabled";
 	int $enabled = `getAttr $nodeAttr`;
-
-	editorTemplate -dimControl $nodeName "emissionGradType" ($enabled == 0);
-	editorTemplate -dimControl $nodeName "emissionValue" ($enabled == 0);
+	
+	editorTemplate -dimControl $nodeName "emissionSelectedGrid" ($enabled == 0);
+	editorTemplate -dimControl $nodeName "volumeDimensionsEmission" true;
 	editorTemplate -dimControl $nodeName "emissionIntensity" ($enabled == 0);
-	editorTemplate -dimControl $nodeName "emissionRamp" ($enabled == 0);
 }
 
 global proc AEVolumeCheckEnableDensity(string $nodeName)
 {
 	string $nodeAttr = $nodeName + ".densityEnabled";
 	int $enabled = `getAttr $nodeAttr`;
-
-	editorTemplate -dimControl $nodeName "densityGradType" ($enabled == 0);
-	editorTemplate -dimControl $nodeName "densityValue" ($enabled == 0);
+	
+	editorTemplate -dimControl $nodeName "densitySelectedGrid" ($enabled == 0);
+	editorTemplate -dimControl $nodeName "volumeDimensionsDensity" true;
 	editorTemplate -dimControl $nodeName "densityMultiplier" ($enabled == 0);
+}
+
+global proc importVDBFilePathNew( string $attr )
+{
+	global int $gAttributeEditorTemplateLabelWidth;
+    rowLayout
+        -numberOfColumns 3
+        -columnWidth3 $gAttributeEditorTemplateLabelWidth 175 35
+        -columnAttach3 "right" "both" "both"
+        -columnAlign3 "left" "left" "center"
+        -rowAttach 1 "both" 0
+        -rowAttach 2 "both" 0
+        -rowAttach 3 "both" 0
+        importVDBFilePathLayout;
+    {
+        text
+            -label "VDB File Path"
+            -annotation ""
+            importVDBFilePathLabel;
+
+        textField
+            -fileName "vdb file path and name. Insert a sequence of pound signs (#) and connect the global frame time node to embed the current frame number in the file name. (The number of pound signs defines the zero padding width.)"
+            -insertionPosition 0
+            -editable true
+            -annotation "vdb file path and name. Insert a sequence of pound signs (#) and connect the global frame time node to embed the current frame number in the file name. (The number of pound signs defines the zero padding width.)"
+            importVDBFilePathField;
+
+        button
+            -label "..."
+            -align "center"
+            -command ""
+            -annotation "Browse for the VDB file."
+            importVDBFilePathButton;
+
+        setParent ..;
+    }
+
+    importVDBFilePathReplace( $attr );
+}
+
+global proc importVDBFilePathReplace( string $attr )
+{
+    setParent importVDBFilePathLayout;
+    connectControl importVDBFilePathField $attr;
+    button -e
+        -command ("browseForVDBFile( \""+$attr+"\" )")
+        importVDBFilePathButton;
+    setParent ..;
+}
+
+global proc browseForVDBFile( string $filePathAttr )
+{
+    string $currentFilePath = `getAttr $filePathAttr`;
+    string $currentFilePathDir = dirname( $currentFilePath );
+
+    if( $currentFilePath != "" )
+    {
+        if( filetest( "-d", $currentFilePath ) == 1 )
+        {
+            $currentFilePathDir = $currentFilePath;
+        }
+    }
+
+    string $singleFilter = "VDB Files (*.vdb)";
+
+    string $path[] = `fileDialog2 -ds 2 -cap "VDB File" -dir $currentFilePathDir -ff $singleFilter -fm 1`;
+
+    if (size($path) > 0)
+    {
+        setAttr -type "string" $filePathAttr $path[0];
+    }
+}
+
+global proc FillGridList( string $nodeName )
+{
+	string $multiAttr[] = `listAttr -multi ( $nodeName + ".loadedGrids" )`;
+	for ( $attr in $multiAttr )
+	{
+		$attr = $nodeName + "." + $attr;
+		$val = `getAttr $attr`;
+		print $val;
+		print "\n";
+	}
+
+	string $listAttrName = $nodeName + ".loadedGrids";
+
+	string $attrNameA = $nodeName + ".albedoSelectedGrid";
+	albedoGridSelectReplace($attrNameA, $listAttrName);
+
+	string $attrNameD = $nodeName + ".densitySelectedGrid";
+	densityGridSelectReplace($attrNameD, $listAttrName);
+
+	string $attrNameE = $nodeName + ".emissionSelectedGrid";
+	emissionGridSelectReplace($attrNameE, $listAttrName);
+
+	updateAE $nodeName;
+}
+
+global proc albedoGridSelectNew( string $attrName, string $listAttrName )
+{
+	$command = getAlbedoGridSelectCommand($attrName);
+
+	paneLayout;
+			textScrollList 
+				-allowMultiSelection false 
+				-numberOfRows 4 
+				-selectCommand $command
+				albedoGridList;
+	setParent ..;
+
+	connectControl albedoGridList $attrName;
+
+	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
+	for ( $attr in $multiAttr )
+	{
+		$len = size($listAttrName) - size($attr) + 3; // 3 is length of "[0]"
+		string $tmpstr = $listAttrName;
+		string $nodestr = `substring $tmpstr 1 $len`;
+		$attr = $nodestr + $attr;
+		$val = `getAttr $attr`;
+		textScrollList -e -append $val albedoGridList;
+	}
+
+	textScrollList -e -selectIndexedItem 1 albedoGridList;
+
+	eval $command;
+}
+
+global proc albedoGridSelectReplace( string $attrName, string $listAttrName )
+{	
+	connectControl albedoGridList $attrName;
+
+	textScrollList -e -removeAll albedoGridList;
+
+	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
+	for ( $attr in $multiAttr )
+	{
+		$len = size($listAttrName) - size($attr) + 3; // 3 is length of "[0]"
+		string $tmpstr = $listAttrName;
+		string $nodestr = `substring $tmpstr 1 $len`;
+		$attr = $nodestr + $attr;
+		$val = `getAttr $attr`;
+		textScrollList -e -append $val albedoGridList;
+	}
+
+	string $selectedValue = `getAttr $attrName`;
+	textScrollList -e -selectItem $selectedValue albedoGridList;
+}
+
+global proc onAlbedoGridSelectClicked(string $attrName)
+{
+	string $selectedItems[];
+	$selectedItems = `textScrollList -q -selectItem albedoGridList`;
+
+	int $selectedIds[];
+	$selectedIds = `textScrollList -q -selectIndexedItem albedoGridList`;
+
+	setAttr $attrName -type "string" $selectedItems[0];
+}
+
+global proc string getAlbedoGridSelectCommand(string $attrName)
+{
+	return "onAlbedoGridSelectClicked(\"" + $attrName + "\")";
+}
+
+global proc densityGridSelectNew( string $attrName, string $listAttrName )
+{
+	$command = getDensityGridSelectCommand($attrName);
+
+	paneLayout;
+			textScrollList 
+				-allowMultiSelection false 
+				-numberOfRows 4 
+				-selectCommand $command
+				densityGridList;
+	setParent ..;
+
+	connectControl densityGridList $attrName;
+
+	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
+	for ( $attr in $multiAttr )
+	{
+		$len = size($listAttrName) - size($attr) + 3; // 3 is length of "[0]"
+		string $tmpstr = $listAttrName;
+		string $nodestr = `substring $tmpstr 1 $len`;
+		$attr = $nodestr + $attr;
+		$val = `getAttr $attr`;
+		textScrollList -e -append $val densityGridList;
+	}
+
+	textScrollList -e -selectIndexedItem 1 densityGridList;
+
+	eval $command;
+}
+
+global proc densityGridSelectReplace( string $attrName, string $listAttrName )
+{	
+	connectControl densityGridList $attrName;
+
+	textScrollList -e -removeAll densityGridList;
+
+	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
+	for ( $attr in $multiAttr )
+	{
+		$len = size($listAttrName) - size($attr) + 3; // 3 is length of "[0]"
+		string $tmpstr = $listAttrName;
+		string $nodestr = `substring $tmpstr 1 $len`;
+		$attr = $nodestr + $attr;
+		$val = `getAttr $attr`;
+		textScrollList -e -append $val densityGridList;
+	}
+
+	string $selectedValue = `getAttr $attrName`;
+	textScrollList -e -selectItem $selectedValue densityGridList;
+
+	// without selected density grid volume will not render (and will not give any warnings!), thus this safety routine is added
+	$isselectd = `textScrollList -q -selectItem densityGridList`;
+	if (size($isselectd) == 0)
+	{
+		textScrollList -e -selectIndexedItem 1 densityGridList;
+		onDensityGridSelectClicked($attrName);
+	}
+}
+
+global proc onDensityGridSelectClicked(string $attrName)
+{
+	string $selectedItems[];
+	$selectedItems = `textScrollList -q -selectItem densityGridList`;
+
+	int $selectedIds[];
+	$selectedIds = `textScrollList -q -selectIndexedItem densityGridList`;
+
+	setAttr $attrName -type "string" $selectedItems[0];
+}
+
+global proc string getDensityGridSelectCommand(string $attrName)
+{
+	return "onDensityGridSelectClicked(\"" + $attrName + "\")";
+}
+
+global proc emissionGridSelectNew( string $attrName, string $listAttrName )
+{
+	$command = getEmissionGridSelectCommand($attrName);
+
+	paneLayout;
+			textScrollList 
+				-allowMultiSelection false 
+				-numberOfRows 4 
+				-selectCommand $command
+				emissionGridList;
+	setParent ..;
+
+	connectControl emissionGridList $attrName;
+
+	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
+	for ( $attr in $multiAttr )
+	{
+		$len = size($listAttrName) - size($attr) + 3; // 3 is length of "[0]"
+		string $tmpstr = $listAttrName;
+		string $nodestr = `substring $tmpstr 1 $len`;
+		$attr = $nodestr + $attr;
+		$val = `getAttr $attr`;
+		textScrollList -e -append $val emissionGridList;
+	}
+
+	textScrollList -e -selectIndexedItem 1 emissionGridList;
+
+	eval $command;
+}
+
+global proc emissionGridSelectReplace( string $attrName, string $listAttrName )
+{	
+	connectControl emissionGridList $attrName;
+
+	textScrollList -e -removeAll emissionGridList;
+
+	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
+	for ( $attr in $multiAttr )
+	{
+		$len = size($listAttrName) - size($attr) + 3; // 3 is length of "[0]"
+		string $tmpstr = $listAttrName;
+		string $nodestr = `substring $tmpstr 1 $len`;
+		$attr = $nodestr + $attr;
+		$val = `getAttr $attr`;
+		textScrollList -e -append $val emissionGridList;
+	}
+
+	string $selectedValue = `getAttr $attrName`;
+	textScrollList -e -selectItem $selectedValue emissionGridList;
+}
+
+global proc onEmissionGridSelectClicked(string $attrName)
+{
+	string $selectedItems[];
+	$selectedItems = `textScrollList -q -selectItem emissionGridList`;
+
+	int $selectedIds[];
+	$selectedIds = `textScrollList -q -selectIndexedItem emissionGridList`;
+
+	setAttr $attrName -type "string" $selectedItems[0];
+}
+
+global proc string getEmissionGridSelectCommand(string $attrName)
+{
+	return "onEmissionGridSelectClicked(\"" + $attrName + "\")";
 }
 
 global proc AERPRVolumeTemplate(string $nodeName)
 {
 	editorTemplate -beginScrollLayout;
 		editorTemplate -beginLayout "General" -collapse 0;
-			editorTemplate -label "Volume Dimentions" -addControl "volumeDimentions";
+			editorTemplate -beginLayout "OpenVDB Read File" -collapse 0;
+			{
+				editorTemplate -callCustom "importVDBFilePathNew" "importVDBFilePathReplace" "VdbFilePath";
+			}
+			editorTemplate -endLayout;
+
+			//editorTemplate -label "Loaded Grids" -addControl "loadedGrids";
 		editorTemplate -endLayout;
 
-		editorTemplate -beginLayout "Albedo" -collapse 0;
+		editorTemplate -beginLayout "Albedo" -collapse 0 AlbedoLayout;
 			editorTemplate -label "Enable" -addControl "albedoEnabled" "AEVolumeCheckEnableAlbedo";
-			editorTemplate -label "Gradient Type" -addControl "albedoGradType";
-			AEaddRampControl($nodeName + ".albedoValue");
+			editorTemplate -label "Grid Dimensions" -addControl "volumeDimensionsAlbedo";
+			editorTemplate -callCustom "albedoGridSelectNew" "albedoGridSelectReplace" "albedoSelectedGrid" "loadedGrids";
 		editorTemplate -endLayout;
 
-		editorTemplate -beginLayout "Emission" -collapse 0;
+		editorTemplate -beginLayout "Emission" -collapse 0 EmissionLayout;
 			editorTemplate -label "Enable" -addControl "emissionEnabled" "AEVolumeCheckEnableEmission";
-			editorTemplate -label "Gradient Type" -addControl "emissionGradType";
-			AEaddRampControl($nodeName + ".emissionValue");
-			editorTemplate -label "Intensity" -addControl "emissionIntensity";
-			AEaddRampControl($nodeName + ".emissionRamp");
+			editorTemplate -label "Grid Dimensions" -addControl "volumeDimensionsEmission";
+			editorTemplate -callCustom "emissionGridSelectNew" "emissionGridSelectReplace" "emissionSelectedGrid" "loadedGrids";
+			editorTemplate -label "Intensity Multiplier" -addControl "emissionIntensity";
 		editorTemplate -endLayout;
 
-		editorTemplate -beginLayout "Density" -collapse 0;
+		editorTemplate -beginLayout "Density" -collapse 0 DensityLayout;
 			editorTemplate -label "Enable" -addControl "densityEnabled" "AEVolumeCheckEnableDensity";
-			editorTemplate -label "Gradient Type" -addControl "densityGradType";
-			AEaddRampControl($nodeName + ".densityValue");
+			editorTemplate -label "Grid Dimensions" -addControl "volumeDimensionsDensity";
+			editorTemplate -callCustom "densityGridSelectNew" "densityGridSelectReplace" "densitySelectedGrid" "loadedGrids";
+			editorTemplate -label "Density Grid" -addControl "densityGradType";
 			editorTemplate -label "Multiplier" -addControl "densityMultiplier";
 		editorTemplate -endLayout;
 

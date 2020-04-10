@@ -17,6 +17,7 @@ limitations under the License.
 #include <maya/MMessage.h>
 #include <maya/MNodeMessage.h>
 #include <memory>
+#include <map>
 
 /**
 * The RPR Volume locator contains the
@@ -30,6 +31,8 @@ public:
 	virtual ~FireRenderVolumeLocator();
 
 	virtual MStatus compute(const MPlug& plug, MDataBlock& data) override;
+
+	virtual MStatus setDependentsDirty(const MPlug& plugBeingDirtied, MPlugArray&	affectedPlugs) override;
 
 	virtual void draw(
 		M3dView & view,
@@ -47,6 +50,8 @@ public:
 
 	static MStatus initialize();
 
+	using GridParams = std::map<std::string, std::array<int, 3>>;
+
 public:
 	static MTypeId id;
 	static MString drawDbClassification;
@@ -54,6 +59,8 @@ public:
 
 private:
 	MCallbackId m_attributeChangedCallback;
+
+	GridParams m_gridParams;
 
 private:
 	static void onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
