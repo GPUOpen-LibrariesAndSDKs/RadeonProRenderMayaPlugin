@@ -11,6 +11,15 @@
             <ActionContent
                title = "Run Script"
                scriptText = "&quot;$PROJECT_DIR/../prebuild.sh&quot;&#10;">
+               <EnvironmentBuildable>
+                  <BuildableReference
+                     BuildableIdentifier = "primary"
+                     BlueprintIdentifier = "8DBCC29B22304666003EE361"
+                     BuildableName = "RadeonProRender.bundle"
+                     BlueprintName = "Maya2019"
+                     ReferencedContainer = "container:RadeonProRender.xcodeproj">
+                  </BuildableReference>
+               </EnvironmentBuildable>
             </ActionContent>
          </ExecutionAction>
       </PreActions>
