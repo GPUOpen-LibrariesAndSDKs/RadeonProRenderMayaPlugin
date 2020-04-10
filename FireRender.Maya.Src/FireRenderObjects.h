@@ -616,16 +616,14 @@ protected:
 };
 
 // Fire render volume
-// Bridge class between a Maya Volume node and frw::Volume
-struct VolumeData; // forward declaration of RPR data wrapper class
-class FireRenderVolume : public FireRenderNode
+class FireRenderCommonVolume : public FireRenderNode
 {
 public:
 	// Constructor
-	FireRenderVolume(FireRenderContext* context, const MDagPath& dagPath);
+	FireRenderCommonVolume(FireRenderContext* context, const MDagPath& dagPath);
 
 	// Destructor
-	virtual ~FireRenderVolume();
+	virtual ~FireRenderCommonVolume();
 
 	// Refresh the curves
 	virtual void Freshen() override;
@@ -638,6 +636,48 @@ public:
 
 	// attach to the scene
 	virtual void attachToScene() override;
+
+	// Register the callback
+	virtual void RegisterCallbacks(void) override;
+
+	// node dirty
+	virtual void OnShaderDirty(void);
+
+protected:
+	// create volume from maya fluid node
+	virtual bool TranslateVolume(void) = 0;
+
+	// applies transform to node
+	virtual void ApplyTransform(void);
+
+	// create shape for bounding box
+	virtual bool SetBBox(double Xdim, double Ydim, double Zdim);
+
+protected:
+	// transform matrix
+	MMatrix m_matrix;
+	MMatrix m_bboxScale;
+
+	// volume
+	frw::VolumeGrid m_densityGrid;
+	frw::VolumeGrid m_albedoGrid;
+	frw::VolumeGrid m_emissionGrid;
+	frw::Volume m_volume;
+
+	// fake mesh
+	frw::Shape m_boundingBoxMesh;
+};
+
+// Bridge class between a Maya Volume node and frw::Volume
+struct VolumeData; // forward declaration of RPR data wrapper class
+class FireRenderFluidVolume : public FireRenderCommonVolume
+{
+public:
+	// Constructor
+	FireRenderFluidVolume(FireRenderContext* context, const MDagPath& dagPath);
+
+	// Destructor
+	virtual ~FireRenderFluidVolume();
 
 protected:
 	// create volume from maya fluid node
@@ -657,26 +697,10 @@ protected:
 
 	// apply noise to channel
 	bool ApplyNoise(std::vector<float>& channelValues);
-	
-	// applies transform to node
-	virtual void ApplyTransform(void);
-
-	// create shape for bounding box
-	virtual bool SetBBox(double Xdim, double Ydim, double Zdim);
-
-	// transform matrix
-	MMatrix m_matrix;
-	MMatrix m_bboxScale;
-
-	// volume
-	frw::Volume m_volume;
-
-	// fake mesh
-	frw::Shape m_boundingBoxMesh;
 };
 
 // Bridge class between RPR Volume node and frw::Volume
-class FireRenderRPRVolume : public FireRenderVolume
+class FireRenderRPRVolume : public FireRenderCommonVolume
 {
 public:
 	// Constructor

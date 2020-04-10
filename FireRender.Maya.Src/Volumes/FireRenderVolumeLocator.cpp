@@ -14,6 +14,8 @@ limitations under the License.
 #include <maya/MFnEnumAttribute.h>
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MDagModifier.h>
+#include <maya/MFnStringArrayData.h>
+#include <maya/MArrayDataBuilder.h>
 
 #include "FireRenderVolumeLocator.h"
 #include "VolumeAttributes.h"
@@ -36,12 +38,63 @@ FireRenderVolumeLocator::~FireRenderVolumeLocator()
 	}
 }
 
+void SetDefaultStringArrayAttrValue(MPlug& plug, MDataBlock& block)
+{
+	MStatus status;
+
+	MDataHandle wHandle = plug.constructHandle(block);
+	MArrayDataHandle arrayHandle(wHandle, &status);
+	MArrayDataBuilder arrayBuilder = arrayHandle.builder(&status);
+
+	MDataHandle handle = arrayBuilder.addElement(0, &status);
+	MString val = MString("Not used");
+	handle.set(val);
+
+	status = arrayHandle.set(arrayBuilder);
+
+	plug.setValue(wHandle);
+	plug.destructHandle(wHandle);
+}
+
 void FireRenderVolumeLocator::postConstructor()
 {
 	MStatus status;
 	MObject mobj = thisMObject();
 	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(mobj, FireRenderVolumeLocator::onAttributeChanged, this, &status);
 	assert(status == MStatus::kSuccess);
+
+	setMPSafe(true);
+
+	status = setExistWithoutInConnections(true);
+	CHECK_MSTATUS(status);
+
+	// set default value for loaded grids list
+	MPlug lgPlug(thisMObject(), RPRVolumeAttributes::loadedGrids);
+	MDataBlock block = this->forceCache();
+	SetDefaultStringArrayAttrValue(lgPlug, block);
+
+	// set default values for ramps
+	// - will be added when/if we will add ramps
+}
+
+MStatus FireRenderVolumeLocator::setDependentsDirty(const MPlug& plugBeingDirtied,	MPlugArray&	affectedPlugs)
+{
+	std::string name = plugBeingDirtied.partialName().asChar();
+	if (name.find("loag") == std::string::npos)
+	{
+		return MS::kSuccess;
+	}
+
+	if (plugBeingDirtied.attribute() != RPRVolumeAttributes::loadedGrids) 
+	{
+		return MS::kSuccess;
+	}
+
+	MObject thisNode = thisMObject();
+	MPlug palbedoSelectedGrid(thisNode, RPRVolumeAttributes::albedoSelectedGrid);
+	affectedPlugs.append(palbedoSelectedGrid);
+
+	return(MS::kSuccess);
 }
 
 MStatus FireRenderVolumeLocator::compute(const MPlug& plug, MDataBlock& data)
@@ -86,13 +139,22 @@ void* FireRenderVolumeLocator::creator()
 
 void FireRenderVolumeLocator::onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
 {
-	FireRenderVolumeLocator* volumeLocatorNode = static_cast<FireRenderVolumeLocator*> (clientData);
-
 	if (!(msg | MNodeMessage::AttributeMessage::kAttributeSet))
 	{
 		return;
 	}
 
-	// change displayed grid
+	FireRenderVolumeLocator* rprVolumeLocatorNode = static_cast<FireRenderVolumeLocator*> (clientData);
+	MObject mobj = rprVolumeLocatorNode->thisMObject();
+
+	if (plug == RPRVolumeAttributes::vdbFile)
+	{
+		RPRVolumeAttributes::SetupVolumeFromFile(mobj, rprVolumeLocatorNode->m_gridParams);
+	}
+
+	else if ((plug == RPRVolumeAttributes::albedoSelectedGrid) || (plug == RPRVolumeAttributes::emissionSelectedGrid) || (plug == RPRVolumeAttributes::densitySelectedGrid))
+	{
+		RPRVolumeAttributes::SetupGridSizeFromFile(mobj, plug, rprVolumeLocatorNode->m_gridParams);
+	}
 }
 

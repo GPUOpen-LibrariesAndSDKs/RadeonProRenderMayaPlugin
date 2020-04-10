@@ -52,56 +52,19 @@ limitations under the License.
 
 #include <maya/MFnFluid.h>
 
-
 //===================
-// RPR Volume
+// Common Volume
 //===================
-FireRenderRPRVolume::FireRenderRPRVolume(FireRenderContext* context, const MDagPath& dagPath)
-	: FireRenderVolume(context, dagPath)
-{}
-
-FireRenderRPRVolume::~FireRenderRPRVolume()
-{
-	clear();
-}
-
-bool FireRenderRPRVolume::TranslateVolume()
-{
-	// setup
-	const MObject& node = Object();
-
-	// get volume data
-	VolumeData vdata;
-	RPRVolumeAttributes::FillVolumeData(vdata, node, &context()->GetScope());
-	if (!vdata.IsValid())
-		return false;
-
-	// create fake mesh for volume
-	if (!SetBBox(1.0f, 1.0f, 1.0f)) // scale is applied when tranformation matrix is applied to volume
-	{
-		return false;
-	}
-
-	// create rpr volume
-	m_volume = Context().CreateVolume(vdata.gridSizeX, vdata.gridSizeY, vdata.gridSizeZ,
-		(float*)vdata.voxels.data(), vdata.voxels.size());
-
-	return m_volume.IsValid();
-}
-
-//===================
-// Volume
-//===================
-FireRenderVolume::FireRenderVolume(FireRenderContext* context, const MDagPath& dagPath)
+FireRenderCommonVolume::FireRenderCommonVolume(FireRenderContext* context, const MDagPath& dagPath)
 	: FireRenderNode(context, dagPath)
 {}
 
-FireRenderVolume::~FireRenderVolume()
+FireRenderCommonVolume::~FireRenderCommonVolume()
 {
 	clear();
 }
 
-void FireRenderVolume::ApplyTransform(void)
+void FireRenderCommonVolume::ApplyTransform(void)
 {
 	if (!m_volume.IsValid())
 		return;
@@ -132,8 +95,10 @@ void FireRenderVolume::ApplyTransform(void)
 	m_boundingBoxMesh.SetTransform(*mfloats, false);
 }
 
-void FireRenderVolume::Freshen()
+void FireRenderCommonVolume::Freshen()
 {
+	detachFromScene();
+
 	clear();
 
 	auto node = Object();
@@ -154,12 +119,17 @@ void FireRenderVolume::Freshen()
 	FireRenderNode::Freshen();
 }
 
-void FireRenderVolume::clear()
+void FireRenderCommonVolume::clear()
 {
+	m_volume.Reset();
+	m_densityGrid.Reset();
+	m_albedoGrid.Reset();
+	m_emissionGrid.Reset();
+
 	FireRenderObject::clear();
 }
 
-void FireRenderVolume::attachToScene()
+void FireRenderCommonVolume::attachToScene()
 {
 	if (m_isVisible)
 		return;
@@ -188,7 +158,7 @@ void FireRenderVolume::attachToScene()
 	m_isVisible = true;
 }
 
-void FireRenderVolume::detachFromScene()
+void FireRenderCommonVolume::detachFromScene()
 {
 	if (!m_isVisible)
 		return;
@@ -201,14 +171,9 @@ void FireRenderVolume::detachFromScene()
 	}
 }
 
-bool FireRenderVolume::SetBBox(double Xdim, double Ydim, double Zdim) //(MFnFluid& fnFluid)
+bool FireRenderCommonVolume::SetBBox(double Xdim, double Ydim, double Zdim) 
 {
-	// save a scale matrix
-	// core creates a cube instead of bbox so we need to adjust it by scale matrix
-	m_bboxScale.setToIdentity();
-	m_bboxScale[0][0] = Xdim;
-	m_bboxScale[1][1] = Ydim;
-	m_bboxScale[2][2] = Zdim;
+	// scale is applied when tranformation matrix is applied to volume!
 
 	// proceed with creating mesh
 	std::vector<float> veritces;
@@ -228,9 +193,137 @@ bool FireRenderVolume::SetBBox(double Xdim, double Ydim, double Zdim) //(MFnFlui
 		nullptr /*puvIndices.data()*/, nullptr /*texIndexStride.data()*/,
 		std::vector<int>(vertexIndices.size() / 3, 3).data(), vertexIndices.size() / 3);
 
-	//m_boundingBoxMesh.SetTransform(&mfloats[0][0]);
-
 	return true;
+}
+
+void FireRenderCommonVolume::OnShaderDirty()
+{
+	setDirty();
+}
+
+static void VolumeDirtyCallback(MObject& node, void* clientData)
+{
+	DebugPrint("CALLBACK > VolumeDirtyCallback(%s)", node.apiTypeStr());
+	if (auto self = static_cast<FireRenderCommonVolume*>(clientData))
+	{
+		assert(node != self->Object());
+		self->OnShaderDirty();
+	}
+}
+
+void FireRenderCommonVolume::RegisterCallbacks()
+{
+	FireRenderNode::RegisterCallbacks();
+
+	if (!m_volume.IsValid())
+		return;
+
+	// add callback
+	MObject node = Object();
+	MStatus status;
+	MDagPath path = MDagPath::getAPathTo(node, &status);
+
+	// get hair shader node
+	MObjectArray shdrs = getConnectedShaders(path);
+	if (shdrs.length() == 0)
+		return;
+
+	AddCallback(MNodeMessage::addNodeDirtyCallback(node, VolumeDirtyCallback, this, &status));
+}
+
+//===================
+// RPR Volume
+//===================
+FireRenderRPRVolume::FireRenderRPRVolume(FireRenderContext* context, const MDagPath& dagPath)
+	: FireRenderCommonVolume(context, dagPath)
+{}
+
+FireRenderRPRVolume::~FireRenderRPRVolume()
+{
+	clear();
+}
+
+bool FireRenderRPRVolume::TranslateVolume()
+{
+	// setup
+	const MObject& node = Object();
+
+	// get volume data
+	VDBVolumeData vdata;
+	RPRVolumeAttributes::FillVolumeData(vdata, node);
+	
+	if (!vdata.IsValid())
+		return false;
+
+	// create fake mesh for volume
+	if (!SetBBox(1.0f, 1.0f, 1.0f)) // scale is applied when tranformation matrix is applied to volume
+	{
+		return false;
+	}
+
+	// create rpr volumes
+	m_densityGrid.Reset();
+	m_albedoGrid.Reset();
+	m_emissionGrid.Reset();
+
+	if (vdata.densityGrid.IsValid()) // grid exists
+	{
+		m_densityGrid = Context().CreateVolumeGrid(
+			vdata.densityGrid.gridSizeX,
+			vdata.densityGrid.gridSizeY,
+			vdata.densityGrid.gridSizeZ,
+			vdata.densityGrid.gridOnIndices,
+			vdata.densityGrid.gridOnValueIndices,
+			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
+		);
+	}
+
+	if (vdata.albedoGrid.IsValid()) // grid exists
+	{
+		m_albedoGrid = Context().CreateVolumeGrid(
+			vdata.albedoGrid.gridSizeX,
+			vdata.albedoGrid.gridSizeY,
+			vdata.albedoGrid.gridSizeZ,
+			vdata.albedoGrid.gridOnIndices,
+			vdata.albedoGrid.gridOnValueIndices,
+			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
+		);
+	}
+
+	if (vdata.emissionGrid.IsValid()) // grid exists
+	{
+		m_emissionGrid = Context().CreateVolumeGrid(
+			vdata.emissionGrid.gridSizeX,
+			vdata.emissionGrid.gridSizeY,
+			vdata.emissionGrid.gridSizeZ,
+			vdata.emissionGrid.gridOnIndices,
+			vdata.emissionGrid.gridOnValueIndices,
+			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
+		);
+	}
+
+	m_volume = Context().CreateVolume(
+		m_densityGrid.Handle(),
+		m_albedoGrid.Handle(),
+		m_emissionGrid.Handle(),
+		vdata.densityGrid.valuesLookUpTable,
+		vdata.albedoGrid.valuesLookUpTable,
+		vdata.emissionGrid.valuesLookUpTable
+	);
+
+	return m_volume.IsValid();
+}
+
+//===================
+// Volume
+//===================
+FireRenderFluidVolume::FireRenderFluidVolume(FireRenderContext* context, const MDagPath& dagPath)
+	: FireRenderCommonVolume(context, dagPath)
+{}
+
+FireRenderFluidVolume::~FireRenderFluidVolume()
+{
+	clear();
 }
 
 // not used now, but might need in the future
@@ -330,7 +423,7 @@ void RemapControlPoints(std::vector<float>& outputControlPoints, const std::vect
 	}
 }
 
-bool FireRenderVolume::TranslateGeneralVolumeData(VolumeData* pVolumeData, MFnFluid& fnFluid)
+bool FireRenderFluidVolume::TranslateGeneralVolumeData(VolumeData* pVolumeData, MFnFluid& fnFluid)
 {
 	MStatus mstatus;
 	FireRenderError error;
@@ -405,7 +498,7 @@ void FillArrayWithGradient(
 			}
 }
 
-bool FireRenderVolume::ReadDensityIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues)
+bool FireRenderFluidVolume::ReadDensityIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues)
 {
 	MStatus mstatus;
 	FireRenderError error;
@@ -466,7 +559,7 @@ bool FireRenderVolume::ReadDensityIntoArray(MFnFluid& fnFluid, std::vector<float
 	return false;
 }
 
-bool FireRenderVolume::ReadTemperatureIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues)
+bool FireRenderFluidVolume::ReadTemperatureIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues)
 {
 	MStatus mstatus;
 	FireRenderError error;
@@ -529,7 +622,7 @@ bool FireRenderVolume::ReadTemperatureIntoArray(MFnFluid& fnFluid, std::vector<f
 	return false;
 }
 
-bool FireRenderVolume::ReadFuelIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues)
+bool FireRenderFluidVolume::ReadFuelIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues)
 {
 	MStatus mstatus;
 	FireRenderError error;
@@ -590,7 +683,7 @@ bool FireRenderVolume::ReadFuelIntoArray(MFnFluid& fnFluid, std::vector<float>& 
 	return false;
 }
 
-bool FireRenderVolume::ReadPressureIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues)
+bool FireRenderFluidVolume::ReadPressureIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues)
 {
 	MStatus mstatus;
 	FireRenderError error;
@@ -620,7 +713,7 @@ bool FireRenderVolume::ReadPressureIntoArray(MFnFluid& fnFluid, std::vector<floa
 	return true;
 }
 
-bool FireRenderVolume::ReadSpeedIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues)
+bool FireRenderFluidVolume::ReadSpeedIntoArray(MFnFluid& fnFluid, std::vector<float>& outputValues)
 {
 	MStatus mstatus;
 	FireRenderError error;
@@ -687,7 +780,7 @@ bool FireRenderVolume::ReadSpeedIntoArray(MFnFluid& fnFluid, std::vector<float>&
 	return false;
 }
 
-bool FireRenderVolume::ProcessInputField(int inputField,
+bool FireRenderFluidVolume::ProcessInputField(int inputField,
 	std::vector<float>& outData,
 	unsigned int Xres,
 	unsigned int Yres,
@@ -903,7 +996,7 @@ bool ProcessControlPoints(MPlug& valuePlug, std::vector<float>& outputCtrlPoints
 	return true;
 }
 
-bool FireRenderVolume::TranslateDensity(VolumeData* pVolumeData, MFnFluid& fnFluid, MFnDependencyNode& shaderNode)
+bool FireRenderFluidVolume::TranslateDensity(VolumeData* pVolumeData, MFnFluid& fnFluid, MFnDependencyNode& shaderNode)
 {
 	FireRenderError error;
 
@@ -964,7 +1057,7 @@ bool FireRenderVolume::TranslateDensity(VolumeData* pVolumeData, MFnFluid& fnFlu
 	return true;
 }
 
-bool FireRenderVolume::TranslateAlbedo(VolumeData* pVolumeData, MFnFluid& fnFluid, MFnDependencyNode& shaderNode)
+bool FireRenderFluidVolume::TranslateAlbedo(VolumeData* pVolumeData, MFnFluid& fnFluid, MFnDependencyNode& shaderNode)
 {
 	MStatus mstatus;
 	FireRenderError error;
@@ -1041,7 +1134,7 @@ bool FireRenderVolume::TranslateAlbedo(VolumeData* pVolumeData, MFnFluid& fnFlui
 	return true;
 }
 
-bool FireRenderVolume::TranslateEmission(VolumeData* pVolumeData, MFnFluid& fnFluid, MFnDependencyNode& shaderNode)
+bool FireRenderFluidVolume::TranslateEmission(VolumeData* pVolumeData, MFnFluid& fnFluid, MFnDependencyNode& shaderNode)
 {
 	MStatus mstatus;
 	FireRenderError error;
@@ -1118,12 +1211,12 @@ bool FireRenderVolume::TranslateEmission(VolumeData* pVolumeData, MFnFluid& fnFl
 	return true;
 }
 
-bool FireRenderVolume::ApplyNoise(std::vector<float>& channelValues)
+bool FireRenderFluidVolume::ApplyNoise(std::vector<float>& channelValues)
 {
 	return true;
 }
 
-bool FireRenderVolume::TranslateVolume(void)
+bool FireRenderFluidVolume::TranslateVolume(void)
 {
 	VolumeData vdata;
 	FireRenderError error;

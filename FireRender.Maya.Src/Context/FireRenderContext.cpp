@@ -2098,39 +2098,44 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		}
 		else if (dagNode.typeName() == "fluidShape" && volumeSupported)
 		{
-			ob = CreateSceneObject<FireRenderVolume, NodeCachingOptions::AddPath>(dagPath);
+			// Maya native volume
+			ob = CreateSceneObject<FireRenderFluidVolume, NodeCachingOptions::AddPath>(dagPath);
 		}
 		else if (dagNode.typeName() == "RPRVolume" && volumeSupported)
 		{
+			// can read .vdb files
 			ob = CreateSceneObject<FireRenderRPRVolume, NodeCachingOptions::AddPath>(dagPath);
 		}
 		else if (dagNode.typeName() == "instancer")
 		{
 			m_LateinitMASHInstancers.push_back(dagPath);
 		}
-		else
+		else if (dagNode.typeName() == "xgmSplineDescription")
 		{
-			if (dagNode.typeName() == "xgmSplineDescription")
+			if (!IsXgenGuides(node) && hairSupported)
 			{
-				if (!IsXgenGuides(node) && hairSupported)
-				{
-					// check if xgmSplineDescription is a guides for other xgmSplineDescription
-					// don't need to create hair object if that is the case
-					ob = CreateSceneObject<FireRenderHairXGenGrooming, NodeCachingOptions::AddPath>(dagPath);
-				}
+				// check if xgmSplineDescription is a guides for other xgmSplineDescription
+				// don't need to create hair object if that is the case
+				ob = CreateSceneObject<FireRenderHairXGenGrooming, NodeCachingOptions::AddPath>(dagPath);
 			}
 			else if (dagNode.typeName() == "HairShape" && hairSupported)
 			{
-				ob = CreateSceneObject<FireRenderHairOrnatrix, NodeCachingOptions::AddPath>(dagPath);
+				// check if xgmSplineDescription is a guides for other xgmSplineDescription
+				// don't need to create hair object if that is the case
+				ob = CreateSceneObject<FireRenderHairXGenGrooming, NodeCachingOptions::AddPath>(dagPath);
 			}
-			else if (dagNode.typeName() == "transform")
-			{
-				ob = CreateSceneObject<FireRenderNode, NodeCachingOptions::AddPath>(dagPath);
-			}
-			else
-			{
-				DebugPrint("Ignoring %s: %s", dagNode.typeName().asUTF8(), dagNode.name().asUTF8());
-			}
+		}
+		else if (dagNode.typeName() == "HairShape")
+		{
+			ob = CreateSceneObject<FireRenderHairOrnatrix, NodeCachingOptions::AddPath>(dagPath);
+		}
+		else if (dagNode.typeName() == "transform")
+		{
+			ob = CreateSceneObject<FireRenderNode, NodeCachingOptions::AddPath>(dagPath);
+		}
+		else
+		{
+			DebugPrint("Ignoring %s: %s", dagNode.typeName().asUTF8(), dagNode.name().asUTF8());
 		}
 	}
 	else

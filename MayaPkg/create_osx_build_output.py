@@ -255,20 +255,15 @@ def create_zip_addon(lib_path,package_name, version, target='windows'):
 
 def enumerate_lib_data():
     name_ending = ".dylib"
-    rprsdk_bin = repo_root / 'RadeonProRenderSDK/RadeonProRender/binMacOS'
-    for name in os.listdir((str(rprsdk_bin))):
-        if name.endswith(name_ending):
-            yield Path(rprsdk_bin)/name, name
-    
-    rpipsdk_bin = repo_root / 'RadeonProImageProcessingSDK/OSX'
-    for name in os.listdir((str(rpipsdk_bin))):
-        if name.endswith(name_ending):
-            yield Path(rpipsdk_bin)/name, name
+    paths_to_copy_to_maya_lib_folder = ['RadeonProRenderSDK/RadeonProRender/binMacOS', 
+                    'RadeonProImageProcessingSDK/OSX', 
+                    'ThirdParty/oiio-mac/bin']
 
-    oiio_bin = repo_root / 'ThirdParty/oiio-mac/bin'
-    for name in os.listdir((str(oiio_bin))):
-        if name.endswith(name_ending):
-            yield Path(oiio_bin)/name, name
+    for dirToTakeFrom in paths_to_copy_to_maya_lib_folder:
+        path = repo_root / dirToTakeFrom
+        for name in os.listdir((str(path))):
+            if name.endswith(name_ending):
+                yield Path(path)/name, name
 
 def copy_libs(libpath):
     for src, package_path in enumerate_lib_data():

@@ -10,7 +10,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Script"
-               scriptText = "&quot;$PROJECT_DIR/../prebuild.sh&quot;">
+               scriptText = "&quot;$PROJECT_DIR/../prebuild.sh&quot;&#10;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
@@ -28,13 +28,13 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Script"
-               scriptText = "&quot;$PROJECT_DIR/../postbuild_debug.sh&quot;">
+               scriptText = "&quot;$PROJECT_DIR/../postbuild_debug.sh&quot;&#10;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
-                     BlueprintIdentifier = "4DE508631D9950A1009B2BD6"
+                     BlueprintIdentifier = "8D595D8B20372FE20031988A"
                      BuildableName = "RadeonProRender.bundle"
-                     BlueprintName = "Maya2017"
+                     BlueprintName = "Maya2018"
                      ReferencedContainer = "container:RadeonProRender.xcodeproj">
                   </BuildableReference>
                </EnvironmentBuildable>
@@ -62,7 +62,6 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      language = ""
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
       </Testables>
@@ -82,7 +81,6 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      language = ""
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"

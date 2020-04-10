@@ -366,6 +366,43 @@ global proc shelf_Radeon_ProRender () {
 		-manage 1
 		-visible 1
 		-preventOverride 0
+		-annotation "Create RPR Volume"
+		-enableBackground 0
+		-align "center"
+		// -label "RPR Volume"
+		-labelOffset 0
+		-font "plainLabelFont"
+		// -imageOverlayLabel "Volume"
+		-overlayLabelColor 0.8 0.8 0.8
+		-overlayLabelBackColor 0 0 0 0
+		-image "shelf/volume.png"
+		-image1 "shelf/volume.png"
+		-style "iconOnly"
+		-marginWidth 1
+		-marginHeight 1
+		-command "source shelfCommands.mel; createVolumeRPR();"
+		-sourceType "mel"
+		-commandRepeatable 1
+		-flat 1
+	;
+	separator
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
+		-enableBackground 0
+		-horizontal 0
+	;
+	shelfButton
+		-enableCommandRepeat 1
+		-enable 1
+		-width 35
+		-height 35
+		-manage 1
+		-visible 1
+		-preventOverride 0
 		-annotation "Radeon ProRender Information"
 		-enableBackground 0
 		-align "center"

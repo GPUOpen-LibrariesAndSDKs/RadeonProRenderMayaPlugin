@@ -600,7 +600,7 @@
       <AdditionalOptions>%(AdditionalOptions)</AdditionalOptions>
       <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <OpenMPSupport>true</OpenMPSupport>
-      <AdditionalIncludeDirectories>..\ThirdParty\aws\Win\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -609,7 +609,7 @@
       <AdditionalOptions>/export:initializePlugin /export:uninitializePlugin %(AdditionalOptions)</AdditionalOptions>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
-      <AdditionalLibraryDirectories>$(MAYA_X64_2018)\lib;..\ThirdParty\aws\Win\lib;..\ThirdParty\aws\Win\bin;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenMayaFX.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
@@ -703,7 +703,7 @@
       <PrecompiledHeaderOutputFile>$(IntermediateOutputPath)\$(ProjectName).pch</PrecompiledHeaderOutputFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <OpenMPSupport>true</OpenMPSupport>
-      <AdditionalIncludeDirectories>$(MAYA_SDK_2018)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>
@@ -714,7 +714,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
       <ImportLibrary>$(IntermediateOutputPath)$(ProjectName).lib</ImportLibrary>
-      <AdditionalLibraryDirectories>$(MAYA_X64_2018)\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>OpenMayaFX.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
