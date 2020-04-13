@@ -98,10 +98,12 @@ global proc createAboutFrame(string $parent)
 			-collapsable false
 			-collapse false;
 
-			string $name = "Radeon ProRender for Maya(R) " + getRPRPluginVersion() + " (core " + getRprCoreVersion() + ")\n" +
-							"Copyright (C) 2016 Advanced Micro Devices, Inc. (AMD).\n" +
-							"Portions of this software are created and copyrighted\n" +
-							"to other third parties.";
+			string $name = "Radeon ProRender for Maya(R)\n" + 
+					"Plugin: " + getRPRPluginVersion() + " (Core: " + getRprCoreVersion() + ", RIF:" + getRifVersion() + ")\n" +
+					"Copyright (C) 2020 Advanced Micro Devices, Inc. (AMD).\n" +
+					"Portions of this software are created and copyrighted\n" +
+					"to other third parties.";
+
 			button -label $name -height 64 -command "showMoreAbout()";
 
 		setParent..;
