@@ -21,6 +21,7 @@ global proc string getRPRPluginVersion()
 }
 
 global string $rprCoreVersion;
+global string $rifVersion;
 
 global proc setRprCoreVersion(string $rcv)
 {
@@ -34,6 +35,18 @@ global proc string getRprCoreVersion()
 	global string $rprCoreVersion;
 
 	return $rprCoreVersion;
+}
+
+global proc setRifVersion(string $rv)
+{
+	global string $rifVersion;
+	$rifVersion = $rv;
+}
+
+global proc string getRifVersion()
+{
+	global string $rifVersion;
+	return $rifVersion;
 }
 
 global proc string getRPRNodePrefix()

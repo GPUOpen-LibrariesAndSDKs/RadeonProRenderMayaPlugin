@@ -419,6 +419,29 @@ MStatus deRegisterNodesInPathEditor(void)
 	return status;	
 }
 
+void SetVersionsForMel()
+{
+	// Set RPR Engine version
+	std::ostringstream ossRPRCore;
+	ossRPRCore << RPR_VERSION_MAJOR << "." << RPR_VERSION_MINOR << RPR_VERSION_REVISION;
+
+	std::string versionStr = ossRPRCore.str();
+	std::string commandStr = "setRprCoreVersion(\"" + versionStr + "\")";
+
+	MGlobal::executeCommand(commandStr.c_str());
+
+	// set RIF version
+	std::ostringstream ossRIF;
+	ossRIF << RIF_VERSION_MAJOR << "." << RIF_VERSION_MINOR << RIF_VERSION_REVISION;
+
+	versionStr = ossRIF.str();
+	commandStr = "setRifVersion(\"" + versionStr + "\")";
+
+	MGlobal::executeCommand(commandStr.c_str());
+
+}
+
+
 MStatus initializePlugin(MObject obj)
 //
 //	Description:
@@ -791,22 +814,7 @@ MStatus initializePlugin(MObject obj)
 
 	CHECK_MSTATUS(registerNodesInPathEditor());
 
-#ifdef RPR_VERSION_MAJOR_MINOR_REVISION
-	std::ostringstream oss;
-	oss << RPR_VERSION_MAJOR << "." << RPR_VERSION_MINOR << RPR_VERSION_REVISION;
-#else
-	int mj = (RPR_API_VERSION & 0xFFFF00000) >> 28;
-	int mn = (RPR_API_VERSION & 0xFFFFF) >> 8;
-
-	std::ostringstream oss;
-	oss << std::hex << mj << "." << mn;
-#endif
-
-
-	std::string versionStr = oss.str();
-	std::string commandStr = "setRprCoreVersion(\"" + versionStr + "\")";
-
-	MGlobal::executeCommand( commandStr.c_str() );
+	SetVersionsForMel();
 
 	// If we in file open process we need to remove default RadeonProRenderGlobals node
 	if (MFileIO::isOpeningFile())
