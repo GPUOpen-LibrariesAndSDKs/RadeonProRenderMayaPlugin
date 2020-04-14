@@ -793,6 +793,7 @@ public:
 	CompletionCriteriaParams m_completionCriteriaParams;
 
 	int	m_currentIteration;
+	rpr_uint m_currentFrame;
 	int	m_progress;
 	std::chrono::time_point<std::chrono::system_clock> m_lastRenderStartTime;
 

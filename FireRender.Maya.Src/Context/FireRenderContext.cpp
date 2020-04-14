@@ -102,6 +102,7 @@ FireRenderContext::FireRenderContext() :
 	m_lastRenderResultState(NOT_SET),
 	m_polycountLastRender(0),
 	m_currentIteration(0),
+	m_currentFrame(0),
 	m_progress(0),
 	m_lastIterationTime(0),
 	m_timeIntervalForOutputUpdate(0.1),
@@ -895,6 +896,7 @@ void FireRenderContext::render(bool lock)
 		m_restartRender = false;
 		m_startTime = clock();
 		m_currentIteration = 0;
+		m_currentFrame = 0;
 	}
 
 	// may need to change iteration step
@@ -910,6 +912,7 @@ void FireRenderContext::render(bool lock)
 	}
 
 	context.SetParameter(RPR_CONTEXT_ITERATIONS, iterationStep);
+	context.SetParameter(RPR_CONTEXT_FRAMECOUNT, m_currentFrame);
 
 	if (m_useRegion)
 		context.RenderTile(m_region.left, m_region.right+1, m_height - m_region.top - 1, m_height - m_region.bottom);
@@ -924,6 +927,7 @@ void FireRenderContext::render(bool lock)
 	}
 
 	m_currentIteration += iterationStep;
+	m_currentFrame++;
 
 	m_cameraAttributeChanged = false;
 }
