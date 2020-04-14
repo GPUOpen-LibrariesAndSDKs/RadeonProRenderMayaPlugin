@@ -12,6 +12,12 @@
 # limitations under the License.
 
 # clear old folders
+
+if [ "$ACTION" != "clean" ]; then
+	exit
+fi
+
+
 pushd "/Users/Shared/RadeonProRender"
 rm -rf cache icons image lib plug-ins renderDesc scripts shaders shelves modules
 popd
