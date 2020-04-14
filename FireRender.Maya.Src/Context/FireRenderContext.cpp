@@ -886,7 +886,7 @@ void FireRenderContext::render(bool lock)
 			}
 		}
 
-		if (m_interactive && m_denoiserChanged && m_globals.denoiserSettings.enabled)
+		if (m_interactive && m_denoiserChanged && m_globals.denoiserSettings.enabled && IsDenoiserSupported())
 		{
 			turnOnAOVsForDenoiser(true);
 			setupDenoiserFB();
@@ -2129,7 +2129,7 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 				ob = CreateSceneObject<FireRenderHairXGenGrooming, NodeCachingOptions::AddPath>(dagPath);
 			}
 		}
-		else if (dagNode.typeName() == "HairShape")
+		else if (dagNode.typeName() == "HairShape" && hairSupported)
 		{
 			ob = CreateSceneObject<FireRenderHairOrnatrix, NodeCachingOptions::AddPath>(dagPath);
 		}
