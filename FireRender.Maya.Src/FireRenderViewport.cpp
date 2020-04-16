@@ -909,13 +909,7 @@ void FireRenderViewport::setCurrentAOV(int aov)
 void FireRenderViewport::addMenu()
 {
 	// The add menu command string.
-	MString command;
-
-	// Maya 2017 uses newer Python APIs, so create a
-	// different command for the different Maya versions.
-	if (MGlobal::apiVersion() >= 201700)
-	{
-		command =
+	MString command = 
 			R"(from PySide2 import QtCore, QtWidgets, QtGui
 import shiboken2
 import maya.OpenMayaUI as omu
@@ -943,8 +937,19 @@ def setFireViewportMode_ambientOcclusion(checked=True):
 	maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportMode="ambientOcclusion")
 
 def createAOVsMenu(frMenu):
+
+	# numbers in the following arrays are IDs of RPR AOVs that are declared in RadeonProRender.h
+	aov_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 27, 28]
+
 	def setFireViewportAOV(aov):
 		maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportAOV=aov)
+
+	# Maya 2020 has broken lambdas when used as a callback for unknown reason. Explicit version works.
+	def activate_aov(index):
+		def wrapped(*args, **kwargs):
+			setFireViewportAOV(aov_ids[index])
+
+		return wrapped
 
 	frSubMenu = frMenu.addMenu("AOV")
 
@@ -952,14 +957,11 @@ def createAOVsMenu(frMenu):
 	aovs.extend(["Shadow Catcher", "Background", "Emission", "Velocity", "Direct Illumination", "Indirect Illumination", "AO", "Direct Diffuse"])
 	aovs.extend(["Direct Reflect", "Indirect Diffuse", "Indirect Reflect", "Refract", "Subsurface / Volume", "Albedo", "Variance"])
 
-	# numbers in the following arrays are IDs of RPR AOVs that are declared in RadeonProRender.h
-	aov_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 27, 28]
-
 	ag = QtWidgets.QActionGroup(frSubMenu)
 	count = 0
 	for aov in aovs:
 		action = frSubMenu.addAction(aov)
-		action.triggered.connect( lambda index = count: setFireViewportAOV(aov_ids[index]))
+		action.triggered.connect(activate_aov(count))
 		action.setActionGroup(ag)
 		action.setCheckable(True)
 		if count == 0 :
@@ -1032,101 +1034,6 @@ if not frExist:
 	action.setActionGroup(ag)
 	action.triggered.connect(setFireViewportMode_ambientOcclusion)
 )";
-	}
-	else
-	{
-		command =
-			R"(from PySide import QtCore, QtGui
-import shiboken
-import maya.OpenMayaUI as omu
-def setFireRenderAnimCache(checked=True):
-	maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),cache=checked)
-def clearFireRenderCache():
-	maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),clear=True)
-def setFireViewportMode_globalIllumination(checked=True):
-	maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportMode="globalIllumination")
-def setFireViewportMode_directIllumination(checked=True):
-	maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportMode="directIllumination")
-def setFireViewportMode_directIlluminationNoShadow(checked=True):
-	maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportMode="directIlluminationNoShadow")
-def setFireViewportMode_wireframe(checked=True):
-	maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportMode="wireframe")
-def setFireViewportMode_materialId(checked=True):
-	maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportMode="materialId")
-def setFireViewportMode_position(checked=True):
-	maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportMode="position")
-def setFireViewportMode_normal(checked=True):
-	maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportMode="normal")
-def setFireViewportMode_texcoord(checked=True):
-	maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportMode="texcoord")
-def setFireViewportMode_ambientOcclusion(checked=True):
-	maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportMode="ambientOcclusion")
-
-ptr = omu.MQtUtil.findControl("m_panelName", long(omu.MQtUtil.mainWindow()))
-w = shiboken.wrapInstance(long(ptr), QtGui.QWidget)
-menuBar = w.findChildren(QtGui.QMenuBar)[0]
-frExist = False
-for act in menuBar.actions():
-	if act.text() == "FIRE_RENDER_NAME":
-		frExist = True
-if not frExist:
-	frMenu = menuBar.addMenu("FIRE_RENDER_NAME")
-	animAction = frMenu.addAction("Animation cache")
-	animAction.setCheckable(True)
-	animAction.setChecked(True)
-	animAction.toggled.connect(setFireRenderAnimCache)
-	action = frMenu.addAction("Clear animation cache")
-	action.triggered.connect(clearFireRenderCache)
-
-	frSubMenu = frMenu.addMenu("Viewport Mode")
-	ag = QtGui.QActionGroup(frSubMenu)
-	action = frSubMenu.addAction("globalIllumination")
-	action.setActionGroup(ag)
-	action.setCheckable(True)
-	action.setChecked(True)
-	action.triggered.connect(setFireViewportMode_globalIllumination)
-
-	action = frSubMenu.addAction("directIllumination")
-	action.setActionGroup(ag)
-	action.setCheckable(True)
-	action.triggered.connect(setFireViewportMode_directIllumination)
-
-	action = frSubMenu.addAction("directIlluminationNoShadow")
-	action.setActionGroup(ag)
-	action.setCheckable(True)
-	action.triggered.connect(setFireViewportMode_directIlluminationNoShadow)
-
-	action = frSubMenu.addAction("wireframe")
-	action.setActionGroup(ag)
-	action.setCheckable(True)
-	action.triggered.connect(setFireViewportMode_wireframe)
-
-	action = frSubMenu.addAction("materialId")
-	action.setActionGroup(ag)
-	action.setCheckable(True)
-	action.triggered.connect(setFireViewportMode_materialId)
-
-	action = frSubMenu.addAction("position")
-	action.setActionGroup(ag)
-	action.setCheckable(True)
-	action.triggered.connect(setFireViewportMode_position)
-
-	action = frSubMenu.addAction("normal")
-	action.setActionGroup(ag)
-	action.setCheckable(True)
-	action.triggered.connect(setFireViewportMode_normal)
-
-	action = frSubMenu.addAction("texcoord")
-	action.setActionGroup(ag)
-	action.setCheckable(True)
-	action.triggered.connect(setFireViewportMode_texcoord)
-
-	action = frSubMenu.addAction("ambientOcclusion")
-	action.setActionGroup(ag)
-	action.setCheckable(True)
-	action.triggered.connect(setFireViewportMode_ambientOcclusion)
-)";
-	}
 
 	command.substitute("m_panelName", m_panelName);
 	command.substitute("FIRE_RENDER_NAME", FIRE_RENDER_NAME);
@@ -1142,9 +1049,7 @@ void FireRenderViewport::removeMenu()
 
 	// Maya 2017 uses newer Python APIs, so create a
 	// different command for the different Maya versions.
-	if (MGlobal::apiVersion() >= 201700)
-	{
-		command =
+	command =
 			"from PySide2 import QtCore, QtWidgets\n"
 			"import shiboken2\n"
 			"import maya.OpenMayaUI as omu\n"
@@ -1155,21 +1060,6 @@ void FireRenderViewport::removeMenu()
 			"for act in menuBar.actions():\n"
 			"\tif act.text() == \"" + FIRE_RENDER_NAME + "\":\n"
 			"\t\tmenuBar.removeAction(act)\n";
-	}
-	else
-	{
-		command =
-			"from PySide import QtCore, QtGui\n"
-			"import shiboken\n"
-			"import maya.OpenMayaUI as omu\n"
-			"ptr = omu.MQtUtil.findControl(\"" + m_panelName + "\", long(omu.MQtUtil.mainWindow()))\n"
-			"w = shiboken.wrapInstance(long(ptr), QtGui.QWidget)\n"
-			"menuBar = w.findChildren(QtGui.QMenuBar)[0]\n"
-			"frExist = False\n"
-			"for act in menuBar.actions():\n"
-			"\tif act.text() == \"" + FIRE_RENDER_NAME + "\":\n"
-			"\t\tmenuBar.removeAction(act)\n";
-	}
 
 	MGlobal::executePythonCommand(command);
 }
