@@ -17,11 +17,7 @@ limitations under the License.
 #include <maya/MImage.h>
 #include <string>
 #include <memory>
-#ifdef __APPLE__
-#include <OpenImageIO/color.h>
-#else
 #include <color.h>
-#endif
 
 // -----------------------------------------------------------------------------
 void FireRenderImageUtil::save(MString filePath, unsigned int width, unsigned int height,

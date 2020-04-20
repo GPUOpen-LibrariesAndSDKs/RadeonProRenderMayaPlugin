@@ -45,11 +45,7 @@ limitations under the License.
 #include "RenderRegion.h"
 #include "FireRenderThread.h"
 
-#ifdef OSMac_
-#include <OpenImageIO/imageio.h>
-#else
 #include <imageio.h>
-#endif
 
 using namespace std;
 using namespace OIIO;

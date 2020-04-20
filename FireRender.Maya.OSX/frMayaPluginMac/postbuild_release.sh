@@ -28,9 +28,7 @@ cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/shelfs/" "/Users/Shared/RadeonP
 
 cp -r "$PROJECT_DIR/../../../RadeonProRenderSDK/RadeonProRender/binMacOS/" "/Users/Shared/RadeonProRender/lib/"
 cp    "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/OSX/libRadeonImageFilters64.1.5.0.dylib" "/Users/Shared/RadeonProRender/lib/libRadeonImageFilters64.1.5.0.dylib"
-cp -r  "$PROJECT_DIR/../../../ThirdParty/oiio-mac/bin/" "/Users/Shared/RadeonProRender/lib"
-
-#cp    "$PROJECT_DIR/../../../ThirdParty/aws/Mac/bin/*" "/Users/Shared/RadeonProRender/lib"
+cp -r  "$PROJECT_DIR/../../../RadeonProRenderSharedComponents/oiio/OSX/bin/" "/Users/Shared/RadeonProRender/lib"
 
 # Make fix pathes in libraries and bundles
 python3 $PROJECT_DIR/../postbuild.py
