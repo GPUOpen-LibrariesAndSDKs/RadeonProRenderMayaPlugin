@@ -15,11 +15,6 @@ set mayaVersions=2018 2019 2020
 
 setlocal enabledelayedexpansion
 
-:update_3dparty
-pushd ThirdParty
-call win_update.cmd
-popd
-
 :vs_setup
 
 call vs_path.bat

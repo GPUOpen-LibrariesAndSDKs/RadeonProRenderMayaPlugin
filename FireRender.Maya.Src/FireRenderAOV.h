@@ -20,12 +20,7 @@ limitations under the License.
 #undef min
 #undef max
 
-#ifdef OSMac_
-#include <OpenImageIO/imageio.h>
-#else
 #include <imageio.h>
-#endif
-
 
 // Forward declarations.
 class FireRenderContext;

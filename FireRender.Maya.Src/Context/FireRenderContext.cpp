@@ -60,12 +60,7 @@ std::map<FireRenderContext*,FireRenderContext::Lock::frcinfo> FireRenderContext:
 #undef max
 #endif
 
-#ifdef OSMac_
-#include <OpenImageIO/imageio.h>
-#else
 #include <imageio.h>
-#endif
-
 
 #ifndef MAYA2015
 #include <maya/MUuid.h>

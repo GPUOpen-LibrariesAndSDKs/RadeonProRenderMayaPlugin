@@ -22,7 +22,7 @@ limitations under the License.
 #include <maya/MDataHandle.h>
 #include <maya/MRampAttribute.h>
 
-#include <pluginUtils.h>
+#include <RadeonProRenderLibs/rprLibs/pluginUtils.h>
 
 #include <vector>
 #include <array>

@@ -279,7 +279,7 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 			</Feature>
 EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 -->
-			<Feature Id="SceneConvScripts" Title="Scene Convertion Scripts" Description="Scene Convertion Scripts for Arnold and RedShift" Level="1" Absent="disallow" AllowAdvertise="no">
+			<Feature Id="SceneConvScripts" Title="Scene Conversion Scripts" Description="Scene Conversion Scripts for Arnold and RedShift" Level="1" Absent="disallow" AllowAdvertise="no">
 				<ComponentGroupRef Id="CG_SCENE_CONV"/>
 				<ComponentRef Id="SceneConv"/>
 			</Feature>

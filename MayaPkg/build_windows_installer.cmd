@@ -43,8 +43,8 @@ call create_module.cmd 2018
 call create_module.cmd 2019
 call create_module.cmd 2020
 
-:: update ThirdParty
-set ThirdPartyDir="..\ThirdParty"
+:: update SharedComponents
+set SharedComponentsDir="..\RadeonProRenderSharedComponents"
 
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\bin" "system\PluginInstaller\InputData\feature_Core\bin\*"
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\data" "system\PluginInstaller\InputData\feature_Core\data\*"
@@ -58,10 +58,10 @@ xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2018" "system\PluginI
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2019" "system\PluginInstaller\InputData\feature_2019\2019\*"
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2020" "system\PluginInstaller\InputData\feature_2020\2020\*"
 
-:: scene convertion scripts
+:: scene conversion scripts
 mkdir "system\PluginInstaller\InputData\feature_ConvScripts"
-copy /Y "%ThirdPartyDir%\SceneConvertionScripts\convertAI2RPR.py" "system\PluginInstaller\InputData\feature_ConvScripts\convertAI2RPR.py"
-copy /Y "%ThirdPartyDir%\SceneConvertionScripts\convertRS2RPR.py" "system\PluginInstaller\InputData\feature_ConvScripts\convertRS2RPR.py"
+copy /Y "%SharedComponentsDir%\SceneConversionScripts\convertAI2RPR.py" "system\PluginInstaller\InputData\feature_ConvScripts\convertAI2RPR.py"
+copy /Y "%SharedComponentsDir%\SceneConversionScripts\convertRS2RPR.py" "system\PluginInstaller\InputData\feature_ConvScripts\convertRS2RPR.py"
 
 
 :: copy material library

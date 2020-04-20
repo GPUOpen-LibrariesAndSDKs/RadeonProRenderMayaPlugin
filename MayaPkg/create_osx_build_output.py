@@ -234,30 +234,11 @@ def install_tool_name(src,myzip,package_path,opath,npath):
                     arcname=str(Path('rprblender') / package_path))
 
 
-def create_zip_addon(lib_path,package_name, version, target='windows'):
-
-    with zipfile.ZipFile(package_name, 'w') as myzip:
-        for src, package_path in enumerate_addon_data(lib_path,version, target=target):
-            if isinstance(src, bytes):
-                myzip.writestr(str(Path('rprblender') / package_path), src)
-            else:
-                # print("*** %s" % src.name)
-                if '_cffi_backend.cpython-35m-darwin.so' == src.name:
-                    install_tool_name(src,myzip,package_path,"/usr/lib/libffi.dylib","/Users/Shared/RadeonProRender/Blender/lib/libffi.dylib")
-                elif 'libRPRBlenderHelper.dylib' == src.name:
-                    install_tool_name(src,myzip,package_path,"/Users/Shared/RadeonProRender/lib/libRadeonProRender64.dylib","/Users/Shared/RadeonProRender/Blender/lib/libRadeonProRender64.dylib")
-                elif 'libRadeonProRender64.dylib' == src.name:
-                    install_tool_name(src,myzip,package_path,"/Users/Shared/RadeonProRender/lib/libOpenImageIO.1.7.dylib","/Users/Shared/RadeonProRender/Blender/lib/libOpenImageIO.1.7.dylib")
-                else:
-                    print('  file', src)
-                    myzip.write(str(src),
-                                arcname=str(Path('rprblender') / package_path))
-
 def enumerate_lib_data():
     name_ending = ".dylib"
     paths_to_copy_to_maya_lib_folder = ['RadeonProRenderSDK/RadeonProRender/binMacOS', 
                     'RadeonProImageProcessingSDK/OSX', 
-                    'ThirdParty/oiio-mac/bin']
+                    'RadeonProRenderSharedComponents/OpenImageIO/OSX/bin']
 
     for dirToTakeFrom in paths_to_copy_to_maya_lib_folder:
         path = repo_root / dirToTakeFrom

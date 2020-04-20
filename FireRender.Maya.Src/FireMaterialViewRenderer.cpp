@@ -26,11 +26,7 @@ limitations under the License.
 #undef max
 #endif
 
-#ifdef OSMac_
-#include <OpenImageIO/imageio.h>
-#else
 #include <imageio.h>
-#endif
 
 using namespace FireMaya;
 
