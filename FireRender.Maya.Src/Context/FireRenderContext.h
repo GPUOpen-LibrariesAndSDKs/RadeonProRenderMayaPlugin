@@ -230,6 +230,12 @@ public:
 		int aov;
 		unsigned int width;
 		unsigned int height;
+		std::array<float, 3> shadowColor;
+		std::array<float, 3> bgColor;
+		float shadowTransp;
+		float shadowWeight;
+		float bgTransparency;
+		float bgWeight;
 		const RenderRegion& region;
 		bool flip;
 		bool mergeOpacity;
@@ -241,6 +247,12 @@ public:
 			, aov(RPR_AOV_MAX)
 			, width(0)
 			, height(0)
+			, shadowColor{ 0.0f, 0.0f, 0.0f }
+			, bgColor{ 0.0f, 0.0f, 0.0f }
+			, shadowTransp(0.0f)
+			, shadowWeight(1.0f)
+			, bgTransparency(0.0f)
+			, bgWeight(1.0f)
 			, region(_region)
 			, flip(false)
 			, mergeOpacity(false)
@@ -273,15 +285,15 @@ public:
 
 	// Composite image for Shadow Catcher
 	void compositeShadowCatcherOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region,
-		bool flip);
+		bool flip, const std::array<float, 3>& color, const std::array<float, 3>& bgColor, float transparency, float bgTransp, float bgWeight, float weight);
 
 	// Composite image for Reflection Catcher
 	void compositeReflectionCatcherOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region,
-		bool flip);
+		bool flip, const std::array<float, 3>& bgColor, float bgTransp, float bgWeight, float weight);
 
 	// Composite image for Shadow+Reflection Catcher
 	void compositeReflectionShadowCatcherOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region,
-		bool flip);
+		bool flip, const std::array<float, 3>& color, const std::array<float, 3>& bgColor, float transparency, float bgTransp, float bgWeight, float weight);
 
 	// Copy pixels from the source buffer to the destination buffer.
 	void copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
@@ -787,7 +799,7 @@ public:
 
 	bool m_restartRender;
 
-	//completion criteria sections:
+	// completion criteria sections:
 	clock_t		m_startTime;
 
 	CompletionCriteriaParams m_completionCriteriaParams;
@@ -799,6 +811,14 @@ public:
 
 	double		m_timeIntervalForOutputUpdate;//in sec, TODO: check for Linux/Mac
 	clock_t		m_lastIterationTime;
+
+	// shadow color and transparency (for shadow/reflection catcher)
+	std::array<float, 3> m_shadowColor;
+	std::array<float, 3> m_bgColor;
+	float m_shadowTransparency;
+	float m_backgroundTransparency;
+	float m_shadowWeight;
+	float m_bgWeight;
 
 	/* data for athena dumping */
 	double m_secondsSpentOnLastRender;

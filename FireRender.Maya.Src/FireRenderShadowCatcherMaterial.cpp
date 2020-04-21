@@ -25,7 +25,7 @@ limitations under the License.
 #include <maya/MPlugArray.h>
 
 #include "FireRenderDisplacement.h"
-
+#include "Context/FireRenderContext.h"
 #include "FireMaya.h"
 
 namespace
@@ -40,10 +40,6 @@ namespace
 		MObject shadowColor;
 		MObject shadowWeight;
 		MObject shadowTransparency;
-		MObject useNormalMap;
-		MObject normalMap;
-		MObject useDispMap;
-		MObject dispMap;
 
 		MObject rcenabled;
 		MObject reflectionWeight;
@@ -97,17 +93,13 @@ MStatus FireMaya::ShadowCatcherMaterial::initialize()
 		{ &Attribute::scenabled, "scenabled", "scen", 0, 0, 1, MFnNumericData::kBoolean },
 		{ &Attribute::rcenabled, "rcenabled", "rcen", 0, 0, 1, MFnNumericData::kBoolean },
 		{ &Attribute::bgIsEnv, "bgIsEnv", "bgie", 0, 0, 1, MFnNumericData::kBoolean },
-		{ &Attribute::useNormalMap, "useNormalMap", "unm", 0, 0, 0, MFnNumericData::kBoolean },
-		{ &Attribute::useDispMap, "useDispMap", "udm", 0, 0, 0, MFnNumericData::kBoolean },
 		{ &Attribute::disableSwatch, "disableSwatch", "ds", 0, 0, 0, MFnNumericData::kBoolean }
 	};
 
 	std::vector<ColorAttributeEntry> colorAttributes = 
 	{
-		{&Attribute::bgColor, "bgColor", "bgc", {0.0f, 0.0f, 0.0f} },
+		{&Attribute::bgColor, "bgColor", "bgc", {1.0f, 1.0f, 1.0f} },
 		{&Attribute::shadowColor, "shadowColor", "sc", { 0.0f, 0.0f, 0.0f } },
-		{&Attribute::normalMap, "normalMap", "nm", { 0.0f, 0.0f, 0.0f } },
-		{&Attribute::dispMap, "dispMap", "dm", { 0.0f, 0.0f, 0.0f } }
 	};
 
 	Attribute::output = nAttr.createColor("outColor", "oc");
@@ -176,18 +168,23 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 	if (shaderNode.findPlug(Attribute::scenabled, false).asBool())
 	{
 		// Code below this line copied from FireRenderStandardMaterial
-		// Normal map
-		if (shaderNode.findPlug(Attribute::useNormalMap, false).asBool())
+		frw::Value shadowColor = scope.GetValue(shaderNode.findPlug(Attribute::shadowColor, false));
+		frw::Value bgColor = scope.GetValue(shaderNode.findPlug(Attribute::bgColor, false));
+		frw::Value shadowAlpha = scope.GetValue(shaderNode.findPlug(Attribute::shadowTransparency, false));
+		frw::Value weight = scope.GetValue(shaderNode.findPlug(Attribute::shadowWeight, false));
+		frw::Value bgTransp = scope.GetValue(shaderNode.findPlug(Attribute::bgTransparency, false));
+		frw::Value bgWeight = scope.GetValue(shaderNode.findPlug(Attribute::bgWeight, false));
+		FireRenderContext* pContext = dynamic_cast<FireRenderContext*>(scope.GetIContextInfo());
+		if (pContext)
 		{
-			frw::Value value = scope.GetValue(shaderNode.findPlug(Attribute::normalMap, false));
-			int type = value.GetNodeType();
-
-			if ( (type != frw::ValueTypeNormalMap) && (type != frw::ValueTypeBumpMap) && (type >= 0) )
-				ErrorPrint("%s NormalMap: invalid node type %d\n", shaderNode.name().asChar(), value.GetNodeType());
+			pContext->m_shadowColor = { shadowColor.GetX(), shadowColor.GetY(), shadowColor.GetZ() };
+			pContext->m_shadowTransparency = shadowAlpha.GetX();
+			pContext->m_backgroundTransparency = bgTransp.GetX();
+			pContext->m_shadowWeight = weight.GetX();
+			pContext->m_bgColor = { bgColor.GetX(), bgColor.GetY(), bgColor.GetZ() };
+			pContext->m_bgWeight = bgWeight.GetX();
 		}
 
-		frw::Value shadowColor = scope.GetValue(shaderNode.findPlug(Attribute::shadowColor, false));
-		frw::Value shadowAlpha = scope.GetValue(shaderNode.findPlug(Attribute::shadowTransparency, false));
 		if (shadowColor.IsFloat())
 		{
 			float r = shadowColor.GetX();
@@ -235,21 +232,3 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 	return shader;
 }
 
-MObject FireMaya::ShadowCatcherMaterial::GetDisplacementNode()
-{
-	MFnDependencyNode shaderNode(thisMObject());
-
-	if (!shaderNode.findPlug(Attribute::useDispMap, false).asBool())
-		return MObject::kNullObj;
-
-	MPlug plug = shaderNode.findPlug(Attribute::dispMap, false);
-	if (plug.isNull())
-		return MObject::kNullObj;
-
-	MPlugArray shaderConnections;
-	plug.connectedTo(shaderConnections, true, false);
-	if (shaderConnections.length() == 0)
-		return MObject::kNullObj;
-	MObject node = shaderConnections[0].node();
-	return node;
-}

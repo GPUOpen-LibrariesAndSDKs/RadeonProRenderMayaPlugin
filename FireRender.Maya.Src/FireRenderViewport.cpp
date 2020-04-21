@@ -739,6 +739,8 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 	params.height = m_contextPtr->height();
 	params.flip = false;
 	params.mergeOpacity = false;
+	params.shadowColor = m_contextPtr->m_shadowColor;
+	params.shadowTransp = m_contextPtr->m_shadowTransparency;
 
 	// Read to a cached frame if supplied.
 	if (storedFrame)

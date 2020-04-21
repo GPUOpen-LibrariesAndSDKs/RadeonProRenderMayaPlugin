@@ -248,6 +248,12 @@ void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip, bool 
 	params.mergeOpacity = context.camera().GetAlphaMask() && context.isAOVEnabled(RPR_AOV_OPACITY);
 	params.mergeShadowCatcher = true;
 	params.isDenoiserDisabled = isDenoiserDisabled;
+	params.shadowColor = context.m_shadowColor;
+	params.bgColor = context.m_bgColor;
+	params.bgWeight = context.m_bgWeight;
+	params.shadowTransp = context.m_shadowTransparency;
+	params.bgTransparency = context.m_backgroundTransparency;
+	params.shadowWeight = context.m_shadowWeight;
 
 	// process frame buffer
 	context.readFrameBuffer(params);

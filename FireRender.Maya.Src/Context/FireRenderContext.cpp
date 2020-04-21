@@ -109,6 +109,12 @@ FireRenderContext::FireRenderContext() :
 	m_cameraDirty(true),
 	m_denoiserChanged(false),
 	m_denoiserFilter(nullptr),
+	m_shadowColor{ 0.0f, 0.0f, 0.0f },
+	m_bgColor{ 1.0f, 1.0f, 1.0f },
+	m_shadowTransparency(0),
+	m_backgroundTransparency(0),
+	m_shadowWeight(1),
+	m_bgWeight(1),
 	m_RenderType(RenderType::Undefined)
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
@@ -1221,19 +1227,19 @@ bool FireRenderContext::ConsiderShadowReflectionCatcherOverride(const ReadFrameB
 
 	if (isShadowCather && isReflectionCatcher)
 	{
-		compositeReflectionShadowCatcherOutput(params.pixels, params.width, params.height, params.region, params.flip);
+		compositeReflectionShadowCatcherOutput(params.pixels, params.width, params.height, params.region, params.flip, params.shadowColor, params.bgColor, params.shadowTransp, params.bgTransparency, params.bgWeight, params.shadowWeight);
 		return true;
 	}
 
 	if (isShadowCather)
 	{
-		compositeShadowCatcherOutput(params.pixels, params.width, params.height, params.region, params.flip);
+		compositeShadowCatcherOutput(params.pixels, params.width, params.height, params.region, params.flip, params.shadowColor, params.bgColor, params.shadowTransp, params.bgTransparency, params.bgWeight, params.shadowWeight);
 		return true;
 	}
 
 	if (isReflectionCatcher)
 	{
-		compositeReflectionCatcherOutput(params.pixels, params.width, params.height, params.region, params.flip);
+		compositeReflectionCatcherOutput(params.pixels, params.width, params.height, params.region, params.flip, params.bgColor, params.bgTransparency, params.bgWeight, params.shadowWeight);
 		return true;
 	}
 
@@ -2543,7 +2549,18 @@ bool FireRenderContext::updateOutput()
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderContext::compositeShadowCatcherOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region, bool flip)
+void FireRenderContext::compositeShadowCatcherOutput(
+	RV_PIXEL* pixels, 
+	unsigned int width, 
+	unsigned int height, 
+	const RenderRegion& region, 
+	bool flip, 
+	const std::array<float, 3>& scColor,
+	const std::array<float, 3>& bgColor,
+	float transparency, 
+	float bgTransp,
+	float bgWeight,
+	float weight)
 {
 	RPR_THREAD_ONLY;
 	// A temporary pixel buffer is required if the region is less
@@ -2572,7 +2589,7 @@ void FireRenderContext::compositeShadowCatcherOutput(RV_PIXEL* pixels, unsigned 
 	RprComposite noAlpha(context.Handle(), RPR_COMPOSITE_CONSTANT);
 	noAlpha.SetInput4f("constant.input", 1.0f, 1.0f, 1.0f, 0.0f);
 
-	/* background * (1-min(alpha+sc, 1)) + color*alpha */
+	/* background * (1-min(alpha+sc*shadowTransp*(1-shadowColor), 1)) + color*alpha */
 	// step 1 
 	// color*alpha
 	RprComposite compositeColor1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
@@ -2592,24 +2609,44 @@ void FireRenderContext::compositeShadowCatcherOutput(RV_PIXEL* pixels, unsigned 
 	step1.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
 
 	// step 2
-	// 1-min(alpha+sc, 1) 
+	// 1-min(alpha+sc*shadowTransp*(1-shadowColor), 1)
 	RprComposite compositeShadowCatcher1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
 	compositeShadowCatcher1.SetInputFb("framebuffer.input", shadowCatcherFrameBuffer);
 
+	// - sc
 	RprComposite compositeShadowCatcherNoAlpha(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
 	compositeShadowCatcherNoAlpha.SetInputC("arithmetic.color0", noAlpha);
 	compositeShadowCatcherNoAlpha.SetInputC("arithmetic.color1", compositeShadowCatcher1);
 	compositeShadowCatcherNoAlpha.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
 
+	// shadowTransp*(1-shadowColor)
+	RprComposite shadowColor(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	shadowColor.SetInput4f("constant.input", 1.0f - scColor[0], 1.0f - scColor[1], 1.0f - scColor[2], 1.0f);
+
+	RprComposite shadowTransp(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	shadowTransp.SetInput4f("constant.input", 1.0f*weight - transparency, 1.0f*weight - transparency, 1.0f*weight - transparency, 1.0f*weight - transparency);
+
+	RprComposite shadowTranspColor(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	shadowTranspColor.SetInputC("arithmetic.color0", shadowTransp);
+	shadowTranspColor.SetInputC("arithmetic.color1", shadowColor);
+	shadowTranspColor.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+
+	// sc*shadowTransp*(1-shadowColor)
+	RprComposite step20(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	step20.SetInputC("arithmetic.color0", compositeShadowCatcherNoAlpha);
+	step20.SetInputC("arithmetic.color1", shadowTranspColor);
+	step20.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+
+	// - alpha+sc
 	RprComposite step21(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step21.SetInputC("arithmetic.color0", compositeShadowCatcherNoAlpha);
+	step21.SetInputC("arithmetic.color0", step20);
 	step21.SetInputC("arithmetic.color1", compositeOpacityNoAlpha);
 	step21.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_ADD);
 
 	RprComposite constant_1(context.Handle(), RPR_COMPOSITE_CONSTANT);
 	constant_1.SetInput4f("constant.input", 1.0f, 1.0f, 1.0f, 1.0f);
 
-	RprComposite step22(context.Handle(), RPR_COMPOSITE_ARITHMETIC); //min(alpha+sc, 1)
+	RprComposite step22(context.Handle(), RPR_COMPOSITE_ARITHMETIC); //min(alpha+sc*shadowTransp*(1-shadowColor), 1)
 	step22.SetInputC("arithmetic.color0", constant_1);
 	step22.SetInputC("arithmetic.color1", step21);
 	step22.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MIN);
@@ -2620,12 +2657,31 @@ void FireRenderContext::compositeShadowCatcherOutput(RV_PIXEL* pixels, unsigned 
 	step23.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_SUB);
 
 	// step 3
-	// background * step 2
 	RprComposite compositeBackground1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
 	compositeBackground1.SetInputFb("framebuffer.input", backgroundFrameBuffer);
 
+	// - step 31
+	// background * bgTransparency
+	RprComposite bgTransparency(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	bgTransparency.SetInput4f("constant.input", 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp);
+
+	RprComposite step31(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	step31.SetInputC("arithmetic.color0", compositeBackground1);
+	step31.SetInputC("arithmetic.color1", bgTransparency);
+	step31.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+
+	// - step 32
+	RprComposite backgroundColor(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	backgroundColor.SetInput4f("constant.input", bgColor[0], bgColor[1], bgColor[2], 1.0f);
+
+	RprComposite step32(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	step32.SetInputC("arithmetic.color0", backgroundColor);
+	step32.SetInputC("arithmetic.color1", step31);
+	step32.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+
+	// background * step 2
 	RprComposite step3(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step3.SetInputC("arithmetic.color0", compositeBackground1);
+	step3.SetInputC("arithmetic.color0", step32);
 	step3.SetInputC("arithmetic.color1", step23);
 	step3.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
 
@@ -2661,7 +2717,16 @@ void FireRenderContext::compositeShadowCatcherOutput(RV_PIXEL* pixels, unsigned 
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderContext::compositeReflectionCatcherOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region, bool flip)
+void FireRenderContext::compositeReflectionCatcherOutput(
+	RV_PIXEL* pixels, 
+	unsigned int width, 
+	unsigned int height, 
+	const RenderRegion& region, 
+	bool flip, 
+	const std::array<float, 3>& bgColor,
+	float bgTransp, 
+	float bgWeight,
+	float weight)
 {
 	RPR_THREAD_ONLY;
 	// A temporary pixel buffer is required if the region is less
@@ -2786,12 +2851,31 @@ void FireRenderContext::compositeReflectionCatcherOutput(RV_PIXEL* pixels, unsig
 	}
 
 	// step 3
-	// background * step 2
 	RprComposite compositeBackground1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
 	compositeBackground1.SetInputFb("framebuffer.input", backgroundFrameBuffer);
 
+	// - step 31
+	// background * bgTransparency
+	RprComposite bgTransparency(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	bgTransparency.SetInput4f("constant.input", 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp);
+
+	RprComposite step31(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	step31.SetInputC("arithmetic.color0", compositeBackground1);
+	step31.SetInputC("arithmetic.color1", bgTransparency);
+	step31.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+
+	// - step 32
+	RprComposite backgroundColor(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	backgroundColor.SetInput4f("constant.input", bgColor[0], bgColor[1], bgColor[2], 1.0f);
+
+	RprComposite step32(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	step32.SetInputC("arithmetic.color0", backgroundColor);
+	step32.SetInputC("arithmetic.color1", step31);
+	step32.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+
+	// background * step 2
 	RprComposite step3(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step3.SetInputC("arithmetic.color0", compositeBackground1);
+	step3.SetInputC("arithmetic.color0", step32);
 	step3.SetInputC("arithmetic.color1", step2);
 	step3.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
 
@@ -2843,7 +2927,18 @@ void FireRenderContext::compositeReflectionCatcherOutput(RV_PIXEL* pixels, unsig
 	}
 }
 
-void FireRenderContext::compositeReflectionShadowCatcherOutput(RV_PIXEL* pixels, unsigned int width, unsigned int height, const RenderRegion& region, bool flip)
+void FireRenderContext::compositeReflectionShadowCatcherOutput(
+	RV_PIXEL* pixels, 
+	unsigned int width, 
+	unsigned int height, 
+	const RenderRegion& region, 
+	bool flip, 
+	const std::array<float, 3>& color,
+	const std::array<float, 3>& bgColor,
+	float transparency, 
+	float bgTransp, 
+	float bgWeight,
+	float weight)
 {
 	RPR_THREAD_ONLY;
 	// A temporary pixel buffer is required if the region is less
@@ -2919,24 +3014,44 @@ void FireRenderContext::compositeReflectionShadowCatcherOutput(RV_PIXEL* pixels,
 	step12.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
 
 	// step 2
-	// 1-min(alpha+sc, 1) 
+	// 1-min(alpha+sc*shadowTransp*(1-shadowColor), 1)
 	RprComposite compositeShadowCatcher1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
 	compositeShadowCatcher1.SetInputFb("framebuffer.input", shadowCatcherFrameBuffer);
 
+	// - sc
 	RprComposite compositeShadowCatcherNoAlpha(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
 	compositeShadowCatcherNoAlpha.SetInputC("arithmetic.color0", noAlpha);
 	compositeShadowCatcherNoAlpha.SetInputC("arithmetic.color1", compositeShadowCatcher1);
 	compositeShadowCatcherNoAlpha.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
 
+	// shadowTransp*(1-shadowColor)
+	RprComposite shadowColor(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	shadowColor.SetInput4f("constant.input", 1.0f - color[0], 1.0f - color[1], 1.0f - color[2], 1.0f);
+
+	RprComposite shadowTransp(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	shadowTransp.SetInput4f("constant.input", 1.0f*weight - transparency, 1.0f*weight - transparency, 1.0f*weight - transparency, 1.0f*weight - transparency);
+
+	RprComposite shadowTranspColor(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	shadowTranspColor.SetInputC("arithmetic.color0", shadowTransp);
+	shadowTranspColor.SetInputC("arithmetic.color1", shadowColor);
+	shadowTranspColor.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+
+	// sc*shadowTransp*(1-shadowColor)
+	RprComposite step20(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	step20.SetInputC("arithmetic.color0", compositeShadowCatcherNoAlpha);
+	step20.SetInputC("arithmetic.color1", shadowTranspColor);
+	step20.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+
+	// - alpha+sc
 	RprComposite step21(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step21.SetInputC("arithmetic.color0", compositeShadowCatcherNoAlpha);
+	step21.SetInputC("arithmetic.color0", step20);
 	step21.SetInputC("arithmetic.color1", compositeOpacityNoAlpha);
 	step21.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_ADD);
 
 	RprComposite constant_1(context.Handle(), RPR_COMPOSITE_CONSTANT);
 	constant_1.SetInput4f("constant.input", 1.0f, 1.0f, 1.0f, 1.0f);
 
-	RprComposite step22(context.Handle(), RPR_COMPOSITE_ARITHMETIC); //min(alpha+sc, 1)
+	RprComposite step22(context.Handle(), RPR_COMPOSITE_ARITHMETIC); //min(alpha+sc*shadowTransp*(1-shadowColor), 1)
 	step22.SetInputC("arithmetic.color0", constant_1);
 	step22.SetInputC("arithmetic.color1", step21);
 	step22.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MIN);
@@ -2947,12 +3062,31 @@ void FireRenderContext::compositeReflectionShadowCatcherOutput(RV_PIXEL* pixels,
 	step23.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_SUB);
 
 	// step 3
-	// background * step 2
 	RprComposite compositeBackground1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
 	compositeBackground1.SetInputFb("framebuffer.input", backgroundFrameBuffer);
 
+	// - step 31
+	// background * bgTransparency
+	RprComposite bgTransparency(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	bgTransparency.SetInput4f("constant.input", 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp);
+
+	RprComposite step31(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	step31.SetInputC("arithmetic.color0", compositeBackground1);
+	step31.SetInputC("arithmetic.color1", bgTransparency);
+	step31.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+
+	// - step 32
+	RprComposite backgroundColor(context.Handle(), RPR_COMPOSITE_CONSTANT);
+	backgroundColor.SetInput4f("constant.input", bgColor[0], bgColor[1], bgColor[2], 1.0f);
+
+	RprComposite step32(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
+	step32.SetInputC("arithmetic.color0", backgroundColor);
+	step32.SetInputC("arithmetic.color1", step31);
+	step32.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+
+	// background * step 2
 	RprComposite step3(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step3.SetInputC("arithmetic.color0", compositeBackground1);
+	step3.SetInputC("arithmetic.color0", step32);
 	step3.SetInputC("arithmetic.color1", step23);
 	step3.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
 

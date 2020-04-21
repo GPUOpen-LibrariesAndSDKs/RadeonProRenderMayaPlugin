@@ -1035,6 +1035,8 @@ void FireRenderProduction::readFrameBuffer()
 	params.flip = true;
 	params.mergeOpacity = false;
 	params.mergeShadowCatcher = false;
+	params.shadowColor = m_contextPtr->m_shadowColor;
+	params.shadowTransp = m_contextPtr->m_shadowTransparency;
 
 	// process frame buffer
 	m_contextPtr->readFrameBuffer(params);
