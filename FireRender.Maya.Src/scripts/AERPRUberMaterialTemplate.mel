@@ -292,6 +292,16 @@ global proc AEUberCheckUseSssDiffuse(string $nodeName)
 	editorTemplate -dimControl $nodeName "volumeScatter" (($value == 1) || ($enabled == 0));
 }
 
+global proc AEUberCheckEnableSheen(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".sheenEnabled";
+	int $value = `getAttr $nodeAttr`;
+
+	editorTemplate -dimControl $nodeName "sheenWeight" ($value == 0);
+	editorTemplate -dimControl $nodeName "sheenTint" ($value == 0);
+	editorTemplate -dimControl $nodeName "sheenColor" ($value == 0);
+}
+
 global proc AERPRUberMaterialTemplateNew(string $nodeName)
 {
 	AEswatchDisplay $nodeName;
@@ -339,6 +349,13 @@ global proc AERPRUberMaterialTemplateNew(string $nodeName)
 		editorTemplate -label "Absorption Distance" -addControl "refractAbsorptionDistance";
 		editorTemplate -label "Absorption Color" -addControl "refractAbsorbColor";
 		editorTemplate -label "Allow Caustics" -addControl "refractAllowCaustics";
+	editorTemplate -endLayout;
+
+	editorTemplate -beginLayout "Sheen" -collapse 0;
+		editorTemplate -label "Enable" -addControl "sheenEnabled" "AEUberCheckEnableSheen";
+		editorTemplate -label "Weight" -addControl "sheenWeight";
+		editorTemplate -label "Tint" -addControl "sheenTint";
+		editorTemplate -label "Color" -addControl "sheenColor";
 	editorTemplate -endLayout;
 
 	editorTemplate -beginLayout "Coating" -collapse 0;
