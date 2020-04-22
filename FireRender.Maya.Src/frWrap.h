@@ -3644,14 +3644,8 @@ namespace frw
 
 			if (minscale > maxscale)
 			{
-				// Create the command to show the error dialog
-				MString command = "confirmDialog -title \"Radeon ProRender Error\" -button \"OK\" -message \" Invalid parameters passed to displacement material! \"";
-
-				// Show the error dialog
-				MGlobal::executeCommandOnIdle(command);
-
 				// render with no displacement
-				res = rprShapeSetDisplacementScale(Handle(), maxscale, maxscale);
+				res = rprShapeSetDisplacementScale(Handle(), maxscale, minscale);
 			}
 			else
 			{
