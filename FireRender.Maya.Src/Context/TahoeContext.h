@@ -29,6 +29,11 @@ public:
 
 	void SetPluginEngine(TahoePluginVersion version);
 
+	virtual bool IsDenoiserSupported() const override;
+	virtual bool IsDisplacementSupported() const override;
+	virtual bool IsHairSupported() const override;
+	virtual bool IsVolumeSupported() const override;
+
 protected:
 	rpr_int CreateContextInternal(rpr_creation_flags createFlags, rpr_context* pContext) override;
 
