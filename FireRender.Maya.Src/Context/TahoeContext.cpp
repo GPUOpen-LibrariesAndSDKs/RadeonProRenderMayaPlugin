@@ -401,3 +401,23 @@ bool TahoeContext::IsRenderQualitySupported(RenderQuality quality) const
 {
 	return quality == RenderQuality::RenderQualityFull;
 }
+
+bool TahoeContext::IsDenoiserSupported() const
+{
+	return m_PluginVersion == TahoePluginVersion::RPR1;
+}
+
+bool TahoeContext::IsDisplacementSupported() const
+{
+	return m_PluginVersion == TahoePluginVersion::RPR1;
+}
+
+bool TahoeContext::IsHairSupported() const
+{
+	return m_PluginVersion == TahoePluginVersion::RPR1;
+}
+
+bool TahoeContext::IsVolumeSupported() const
+{
+	return m_PluginVersion == TahoePluginVersion::RPR1;
+}
