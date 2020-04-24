@@ -2126,3 +2126,10 @@ TahoePluginVersion GetTahoeVersionToUse()
 
 	return TahoePluginVersion::RPR1;
 }
+
+bool CheckIsInteractivePossible()
+{
+	return (GetTahoeVersionToUse() != TahoePluginVersion::RPR2 ||
+		GetRenderQualityForRenderType(RenderType::IPR) != RenderQuality::RenderQualityFull);
+}
+

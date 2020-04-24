@@ -159,6 +159,12 @@ MString FireRenderOverride::uiName() const
 // -----------------------------------------------------------------------------
 MStatus FireRenderOverride::setup(const MString& panelName)
 {
+	if (!CheckIsInteractivePossible())
+	{
+		MGlobal::displayError("Viewport is currently disabled for RPR 2!");
+		return MS::kFailure;
+	}
+
 	// Set up the viewport.
 	if (setupViewport(panelName) == MStatus::kFailure)
 		return MStatus::kFailure;
