@@ -1090,6 +1090,9 @@
     <ClInclude Include="..\FireRender.Components\cpp\Utils\Utils.h">
       <Filter>FireRender.Components\Utils</Filter>
     </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\NodeProcessingUtils.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="scripts\registerFireRender.mel">

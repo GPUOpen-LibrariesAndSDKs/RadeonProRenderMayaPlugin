@@ -154,7 +154,8 @@ namespace frw
 		ValueTypePassthrough = RPR_MATERIAL_NODE_PASSTHROUGH, // legacy, substituted with flat color shader
         ValueTypeAOMap = RPR_MATERIAL_NODE_AO_MAP,
 		ValueTypeUVProcedural = RPR_MATERIAL_NODE_UV_PROCEDURAL,
-		ValueTypeUVTriplanar = RPR_MATERIAL_NODE_UV_TRIPLANAR
+		ValueTypeUVTriplanar = RPR_MATERIAL_NODE_UV_TRIPLANAR,
+		ValueTypeBufferSampler = RPR_MATERIAL_NODE_BUFFER_SAMPLER // buffer node
 	};
 
 	enum ShaderType
@@ -668,6 +669,7 @@ namespace frw
 
 		bool SetValue(rpr_material_node_input key, const Value& v);
 		bool SetValueInt(rpr_material_node_input key, int);
+		bool SetValueBuffer(rpr_material_node_input key, rpr_buffer buffer);
 
 		MaterialSystem GetMaterialSystem() const;
 
@@ -878,6 +880,16 @@ namespace frw
 		MaterialSystem GetMaterialSystem() const;
 
 		static Value unknown;
+	};
+
+	class DataBuffer : public Object
+	{
+		DECLARE_OBJECT_NO_DATA(DataBuffer, Object);
+
+	public:
+		explicit DataBuffer(rpr_buffer h, const Context &context) : Object(h, context, true, new Data()) {}
+
+		DataBuffer(Context context, const rpr_buffer_desc& bufferDesc, const float* data);
 	};
 
 	class Shape : public Object
@@ -2260,6 +2272,21 @@ namespace frw
 		}
 	};
 
+	class BufferNode : public ValueNode
+	{
+	public:
+		BufferNode(const MaterialSystem& h) : ValueNode(h, ValueTypeBufferSampler) {}
+		bool SetBuffer(DataBuffer buff )
+		{
+			AddReference(buff);
+			return SetValueBuffer(RPR_MATERIAL_INPUT_DATA, buff.Handle());
+		}
+		bool SetUV(const Value& uv)
+		{
+			return SetValue(RPR_MATERIAL_INPUT_UV, uv);
+		}
+	};
+
 	class ArithmeticNode : public ValueNode
 	{
 	public:
@@ -3480,6 +3507,11 @@ namespace frw
 		return RPR_SUCCESS == rprMaterialNodeSetInputUByKey(Handle(), key, v);
 	}
 
+	inline bool Node::SetValueBuffer(rpr_material_node_input key, rpr_buffer buffer)
+	{
+		return RPR_SUCCESS == rprMaterialNodeSetInputBufferDataByKey(Handle(), key, buffer);
+	}
+
 	inline MaterialSystem Node::GetMaterialSystem() const
 	{
 		return data().materialSystem.As<MaterialSystem>();
@@ -3715,6 +3747,17 @@ namespace frw
 	{
 		auto res = rprShapeSetSubdivisionBoundaryInterop(Handle(), type);
 		checkStatus(res);
+	}
+
+	inline DataBuffer::DataBuffer(Context context, const rpr_buffer_desc& bufferDesc, const float* data)
+		: Object(nullptr, context, true, new Data())
+	{
+		FRW_PRINT_DEBUG("CreateDataBuffer()");
+
+		rpr_buffer h = nullptr;
+		rpr_int res = rprContextCreateBuffer(context.Handle(), &bufferDesc, data, &h);
+		if (checkStatus(res, "Unable to create data buffer!"))
+			m->Attach(h);
 	}
 
 	inline Image::Image(Context context, float r, float g, float b)

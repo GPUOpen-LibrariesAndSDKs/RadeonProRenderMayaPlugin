@@ -403,6 +403,7 @@
     <ClInclude Include="MayaStandardNodesSupport\MultiplyDivideConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\NodeCheckerConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\NodeConverterUtil.h" />
+    <ClInclude Include="MayaStandardNodesSupport\NodeProcessingUtils.h" />
     <ClInclude Include="MayaStandardNodesSupport\NoiseConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\Place2dTextureConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\PlusMinusAverageConverter.h" />
