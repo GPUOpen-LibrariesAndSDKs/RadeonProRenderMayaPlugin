@@ -2049,12 +2049,17 @@ void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals
 	};
 }
 
-void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source)
+void WriteNameAndType(std::vector<MString>& attrData, MObject attr, MObject parent)
 {
-	int length = source.length();
-	out.clear();
-	out.resize(length, 0.0f);
-	source.get(out.data());
+	MString type = attr.apiTypeStr();
+
+	MFnDependencyNode fnParent(parent);
+	MPlug plug = fnParent.findPlug(attr);
+	MString name = plug.name();
+
+	// first write name of an attribute than its type
+	attrData.push_back(name);
+	attrData.push_back(type);
 }
 
 std::vector<MString> dumpAttributeNamesDbg(MObject node)
@@ -2069,14 +2074,7 @@ std::vector<MString> dumpAttributeNamesDbg(MObject node)
 	for (unsigned int idx = 0; idx < attrCount; ++idx)
 	{
 		MObject attr = fnNode.attribute(idx);
-		MString type = attr.apiTypeStr();
-
-		MPlug plug = fnNode.findPlug(attr);
-		MString name = plug.name();
-
-		// first write name of an attribute than its type
-		attrData.push_back(name);
-		attrData.push_back(type);
+		WriteNameAndType(attrData, attr, node);
 	}
 
 	return attrData;

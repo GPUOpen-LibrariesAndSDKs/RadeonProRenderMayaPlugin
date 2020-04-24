@@ -821,7 +821,7 @@ struct RampCtrlPoint // T is either MColor or float
 	unsigned int index;
 	float position; // X input axis on graph
 
-	RampCtrlPoint() : method(InterpolationMethod::kNone) {}
+	RampCtrlPoint() : method(InterpolationMethod::kNone), index(UINT_MAX) {}
 };
 
 // function to get value between prev and next point on ramp corresponding to positionOnRamp using Linear Interpolation
@@ -844,7 +844,7 @@ auto RampLerp(const RampCtrlPoint<valType>& prev, const RampCtrlPoint<valType>& 
 // is used to get values from maya ramp that can be passed to RPR
 template <typename valType>
 void RemapRampControlPoints(
-	unsigned int countOutputPoints,
+	size_t countOutputPoints,
 	std::vector<valType>& output,
 	const std::vector<RampCtrlPoint<valType>>& inputControlPoints)
 {
@@ -854,7 +854,7 @@ void RemapRampControlPoints(
 	auto itCurr = inputControlPoints.begin();
 	auto itNext = inputControlPoints.begin(); ++itNext;
 
-	for (unsigned int idx = 0; idx < countOutputPoints; ++idx)
+	for (size_t idx = 0; idx < countOutputPoints; ++idx)
 	{
 		float positionOnRamp = (1.0f / (countOutputPoints - 1)) * idx;
 
@@ -936,7 +936,7 @@ bool GetRampValues(MPlug& plug, std::vector<RampCtrlPoint<valType>>& out)
 {
 	// get ramp from plug
 	MRampAttribute valueRamp(plug);
-	unsigned int countCtrlPoints = valueRamp.getNumEntries();
+	MStatus status;
 
 	// get data from plug
 	MIntArray indexes;
@@ -975,7 +975,9 @@ bool GetValuesFromUIRamp(MObject rampObject, const MString& rampKey, std::vector
 	if (!found)
 		return false;
 
-	GetRampValues<MayaDataContainer>(rampPlug, outRampCtrlPoints);
+	bool res = GetRampValues<MayaDataContainer>(rampPlug, outRampCtrlPoints);
+	if (!res)
+		return false;
 
 	return true;
 }
@@ -996,7 +998,19 @@ void setAttribProps(MFnAttribute& attr, const MObject& attrObj);
 
 void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals, std::vector<int>& vertexIndices, std::vector<int>& normalIndices);
 
-void dumpFloatArrDbg(std::vector<float>& out, const MFloatArray& source);
+template <typename OutT, typename MayaArrayT>
+void DumpMayaArray(std::vector<OutT>& out, const MayaArrayT& source)
+{
+	using MayaElementT = decltype(
+		std::declval<MayaArrayT&>()[std::declval<unsigned int>()]
+	);
+	static_assert(std::is_same<MayaElementT, OutT&>::value, "array type mismatch");
+
+	int length = source.length();
+	out.clear();
+	out.resize(length, OutT());
+	source.get(out.data());
+}
 
 std::vector<MString> dumpAttributeNamesDbg(MObject node);
 
