@@ -249,6 +249,13 @@ MStatus FireRenderCmd::renderIpr(const MArgDatabase& args)
 				s_production->stop();
 			}
 
+			// Request from Tahoe team to temporary disable IPR for RPR 2
+			if (!CheckIsInteractivePossible())
+			{
+				MGlobal::displayError("IPR is currently disabled for RPR 2!");
+				return MS::kFailure;
+			}
+
 			// Get frame buffer dimensions.
 			unsigned int width = 0;
 			unsigned int height = 0;
@@ -268,7 +275,11 @@ MStatus FireRenderCmd::renderIpr(const MArgDatabase& args)
 			s_ipr->setCamera(cameraPath);
 			s_ipr->setResolution(width, height);
 			s_ipr->updateRegion();
-			s_ipr->start();
+			if (!s_ipr->start())
+			{
+				setResult(false);
+				return MStatus::kFailure;
+			}
 		}
 
 		// Stop an active IPR render.

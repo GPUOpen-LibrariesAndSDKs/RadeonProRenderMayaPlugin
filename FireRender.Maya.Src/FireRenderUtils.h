@@ -1004,6 +1004,8 @@ RenderQuality GetRenderQualityFromPlug(const char* plugName);
 RenderQuality GetRenderQualityForRenderType(RenderType renderType);
 
 TahoePluginVersion GetTahoeVersionToUse();
+bool CheckIsInteractivePossible();
+
 
 template <class T>
 std::vector<T> splitString(const T& s, typename T::traits_type::char_type delim)
