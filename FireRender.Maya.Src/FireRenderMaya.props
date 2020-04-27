@@ -9,7 +9,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>..\RadeonProRenderSharedComponents\glew\lib\x64;..\RadeonProRenderSharedComponents\OpenImageIO\Windows\lib;..\RadeonProRenderSDK\RadeonProRender\libWin64;..\RadeonProImageProcessingSDK\Windows\;..\RadeonProRenderSharedComponents\OpenVDB\Windows\lib\%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RadeonProRender64.lib;RprLoadStore64.lib;ProRenderGLTF.lib;RadeonImageFilters64.lib;OpenImageIO_RPR.lib;Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaRender.lib;Image.lib;glew.lib;glu32.lib;OpenGL32.lib;openvdb.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>RadeonProRender64.lib;RprLoadStore64.lib;ProRenderGLTF.lib;RadeonImageFilters.lib;OpenImageIO_RPR.lib;Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaRender.lib;Image.lib;glew.lib;glu32.lib;OpenGL32.lib;openvdb.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
       <DelayLoadDLLs>RadeonProRender64.dll</DelayLoadDLLs>
     </Link>
