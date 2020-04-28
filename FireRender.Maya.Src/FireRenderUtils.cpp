@@ -2110,6 +2110,7 @@ RenderQuality GetRenderQualityForRenderType(RenderType renderType)
 
 TahoePluginVersion GetTahoeVersionToUse()
 {
+#ifdef WIN32
 	MPlug plug = GetRadeonProRenderGlobalsPlug("tahoeVersion");
 
 	if (!plug.isNull())
@@ -2121,6 +2122,7 @@ TahoePluginVersion GetTahoeVersionToUse()
 		// plug should not be null
 		assert(false);
 	}
+#endif
 
 	return TahoePluginVersion::RPR1;
 }

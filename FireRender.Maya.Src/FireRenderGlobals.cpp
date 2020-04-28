@@ -435,7 +435,11 @@ MStatus FireRenderGlobals::initialize()
 
 	Attribute::tahoeVersion = eAttr.create("tahoeVersion", "tahv", TahoePluginVersion::RPR1, &status);
 	eAttr.addField("RPR 1", TahoePluginVersion::RPR1);
+
+#ifdef WIN32
 	eAttr.addField("RPR 2 (Experimental)", TahoePluginVersion::RPR2);
+#endif
+
 	MAKE_INPUT_CONST(eAttr);
 	addAsGlobalAttribute(eAttr);
 
