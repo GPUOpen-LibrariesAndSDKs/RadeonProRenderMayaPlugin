@@ -2930,6 +2930,7 @@
 					REQUIRE_IOSTREAM,
 					MAYA2018,
 					MAYA_PLUGIN,
+					NDEBUG,
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(MAYA_DIRECTORY)/include",
@@ -3047,6 +3048,7 @@
 					REQUIRE_IOSTREAM,
 					MAYA2019,
 					MAYA_PLUGIN,
+					NDEBUG,
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(MAYA_DIRECTORY)/include",
@@ -3163,6 +3165,7 @@
 					REQUIRE_IOSTREAM,
 					MAYA2020,
 					MAYA_PLUGIN,
+					NDEBUG,
 				);
 				HEADER_SEARCH_PATHS = (
 					"$(MAYA_DIRECTORY)/include",
