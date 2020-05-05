@@ -47,7 +47,7 @@ rpr_int TahoeContext::GetPluginID(TahoePluginVersion version)
 		}
 		else if (version == TahoePluginVersion::RPR2)
 		{
-			pluginId = rprRegisterPlugin("NorthStar64.dll");
+			pluginId = rprRegisterPlugin("Northstar64.dll");
 		}
 #endif
 

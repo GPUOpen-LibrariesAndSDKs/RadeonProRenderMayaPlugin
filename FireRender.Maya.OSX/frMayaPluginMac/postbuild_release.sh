@@ -27,7 +27,14 @@ cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/python/" "/Users/Shared/RadeonP
 cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/shelfs/" "/Users/Shared/RadeonProRender/shelves/"
 
 cp -r "$PROJECT_DIR/../../../RadeonProRenderSDK/RadeonProRender/binMacOS/" "/Users/Shared/RadeonProRender/lib/"
-cp    "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/OSX/libRadeonImageFilters.1.dylib" "/Users/Shared/RadeonProRender/lib/libRadeonImageFilters.1.dylib"
+
+mkdir "/Users/Shared/RadeonProRender/data"
+cp -r "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/models/" "/Users/Shared/RadeonProRender/data/models/"
+#cp    "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/OSX/libRadeonImageFilters.1.dylib" "/Users/Shared/RadeonProRender/lib/libRadeonImageFilters.1.dylib"
+#cp    "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/OSX/libOpenImageDenoise.dylib" "/Users/Shared/RadeonProRender/lib/libOpenImageDenoise.dylib"
+#cp    "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/OSX/libRadeonML-MPS.dylib" "/Users/Shared/RadeonProRender/lib/libRadeonML-MPS.dylib"
+cp -PR   "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/OSX/" "/Users/Shared/RadeonProRender/lib/"
+
 cp -r  "$PROJECT_DIR/../../../RadeonProRenderSharedComponents/OpenImageIO/OSX/bin/" "/Users/Shared/RadeonProRender/lib"
 
 # Make fix pathes in libraries and bundles
