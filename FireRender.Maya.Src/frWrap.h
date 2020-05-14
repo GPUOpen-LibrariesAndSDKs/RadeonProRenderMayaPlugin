@@ -157,7 +157,9 @@ namespace frw
         ValueTypeAOMap = RPR_MATERIAL_NODE_AO_MAP,
 		ValueTypeUVProcedural = RPR_MATERIAL_NODE_UV_PROCEDURAL,
 		ValueTypeUVTriplanar = RPR_MATERIAL_NODE_UV_TRIPLANAR,
-		ValueTypeBufferSampler = RPR_MATERIAL_NODE_BUFFER_SAMPLER // buffer node
+		ValueTypeBufferSampler = RPR_MATERIAL_NODE_BUFFER_SAMPLER, // buffer node
+		ValueTypeHSVToRGB = RPR_MATERIAL_NODE_HSV_TO_RGB,
+		ValueTypeRRGToHSV = RPR_MATERIAL_NODE_RGB_TO_HSV
 	};
 
 	enum ShaderType
@@ -2332,6 +2334,28 @@ namespace frw
 				auto res = rprMaterialNodeSetInputNByKey(Handle(), RPR_MATERIAL_INPUT_COLOR, n.Handle());
 				checkStatus(res);
 			}
+		}
+	};
+
+	class RGBToHSVNode : public ValueNode
+	{
+	public:
+		explicit RGBToHSVNode(const MaterialSystem& h) : ValueNode(h, ValueTypeRRGToHSV) {}
+
+		void SetInputColor(const Value& inputRGB)
+		{
+			SetValue(RPR_MATERIAL_INPUT_COLOR, inputRGB);
+		}
+	};
+
+	class HSVToRGBNode : public ValueNode
+	{
+	public:
+		explicit HSVToRGBNode(const MaterialSystem& h) : ValueNode(h, ValueTypeHSVToRGB) {}
+
+		void SetInputColor(const Value& inputHSV)
+		{
+			SetValue(RPR_MATERIAL_INPUT_COLOR, inputHSV);
 		}
 	};
 
