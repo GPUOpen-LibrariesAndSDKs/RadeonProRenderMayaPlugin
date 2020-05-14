@@ -81,8 +81,13 @@ MPlug FireMaya::GetConnectedPlug(const MPlug& plug)
 		plug.connectedTo(connections, true, false);
 		if (connections.length() > 0)
 		{
-			if (!connections[0].node().hasFn(MFn::kAnimCurve))
+			MObject objNode = connections[0].node();
+
+			if (!objNode.hasFn(MFn::kAnimCurve) && 
+				!objNode.hasFn(MFn::kTransform))
+			{
 				return connections[0];
+			}
 		}
 	}
 	return MPlug();
