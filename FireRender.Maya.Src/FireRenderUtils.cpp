@@ -704,9 +704,8 @@ bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath)
 		transformNode.getAllPaths(pathArrayToTransform);
 	}
 
-	assert(pathArrayToTransform.length() == 1);
-
-	if (pathArrayToTransform.length() != 1)
+	int pathArrayLength = pathArrayToTransform.length();
+	if (pathArrayLength == 0)
 		return false;
 
 	// get shape (referenced by transform)
