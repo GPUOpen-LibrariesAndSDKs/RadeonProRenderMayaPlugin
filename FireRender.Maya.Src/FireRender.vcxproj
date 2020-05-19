@@ -249,12 +249,14 @@
     <ClCompile Include="MayaStandardNodesSupport\MultiplyDivideConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\NodeCheckerConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\NodeConverterUtil.cpp" />
+    <ClCompile Include="MayaStandardNodesSupport\NodeProcessingUtils.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\NoiseConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\Place2dTextureConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\PlusMinusAverageConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\ProjectionNodeConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\RampNodeConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\RemapHSVConverter.cpp" />
+    <ClCompile Include="MayaStandardNodesSupport\RemapValueConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\ReverseMapConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\RGBToHSVConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\VectorProductConverter.cpp" />
@@ -410,6 +412,7 @@
     <ClInclude Include="MayaStandardNodesSupport\ProjectionNodeConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\RampNodeConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\RemapHSVConverter.h" />
+    <ClInclude Include="MayaStandardNodesSupport\RemapValueConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\ReverseMapConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\RGBToHSVConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\VectorProductConverter.h" />

@@ -16,11 +16,10 @@ limitations under the License.
 
 namespace MayaStandardNodeConverters
 {
-
-	class RemapHSVConverter : public BaseConverter
+	class RemapValueConverter : public BaseConverter
 	{
 	public:
-		RemapHSVConverter(const ConverterParams& params);
+		RemapValueConverter(const ConverterParams& params);
 		virtual frw::Value Convert() const override;
 	};
 

@@ -1,5 +1,10 @@
 #pragma once
 
+namespace MayaStandardNodeConverters
+{
+
+struct ConverterParams;
+
 // function to perform action for each element of compound plug compoundPlug
 // - use dataContainer to pass data
 // - return false if detects error or if passed action function returns false
@@ -48,3 +53,12 @@ bool ProcessArrayPlug(MPlug& arrayPlug, T& dataContainer, std::function<bool(MPl
 
 	return true;
 }
+
+frw::Value GetSamplerNodeForValue(const ConverterParams& params,
+	const MString& plugName,
+	frw::Value valueInput,
+	frw::Value inputMin = 0.0,
+	frw::Value inputMax = 1.0,
+	frw::Value outputMin = 0.0,
+	frw::Value outputMax = 1.0);
+} // End of namespace
