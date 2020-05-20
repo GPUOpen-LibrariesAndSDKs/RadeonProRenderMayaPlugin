@@ -26,7 +26,7 @@ frw::Value RemapValueConverter::Convert() const
 {
 	frw::Value outputValue;
 
-	if (m_params.outPlugName == "outValue")
+	if (m_params.outPlugName == "outValue" || m_params.outPlugName == "ov")
 	{
 		frw::Value input = m_params.scope.GetValueWithCheck(m_params.shaderNode, "inputValue");
 
