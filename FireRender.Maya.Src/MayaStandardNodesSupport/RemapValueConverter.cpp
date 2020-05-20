@@ -24,8 +24,6 @@ RemapValueConverter::RemapValueConverter(const ConverterParams& params) : BaseCo
 
 frw::Value RemapValueConverter::Convert() const
 {
-	frw::Value outputValue;
-
 	if (m_params.outPlugName == "outValue" || m_params.outPlugName == "ov")
 	{
 		frw::Value input = m_params.scope.GetValueWithCheck(m_params.shaderNode, "inputValue");
@@ -35,15 +33,13 @@ frw::Value RemapValueConverter::Convert() const
 		frw::Value outputMin = m_params.scope.GetValueWithCheck(m_params.shaderNode, "outputMin");
 		frw::Value outputMax = m_params.scope.GetValueWithCheck(m_params.shaderNode, "outputMax");
 
-		outputValue = GetSamplerNodeForValue(m_params, "value", input, inputMin, inputMax, outputMin, outputMax);
+		return GetSamplerNodeForValue(m_params, "value", input, inputMin, inputMax, outputMin, outputMax);
 	}
 	else 
 	{
 		// _TODO: outColor plug, haven't implemented (will be in case of necessity)
-
+		return frw::Value(0.0);
 	}
-
-	return outputValue;
 }
 
 } // End of hte namespace
