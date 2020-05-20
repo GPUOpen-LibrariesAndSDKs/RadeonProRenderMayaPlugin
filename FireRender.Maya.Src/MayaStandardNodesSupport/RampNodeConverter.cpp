@@ -17,7 +17,9 @@ limitations under the License.
 
 #include <maya/MItDependencyGraph.h>
 
-MayaStandardNodeConverters::RampNodeConverter::RampNodeConverter(const ConverterParams& params) : BaseConverter(params)
+namespace MayaStandardNodeConverters
+{ 
+RampNodeConverter::RampNodeConverter(const ConverterParams& params) : BaseConverter(params)
 {
 
 }
@@ -420,7 +422,7 @@ bool IsRampSupportedbyRPR(MFnDependencyNode& fnNode, RampUVType rampType)
 	return true;
 }
 
-frw::Value MayaStandardNodeConverters::RampNodeConverter::Convert() const
+frw::Value RampNodeConverter::Convert() const
 {
 	// we have 2 branches here
 	// first, if RPR Arithmetic node is connected we need to convert Ramp using buffer sampler (as in Blender)
@@ -493,4 +495,5 @@ frw::Value MayaStandardNodeConverters::RampNodeConverter::Convert() const
 
 	// use RPR Nodes
 	return GetBufferSamplerConvertor(shaderNodeObject, m_params.scope, rampType);
+}
 }

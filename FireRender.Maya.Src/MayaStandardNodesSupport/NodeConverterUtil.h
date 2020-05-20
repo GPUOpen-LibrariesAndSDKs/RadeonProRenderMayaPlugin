@@ -44,7 +44,8 @@ namespace MayaStandardNodeConverters
 		PlusMinusAverage = 0x52504d41,
 		VectorProduct = 0x52564543,
 		BlendTwoAttr = 0x41424C32,
-		Clamp = 0x52434c33
+		Clamp = 0x52434c33,
+		RemapValue = 0x524d564c,
 	};
 
 	class NodeConverterUtil
