@@ -2072,10 +2072,6 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::AddPath>(dagPath);
 		}
-		else if (isTransformWithInstancedShape(node, dagPathTmp))
-		{
-			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::DontAddPath>(dagPathTmp);
-		}
 		else if (dagNode.typeId() == TypeId::FireRenderIESLightLocator
 			|| isLight(node)
 			|| VRay::isNonEnvironmentLight(dagNode))
@@ -2133,6 +2129,10 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		else if (dagNode.typeName() == "HairShape" && hairSupported)
 		{
 			ob = CreateSceneObject<FireRenderHairOrnatrix, NodeCachingOptions::AddPath>(dagPath);
+		}
+		else if (isTransformWithInstancedShape(node, dagPathTmp))
+		{
+			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::DontAddPath>(dagPathTmp);
 		}
 		else if (dagNode.typeName() == "transform")
 		{
