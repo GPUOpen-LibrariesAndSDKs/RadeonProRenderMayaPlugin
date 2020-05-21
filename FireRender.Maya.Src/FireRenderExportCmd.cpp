@@ -191,7 +191,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 				{
 					MDagPath& cameraPath = cameras[selectedCameraIdx];
 					MString cameraName = getNameByDagPath(cameraPath);
-					if (std::string(selectedCameraName.asChar()).find(std::string(cameraName.asChar())) != std::string::npos)
+					if (selectedCameraName == cameraName)
 					{
 						context.setCamera(cameras[selectedCameraIdx], true);
 						break;
