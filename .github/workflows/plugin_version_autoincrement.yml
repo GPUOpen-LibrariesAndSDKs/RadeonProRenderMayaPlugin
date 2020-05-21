@@ -1,0 +1,36 @@
+name: Version increment
+on:
+  push:
+    branches: [ master ]    
+
+jobs:
+  Increment:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Version increment
+      run: |
+        version_line=$(<version.h)
+        echo -e "Init version:\n $version_line"
+
+        version_regexp='^(#.*\s"+)([0-9]+).([0-9]+).([0-9]+)"$'
+
+        if [[ $version_line =~ $version_regexp ]]; then
+          prefix_string="${BASH_REMATCH[1]}";
+          major="${BASH_REMATCH[2]}";
+          minor="${BASH_REMATCH[3]}";
+          build="${BASH_REMATCH[4]}";
+
+          new_version_line=$prefix_string$major.$minor.$(echo $build+1 | bc)\";
+          echo -e "New version:\n $new_version_line"
+        fi
+
+        echo -n $new_version_line > version.h
+
+        git config --local user.email "action@github.com"
+        git config --local user.name "buildmaster"
+        git commit -m "buildmaster: version update to $major.$minor.$build" version.h
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
