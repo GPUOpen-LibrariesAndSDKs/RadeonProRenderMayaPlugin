@@ -2080,6 +2080,10 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 			{
 				ob = CreateSceneObject<FireRenderEnvLight, NodeCachingOptions::AddPath>(dagPath);
 			}
+			else if (dagNode.typeId() == FireMaya::TypeId::FireRenderPhysicalLightLocator)
+			{
+				ob = CreateSceneObject<FireRenderPhysLight, NodeCachingOptions::AddPath>(dagPath);
+			}
 			else
 			{
 				ob = CreateSceneObject<FireRenderLight, NodeCachingOptions::AddPath>(dagPath);
