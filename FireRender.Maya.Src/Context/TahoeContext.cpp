@@ -421,3 +421,8 @@ bool TahoeContext::IsVolumeSupported() const
 {
 	return m_PluginVersion == TahoePluginVersion::RPR1;
 }
+
+bool TahoeContext::IsGLInteropEnabled() const
+{
+	return m_PluginVersion == TahoePluginVersion::RPR1;
+}

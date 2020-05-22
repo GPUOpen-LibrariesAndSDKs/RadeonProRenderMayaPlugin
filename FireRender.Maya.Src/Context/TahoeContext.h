@@ -41,6 +41,8 @@ protected:
 
 	bool needResolve() const override;
 
+	bool IsGLInteropEnabled() const;
+
 private:
 	TahoePluginVersion m_PluginVersion;
 
