@@ -2128,11 +2128,14 @@ TahoePluginVersion GetTahoeVersionToUse()
 
 bool CheckIsInteractivePossible()
 {
-	std::string result = std::getenv("RPR_RPR2_IPR_BACKDOOR");
+	char* chStr = std::getenv("RPR_RPR2_IPR_BACKDOOR");
 
-	if (result == "1")
+	if (chStr != nullptr)
 	{
-		return true;
+		if (std::string(chStr) == "1")
+		{
+			return true;
+		}
 	}
 
 	return (GetTahoeVersionToUse() != TahoePluginVersion::RPR2 ||
