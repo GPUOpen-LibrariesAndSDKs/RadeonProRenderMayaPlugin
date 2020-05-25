@@ -397,7 +397,9 @@ public:
 protected:
 	void UpdateTransform(const MMatrix& matrix) override;
 
-private:
+	virtual bool ShouldUpdateTransformOnly() const;
+
+protected:
 
 	// Transform matrix
 	MMatrix m_matrix;
@@ -407,6 +409,16 @@ private:
 
 	// portal flag
 	bool m_portal;
+};
+
+class FireRenderPhysLight : public FireRenderLight
+{
+public:
+	// Constructor
+	FireRenderPhysLight(FireRenderContext* context, const MDagPath& dagPath);
+
+protected:
+	virtual bool ShouldUpdateTransformOnly() const;
 };
 
 // Fire render environment light
