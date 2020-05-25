@@ -283,7 +283,7 @@ MStatus FireRenderGlobals::initialize()
 
 	Attribute::AAGridSize = nAttr.create("filterSize", "fs", MFnNumericData::kFloat, 1.5, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(1);
+	nAttr.setMin(0.0);
 	nAttr.setMax(10);
 
 	setupProductionRayDepthParameters();
