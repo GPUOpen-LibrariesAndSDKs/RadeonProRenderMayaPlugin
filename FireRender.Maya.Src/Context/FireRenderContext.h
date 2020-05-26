@@ -589,6 +589,9 @@ public:
 	virtual bool IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) const override { return true; }
 	virtual frw::Shader GetDefaultColorShader(frw::Value color) override;
 
+	bool IsGLTFExport() const override { return m_bIsGLTFExport; }
+	void SetGLTFExport(bool isGLTFExport) { m_bIsGLTFExport = isGLTFExport; }
+
 protected:
 	static int INCORRECT_PLUGIN_ID;
 
@@ -745,6 +748,8 @@ private:
 
 	// buffer to dump data from frame buffers, if needed
 	AOVPixelBuffers m_pixelBuffers;
+
+	bool m_bIsGLTFExport;
 
 public:
 	FireRenderEnvLight *iblLight = nullptr;
