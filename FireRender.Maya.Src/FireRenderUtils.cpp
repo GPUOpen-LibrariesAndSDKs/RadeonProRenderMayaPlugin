@@ -2128,17 +2128,7 @@ TahoePluginVersion GetTahoeVersionToUse()
 
 bool CheckIsInteractivePossible()
 {
-	char* chStr = std::getenv("RPR_RPR2_IPR_BACKDOOR");
-
-	if (chStr != nullptr)
-	{
-		if (std::string(chStr) == "1")
-		{
-			return true;
-		}
-	}
-
-	return (GetTahoeVersionToUse() != TahoePluginVersion::RPR2 ||
-		GetRenderQualityForRenderType(RenderType::IPR) != RenderQuality::RenderQualityFull);
+	// return treu in anticipation that IPR For RPR2 would be fixed for the next Release.
+	return true;
 }
 
