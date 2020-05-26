@@ -46,6 +46,7 @@ namespace MayaStandardNodeConverters
 		BlendTwoAttr = 0x41424C32,
 		Clamp = 0x52434c33,
 		RemapValue = 0x524d564c,
+		SetRange = 0x52524e47,
 	};
 
 	class NodeConverterUtil

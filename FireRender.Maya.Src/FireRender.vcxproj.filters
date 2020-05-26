@@ -656,6 +656,9 @@
     <ClCompile Include="MayaStandardNodesSupport\NodeProcessingUtils.cpp">
       <Filter>MayaStandardNodesSupport</Filter>
     </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\SetRangeConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -1100,6 +1103,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MayaStandardNodesSupport\RemapValueConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\SetRangeConverter.h">
       <Filter>MayaStandardNodesSupport</Filter>
     </ClInclude>
   </ItemGroup>
