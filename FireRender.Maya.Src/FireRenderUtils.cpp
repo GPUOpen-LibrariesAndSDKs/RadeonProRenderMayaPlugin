@@ -2132,3 +2132,15 @@ bool CheckIsInteractivePossible()
 		GetRenderQualityForRenderType(RenderType::IPR) != RenderQuality::RenderQualityFull);
 }
 
+// Backdoor to enable different AOVs from Render Settings in IPR and Viewport
+void EnableAOVsFromRSIfEnvVarSet(FireRenderContext& context, FireRenderAOVs& aovs)
+{
+	char* result = std::getenv("ENABLE_ADD_AOVS_FOR_INTERACTIVE");
+
+	if (result == nullptr || std::string(result) != "1")
+	{
+		return;
+	}
+
+	aovs.applyToContext(context);
+}
