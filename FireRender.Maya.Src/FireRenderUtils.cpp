@@ -2128,7 +2128,7 @@ TahoePluginVersion GetTahoeVersionToUse()
 
 bool CheckIsInteractivePossible()
 {
-	return (GetTahoeVersionToUse() != TahoePluginVersion::RPR2 ||
-		GetRenderQualityForRenderType(RenderType::IPR) != RenderQuality::RenderQualityFull);
+	// return treu in anticipation that IPR For RPR2 would be fixed for the next Release.
+	return true;
 }
 
