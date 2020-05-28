@@ -259,6 +259,7 @@
     <ClCompile Include="MayaStandardNodesSupport\RemapValueConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\ReverseMapConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\RGBToHSVConverter.cpp" />
+    <ClCompile Include="MayaStandardNodesSupport\SetRangeConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\VectorProductConverter.cpp" />
     <ClCompile Include="OptionVarHelpers.cpp" />
     <ClCompile Include="pluginMain.cpp" />
@@ -415,6 +416,7 @@
     <ClInclude Include="MayaStandardNodesSupport\RemapValueConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\ReverseMapConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\RGBToHSVConverter.h" />
+    <ClInclude Include="MayaStandardNodesSupport\SetRangeConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\VectorProductConverter.h" />
     <ClInclude Include="OptionVarHelpers.h" />
     <ClInclude Include="RenderCacheWarningDialog.h" />
