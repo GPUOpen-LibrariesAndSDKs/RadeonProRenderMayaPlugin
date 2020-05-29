@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		50C1EDBC247EC23700E53230 /* SetRangeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50C1EDB9247EC23700E53230 /* SetRangeConverter.h */; };
+		50C1EDBD247EC23700E53230 /* SetRangeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50C1EDB9247EC23700E53230 /* SetRangeConverter.h */; };
+		50C1EDBE247EC23700E53230 /* SetRangeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50C1EDB9247EC23700E53230 /* SetRangeConverter.h */; };
+		50C1EDBF247EC23700E53230 /* SetRangeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */; };
+		50C1EDC0247EC23700E53230 /* SetRangeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */; };
+		50C1EDC1247EC23700E53230 /* SetRangeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */; };
 		8D28372E2199D73B0004852B /* OptionVarHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D28372B2199D6C90004852B /* OptionVarHelpers.h */; };
 		8D28372F2199D7480004852B /* OptionVarHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D2837292199D6C90004852B /* OptionVarHelpers.cpp */; };
 		8D55909F20C874BA00567EEC /* MeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D55909520C8743800567EEC /* MeshTranslator.h */; };
@@ -971,6 +977,8 @@
 		4DE6450A1DA2774A0076E6A7 /* RenderProgressBars.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RenderProgressBars.cpp; path = ../../../FireRender.Maya.Src/RenderProgressBars.cpp; sourceTree = "<group>"; };
 		4DE6450D1DA277BC0076E6A7 /* RenderProgressBars.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RenderProgressBars.h; path = ../../../FireRender.Maya.Src/RenderProgressBars.h; sourceTree = "<group>"; };
 		4DE645101DA339A60076E6A7 /* Readme.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Readme.txt; path = ../../Readme.txt; sourceTree = "<group>"; };
+		50C1EDB9247EC23700E53230 /* SetRangeConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SetRangeConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/SetRangeConverter.h; sourceTree = "<group>"; };
+		50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SetRangeConverter.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/SetRangeConverter.cpp; sourceTree = "<group>"; };
 		8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRprLoadStore64.dylib; path = ../../../RadeonProRenderSDK/RadeonProRender/binMacOS/libRprLoadStore64.dylib; sourceTree = "<group>"; };
 		8D1E289B2034A0550060BB11 /* FireRenderPBRMaterial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderPBRMaterial.h; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.h; sourceTree = "<group>"; };
 		8D1E289D2034A0550060BB11 /* FireRenderPBRMaterial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderPBRMaterial.cpp; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.cpp; sourceTree = "<group>"; };
@@ -1722,6 +1730,8 @@
 		B773D2C823A9123B009FC79C /* StandardMayaNodesIntegration */ = {
 			isa = PBXGroup;
 			children = (
+				50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */,
+				50C1EDB9247EC23700E53230 /* SetRangeConverter.h */,
 				B72001CC24742A8600A32CC0 /* RemapValueConverter.cpp */,
 				B72001CB24742A8600A32CC0 /* RemapValueConverter.h */,
 				B72001C424742A7400A32CC0 /* NodeProcessingUtils.cpp */,
@@ -1837,6 +1847,7 @@
 				8D595DA620372FE20031988A /* FireRenderVolumeMaterial.h in Headers */,
 				8D595DA720372FE20031988A /* FireRenderViewportUI.h in Headers */,
 				AD18135D22E6A0EC00BB2B78 /* athenaCmd.h in Headers */,
+				50C1EDBC247EC23700E53230 /* SetRangeConverter.h in Headers */,
 				8D595DA920372FE20031988A /* FireRenderTextureCache.h in Headers */,
 				B72F81EC239F813F00C2BFB3 /* NoiseConverter.h in Headers */,
 				B7498DD623E2D97700248217 /* ProjectionNodeConverter.h in Headers */,
@@ -1986,6 +1997,7 @@
 				8DBCC2BC22304666003EE361 /* FireRenderVolumeMaterial.h in Headers */,
 				8DBCC2BD22304666003EE361 /* FireRenderViewportUI.h in Headers */,
 				AD18135E22E6A0EC00BB2B78 /* athenaCmd.h in Headers */,
+				50C1EDBD247EC23700E53230 /* SetRangeConverter.h in Headers */,
 				8DBCC2BF22304666003EE361 /* FireRenderTextureCache.h in Headers */,
 				B72F81ED239F813F00C2BFB3 /* NoiseConverter.h in Headers */,
 				B7498DD723E2D97700248217 /* ProjectionNodeConverter.h in Headers */,
@@ -2135,6 +2147,7 @@
 				B7531FFD23D9ED5600246738 /* FireRenderViewportUI.h in Headers */,
 				B7531FFE23D9ED5600246738 /* athenaCmd.h in Headers */,
 				B7531FFF23D9ED5600246738 /* FireRenderTextureCache.h in Headers */,
+				50C1EDBE247EC23700E53230 /* SetRangeConverter.h in Headers */,
 				B753200023D9ED5600246738 /* NoiseConverter.h in Headers */,
 				B7498DD823E2D97700248217 /* ProjectionNodeConverter.h in Headers */,
 				B753200123D9ED5600246738 /* FireRenderImportExportXML.h in Headers */,
@@ -2426,6 +2439,7 @@
 				B7230A6123ACD82900E51BD1 /* ClampConverter.cpp in Sources */,
 				8D595E1220372FE20031988A /* VRay.cpp in Sources */,
 				B7EC453823743C9C001E49F7 /* FireRenderContext.cpp in Sources */,
+				50C1EDBF247EC23700E53230 /* SetRangeConverter.cpp in Sources */,
 				B72F81F2239F813F00C2BFB3 /* VectorProductConverter.cpp in Sources */,
 				B7190C592449C9970071D47F /* IESprocessor.cpp in Sources */,
 				B773D2B323A36DB8009FC79C /* RampNodeConverter.cpp in Sources */,
@@ -2574,6 +2588,7 @@
 				B7230A6C23ACD82A00E51BD1 /* ClampConverter.cpp in Sources */,
 				8DBCC33522304666003EE361 /* VRay.cpp in Sources */,
 				B7EC453D23743C9D001E49F7 /* FireRenderContext.cpp in Sources */,
+				50C1EDC0247EC23700E53230 /* SetRangeConverter.cpp in Sources */,
 				B72F81F3239F813F00C2BFB3 /* VectorProductConverter.cpp in Sources */,
 				B7190C5A2449C9970071D47F /* IESprocessor.cpp in Sources */,
 				B773D2B423A36DB8009FC79C /* RampNodeConverter.cpp in Sources */,
@@ -2722,6 +2737,7 @@
 				B75320B023D9ED5600246738 /* FireRenderConvertVRayCmd.cpp in Sources */,
 				B75320B123D9ED5600246738 /* ClampConverter.cpp in Sources */,
 				B75320B223D9ED5600246738 /* VRay.cpp in Sources */,
+				50C1EDC1247EC23700E53230 /* SetRangeConverter.cpp in Sources */,
 				B75320B323D9ED5600246738 /* FireRenderContext.cpp in Sources */,
 				B7190C5B2449C9970071D47F /* IESprocessor.cpp in Sources */,
 				B75320B423D9ED5600246738 /* VectorProductConverter.cpp in Sources */,

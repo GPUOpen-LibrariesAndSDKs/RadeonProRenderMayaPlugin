@@ -115,7 +115,8 @@ FireRenderContext::FireRenderContext() :
 	m_backgroundTransparency(0),
 	m_shadowWeight(1),
 	m_bgWeight(1),
-	m_RenderType(RenderType::Undefined)
+	m_RenderType(RenderType::Undefined),
+	m_bIsGLTFExport(false)
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
 
