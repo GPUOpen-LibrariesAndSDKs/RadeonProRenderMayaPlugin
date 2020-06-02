@@ -1634,9 +1634,19 @@ void FireRenderLight::UpdateTransform(const MMatrix& matrix)
 	}
 }
 
+bool FireRenderLight::ShouldUpdateTransformOnly() const
+{
+	return m_bIsTransformChanged;
+}
+
+bool FireRenderPhysLight::ShouldUpdateTransformOnly() const
+{
+	return false;
+}
+
 void FireRenderLight::Freshen()
 {
-	if (m_bIsTransformChanged)
+	if (ShouldUpdateTransformOnly())
 	{
 		MMatrix matrix = DagPath().inclusiveMatrix();
 		UpdateTransform(matrix);
@@ -1713,6 +1723,10 @@ bool FireRenderLight::portal()
 {
 	return m_portal;
 }
+
+FireRenderPhysLight::FireRenderPhysLight(FireRenderContext* context, const MDagPath& dagPath) :
+	FireRenderLight(context, dagPath)
+{}
 
 //===================
 // Env Light

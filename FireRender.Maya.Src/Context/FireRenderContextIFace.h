@@ -42,4 +42,6 @@ public:
 	virtual bool IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) const = 0;
 	
 	virtual frw::Shader GetDefaultColorShader(frw::Value color) = 0;
+
+	virtual bool IsGLTFExport() const = 0;
 };

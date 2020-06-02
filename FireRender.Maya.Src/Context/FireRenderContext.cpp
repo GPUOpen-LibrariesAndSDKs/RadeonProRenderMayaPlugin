@@ -115,7 +115,8 @@ FireRenderContext::FireRenderContext() :
 	m_backgroundTransparency(0),
 	m_shadowWeight(1),
 	m_bgWeight(1),
-	m_RenderType(RenderType::Undefined)
+	m_RenderType(RenderType::Undefined),
+	m_bIsGLTFExport(false)
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
 
@@ -2072,10 +2073,6 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::AddPath>(dagPath);
 		}
-		else if (isTransformWithInstancedShape(node, dagPathTmp))
-		{
-			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::DontAddPath>(dagPathTmp);
-		}
 		else if (dagNode.typeId() == TypeId::FireRenderIESLightLocator
 			|| isLight(node)
 			|| VRay::isNonEnvironmentLight(dagNode))
@@ -2083,6 +2080,10 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 			if (dagNode.typeName() == "ambientLight") 
 			{
 				ob = CreateSceneObject<FireRenderEnvLight, NodeCachingOptions::AddPath>(dagPath);
+			}
+			else if (dagNode.typeId() == FireMaya::TypeId::FireRenderPhysicalLightLocator)
+			{
+				ob = CreateSceneObject<FireRenderPhysLight, NodeCachingOptions::AddPath>(dagPath);
 			}
 			else
 			{
@@ -2133,6 +2134,10 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		else if (dagNode.typeName() == "HairShape" && hairSupported)
 		{
 			ob = CreateSceneObject<FireRenderHairOrnatrix, NodeCachingOptions::AddPath>(dagPath);
+		}
+		else if (isTransformWithInstancedShape(node, dagPathTmp))
+		{
+			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::DontAddPath>(dagPathTmp);
 		}
 		else if (dagNode.typeName() == "transform")
 		{

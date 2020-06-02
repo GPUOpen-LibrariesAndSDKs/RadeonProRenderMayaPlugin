@@ -33,6 +33,8 @@ limitations under the License.
 #include "BlendTwoAttrConverter.h"
 #include "ClampConverter.h"
 #include "ProjectionNodeConverter.h"
+#include "RemapValueConverter.h"
+#include "SetRangeConverter.h"
 
 frw::Value MayaStandardNodeConverters::NodeConverterUtil::Convert(const ConverterParams& params, const MayaValueId mayaNodeId)
 {
@@ -84,6 +86,9 @@ std::unique_ptr<MayaStandardNodeConverters::BaseConverter> MayaStandardNodeConve
 		case MayaValueId::BlendTwoAttr:		return std::make_unique<BlendTwoAttrConverter>(params);
 		case MayaValueId::Clamp:			return std::make_unique<ClampConverter>(params);
 		case MayaValueId::Projection:		return std::make_unique<ProjectionNodeConverter>(params);
+		case MayaValueId::RemapValue:		return std::make_unique<RemapValueConverter>(params);
+		case MayaValueId::SetRange:			return std::make_unique<SetRangeConverter>(params);
+
 		default: return nullptr;
 	}
 }
