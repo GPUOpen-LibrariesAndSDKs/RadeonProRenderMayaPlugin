@@ -53,19 +53,28 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 	}
 	else if (m_params.outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_ALPHA)
 	{
-		MPlug alphaIsLuminancePlug = m_params.shaderNode.findPlug("alphaIsLuminance");
-		bool alphaIsLuminance = alphaIsLuminancePlug.asBool();
-
-		bool shouldUseAlphaIsLuminance = alphaIsLuminance || !image.HasAlphaChannel();
-		if (shouldUseAlphaIsLuminance)
+		if (!m_params.scope.GetIContextInfo()->IsGLTFExport())
 		{
-			// Calculate alpha is luminance value
-			return m_params.scope.MaterialSystem().ValueConvertToLuminance(imageNode);
+			MPlug alphaIsLuminancePlug = m_params.shaderNode.findPlug("alphaIsLuminance");
+			bool alphaIsLuminance = alphaIsLuminancePlug.asBool();
+
+			bool shouldUseAlphaIsLuminance = alphaIsLuminance || !image.HasAlphaChannel();
+			if (shouldUseAlphaIsLuminance)
+			{
+				// Calculate alpha is luminance value
+				return m_params.scope.MaterialSystem().ValueConvertToLuminance(imageNode);
+			}
+			else
+			{
+				// Select the real alpha value
+				return frw::Value(imageNode).SelectW();
+			}
 		}
+		// In GLTF Export case we don't process outAlpha as in rendering mode because in this case Arithmetic nodes will be produced 
+		// but Hybrid engine doesn't support them
 		else
 		{
-			// Select the real alpha value
-			return frw::Value(imageNode).SelectW();
+			return imageNode;
 		}
 	}
 

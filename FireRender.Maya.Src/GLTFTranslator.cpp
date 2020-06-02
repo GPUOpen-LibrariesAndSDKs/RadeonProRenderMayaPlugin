@@ -68,6 +68,7 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	m_progressBars->SetPreparingSceneText(true);
 
 	fireRenderContext->setCallbackCreationDisabled(true);
+	fireRenderContext->SetGLTFExport(true);
 	if (!fireRenderContext->buildScene(false, false, true, [this](int progress) { m_progressBars->update(progress); } ))
 		return MS::kFailure;
 
