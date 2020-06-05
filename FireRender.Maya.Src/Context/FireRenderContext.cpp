@@ -303,6 +303,12 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 
 	m_globals.readFromCurrentScene();
 
+	// Backdoor for enabling aovs in IPR/Viewport
+	if (isInteractive())
+	{
+		EnableAOVsFromRSIfEnvVarSet(*this, m_globals.aovs);
+	}
+
 	if (m_globals.denoiserSettings.enabled)
 	{
 		turnOnAOVsForDenoiser();
