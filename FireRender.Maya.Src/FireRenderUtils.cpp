@@ -1395,6 +1395,27 @@ MDagPathArray GetSceneCameras(bool renderableOnly /*= false*/)
 	return cameras;
 }
 
+void GetResolutionFromCommonTab(unsigned int& width, unsigned int& height)
+{
+	MObject defaultResolutionObject;
+	MSelectionList slist;
+	slist.add("defaultResolution");
+	slist.getDependNode(0, defaultResolutionObject);
+
+	MFnDependencyNode globalsNode(defaultResolutionObject);
+	MPlug plug = globalsNode.findPlug("width");
+	if (!plug.isNull())
+	{
+		width = plug.asInt();
+	}
+
+	plug = globalsNode.findPlug("height");
+	if (!plug.isNull())
+	{
+		height = plug.asInt();
+	}
+}
+
 MStatus GetDefaultRenderGlobals(MObject& outGlobalsNode)
 {
 	MSelectionList slist;
