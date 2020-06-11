@@ -225,6 +225,7 @@
     <ClCompile Include="GlobalRenderUtilsDataHolder.cpp" />
     <ClCompile Include="GLTFTranslator.cpp" />
     <ClCompile Include="Hosek\ArHosekSkyModel.cpp" />
+    <ClCompile Include="Lights\FireRenderLightCommon.cpp" />
     <ClCompile Include="Lights\IES\FireRenderIESLight.cpp" />
     <ClCompile Include="Lights\IES\IESLightLocatorMesh.cpp" />
     <ClCompile Include="Lights\PhysicalLight\FireRenderPhysicalLightLocator.cpp" />
@@ -381,6 +382,7 @@
     <ClInclude Include="Hosek\ArHosekSkyModelData_CIEXYZ.h" />
     <ClInclude Include="Hosek\ArHosekSkyModelData_RGB.h" />
     <ClInclude Include="Hosek\ArHosekSkyModelData_Spectral.h" />
+    <ClInclude Include="Lights\FireRenderLightCommon.h" />
     <ClInclude Include="Lights\IES\FireRenderIESLight.h" />
     <ClInclude Include="Lights\IES\IESLightLocatorMesh.h" />
     <ClInclude Include="Lights\PhysicalLight\FireRenderPhysicalLightLocator.h" />
