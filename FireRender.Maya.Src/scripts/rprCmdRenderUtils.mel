@@ -54,6 +54,7 @@ global proc string[] geFileNodeUDIMFiles(string $nodeName)
 {
 	$pattern = `getAttr ($nodeName + ".computedFileTextureNamePattern")`;
 	int $frameExt = `getAttr ($nodeName + ".frameExtension")` + `getAttr ($nodeName + ".frameOffset")`;
+
 	python("import maya.app.general.fileTexturePathResolver");
 	string $matches[] = python("maya.app.general.fileTexturePathResolver.findAllFilesForPattern('" + $pattern + "', " + $frameExt + ")");
 

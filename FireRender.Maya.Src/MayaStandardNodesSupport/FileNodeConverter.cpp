@@ -13,6 +13,8 @@ limitations under the License.
 #include "FileNodeConverter.h"
 #include "FireMaya.h"
 
+#include <sstream>
+
 MayaStandardNodeConverters::FileNodeConverter::FileNodeConverter(const ConverterParams& params) : BaseConverter(params)
 {
 }
@@ -21,11 +23,10 @@ void LoadAndAssignUdimImages(const MString& nodeName,  frw::Context context, frw
 {
 	MStringArray fileNames;
 
-	MString command;
-	std::string str = "source \"rprCmdRenderUtils.mel\"; geFileNodeUDIMFiles(\"^1s\")";
-	command = command.format("source \"rprCmdRenderUtils.mel\"; geFileNodeUDIMFiles(\"^1s\")", nodeName);
+	std::ostringstream ostream;
+	ostream << "source \"rprCmdRenderUtils.mel\"; geFileNodeUDIMFiles(\"" << nodeName.asChar() << "\")";
 
-	MStatus status = MGlobal::executeCommand(command, fileNames);
+	MStatus status = MGlobal::executeCommand(ostream.str().c_str(), fileNames);
 
 	size_t index = std::string(udimPathPattern.asChar()).find("<UDIM>");
 	size_t tagLength = std::string("UDIM").length();
