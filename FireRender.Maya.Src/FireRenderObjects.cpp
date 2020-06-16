@@ -1321,9 +1321,30 @@ void FireRenderMesh::Rebuild()
 		ProcessSkyLight();
 	}
 
+	SetupObjectId(meshPath.transform());
+
 	m.changed.mesh = false;
 	m.changed.transform = false;
 	m.changed.shader = false;
+}
+
+void FireRenderMesh::SetupObjectId(MObject parentTransformObject)
+{
+	MObject node = Object();
+	MFnDependencyNode parentTransform(parentTransformObject);
+
+	MPlug plug = parentTransform.findPlug("RPRObjectId");
+
+	rpr_uint objectId;
+	if (!plug.isNull())
+	{
+		objectId = plug.asInt();
+	}
+
+	for (FrElement element : m.elements)
+	{
+		element.shape.SetObjectId(objectId);
+	}
 }
 
 void FireRenderMesh::ForceShaderDirtyCallback(MObject& node, void* clientData)

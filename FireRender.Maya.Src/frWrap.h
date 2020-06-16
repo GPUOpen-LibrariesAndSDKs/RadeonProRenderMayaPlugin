@@ -1016,6 +1016,12 @@ namespace frw
 			checkStatus(res);
 		}
 
+		void SetObjectId(rpr_uint id)
+		{
+			auto res = rprShapeSetObjectID(Handle(), id);
+			checkStatus(res);
+		}
+
 		void SetLinearMotion(float x, float y, float z)
 		{
 			auto res = rprShapeSetLinearMotion(Handle(), x, y, z);

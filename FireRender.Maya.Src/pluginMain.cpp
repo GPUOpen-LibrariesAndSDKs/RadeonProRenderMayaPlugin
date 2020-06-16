@@ -18,6 +18,7 @@ limitations under the License.
 #include <maya/MStatus.h>
 #include <maya/MSceneMessage.h>
 #include <maya/MFileIO.h>
+#include <maya/MNodeClass.h>
 
 #include "common.h"
 #include "FireRenderMaterial.h"
@@ -441,6 +442,19 @@ void SetVersionsForMel()
 
 }
 
+void AddExtensionAttributes()
+{
+
+	// Adding RPRObjectId to all transforms
+	MFnNumericAttribute nAttr;
+	MObject objectIdAttr = nAttr.create("RPRObjectId", "roi", MFnNumericData::kLong, 0);
+
+	nAttr.setNiceNameOverride("RPR Object Id");
+	nAttr.setMin(0);
+	MNodeClass transformNodeClass("transform");
+	transformNodeClass.addExtensionAttribute(objectIdAttr);
+}
+
 
 MStatus initializePlugin(MObject obj)
 //
@@ -663,9 +677,9 @@ MStatus initializePlugin(MObject obj)
 
 	MGlobal::executeCommand("setupFireRenderNodeClassification()");
 
-#ifdef ENABLE_RPR_PANEL
+	AddExtensionAttributes();
+
 	MGlobal::executeCommand("setupFireRenderExtraUI()");
-#endif
 
 	MGlobal::executeCommand("rprExportsGLTF(1)");
 
