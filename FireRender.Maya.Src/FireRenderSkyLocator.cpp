@@ -26,12 +26,16 @@ limitations under the License.
 using namespace std;
 
 MTypeId FireRenderSkyLocator::id(FireMaya::TypeId::FireRenderSkyLocator);
-
-MString FireRenderSkyLocator::drawDbClassification("light:drawdb/light/directionalLight:drawdb/geometry/FireRenderSkyLocator");
-MString FireRenderSkyLocator::drawDbGeomClassification("drawdb/geometry/FireRenderSkyLocator");
+MString FireRenderSkyLocator::drawDbClassification("drawdb/geometry/light/FireRenderSkyLocator:drawdb/light/directionalLight:light");
+MString FireRenderSkyLocator::drawDbGeomClassification("drawdb/geometry/light/FireRenderSkyLocator");
 MString FireRenderSkyLocator::drawRegistrantId("FireRenderSkyNode");
 
 MObject FireRenderSkyLocator::SkySelectingPortalMesh;
+
+const MString FireRenderSkyLocator::GetNodeTypeName(void) const
+{
+	return "RPRSky";
+}
 
 MStatus FireRenderSkyLocator::compute(const MPlug& plug, MDataBlock& data)
 {
@@ -245,6 +249,8 @@ void FireRenderSkyLocator::onSelectionChanged(void *clientData)
 
 void FireRenderSkyLocator::postConstructor()
 {
+	FireRenderLightCommon::postConstructor();
+
 	MStatus status;
 	MObject mobj = thisMObject();
 	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(mobj, FireRenderSkyLocator::onAttributeChanged, this, &status);

@@ -73,8 +73,13 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 		return MS::kFailure;
 
 	// Some resolution should be set. It's requred to retrieve background image.
-	// We set 800x600 here but we can set any other resolution.
-	fireRenderContext->setResolution(800, 600, false, 0);
+	FireRenderGlobalsData renderData;
+	
+	unsigned int width = 800;	// use some defaults
+	unsigned int height = 600;
+	GetResolutionFromCommonTab(width, height);
+
+	fireRenderContext->setResolution(width, height, true, 0);
 	fireRenderContext->ConsiderSetupDenoiser();
 
 	MStatus status;

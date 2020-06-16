@@ -303,6 +303,12 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 
 	m_globals.readFromCurrentScene();
 
+	// Backdoor for enabling aovs in IPR/Viewport
+	if (isInteractive())
+	{
+		EnableAOVsFromRSIfEnvVarSet(*this, m_globals.aovs);
+	}
+
 	if (m_globals.denoiserSettings.enabled)
 	{
 		turnOnAOVsForDenoiser();
@@ -2138,6 +2144,10 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		else if (isTransformWithInstancedShape(node, dagPathTmp))
 		{
 			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::DontAddPath>(dagPathTmp);
+		}
+		else if (dagNode.typeName() == "pfxHair" && hairSupported)
+		{
+			ob = CreateSceneObject<FireRenderHairNHair, NodeCachingOptions::AddPath>(dagPath);
 		}
 		else if (dagNode.typeName() == "transform")
 		{
