@@ -398,6 +398,9 @@ MPlug GetRadeonProRenderGlobalsPlug(const char* name, MStatus* status = nullptr)
 // Is IBL image fliping switched on
 bool IsFlipIBL();
 
+// Get Render Size from Common Tab
+void GetResolutionFromCommonTab(unsigned int& width, unsigned int& height);
+
 class HardwareResources
 {
 	HardwareResources();
@@ -1032,3 +1035,6 @@ std::vector<T> splitString(const T& s, typename T::traits_type::char_type delim)
 
 	return elems;
 }
+
+// Backdoor to enable different AOVs from Render Settings in IPR and Viewport
+void EnableAOVsFromRSIfEnvVarSet(FireRenderContext& context, FireRenderAOVs& aovs);

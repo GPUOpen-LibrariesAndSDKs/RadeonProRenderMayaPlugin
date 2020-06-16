@@ -1395,6 +1395,27 @@ MDagPathArray GetSceneCameras(bool renderableOnly /*= false*/)
 	return cameras;
 }
 
+void GetResolutionFromCommonTab(unsigned int& width, unsigned int& height)
+{
+	MObject defaultResolutionObject;
+	MSelectionList slist;
+	slist.add("defaultResolution");
+	slist.getDependNode(0, defaultResolutionObject);
+
+	MFnDependencyNode globalsNode(defaultResolutionObject);
+	MPlug plug = globalsNode.findPlug("width");
+	if (!plug.isNull())
+	{
+		width = plug.asInt();
+	}
+
+	plug = globalsNode.findPlug("height");
+	if (!plug.isNull())
+	{
+		height = plug.asInt();
+	}
+}
+
 MStatus GetDefaultRenderGlobals(MObject& outGlobalsNode)
 {
 	MSelectionList slist;
@@ -2132,3 +2153,15 @@ bool CheckIsInteractivePossible()
 	return true;
 }
 
+// Backdoor to enable different AOVs from Render Settings in IPR and Viewport
+void EnableAOVsFromRSIfEnvVarSet(FireRenderContext& context, FireRenderAOVs& aovs)
+{
+	char* result = std::getenv("ENABLE_ADD_AOVS_FOR_INTERACTIVE");
+
+	if (result == nullptr || std::string(result) != "1")
+	{
+		return;
+	}
+
+	aovs.applyToContext(context);
+}
