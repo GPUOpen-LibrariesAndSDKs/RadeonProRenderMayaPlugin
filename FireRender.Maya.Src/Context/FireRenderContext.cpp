@@ -2145,6 +2145,10 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::DontAddPath>(dagPathTmp);
 		}
+		else if (dagNode.typeName() == "pfxHair" && hairSupported)
+		{
+			ob = CreateSceneObject<FireRenderHairNHair, NodeCachingOptions::AddPath>(dagPath);
+		}
 		else if (dagNode.typeName() == "transform")
 		{
 			ob = CreateSceneObject<FireRenderNode, NodeCachingOptions::AddPath>(dagPath);
