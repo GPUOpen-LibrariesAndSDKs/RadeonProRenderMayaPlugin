@@ -27,7 +27,9 @@ limitations under the License.
 #include <maya/MShaderManager.h>
 #include <maya/MRenderTargetManager.h>
 #include <maya/MPointArray.h>
+
 #include "IESLightLocatorMesh.h"
+#include "FireRenderLightCommon.h"
 
 #include <memory>
 
@@ -36,7 +38,7 @@ limitations under the License.
 * system attributes and is responsible for
 * drawing the viewport representation.
 */
-class FireRenderIESLightLocator : public MPxLocatorNode
+class FireRenderIESLightLocator : public FireRenderLightCommon
 {
 public:
 	FireRenderIESLightLocator() {};
@@ -78,6 +80,9 @@ public:
 	static MObject	aIntensity;
 	static MObject	aDisplay;
 	static MObject	aMeshRepresentationUpdated;
+
+protected:
+	virtual const MString GetNodeTypeName(void) const override;
 
 private:
 	void UpdateMesh(bool forced) const;

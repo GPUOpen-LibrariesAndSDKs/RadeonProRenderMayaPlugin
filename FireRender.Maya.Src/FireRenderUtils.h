@@ -398,6 +398,9 @@ MPlug GetRadeonProRenderGlobalsPlug(const char* name, MStatus* status = nullptr)
 // Is IBL image fliping switched on
 bool IsFlipIBL();
 
+// Get Render Size from Common Tab
+void GetResolutionFromCommonTab(unsigned int& width, unsigned int& height);
+
 class HardwareResources
 {
 	HardwareResources();

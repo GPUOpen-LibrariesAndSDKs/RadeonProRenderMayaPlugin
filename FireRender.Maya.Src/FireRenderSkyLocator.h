@@ -34,12 +34,14 @@ limitations under the License.
 
 #include <memory>
 
+#include "FireRenderLightCommon.h"
+
 /**
  * The sky locator contains the Sun / Sky
  * system attributes and is responsible for
  * drawing the viewport representation.
  */
-class FireRenderSkyLocator : public MPxLocatorNode
+class FireRenderSkyLocator : public FireRenderLightCommon
 {
 public:
 
@@ -63,11 +65,13 @@ public:
 
 	static MStatus initialize();
 
-private:
+protected:
 	static void onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
 	static void onSelectionChanged(void *clientData);
 	void SubscribeSelectionChangedEvent(bool subscribe = true);
 	void AddSelectedMeshToPortalList(void);
+
+	virtual const MString GetNodeTypeName(void) const override;
 
 public:
 

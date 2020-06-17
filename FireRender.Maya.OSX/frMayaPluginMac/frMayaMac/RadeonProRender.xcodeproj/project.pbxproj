@@ -901,6 +901,12 @@
 		CE7CE7E222CA0FF1007270C8 /* EnableSaveIntermediateCmd.h in Headers */ = {isa = PBXBuildFile; fileRef = CE7CE7DF22CA0FF1007270C8 /* EnableSaveIntermediateCmd.h */; };
 		CEED8EC9227346E900136DEF /* FireRenderVolume.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */; };
 		CEED8ECA227346E900136DEF /* FireRenderVolume.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */; };
+		F19A1608248A737000A959C7 /* FireRenderLightCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */; };
+		F19A1609248A737000A959C7 /* FireRenderLightCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */; };
+		F19A160A248A737000A959C7 /* FireRenderLightCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */; };
+		F19A160B248A737000A959C7 /* FireRenderLightCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = F19A1607248A737000A959C7 /* FireRenderLightCommon.h */; };
+		F19A160C248A737000A959C7 /* FireRenderLightCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = F19A1607248A737000A959C7 /* FireRenderLightCommon.h */; };
+		F19A160D248A737000A959C7 /* FireRenderLightCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = F19A1607248A737000A959C7 /* FireRenderLightCommon.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1286,6 +1292,8 @@
 		CE7CE7DF22CA0FF1007270C8 /* EnableSaveIntermediateCmd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EnableSaveIntermediateCmd.h; path = ../../../FireRender.Maya.Src/EnableSaveIntermediateCmd.h; sourceTree = "<group>"; };
 		CEEB7BE022A510530002BBD5 /* athenaWrap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = athenaWrap.cpp; path = ../../../FireRender.Components/cpp/Athena/athenaWrap.cpp; sourceTree = "<group>"; };
 		CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderVolume.cpp; path = ../../../FireRender.Maya.Src/FireRenderVolume.cpp; sourceTree = "<group>"; };
+		F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderLightCommon.cpp; path = ../../../FireRender.Maya.Src/Lights/FireRenderLightCommon.cpp; sourceTree = "<group>"; };
+		F19A1607248A737000A959C7 /* FireRenderLightCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderLightCommon.h; path = ../../../FireRender.Maya.Src/Lights/FireRenderLightCommon.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1373,6 +1381,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */,
+				F19A1607248A737000A959C7 /* FireRenderLightCommon.h */,
 				B72E5C8023EA294A00374742 /* FireRenderHairs.cpp */,
 				B773D2C823A9123B009FC79C /* StandardMayaNodesIntegration */,
 				B7542DE6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.cpp */,
@@ -1863,6 +1873,7 @@
 				B7EC453923743C9C001E49F7 /* FireRenderContext.h in Headers */,
 				8D595DB020372FE20031988A /* FireRenderIBL.h in Headers */,
 				B72F8210239F813F00C2BFB3 /* BlendColorsConverter.h in Headers */,
+				F19A160B248A737000A959C7 /* FireRenderLightCommon.h in Headers */,
 				8D595DB120372FE20031988A /* RprComposite.h in Headers */,
 				B7190C522449C8130071D47F /* Utils.h in Headers */,
 				8D595DB220372FE20031988A /* FireMaya.h in Headers */,
@@ -2013,6 +2024,7 @@
 				B7EC453E23743C9D001E49F7 /* FireRenderContext.h in Headers */,
 				8DBCC2C622304666003EE361 /* FireRenderIBL.h in Headers */,
 				B72F8211239F813F00C2BFB3 /* BlendColorsConverter.h in Headers */,
+				F19A160C248A737000A959C7 /* FireRenderLightCommon.h in Headers */,
 				8DBCC2C722304666003EE361 /* RprComposite.h in Headers */,
 				B7190C532449C8130071D47F /* Utils.h in Headers */,
 				8DBCC2C822304666003EE361 /* FireMaya.h in Headers */,
@@ -2163,6 +2175,7 @@
 				B753200B23D9ED5600246738 /* FireRenderIBL.h in Headers */,
 				B753200C23D9ED5600246738 /* BlendColorsConverter.h in Headers */,
 				B753200D23D9ED5600246738 /* RprComposite.h in Headers */,
+				F19A160D248A737000A959C7 /* FireRenderLightCommon.h in Headers */,
 				B753200E23D9ED5600246738 /* FireMaya.h in Headers */,
 				B7190C542449C8130071D47F /* Utils.h in Headers */,
 				B753200F23D9ED5600246738 /* ReverseMapConverter.h in Headers */,
@@ -2376,6 +2389,7 @@
 				8DB6234620755B2800841D10 /* IESLightLocatorMesh.cpp in Sources */,
 				B7230A6323ACD82900E51BD1 /* ColorMathConverter.cpp in Sources */,
 				B7701DE1235DE0380072482F /* StartupContextChecker.cpp in Sources */,
+				F19A1608248A737000A959C7 /* FireRenderLightCommon.cpp in Sources */,
 				8DB6234720755B2800841D10 /* RprTools.cpp in Sources */,
 				B72E5C8223EA294B00374742 /* FireRenderHairs.cpp in Sources */,
 				B7EC453223743C93001E49F7 /* TahoeContext.cpp in Sources */,
@@ -2525,6 +2539,7 @@
 				8DBCC30B22304666003EE361 /* IESLightLocatorMesh.cpp in Sources */,
 				B7230A6E23ACD82A00E51BD1 /* ColorMathConverter.cpp in Sources */,
 				B7701DE2235DE0380072482F /* StartupContextChecker.cpp in Sources */,
+				F19A1609248A737000A959C7 /* FireRenderLightCommon.cpp in Sources */,
 				8DBCC30C22304666003EE361 /* RprTools.cpp in Sources */,
 				B72E5C8323EA294B00374742 /* FireRenderHairs.cpp in Sources */,
 				B7EC453323743C94001E49F7 /* TahoeContext.cpp in Sources */,
@@ -2674,6 +2689,7 @@
 				B753207423D9ED5600246738 /* FireRenderVolume.cpp in Sources */,
 				B753207623D9ED5600246738 /* IESLightLocatorMesh.cpp in Sources */,
 				B753207723D9ED5600246738 /* ColorMathConverter.cpp in Sources */,
+				F19A160A248A737000A959C7 /* FireRenderLightCommon.cpp in Sources */,
 				B753207823D9ED5600246738 /* StartupContextChecker.cpp in Sources */,
 				B753207923D9ED5600246738 /* RprTools.cpp in Sources */,
 				B72E5C8423EA294B00374742 /* FireRenderHairs.cpp in Sources */,

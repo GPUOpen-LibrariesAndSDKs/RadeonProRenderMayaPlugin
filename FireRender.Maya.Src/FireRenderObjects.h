@@ -807,3 +807,16 @@ public:
 protected:
 	virtual bool CreateCurves(void);
 };
+
+class FireRenderHairNHair : public FireRenderHair
+{
+public:
+	// Constructor
+	FireRenderHairNHair(FireRenderContext* context, const MDagPath& dagPath);
+
+	// Destructor
+	virtual ~FireRenderHairNHair();
+
+protected:
+	virtual bool CreateCurves(void);
+};

@@ -650,6 +650,9 @@
     <ClCompile Include="..\RadeonProRenderSharedComponents\src\XMLMaterialExport\XMLMaterialExportCommon.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Lights\FireRenderLightCommon.cpp">
+      <Filter>Lights</Filter>
+    </ClCompile>
     <ClCompile Include="MayaStandardNodesSupport\RemapValueConverter.cpp">
       <Filter>MayaStandardNodesSupport</Filter>
     </ClCompile>
@@ -1107,6 +1110,30 @@
     </ClInclude>
     <ClInclude Include="MayaStandardNodesSupport\SetRangeConverter.h">
       <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\Athena\athenaWrap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\SunPosition\SPA.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\IESLight\IESLightRepresentationCalc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\IESLight\IESprocessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\ImageFilter\ImageFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\Utils\Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\XMLMaterialExport\XMLMaterialExportCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\FireRenderLightCommon.h">
+      <Filter>Lights</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
