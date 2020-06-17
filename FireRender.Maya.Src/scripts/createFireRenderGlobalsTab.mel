@@ -337,6 +337,34 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 	setUITemplate -popTemplate;
 }
 
+global proc createObjectMaterialIDFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	setParent $parent;
+	columnLayout -adjustableColumn true;
+
+	button -label "Assign Object ID to all transforms" -command "OnAutoObjectIdAssign" objectIDAssignBtn;
+
+	setParent ..;
+	setUITemplate -popTemplate;
+}
+
+global proc OnAutoObjectIdAssign()
+{
+    string $arrNames[] = `ls -type "transform" -long`;
+
+    int $index = 1;
+
+    for ($transformFullName in $arrNames)
+    {
+	string $attr = $transformFullName + ".RPRObjectId";
+	setAttr $attr $index;
+	$index ++;
+    }
+}
+
+
 global proc createFireRenderAOVsTab()
 {
 	string $parentForm = `setParent -query`;
@@ -346,9 +374,13 @@ global proc createFireRenderAOVsTab()
 	// Render Passes
 	//
 	frameLayout -label "Render Passes (AOV)" -cll false -cl 0 fireRenderRenderPassesFrame;
-
 	createFireRenderRenderPassesFrame ("fireRenderRenderPassesFrame");
 	setParent ..;
+
+	frameLayout -label "Object/Material ID" -cll false -cl 0 fireRenderObjectMaterialIDFrame;
+	createObjectMaterialIDFrame ("fireRenderObjectMaterialIDFrame");
+	setParent ..;
+
 
 	// Parameters are moved to Common Tab. We may remove these comments later
 	// Depth settings
