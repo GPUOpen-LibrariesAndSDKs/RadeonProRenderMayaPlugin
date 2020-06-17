@@ -182,6 +182,31 @@ void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
 	if (partialShortName == "fruuid")
 		return;
 
+	// check for RPRObjectId attrbiute change. roi is brief name for this attribute
+	if ((partialShortName == "roi") && node.hasFn(MFn::kTransform))
+	{
+		MFnTransform transform(node);
+
+		MDagPath transformDagPath;
+		MStatus status = transform.getPath(transformDagPath);
+
+		unsigned int childCount = 0;
+		status = transformDagPath.numberOfShapesDirectlyBelow(childCount);
+
+		for (unsigned int childIndex = 0; childIndex < childCount; ++childIndex)
+		{
+			MDagPath childDagPath = transformDagPath;
+			childDagPath.extendToShapeDirectlyBelow(childIndex);
+
+			FireRenderObject* pObject = context()->getRenderObject(childDagPath);
+
+			if (pObject != nullptr)
+			{
+				context()->setDirtyObject(pObject);
+			}
+		}
+	}
+
 	setDirty();
 }
 
