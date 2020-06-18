@@ -97,7 +97,7 @@ void FireRenderLightCommon::onNodeRemoved(MObject &node, void *clientData)
 
 	// delete transform node
 	MStatus mstatus;
-	mstatus = MGlobal::deleteNode(pparent->m_transformObject);
+	mstatus = MGlobal::removeFromModel(pparent->m_transformObject);
 	assert(mstatus == MStatus::kSuccess);
 }
 
