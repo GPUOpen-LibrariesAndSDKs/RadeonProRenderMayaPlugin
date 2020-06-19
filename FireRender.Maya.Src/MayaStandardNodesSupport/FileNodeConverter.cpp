@@ -21,21 +21,21 @@ MayaStandardNodeConverters::FileNodeConverter::FileNodeConverter(const Converter
 
 void LoadAndAssignUdimImages(const MString& nodeName,  frw::Context context, frw::Image masterImage, const MString& udimPathPattern)
 {
-	MStringArray fileNames;
-
-	std::ostringstream ostream;
-	ostream << "source \"rprCmdRenderUtils.mel\"; geFileNodeUDIMFiles(\"" << nodeName.asChar() << "\")";
-
-	MStatus status = MGlobal::executeCommand(ostream.str().c_str(), fileNames);
-
 	size_t index = std::string(udimPathPattern.asChar()).find("<UDIM>");
-	size_t tagLength = std::string("UDIM").length();
+	const size_t tagLength = std::string("UDIM").length();
 
 	if (index == std::string::npos)
 	{
 		MGlobal::displayWarning(MString("UDIM pattern is not recognized: ") + udimPathPattern);
 		return;
 	}
+
+	MStringArray fileNames;
+
+	std::ostringstream ostream;
+	ostream << "source \"rprCmdRenderUtils.mel\"; geFileNodeUDIMFiles(\"" << nodeName.asChar() << "\")";
+
+	MStatus status = MGlobal::executeCommand(ostream.str().c_str(), fileNames);
 
 	for (size_t i = 0; i < fileNames.length(); ++i)
 	{
@@ -56,6 +56,7 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 
 	MPlug uvTilingModePlug = m_params.shaderNode.findPlug("uvTilingMode");
 
+	// This is index in FileNode for property "UV Tiling Mode". I haven't find this constant defined anywhere
 	const int fileNodeUdimMode = 3;
 	int uvMode = uvTilingModePlug.asInt();
 
