@@ -817,6 +817,9 @@ public:
 	// Destructor
 	virtual ~FireRenderHairNHair();
 
+	// Register the callback
+	virtual void RegisterCallbacks(void) override;
+
 protected:
 	virtual bool CreateCurves(void);
 };
