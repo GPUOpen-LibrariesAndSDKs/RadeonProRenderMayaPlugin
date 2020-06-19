@@ -49,3 +49,15 @@ global proc setGamma(float $gamma)
 	setAttr RadeonProRenderGlobals.applyGammaToMayaViews 1;
 	setAttr RadeonProRenderGlobals.displayGamma $gamma;
 }
+
+global proc string[] geFileNodeUDIMFiles(string $nodeName)
+{
+	$pattern = `getAttr ($nodeName + ".computedFileTextureNamePattern")`;
+	int $frameExt = `getAttr ($nodeName + ".frameExtension")` + `getAttr ($nodeName + ".frameOffset")`;
+
+	python("import maya.app.general.fileTexturePathResolver");
+	string $matches[] = python("maya.app.general.fileTexturePathResolver.findAllFilesForPattern('" + $pattern + "', " + $frameExt + ")");
+
+	return $matches;
+}
+
