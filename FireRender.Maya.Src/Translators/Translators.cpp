@@ -256,13 +256,14 @@ namespace FireMaya
 		frstatus = rprCameraSetFarPlane(frcamera, (float)(fnCamera.farClippingPlane() * cmToMCoefficient));
 		checkStatus(frstatus);
 		
-		float lensShiftX = (float) fnCamera.horizontalFilmOffset(&mstatus);
+		float filmOffsetX = (float) fnCamera.horizontalFilmOffset(&mstatus);
 		assert(mstatus == MStatus::kSuccess);
 
-		float lensShiftY = (float) fnCamera.verticalFilmOffset(&mstatus);
+		float filmOffsetY = (float) fnCamera.verticalFilmOffset(&mstatus);
 		assert(mstatus == MStatus::kSuccess);
 
-		frstatus = rprCameraSetLensShift(frcamera, lensShiftX, lensShiftY);
+		float inchesToMM = 25.4f;
+		frstatus = rprCameraSetLensShift(frcamera, inchesToMM * filmOffsetX / apertureWidth, inchesToMM * filmOffsetY / apertureHeight);
 		if (frstatus != RPR_ERROR_UNSUPPORTED)
 		{
 			checkStatus(frstatus);

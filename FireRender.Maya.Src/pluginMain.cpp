@@ -86,6 +86,7 @@ limitations under the License.
 #include "FireRenderSurfaceOverride.h"
 #include "FireRenderBlendOverride.h"
 #include <maya/MCommonSystemUtils.h>
+#include <maya/MNodeClass.h>
 
 #include "FireRenderThread.h"
 
@@ -444,9 +445,13 @@ void SetVersionsForMel()
 
 void AddExtensionAttributes()
 {
+	// Add RPR UI to Maya native nodes
+	MFnNumericAttribute nAttr;
+	MObject hairMaterialAttr = nAttr.createColor("rprHairMaterial", "rhm");
+	MNodeClass hairSystemClass("hairSystem");
+	hairSystemClass.addExtensionAttribute(hairMaterialAttr);
 
 	// Adding RPRObjectId to all transforms
-	MFnNumericAttribute nAttr;
 	MObject objectIdAttr = nAttr.create("RPRObjectId", "roi", MFnNumericData::kLong, 0);
 
 	nAttr.setNiceNameOverride("RPR Object Id");
@@ -678,9 +683,9 @@ MStatus initializePlugin(MObject obj)
 	MGlobal::executeCommand("setupFireRenderNodeClassification()");
 
 	AddExtensionAttributes();
-
 	MGlobal::executeCommand("setupFireRenderExtraUI()");
 
+	// GLTF
 	MGlobal::executeCommand("rprExportsGLTF(1)");
 
 	// register shaders

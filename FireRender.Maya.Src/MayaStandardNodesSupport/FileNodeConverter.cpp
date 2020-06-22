@@ -13,27 +13,78 @@ limitations under the License.
 #include "FileNodeConverter.h"
 #include "FireMaya.h"
 
+#include <sstream>
+
 MayaStandardNodeConverters::FileNodeConverter::FileNodeConverter(const ConverterParams& params) : BaseConverter(params)
 {
 }
+
+void LoadAndAssignUdimImages(const MString& nodeName,  frw::Context context, frw::Image masterImage, const MString& udimPathPattern)
+{
+	size_t index = std::string(udimPathPattern.asChar()).find("<UDIM>");
+	const size_t tagLength = std::string("UDIM").length();
+
+	if (index == std::string::npos)
+	{
+		MGlobal::displayWarning(MString("UDIM pattern is not recognized: ") + udimPathPattern);
+		return;
+	}
+
+	MStringArray fileNames;
+
+	std::ostringstream ostream;
+	ostream << "source \"rprCmdRenderUtils.mel\"; geFileNodeUDIMFiles(\"" << nodeName.asChar() << "\")";
+
+	MStatus status = MGlobal::executeCommand(ostream.str().c_str(), fileNames);
+
+	for (size_t i = 0; i < fileNames.length(); ++i)
+	{
+		std::string fileName = fileNames[(unsigned int) i].asChar();
+
+		rpr_uint tileIndex = std::stoi(fileName.substr(index, tagLength));
+		
+		frw::Image tile(context, fileName.c_str());
+		masterImage.SetUDIM(tileIndex, tile);
+	}
+}
+
 
 frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 {
 	MPlug texturePlug = m_params.shaderNode.findPlug("computedFileTextureNamePattern");
 	MString texturePath = texturePlug.asString();
 
-	MPlug colorSpacePlug = m_params.shaderNode.findPlug("colorSpace");
-	MString colorSpace;
-	if (!colorSpacePlug.isNull())
-	{
-		colorSpace = colorSpacePlug.asString();
-	}
+	MPlug uvTilingModePlug = m_params.shaderNode.findPlug("uvTilingMode");
 
-	frw::Image image = m_params.scope.GetImage(texturePath, colorSpace, m_params.shaderNode.name());
-	if (!image.IsValid())
+	// This is index in FileNode for property "UV Tiling Mode". I haven't find this constant defined anywhere
+	const int fileNodeUdimMode = 3;
+	int uvMode = uvTilingModePlug.asInt();
+
+	frw::Image image;
+	MString colorSpace;
+
+	if (fileNodeUdimMode != uvMode)
 	{
-		m_params.scope.SetIsLastPassTextureMissing(true);
-		return nullptr;
+		MPlug colorSpacePlug = m_params.shaderNode.findPlug("colorSpace");
+		if (!colorSpacePlug.isNull())
+		{
+			colorSpace = colorSpacePlug.asString();
+		}
+
+		image = m_params.scope.GetImage(texturePath, colorSpace, m_params.shaderNode.name());
+		if (!image.IsValid())
+		{
+			m_params.scope.SetIsLastPassTextureMissing(true);
+			return nullptr;
+		}
+	}
+	else
+	{
+		frw::Context context = m_params.scope.Context();
+		rpr_image_format imageFormat = { 0, RPR_COMPONENT_TYPE_UINT8 };
+		image = frw::Image(context, imageFormat);
+
+		LoadAndAssignUdimImages(m_params.shaderNode.name(), context, image, texturePath);
 	}
 
 	frw::ImageNode imageNode(m_params.scope.MaterialSystem());
