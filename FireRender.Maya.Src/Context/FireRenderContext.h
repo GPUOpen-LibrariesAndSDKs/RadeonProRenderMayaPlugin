@@ -814,9 +814,6 @@ public:
 	int	m_progress;
 	std::chrono::time_point<std::chrono::system_clock> m_lastRenderStartTime;
 
-	double		m_timeIntervalForOutputUpdate;//in sec, TODO: check for Linux/Mac
-	clock_t		m_lastIterationTime;
-
 	// shadow color and transparency (for shadow/reflection catcher)
 	std::array<float, 3> m_shadowColor;
 	std::array<float, 3> m_bgColor;
@@ -844,7 +841,6 @@ public:
 	void updateProgress();
 	int	getProgress();
 	void setProgress(int percents);
-	bool updateOutput();
 
 	void setSamplesPerUpdate(int samplesPerUpdate);
 

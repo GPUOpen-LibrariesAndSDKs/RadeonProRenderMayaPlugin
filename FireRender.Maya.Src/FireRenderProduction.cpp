@@ -156,6 +156,14 @@ void FireRenderProduction::setCamera(MDagPath& camera)
 	MRenderView::setCurrentCamera(camera);
 }
 
+void displayTimeSpent(long long timeInMs, MString formatStr)
+{
+	MString strTime;
+	strTime.format(formatStr, MString(std::to_string(timeInMs).c_str()));
+	MGlobal::displayInfo(strTime);
+
+}
+
 // -----------------------------------------------------------------------------
 bool FireRenderProduction::start()
 {
@@ -168,6 +176,8 @@ bool FireRenderProduction::start()
 		GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->UpdateStartTime();
 		std::remove(std::string(GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->FolderPath() + "time_log.txt").c_str());
 	}
+
+	auto syncStartTime = std::chrono::high_resolution_clock::now();
 
 	// Read common render settings.
 	MRenderUtil::getCommonRenderSettings(m_settings);
@@ -283,6 +293,11 @@ bool FireRenderProduction::start()
 		m_progressBars->SetRenderingText(true);
 		m_contextPtr->setStartedRendering();
 
+		auto syncEndTime = std::chrono::high_resolution_clock::now();
+		long long syncTime = std::chrono::duration_cast<std::chrono::milliseconds>(syncEndTime - syncStartTime).count();
+
+		displayTimeSpent(syncTime, "RPR scene synchronization time: ^1s ms");
+
 		// Start the render
 		FireRenderThread::KeepRunning([this]()
 		{
@@ -347,6 +362,9 @@ bool FireRenderProduction::stop()
 		{
 			m_stopCallback(m_aovs, m_settings);
 			m_progressBars.reset();
+
+			long long renderTimeMs = (clock() - m_contextPtr->m_startTime) * 1000 / CLOCKS_PER_SEC;
+			displayTimeSpent(renderTimeMs, "RPR scene render time: ^1s ms");
 
 			std::string renderStampText = RenderStampUtils::FormatRenderStamp(*m_contextPtr, "\\nFrame: %f  Render Time: %pt  Passes: %pp");
 

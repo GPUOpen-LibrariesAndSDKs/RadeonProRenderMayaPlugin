@@ -99,8 +99,6 @@ FireRenderContext::FireRenderContext() :
 	m_currentIteration(0),
 	m_currentFrame(0),
 	m_progress(0),
-	m_lastIterationTime(0),
-	m_timeIntervalForOutputUpdate(0.1),
 	m_interactive(false),
 	m_camera(this, MDagPath()),
 	m_glInteropActive(false),
@@ -2548,19 +2546,6 @@ int FireRenderContext::getProgress()
 void FireRenderContext::setProgress(int percents)
 {
 	m_progress = std::min(percents, 100);
-}
-
-bool FireRenderContext::updateOutput()
-{
-	long numberOfClicks = clock() - m_lastIterationTime;
-	double secondsSpentRendering = numberOfClicks / (double)CLOCKS_PER_SEC;
-	if (m_timeIntervalForOutputUpdate < secondsSpentRendering) {
-		m_lastIterationTime = clock();
-		return true;
-	}
-	else {
-		return false;
-	}
 }
 
 // -----------------------------------------------------------------------------
