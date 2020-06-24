@@ -217,7 +217,7 @@ bool FireRenderViewport::RunOnViewportThread()
 {
 	RPR_THREAD_ONLY;
 
-	switch (m_contextPtr->state)
+	switch (m_contextPtr->GetState())
 	{
 		// The context is exiting.
 	case FireRenderContext::StateExiting:
@@ -274,7 +274,7 @@ bool FireRenderViewport::RunOnViewportThread()
                     if (activeView.widget() == m_widget)
                         m_view.scheduleRefresh();
                     else
-                        m_contextPtr->state = FireRenderContext::StateExiting;
+                        m_contextPtr->SetState(FireRenderContext::StateExiting);
                 }
             });
 		}
@@ -311,7 +311,7 @@ bool FireRenderViewport::start()
 		// We should lock context, otherwise another asynchronous lock could
 		// change context's state, and rendering will stall in StateUpdating.
 		FireRenderContext::Lock lock(m_contextPtr.get(), "FireRenderViewport::start"); // lock constructor which do not change state
-		m_contextPtr->state = FireRenderContext::StateRendering;
+		m_contextPtr->SetState(FireRenderContext::StateRendering);
 	}
 
 	m_isRunning = false;
@@ -349,7 +349,7 @@ bool FireRenderViewport::stop()
 		FireRenderThread::RunItemsQueuedForTheMainThread();
 
 		// terminate the thread
-		m_contextPtr->state = FireRenderContext::StateExiting;
+		m_contextPtr->SetState(FireRenderContext::StateExiting);
 		this_thread::sleep_for(10ms); // 10.03.2017 - perhaps this is better than yield()
 	}
 

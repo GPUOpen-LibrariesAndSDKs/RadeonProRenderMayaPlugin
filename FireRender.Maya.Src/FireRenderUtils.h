@@ -301,6 +301,8 @@ public:
 	// Use Metal Performance Shaders for MacOS
 	bool useMPS;
 
+	bool useDetailedContextWorkLog;
+
 private:
 	short getMaxRayDepth(const FireRenderContext& context) const;
 	short getSamples(const FireRenderContext& context) const;
@@ -1038,3 +1040,17 @@ std::vector<T> splitString(const T& s, typename T::traits_type::char_type delim)
 
 // Backdoor to enable different AOVs from Render Settings in IPR and Viewport
 void EnableAOVsFromRSIfEnvVarSet(FireRenderContext& context, FireRenderAOVs& aovs);
+
+template<typename ... Args>
+std::string string_format(const std::string& format, Args ... args)
+{
+	size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
+	if (size <= 0) 
+	{ 
+		throw std::runtime_error("Error during formatting."); 
+	}
+
+	std::unique_ptr<char[]> buf(new char[size]);
+	snprintf(buf.get(), size, format.c_str(), args ...);
+	return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+}

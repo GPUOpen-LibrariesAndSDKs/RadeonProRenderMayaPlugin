@@ -256,11 +256,11 @@ bool FireRenderIpr::pause(bool value)
 
 	if (m_isPaused)
 	{
-		m_contextPtr->state = FireRenderContext::StatePaused;
+		m_contextPtr->SetState(FireRenderContext::StatePaused);
 	}
 	else
 	{
-		m_contextPtr->state = FireRenderContext::StateRendering;
+		m_contextPtr->SetState(FireRenderContext::StateRendering);
 
 		m_needsContextRefresh = true;
 	}
@@ -273,7 +273,7 @@ bool FireRenderIpr::stop()
 {
 	if (m_isRunning)
 	{
-		m_contextPtr->state = FireRenderContext::StateExiting;
+		m_contextPtr->SetState(FireRenderContext::StateExiting);
 
 		stopMayaRender();
 
@@ -300,7 +300,7 @@ bool FireRenderIpr::RunOnViewportThread()
 		m_contextPtr->ResetContextSupportCurrentSettings();
 	}
 
-	switch (m_contextPtr->state)
+	switch (m_contextPtr->GetState())
 	{
 		// The context is exiting.
 	case FireRenderContext::StateExiting:
@@ -445,7 +445,7 @@ void FireRenderIpr::updateRenderView()
 	CheckSelection();
 
 	// Check that rendering is still active.
-	if (m_contextPtr->state != FireRenderContext::StateRendering)
+	if (m_contextPtr->GetState() != FireRenderContext::StateRendering)
 		return;
 
 	{
