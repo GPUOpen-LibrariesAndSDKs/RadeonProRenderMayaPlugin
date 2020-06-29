@@ -183,7 +183,8 @@ void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
 		return;
 
 	// check for RPRObjectId attrbiute change. roi is brief name for this attribute
-	if ((partialShortName == "roi") && node.hasFn(MFn::kTransform))
+	if (node.hasFn(MFn::kTransform) &&
+		((partialShortName == "roi") || (partialShortName.indexW("rlio") != -1)))
 	{
 		MFnTransform transform(node);
 

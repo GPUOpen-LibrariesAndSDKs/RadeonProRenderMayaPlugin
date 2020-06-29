@@ -59,7 +59,7 @@ frw::Value MayaStandardNodeConverters::NodeConverterUtil::Convert(const Converte
 		DebugPrint("Warning: Unhandled or Unknown RPRMaya Node: %X", static_cast<int>(mayaNodeId));
 		// I don't think we need this: Dump(shaderNode);
 	}
-	return params.scope.createImageFromShaderNodeUsingFileNode(params.shaderNode.object(), "outColor");
+	return params.scope.createImageFromShaderNodeUsingFileNode(params.shaderNode.object(), params.outPlugName);
 }
 
 std::unique_ptr<MayaStandardNodeConverters::BaseConverter> MayaStandardNodeConverters::NodeConverterUtil::CreateConverter(const ConverterParams& params, const MayaValueId mayaNodeId)
