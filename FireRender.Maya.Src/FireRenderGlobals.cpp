@@ -443,6 +443,13 @@ MStatus FireRenderGlobals::initialize()
 	MAKE_INPUT_CONST(eAttr);
 	addAsGlobalAttribute(eAttr);
 
+	MObject switchDetailedLogAttribute = nAttr.create("detailedLog", "rdl", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setStorable(false);
+	CHECK_MSTATUS(addAttribute(switchDetailedLogAttribute));
+
+	// Needed for QA and CIS in order to switch on detailed sync and render logs
+
 	CHECK_MSTATUS(addAttribute(Attribute::textureCompression));
 
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradiance));
