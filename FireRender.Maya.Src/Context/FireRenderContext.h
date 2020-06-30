@@ -90,6 +90,34 @@ public:
 	int flags;
 };
 
+
+// used in sync progress callback
+struct ContextWorkProgressData
+{
+	enum class ProgressType
+	{
+		Unknown = -1,
+		SyncStarted = 1,
+		ObjectPreSync,
+		ObjectSyncComplete,
+		SyncComplete,
+		RenderStart,
+		RenderPassStarted,
+		RenderComplete
+	};
+
+	ProgressType progressType = ProgressType::Unknown;
+	size_t currentIndex = 0;
+	size_t totalCount = 0;
+	std::string objectName;
+	long long currentTimeInMiliseconds = 0;
+	long long elapsed = 0;
+
+	unsigned int GetPercentProgress() const { return (unsigned int)(100 * currentIndex / totalCount); }
+};
+
+using ProgressType = ContextWorkProgressData::ProgressType;
+
 // FireRender Context
 //
 // This is the main class that wrap the main rpr_context
@@ -97,23 +125,11 @@ public:
 // from the viewport renderer, to the swatch renderer etc...
 // It also manage all the global callbacks connected to the current scene
 // and the Maya session
+
 class FireRenderContext : public IFireRenderContextInfo
 {
 public:
-
-#ifdef OPTIMIZATION_CLOCK
-	static int timeInInnerAddPolygon;
-	static int overallAddPolygon;
-	static int overallCreateMeshEx;
-	static unsigned long long timeGetDataFromMaya;
-	static unsigned long long translateData;
-	static int inTranslateMesh;
-	static int inGetFaceMaterials;
-	static int getTessellatedObj;
-	static int deleteNodes;
-#endif
-
-	typedef std::function<void(int)> BuildSceneProgressCallback;
+	typedef std::function<void(const ContextWorkProgressData&)> WorkProgressCallback;
 
 	bool createContext(rpr_creation_flags createFlags, rpr_context& result, int* pOutRes = nullptr);
 
@@ -153,7 +169,7 @@ public:
 	void updateLimits(bool animation = false);
 	void updateLimitsFromGlobalData(const FireRenderGlobalsData& globalData, bool animation = false, bool batch = false);
 
-	bool buildScene(bool isViewport = false, bool glViewport = false, bool freshen = true, BuildSceneProgressCallback progressCallback = nullptr);
+	bool buildScene(bool isViewport = false, bool glViewport = false, bool freshen = true);
 
 	// Clean scene
 	void cleanScene();
@@ -424,8 +440,7 @@ public:
 
 	// refresh/rebuild anything we require
 	bool Freshen(bool lock = true,
-		std::function<bool()> cancelled = [] { return false; },
-		BuildSceneProgressCallback progressCallback = nullptr);
+		std::function<bool()> cancelled = [] { return false; });
 
 	HashValue GetStateHash();
 
@@ -472,7 +487,9 @@ public:
 	float motionBlurCameraExposure() const;
 
 	// State flag of the renderer
-	tbb::atomic<StateEnum> state;
+	StateEnum GetState() const { return m_state; }
+	void SetState(StateEnum newState);
+
 	const char* lockedBy;
 
 	// Camera attribute changed
@@ -592,6 +609,8 @@ public:
 	bool IsGLTFExport() const override { return m_bIsGLTFExport; }
 	void SetGLTFExport(bool isGLTFExport) { m_bIsGLTFExport = isGLTFExport; }
 
+	void SetWorkProgressCallback(WorkProgressCallback callback) { m_WorkProgressCallback = callback; }
+
 protected:
 	static int INCORRECT_PLUGIN_ID;
 
@@ -605,6 +624,10 @@ protected:
 	virtual bool needResolve() const { return false; }
 
 	virtual bool IsGLInteropEnabled() const { return true; }
+
+	void UpdateTimeAndTriggerProgressCallback(ContextWorkProgressData& syncProgressData, ProgressType progressType = ProgressType::Unknown);
+
+	void TriggerProgressCallback(const ContextWorkProgressData& syncProgressData);
 
 private:
 	struct CallbacksAttachmentHelper
@@ -636,6 +659,8 @@ private:
 	std::shared_ptr<ImageFilter> m_denoiserFilter;
 
 	frw::DirectionalLight m_defaultLight;
+
+	tbb::atomic<StateEnum> m_state;
 
 	// Render camera
 	FireRenderCamera m_camera;
@@ -751,6 +776,8 @@ private:
 
 	bool m_bIsGLTFExport;
 
+	WorkProgressCallback m_WorkProgressCallback;
+
 public:
 	FireRenderEnvLight *iblLight = nullptr;
 	MObject iblTransformObject = MObject();
@@ -805,7 +832,9 @@ public:
 	bool m_restartRender;
 
 	// completion criteria sections:
-	clock_t		m_startTime;
+	clock_t	m_renderStartTime;
+
+	clock_t m_workStartTime;
 
 	CompletionCriteriaParams m_completionCriteriaParams;
 
@@ -813,9 +842,6 @@ public:
 	rpr_uint m_currentFrame;
 	int	m_progress;
 	std::chrono::time_point<std::chrono::system_clock> m_lastRenderStartTime;
-
-	double		m_timeIntervalForOutputUpdate;//in sec, TODO: check for Linux/Mac
-	clock_t		m_lastIterationTime;
 
 	// shadow color and transparency (for shadow/reflection catcher)
 	std::array<float, 3> m_shadowColor;
@@ -844,7 +870,6 @@ public:
 	void updateProgress();
 	int	getProgress();
 	void setProgress(int percents);
-	bool updateOutput();
 
 	void setSamplesPerUpdate(int samplesPerUpdate);
 
@@ -867,8 +892,8 @@ public:
                 addMapLock(context,lockedBy);
 #endif
 				context->m_mutex.lock();
-				oldState = context->state;
-				context->state = newState;
+				oldState = context->GetState();
+				context->SetState(newState);
 				context->lockedBy = lockedBy;
 			}
 		}
@@ -892,7 +917,7 @@ public:
 			if (context)
 			{
 				if (oldState >= 0)
-					context->state = StateEnum(oldState);
+					context->SetState(StateEnum(oldState));
 #ifdef DEBUG_LOCKS
                 removeMapLock(context);
 #endif

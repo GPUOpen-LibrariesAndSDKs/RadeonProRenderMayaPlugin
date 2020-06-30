@@ -106,7 +106,8 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	tileSizeX(0),
 	tileSizeY(0),
 	cameraType(0),
-	useMPS(false)
+	useMPS(false),
+	useDetailedContextWorkLog(false)
 {
 
 }
@@ -402,6 +403,11 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("useMPS");
 		if (!plug.isNull())
 			useMPS = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("detailedLog");
+		if (!plug.isNull())
+			useDetailedContextWorkLog = plug.asBool();
+		
 
 		aovs.readFromGlobals(frGlobalsNode);
 
