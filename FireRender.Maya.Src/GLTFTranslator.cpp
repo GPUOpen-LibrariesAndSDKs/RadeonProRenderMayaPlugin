@@ -134,7 +134,7 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 			materialSystem.Handle(),
 			scenes.data(),
 			scenes.size(),
-			RPRGLTF_EXPORTFLAG_COPY_IMAGES_USING_OBJECTNAME);
+			RPRGLTF_EXPORTFLAG_COPY_IMAGES_USING_OBJECTNAME | RPRGLTF_EXPORTFLAG_KHR_LIGHT);
 
 		if (err != GLTF_SUCCESS)
 		{
