@@ -1016,6 +1016,12 @@ namespace frw
 			checkStatus(res);
 		}
 
+		void SetObjectId(rpr_uint id)
+		{
+			auto res = rprShapeSetObjectID(Handle(), id);
+			checkStatus(res);
+		}
+
 		void SetLinearMotion(float x, float y, float z)
 		{
 			auto res = rprShapeSetLinearMotion(Handle(), x, y, z);
@@ -1199,17 +1205,47 @@ namespace frw
 
 	class Image : public Object
 	{
-		DECLARE_OBJECT_NO_DATA(Image, Object);
+		DECLARE_OBJECT(Image, Object);
+
+		class Data : public Object::Data
+		{
+			DECLARE_OBJECT_DATA
+		public:
+			virtual ~Data()
+			{
+				for (auto it = m_udimsMap.begin(); it != m_udimsMap.end(); ++it)
+				{
+					rprImageSetUDIM(Handle(), it->first, nullptr);
+				}
+
+				m_udimsMap.clear();
+			}
+			
+			std::map<rpr_uint, Image> m_udimsMap;
+		};
+
+
 	public:
 		explicit Image(rpr_image h, const Context& context) : Object(h, context, true, new Data()) {}
 
 		Image(Context context, float r, float g, float b);
 		Image(Context context, const rpr_image_format& format, const rpr_image_desc& image_desc, const void* data);
+
+		// create empty image (used for UDIM creation of master image
+		Image(Context context, const rpr_image_format& format);
 		Image(Context context, const char * filename);
 		void SetGamma(float gamma)
 		{
 			rpr_int res = rprImageSetGamma(Handle(), gamma);
 			checkStatus(res);
+		}
+
+		void SetUDIM(rpr_uint tileIndex, frw::Image image)
+		{
+			rpr_int res = rprImageSetUDIM(Handle(), tileIndex, image.Handle());
+			checkStatus(res);
+
+			data().m_udimsMap[tileIndex] = image;
 		}
 
 		bool HasAlphaChannel()
@@ -3798,7 +3834,9 @@ namespace frw
 		rpr_image h = nullptr;
 		auto res = rprContextCreateImage(context.Handle(), format, &image_desc, data, &h);
 		if (checkStatus(res, "Unable to create image"))
+		{
 			m->Attach(h);
+		}
 	}
 
 	inline Image::Image(Context context, const rpr_image_format& format, const rpr_image_desc& image_desc, const void* data)
@@ -3808,8 +3846,23 @@ namespace frw
 		rpr_image h = nullptr;
 		auto res = rprContextCreateImage(context.Handle(), format, &image_desc, data, &h);
 		if (checkStatus(res, "Unable to create image"))
+		{
 			m->Attach(h);
+		}
 	}
+
+	inline Image::Image(Context context, const rpr_image_format& format)
+		: Object(nullptr, context, true, new Data())
+	{
+		FRW_PRINT_DEBUG("CreateImage()");
+		rpr_image h = nullptr;
+		auto res = rprContextCreateImage(context.Handle(), format, nullptr, nullptr, &h);
+		if (checkStatus(res, "Unable to create image"))
+		{
+			m->Attach(h);
+		}
+	}
+
 
 	inline Image::Image(Context context, const char* filename)
 		: Object(nullptr, context, true, new Data())

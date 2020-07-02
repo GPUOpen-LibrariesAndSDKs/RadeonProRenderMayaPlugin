@@ -327,6 +327,8 @@ protected:
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;
 	void SaveUsedUV(const MObject& meshNode);
 
+	void SetupObjectId(MObject parentTransform);
+
 	struct
 	{
 		std::vector<FrElement> elements;
@@ -816,6 +818,9 @@ public:
 
 	// Destructor
 	virtual ~FireRenderHairNHair();
+
+	// Register the callback
+	virtual void RegisterCallbacks(void) override;
 
 protected:
 	virtual bool CreateCurves(void);
