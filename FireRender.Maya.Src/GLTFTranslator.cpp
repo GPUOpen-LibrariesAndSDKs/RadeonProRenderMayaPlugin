@@ -69,8 +69,19 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 
 	fireRenderContext->setCallbackCreationDisabled(true);
 	fireRenderContext->SetGLTFExport(true);
-	if (!fireRenderContext->buildScene(false, false, true, [this](int progress) { m_progressBars->update(progress); } ))
+
+	fireRenderContext->SetWorkProgressCallback([this](const ContextWorkProgressData& syncProgressData)
+		{
+			if (syncProgressData.progressType == ProgressType::ObjectSyncComplete)
+			{
+				m_progressBars->update(syncProgressData.GetPercentProgress());
+			}
+		});
+
+	if (!fireRenderContext->buildScene(false, false, true))
+	{
 		return MS::kFailure;
+	}
 
 	// Some resolution should be set. It's requred to retrieve background image.
 	FireRenderGlobalsData renderData;
@@ -93,7 +104,7 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 
 	fireRenderContext->setCamera(renderableCameras[0]);
 	
-	fireRenderContext->state = FireRenderContext::StateRendering;
+	fireRenderContext->SetState(FireRenderContext::StateRendering);
 
 	//Populate rpr scene with actual data
 	if (!fireRenderContext->Freshen(false))
@@ -123,7 +134,7 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 			materialSystem.Handle(),
 			scenes.data(),
 			scenes.size(),
-			RPRGLTF_EXPORTFLAG_COPY_IMAGES_USING_OBJECTNAME);
+			RPRGLTF_EXPORTFLAG_COPY_IMAGES_USING_OBJECTNAME | RPRGLTF_EXPORTFLAG_KHR_LIGHT);
 
 		if (err != GLTF_SUCCESS)
 		{
