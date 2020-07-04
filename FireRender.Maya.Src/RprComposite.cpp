@@ -26,6 +26,14 @@ RprComposite::RprComposite(rpr_context context, rpr_composite_type type)
 	checkStatus(status);
 }
 
+RprComposite::RprComposite()
+{
+	RPR_THREAD_ONLY;
+
+	// dummy constructor; object created by this is expected to be swapped with real object created by other constructor
+	// COMPOSITE IS NOT CREATED HERE!
+}
+
 RprComposite::~RprComposite()
 {
 	RPR_THREAD_ONLY;
@@ -33,7 +41,7 @@ RprComposite::~RprComposite()
 	if (mData) rprObjectDelete(mData);
 }
 
-RprComposite::operator rpr_composite()
+RprComposite::operator rpr_composite() const
 {
 	RPR_THREAD_ONLY;
 
@@ -41,6 +49,14 @@ RprComposite::operator rpr_composite()
 }
 
 void RprComposite::SetInputC(const char *inputName, rpr_composite input)
+{
+	RPR_THREAD_ONLY;
+
+	rpr_int status = rprCompositeSetInputC(mData, inputName, input);
+	checkStatus(status);
+}
+
+void RprComposite::SetInputC(const char *inputName, const RprComposite& input)
 {
 	RPR_THREAD_ONLY;
 
@@ -78,4 +94,10 @@ void RprComposite::SetInputOp(const char *inputName, rpr_material_node_arithmeti
 
 	rpr_int status = rprCompositeSetInputOp(mData, inputName, op);
 	checkStatus(status);
+}
+
+void RprComposite::SaveDependency(const std::shared_ptr<RprComposite>& fromTemporary)
+{
+	m_dependencies.emplace_back();
+	m_dependencies.back() = fromTemporary;
 }
