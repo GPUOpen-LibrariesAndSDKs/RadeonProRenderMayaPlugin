@@ -174,6 +174,46 @@ HashValue FireRenderNode::CalculateHash()
 	return hash;
 }
 
+void FireRenderNode::MarkDirtyTransformRecursive(const MFnTransform& transform)
+{
+	unsigned int childCount = transform.childCount();
+
+	for (unsigned int childIndex = 0; childIndex < childCount; ++childIndex)
+	{
+		MObject child = transform.child(childIndex);
+
+		if (child.hasFn(MFn::kTransform))
+		{
+			MarkDirtyTransformRecursive(MFnTransform(child));
+		}
+	}
+
+	MarkDirtyAllDirectChildren(transform);
+}
+
+
+void FireRenderNode::MarkDirtyAllDirectChildren(const MFnTransform& transform)
+{
+	MDagPath transformDagPath;
+	MStatus status = transform.getPath(transformDagPath);
+
+	unsigned int childCount = 0;
+	status = transformDagPath.numberOfShapesDirectlyBelow(childCount);
+
+	for (unsigned int childIndex = 0; childIndex < childCount; ++childIndex)
+	{
+		MDagPath childDagPath = transformDagPath;
+		childDagPath.extendToShapeDirectlyBelow(childIndex);
+
+		FireRenderObject* pObject = context()->getRenderObject(childDagPath);
+
+		if (pObject != nullptr)
+		{
+			context()->setDirtyObject(pObject);
+		}
+	}
+}
+
 void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
 {
 	FireRenderObject::OnPlugDirty(node, plug);
@@ -182,29 +222,32 @@ void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
 	if (partialShortName == "fruuid")
 		return;
 
+	MFnDependencyNode dnode(node);
+
+	MString name = dnode.name();
+
 	// check for RPRObjectId attrbiute change. roi is brief name for this attribute
-	if ((partialShortName == "roi") && node.hasFn(MFn::kTransform))
+	if (node.hasFn(MFn::kTransform) && (partialShortName == "roi"))
 	{
 		MFnTransform transform(node);
 
-		MDagPath transformDagPath;
-		MStatus status = transform.getPath(transformDagPath);
+		MarkDirtyAllDirectChildren(transform);
+	}
 
-		unsigned int childCount = 0;
-		status = transformDagPath.numberOfShapesDirectlyBelow(childCount);
-
-		for (unsigned int childIndex = 0; childIndex < childCount; ++childIndex)
+	// If changeing render layers or collections inside render layer
+	if (partialShortName.indexW("rlio[") != -1)
+	{
+		if (node.hasFn(MFn::kTransform))
 		{
-			MDagPath childDagPath = transformDagPath;
-			childDagPath.extendToShapeDirectlyBelow(childIndex);
-
-			FireRenderObject* pObject = context()->getRenderObject(childDagPath);
-
-			if (pObject != nullptr)
-			{
-				context()->setDirtyObject(pObject);
-			}
+			MFnTransform transform(node);
+			MarkDirtyTransformRecursive(transform);
 		}
+		else
+		{
+
+		}
+
+
 	}
 
 	setDirty();
