@@ -730,7 +730,7 @@ namespace FireMaya
 			scaleM[0][0] = -scaleM[0][0];
 		}
 
-		m *= scaleM;
+		m = scaleM * m;
 		float mfloats[4][4];
 		m.get(mfloats);
 		frlight.SetTransform((rpr_float*)mfloats);
