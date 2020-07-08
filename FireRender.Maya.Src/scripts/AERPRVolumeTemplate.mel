@@ -112,15 +112,6 @@ global proc browseForVDBFile( string $filePathAttr )
 
 global proc FillGridList( string $nodeName )
 {
-	string $multiAttr[] = `listAttr -multi ( $nodeName + ".loadedGrids" )`;
-	for ( $attr in $multiAttr )
-	{
-		$attr = $nodeName + "." + $attr;
-		$val = `getAttr $attr`;
-		print $val;
-		print "\n";
-	}
-
 	string $listAttrName = $nodeName + ".loadedGrids";
 
 	string $attrNameA = $nodeName + ".albedoSelectedGrid";
