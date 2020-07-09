@@ -596,7 +596,8 @@ void RPRVolumeAttributes::SetupVolumeFromFile(MObject& node, FireRenderVolumeLoc
 
 	// update UI
 	MString command = "FillGridList(\"" + nodeName + "\");\n";
-	MGlobal::executeCommand(command);
+	MStatus res = MGlobal::executeCommandOnIdle(command);
+	CHECK_MSTATUS(res);
 }
 
 void RPRVolumeAttributes::SetupGridSizeFromFile(MObject& node, MPlug& plug, FireRenderVolumeLocator::GridParams& gridParams)

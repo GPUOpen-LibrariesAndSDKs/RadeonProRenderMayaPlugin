@@ -662,6 +662,9 @@
     <ClCompile Include="MayaStandardNodesSupport\SetRangeConverter.cpp">
       <Filter>MayaStandardNodesSupport</Filter>
     </ClCompile>
+    <ClCompile Include="CompositeWrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -1134,6 +1137,9 @@
     </ClInclude>
     <ClInclude Include="Lights\FireRenderLightCommon.h">
       <Filter>Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="CompositeWrapper.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
