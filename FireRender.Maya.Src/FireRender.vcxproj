@@ -150,6 +150,7 @@
     <ClCompile Include="..\RadeonProRenderSDK\RadeonProRender\rprTools\RprTools.cpp" />
     <ClCompile Include="athenaCmd.cpp" />
     <ClCompile Include="athenaSystemInfo_Win.cpp" />
+    <ClCompile Include="CompositeWrapper.cpp" />
     <ClCompile Include="Context\ContextCreator.cpp" />
     <ClCompile Include="Context\FireRenderContext.cpp" />
     <ClCompile Include="Context\HybridContext.cpp" />
@@ -303,6 +304,7 @@
     <ClInclude Include="AutoLock.h" />
     <ClInclude Include="base_mesh.h" />
     <ClInclude Include="common.h" />
+    <ClInclude Include="CompositeWrapper.h" />
     <ClInclude Include="Context\ContextCreator.h" />
     <ClInclude Include="Context\FireRenderContext.h" />
     <ClInclude Include="Context\HybridContext.h" />

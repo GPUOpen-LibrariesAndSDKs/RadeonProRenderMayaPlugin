@@ -248,6 +248,9 @@ protected:
 
 protected:
 	virtual void UpdateTransform(const MMatrix& matrix) {}
+
+	void MarkDirtyTransformRecursive(const MFnTransform& transform);
+	void MarkDirtyAllDirectChildren(const MFnTransform& transform);
 };
 
 // Fire render mesh

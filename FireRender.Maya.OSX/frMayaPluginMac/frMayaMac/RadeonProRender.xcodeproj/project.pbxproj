@@ -907,6 +907,12 @@
 		F19A160B248A737000A959C7 /* FireRenderLightCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = F19A1607248A737000A959C7 /* FireRenderLightCommon.h */; };
 		F19A160C248A737000A959C7 /* FireRenderLightCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = F19A1607248A737000A959C7 /* FireRenderLightCommon.h */; };
 		F19A160D248A737000A959C7 /* FireRenderLightCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = F19A1607248A737000A959C7 /* FireRenderLightCommon.h */; };
+		F1EEA1F124ADE93A008AFB18 /* CompositeWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */; };
+		F1EEA1F224ADE93A008AFB18 /* CompositeWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */; };
+		F1EEA1F324ADE93A008AFB18 /* CompositeWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */; };
+		F1EEA1F424ADE93A008AFB18 /* CompositeWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = F1EEA1F024ADE93A008AFB18 /* CompositeWrapper.h */; };
+		F1EEA1F524ADE93A008AFB18 /* CompositeWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = F1EEA1F024ADE93A008AFB18 /* CompositeWrapper.h */; };
+		F1EEA1F624ADE93A008AFB18 /* CompositeWrapper.h in Headers */ = {isa = PBXBuildFile; fileRef = F1EEA1F024ADE93A008AFB18 /* CompositeWrapper.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -1294,6 +1300,8 @@
 		CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderVolume.cpp; path = ../../../FireRender.Maya.Src/FireRenderVolume.cpp; sourceTree = "<group>"; };
 		F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderLightCommon.cpp; path = ../../../FireRender.Maya.Src/Lights/FireRenderLightCommon.cpp; sourceTree = "<group>"; };
 		F19A1607248A737000A959C7 /* FireRenderLightCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderLightCommon.h; path = ../../../FireRender.Maya.Src/Lights/FireRenderLightCommon.h; sourceTree = "<group>"; };
+		F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CompositeWrapper.cpp; path = ../../../FireRender.Maya.Src/CompositeWrapper.cpp; sourceTree = "<group>"; };
+		F1EEA1F024ADE93A008AFB18 /* CompositeWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CompositeWrapper.h; path = ../../../FireRender.Maya.Src/CompositeWrapper.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1381,6 +1389,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */,
+				F1EEA1F024ADE93A008AFB18 /* CompositeWrapper.h */,
 				F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */,
 				F19A1607248A737000A959C7 /* FireRenderLightCommon.h */,
 				B72E5C8023EA294A00374742 /* FireRenderHairs.cpp */,
@@ -1935,6 +1945,7 @@
 				8D595DDB20372FE20031988A /* FireRenderAOVs.h in Headers */,
 				8D595DDC20372FE20031988A /* FireRenderEnvironmentLight.h in Headers */,
 				8D595DDD20372FE20031988A /* FireRenderObjects.h in Headers */,
+				F1EEA1F424ADE93A008AFB18 /* CompositeWrapper.h in Headers */,
 				8D595DDE20372FE20031988A /* FireRenderFresnel.h in Headers */,
 				8D595DDF20372FE20031988A /* FireRenderDisplacement.h in Headers */,
 				B7190C5C2449C9970071D47F /* IESLightRepresentationCalc.h in Headers */,
@@ -2086,6 +2097,7 @@
 				8DBCC2F022304666003EE361 /* FireRenderAOVs.h in Headers */,
 				8DBCC2F122304666003EE361 /* FireRenderEnvironmentLight.h in Headers */,
 				8DBCC2F222304666003EE361 /* FireRenderObjects.h in Headers */,
+				F1EEA1F524ADE93A008AFB18 /* CompositeWrapper.h in Headers */,
 				8DBCC2F322304666003EE361 /* FireRenderFresnel.h in Headers */,
 				8DBCC2F422304666003EE361 /* FireRenderDisplacement.h in Headers */,
 				B7190C5D2449C9970071D47F /* IESLightRepresentationCalc.h in Headers */,
@@ -2237,6 +2249,7 @@
 				B753204823D9ED5600246738 /* FireRenderAOVs.h in Headers */,
 				B753204923D9ED5600246738 /* FireRenderEnvironmentLight.h in Headers */,
 				B753204A23D9ED5600246738 /* FireRenderObjects.h in Headers */,
+				F1EEA1F624ADE93A008AFB18 /* CompositeWrapper.h in Headers */,
 				B753204B23D9ED5600246738 /* FireRenderFresnel.h in Headers */,
 				B753204C23D9ED5600246738 /* FireRenderDisplacement.h in Headers */,
 				B7190C5E2449C9970071D47F /* IESLightRepresentationCalc.h in Headers */,
@@ -2496,6 +2509,7 @@
 				B7190C2E2449C79D0071D47F /* athenaWrap.cpp in Sources */,
 				8D595E3420372FE20031988A /* FireRenderSurfaceOverride.cpp in Sources */,
 				8D595E3520372FE20031988A /* FireRenderLocationCmd.cpp in Sources */,
+				F1EEA1F124ADE93A008AFB18 /* CompositeWrapper.cpp in Sources */,
 				8D595E3620372FE20031988A /* FireMaya.cpp in Sources */,
 				8D595E3720372FE20031988A /* FireRenderFresnelSchlick.cpp in Sources */,
 				CE1ECBC522EB8F7F0074C7E7 /* GlobalRenderUtilsDataHolder.cpp in Sources */,
@@ -2646,6 +2660,7 @@
 				B7190C2D2449C79C0071D47F /* athenaWrap.cpp in Sources */,
 				8DBCC35522304666003EE361 /* FireRenderSurfaceOverride.cpp in Sources */,
 				8DBCC35622304666003EE361 /* FireRenderLocationCmd.cpp in Sources */,
+				F1EEA1F224ADE93A008AFB18 /* CompositeWrapper.cpp in Sources */,
 				8DBCC35722304666003EE361 /* FireMaya.cpp in Sources */,
 				8DBCC35822304666003EE361 /* FireRenderFresnelSchlick.cpp in Sources */,
 				CE1ECBC622EB8F7F0074C7E7 /* GlobalRenderUtilsDataHolder.cpp in Sources */,
@@ -2796,6 +2811,7 @@
 				B75320D923D9ED5600246738 /* FireRenderViewportCmd.cpp in Sources */,
 				B75320DA23D9ED5600246738 /* FireRenderSurfaceOverride.cpp in Sources */,
 				B75320DB23D9ED5600246738 /* FireRenderLocationCmd.cpp in Sources */,
+				F1EEA1F324ADE93A008AFB18 /* CompositeWrapper.cpp in Sources */,
 				B75320DC23D9ED5600246738 /* FireMaya.cpp in Sources */,
 				B75320DD23D9ED5600246738 /* FireRenderFresnelSchlick.cpp in Sources */,
 				B75320DE23D9ED5600246738 /* GlobalRenderUtilsDataHolder.cpp in Sources */,
