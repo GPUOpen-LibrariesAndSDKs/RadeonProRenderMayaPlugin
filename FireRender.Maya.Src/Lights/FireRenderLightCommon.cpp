@@ -112,7 +112,6 @@ void FireRenderLightCommon::OnModelEditorChanged(void* clientData)
 	if (light)
 	{
 		MHWRender::MRenderer::setGeometryDrawDirty(light->thisMObject());
-		MGlobal::displayInfo("Set current surface light node dirty.");
 	}
 }
 
@@ -126,5 +125,10 @@ void FireRenderLightCommon::postConstructor()
 
 	m_modelEditorChangedCallback = MEventMessage::addEventCallback("modelEditorChanged", OnModelEditorChanged, this, &status);
 	assert(status == MStatus::kSuccess);
+}
+
+bool FireRenderLightCommon::excludeAsLocator() const
+{
+	return false;
 }
 

@@ -246,6 +246,25 @@ void* FireRenderIESLightLocator::creator()
 	return new FireRenderIESLightLocator();
 }
 
+void FireRenderIESLightLocator::postConstructor()
+{
+	FireRenderLightCommon::postConstructor();
+
+	MStatus status;
+	MObject mobj = thisMObject();
+
+	// rename node
+	MFnDependencyNode nodeFn(thisMObject());
+	nodeFn.setName("RPRIESShape#");
+
+	MFnDagNode dagNode(thisMObject());
+	MObject parent = dagNode.parent(0, &status);
+	CHECK_MSTATUS(status);
+
+	MFnDependencyNode parentFn(parent);
+	parentFn.setName("RPRIES#");
+}
+
 // ================================
 // Viewport 2.0 override
 // ================================

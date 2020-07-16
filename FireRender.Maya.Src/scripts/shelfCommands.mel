@@ -377,17 +377,15 @@ global proc createIESLight()
 	if (!checkPluginLoadedRPR())
 		return;
 
-	string $IESNode = `shadingNode -asLight RPRIES -n RPRIESLight`;
-	rename $IESNode "RPRIES#";
+	shadingNode -asLight RPRIES;
 }
 
 global proc createPhysicalLight()
 {
 	if (!checkPluginLoadedRPR())
 		return;
-
-	string $physicalNode = `shadingNode -asLight RPRPhysicalLight -n RPRPhysicalLightShape`;
-	rename $physicalNode "RPRPhysicalLight#";
+	
+	shadingNode -asLight RPRPhysicalLight;
 }
 
 global proc createLightsSubmenuItems(string $parentMenu)
