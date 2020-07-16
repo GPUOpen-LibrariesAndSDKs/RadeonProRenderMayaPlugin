@@ -407,6 +407,7 @@ global proc createVolumeRPR()
 	string $VolumeNode = `createNode RPRVolume -n RPRVolumeObj`;
 	string $parent[] = `listRelatives -p $VolumeNode`;
 	rename $parent[0] "RPRVolume#";
+	rename $VolumeNode "RPRVolumeObj#";
 }
 
 global proc createVolumesSubmenuItems(string $parentMenu)
