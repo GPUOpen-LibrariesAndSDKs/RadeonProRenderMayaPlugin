@@ -73,16 +73,16 @@ global proc createIBLNodeRPR()
 	}
 
 	// Create, name and scale the IBL node.
-	string $iblNode = `shadingNode -asLight RPRIBL -n RPRIBLShape`;
-	rename $iblNode "RPRIBL";
-
+	string $iblNode = `shadingNode -asLight RPRIBL`;
+	
+	// scale the IBL node
 	setAttr ($iblNode + ".scaleX") 1001.25663706144; //pi*5/10 ... something unique (for hierarchy change tracking)
 	setAttr ($iblNode + ".scaleY") 1001.25663706144;
 	setAttr ($iblNode + ".scaleZ") 1001.25663706144;
-
+	
 	// Update the UI.
 	updateIBLInterfaceRPR();
-
+	
 	// Select the node.
 	showIBLEditorRPR();
 }
@@ -256,8 +256,8 @@ global proc createSkyNodeRPR()
 	}
 
 	// Create and name the Sky node.
-	string $skyNode = `shadingNode -asLight RPRSky -n RPRSkyShape`;
-	rename $skyNode "RPRSky";
+	string $skyNode = `shadingNode -asLight RPRSky`;
+	
 	setAttr ($skyNode + ".scaleX") 0.94247779607; //pi*3/10 ... something unique (for hierarchy change tracking)
 	setAttr ($skyNode + ".scaleY") 0.94247779607; //pi*3/10
 	setAttr ($skyNode + ".scaleZ") 0.94247779607; //pi*3/10
