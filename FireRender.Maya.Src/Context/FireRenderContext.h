@@ -206,7 +206,7 @@ public:
 	void setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
 
 	void enableAOV(int aov, bool flag = true);
-	bool isAOVEnabled(int aov);
+	bool isAOVEnabled(int aov) const;
 
 	// Set camera
 	void setCamera(MDagPath& cameraPath, bool useNonDefaultCameraType = false);
@@ -221,10 +221,10 @@ public:
 	std::vector<float> getRenderImageData();
 
 	// Return the framebuffer width
-	unsigned int width();
+	unsigned int width() const;
 
 	// Return the framebuffer height
-	unsigned int height();
+	unsigned int height() const;
 
 	bool isRenderView() const;
 
@@ -864,6 +864,8 @@ public:
 	} m_lastRenderResultState;
 
 	void setCompletionCriteria(const CompletionCriteriaParams& completionCriteriaParams);
+	const CompletionCriteriaParams& getCompletionCriteria(void) const;
+
 	bool isUnlimited();
 	void setStartedRendering();
 	bool keepRenderRunning();
