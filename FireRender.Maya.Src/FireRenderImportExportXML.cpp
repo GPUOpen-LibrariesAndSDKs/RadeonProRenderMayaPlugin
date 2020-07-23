@@ -436,6 +436,8 @@ MStatus FireRenderXmlImportCmd::doIt(const MArgList & args)
 	if (MS::kSuccess != result)
 		return result;
 
+	MGlobal::displayInfo("Began loading material from material library, path to material is: " + filePath);
+
 	// Get directory name
 	std::string directory = getDirectory(filePath.asChar());
 	m_directoryPath = MString(directory.c_str());
@@ -457,6 +459,16 @@ MStatus FireRenderXmlImportCmd::doIt(const MArgList & args)
 	std::string materialName;
 	nodeGroup.clear();
 	result = ImportMaterials(filePath.asChar(), nodeGroup, materialName) ? MS::kSuccess : MS::kFailure;
+
+	if (MS::kSuccess == result)
+	{
+		MGlobal::displayInfo("Succesfully loaded material " + MString(materialName.c_str()) + "from material library!\n");
+	}
+	else
+	{
+		MGlobal::displayError("Failed to load material " + MString(materialName.c_str()) + "from material library!\n");
+	}
+
 	if (MS::kSuccess != result)
 		return result;
 
