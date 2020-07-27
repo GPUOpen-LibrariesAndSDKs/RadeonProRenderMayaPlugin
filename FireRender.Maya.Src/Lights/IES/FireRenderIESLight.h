@@ -44,6 +44,8 @@ public:
 	FireRenderIESLightLocator() {};
 	virtual ~FireRenderIESLightLocator() {};
 
+	virtual void postConstructor() override;
+
 public:
 	virtual MStatus compute(const MPlug& plug, MDataBlock& data);
 

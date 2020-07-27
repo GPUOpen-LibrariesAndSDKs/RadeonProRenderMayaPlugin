@@ -112,15 +112,6 @@ global proc browseForVDBFile( string $filePathAttr )
 
 global proc FillGridList( string $nodeName )
 {
-	string $multiAttr[] = `listAttr -multi ( $nodeName + ".loadedGrids" )`;
-	for ( $attr in $multiAttr )
-	{
-		$attr = $nodeName + "." + $attr;
-		$val = `getAttr $attr`;
-		print $val;
-		print "\n";
-	}
-
 	string $listAttrName = $nodeName + ".loadedGrids";
 
 	string $attrNameA = $nodeName + ".albedoSelectedGrid";
@@ -137,32 +128,17 @@ global proc FillGridList( string $nodeName )
 
 global proc albedoGridSelectNew( string $attrName, string $listAttrName )
 {
-	$command = getAlbedoGridSelectCommand($attrName);
-
 	paneLayout;
 			textScrollList 
 				-allowMultiSelection false 
 				-numberOfRows 4 
-				-selectCommand $command
+				-selectCommand onAlbedoGridSelectClicked
 				albedoGridList;
 	setParent ..;
 
 	connectControl albedoGridList $attrName;
 
-	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
-	for ( $attr in $multiAttr )
-	{
-		$len = size($listAttrName) - size($attr) + 3; // 3 is length of "[0]"
-		string $tmpstr = $listAttrName;
-		string $nodestr = `substring $tmpstr 1 $len`;
-		$attr = $nodestr + $attr;
-		$val = `getAttr $attr`;
-		textScrollList -e -append $val albedoGridList;
-	}
-
-	textScrollList -e -selectIndexedItem 1 albedoGridList;
-
-	eval $command;
+	albedoGridSelectReplace($attrName, $listAttrName);
 }
 
 global proc albedoGridSelectReplace( string $attrName, string $listAttrName )
@@ -170,7 +146,7 @@ global proc albedoGridSelectReplace( string $attrName, string $listAttrName )
 	connectControl albedoGridList $attrName;
 
 	textScrollList -e -removeAll albedoGridList;
-
+	
 	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
 	for ( $attr in $multiAttr )
 	{
@@ -183,53 +159,42 @@ global proc albedoGridSelectReplace( string $attrName, string $listAttrName )
 	}
 
 	string $selectedValue = `getAttr $attrName`;
-	textScrollList -e -selectItem $selectedValue albedoGridList;
+
+	string $listAllItems[];
+	$listAllItems = `textScrollList -q -allItems albedoGridList`;
+	
+	for ($tmp in $listAllItems)
+	{
+		if ($tmp == $selectedValue)
+		{
+			textScrollList -e -selectItem $selectedValue albedoGridList;
+			break;
+		}
+	}
 }
 
-global proc onAlbedoGridSelectClicked(string $attrName)
+global proc onAlbedoGridSelectClicked()
 {
 	string $selectedItems[];
 	$selectedItems = `textScrollList -q -selectItem albedoGridList`;
-
-	int $selectedIds[];
-	$selectedIds = `textScrollList -q -selectIndexedItem albedoGridList`;
-
+	
+	$attrName = `attrControlGrp -query -attribute albedoGridList`;
 	setAttr $attrName -type "string" $selectedItems[0];
-}
-
-global proc string getAlbedoGridSelectCommand(string $attrName)
-{
-	return "onAlbedoGridSelectClicked(\"" + $attrName + "\")";
 }
 
 global proc densityGridSelectNew( string $attrName, string $listAttrName )
 {
-	$command = getDensityGridSelectCommand($attrName);
-
 	paneLayout;
 			textScrollList 
 				-allowMultiSelection false 
 				-numberOfRows 4 
-				-selectCommand $command
+				-selectCommand onDensityGridSelectClicked
 				densityGridList;
 	setParent ..;
 
 	connectControl densityGridList $attrName;
 
-	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
-	for ( $attr in $multiAttr )
-	{
-		$len = size($listAttrName) - size($attr) + 3; // 3 is length of "[0]"
-		string $tmpstr = $listAttrName;
-		string $nodestr = `substring $tmpstr 1 $len`;
-		$attr = $nodestr + $attr;
-		$val = `getAttr $attr`;
-		textScrollList -e -append $val densityGridList;
-	}
-
-	textScrollList -e -selectIndexedItem 1 densityGridList;
-
-	eval $command;
+	densityGridSelectReplace($attrName, $listAttrName);
 }
 
 global proc densityGridSelectReplace( string $attrName, string $listAttrName )
@@ -237,7 +202,7 @@ global proc densityGridSelectReplace( string $attrName, string $listAttrName )
 	connectControl densityGridList $attrName;
 
 	textScrollList -e -removeAll densityGridList;
-
+	
 	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
 	for ( $attr in $multiAttr )
 	{
@@ -250,61 +215,50 @@ global proc densityGridSelectReplace( string $attrName, string $listAttrName )
 	}
 
 	string $selectedValue = `getAttr $attrName`;
-	textScrollList -e -selectItem $selectedValue densityGridList;
+
+	string $listAllItems[];
+	$listAllItems = `textScrollList -q -allItems densityGridList`;
+	
+	for ($tmp in $listAllItems)
+	{
+		if ($tmp == $selectedValue)
+		{
+			textScrollList -e -selectItem $selectedValue densityGridList;
+			break;
+		}
+	}
 
 	// without selected density grid volume will not render (and will not give any warnings!), thus this safety routine is added
 	$isselectd = `textScrollList -q -selectItem densityGridList`;
 	if (size($isselectd) == 0)
 	{
 		textScrollList -e -selectIndexedItem 1 densityGridList;
-		onDensityGridSelectClicked($attrName);
+		onDensityGridSelectClicked();
 	}
 }
 
-global proc onDensityGridSelectClicked(string $attrName)
+global proc onDensityGridSelectClicked()
 {
 	string $selectedItems[];
 	$selectedItems = `textScrollList -q -selectItem densityGridList`;
-
-	int $selectedIds[];
-	$selectedIds = `textScrollList -q -selectIndexedItem densityGridList`;
-
+	
+	$attrName = `attrControlGrp -query -attribute densityGridList`;
 	setAttr $attrName -type "string" $selectedItems[0];
-}
-
-global proc string getDensityGridSelectCommand(string $attrName)
-{
-	return "onDensityGridSelectClicked(\"" + $attrName + "\")";
 }
 
 global proc emissionGridSelectNew( string $attrName, string $listAttrName )
 {
-	$command = getEmissionGridSelectCommand($attrName);
-
 	paneLayout;
 			textScrollList 
 				-allowMultiSelection false 
 				-numberOfRows 4 
-				-selectCommand $command
+				-selectCommand onEmissionGridSelectClicked
 				emissionGridList;
 	setParent ..;
 
 	connectControl emissionGridList $attrName;
 
-	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
-	for ( $attr in $multiAttr )
-	{
-		$len = size($listAttrName) - size($attr) + 3; // 3 is length of "[0]"
-		string $tmpstr = $listAttrName;
-		string $nodestr = `substring $tmpstr 1 $len`;
-		$attr = $nodestr + $attr;
-		$val = `getAttr $attr`;
-		textScrollList -e -append $val emissionGridList;
-	}
-
-	textScrollList -e -selectIndexedItem 1 emissionGridList;
-
-	eval $command;
+	emissionGridSelectReplace($attrName, $listAttrName);
 }
 
 global proc emissionGridSelectReplace( string $attrName, string $listAttrName )
@@ -312,7 +266,7 @@ global proc emissionGridSelectReplace( string $attrName, string $listAttrName )
 	connectControl emissionGridList $attrName;
 
 	textScrollList -e -removeAll emissionGridList;
-
+	
 	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
 	for ( $attr in $multiAttr )
 	{
@@ -325,23 +279,26 @@ global proc emissionGridSelectReplace( string $attrName, string $listAttrName )
 	}
 
 	string $selectedValue = `getAttr $attrName`;
-	textScrollList -e -selectItem $selectedValue emissionGridList;
+
+	string $listAllItems[];
+	$listAllItems = `textScrollList -q -allItems emissionGridList`;
+	for ($tmp in $listAllItems)
+	{
+		if ($tmp == $selectedValue)
+		{
+			textScrollList -e -selectItem $selectedValue emissionGridList;
+			break;
+		}
+	}
 }
 
-global proc onEmissionGridSelectClicked(string $attrName)
+global proc onEmissionGridSelectClicked()
 {
 	string $selectedItems[];
 	$selectedItems = `textScrollList -q -selectItem emissionGridList`;
-
-	int $selectedIds[];
-	$selectedIds = `textScrollList -q -selectIndexedItem emissionGridList`;
-
+	
+	$attrName = `attrControlGrp -query -attribute emissionGridList`;
 	setAttr $attrName -type "string" $selectedItems[0];
-}
-
-global proc string getEmissionGridSelectCommand(string $attrName)
-{
-	return "onEmissionGridSelectClicked(\"" + $attrName + "\")";
 }
 
 global proc AERPRVolumeTemplate(string $nodeName)
@@ -353,8 +310,6 @@ global proc AERPRVolumeTemplate(string $nodeName)
 				editorTemplate -callCustom "importVDBFilePathNew" "importVDBFilePathReplace" "VdbFilePath";
 			}
 			editorTemplate -endLayout;
-
-			//editorTemplate -label "Loaded Grids" -addControl "loadedGrids";
 		editorTemplate -endLayout;
 
 		editorTemplate -beginLayout "Albedo" -collapse 0 AlbedoLayout;
