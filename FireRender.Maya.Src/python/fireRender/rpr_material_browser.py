@@ -23,6 +23,7 @@ from sys import platform
 # -----------------------------------------------------------------------------
 def show() :
 
+    print("ML Log: try show RPRMaterialBrowser")
     RPRMaterialBrowser().show()
 
 # Get Library Path.
@@ -60,6 +61,8 @@ class RPRMaterialBrowser(object) :
         # Get the material library path and
         # ensure that it's formatted correctly.5
         libraryPath = self.getLibraryPath()
+        print("ML Log: library path = " + libraryPath)		
+		
         self.libraryPath = libraryPath.replace("\\", "/").rstrip("/")
 
 
@@ -109,10 +112,14 @@ class RPRMaterialBrowser(object) :
 
         # Check that the library can be found.
         if not self.checkLibrary():
+            print("ML Log: ERROR: library path was not found")	
             return
 
         # Load material manifest and create the browser layout.
+        print("ML Log: Begin loading library")
         self.loadManifest()
+		
+        print("ML Log: Begin creating layout")
         self.createLayout()
 
 
@@ -160,6 +167,7 @@ class RPRMaterialBrowser(object) :
     # -----------------------------------------------------------------------------
     def createLayout(self) :
 
+        print("ML Log: createLayout")
         # Delete any existing window.
         if (cmds.window("RPRMaterialBrowserWindow", exists = True)) :
             cmds.deleteUI("RPRMaterialBrowserWindow")
@@ -199,6 +207,7 @@ class RPRMaterialBrowser(object) :
     # -----------------------------------------------------------------------------
     def createCategoriesLayout(self) :
 
+        print("ML Log: createCategoriesLayout")
         # Create tab, form and scroll layouts.
         tabLayout = cmds.tabLayout(innerMarginWidth=5, innerMarginHeight=15, borderStyle="full")
         formLayout = cmds.formLayout(numberOfDivisions=100)
@@ -237,7 +246,8 @@ class RPRMaterialBrowser(object) :
     # Create the materials layout.
     # -----------------------------------------------------------------------------
     def createMaterialsLayout(self) :
-
+	
+        print("ML Log: createMaterialsLayout")
         # Create the tab and form layouts.
         self.materialsTab = cmds.tabLayout(borderStyle="full")
         self.materialsForm = cmds.formLayout(numberOfDivisions=100)
@@ -298,6 +308,7 @@ class RPRMaterialBrowser(object) :
     # -----------------------------------------------------------------------------
     def createSelectedLayout(self) :
 
+        print("ML Log: createSelectedLayout")
         # Create a pane layout to contain material info and preview.
         paneLayout = cmds.paneLayout("RPRSelectedPane", configuration='horizontal2', staticHeightPane=2,
                                      separatorMovedCommand=self.updatePreviewLayout)
@@ -322,6 +333,7 @@ class RPRMaterialBrowser(object) :
     # -----------------------------------------------------------------------------
     def createInfoLayout(self) :
 
+        print("ML Log: createInfoLayout")
         # Create tab and form layouts.
         tabLayout = cmds.tabLayout(innerMarginWidth=8, innerMarginHeight=8, borderStyle="full")
         formLayout = cmds.formLayout(numberOfDivisions=100)
@@ -372,6 +384,7 @@ class RPRMaterialBrowser(object) :
     # -----------------------------------------------------------------------------
     def createPreviewLayout(self) :
 
+        print("ML Log: createPreviewLayout")
         # Create tab layout.
         tabLayout = cmds.tabLayout(borderStyle="full")
 
@@ -418,7 +431,8 @@ class RPRMaterialBrowser(object) :
     # Select a material category by index.
     # -----------------------------------------------------------------------------
     def selectCategory(self, index) :
-
+	
+        print("ML Log: selectCategory")
         # Populate the materials view from the selected category.
         self.materials = self.manifest["categories"][index]["materials"]
         self.populateMaterials()
@@ -440,8 +454,13 @@ class RPRMaterialBrowser(object) :
     # -----------------------------------------------------------------------------
     def selectMaterial(self, material) :
 
+        print("ML Log: selectMaterial")
+	
         fileName = material["fileName"]
         imageFileName = self.libraryPath + "/" + fileName + "/" + fileName + ".jpg"
+		
+        print("ML Log: fileName = " + fileName)
+        print("ML Log: imageFileName = " + imageFileName)		
 
         cmds.iconTextStaticLabel("RPRPreviewImage", edit=True, image=imageFileName)
         cmds.text("RPRCategoryText", edit=True, label=material["category"]["name"])
@@ -494,6 +513,7 @@ class RPRMaterialBrowser(object) :
     # -----------------------------------------------------------------------------
     def updatePreviewLayout(self) :
 
+        print("ML Log: updatePreviewLayout")
         # Determine the size of the preview area.
         width = cmds.flowLayout("RPRPreviewArea", query=True, width=True)
         height = cmds.flowLayout("RPRPreviewArea", query=True, height=True)
@@ -572,10 +592,12 @@ class RPRMaterialBrowser(object) :
     # -----------------------------------------------------------------------------
     def searchMaterials(self, *args) :
 
+        print("ML Log: searchMaterials")
         # Convert the search string to lower
         # case so the search is not case sensitive.
         searchString = cmds.textField(self.searchField, query=True, text=True).lower()
-
+        print("ML Log: searchString = " + searchString)
+		
         # Check that the string is long enough
         # to search and not whitespace.
         if (len(searchString) < 2 or searchString.isspace()) :
@@ -597,6 +619,7 @@ class RPRMaterialBrowser(object) :
     # -----------------------------------------------------------------------------
     def populateMaterials(self) :
 
+        print("ML Log: populateMaterials")	
         # Remove any existing materials.
         if (cmds.layout("RPRMaterialsFlow", exists=True)) :
             cmds.deleteUI("RPRMaterialsFlow", layout=True)
@@ -655,9 +678,12 @@ class RPRMaterialBrowser(object) :
     # Import a material into Maya.
     # -----------------------------------------------------------------------------
     def importMaterial(self, material) :
-
+	
+        print("ML Log: importMaterial")
         fileName = material["fileName"]
         filePath = self.libraryPath + "/" + fileName + "/" + fileName + ".xml"
+        print("ML Log: fileName" + fileName)
+        print("ML Log: filePath" + filePath)
         cmds.RPRXMLImport(file=filePath, importImages=self.importImagesEnabled())
 
 

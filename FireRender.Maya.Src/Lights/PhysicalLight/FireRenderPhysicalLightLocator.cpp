@@ -56,6 +56,17 @@ void FireRenderPhysicalLightLocator::postConstructor()
 	
 	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(mobj, FireRenderPhysicalLightLocator::onAttributeChanged, this, &status);
 	assert(status == MStatus::kSuccess);
+
+	// rename node
+	MFnDependencyNode nodeFn(thisMObject());
+	nodeFn.setName("RPRPhysicalLightShape#");
+
+	MFnDagNode dagNode(thisMObject());
+	MObject parent = dagNode.parent(0, &status);
+	CHECK_MSTATUS(status);
+
+	MFnDependencyNode parentFn(parent);
+	parentFn.setName("RPRPhysicalLight#");
 }
 
 const MString FireRenderPhysicalLightLocator::GetNodeTypeName(void) const
