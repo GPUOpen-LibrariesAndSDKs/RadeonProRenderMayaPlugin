@@ -559,9 +559,6 @@ void ProcessTemperatureGrid(
 void RPRVolumeAttributes::SetupVolumeFromFile(MObject& node, FireRenderVolumeLocator::GridParams& gridParams)
 {
 	// get .vdb file from UI form
-	MFnDependencyNode depNode(node);
-	MString nodeName = depNode.name();
-
 	std::string filename = GetVDBFilePath(node).asChar();
 	if (filename.empty())
 		return;
@@ -595,7 +592,9 @@ void RPRVolumeAttributes::SetupVolumeFromFile(MObject& node, FireRenderVolumeLoc
 	wPlug.destructHandle(wHandle);
 
 	// update UI
-	MString command = "FillGridList(\"" + nodeName + "\");\n";
+	MFnDagNode dagNode(node);
+	MString partialPathName = dagNode.partialPathName();
+	MString command = "FillGridList(\"" + partialPathName + "\");\n";
 	MStatus res = MGlobal::executeCommandOnIdle(command);
 	CHECK_MSTATUS(res);
 }
