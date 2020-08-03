@@ -91,7 +91,6 @@ public:
 	TypeDesc::BASETYPE GetChannelFormat() const;
 
 private:
-	template<class T = FireRenderAOV>
 	void AddAOV(unsigned int id, const MString& attribute, const MString& name,
 									const MString& folder, AOVDescription description);
 

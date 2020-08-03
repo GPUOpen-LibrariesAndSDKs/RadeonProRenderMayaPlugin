@@ -97,6 +97,18 @@ FireRenderAOVs::FireRenderAOVs() :
 	AddAOV(RPR_AOV_VOLUME, "aovVolume", "Subsurface / Volume", "volume",
 		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
 
+	AddAOV(RPR_AOV_LIGHT_GROUP0, "aovLightGroup0", "Light Group 0", "lightGroup0",
+		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
+
+	AddAOV(RPR_AOV_LIGHT_GROUP1, "aovLightGroup1", "Light Group 1", "lightGroup1",
+		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
+
+	AddAOV(RPR_AOV_LIGHT_GROUP2, "aovLightGroup2", "Light Group 2", "lightGroup2",
+		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
+
+	AddAOV(RPR_AOV_LIGHT_GROUP3, "aovLightGroup3", "Light Group 3", "lightGroup3",
+		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
+
 	AddAOV(RPR_AOV_DIFFUSE_ALBEDO, "aovAlbedo", "Albedo", "albedo",
 		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
 
@@ -130,14 +142,13 @@ void FireRenderAOVs::InitEXRCompressionMap()
 }
 
 
-template<class T>
 void FireRenderAOVs::AddAOV(unsigned int id, 
 							const MString& attribute, 
 							const MString& name,
 							const MString& folder, 
 							AOVDescription description)
 {
-	FireRenderAOV* aov = new T(id, attribute, name, folder, description);
+	FireRenderAOV* aov = new FireRenderAOV(id, attribute, name, folder, description);
 
 	m_aovs[id] = std::shared_ptr<FireRenderAOV>(aov);
 }
