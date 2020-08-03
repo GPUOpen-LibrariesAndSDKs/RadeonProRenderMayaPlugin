@@ -458,6 +458,23 @@ void AddExtensionAttributes()
 	nAttr.setMin(0);
 	MNodeClass transformNodeClass("transform");
 	transformNodeClass.addExtensionAttribute(objectIdAttr);
+
+	////// light group attributes for Light Group AOVs
+
+	MString lightClassNames[] = { "RPRPhysicalLight", "RPRIBL", "pointLight", "directionalLight", "spotLight", "areaLight" };
+
+	for (MString className : lightClassNames)
+	{
+		MNodeClass lightClass(className);
+
+		MObject lightGroupAttr = nAttr.create("RPRLightGroup", "lg", MFnNumericData::kLong, -1);
+
+		nAttr.setNiceNameOverride("RPR Light Group");
+		nAttr.setMin(-1);
+		nAttr.setMax(3);
+
+		lightClass.addExtensionAttribute(lightGroupAttr);
+	}
 }
 
 
