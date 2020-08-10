@@ -409,12 +409,12 @@ bool TahoeContext::IsDenoiserSupported() const
 
 bool TahoeContext::IsDisplacementSupported() const
 {
-	return m_PluginVersion == TahoePluginVersion::RPR1;
+	return true;
 }
 
 bool TahoeContext::IsHairSupported() const
 {
-	return m_PluginVersion == TahoePluginVersion::RPR1;
+	return true;
 }
 
 bool TahoeContext::IsVolumeSupported() const
