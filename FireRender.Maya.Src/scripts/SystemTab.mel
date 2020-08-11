@@ -39,10 +39,6 @@ global proc createSystemTab()
     setParent ..;
 
     separator -height 10;
-	attrControlGrp
-		 -label "Tahoe Engine:"
-		 -attribute "RadeonProRenderGlobals.tahoeVersion";
-    separator -height 10;
 
     optionMenuGrp -label "Preferences for: " -changeCommand "onSystemPreferencesModeChanged" RPR_SystemTabRM;
 		menuItem -label "Final Render" -data 1 RPR_FinalRenderRM;
@@ -129,7 +125,7 @@ global proc createAboutFrame(string $parent)
 
 global proc createFinalRenderPart()
 {
-    frameLayout -label "Render Setup" -cll false -cl 0 finalRenderSetup;
+    frameLayout -label "Render Devices" -cll false -cl 0 finalRenderSetup;
     createRenderResourcesFrame ("finalRenderSetup", 1);
     setParent ..;
 
@@ -193,26 +189,6 @@ global proc createViewportRenderPart()
 	attrControlGrp
 		-label "Render Mode"
 		-attribute "RadeonProRenderGlobals.renderModeViewport";
-
-    separator -height 5;
-
-	attrControlGrp
-		-label "Max Ray Depth"
-		-attribute "RadeonProRenderGlobals.maxRayDepthViewport";
-
-	attrControlGrp
-		-label "Max Diffuse Ray Depth"
-		-attribute "RadeonProRenderGlobals.maxDepthDiffuseViewport";
-
-	attrControlGrp
-		-label "Max Reflection Ray Depth"
-		-attribute "RadeonProRenderGlobals.maxDepthGlossyViewport";
-
-    separator -height 5;
-
-	attrControlGrp
-		-label "Viewport Motion Blur"
-		-attribute "RadeonProRenderGlobals.motionBlurViewport";
 
     setParent ..;
     setParent ..;

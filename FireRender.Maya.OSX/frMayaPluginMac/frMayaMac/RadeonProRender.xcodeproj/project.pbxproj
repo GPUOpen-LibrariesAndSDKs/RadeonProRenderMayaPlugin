@@ -449,9 +449,6 @@
 		B7190C622449C9970071D47F /* IESprocessor.h in Headers */ = {isa = PBXBuildFile; fileRef = B7190C582449C9970071D47F /* IESprocessor.h */; };
 		B7190C632449C9970071D47F /* IESprocessor.h in Headers */ = {isa = PBXBuildFile; fileRef = B7190C582449C9970071D47F /* IESprocessor.h */; };
 		B7190C642449C9970071D47F /* IESprocessor.h in Headers */ = {isa = PBXBuildFile; fileRef = B7190C582449C9970071D47F /* IESprocessor.h */; };
-		B7190C7D2452F6860071D47F /* libRadeonImageFilters.1.5.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B7190C7C2452F6850071D47F /* libRadeonImageFilters.1.5.1.dylib */; };
-		B7190C7E2452F6880071D47F /* libRadeonImageFilters.1.5.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B7190C7C2452F6850071D47F /* libRadeonImageFilters.1.5.1.dylib */; };
-		B7190C7F2452F6880071D47F /* libRadeonImageFilters.1.5.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B7190C7C2452F6850071D47F /* libRadeonImageFilters.1.5.1.dylib */; };
 		B7190C812452F6D70071D47F /* libOpenImageIO.1.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B7190C802452F6D70071D47F /* libOpenImageIO.1.6.dylib */; };
 		B7190C822452F6D70071D47F /* libOpenImageIO.1.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B7190C802452F6D70071D47F /* libOpenImageIO.1.6.dylib */; };
 		B7190C832452F6D70071D47F /* libOpenImageIO.1.6.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = B7190C802452F6D70071D47F /* libOpenImageIO.1.6.dylib */; };
@@ -907,6 +904,12 @@
 		F19A160B248A737000A959C7 /* FireRenderLightCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = F19A1607248A737000A959C7 /* FireRenderLightCommon.h */; };
 		F19A160C248A737000A959C7 /* FireRenderLightCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = F19A1607248A737000A959C7 /* FireRenderLightCommon.h */; };
 		F19A160D248A737000A959C7 /* FireRenderLightCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = F19A1607248A737000A959C7 /* FireRenderLightCommon.h */; };
+		F1B3270624D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */; };
+		F1B3270724D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		F1B3270924D81D5E001C0430 /* libRadeonImageFilters.1.5.4.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */; };
+		F1B3270A24D81D5F001C0430 /* libRadeonImageFilters.1.5.4.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		F1B3270C24D81D87001C0430 /* libRadeonImageFilters.1.5.4.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */; };
+		F1B3270D24D81D87001C0430 /* libRadeonImageFilters.1.5.4.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		F1EEA1F124ADE93A008AFB18 /* CompositeWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */; };
 		F1EEA1F224ADE93A008AFB18 /* CompositeWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */; };
 		F1EEA1F324ADE93A008AFB18 /* CompositeWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */; };
@@ -957,6 +960,39 @@
 				B75320FD23DB145800246738 /* RadeonProRender.bundle in Copy Files (copy product to plug-ins) */,
 			);
 			name = "Copy Files (copy product to plug-ins)";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1B3270824D81D42001C0430 /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				F1B3270724D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib in Embed Libraries */,
+			);
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1B3270B24D81D5F001C0430 /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				F1B3270A24D81D5F001C0430 /* libRadeonImageFilters.1.5.4.dylib in Embed Libraries */,
+			);
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F1B3270E24D81D87001C0430 /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				F1B3270D24D81D87001C0430 /* libRadeonImageFilters.1.5.4.dylib in Embed Libraries */,
+			);
+			name = "Embed Libraries";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -1300,8 +1336,10 @@
 		CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderVolume.cpp; path = ../../../FireRender.Maya.Src/FireRenderVolume.cpp; sourceTree = "<group>"; };
 		F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderLightCommon.cpp; path = ../../../FireRender.Maya.Src/Lights/FireRenderLightCommon.cpp; sourceTree = "<group>"; };
 		F19A1607248A737000A959C7 /* FireRenderLightCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderLightCommon.h; path = ../../../FireRender.Maya.Src/Lights/FireRenderLightCommon.h; sourceTree = "<group>"; };
+		F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonImageFilters.1.5.4.dylib; path = ../../../RadeonProImageProcessingSDK/OSX/libRadeonImageFilters.1.5.4.dylib; sourceTree = "<group>"; };
 		F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CompositeWrapper.cpp; path = ../../../FireRender.Maya.Src/CompositeWrapper.cpp; sourceTree = "<group>"; };
 		F1EEA1F024ADE93A008AFB18 /* CompositeWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CompositeWrapper.h; path = ../../../FireRender.Maya.Src/CompositeWrapper.h; sourceTree = "<group>"; };
+		F1F815AD24CADC4A00599CFD /* libRadeonImageFilters.1.5.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonImageFilters.1.5.3.dylib; path = ../../../RadeonProImageProcessingSDK/OSX/libRadeonImageFilters.1.5.3.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1310,10 +1348,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D8613C021EE273F009DF99F /* libAdskXGen.dylib in Frameworks */,
+				F1B3270624D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib in Frameworks */,
 				B7190C812452F6D70071D47F /* libOpenImageIO.1.6.dylib in Frameworks */,
 				8D595E3B20372FE20031988A /* libRprLoadStore64.dylib in Frameworks */,
 				B7190BC32448AD3C0071D47F /* libblosc.a in Frameworks */,
-				B7190C7D2452F6860071D47F /* libRadeonImageFilters.1.5.1.dylib in Frameworks */,
 				B7190BC62448AD3C0071D47F /* libopenvdb.a in Frameworks */,
 				B7190BCF2448AD3C0071D47F /* libz.a in Frameworks */,
 				8D595E3E20372FE20031988A /* libRadeonProRender64.dylib in Frameworks */,
@@ -1329,10 +1367,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				8DBCC35E22304666003EE361 /* libRprLoadStore64.dylib in Frameworks */,
+				F1B3270924D81D5E001C0430 /* libRadeonImageFilters.1.5.4.dylib in Frameworks */,
 				B7190C822452F6D70071D47F /* libOpenImageIO.1.6.dylib in Frameworks */,
 				B7190BC42448AD3C0071D47F /* libblosc.a in Frameworks */,
 				B7190C162448C6E90071D47F /* libAdskXGen.dylib in Frameworks */,
-				B7190C7E2452F6880071D47F /* libRadeonImageFilters.1.5.1.dylib in Frameworks */,
 				B7190BC72448AD3C0071D47F /* libopenvdb.a in Frameworks */,
 				B7190BD02448AD3C0071D47F /* libz.a in Frameworks */,
 				8DBCC36122304666003EE361 /* libRadeonProRender64.dylib in Frameworks */,
@@ -1348,10 +1386,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				B75320E423D9ED5600246738 /* libRprLoadStore64.dylib in Frameworks */,
+				F1B3270C24D81D87001C0430 /* libRadeonImageFilters.1.5.4.dylib in Frameworks */,
 				B7190C832452F6D70071D47F /* libOpenImageIO.1.6.dylib in Frameworks */,
 				B7190BC52448AD3C0071D47F /* libblosc.a in Frameworks */,
 				B7190C182448C71D0071D47F /* libAdskXGen.dylib in Frameworks */,
-				B7190C7F2452F6880071D47F /* libRadeonImageFilters.1.5.1.dylib in Frameworks */,
 				B7190BC82448AD3C0071D47F /* libopenvdb.a in Frameworks */,
 				B7190BD12448AD3C0071D47F /* libz.a in Frameworks */,
 				B75320E623D9ED5600246738 /* libRadeonProRender64.dylib in Frameworks */,
@@ -1673,6 +1711,8 @@
 		4DE645121DA349C10076E6A7 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */,
+				F1F815AD24CADC4A00599CFD /* libRadeonImageFilters.1.5.3.dylib */,
 				B7190C802452F6D70071D47F /* libOpenImageIO.1.6.dylib */,
 				B7190C7C2452F6850071D47F /* libRadeonImageFilters.1.5.1.dylib */,
 				B7190BBE2448AD3C0071D47F /* libblosc.a */,
@@ -2278,6 +2318,7 @@
 				8D595DE820372FE20031988A /* Sources */,
 				8D595E3A20372FE20031988A /* Frameworks */,
 				8D595E4120372FE20031988A /* Copy Files (copy product to plug-ins) */,
+				F1B3270824D81D42001C0430 /* Embed Libraries */,
 			);
 			buildRules = (
 			);
@@ -2296,6 +2337,7 @@
 				8DBCC2FC22304666003EE361 /* Sources */,
 				8DBCC35B22304666003EE361 /* Frameworks */,
 				8DBCC36422304666003EE361 /* Copy Files (copy product to plug-ins) */,
+				F1B3270B24D81D5F001C0430 /* Embed Libraries */,
 			);
 			buildRules = (
 			);
@@ -2314,6 +2356,7 @@
 				B753205723D9ED5600246738 /* Sources */,
 				B75320E123D9ED5600246738 /* Frameworks */,
 				B75320E923D9ED5600246738 /* Copy Files (copy product to plug-ins) */,
+				F1B3270E24D81D87001C0430 /* Embed Libraries */,
 			);
 			buildRules = (
 			);
