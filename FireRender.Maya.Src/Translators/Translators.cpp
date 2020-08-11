@@ -428,6 +428,19 @@ namespace FireMaya
 			frlight.areaLight.SetName(lightName);
 		}
 
+		MPlug plug = dagNode.findPlug("RPRLightGroup");
+
+		if (!plug.isNull())
+		{
+			const int maxLightGroupId = 3;
+			int lightGroupId = plug.asInt();
+
+			if (lightGroupId >= 0 && lightGroupId <= maxLightGroupId)
+			{
+				frlight.SetLightGroupId((rpr_uint) lightGroupId);
+			}
+		}
+
 		return ret;
 	}
 

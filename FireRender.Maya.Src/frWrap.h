@@ -1009,6 +1009,12 @@ namespace frw
 			checkStatus(res);
 		}
 
+		void SetLightGroupId(rpr_uint id)
+		{
+			rpr_status res = rprShapeSetLightGroupID(Handle(), id);
+			checkStatus(res);
+		}
+
 		Shape CreateInstance(Context context) const;
 		void SetTransform(const float* tm, bool transpose = false)
 		{
@@ -1186,21 +1192,12 @@ namespace frw
 			auto res = rprLightSetTransform(Handle(), transpose, tm);
 			checkStatus(res);
 		}
-#ifdef FRW_USE_MAX_TYPES
-		void SetTransform(const Matrix3& tm)
-		{
-			float m44[16] = {};
-			float* p = m44;
-			for (int x = 0; x < 4; ++x)
-			{
-				for (int y = 0; y < 3; ++y)
-					*p++ = tm.GetRow(x)[y];
 
-				*p++ = (x == 3) ? 1.f : 0.f;
-			}
-			SetTransform(m44);
+		void SetLightGroupId(rpr_uint id)
+		{
+			rpr_status res = rprLightSetGroupId(Handle(), id);
+			checkStatus(res);
 		}
-#endif
 	};
 
 	class Image : public Object

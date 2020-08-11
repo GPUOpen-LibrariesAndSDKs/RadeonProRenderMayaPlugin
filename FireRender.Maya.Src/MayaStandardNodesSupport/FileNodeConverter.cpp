@@ -19,6 +19,14 @@ MayaStandardNodeConverters::FileNodeConverter::FileNodeConverter(const Converter
 {
 }
 
+void GetResolvedPatternStringArray(const MString& nodeName, MStringArray& resolvedNames)
+{
+	std::ostringstream ostream;
+	ostream << "source \"rprCmdRenderUtils.mel\"; geFileNodeUDIMFiles(\"" << nodeName.asChar() << "\")";
+
+	MStatus status = MGlobal::executeCommand(ostream.str().c_str(), resolvedNames);
+}
+
 void LoadAndAssignUdimImages(const MString& nodeName,  frw::Context context, frw::Image masterImage, const MString& udimPathPattern)
 {
 	size_t index = std::string(udimPathPattern.asChar()).find("<UDIM>");
@@ -31,11 +39,7 @@ void LoadAndAssignUdimImages(const MString& nodeName,  frw::Context context, frw
 	}
 
 	MStringArray fileNames;
-
-	std::ostringstream ostream;
-	ostream << "source \"rprCmdRenderUtils.mel\"; geFileNodeUDIMFiles(\"" << nodeName.asChar() << "\")";
-
-	MStatus status = MGlobal::executeCommand(ostream.str().c_str(), fileNames);
+	GetResolvedPatternStringArray(nodeName, fileNames);
 
 	for (size_t i = 0; i < fileNames.length(); ++i)
 	{
@@ -64,7 +68,20 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 	MString colorSpace;
 
 	if (fileNodeUdimMode != uvMode)
-	{
+	{	
+		bool useFrameExt = m_params.shaderNode.findPlug("useFrameExtension").asBool();
+
+		if (useFrameExt)
+		{
+			MStringArray fileNames;
+			GetResolvedPatternStringArray(m_params.shaderNode.name(), fileNames);
+
+			if (fileNames.length() > 0)
+			{
+				texturePath = fileNames[0];
+			}
+		}		
+
 		MPlug colorSpacePlug = m_params.shaderNode.findPlug("colorSpace");
 		if (!colorSpacePlug.isNull())
 		{

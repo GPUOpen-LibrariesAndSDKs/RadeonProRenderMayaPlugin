@@ -133,10 +133,10 @@ bool SaveExportConfig(std::string filePath, TahoeContext& ctx, std::string fileN
 		,{RPR_AOV_INDIRECT_REFLECT, "indirect.reflect" }
 		,{RPR_AOV_REFRACT, "refract" }
 		,{RPR_AOV_VOLUME, "volume" }
-		,{RPR_AOV_LIGHT_GROUP0, "light_group0" }
-		,{RPR_AOV_LIGHT_GROUP1, "light_group1" }
-		,{RPR_AOV_LIGHT_GROUP2, "light_group2" }
-		,{RPR_AOV_LIGHT_GROUP3, "light_group3" }
+		,{RPR_AOV_LIGHT_GROUP0, "light.group0" }
+		,{RPR_AOV_LIGHT_GROUP1, "light.group1" }
+		,{RPR_AOV_LIGHT_GROUP2, "light.group2" }
+		,{RPR_AOV_LIGHT_GROUP3, "light.group3" }
 		,{RPR_AOV_DIFFUSE_ALBEDO, "albedo.diffuse" }
 		,{RPR_AOV_VARIANCE, "variance" }
 		,{RPR_AOV_VIEW_SHADING_NORMAL, "normal.view" }
