@@ -251,20 +251,52 @@ int getUVLightGroup(const MDagPath& inDagPath)
 	return -1;
 }
 
-void GLTFTranslator::assignMeshes(FireRenderContext& context)
+void assignMesh(FireRenderMesh* pMesh, const MString& groupName, const MDagPath& dagPath)
+{
+	for (auto& element : pMesh->Elements())
+	{
+		rprGLTF_AssignShapeToGroup(element.shape.Handle(), groupName.asChar());
+
+		//Reset transform for shape since we already have transformation in parent groups
+		std::array<float, 16> arr;
+		FillArrayWithScaledMMatrixData(arr);
+		element.shape.SetTransform(arr.data());
+
+		int lightGroup = getUVLightGroup(dagPath);
+
+		if (lightGroup >= 0)
+		{
+			rprGLTF_AddExtraShapeParameter(element.shape.Handle(), "lightmapUVGroup", lightGroup);
+		}
+	}
+}
+
+void assignLight(FireRenderLight* pLight, const MString& groupName)
+{
+	// this function was not included in dylib for some reason
+#ifdef _WIN32
+	rprGLTF_AssignLightToGroup(pLight->data().light.Handle(), groupName.asChar());
+#endif
+	//Reset transform for shape since we already have transformation in parent groups
+	std::array<float, 16> arr;
+	FillArrayWithScaledMMatrixData(arr);
+	pLight->GetFrLight().light.SetTransform(arr.data());
+}
+
+void GLTFTranslator::assignMeshesAndLights(FireRenderContext& context)
 {
 	FireRenderContext::FireRenderObjectMap& sceneObjects = context.GetSceneObjects();
 	// set gltf group name for meshes
 	for (FireRenderContext::FireRenderObjectMap::iterator it = sceneObjects.begin(); it != sceneObjects.end(); ++it)
 	{
-		FireRenderMesh* pMesh = dynamic_cast<FireRenderMesh*>(it->second.get());
+		FireRenderNode* pNode = dynamic_cast<FireRenderNode*>(it->second.get());
 
-		if (pMesh == nullptr)
+		if (pNode == nullptr)
 		{
 			continue;
 		}
 
-		MDagPath dagPath = pMesh->DagPath();
+		MDagPath dagPath = pNode->DagPath();
 
 		if (!isNeedToSetANameForTransform(dagPath))
 		{
@@ -273,21 +305,16 @@ void GLTFTranslator::assignMeshes(FireRenderContext& context)
 
 		MString groupName = getGroupNameForDagPath(dagPath);
 
-		for (auto& element : pMesh->Elements())
+		FireRenderMesh* pMesh = dynamic_cast<FireRenderMesh*>(pNode);
+		FireRenderLight* pLight = dynamic_cast<FireRenderLight*>(pNode);
+
+		if (pMesh != nullptr)
 		{
-			rprGLTF_AssignShapeToGroup(element.shape.Handle(), groupName.asChar());
-
-			//Reset transform for shape since we already have transformation in parent groups
-			std::array<float, 16> arr;
-			FillArrayWithScaledMMatrixData(arr);
-			element.shape.SetTransform(arr.data());
-
-			int lightGroup = getUVLightGroup(dagPath);
-
-			if (lightGroup >= 0)
-			{
-				rprGLTF_AddExtraShapeParameter(element.shape.Handle(), "lightmapUVGroup", lightGroup);
-			}
+			assignMesh(pMesh, groupName, dagPath);
+		}
+		else if (pLight != nullptr && !pLight->data().isAreaLight)
+		{
+			assignLight(pLight, groupName);
 		}
 	}
 }
@@ -295,7 +322,7 @@ void GLTFTranslator::assignMeshes(FireRenderContext& context)
 void GLTFTranslator::addGLTFAnimations(GLTFDataHolderStruct& dataHolder, FireRenderContext& context)
 {
 	assignCameras(dataHolder, context);
-	assignMeshes(context);
+	assignMeshesAndLights(context);
 	animateGLTFGroups(dataHolder.animationDataVector);
 }
 
