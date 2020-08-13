@@ -132,7 +132,7 @@ namespace FireMaya
 		void setGLTFTransformationForNode(MObject transform, const char* groupName);
 
 		void assignCameras(GLTFDataHolderStruct& dataHolder, FireRenderContext& context);
-		void assignMeshes(FireRenderContext& context);
+		void assignMeshesAndLights(FireRenderContext& context);
 		
 		// addAdditionalKeys param means that we need to add additional keys for Rotation, 
 		void addTimesFromCurve(const MFnAnimCurve& curve, TimeKeySet& outUniqueTimeKeySet, int attributeId);

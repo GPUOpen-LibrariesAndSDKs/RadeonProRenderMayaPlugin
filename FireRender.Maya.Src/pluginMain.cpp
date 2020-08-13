@@ -475,6 +475,13 @@ void AddExtensionAttributes()
 
 		lightClass.addExtensionAttribute(lightGroupAttr);
 	}
+
+	/// Add emitter attribute to locator node
+	MNodeClass locatorClass("locator");
+
+	MObject emitterAttr = nAttr.create("RPRIsEmitter", "iem", MFnNumericData::kBoolean, false);
+	nAttr.setNiceNameOverride("RPR Is Emitter");
+	locatorClass.addExtensionAttribute(emitterAttr);
 }
 
 
