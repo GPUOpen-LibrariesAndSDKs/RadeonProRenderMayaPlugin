@@ -38,6 +38,7 @@ limitations under the License.
 #include <maya/MDistance.h>
 #include <maya/MColor.h>
 #include "FireRenderMath.h"
+#include "ProRenderGLTF.h"
 
 //#define FRW_LOGGING 1
 
@@ -1197,6 +1198,11 @@ namespace frw
 		{
 			rpr_status res = rprLightSetGroupId(Handle(), id);
 			checkStatus(res);
+		}
+
+		void AddGLTFExtraIntAttribute(const std::string& attrName, int value)
+		{
+			rprGLTF_AddExtraLightParameter(Handle(), attrName.c_str(), value);
 		}
 	};
 
