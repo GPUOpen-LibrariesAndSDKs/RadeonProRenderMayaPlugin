@@ -105,6 +105,9 @@
     <Filter Include="FireRender.Components\Utils">
       <UniqueIdentifier>{71f57e19-1856-44ee-87d1-3f9b603bc501}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FireRender.Components\Alembic">
+      <UniqueIdentifier>{2c6f0ce5-b6e0-4427-989d-c4a997e950d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="python\__init__.py">
@@ -665,6 +668,12 @@
     <ClCompile Include="CompositeWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FireRenderGPUCache.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RadeonProRenderSharedComponents\src\Alembic\AlembicWrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -1139,6 +1148,12 @@
       <Filter>Lights</Filter>
     </ClInclude>
     <ClInclude Include="CompositeWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderGPUCache.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\Alembic\AlembicWrapper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
