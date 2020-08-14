@@ -39,6 +39,8 @@ struct FrElement
 	frw::Shader shader;
 	frw::Shader volumeShader;
 	MObject		shadingEngine;
+
+	std::array<float, 16> TM; // extra transformation matrix
 };
 
 class FrLight
