@@ -246,7 +246,7 @@ void MayaStandardNodeConverters::ProjectionNodeConverter::SubscribeCurrentMeshTo
 	//    Therefore const_cast was used to indicate the problem that we modify some mesh from almost global variable in shader parsing code.
 	//    It would be good to have a shader class that could have stored callbacks.
 
-	FireRenderMesh* mesh = const_cast<FireRenderMesh*>(m_params.scope.GetCurrentlyParsedMesh());
+	FireRenderMeshCommon* mesh = const_cast<FireRenderMeshCommon*>(m_params.scope.GetCurrentlyParsedMesh());
 
 	// Swatch render returns nullptr for current mesh
 	if (mesh != nullptr)

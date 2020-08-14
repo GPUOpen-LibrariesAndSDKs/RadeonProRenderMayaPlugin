@@ -45,6 +45,10 @@ limitations under the License.
 #include "FireRenderMaterialSwatchRender.h"
 #include "CompositeWrapper.h"
 
+#ifdef WIN32 // alembic support is disabled on MAC until alembic build issue on MAC is resolved
+#include "FireRenderGPUCache.h"
+#endif
+
 #ifdef OPTIMIZATION_CLOCK
 	#include <chrono>
 #endif
@@ -2172,14 +2176,24 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			ob = CreateSceneObject<FireRenderNode, NodeCachingOptions::AddPath>(dagPath);
 		}
+#ifdef WIN32
+		else if (dagNode.typeName() == "gpuCache")
+		{
+			ob = CreateSceneObject<FireRenderGPUCache, NodeCachingOptions::AddPath>(dagPath);
+		}
+#endif
 		else
 		{
+			std::string typeName = dagNode.typeName().asUTF8();
+			std::string nodeName = dagNode.name().asUTF8();
 			DebugPrint("Ignoring %s: %s", dagNode.typeName().asUTF8(), dagNode.name().asUTF8());
 		}
 	}
 	else
 	{
 		MFnDependencyNode depNode(node);
+		std::string typeName = depNode.typeName().asUTF8();
+		std::string nodeName = depNode.name().asUTF8();
 		DebugPrint("Ignoring %s: %s", depNode.typeName().asUTF8(), depNode.name().asUTF8());
 	}
 
@@ -2774,7 +2788,7 @@ bool FireRenderContext::ShouldResizeTexture(unsigned int& max_width, unsigned in
 	return false;
 }
 
-frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMesh* pMesh, bool forceUpdate)
+frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMeshCommon* pMesh, bool forceUpdate)
 { 
 	scope.SetContextInfo(this);
 
