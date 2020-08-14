@@ -138,6 +138,7 @@
     <None Include="Shelfs\shelf_Radeon_ProRender.mel" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\RadeonProRenderSharedComponents\src\Alembic\AlembicWrapper.cpp" />
     <ClCompile Include="..\RadeonProRenderSharedComponents\src\Athena\athenaWrap.cpp" />
     <ClCompile Include="..\RadeonProRenderSharedComponents\src\SunPosition\SPA.cpp" />
     <ClCompile Include="..\RadeonProRenderSharedComponents\src\IESLight\IESLightRepresentationCalc.cpp" />
@@ -182,6 +183,7 @@
     <ClCompile Include="FireRenderFresnel.cpp" />
     <ClCompile Include="FireRenderFresnelSchlick.cpp" />
     <ClCompile Include="FireRenderGlobals.cpp" />
+    <ClCompile Include="FireRenderGPUCache.cpp" />
     <ClCompile Include="FireRenderGradient.cpp" />
     <ClCompile Include="FireRenderHairs.cpp" />
     <ClCompile Include="FireRenderIBL.cpp" />
@@ -291,6 +293,7 @@
     <ClCompile Include="VRay.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\Alembic\AlembicWrapper.hpp" />
     <ClInclude Include="..\RadeonProRenderSharedComponents\src\Athena\athenaWrap.h" />
     <ClInclude Include="..\RadeonProRenderSharedComponents\src\SunPosition\SPA.h" />
     <ClInclude Include="..\RadeonProRenderSharedComponents\src\IESLight\IESLightRepresentationCalc.h" />
@@ -334,6 +337,7 @@
     <ClInclude Include="FireRenderError.h" />
     <ClInclude Include="FireRenderFresnelSchlick.h" />
     <ClInclude Include="FireRenderGlobals.h" />
+    <ClInclude Include="FireRenderGPUCache.h" />
     <ClInclude Include="FireRenderGradient.h" />
     <ClInclude Include="FireRenderIBL.h" />
     <ClInclude Include="FireRenderImageComparing.h" />
@@ -728,10 +732,6 @@
       <AdditionalDependencies>OpenMayaFX.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release2019|x64'">
     <ClCompile>
@@ -762,10 +762,6 @@
       <AdditionalDependencies>OpenMayaFX.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release2020|x64'">
     <ClCompile>
@@ -796,10 +792,6 @@
       <AdditionalDependencies>OpenMayaFX.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
