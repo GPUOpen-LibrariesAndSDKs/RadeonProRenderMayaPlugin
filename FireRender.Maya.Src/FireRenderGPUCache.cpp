@@ -368,7 +368,7 @@ frw::Shape TranslateAlembicMesh(const RPRAlembicWrapper::PolygonMeshObject* mesh
 		{ return pair.first == "P"; });
 
 	// in alembic indexes are reversed compared to what RPR expects
-	assert(pointsIt != keyScopeTags.end());
+	assert(pointsIt != keyScopeTags->end());
 	std::string pointsTag = pointsIt->second;
 
 	GenerateIndicesArray(vertexIndices, pointsTag, mesh, isTriangleMesh);
@@ -379,7 +379,7 @@ frw::Shape TranslateAlembicMesh(const RPRAlembicWrapper::PolygonMeshObject* mesh
 		auto normalsIt = find_if(keyScopeTags->begin(), keyScopeTags->end(), [](const auto& pair)
 			{ return pair.first == "N"; });
 
-		assert(normalsIt != keyScopeTags.end());
+		assert(normalsIt != keyScopeTags->end());
 		std::string normalsTag = normalsIt->second;
 
 		if (normalsTag == pointsTag)
@@ -398,7 +398,7 @@ frw::Shape TranslateAlembicMesh(const RPRAlembicWrapper::PolygonMeshObject* mesh
 		auto uvsIt = find_if(keyScopeTags->begin(), keyScopeTags->end(), [](const auto& pair)
 		{ return pair.first == "uv"; });
 
-		assert(uvsIt != keyScopeTags.end());
+		assert(uvsIt != keyScopeTags->end());
 		std::string uvsTag = uvsIt->second;
 
 		if (uvsTag == pointsTag)
