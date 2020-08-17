@@ -660,13 +660,26 @@ MDagPath FireRenderNode::DagPath()
 //===================
 // Mesh
 //===================
-FireRenderMesh::FireRenderMesh(FireRenderContext* context, const MDagPath& dagPath) :
+FireRenderMeshCommon::FireRenderMeshCommon(FireRenderContext* context, const MDagPath& dagPath) :
 	FireRenderNode(context, dagPath)
+{}
+
+FireRenderMeshCommon::FireRenderMeshCommon(const FireRenderMeshCommon& rhs, const std::string& uuid)
+	: FireRenderNode(rhs, uuid)
+{}
+
+FireRenderMeshCommon::~FireRenderMeshCommon()
+{
+	FireRenderObject::clear();
+}
+
+FireRenderMesh::FireRenderMesh(FireRenderContext* context, const MDagPath& dagPath) :
+	FireRenderMeshCommon(context, dagPath)
 {
 }
 
 FireRenderMesh::FireRenderMesh(const FireRenderMesh& rhs, const std::string& uuid)
-	: FireRenderNode(rhs, uuid)
+	: FireRenderMeshCommon(rhs, uuid)
 {
 }
 
@@ -682,7 +695,7 @@ void FireRenderMesh::clear()
 	FireRenderObject::clear();
 }
 
-void FireRenderMesh::detachFromScene()
+void FireRenderMeshCommon::detachFromScene()
 {
 	if (!m_isVisible)
 		return;
@@ -698,7 +711,7 @@ void FireRenderMesh::detachFromScene()
 	m_isVisible = false;
 }
 
-void FireRenderMesh::attachToScene()
+void FireRenderMeshCommon::attachToScene()
 {
 	if (m_isVisible)
 		return;
@@ -773,7 +786,7 @@ void FireRenderMesh::buildSphere()
 	}
 }
 
-void FireRenderMesh::setRenderStats(MDagPath dagPath)
+void FireRenderMeshCommon::setRenderStats(MDagPath dagPath)
 {
 	MFnDependencyNode depNode(dagPath.node());
 
@@ -832,7 +845,7 @@ bool FireRenderMesh::IsSelected(const MDagPath& dagPath) const
 	return isSelected;
 }
 
-void FireRenderMesh::setVisibility(bool visibility)
+void FireRenderMeshCommon::setVisibility(bool visibility)
 {
 	if (visibility)
 		attachToScene();
@@ -840,7 +853,7 @@ void FireRenderMesh::setVisibility(bool visibility)
 		detachFromScene();
 }
 
-void FireRenderMesh::setReflectionVisibility(bool reflectionVisibility)
+void FireRenderMeshCommon::setReflectionVisibility(bool reflectionVisibility)
 {
 	for (auto element : m.elements)
 	{
@@ -856,7 +869,7 @@ void FireRenderMesh::setReflectionVisibility(bool reflectionVisibility)
 	}
 }
 
-void FireRenderMesh::setRefractionVisibility(bool refractionVisibility)
+void FireRenderMeshCommon::setRefractionVisibility(bool refractionVisibility)
 {
 	for (auto element : m.elements)
 	{
@@ -872,7 +885,7 @@ void FireRenderMesh::setRefractionVisibility(bool refractionVisibility)
 	}
 }
 
-void FireRenderMesh::setCastShadows(bool castShadow)
+void FireRenderMeshCommon::setCastShadows(bool castShadow)
 {
 	for (auto element : m.elements)
 	{
@@ -881,7 +894,7 @@ void FireRenderMesh::setCastShadows(bool castShadow)
 	}
 }
 
-void FireRenderMesh::setPrimaryVisibility(bool primaryVisibility)
+void FireRenderMeshCommon::setPrimaryVisibility(bool primaryVisibility)
 {
 	for (auto element : m.elements)
 	{
@@ -1415,7 +1428,7 @@ void FireRenderMesh::SetupObjectId(MObject parentTransformObject)
 	}
 }
 
-void FireRenderMesh::ForceShaderDirtyCallback(MObject& node, void* clientData)
+void FireRenderMeshCommon::ForceShaderDirtyCallback(MObject& node, void* clientData)
 {
 	if (nullptr == clientData)
 	{
@@ -1435,7 +1448,7 @@ void FireRenderMesh::ForceShaderDirtyCallback(MObject& node, void* clientData)
 	}
 }
 
-void FireRenderMesh::AddForceShaderDirtyDependOnOtherObjectCallback(MObject dependency)
+void FireRenderMeshCommon::AddForceShaderDirtyDependOnOtherObjectCallback(MObject dependency)
 {
 	AddCallback(MNodeMessage::addNodeDirtyCallback(dependency, ForceShaderDirtyCallback, this));
 }
@@ -1579,7 +1592,7 @@ void FireRenderMesh::RebuildTransforms()
 	}
 }
 
-void FireRenderMesh::AssignShadingEngines(const MObjectArray& shadingEngines)
+void FireRenderMeshCommon::AssignShadingEngines(const MObjectArray& shadingEngines)
 {
 	for (unsigned int i = 0; i < m.elements.size(); i++)
 	{
@@ -1609,7 +1622,7 @@ void FireRenderMesh::ShaderDirtyCallback(MObject& node, void* clientData)
 	}
 }
 
-unsigned int FireRenderMesh::GetAssignedUVMapIdx(const MString& textureFile) const
+unsigned int FireRenderMeshCommon::GetAssignedUVMapIdx(const MString& textureFile) const
 {
 	auto it = m_uvSetCachedMappingData.find(textureFile.asChar());
 
