@@ -159,6 +159,10 @@ global proc int isMPSOptionNeeded()
         {
             return 1;
         }
+        if (`match "10.15" $ver` != "")
+        {
+            return 1;
+        }
     }
 
     return 0;

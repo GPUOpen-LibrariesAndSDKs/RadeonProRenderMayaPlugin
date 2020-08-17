@@ -607,6 +607,8 @@ public:
 	virtual bool IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) const override { return true; }
 	virtual frw::Shader GetDefaultColorShader(frw::Value color) override;
 
+	virtual bool MetalContextAvailable() const { return false; }
+
 	bool IsGLTFExport() const override { return m_bIsGLTFExport; }
 	void SetGLTFExport(bool isGLTFExport) { m_bIsGLTFExport = isGLTFExport; }
 
