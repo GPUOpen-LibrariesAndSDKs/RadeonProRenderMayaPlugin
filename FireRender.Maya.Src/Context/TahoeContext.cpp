@@ -31,24 +31,29 @@ rpr_int TahoeContext::GetPluginID(TahoePluginVersion version)
 	LoadedPluginMap::const_iterator it = m_gLoadedPluginsIDsMap.find(version);
 	if (it == m_gLoadedPluginsIDsMap.end())
 	{
+        std::string libName;
+        
+        if (version == TahoePluginVersion::RPR1)
+        {
+            libName = "Tahoe64";
+        }
+        else if (version == TahoePluginVersion::RPR2)
+        {
+            libName = "Northstar64";
+        }
 #ifdef OSMac_
-		std::string pathToTahoeDll = "/Users/Shared/RadeonProRender/Maya/lib/libTahoe64.dylib";
-		if (0 != access(pathToTahoeDll.c_str(), F_OK))
-		{
-			pathToTahoeDll = "/Users/Shared/RadeonProRender/lib/libTahoe64.dylib";
-		}
+        libName = "lib" + libName + ".dylib";
+        std::string pathToTahoeDll = "/Users/Shared/RadeonProRender/Maya/lib/" + libName;
+        if (0 != access(pathToTahoeDll.c_str(), F_OK))
+        {
+             pathToTahoeDll = "/Users/Shared/RadeonProRender/lib/" + libName;
+        }
 		pluginId = rprRegisterPlugin(pathToTahoeDll.c_str());
 #elif __linux__
 		pluginId = rprRegisterPlugin("libTahoe64.so");
 #else
-		if (version == TahoePluginVersion::RPR1)
-		{
-			pluginId = rprRegisterPlugin("Tahoe64.dll");
-		}
-		else if (version == TahoePluginVersion::RPR2)
-		{
-			pluginId = rprRegisterPlugin("Northstar64.dll");
-		}
+		libName += ".dll";
+		pluginId = rprRegisterPlugin(libName.c_str());
 #endif
 
 		m_gLoadedPluginsIDsMap[version] = pluginId;
@@ -423,6 +428,11 @@ bool TahoeContext::IsVolumeSupported() const
 }
 
 bool TahoeContext::IsGLInteropEnabled() const
+{
+	return m_PluginVersion == TahoePluginVersion::RPR1;
+}
+
+bool TahoeContext::MetalContextAvailable() const
 {
 	return m_PluginVersion == TahoePluginVersion::RPR1;
 }
