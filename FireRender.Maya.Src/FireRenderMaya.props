@@ -5,11 +5,11 @@
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <AdditionalIncludeDirectories>.;..\RadeonProRenderSDK\RadeonProRender\inc;..\RadeonProRenderSDK\RadeonProRender\rprTools;..\RadeonProRenderSharedComponents\glew\include;..\RadeonProRenderSharedComponents\OpenImageIO\Windows\include;..\RadeonProRenderSharedComponents\json\include\;..\RadeonProRenderSharedComponents\src\;Lights\;Lights\PhysicalLight\;..\RadeonProRenderSharedComponents\src\ImageFilter\;..\RadeonProImageProcessingSDK\include\;..\RadeonProRenderSharedComponents\Ornatrix\;..\RadeonProRenderSharedComponents\Ornatrix\Ephere\;..\RadeonProRenderSharedComponents\OpenVDB\include\;..\RadeonProRenderSharedComponents\</AdditionalIncludeDirectories>    <PreprocessorDefinitions>MAYA_PLUGIN;GL_INTEROP;WIN32;_WINDOWS;_USRDLL;NT_PLUGIN;_HAS_ITERATOR_DEBUGGING=0;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;__TBB_LIB_NAME=tbb.lib;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.;..\RadeonProRenderSDK\RadeonProRender\inc;..\RadeonProRenderSDK\RadeonProRender\rprTools;..\RadeonProRenderSharedComponents\glew\include;..\RadeonProRenderSharedComponents\OpenImageIO\Windows\include;..\RadeonProRenderSharedComponents\json\include\;..\RadeonProRenderSharedComponents\src\;Lights\;Lights\PhysicalLight\;..\RadeonProRenderSharedComponents\src\ImageFilter\;..\RadeonProImageProcessingSDK\include\;..\RadeonProRenderSharedComponents\Ornatrix\;..\RadeonProRenderSharedComponents\Ornatrix\Ephere\;..\RadeonProRenderSharedComponents\OpenVDB\include\;..\RadeonProRenderSharedComponents\Alembic\include\;..\RadeonProRenderSharedComponents\Alembic\include\OpenEXR\;..\RadeonProRenderSharedComponents\</AdditionalIncludeDirectories>    <PreprocessorDefinitions>MAYA_PLUGIN;GL_INTEROP;WIN32;_WINDOWS;_USRDLL;NT_PLUGIN;_HAS_ITERATOR_DEBUGGING=0;_SECURE_SCL=0;_SECURE_SCL_THROWS=0;_SECURE_SCL_DEPRECATE=0;_CRT_SECURE_NO_DEPRECATE;__TBB_LIB_NAME=tbb.lib;REQUIRE_IOSTREAM;AW_NEW_IOSTREAMS;Bits64_;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <AdditionalLibraryDirectories>..\RadeonProRenderSharedComponents\glew\lib\x64;..\RadeonProRenderSharedComponents\OpenImageIO\Windows\lib;..\RadeonProRenderSDK\RadeonProRender\libWin64;..\RadeonProImageProcessingSDK\Windows\;..\RadeonProRenderSharedComponents\OpenVDB\Windows\lib\%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>RadeonProRender64.lib;RprLoadStore64.lib;ProRenderGLTF.lib;RadeonImageFilters.lib;OpenImageIO_RPR.lib;Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaRender.lib;Image.lib;glew.lib;glu32.lib;OpenGL32.lib;openvdb.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\RadeonProRenderSharedComponents\glew\lib\x64;..\RadeonProRenderSharedComponents\OpenImageIO\Windows\lib;..\RadeonProRenderSDK\RadeonProRender\libWin64;..\RadeonProImageProcessingSDK\Windows\;..\RadeonProRenderSharedComponents\OpenVDB\Windows\lib\;..\RadeonProRenderSharedComponents\Alembic\lib\%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>RadeonProRender64.lib;RprLoadStore64.lib;ProRenderGLTF.lib;RadeonImageFilters.lib;OpenImageIO_RPR.lib;Foundation.lib;OpenMaya.lib;OpenMayaUI.lib;OpenMayaAnim.lib;OpenMayaRender.lib;Image.lib;glew.lib;glu32.lib;OpenGL32.lib;openvdb.lib;Alembic.lib;Half-2_3.lib;hdf5.lib;Iex-2_3.lib;Imath-2_3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ProgramDatabaseFile>$(IntDir)$(TargetName).pdb</ProgramDatabaseFile>
       <DelayLoadDLLs>RadeonProRender64.dll</DelayLoadDLLs>
     </Link>
@@ -40,6 +40,7 @@ COPY $(ProjectDir)\renderDesc\* $(SolutionDir)dist\renderDesc\ /Y
 COPY "$(SolutionDir)RadeonProRenderSDK\RadeonProRender\binWin64\*.dll" $(SolutionDir)dist\bin\ /Y
 COPY "$(SolutionDir)RadeonProImageProcessingSDK\Windows\*.dll" $(SolutionDir)dist\bin\ /Y
 COPY "$(SolutionDir)RadeonProRenderSharedComponents\OpenVDB\Windows\bin\*.dll" $(SolutionDir)dist\bin\ /Y
+COPY "$(SolutionDir)RadeonProRenderSharedComponents\Alembic\bin\*.dll" $(SolutionDir)dist\bin\ /Y
 COPY "$(SolutionDir)RadeonProRenderSharedComponents\OpenImageIO\Windows\bin\*.dll" $(SolutionDir)dist\bin\ /Y
 XCOPY /S /Y /I "$(SolutionDir)RadeonProImageProcessingSDK\models" $(SolutionDir)dist\data\models
 
