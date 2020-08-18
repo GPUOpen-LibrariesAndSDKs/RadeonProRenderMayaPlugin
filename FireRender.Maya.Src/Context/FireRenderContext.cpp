@@ -1072,10 +1072,17 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 	bool useThread = (createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) == RPR_CREATION_FLAGS_ENABLE_CPU;
 	DebugPrint("* Creating Context: %d (0x%x) - useThread: %d", createFlags, createFlags, useThread);
 
-	if (isMetalOn() && !(createFlags & RPR_CREATION_FLAGS_ENABLE_CPU))
-	{
-		createFlags = createFlags | RPR_CREATION_FLAGS_ENABLE_METAL;
-	}
+    if (MetalContextAvailable())
+    {
+        if (isMetalOn() && !(createFlags & RPR_CREATION_FLAGS_ENABLE_CPU))
+        {
+            createFlags = createFlags | RPR_CREATION_FLAGS_ENABLE_METAL;
+        }
+    }
+    else
+    {
+        createFlags = createFlags & ~RPR_CREATION_FLAGS_ENABLE_METAL;
+    }
 
 	int res = CreateContextInternal(createFlags, &context);
 
