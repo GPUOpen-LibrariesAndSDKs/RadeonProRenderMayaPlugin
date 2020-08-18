@@ -42,7 +42,7 @@ FireRenderContextPtr ContextCreator::CreateAppropriateContextForRenderQuality(Re
 	}
 #endif
 
-	return CreateTahoeContext(TahoePluginVersion::RPR1);
+	return CreateTahoeContext(GetTahoeVersionToUse());
 }
 
 FireRenderContextPtr ContextCreator::CreateAppropriateContextForRenderType(RenderType renderType)
