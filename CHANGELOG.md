@@ -1,3 +1,44 @@
+# Version 2.9.42
+
+## New features
+-   **Beta support for RPR 2.0 and the capability of using it for Maya Interactive Photorealistic Render (IPR) has been added.**
+-   The Arnold to RPR conversion script has been updated.
+-   Support for Maya nHair has been added.  
+-   A field has been added to the Transform nodes to set RPR Object ID (used with the Object ID AOV).
+-   Support for UDIM (Mari) textures in the File node has been added.
+-   Sync and Render time are now displayed in the Maya console.
+-   A config.json file for rendering via the command line or cloud is exported with an .rpr file.
+-   The ML Denoising filter speed has been improved.
+-   The capability to assign a “Light Group ID” attribute to lights has been added. With the corresponding AOV, this allows artists to separate lighting via groups of lights.  
+-   Support for Image texture sequences for the Image File node has been added.
+-   Support for Maya GPU cache objects (Alembic files) has been added.
+-   For users interested in testing the latest developments in the Radeon ProRender for Maya plugin, a weekly “Development Build” will be posted on future Fridays.  See https://github.com/GPUOpen-LibrariesAndSDKs/RadeonProRenderMayaPlugin/releases or follow the repository on github to get weekly updates.
+
+## Fixed issues
+-   The SetRange, RemapHSV and RemapValue nodes now process faster.
+-   A crash can no longer occur if the Material nodes are connected to a Transform node.
+-   In some instances when the render settings were imported to a scene, some render layers failed to export — fixed.
+-   Instances of lights were not exported correctly — fixed.
+-   .rpr Export did not always use the correct camera — fixed.
+-   The Anti-Aliasing filter could not be set to < 1.0 — the minimum value now is 0.0.
+-   Physical Light normalization was not taking transform scaling into account — fixed.
+-   Various Conversion scripts no longer can result in failures.
+-   RPR lights were showing up in the viewport as Locators. They are now Lights.
+-   The camera size in GLTF files is now correct.
+-   Various issues have been fixed with render layers using shader overrides and with updating them for IPR.
+-   The plugin can now start on macOS with the Japanese language set.
+-   Various bugs have been fixed in the OpenVDB node UI.
+-   Lights created from the Hypershade no longer have incorrect names in the outliner.
+-   Some settings in the “System” Tab have been moved to other tabs. In particular, the Render Engine and Ray Depth settings have been moved to the Quality tab and are now saved with the scene, not in the Maya preferences.
+-   Animated lights are exported correctly with GLTF
+
+## Known issues
+-   RPR 2.0 known issues
+    - Shadow and reflection catchers are not yet enabled
+    - Adaptive sampling is disabled
+    - Adaptive subdivision is disabled
+    - On macOS, currently RPR 2.0 uses OpenCL and not metal.
+
 
 # Version 2.9.4
 
