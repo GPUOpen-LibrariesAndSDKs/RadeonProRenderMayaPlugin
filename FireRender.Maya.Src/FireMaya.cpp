@@ -81,8 +81,13 @@ MPlug FireMaya::GetConnectedPlug(const MPlug& plug)
 		plug.connectedTo(connections, true, false);
 		if (connections.length() > 0)
 		{
-			if (!connections[0].node().hasFn(MFn::kAnimCurve))
+			MObject objNode = connections[0].node();
+
+			if (!objNode.hasFn(MFn::kAnimCurve) && 
+				!objNode.hasFn(MFn::kTransform))
+			{
 				return connections[0];
+			}
 		}
 	}
 	return MPlug();
@@ -1379,13 +1384,18 @@ bool FireMaya::Scope::FindFileNodeRecursive(MObject objectNode, int& width, int&
 	MFnDependencyNode node(objectNode);
 	if (node.getConnections(connections) == MStatus::kSuccess)
 	{
-		for (auto c : connections)
+		for (MPlug& plug : connections)
 		{
-			auto name = c.name(&status);
+			MString name = plug.name(&status);
 
-			if (c.isDestination())
+			if (plug.attribute().hasFn(MFn::kMessageAttribute))
 			{
-				MObject node = GetConnectedNode(c);
+				continue;
+			}
+
+			if (plug.isDestination())
+			{
+				MObject node = GetConnectedNode(plug);
 
 				if (FindFileNodeRecursive(node, width, height))
 				{
@@ -1932,7 +1942,7 @@ FireMaya::Scope::~Scope()
 }
 
 
-frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMesh* pMesh, bool forceUpdate)
+frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMeshCommon* pMesh, bool forceUpdate)
 {
 	if (node.isNull())
 	{

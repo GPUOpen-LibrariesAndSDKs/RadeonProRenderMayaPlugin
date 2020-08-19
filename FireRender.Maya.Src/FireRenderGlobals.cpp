@@ -283,7 +283,7 @@ MStatus FireRenderGlobals::initialize()
 
 	Attribute::AAGridSize = nAttr.create("filterSize", "fs", MFnNumericData::kFloat, 1.5, &status);
 	MAKE_INPUT(nAttr);
-	nAttr.setMin(1);
+	nAttr.setMin(0.0);
 	nAttr.setMax(10);
 
 	setupProductionRayDepthParameters();
@@ -435,13 +435,17 @@ MStatus FireRenderGlobals::initialize()
 
 	Attribute::tahoeVersion = eAttr.create("tahoeVersion", "tahv", TahoePluginVersion::RPR1, &status);
 	eAttr.addField("RPR 1", TahoePluginVersion::RPR1);
-
-#ifdef WIN32
 	eAttr.addField("RPR 2 (Experimental)", TahoePluginVersion::RPR2);
-#endif
 
 	MAKE_INPUT_CONST(eAttr);
-	addAsGlobalAttribute(eAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::tahoeVersion));
+
+	MObject switchDetailedLogAttribute = nAttr.create("detailedLog", "rdl", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setStorable(false);
+	CHECK_MSTATUS(addAttribute(switchDetailedLogAttribute));
+
+	// Needed for QA and CIS in order to switch on detailed sync and render logs
 
 	CHECK_MSTATUS(addAttribute(Attribute::textureCompression));
 
@@ -995,15 +999,15 @@ void FireRenderGlobals::createViewportAttributes()
 	nAttr.setSoftMin(rayDepthParameterSoftMin);
 	nAttr.setSoftMax(rayDepthParameterSoftMax);
 	nAttr.setMax(rayDepthParameterMax);
-	addAsGlobalAttribute(nAttr);
-
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::maxRayDepth));
+	
 	ViewportRenderAttributes::maxDiffuseRayDepth = nAttr.create("maxDepthDiffuseViewport", "mddv", MFnNumericData::kInt, 3, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(rayDepthParameterMin);
 	nAttr.setSoftMin(rayDepthParameterSoftMin);
 	nAttr.setSoftMax(rayDepthParameterSoftMax);
 	nAttr.setMax(rayDepthParameterMax);
-	addAsGlobalAttribute(nAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::maxDiffuseRayDepth));
 
 	ViewportRenderAttributes::maxDepthGlossy = nAttr.create("maxDepthGlossyViewport", "mdgv", MFnNumericData::kInt, 5, &status);
 	MAKE_INPUT(nAttr);
@@ -1011,11 +1015,11 @@ void FireRenderGlobals::createViewportAttributes()
 	nAttr.setSoftMin(rayDepthParameterSoftMin);
 	nAttr.setSoftMax(rayDepthParameterSoftMax);
 	nAttr.setMax(rayDepthParameterMax);
-	addAsGlobalAttribute(nAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::maxDepthGlossy));
 
 	ViewportRenderAttributes::motionBlur = nAttr.create("motionBlurViewport", "vmb", MFnNumericData::kBoolean, false);
 	MAKE_INPUT(nAttr);
-	addAsGlobalAttribute(nAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::motionBlur));
 
 	ViewportRenderAttributes::adaptiveThresholdViewport = nAttr.create("adaptiveThresholdViewport", "atv", MFnNumericData::kFloat, 0.05, &status);
 	MAKE_INPUT(nAttr);

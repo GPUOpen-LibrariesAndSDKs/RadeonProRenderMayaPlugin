@@ -38,6 +38,7 @@ limitations under the License.
 #include <maya/MDistance.h>
 #include <maya/MColor.h>
 #include "FireRenderMath.h"
+#include "ProRenderGLTF.h"
 
 //#define FRW_LOGGING 1
 
@@ -157,7 +158,9 @@ namespace frw
         ValueTypeAOMap = RPR_MATERIAL_NODE_AO_MAP,
 		ValueTypeUVProcedural = RPR_MATERIAL_NODE_UV_PROCEDURAL,
 		ValueTypeUVTriplanar = RPR_MATERIAL_NODE_UV_TRIPLANAR,
-		ValueTypeBufferSampler = RPR_MATERIAL_NODE_BUFFER_SAMPLER // buffer node
+		ValueTypeBufferSampler = RPR_MATERIAL_NODE_BUFFER_SAMPLER, // buffer node
+		ValueTypeHSVToRGB = RPR_MATERIAL_NODE_HSV_TO_RGB,
+		ValueTypeRRGToHSV = RPR_MATERIAL_NODE_RGB_TO_HSV
 	};
 
 	enum ShaderType
@@ -1007,10 +1010,22 @@ namespace frw
 			checkStatus(res);
 		}
 
+		void SetLightGroupId(rpr_uint id)
+		{
+			rpr_status res = rprShapeSetLightGroupID(Handle(), id);
+			checkStatus(res);
+		}
+
 		Shape CreateInstance(Context context) const;
 		void SetTransform(const float* tm, bool transpose = false)
 		{
 			auto res = rprShapeSetTransform(Handle(), transpose, tm);
+			checkStatus(res);
+		}
+
+		void SetObjectId(rpr_uint id)
+		{
+			auto res = rprShapeSetObjectID(Handle(), id);
 			checkStatus(res);
 		}
 
@@ -1178,36 +1193,62 @@ namespace frw
 			auto res = rprLightSetTransform(Handle(), transpose, tm);
 			checkStatus(res);
 		}
-#ifdef FRW_USE_MAX_TYPES
-		void SetTransform(const Matrix3& tm)
-		{
-			float m44[16] = {};
-			float* p = m44;
-			for (int x = 0; x < 4; ++x)
-			{
-				for (int y = 0; y < 3; ++y)
-					*p++ = tm.GetRow(x)[y];
 
-				*p++ = (x == 3) ? 1.f : 0.f;
-			}
-			SetTransform(m44);
+		void SetLightGroupId(rpr_uint id)
+		{
+			rpr_status res = rprLightSetGroupId(Handle(), id);
+			checkStatus(res);
 		}
-#endif
+
+		void AddGLTFExtraIntAttribute(const std::string& attrName, int value)
+		{
+			rprGLTF_AddExtraLightParameter(Handle(), attrName.c_str(), value);
+		}
 	};
 
 	class Image : public Object
 	{
-		DECLARE_OBJECT_NO_DATA(Image, Object);
+		DECLARE_OBJECT(Image, Object);
+
+		class Data : public Object::Data
+		{
+			DECLARE_OBJECT_DATA
+		public:
+			virtual ~Data()
+			{
+				for (auto it = m_udimsMap.begin(); it != m_udimsMap.end(); ++it)
+				{
+					rprImageSetUDIM(Handle(), it->first, nullptr);
+				}
+
+				m_udimsMap.clear();
+			}
+			
+			std::map<rpr_uint, Image> m_udimsMap;
+		};
+
+
 	public:
 		explicit Image(rpr_image h, const Context& context) : Object(h, context, true, new Data()) {}
 
 		Image(Context context, float r, float g, float b);
 		Image(Context context, const rpr_image_format& format, const rpr_image_desc& image_desc, const void* data);
+
+		// create empty image (used for UDIM creation of master image
+		Image(Context context, const rpr_image_format& format);
 		Image(Context context, const char * filename);
 		void SetGamma(float gamma)
 		{
 			rpr_int res = rprImageSetGamma(Handle(), gamma);
 			checkStatus(res);
+		}
+
+		void SetUDIM(rpr_uint tileIndex, frw::Image image)
+		{
+			rpr_int res = rprImageSetUDIM(Handle(), tileIndex, image.Handle());
+			checkStatus(res);
+
+			data().m_udimsMap[tileIndex] = image;
 		}
 
 		bool HasAlphaChannel()
@@ -2332,6 +2373,28 @@ namespace frw
 				auto res = rprMaterialNodeSetInputNByKey(Handle(), RPR_MATERIAL_INPUT_COLOR, n.Handle());
 				checkStatus(res);
 			}
+		}
+	};
+
+	class RGBToHSVNode : public ValueNode
+	{
+	public:
+		explicit RGBToHSVNode(const MaterialSystem& h) : ValueNode(h, ValueTypeRRGToHSV) {}
+
+		void SetInputColor(const Value& inputRGB)
+		{
+			SetValue(RPR_MATERIAL_INPUT_COLOR, inputRGB);
+		}
+	};
+
+	class HSVToRGBNode : public ValueNode
+	{
+	public:
+		explicit HSVToRGBNode(const MaterialSystem& h) : ValueNode(h, ValueTypeHSVToRGB) {}
+
+		void SetInputColor(const Value& inputHSV)
+		{
+			SetValue(RPR_MATERIAL_INPUT_COLOR, inputHSV);
 		}
 	};
 
@@ -3774,7 +3837,9 @@ namespace frw
 		rpr_image h = nullptr;
 		auto res = rprContextCreateImage(context.Handle(), format, &image_desc, data, &h);
 		if (checkStatus(res, "Unable to create image"))
+		{
 			m->Attach(h);
+		}
 	}
 
 	inline Image::Image(Context context, const rpr_image_format& format, const rpr_image_desc& image_desc, const void* data)
@@ -3784,8 +3849,23 @@ namespace frw
 		rpr_image h = nullptr;
 		auto res = rprContextCreateImage(context.Handle(), format, &image_desc, data, &h);
 		if (checkStatus(res, "Unable to create image"))
+		{
 			m->Attach(h);
+		}
 	}
+
+	inline Image::Image(Context context, const rpr_image_format& format)
+		: Object(nullptr, context, true, new Data())
+	{
+		FRW_PRINT_DEBUG("CreateImage()");
+		rpr_image h = nullptr;
+		auto res = rprContextCreateImage(context.Handle(), format, nullptr, nullptr, &h);
+		if (checkStatus(res, "Unable to create image"))
+		{
+			m->Attach(h);
+		}
+	}
+
 
 	inline Image::Image(Context context, const char* filename)
 		: Object(nullptr, context, true, new Data())

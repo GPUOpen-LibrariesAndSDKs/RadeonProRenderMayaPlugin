@@ -33,6 +33,8 @@ limitations under the License.
 #include "BlendTwoAttrConverter.h"
 #include "ClampConverter.h"
 #include "ProjectionNodeConverter.h"
+#include "RemapValueConverter.h"
+#include "SetRangeConverter.h"
 
 frw::Value MayaStandardNodeConverters::NodeConverterUtil::Convert(const ConverterParams& params, const MayaValueId mayaNodeId)
 {
@@ -57,7 +59,7 @@ frw::Value MayaStandardNodeConverters::NodeConverterUtil::Convert(const Converte
 		DebugPrint("Warning: Unhandled or Unknown RPRMaya Node: %X", static_cast<int>(mayaNodeId));
 		// I don't think we need this: Dump(shaderNode);
 	}
-	return params.scope.createImageFromShaderNodeUsingFileNode(params.shaderNode.object(), "outColor");
+	return params.scope.createImageFromShaderNodeUsingFileNode(params.shaderNode.object(), params.outPlugName);
 }
 
 std::unique_ptr<MayaStandardNodeConverters::BaseConverter> MayaStandardNodeConverters::NodeConverterUtil::CreateConverter(const ConverterParams& params, const MayaValueId mayaNodeId)
@@ -84,6 +86,9 @@ std::unique_ptr<MayaStandardNodeConverters::BaseConverter> MayaStandardNodeConve
 		case MayaValueId::BlendTwoAttr:		return std::make_unique<BlendTwoAttrConverter>(params);
 		case MayaValueId::Clamp:			return std::make_unique<ClampConverter>(params);
 		case MayaValueId::Projection:		return std::make_unique<ProjectionNodeConverter>(params);
+		case MayaValueId::RemapValue:		return std::make_unique<RemapValueConverter>(params);
+		case MayaValueId::SetRange:			return std::make_unique<SetRangeConverter>(params);
+
 		default: return nullptr;
 	}
 }

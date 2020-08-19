@@ -34,6 +34,8 @@ public:
 	virtual bool IsHairSupported() const override;
 	virtual bool IsVolumeSupported() const override;
 
+	virtual bool MetalContextAvailable() const override;
+
 protected:
 	rpr_int CreateContextInternal(rpr_creation_flags createFlags, rpr_context* pContext) override;
 
@@ -41,9 +43,13 @@ protected:
 
 	bool needResolve() const override;
 
+	bool IsGLInteropEnabled() const;
+
 private:
 	TahoePluginVersion m_PluginVersion;
 
 	typedef std::map< TahoePluginVersion, rpr_int> LoadedPluginMap;
 	static LoadedPluginMap m_gLoadedPluginsIDsMap;
 };
+
+typedef std::shared_ptr<TahoeContext> TahoeContextPtr;

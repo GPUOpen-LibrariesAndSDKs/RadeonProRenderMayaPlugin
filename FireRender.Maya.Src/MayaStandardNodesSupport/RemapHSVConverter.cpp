@@ -10,8 +10,10 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ********************************************************************/
-#include "RemapHSVConverter.h"
+
 #include "FireMaya.h"
+#include "RemapHSVConverter.h"
+#include "NodeProcessingUtils.h"
 
 MayaStandardNodeConverters::RemapHSVConverter::RemapHSVConverter(const ConverterParams& params) : BaseConverter(params)
 {
@@ -19,5 +21,21 @@ MayaStandardNodeConverters::RemapHSVConverter::RemapHSVConverter(const Converter
 
 frw::Value MayaStandardNodeConverters::RemapHSVConverter::Convert() const
 {
-	return m_params.scope.createImageFromShaderNodeUsingFileNode(m_params.shaderNode.object(), MString("outColor"));
+	frw::RGBToHSVNode rgbToHSVNode(m_params.scope.MaterialSystem());
+
+	frw::Value rgbInput = m_params.scope.GetValue(m_params.shaderNode.findPlug("color", false));
+	rgbToHSVNode.SetInputColor(rgbInput);
+
+	frw::Value hsvInput = rgbToHSVNode;
+
+	frw::Value hueOutput = GetSamplerNodeForValue(m_params, "hue", hsvInput.SelectX());
+	frw::Value saturationOutput = GetSamplerNodeForValue(m_params, "saturation", hsvInput.SelectY());
+	frw::Value valueOutput = GetSamplerNodeForValue(m_params, "value", hsvInput.SelectZ());
+	frw::Value hsvRemapped = m_params.scope.MaterialSystem().ValueCombine(hueOutput, saturationOutput, valueOutput);
+
+	frw::HSVToRGBNode hsvToRGBNode(m_params.scope.MaterialSystem());
+
+	hsvToRGBNode.SetInputColor(hsvRemapped);
+
+	return hsvToRGBNode;
 }

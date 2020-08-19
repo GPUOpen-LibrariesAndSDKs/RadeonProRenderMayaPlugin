@@ -39,6 +39,8 @@ struct FrElement
 	frw::Shader shader;
 	frw::Shader volumeShader;
 	MObject		shadingEngine;
+
+	std::array<float, 16> TM; // extra transformation matrix
 };
 
 class FrLight
@@ -78,6 +80,18 @@ public:
 		scaleY = other.scaleY;
 		scaleZ = other.scaleZ;
 		return *this;
+	}
+
+	void SetLightGroupId(rpr_uint id)
+	{
+		if (isAreaLight)
+		{
+			areaLight.SetLightGroupId(id);
+		}
+		else
+		{
+			light.SetLightGroupId(id);
+		}
 	}
 
 	frw::Image image;

@@ -354,7 +354,6 @@ const std::string& FireRenderAOV::GetAOVName(int aov_id)
 		,{RPR_AOV_VARIANCE, "RPR_AOV_VARIANCE" }
 		,{RPR_AOV_VIEW_SHADING_NORMAL, "RPR_AOV_VIEW_SHADING_NORMAL" }
 		,{RPR_AOV_REFLECTION_CATCHER, "RPR_AOV_REFLECTION_CATCHER" }
-		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
 	};
 
 	auto it = id2name.find(aov_id);

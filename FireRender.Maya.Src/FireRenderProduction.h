@@ -104,6 +104,8 @@ private:
 	// Private Methods
 	// -----------------------------------------------------------------------------
 
+	void SetupWorkProgressCallback();
+
 	void RenderFullFrame();
 	void RenderTiles();
 
@@ -120,7 +122,7 @@ private:
 	void readFrameBuffer();
 
 	/** Refresh the context. */
-	void refreshContext(FireRenderContext::BuildSceneProgressCallback progressCallback = nullptr);
+	void refreshContext();
 
 	/* Gather and send render data by Athena */
 	void UploadAthenaData();

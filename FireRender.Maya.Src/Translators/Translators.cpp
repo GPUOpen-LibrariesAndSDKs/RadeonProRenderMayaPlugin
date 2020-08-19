@@ -256,13 +256,14 @@ namespace FireMaya
 		frstatus = rprCameraSetFarPlane(frcamera, (float)(fnCamera.farClippingPlane() * cmToMCoefficient));
 		checkStatus(frstatus);
 		
-		float lensShiftX = (float) fnCamera.horizontalFilmOffset(&mstatus);
+		float filmOffsetX = (float) fnCamera.horizontalFilmOffset(&mstatus);
 		assert(mstatus == MStatus::kSuccess);
 
-		float lensShiftY = (float) fnCamera.verticalFilmOffset(&mstatus);
+		float filmOffsetY = (float) fnCamera.verticalFilmOffset(&mstatus);
 		assert(mstatus == MStatus::kSuccess);
 
-		frstatus = rprCameraSetLensShift(frcamera, lensShiftX, lensShiftY);
+		float inchesToMM = 25.4f;
+		frstatus = rprCameraSetLensShift(frcamera, inchesToMM * filmOffsetX / apertureWidth, inchesToMM * filmOffsetY / apertureHeight);
 		if (frstatus != RPR_ERROR_UNSUPPORTED)
 		{
 			checkStatus(frstatus);
@@ -425,6 +426,19 @@ namespace FireMaya
 		else if (frlight.areaLight)
 		{
 			frlight.areaLight.SetName(lightName);
+		}
+
+		MPlug plug = dagNode.findPlug("RPRLightGroup");
+
+		if (!plug.isNull())
+		{
+			const int maxLightGroupId = 3;
+			int lightGroupId = plug.asInt();
+
+			if (lightGroupId >= 0 && lightGroupId <= maxLightGroupId)
+			{
+				frlight.SetLightGroupId((rpr_uint) lightGroupId);
+			}
 		}
 
 		return ret;
@@ -729,7 +743,7 @@ namespace FireMaya
 			scaleM[0][0] = -scaleM[0][0];
 		}
 
-		m *= scaleM;
+		m = scaleM * m;
 		float mfloats[4][4];
 		m.get(mfloats);
 		frlight.SetTransform((rpr_float*)mfloats);

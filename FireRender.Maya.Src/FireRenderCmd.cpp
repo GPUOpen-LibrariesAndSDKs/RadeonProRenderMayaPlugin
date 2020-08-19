@@ -45,6 +45,8 @@ limitations under the License.
 #include "RenderRegion.h"
 #include "FireRenderThread.h"
 
+#include "Context/ContextCreator.h"
+
 #include <imageio.h>
 
 using namespace std;
@@ -351,7 +353,10 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 	auto previousUseThreadValue = FireRenderThread::UseTheThread(false);	// No need to use separate thread for batch render
 
 	// The render context.
-	TahoeContext context;
+
+	TahoeContextPtr tahoeContextPtr = ContextCreator::CreateTahoeContext(GetTahoeVersionToUse());
+
+	TahoeContext& context = *tahoeContextPtr;
 
 	try
 	{
