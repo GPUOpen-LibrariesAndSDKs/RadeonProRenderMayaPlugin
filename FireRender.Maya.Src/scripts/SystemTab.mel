@@ -198,8 +198,6 @@ global proc createViewportRenderPart()
 		-label "Render Mode"
 		-attribute "RadeonProRenderGlobals.renderModeViewport";
 
-    updateEnableSwatches();
-
     setParent ..;
     setParent ..;
 }
