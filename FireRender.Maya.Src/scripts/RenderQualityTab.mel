@@ -102,6 +102,20 @@ proc createViewportRenderQualityPart()
 			 -attribute "RadeonProRenderGlobals.renderQualityViewport";
 		setParent ..;
 	}
+
+	frameLayout -label "Viewport Ray Depths" -cll true -cl 0 fireRenderViewportRayDepthFrame;
+	    attrControlGrp
+	        -label "Max Ray Depth"
+	        -attribute "RadeonProRenderGlobals.maxRayDepthViewport";
+
+	    attrControlGrp
+	        -label "Max Diffuse Ray Depth"
+	        -attribute "RadeonProRenderGlobals.maxDepthDiffuseViewport";
+
+	    attrControlGrp
+	        -label "Max Reflection Ray Depth"
+	        -attribute "RadeonProRenderGlobals.maxDepthGlossyViewport";
+	setParent ..;
 }
 
 global proc createQualityTab()
@@ -109,6 +123,14 @@ global proc createQualityTab()
 	string $parentForm = `setParent -query`;
 	scrollLayout -w 375 -horizontalScrollBarThickness 0 fireRenderQualityScrollLayout;
 	columnLayout -w 375 -adjustableColumn true fireRenderTabColumn;
+
+	frameLayout -label "Engine:" -cll true -cl 0 fireRenderTahoeEngineFrame;
+		attrControlGrp
+		    -label "Render Engine:"
+		     -attribute "RadeonProRenderGlobals.tahoeVersion";
+	setParent ..;
+
+
 
         createFinalRenderQualityPart();
 	createViewportRenderQualityPart();

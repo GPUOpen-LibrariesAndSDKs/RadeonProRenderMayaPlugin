@@ -41,6 +41,11 @@ limitations under the License.
 #include <maya/MRenderUtil.h> 
 #include <maya/MFnPluginData.h> 
 #include <maya/MPxData.h>
+#include <maya/MItDependencyGraph.h>
+
+#include <maya/MFnPfxGeometry.h>
+#include <maya/MRenderLineArray.h>
+#include <maya/MRenderLine.h>
 
 #if defined(MAYA2018)
 #include <XGen/XgSplineAPI.h>
@@ -107,6 +112,83 @@ std::tuple<bool, MObject> GetUberMaterialFromHairShader(MObject& surfaceShader)
 	return std::make_tuple(false, MObject::kNullObj);
 }
 
+MObject TryFindUber(MDagPath& path)
+{
+	MStatus status;
+
+	MObject rootNode = path.node();
+	MItDependencyGraph itdep(
+		rootNode,
+		MFn::kDependencyNode,
+		MItDependencyGraph::kUpstream,
+		MItDependencyGraph::kBreadthFirst,
+		MItDependencyGraph::kNodeLevel,
+		&status);
+
+	CHECK_MSTATUS(status)
+
+	for (; !itdep.isDone(); itdep.next())
+	{
+		MFnDependencyNode connectionNode(itdep.currentItem());
+		MString connectionNodeTypename = connectionNode.typeName();
+
+		// check if Uber is connected to hair shader
+		if (connectionNodeTypename == "RPRUberMaterial")
+		{
+			return itdep.currentItem();
+		}
+
+		// check if uber is connected in rpr panel
+		else if (connectionNodeTypename == "hairSystem")
+		{
+			MPlug hairColorPlug = connectionNode.findPlug("rprHairMaterial", &status);
+			CHECK_MSTATUS(status);
+			if (hairColorPlug.isNull())
+				continue;
+
+			MPlugArray connections;
+			hairColorPlug.connectedTo(connections, true, false, &status);
+
+			if (connections.length() == 0)
+				continue;
+
+			MPlug conn = connections[0];
+			MFn::Type type = conn.node().apiType();
+
+			MObject hairMaterialObject = conn.node(&status);
+			CHECK_MSTATUS(status);
+
+			return hairMaterialObject;
+		}
+	}
+
+	// dummy return for the compiler
+	return MObject::kNullObj;
+}
+
+MObject GetUberMObject(MDagPath& path)
+{
+	MObjectArray shdrs = getConnectedShaders(path);
+
+	if (shdrs.length() == 0)
+		return TryFindUber(path);
+
+	// get hair shader node
+	MObject surfaceShader = shdrs[0];
+	MFnDependencyNode shaderNode(surfaceShader);
+
+	MString shaderName = shaderNode.name();
+	MString shaderType = shaderNode.typeName();
+
+	bool uberMaterrialFound = false;
+	MObject uberMObj = MObject::kNullObj;
+	std::tie(uberMaterrialFound, uberMObj) = GetUberMaterialFromHairShader(surfaceShader);
+	if (!uberMaterrialFound)
+		return MObject::kNullObj;
+
+	return uberMObj;
+}
+
 bool FireRenderHair::ApplyMaterial(void)
 {
 	if (m_Curves.empty())
@@ -115,23 +197,7 @@ bool FireRenderHair::ApplyMaterial(void)
 	auto node = Object();
 	MDagPath path = MDagPath::getAPathTo(node);
 
-	// get hair shader node
-	MObjectArray shdrs = getConnectedShaders(path);
-
-	if (shdrs.length() == 0)
-		return false;
-
-	MObject surfaceShader = shdrs[0];
-	MFnDependencyNode shaderNode(surfaceShader);
-
-	MString shaderName = shaderNode.name();
-	MString shaderType = shaderNode.typeName();
-
-	MObject uberMObj;
-	bool uberMaterrialFound = false;
-	std::tie(uberMaterrialFound, uberMObj) = GetUberMaterialFromHairShader(surfaceShader);
-	if (!uberMaterrialFound)
-		return false;
+	MObject uberMObj = GetUberMObject(path);	
 
 	frw::Shader shader = m.context->GetShader(uberMObj);
 	if (!shader.IsValid())
@@ -218,9 +284,10 @@ void ProcessHairTail(std::vector<rpr_uint>& outCurveIndicesData)
 	}
 }
 
+template <typename T>
 void ProcessHairWidth(
 	std::vector<float>& outRadiuses,
-	const float* width,
+	const T* width,
 	const std::vector<rpr_uint>& curveIndicesData)
 {
 	// ensure correct inputs
@@ -235,12 +302,12 @@ void ProcessHairWidth(
 	{
 		// bottom circle
 		rpr_uint controlPointIdx = curveIndicesData[idx * PointsPerSegment];
-		float radius = width[controlPointIdx] * 0.5f;
+		float radius = (float)width[controlPointIdx] * 0.5f;
 		outRadiuses.push_back(radius);
 
 		// top circle
 		controlPointIdx = curveIndicesData[idx * PointsPerSegment + (PointsPerSegment - 1)];
-		radius = width[controlPointIdx] * 0.5f;
+		radius = (float)width[controlPointIdx] * 0.5f;
 		outRadiuses.push_back(radius);
 	}
 }
@@ -296,6 +363,23 @@ struct CurvesBatchData
 		m_indicesData.reserve(splineIt.vertexCount() * 2);
 		m_numPointsPerSegment.reserve(curveCount);
 		m_radiuses.reserve(splineIt.vertexCount()); // array of N float. If curve is not tapered, N = curveCount. If curve is tapered, N = 2*(number of segments)
+		m_uvCoord.reserve(2 * curveCount);
+	}
+
+	void Init(MRenderLineArray& mainLines)
+	{
+		int curveCount = mainLines.length();
+		for (int idx = 0; idx < curveCount; ++idx)
+		{
+			MStatus status;
+			MRenderLine renderLine = mainLines.renderLine(idx, &status);
+			MVectorArray lineVtxs = renderLine.getLine();
+			m_pointCount += lineVtxs.length();
+		}
+
+		m_indicesData.reserve(m_pointCount * 2);
+		m_numPointsPerSegment.reserve(curveCount);
+		m_radiuses.reserve(m_pointCount); // array of N float. If curve is not tapered, N = curveCount. If curve is tapered, N = 2*(number of segments)
 		m_uvCoord.reserve(2 * curveCount);
 	}
 
@@ -631,6 +715,131 @@ bool FireRenderHairOrnatrix::CreateCurves()
 	return (m_Curves.size() > 0);
 }
 
+FireRenderHairNHair::FireRenderHairNHair(FireRenderContext* context, const MDagPath& dagPath)
+	: FireRenderHair(context, dagPath)
+{}
+
+FireRenderHairNHair::~FireRenderHairNHair()
+{}
+
+frw::Curve ProcessCurvesBatch(MRenderLineArray& mainLines, frw::Context currContext)
+{	
+	MStatus status;
+
+	// create data buffers
+	CurvesBatchData batchData;
+	batchData.Init(mainLines);
+
+	std::vector<float> vertices;
+	vertices.reserve(batchData.m_pointCount * 3);
+	std::vector<double> widths;
+	widths.reserve(batchData.m_pointCount * 3);
+
+	// for each primitive (for each hair)
+	int currStrandVertexCount = 0;
+	unsigned int offset = 0;
+
+	int countMainLines = mainLines.length();
+	for (int idx = 0; idx < countMainLines; ++idx, offset += currStrandVertexCount)
+	{
+		MRenderLine renderLine = mainLines.renderLine(idx, &status);
+		MVectorArray lineVtxs = renderLine.getLine();
+		currStrandVertexCount = lineVtxs.length();
+
+		// Copy points
+		for (unsigned int vtxIdx = 0; vtxIdx < lineVtxs.length(); ++vtxIdx)
+		{
+			MVector& tVect = lineVtxs[vtxIdx];
+			vertices.push_back((float)tVect.x);
+			vertices.push_back((float)tVect.y);
+			vertices.push_back((float)tVect.z);
+		}
+
+		// Write indices
+		std::vector<rpr_uint> curveIndicesData;
+		ProcessHairPoints(curveIndicesData, offset, currStrandVertexCount);
+		ProcessHairTail(curveIndicesData);
+		assert(curveIndicesData.size() % PointsPerSegment == 0);
+
+		// Number of segments in the current curve
+		const unsigned int segmentsInCurve = (unsigned int)(curveIndicesData.size()) / PointsPerSegment;
+		batchData.m_numPointsPerSegment.push_back(segmentsInCurve);
+
+		// add tmp_indicesData to output
+		batchData.m_indicesData.insert(batchData.m_indicesData.end(), curveIndicesData.begin(), curveIndicesData.end());
+
+		// Hair segments radiuses
+		MDoubleArray width = renderLine.getWidth();
+		std::fill_n(std::back_inserter(widths), width.length(), 0.0);
+		width.get(&widths[offset]);
+		ProcessHairWidth(batchData.m_radiuses, widths.data(), curveIndicesData);
+
+		// Texcoord
+		MDoubleArray parameter = renderLine.getParameter();
+		for (unsigned int idx = 0; idx < parameter.length(); ++idx)
+		{
+			float param = (float)parameter[idx];
+			batchData.m_uvCoord.push_back(param);
+			batchData.m_uvCoord.push_back(param);
+		}
+	}
+
+	batchData.m_points = vertices.data();
+
+	// create RPR curve (create batch of hairs)
+	return batchData.CreateRPRCurve(currContext);
+}
+
+bool FireRenderHairNHair::CreateCurves()
+{
+	MObject node = Object();
+
+	// ensure valid input
+	bool hasNHairs = node.hasFn(MFn::kPfxGeometry);
+	if (!hasNHairs)
+		return false;
+
+	// get curves data
+	MStatus status;
+	MFnPfxGeometry hHairs(node, &status);
+	assert(status == MStatus::kSuccess);
+
+	MRenderLineArray mainLines;
+	MRenderLineArray leafLines;
+	MRenderLineArray flowerLines;
+	status = hHairs.getLineData(mainLines, leafLines, flowerLines,
+		true, //doLines
+		true, //doTwist
+		true, //doWidth
+		true, //doFlatness
+		true, //doParameter
+		true, //doColor
+		true, //doIncandescence
+		true, //doTransparency
+		false //worldSpace
+		);
+	assert(status == MStatus::kSuccess);
+	int countMainLines = mainLines.length();
+	int countLeafLines = leafLines.length();
+	int countFlowerLines = flowerLines.length();
+
+	// create rpr curves
+	m_Curves.push_back(ProcessCurvesBatch(mainLines, Context()));
+
+	// clean up
+	mainLines.deleteArray();
+	leafLines.deleteArray();
+	flowerLines.deleteArray();
+
+	// apply transform to curves
+	ApplyTransform();
+
+	// apply material to curves
+	ApplyMaterial();
+
+	return (m_Curves.size() > 0);
+}
+
 static void HairShaderDirtyCallback(MObject& node, void* clientData)
 {
 	DebugPrint("CALLBACK > HairShaderDirtyCallback(%s)", node.apiTypeStr());
@@ -666,4 +875,21 @@ void FireRenderHair::RegisterCallbacks()
 	{
 		AddCallback(MNodeMessage::addNodeDirtyCallback(surfaceShader, HairShaderDirtyCallback, this));
 	}
+}
+
+void FireRenderHairNHair::RegisterCallbacks()
+{
+	FireRenderNode::RegisterCallbacks();
+
+	if (m_Curves.empty())
+		return;
+
+	MObject node = Object();
+	MDagPath path = MDagPath::getAPathTo(node);
+
+	MObject shader = TryFindUber(path);
+	if (shader.isNull())
+		return;
+
+	AddCallback(MNodeMessage::addNodeDirtyCallback(shader, HairShaderDirtyCallback, this));
 }

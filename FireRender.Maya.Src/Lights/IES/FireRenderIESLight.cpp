@@ -37,9 +37,14 @@ MObject	FireRenderIESLightLocator::aIntensity;
 MObject	FireRenderIESLightLocator::aDisplay;
 MObject FireRenderIESLightLocator::aMeshRepresentationUpdated;
 MTypeId FireRenderIESLightLocator::id(FireMaya::TypeId::FireRenderIESLightLocator);
-MString FireRenderIESLightLocator::drawDbClassification("light:drawdb/light/directionalLight:drawdb/geometry/FireRenderIESLightLocator");
-MString FireRenderIESLightLocator::drawDbGeomClassification("drawdb/geometry/FireRenderIESLightLocator");
+MString FireRenderIESLightLocator::drawDbClassification("drawdb/geometry/light/FireRenderIESLightLocator:drawdb/light/directionalLight:light");
+MString FireRenderIESLightLocator::drawDbGeomClassification("drawdb/geometry/light/FireRenderIESLightLocator");
 MString FireRenderIESLightLocator::drawRegistrantId("FireRenderIESLightNode");
+
+const MString FireRenderIESLightLocator::GetNodeTypeName(void) const
+{
+	return "RPRIES";
+}
 
 MStatus FireRenderIESLightLocator::compute(const MPlug& plug, MDataBlock& data)
 {
@@ -239,6 +244,25 @@ MBoundingBox FireRenderIESLightLocator::boundingBox() const
 void* FireRenderIESLightLocator::creator()
 {
 	return new FireRenderIESLightLocator();
+}
+
+void FireRenderIESLightLocator::postConstructor()
+{
+	FireRenderLightCommon::postConstructor();
+
+	MStatus status;
+	MObject mobj = thisMObject();
+
+	// rename node
+	MFnDependencyNode nodeFn(thisMObject());
+	nodeFn.setName("RPRIESShape#");
+
+	MFnDagNode dagNode(thisMObject());
+	MObject parent = dagNode.parent(0, &status);
+	CHECK_MSTATUS(status);
+
+	MFnDependencyNode parentFn(parent);
+	parentFn.setName("RPRIES#");
 }
 
 // ================================

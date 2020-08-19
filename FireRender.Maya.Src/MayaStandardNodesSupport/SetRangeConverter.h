@@ -10,17 +10,18 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ********************************************************************/
+
 #pragma once
-#include "TahoeContext.h"
 
-class ContextCreator
+#include "BaseConverter.h"
+
+namespace MayaStandardNodeConverters
 {
-public:
-	static FireRenderContextPtr CreateAppropriateContextForRenderQuality(RenderQuality quality);
-	static FireRenderContextPtr CreateAppropriateContextForRenderType(RenderType renderType);
+	class SetRangeConverter : public BaseConverter
+	{
+	public:
+		SetRangeConverter(const ConverterParams& params);
+		virtual frw::Value Convert() const override;
+	};
 
-	static TahoeContextPtr CreateTahoeContext(TahoePluginVersion version);
-
-private:
-	static FireRenderContextPtr CreateHybridContext();
-};
+}

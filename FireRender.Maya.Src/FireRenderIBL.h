@@ -32,9 +32,11 @@ limitations under the License.
 
 #include <memory>
 
+#include "FireRenderLightCommon.h"
+
 class FireRenderIBLOverride;
 
-class FireRenderIBL : public MPxLocatorNode
+class FireRenderIBL : public FireRenderLightCommon
 {
 public:
 
@@ -77,12 +79,14 @@ public:
 	MCallbackId m_attributeChangedCallback;
 	MCallbackId m_selectionChangedCallback;
 
-private:
+protected:
 	static void onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
 	static void onSelectionChanged(void *clientData);
 
 	void SubscribeSelectionChangedEvent(bool subscribe = true);
 	void AddSelectedMeshToPortalList(void);
+
+	virtual const MString GetNodeTypeName(void) const override;
 
 private:
 	MString mTexturePath;

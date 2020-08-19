@@ -47,7 +47,7 @@ frw::Value MayaStandardNodeConverters::Place2dTextureConverter::Convert() const
 
 	// get uv data
 	int uvIdx = 0;
-	const FireRenderMesh* pMesh = m_params.scope.GetCurrentlyParsedMesh();
+	const FireRenderMeshCommon* pMesh = m_params.scope.GetCurrentlyParsedMesh();
 	if (pMesh != nullptr)
 	{
 		uvIdx = pMesh->GetAssignedUVMapIdx(textureFile);

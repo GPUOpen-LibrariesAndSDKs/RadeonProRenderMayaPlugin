@@ -13,6 +13,8 @@ limitations under the License.
 #include "FireRenderExportCmd.h"
 #include "Context/TahoeContext.h"
 #include "FireRenderUtils.h"
+#include "RenderStampUtils.h"
+
 #include <maya/MArgDatabase.h>
 #include <maya/MItDag.h>
 #include <maya/MDagPath.h>
@@ -66,6 +68,145 @@ MSyntax FireRenderExportCmd::newSyntax()
 	CHECK_MSTATUS(syntax.addFlag(kSelectedCamera, kSelectedCameraLong, MSyntax::kString));
 
 	return syntax;
+}
+
+bool SaveExportConfig(std::string filePath, TahoeContext& ctx, std::string fileName)
+{
+	// get directory path and name of generated files
+	std::string directory = filePath;
+	const size_t lastIdx = filePath.rfind('/');
+	if (std::string::npos != lastIdx)
+	{
+		directory = filePath.substr(0, lastIdx);
+	}
+	fileName.erase(0, directory.length() + 1);
+	directory += "/config.json";
+	std::ofstream json(directory);
+	if (!json)
+		return false;
+
+	json << "{" << std::endl;
+
+	json << "\"output\" : " << "\"" << fileName << ".png\",\n";
+
+	json << "\"output.json\" : \"output.json\",\n";
+
+	// write file data fields
+	json << "\"width\" : " << ctx.width() << ",\n";
+	json << "\"height\" : " << ctx.height() << ",\n";
+
+	bool isUnlimitedIterations = ctx.getCompletionCriteria().isUnlimitedIterations();
+	if (isUnlimitedIterations)
+	{
+		json << "\"iterations\" : " << 100 << ",\n";
+	}
+	else
+	{
+		json << "\"iterations\" : " << ctx.getCompletionCriteria().completionCriteriaMaxIterations << ",\n";
+	}
+
+	json << "\"gamma\" : " << 1 << ",\n";
+
+	// - aovs
+	static std::map<unsigned int, std::string> aov2name =
+	{
+		 {RPR_AOV_COLOR, "color"}
+		,{RPR_AOV_OPACITY, "opacity" }
+		,{RPR_AOV_WORLD_COORDINATE, "world.coordinate" }
+		,{RPR_AOV_UV, "uv" }
+		,{RPR_AOV_MATERIAL_IDX, "material.id" }
+		,{RPR_AOV_GEOMETRIC_NORMAL, "normal.geom" }
+		,{RPR_AOV_SHADING_NORMAL, "normal" }
+		,{RPR_AOV_DEPTH, "depth" }
+		,{RPR_AOV_OBJECT_ID, "object.id" }
+		,{RPR_AOV_OBJECT_GROUP_ID, "group.id" }
+		,{RPR_AOV_SHADOW_CATCHER, "shadow.catcher" }
+		,{RPR_AOV_BACKGROUND, "background" }
+		,{RPR_AOV_EMISSION, "emission" }
+		,{RPR_AOV_VELOCITY, "velocity" }
+		,{RPR_AOV_DIRECT_ILLUMINATION, "direct.illumination" }
+		,{RPR_AOV_INDIRECT_ILLUMINATION, "indirect.illumination"}
+		,{RPR_AOV_AO, "ao" }
+		,{RPR_AOV_DIRECT_DIFFUSE, "direct.diffuse" }
+		,{RPR_AOV_DIRECT_REFLECT, "direct.reflect" }
+		,{RPR_AOV_INDIRECT_DIFFUSE, "indirect.diffuse" }
+		,{RPR_AOV_INDIRECT_REFLECT, "indirect.reflect" }
+		,{RPR_AOV_REFRACT, "refract" }
+		,{RPR_AOV_VOLUME, "volume" }
+		,{RPR_AOV_LIGHT_GROUP0, "light.group0" }
+		,{RPR_AOV_LIGHT_GROUP1, "light.group1" }
+		,{RPR_AOV_LIGHT_GROUP2, "light.group2" }
+		,{RPR_AOV_LIGHT_GROUP3, "light.group3" }
+		,{RPR_AOV_DIFFUSE_ALBEDO, "albedo.diffuse" }
+		,{RPR_AOV_VARIANCE, "variance" }
+		,{RPR_AOV_VIEW_SHADING_NORMAL, "normal.view" }
+		,{RPR_AOV_REFLECTION_CATCHER, "reflection.catcher" }
+		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
+	};
+
+	FireRenderGlobalsData globals;
+	globals.readFromCurrentScene();
+	FireRenderAOVs& aovsGlobal = globals.aovs;
+	aovsGlobal.applyToContext(ctx);
+
+	std::vector<std::string> aovs;
+	for (auto aov = RPR_AOV_OPACITY; aov != RPR_AOV_MAX; aov++)
+	{
+		auto it = aov2name.find(aov);
+		if (it == aov2name.end())
+			continue;
+
+		if (!ctx.isAOVEnabled(aov))
+			continue;
+
+		aovs.push_back(it->second);
+	}
+
+	// aovs
+	auto aov = aovs.begin();
+	if (aov != aovs.end())
+	{
+		json << "\"aovs\" : {\n";
+		json << "\"" << *aov << "\":\"" << (*aov + ".png") << "\"";
+		++aov;
+
+		for (; aov != aovs.end(); ++aov)
+		{
+			json << ",\n" << "\"" << *aov << "\":\"" << (*aov + ".png") << "\"";
+		}
+		json << "\n}," << std::endl;
+	}
+
+	// - devices
+	std::vector<std::pair<std::string, int>> context;
+	MIntArray devicesUsing;
+	MGlobal::executeCommand("optionVar -q RPR_DevicesSelected", devicesUsing);
+	std::vector<HardwareResources::Device> allDevices = HardwareResources::GetAllDevices();
+	size_t numDevices = std::min<size_t>(devicesUsing.length(), allDevices.size());
+	for (size_t idx = 0; idx < numDevices; ++idx)
+	{
+		std::string device("gpu");
+		device += std::to_string(idx);
+		context.emplace_back();
+		context.back().first = device;
+		context.back().second = (devicesUsing[(unsigned int)idx] != 0);
+	}
+	context.emplace_back("debug", 0);
+
+	json << "\"context\" : {\n";
+	auto it = context.begin();
+	json << "\"" << it->first << "\":" << it->second;
+	++it;
+	for (; it != context.end(); ++it)
+	{
+		json << ",\n" << "\"" << it->first << "\":" << it->second;
+	}
+	json << "\n}" << std::endl;
+
+	json << "}" << std::endl;
+	json.close();
+
+	return true;
 }
 
 MStatus FireRenderExportCmd::doIt(const MArgList & args)
@@ -191,7 +332,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 				{
 					MDagPath& cameraPath = cameras[selectedCameraIdx];
 					MString cameraName = getNameByDagPath(cameraPath);
-					if (std::string(selectedCameraName.asChar()).find(std::string(cameraName.asChar())) != std::string::npos)
+					if (selectedCameraName == cameraName)
 					{
 						context.setCamera(cameras[selectedCameraIdx], true);
 						break;
@@ -308,6 +449,13 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			// launch export
 			rpr_int statusExport = rprsExport(newFilePath.asChar(), context.context(), context.scene(),
 				0, 0, 0, 0, 0, 0, exportFlags);
+
+			// save config
+			bool res = SaveExportConfig(filePath.asChar(), context, fileName.asChar());
+			if (!res)
+			{
+				MGlobal::displayError("Unable to export render config!\n");
+			}
 
 			if (statusExport != RPR_SUCCESS)
 			{

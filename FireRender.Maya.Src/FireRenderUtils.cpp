@@ -106,7 +106,8 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	tileSizeX(0),
 	tileSizeY(0),
 	cameraType(0),
-	useMPS(false)
+	useMPS(false),
+	useDetailedContextWorkLog(false)
 {
 
 }
@@ -402,6 +403,11 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("useMPS");
 		if (!plug.isNull())
 			useMPS = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("detailedLog");
+		if (!plug.isNull())
+			useDetailedContextWorkLog = plug.asBool();
+		
 
 		aovs.readFromGlobals(frGlobalsNode);
 
@@ -704,9 +710,8 @@ bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath)
 		transformNode.getAllPaths(pathArrayToTransform);
 	}
 
-	assert(pathArrayToTransform.length() == 1);
-
-	if (pathArrayToTransform.length() != 1)
+	int pathArrayLength = pathArrayToTransform.length();
+	if (pathArrayLength == 0)
 		return false;
 
 	// get shape (referenced by transform)
@@ -1394,6 +1399,27 @@ MDagPathArray GetSceneCameras(bool renderableOnly /*= false*/)
 	}
 
 	return cameras;
+}
+
+void GetResolutionFromCommonTab(unsigned int& width, unsigned int& height)
+{
+	MObject defaultResolutionObject;
+	MSelectionList slist;
+	slist.add("defaultResolution");
+	slist.getDependNode(0, defaultResolutionObject);
+
+	MFnDependencyNode globalsNode(defaultResolutionObject);
+	MPlug plug = globalsNode.findPlug("width");
+	if (!plug.isNull())
+	{
+		width = plug.asInt();
+	}
+
+	plug = globalsNode.findPlug("height");
+	if (!plug.isNull())
+	{
+		height = plug.asInt();
+	}
 }
 
 MStatus GetDefaultRenderGlobals(MObject& outGlobalsNode)
@@ -2110,7 +2136,6 @@ RenderQuality GetRenderQualityForRenderType(RenderType renderType)
 
 TahoePluginVersion GetTahoeVersionToUse()
 {
-#ifdef WIN32
 	MPlug plug = GetRadeonProRenderGlobalsPlug("tahoeVersion");
 
 	if (!plug.isNull())
@@ -2122,14 +2147,25 @@ TahoePluginVersion GetTahoeVersionToUse()
 		// plug should not be null
 		assert(false);
 	}
-#endif
 
 	return TahoePluginVersion::RPR1;
 }
 
 bool CheckIsInteractivePossible()
 {
-	return (GetTahoeVersionToUse() != TahoePluginVersion::RPR2 ||
-		GetRenderQualityForRenderType(RenderType::IPR) != RenderQuality::RenderQualityFull);
+	// return treu in anticipation that IPR For RPR2 would be fixed for the next Release.
+	return true;
 }
 
+// Backdoor to enable different AOVs from Render Settings in IPR and Viewport
+void EnableAOVsFromRSIfEnvVarSet(FireRenderContext& context, FireRenderAOVs& aovs)
+{
+	char* result = std::getenv("ENABLE_ADD_AOVS_FOR_INTERACTIVE");
+
+	if (result == nullptr || std::string(result) != "1")
+	{
+		return;
+	}
+
+	aovs.applyToContext(context);
+}
