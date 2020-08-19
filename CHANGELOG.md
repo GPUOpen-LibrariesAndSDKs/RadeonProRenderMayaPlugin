@@ -12,7 +12,7 @@
 -   The capability to assign a “Light Group ID” attribute to lights has been added. With the corresponding AOV, this allows artists to separate lighting via groups of lights.  
 -   Support for Image texture sequences for the Image File node has been added.
 -   Support for Maya GPU cache objects (Alembic files) has been added.
--   For users interested in testing the latest developments in the Radeon ProRender for Maya plugin, a weekly “Development Build” will be posted on future Fridays.  See https://github.com/GPUOpen-LibrariesAndSDKs/RadeonProRenderMayaPlugin/releases or follow the repository on github to get weekly updates.
+-   For users interested in testing the latest developments in the Radeon ProRender for Maya plugin, a weekly “Development Build” will be posted on future Mondays.  See https://github.com/GPUOpen-LibrariesAndSDKs/RadeonProRenderMayaPlugin/releases or follow the repository on github to get weekly updates.
 
 ## Fixed issues
 -   The SetRange, RemapHSV and RemapValue nodes now process faster.
