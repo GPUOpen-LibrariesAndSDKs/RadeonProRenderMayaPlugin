@@ -107,6 +107,12 @@ std::string ProcessFilePath(MString& in)
 		size_t found = out.find(tmpVar);
 
 		if (found == std::string::npos)
+		{
+			tmpVar = "${" + eVar.first + "}";
+			found = out.find(tmpVar);
+		}
+
+		if (found == std::string::npos)
 			continue;
 
 		out.replace(found, tmpVar.length(), eVar.second);
@@ -328,10 +334,14 @@ void GenerateIndicesByFvr(std::vector<int>& out, const RPRAlembicWrapper::Polygo
 	uint32_t idx = 0;
 	for (uint32_t faceCount : mesh->faceCounts)
 	{
+		uint32_t currIdx = idx;
+
 		for (uint32_t idxInPolygon = 0; idxInPolygon < faceCount; ++idxInPolygon)
 		{
 			out.push_back(idx++);
 		}
+
+		std::reverse(out.end() - faceCount, out.end());
 	}
 }
 
