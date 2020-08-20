@@ -415,7 +415,7 @@ void FireRenderGlobalsData::readFromCurrentScene()
 	});
 }
 
-int FireRenderGlobalsData::getThumbnailIterCount()
+int FireRenderGlobalsData::getThumbnailIterCount(bool* pSwatchesEnabled)
 {
 	MObject fireRenderGlobals;
 	GetRadeonProRenderGlobals(fireRenderGlobals);
@@ -423,12 +423,21 @@ int FireRenderGlobalsData::getThumbnailIterCount()
 	// Get Fire render globals attributes
 	MFnDependencyNode frGlobalsNode(fireRenderGlobals);
 
+	if (pSwatchesEnabled != nullptr)
+	{
+		MPlug plug = frGlobalsNode.findPlug("enableSwatches");
+		if (!plug.isNull())
+		{
+			*pSwatchesEnabled = plug.asBool();
+		}
+	}
+
 	MPlug plug = frGlobalsNode.findPlug("thumbnailIterationCount");
 	if (!plug.isNull())
 	{
 		return plug.asInt();
 	}
-
+	
 	return 0;
 }
 

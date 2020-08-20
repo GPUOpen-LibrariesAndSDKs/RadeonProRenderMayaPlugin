@@ -143,6 +143,7 @@ void FireRenderMaterialSwatchRender::processFromBackgroundThread()
 
 		swatchInstance.getContext().setDirty();
 		swatchInstance.getContext().m_restartRender = true;
+		swatchInstance.getContext().UpdateCompletionCriteriaForSwatch();
 
 		while (swatchInstance.getContext().keepRenderRunning())
 		{
