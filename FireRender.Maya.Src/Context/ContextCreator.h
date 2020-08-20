@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ********************************************************************/
 #pragma once
-#include "FireRenderContext.h"
+#include "TahoeContext.h"
 
 class ContextCreator
 {
@@ -19,7 +19,8 @@ public:
 	static FireRenderContextPtr CreateAppropriateContextForRenderQuality(RenderQuality quality);
 	static FireRenderContextPtr CreateAppropriateContextForRenderType(RenderType renderType);
 
+	static TahoeContextPtr CreateTahoeContext(TahoePluginVersion version);
+
 private:
 	static FireRenderContextPtr CreateHybridContext();
-	static FireRenderContextPtr CreateTahoeContext(TahoePluginVersion version);
 };
