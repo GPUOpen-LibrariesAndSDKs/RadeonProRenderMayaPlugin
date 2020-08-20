@@ -175,7 +175,7 @@ public:
 	static bool IsMotionBlur(MString name);
 
 	static void getCPUThreadSetup(bool& overriden, int& cpuThreadCount, RenderType renderType);
-	static int getThumbnailIterCount();
+	static int getThumbnailIterCount(bool* pSwatchesEnabled = nullptr);
 	static bool isExrMultichannelEnabled(void);
 
 public:

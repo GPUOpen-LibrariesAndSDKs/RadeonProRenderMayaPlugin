@@ -860,8 +860,24 @@ void FireRenderContext::initSwatchScene()
 	m_globals.readFromCurrentScene();
 	setupContext(m_globals);
 
+	UpdateCompletionCriteriaForSwatch();
+
+	setPreview();
+}
+
+void FireRenderContext::UpdateCompletionCriteriaForSwatch()
+{
 	CompletionCriteriaParams completionParams;
-	int iterations = FireRenderGlobalsData::getThumbnailIterCount();
+
+	bool enableSwatches = false;
+
+	int iterations = FireRenderGlobalsData::getThumbnailIterCount(&enableSwatches);
+
+	if (!enableSwatches)
+	{
+		iterations = 0;
+	}
+
 	completionParams.completionCriteriaMaxIterations = iterations;
 	completionParams.completionCriteriaMinIterations = iterations;
 
@@ -869,8 +885,6 @@ void FireRenderContext::initSwatchScene()
 
 	setSamplesPerUpdate(iterations);
 	setCompletionCriteria(completionParams);
-
-	setPreview();
 }
 
 long TimeDiff(time_t currTime, time_t startTime)

@@ -192,6 +192,8 @@ public:
 	// \param shaderObj Shader used to render the sphere
 	void initSwatchScene();
 
+	void UpdateCompletionCriteriaForSwatch();
+
 	// It resets frame buffer and reinitialize it if particular aov is enabled
 	void resetAOV(int index, rpr_GLuint* glTexture);
 
