@@ -82,46 +82,6 @@ void FireRenderGPUCache::Freshen()
 	FireRenderNode::Freshen();
 }
 
-std::string ProcessFilePath(MString& in)
-{
-	std::string out (in.asChar());
-
-	// find environmental variables in the string
-	std::map<std::string, std::string> eVars;
-	char *s = *environ;
-	int i = 1;
-	for (; s; i++) 
-	{
-		std::string tmp(s);
-		std::string varName = tmp.substr(0, tmp.find("="));
-		std::string varValue = tmp.substr(tmp.find("=")+1, tmp.length());
-
-		eVars[varName] = varValue;
-		s = *(environ + i);
-	};
-
-	// replace them with real path
-	for (auto& eVar : eVars)
-	{
-		std::string tmpVar = "%" + eVar.first + "%";
-		size_t found = out.find(tmpVar);
-
-		if (found == std::string::npos)
-			continue;
-
-		out.replace(found, tmpVar.length(), eVar.second);
-	}
-
-	// replace "\\" with "/"
-	static const string toBeReplace("\\");
-	while (out.find(toBeReplace) != std::string::npos)
-	{
-		out.replace(out.find(toBeReplace), toBeReplace.size(), "/");
-	}
-
-	return out;
-}
-
 void FireRenderGPUCache::ReadAlembicFile()
 {
 	MStatus res;
@@ -132,12 +92,12 @@ void FireRenderGPUCache::ReadAlembicFile()
 	MPlug plug = nodeFn.findPlug("cacheFileName", &res);
 	CHECK_MSTATUS(res);
 
-	MString cacheFilePath = ProcessFilePath(plug.asString(&res)).c_str();
+	std::string cacheFilePath = ProcessEnvVarsInFilePath(plug.asString(&res));
 	CHECK_MSTATUS(res);
 
 	try
 	{
-		m_archive = IArchive(Alembic::AbcCoreOgawa::ReadArchive(), cacheFilePath.asChar());
+		m_archive = IArchive(Alembic::AbcCoreOgawa::ReadArchive(), cacheFilePath);
 	}
 	catch (std::exception &e)
 	{
@@ -153,7 +113,7 @@ void FireRenderGPUCache::ReadAlembicFile()
 	uint32_t getNumTimeSamplings = m_archive.getNumTimeSamplings();
 
 	std::string errorMessage;
-	if (m_storage.open(cacheFilePath.asChar(), errorMessage) == false)
+	if (m_storage.open(cacheFilePath, errorMessage) == false)
 	{
 		errorMessage = "AlembicStorage::open error: " + errorMessage;
 		MGlobal::displayError(errorMessage.c_str());
@@ -328,10 +288,14 @@ void GenerateIndicesByFvr(std::vector<int>& out, const RPRAlembicWrapper::Polygo
 	uint32_t idx = 0;
 	for (uint32_t faceCount : mesh->faceCounts)
 	{
+		uint32_t currIdx = idx;
+
 		for (uint32_t idxInPolygon = 0; idxInPolygon < faceCount; ++idxInPolygon)
 		{
 			out.push_back(idx++);
 		}
+
+		std::reverse(out.end() - faceCount, out.end());
 	}
 }
 

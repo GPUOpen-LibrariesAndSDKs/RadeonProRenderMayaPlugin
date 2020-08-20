@@ -21,7 +21,7 @@ FireRenderContextPtr ContextCreator::CreateHybridContext()
 	return std::make_shared<HybridContext>();
 }
 
-FireRenderContextPtr ContextCreator::CreateTahoeContext(TahoePluginVersion version)
+TahoeContextPtr ContextCreator::CreateTahoeContext(TahoePluginVersion version)
 {
 	std::shared_ptr<TahoeContext> instance = std::make_shared<TahoeContext>();
 	instance->SetPluginEngine(version);
