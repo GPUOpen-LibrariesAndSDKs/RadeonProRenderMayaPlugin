@@ -184,11 +184,15 @@ global proc createViewportRenderPart()
     frameLayout -label "Other Settings" -cll false -cl 0 ViewportOtherCCSettings;
     columnLayout -cat left 20;
 
+	attrControlGrp
+		-label "Enable Swatches"
+		-attribute "RadeonProRenderGlobals.enableSwatches";
+
 	attrFieldSliderGrp
 		-label "Thumbnail\nIterations Count"
 		-attribute "RadeonProRenderGlobals.thumbnailIterationCount";
 
-    separator -height 5;
+    	separator -height 5;
 
 	attrControlGrp
 		-label "Render Mode"

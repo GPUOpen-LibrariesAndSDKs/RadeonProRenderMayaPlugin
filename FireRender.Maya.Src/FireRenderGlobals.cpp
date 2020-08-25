@@ -153,6 +153,7 @@ namespace
 		MObject maxDiffuseRayDepth;
 		MObject maxDepthGlossy;
 
+		MObject enableSwatches;
 		MObject thumbnailIterCount;
 		MObject renderMode;
 		MObject motionBlur;
@@ -981,6 +982,10 @@ void FireRenderGlobals::createViewportAttributes()
 	nAttr.setSoftMax(100);
 	nAttr.setMax(INT_MAX);
 	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::completionCriteriaMinIterations));
+
+	ViewportRenderAttributes::enableSwatches = nAttr.create("enableSwatches", "ses", MFnNumericData::kBoolean, true, &status);
+	MAKE_INPUT(nAttr);
+	addAsGlobalAttribute(nAttr);
 
 	ViewportRenderAttributes::thumbnailIterCount = nAttr.create("thumbnailIterationCount", "tic", MFnNumericData::kInt, 50, &status);
 	MAKE_INPUT(nAttr);

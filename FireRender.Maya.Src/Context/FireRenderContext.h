@@ -192,6 +192,8 @@ public:
 	// \param shaderObj Shader used to render the sphere
 	void initSwatchScene();
 
+	void UpdateCompletionCriteriaForSwatch();
+
 	// It resets frame buffer and reinitialize it if particular aov is enabled
 	void resetAOV(int index, rpr_GLuint* glTexture);
 
@@ -304,9 +306,9 @@ public:
 	virtual void compositeReflectionCatcherOutput(const ReadFrameBufferRequestParams& params);
 	virtual void compositeReflectionShadowCatcherOutput(const ReadFrameBufferRequestParams& params);
 
-	virtual void rifShadowCatcherOutput(const ReadFrameBufferRequestParams& params) {}
-	virtual void rifReflectionCatcherOutput(const ReadFrameBufferRequestParams& params) {}
-	virtual void rifReflectionShadowCatcherOutput(const ReadFrameBufferRequestParams& params) {}
+	virtual void rifShadowCatcherOutput(const ReadFrameBufferRequestParams& params);
+	virtual void rifReflectionCatcherOutput(const ReadFrameBufferRequestParams& params);
+	virtual void rifReflectionShadowCatcherOutput(const ReadFrameBufferRequestParams& params);
 
 	// Copy the frame buffer into temporary memory, if
 	// required, or directly into the supplied pixel buffer.
