@@ -358,6 +358,12 @@ void FireRenderPhysicalOverride::CreateGizmoGeometry(GizmoVertexVector& vertexVe
 	case PLTDirectional:
 		PhysicalLightGeometryUtility::FillGizmoGeometryForDirectionalLight(vertexVector, indexVector);
 		break;
+	case PLTDisk:
+		PhysicalLightGeometryUtility::FillGizmoGeometryForDiskLight(vertexVector, indexVector, data.diskAngle, data.diskRadius);
+		break;
+	case PLTSphere:
+		PhysicalLightGeometryUtility::FillGizmoGeometryForSphereLight(vertexVector, indexVector, data.sphereRadius);
+		break;
 	}
 }
 

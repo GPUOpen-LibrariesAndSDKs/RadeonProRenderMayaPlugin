@@ -248,12 +248,23 @@ bool PhysicalLightGeometryUtility::FillGizmoGeometryForDirectionalLight(GizmoVer
 
 	AddArrowForDirectional(vertices, indices, xOffset, 0.25f, arrowWidthSmall, rotAngle);
 	AddArrowForDirectional(vertices, indices, -xOffset, 0.25f, arrowWidthSmall , -rotAngle);
+
 	return true;
 }
 
 bool PhysicalLightGeometryUtility::FillGizmoGeometryForPointLight(GizmoVertexVector& vertices, IndexVector& indices)
 {
 	return false;
+}
+
+bool PhysicalLightGeometryUtility::FillGizmoGeometryForDiskLight(GizmoVertexVector& vertexVector, IndexVector& indexVector, float diskAngle, float diskRadius)
+{
+	return true;
+}
+
+bool PhysicalLightGeometryUtility::FillGizmoGeometryForSphereLight(GizmoVertexVector& vertexVector, IndexVector& indexVector, float sphereRadius)
+{
+	return true;
 }
 
 // Shape for mesh while rendering in RPR

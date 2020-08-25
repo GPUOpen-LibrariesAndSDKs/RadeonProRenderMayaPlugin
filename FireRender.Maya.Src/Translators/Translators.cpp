@@ -410,6 +410,34 @@ namespace FireMaya
 					checkStatus(frstatus);
 					break;
 				}
+				case PLTSphere:
+					if (!update)
+					{
+						frlight.light = frcontext.CreateSphereLight();
+					}
+
+					frstatus = rprSphereLightSetRadiantPower3f(frlight.light.Handle(), color.r, color.g, color.b);
+					checkStatus(frstatus);
+
+					frstatus = rprSphereLightSetRadius(frlight.light.Handle(), lightData.sphereRadius);
+					checkStatus(frstatus);
+					break;
+
+				case PLTDisk:
+					if (!update)
+					{
+						frlight.light = frcontext.CreateDiskLight();
+					}
+
+					frstatus = rprDiskLightSetRadiantPower3f(frlight.light.Handle(), color.r, color.g, color.b);
+					checkStatus(frstatus);
+
+					frstatus = rprDiskLightSetRadius(frlight.light.Handle(), lightData.diskRadius);
+					checkStatus(frstatus);
+
+					frstatus = rprDiskLightSetAngle(frlight.light.Handle(), lightData.diskAngle);
+					checkStatus(frstatus);
+					break;
 
 				case PLTUnknown:
 					return false;

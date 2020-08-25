@@ -80,6 +80,14 @@ public:
 	static MObject spotLightInnerConeAngle;
 	static MObject spotLightOuterConeFalloff;
 
+	// Sphere Light
+	static MObject sphereLightRadius;
+
+	// Disk light
+	static MObject diskLightRadius;
+	static MObject diskLightAngle;
+
+
 	//Light Decay
 	static MObject decayType;
 	static MObject decayFalloffStart;
@@ -100,7 +108,9 @@ private:
 	static void CreateGeneralAttributes();
 	static void CreateIntensityAttributes();
 	static void CreateAreaLightAttrbutes();
+	static void CreateSphereLightAttrbutes();
 	static void CreateSpotLightAttrbutes();
+	static void CreateDiskLightAttrbutes();
 	static void CreateDecayAttrbutes();
 	static void CreateShadowsAttrbutes();
 	static void CreateVolumeAttrbutes();
