@@ -222,16 +222,18 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		return MS::kFailure;
 	}
 
-	MString filePath;
+	MString inFilePath;
 	if (argData.isFlagSet(kFilePathFlag))
 	{
-		argData.getFlagArgument(kFilePathFlag, 0, filePath);
+		argData.getFlagArgument(kFilePathFlag, 0, inFilePath);
 	}
 	else
 	{
 		MGlobal::displayError("File path is missing, use -file flag");
 		return MS::kFailure;
 	}
+
+	std::string filePath = ProcessEnvVarsInFilePath(inFilePath);
 
 	MString materialName;
 	if (argData.isFlagSet(kMaterialFlag))
@@ -348,19 +350,20 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		}
 
 		// process file path
-		MString fileName;
-		MString fileExtension = "rpr";
+		std::string fileName;
+		std::string fileExtension = "rpr";
 
 		// Remove extension from file name, because it would be added later
-		int fileExtensionIndex = filePath.rindexW("." + fileExtension);
+		size_t fileExtensionIndex = filePath.find("." + fileExtension);
 		bool fileExtensionNotProvided = fileExtensionIndex == -1;
+
 		if (fileExtensionNotProvided)
 		{
 			fileName = filePath;
 		}
 		else
 		{
-			fileName = filePath.substringW(0, fileExtensionIndex - 1);
+			fileName = filePath.substr(0, fileExtensionIndex);
 		}
 
 		// read file name pattern and padding
@@ -389,7 +392,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			context.Freshen();
 
 			// update file path
-			MString newFilePath;
+			std::string newFilePath;
 			if (isSequenceExportEnabled)
 			{
 				std::regex name_regex("name");
@@ -399,14 +402,14 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 				std::string pattern = namePattern.asChar();
 
 				// Replace extension at first, because it shouldn't match name_regex or frame_regex for given .rpr format
-				std::string result = std::regex_replace(pattern, extension_regex, fileExtension.asChar());
+				std::string result = std::regex_replace(pattern, extension_regex, fileExtension);
 
 				std::stringstream frameStream;
 				frameStream << std::setfill('0') << std::setw(framePadding) << frame;
 				result = std::regex_replace(result, frame_regex, frameStream.str().c_str());
 
 				// Replace name after all operations, because it could match frame or extension regex
-				result = std::regex_replace(result, name_regex, fileName.asChar());
+				result = std::regex_replace(result, name_regex, fileName);
 
 				newFilePath = result.c_str();
 			}
@@ -447,11 +450,11 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			#endif
 
 			// launch export
-			rpr_int statusExport = rprsExport(newFilePath.asChar(), context.context(), context.scene(),
+			rpr_int statusExport = rprsExport(newFilePath.c_str(), context.context(), context.scene(),
 				0, 0, 0, 0, 0, 0, exportFlags);
 
 			// save config
-			bool res = SaveExportConfig(filePath.asChar(), context, fileName.asChar());
+			bool res = SaveExportConfig(filePath.c_str(), context, fileName.c_str());
 			if (!res)
 			{
 				MGlobal::displayError("Unable to export render config!\n");

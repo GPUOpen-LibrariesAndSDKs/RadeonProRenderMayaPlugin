@@ -28,9 +28,11 @@ limitations under the License.
 #include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFileObject.h>
+
 #include <cassert>
 #include <vector>
 #include <time.h>
+#include <iostream>
 
 #include "attributeNames.h"
 #include "OptionVarHelpers.h"
@@ -415,7 +417,7 @@ void FireRenderGlobalsData::readFromCurrentScene()
 	});
 }
 
-int FireRenderGlobalsData::getThumbnailIterCount()
+int FireRenderGlobalsData::getThumbnailIterCount(bool* pSwatchesEnabled)
 {
 	MObject fireRenderGlobals;
 	GetRadeonProRenderGlobals(fireRenderGlobals);
@@ -423,12 +425,21 @@ int FireRenderGlobalsData::getThumbnailIterCount()
 	// Get Fire render globals attributes
 	MFnDependencyNode frGlobalsNode(fireRenderGlobals);
 
+	if (pSwatchesEnabled != nullptr)
+	{
+		MPlug plug = frGlobalsNode.findPlug("enableSwatches");
+		if (!plug.isNull())
+		{
+			*pSwatchesEnabled = plug.asBool();
+		}
+	}
+
 	MPlug plug = frGlobalsNode.findPlug("thumbnailIterationCount");
 	if (!plug.isNull())
 	{
 		return plug.asInt();
 	}
-
+	
 	return 0;
 }
 
@@ -2169,3 +2180,77 @@ void EnableAOVsFromRSIfEnvVarSet(FireRenderContext& context, FireRenderAOVs& aov
 
 	aovs.applyToContext(context);
 }
+
+#ifdef __APPLE__ // https://stackoverflow.com/questions/31346887/header-for-environ-on-mac
+extern char **environ;
+#endif
+
+class EnvironmentVarsWrapper
+{
+public:
+	static const std::map<std::string, std::string>& GetEnvVarsTable(void)
+	{
+		static EnvironmentVarsWrapper instance;
+
+		return instance.m_eVars;
+	}
+
+	EnvironmentVarsWrapper(EnvironmentVarsWrapper const&) = delete;
+	void operator=(EnvironmentVarsWrapper const&) = delete;
+
+private:
+	EnvironmentVarsWrapper(void) 
+	{
+		char *pEnvVarPair = *environ;
+		for (int idx = 1; pEnvVarPair; idx++)
+		{
+			std::string tmp(pEnvVarPair);
+			size_t delimiter = tmp.find("=");
+			std::string varName = tmp.substr(0, delimiter);
+			std::string varValue = tmp.substr(delimiter + 1, tmp.length());
+
+			m_eVars[varName] = varValue;
+			pEnvVarPair = *(environ + idx);
+		};
+	}
+
+private:
+	std::map<std::string, std::string> m_eVars;
+};
+
+
+std::string ProcessEnvVarsInFilePath(const MString& in)
+{
+	std::string out(in.asUTF8());
+
+	const std::map<std::string, std::string>& eVars = EnvironmentVarsWrapper::GetEnvVarsTable();
+
+	// find environmen variables in the string
+	// and replace them with real path
+	for (auto& eVar : eVars)
+	{
+		std::string tmpVar = "%" + eVar.first + "%";
+		size_t found = out.find(tmpVar);
+
+		if (found == std::string::npos)
+		{
+			tmpVar = "${" + eVar.first + "}";
+			found = out.find(tmpVar);
+		}
+
+		if (found == std::string::npos)
+			continue;
+
+		out.replace(found, tmpVar.length(), eVar.second);
+	}
+
+	// replace "\\" with "/"
+	static const std::string toBeReplace("\\");
+	while (out.find(toBeReplace) != std::string::npos)
+	{
+		out.replace(out.find(toBeReplace), toBeReplace.size(), "/");
+	}
+
+	return out;
+}
+
