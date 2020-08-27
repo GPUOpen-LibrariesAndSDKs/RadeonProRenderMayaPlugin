@@ -39,6 +39,8 @@ public:
 	bool IsHairSupported() const override { return false; }
 	bool IsVolumeSupported() const override { return false; }
 
+	bool IsPhysicalLightTypeSupported(PLType lightType) const override;
+
 	bool IsShaderSupported(frw::ShaderType type) const override;
 	bool IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) const override;
 	frw::Shader GetDefaultColorShader(frw::Value color) override;

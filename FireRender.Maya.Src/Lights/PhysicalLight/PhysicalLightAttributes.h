@@ -44,6 +44,9 @@ public:
 
 	static void GetSpotLightSettings(const MFnDependencyNode& node, float& innerAngle, float& outerfalloff);
 
+	static void GetDiskLightSettings(const MFnDependencyNode& node, float& radius, float& angle);
+	static void GetSphereLightSettings(const MFnDependencyNode& node, float& radius);
+
 	static bool GetShadowsEnabled(const MFnDependencyNode& node);
 	static float GetShadowsSoftnessAngle(const MFnDependencyNode& node);
 	static MString GetAreaLightMeshSelectedName(const MFnDependencyNode& node);

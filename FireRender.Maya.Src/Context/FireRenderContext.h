@@ -604,6 +604,8 @@ public:
 	virtual bool IsHairSupported() const override { return true; }
 	virtual bool IsVolumeSupported() const override { return true; }
 
+	virtual bool IsPhysicalLightTypeSupported(PLType lightType) const { return true; }
+
 	virtual bool IsShaderSupported(frw::ShaderType type) const override { return true; }
 
 	virtual bool IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) const override { return true; }

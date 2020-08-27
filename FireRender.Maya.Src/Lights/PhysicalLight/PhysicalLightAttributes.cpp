@@ -200,12 +200,12 @@ void PhysicalLightAttributes::CreateSpotLightAttrbutes()
 
 void PhysicalLightAttributes::CreateSphereLightAttrbutes()
 {
-	CreateFloatAttribute(sphereLightRadius, "sphereLightRadius", "slr", 0.0f, 1000.0f, 0.1f);
+	CreateFloatAttribute(sphereLightRadius, "sphereLightRadius", "slr", 0.0f, 1.0f, 0.1f);
 }
 
 void PhysicalLightAttributes::CreateDiskLightAttrbutes()
 {
-	CreateFloatAttribute(diskLightRadius, "diskLightRadius", "dlr", 0.0f, 1000.0f, 0.1f);
+	CreateFloatAttribute(diskLightRadius, "diskLightRadius", "dlr", 0.0f, 10.0f, 0.1f);
 	CreateFloatAttribute(diskLightAngle, "diskLightAngle", "dla", 0.0f, 179.0f, 45.0f);
 }
 
@@ -376,6 +376,18 @@ void PhysicalLightAttributes::GetSpotLightSettings(const MFnDependencyNode& node
 	innerAngle = GetFloatAttribute(node, PhysicalLightAttributes::spotLightInnerConeAngle);
 	outerfalloff = GetFloatAttribute(node, PhysicalLightAttributes::spotLightOuterConeFalloff);
 }
+
+void PhysicalLightAttributes::GetDiskLightSettings(const MFnDependencyNode& node, float& radius, float& angle)
+{
+	radius = GetFloatAttribute(node, PhysicalLightAttributes::diskLightRadius);
+	angle = GetFloatAttribute(node, PhysicalLightAttributes::diskLightAngle);
+}
+
+void PhysicalLightAttributes::GetSphereLightSettings(const MFnDependencyNode& node, float& radius)
+{
+	radius = GetFloatAttribute(node, PhysicalLightAttributes::sphereLightRadius);
+}
+
 
 bool PhysicalLightAttributes::GetShadowsEnabled(const MFnDependencyNode& node)
 {

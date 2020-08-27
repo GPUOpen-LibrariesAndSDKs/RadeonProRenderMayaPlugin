@@ -187,6 +187,16 @@ bool HybridContext::IsRenderQualitySupported(RenderQuality quality) const
 	return quality != RenderQuality::RenderQualityFull;
 }
 
+bool HybridContext::IsPhysicalLightTypeSupported(PLType lightType) const
+{
+	if (lightType == PLTDisk || lightType == PLTSphere)
+	{
+		return false;
+	}
+
+	return true;
+}
+
 bool HybridContext::IsShaderSupported(frw::ShaderType type) const 
 {
 	// Hybrid supports only Uber and Emissive shaders
