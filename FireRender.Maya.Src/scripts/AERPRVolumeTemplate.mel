@@ -301,6 +301,45 @@ global proc onEmissionGridSelectClicked()
 	setAttr $attrName -type "string" $selectedItems[0];
 }
 
+global proc uiVDBFileSchemaNew( string $attr )
+{
+	optionMenu 
+		-label "Frame Extention" 
+		-enable true 
+		vdbSequenceNamingSchema;
+	menuItem 
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt3")) 
+		-data 0
+		mayaSoftwareNameDotFrameDotExtension;
+	menuItem 
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt4")) 
+		-data 1
+		mayaSoftwareNameDotExtensionDotFrame;
+	menuItem 
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt5")) 
+		-data 2
+		mayaSoftwareNameDotFrame;
+	menuItem 
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt6")) 
+		-data 3
+		mayaSoftwareFrameDotExtension;
+	menuItem 
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt7")) 
+		-data 4
+		mayaSoftwareNameUnderFrameDotExtension;
+		
+    connectControl vdbSequenceNamingSchema $attr;
+
+    setParent ..;
+}
+
+global proc uiVDBFileSchemaReplace( string $attr )
+{
+    connectControl vdbSequenceNamingSchema $attr;
+    
+    setParent ..;
+}
+
 global proc AERPRVolumeTemplate(string $nodeName)
 {
 	editorTemplate -beginScrollLayout;
@@ -310,6 +349,11 @@ global proc AERPRVolumeTemplate(string $nodeName)
 				editorTemplate -callCustom "importVDBFilePathNew" "importVDBFilePathReplace" "VdbFilePath";
 			}
 			editorTemplate -endLayout;
+			editorTemplate -beginLayout "Sequence Naming Schema" -collapse 0;
+			{
+				editorTemplate -callCustom "uiVDBFileSchemaNew" "uiVDBFileSchemaReplace" "namingSchema";
+			}
+
 		editorTemplate -endLayout;
 
 		editorTemplate -beginLayout "Albedo" -collapse 0 AlbedoLayout;
