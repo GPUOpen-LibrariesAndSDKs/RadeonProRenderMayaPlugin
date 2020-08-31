@@ -92,7 +92,7 @@ void FireRenderGPUCache::ReadAlembicFile()
 	MPlug plug = nodeFn.findPlug("cacheFileName", &res);
 	CHECK_MSTATUS(res);
 
-	std::string cacheFilePath = ProcessEnvVarsInFilePath(plug.asString(&res));
+	std::string cacheFilePath = ProcessEnvVarsInFilePath<std::string, char>(plug.asString(&res).asChar());
 	CHECK_MSTATUS(res);
 
 	try
