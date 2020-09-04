@@ -1287,8 +1287,6 @@ global proc string createFireRenderImageFormatControl()
 	return "imageMenuMayaSW";
 }
 
-global string $exrCheckbox = "";
-
 global proc updateFireRenderImageFormatControl()
 {
 	string $oldParent = `setParent -query`;
@@ -1347,13 +1345,7 @@ global proc updateFireRenderImageFormatControl()
 	//update the Multiple camera frame buffer naming control
 	updateFireRenderMultiCameraBufferNamingMenu();
 
-	global string $exrCheckbox;
-	if ($exrCheckbox != "")
-	{
-		checkBox -edit 
-			-enable ($imageNum == 40) 
-			$exrCheckbox; 
-	};
+	attrControlGrp -edit -enable ($imageNum == 40) exrSaveAllAOVsCheckbox;
 }
 
 global proc changeFireRenderImageFormat()
@@ -1982,16 +1974,6 @@ proc createCommonColorMgt()
 	scriptJob -event "colorMgtConfigChanged" $outputChangedCb;
 }
 
-global proc onExrCheckbox()
-{
-	setAttr RadeonProRenderGlobals.enableExrMultilayer 1;
-}
-
-global proc offExrCheckbox()
-{
-	setAttr RadeonProRenderGlobals.enableExrMultilayer 0;
-}
-
 proc createCommonImageFile()
 //
 //  Procedure Name:
@@ -2032,15 +2014,10 @@ proc createCommonImageFile()
 		string $imageFormatControl = createFireRenderImageFormatControl();
 		int $item = `optionMenuGrp -q -sl $imageFormatControl` - 1;
 
-		global string $exrCheckbox;
-		$exrCheckbox = `checkBox 
-			-al "center" 
+		attrControlGrp
+			-attribute RadeonProRenderGlobals.enableExrMultilayer
 			-label "Save all AOVs to multilayer OpenEXR" 
-			-onCommand "onExrCheckbox"
-			-offCommand "offExrCheckbox"
-			-en false 
-			-ann "Save all AOVs as channels in a single .exr file"
-			renderGlobalsEnableMultiAOV`;
+			exrSaveAllAOVsCheckbox;
 
 		createCompressorControl($item);
 

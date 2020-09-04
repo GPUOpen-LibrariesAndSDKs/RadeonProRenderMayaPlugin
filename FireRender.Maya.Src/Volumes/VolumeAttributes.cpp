@@ -20,6 +20,8 @@ limitations under the License.
 #include <maya/MDGModifier.h>
 #include <maya/MFnStringArrayData.h>
 #include <maya/MArrayDataBuilder.h>
+#include <maya/MAnimControl.h>
+#include <maya/MTime.h>
 
 #pragma warning(push)
 #pragma warning(disable : 4244)
@@ -29,10 +31,12 @@ limitations under the License.
 
 #include <array>
 #include <fstream>
+#include <regex>
 
 
 // general
 MObject RPRVolumeAttributes::vdbFile;
+MObject RPRVolumeAttributes::namingSchema;
 MObject RPRVolumeAttributes::loadedGrids;
 
 // channels
@@ -204,6 +208,12 @@ void RPRVolumeAttributes::Initialize()
 	status = addAttribute(vdbFile);
 	CHECK_MSTATUS(status);
 
+	// - naming schema (for sequence)
+	namingSchema = nAttr.create("namingSchema", "nmsh", MFnNumericData::kInt, 0);
+	CHECK_MSTATUS(status);
+	tAttr.setHidden(true);
+	setAttribProps(tAttr, namingSchema);
+
 	MFnStringData stringData; // use textScrollList for UI
 	MStatus status2;
 	loadedGrids = tAttr.create("loadedGrids", "loag", MFnData::kString, stringData.create(&status2), &status); //https://download.autodesk.com/us/maya/2011help/API/cgfx_shader_node_8cpp-example.html#_a24
@@ -279,20 +289,87 @@ MDataHandle RPRVolumeAttributes::GetVolumeGridDimentions(const MFnDependencyNode
 	return MDataHandle();
 }
 
-MString RPRVolumeAttributes::GetVDBFilePath(const MFnDependencyNode& node)
+bool ProcessSchema(int schemaId, int frame, std::string& filePath)
+{
+	const std::string& fileExtension ("vdb");
+
+	const static std::map<int, std::tuple<std::regex, std::regex, std::string>> mayaNamePattern =
+	{
+		{ 0, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.]+)+(\.)([0-9])+\.(vdb)$)"), std::regex(R"((\.)([0-9])+\.(vdb)$)"),	"name.#.ext"	}},
+		{ 1, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.]+)+(\.)(vdb)\.([0-9])+$)"), std::regex(R"((\.)(vdb)\.([0-9])+$)"),	"name.ext.#"	}},
+		{ 2, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.]+)+\.([0-9])+$)"),			std::regex(R"(\.([0-9])+$)"),			"name.#"		}},
+		{ 3, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.]+)+([0-9])+\.(vdb)$)"),		std::regex(R"(([0-9])+\.(vdb)$)"),		"name#.ext"		}},
+		{ 4, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.]+)+(\_)([0-9])+\.(vdb)$)"), std::regex(R"((\_)([0-9])+\.(vdb))"),	"name_#.ext"	}}
+	};
+
+	// get regex record corresponding to ui option
+	auto it = mayaNamePattern.find(schemaId);
+	if (it == mayaNamePattern.end())
+		return false;
+
+	// ui option matches with input file name / path => proceed
+	const std::regex& fullPathCheck = std::get<0>(it->second);
+	bool matches = std::regex_match(filePath.begin(), filePath.end(), fullPathCheck);
+	if (!matches)
+		return false;
+
+	// extract file name (without frame and extention)
+	std::smatch match;
+	const std::regex& getFilename = std::get<1>(it->second); //getFilename(R"(([a-zA-Z_]+)\_([0-9]+)\.(vdb)$)");
+	bool found = std::regex_search(filePath, match, getFilename);
+	assert(found);
+	std::string tail = match[0];
+	std::string filename = filePath.substr(0, filePath.find(tail));
+
+	// form output string
+	std::regex name_regex("name");
+	std::regex frame_regex("#");
+	std::regex extension_regex("ext");
+	const std::string pattern = std::get<2>(it->second);
+
+	filePath = std::regex_replace(pattern, extension_regex, fileExtension);
+	filePath = std::regex_replace(filePath, frame_regex, std::to_string(frame));
+	filePath = std::regex_replace(filePath, name_regex, filename);
+
+	return true;
+}
+
+std::string RPRVolumeAttributes::GetVDBFilePath(const MFnDependencyNode& node)
 {
 	MStatus status;
 
-	MPlug plug = node.findPlug(RPRVolumeAttributes::vdbFile, &status);
+	// get file name string
+	MPlug vdbFilePlug = node.findPlug(RPRVolumeAttributes::vdbFile, &status);
 	CHECK_MSTATUS(status);
 
-	assert(!plug.isNull());
-	if (!plug.isNull())
+	assert(!vdbFilePlug.isNull());
+	if (vdbFilePlug.isNull())
 	{
-		return plug.asString();
+		return "";
 	}
 
-	return MString();
+	std::string out;
+	out = vdbFilePlug.asString().asChar();
+	// - NIY => process env vars
+
+	// check if file exists
+	std::ifstream f(out);
+	bool fileExists = f.good();
+	if (!fileExists)
+		return "";
+
+	// get current animation frame
+	MTime currentTime = MAnimControl::currentTime();
+	double timeValue = currentTime.value();
+	MTime::Unit timeUnit = currentTime.uiUnit();
+	int currentAnimFrame = (int)timeValue;
+
+	// check if filename is part of sequence
+	MPlug vdbSchemaPlug = node.findPlug(RPRVolumeAttributes::namingSchema);
+	assert(!vdbSchemaPlug.isNull());
+	bool isSequence = ProcessSchema(vdbSchemaPlug.asInt(), currentAnimFrame, out);
+
+	return out;
 }
 
 bool RPRVolumeAttributes::GetAlbedoEnabled(const MFnDependencyNode& node)
@@ -559,7 +636,7 @@ void ProcessTemperatureGrid(
 void RPRVolumeAttributes::SetupVolumeFromFile(MObject& node, FireRenderVolumeLocator::GridParams& gridParams)
 {
 	// get .vdb file from UI form
-	std::string filename = GetVDBFilePath(node).asChar();
+	std::string filename = GetVDBFilePath(node);
 	if (filename.empty())
 		return;
 
@@ -627,7 +704,7 @@ void RPRVolumeAttributes::FillVolumeData(VDBVolumeData& data, const MObject& nod
 {
 	MFnDependencyNode depNode(node);
 
-	std::string filename = GetVDBFilePath(depNode).asChar();
+	std::string filename = GetVDBFilePath(depNode);
 	if (filename.empty())
 		return;
 

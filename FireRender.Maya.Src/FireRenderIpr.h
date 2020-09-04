@@ -148,6 +148,8 @@ private:
 
 	bool m_needsContextRefresh;
 
+	unsigned int m_currentAOVToDisplay;
+
 	/** True if a render view update is scheduled. */
 	tbb::atomic<bool> m_renderViewUpdateScheduled;
 

@@ -2181,76 +2181,85 @@ void EnableAOVsFromRSIfEnvVarSet(FireRenderContext& context, FireRenderAOVs& aov
 	aovs.applyToContext(context);
 }
 
-#ifdef __APPLE__ // https://stackoverflow.com/questions/31346887/header-for-environ-on-mac
-extern char **environ;
-#endif
-
-class EnvironmentVarsWrapper
+template<>
+char** GetEnviron(void)
 {
-public:
-	static const std::map<std::string, std::string>& GetEnvVarsTable(void)
-	{
-		static EnvironmentVarsWrapper instance;
-
-		return instance.m_eVars;
-	}
-
-	EnvironmentVarsWrapper(EnvironmentVarsWrapper const&) = delete;
-	void operator=(EnvironmentVarsWrapper const&) = delete;
-
-private:
-	EnvironmentVarsWrapper(void) 
-	{
-		char *pEnvVarPair = *environ;
-		for (int idx = 1; pEnvVarPair; idx++)
-		{
-			std::string tmp(pEnvVarPair);
-			size_t delimiter = tmp.find("=");
-			std::string varName = tmp.substr(0, delimiter);
-			std::string varValue = tmp.substr(delimiter + 1, tmp.length());
-
-			m_eVars[varName] = varValue;
-			pEnvVarPair = *(environ + idx);
-		};
-	}
-
-private:
-	std::map<std::string, std::string> m_eVars;
-};
-
-
-std::string ProcessEnvVarsInFilePath(const MString& in)
-{
-	std::string out(in.asUTF8());
-
-	const std::map<std::string, std::string>& eVars = EnvironmentVarsWrapper::GetEnvVarsTable();
-
-	// find environmen variables in the string
-	// and replace them with real path
-	for (auto& eVar : eVars)
-	{
-		std::string tmpVar = "%" + eVar.first + "%";
-		size_t found = out.find(tmpVar);
-
-		if (found == std::string::npos)
-		{
-			tmpVar = "${" + eVar.first + "}";
-			found = out.find(tmpVar);
-		}
-
-		if (found == std::string::npos)
-			continue;
-
-		out.replace(found, tmpVar.length(), eVar.second);
-	}
-
-	// replace "\\" with "/"
-	static const std::string toBeReplace("\\");
-	while (out.find(toBeReplace) != std::string::npos)
-	{
-		out.replace(out.find(toBeReplace), toBeReplace.size(), "/");
-	}
-
-	return out;
+	return environ;
 }
 
+template<>
+wchar_t** GetEnviron(void)
+{
+#ifndef __APPLE__
+	return _wenviron;
+#else
+	return nullptr;
+#endif
+}
+
+bool IsUnicodeSystem(void)
+{
+#ifdef __APPLE__
+	return false;
+#else
+	return GetEnviron<wchar_t*>() != nullptr;
+#endif
+}
+
+template <>
+std::pair<std::string, std::string> GetPathDelimiter(void)
+{ 
+	return std::make_pair(std::string("\\\\"), std::string("\\")); 
+}
+
+template <>
+std::pair<std::wstring, std::wstring> GetPathDelimiter(void)
+{ 
+	return std::make_pair(std::wstring(L"\\\\"), std::wstring(L"\\"));
+}
+
+template <>
+size_t FindDelimiter(std::string& tmp)
+{
+	return tmp.find("=");
+}
+
+template <>
+size_t FindDelimiter(std::wstring& tmp)
+{
+	return tmp.find(L"=");
+}
+
+template <>
+std::tuple<std::string, std::string> ProcessEVarSchema(const std::string& eVar)
+{
+	return std::make_tuple(std::string("%" + eVar + "%"), std::string("${" + eVar + "}"));
+}
+
+template <>
+std::tuple<std::wstring, std::wstring> ProcessEVarSchema(const std::wstring& eVar)
+{
+	return std::make_tuple(std::wstring(L"%" + eVar + L"%"), std::wstring(L"${" + eVar + L"}"));
+}
+
+// m_createMayaSoftwareCommonGlobalsTab.kExt3 = name.#.ext <= and corresponding pattern on non-English Mayas
+void GetUINameFrameExtPattern(std::wstring& nameOut, std::wstring& extOut)
+{
+	MString command = R"(
+		proc string _mayaVarToPlugin() 
+		{
+			return (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt3"));
+		}
+		_mayaVarToPlugin();
+	)";
+	MString result;
+	MStatus res = MGlobal::executeCommand(command, result);
+	CHECK_MSTATUS(res);
+
+	nameOut = result.asWChar();
+	size_t firstDelimiter = nameOut.find(L".");
+	size_t lastDelimiter = nameOut.rfind(L".");
+
+	extOut = nameOut.substr(lastDelimiter + 1, nameOut.length() - 1);
+	nameOut = nameOut.substr(0, firstDelimiter);
+}

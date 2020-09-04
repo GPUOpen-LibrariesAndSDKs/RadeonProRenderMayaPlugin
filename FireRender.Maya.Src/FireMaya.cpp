@@ -900,7 +900,7 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 		MAIN_THREAD_ONLY; // MTextureManager will not work in other threads
 		DebugPrint("Loading Image: %s in colorSpace: %s", texturePath.asUTF8(), colorSpace.asUTF8());
 
-		std::string processedTexturePath = ProcessEnvVarsInFilePath(texturePath);
+		std::string processedTexturePath = ProcessEnvVarsInFilePath<std::string, char>(texturePath.asChar());
 
 		frw::Image image;
 

@@ -147,7 +147,7 @@ void FireRenderVolumeLocator::onAttributeChanged(MNodeMessage::AttributeMessage 
 	FireRenderVolumeLocator* rprVolumeLocatorNode = static_cast<FireRenderVolumeLocator*> (clientData);
 	MObject mobj = rprVolumeLocatorNode->thisMObject();
 
-	if (plug == RPRVolumeAttributes::vdbFile)
+	if ((plug == RPRVolumeAttributes::vdbFile) || (plug == RPRVolumeAttributes::namingSchema))
 	{
 		RPRVolumeAttributes::SetupVolumeFromFile(mobj, rprVolumeLocatorNode->m_gridParams);
 	}

@@ -41,7 +41,8 @@ FireRenderIpr::FireRenderIpr() :
 	m_isRegion(false),
 	m_renderStarted(false),
 	m_needsContextRefresh(false),
-	m_previousSelectionList()
+	m_previousSelectionList(),
+	m_currentAOVToDisplay(RPR_AOV_COLOR)
 {
 	m_renderViewUpdateScheduled = false;
 }
@@ -156,13 +157,15 @@ bool FireRenderIpr::start()
 		m_contextPtr = ContextCreator::CreateAppropriateContextForRenderType(RenderType::IPR);
 		m_contextPtr->SetRenderType(RenderType::IPR);
 
-		//enable AOV-COLOR and Variance so that it can be resolved and used properly
-		m_contextPtr->enableAOV(RPR_AOV_COLOR);
-		m_contextPtr->enableAOV(RPR_AOV_VARIANCE);
-
 		// Enable SC related AOVs if they was turned on
 		FireRenderGlobalsData globals;
 		globals.readFromCurrentScene();
+
+		m_currentAOVToDisplay = globals.aovs.getRenderViewAOV().id;
+
+		m_contextPtr->enableAOV(m_currentAOVToDisplay);
+		m_contextPtr->enableAOV(RPR_AOV_COLOR);
+		m_contextPtr->enableAOV(RPR_AOV_VARIANCE);
 
 		if (globals.aovs.getAOV(RPR_AOV_OPACITY)->active)
 			m_contextPtr->enableAOV(RPR_AOV_OPACITY);
@@ -532,8 +535,9 @@ void FireRenderIpr::readFrameBuffer()
 	// We need to made SC merge here, but we don't want to do opacity merge 
 	// since we render in interactive mode
 	FireRenderContext::ReadFrameBufferRequestParams params(m_region);
+
 	params.pixels = m_pixels.data();
-	params.aov = RPR_AOV_COLOR;
+	params.aov = m_currentAOVToDisplay;
 	params.width = m_contextPtr->width();
 	params.height = m_contextPtr->height();
 	params.flip = true;
