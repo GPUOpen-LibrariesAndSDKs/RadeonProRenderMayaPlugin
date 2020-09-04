@@ -607,6 +607,7 @@ void FireRenderIpr::globalsChangedCallback(MNodeMessage::AttributeMessage msg, M
 
 bool FireRenderIpr::ShouldOldAOVBeDisabled(int aov)
 {
+	// We need to keep enabled both of these AOV because of Core restrictmenets. VARIANCE is used for adaptive sampling
 	if (m_currentAOVToDisplay == RPR_AOV_COLOR ||
 		m_currentAOVToDisplay == RPR_AOV_VARIANCE)
 	{
