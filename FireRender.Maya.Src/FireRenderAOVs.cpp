@@ -40,7 +40,7 @@ FireRenderAOVs::FireRenderAOVs() :
 	AddAOV(RPR_AOV_UV, "aovUV", "UV", "uv", { { "U", "V", "W" },
 		{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::POINT } });
 
-	AddAOV(RPR_AOV_MATERIAL_IDX, "aovMaterialIndex", "Material Index", "material_index",
+	AddAOV(RPR_AOV_MATERIAL_ID, "aovMaterialIndex", "Material Index", "material_index",
 		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
 
 	AddAOV(RPR_AOV_GEOMETRIC_NORMAL, "aovGeometricNormal", "Geometric Normal", "geometric_normal",
