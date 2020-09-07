@@ -87,6 +87,8 @@ public:
 	/** Gets number of AOVs */
 	int getNumberOfAOVs();
 
+	bool IsAOVActive(unsigned int aov) const;
+
 	MString GetEXRCompressionType() const;
 	TypeDesc::BASETYPE GetChannelFormat() const;
 
