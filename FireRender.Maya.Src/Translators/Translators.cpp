@@ -421,6 +421,11 @@ namespace FireMaya
 
 					frstatus = rprSphereLightSetRadius(frlight.light.Handle(), lightData.sphereRadius);
 					checkStatus(frstatus);
+
+					if (!IsAlmostEqual(mfloats[0][0], mfloats[1][1]) || !IsAlmostEqual(mfloats[0][0], mfloats[2][2]) )
+					{
+						MGlobal::displayWarning("Non-uniform scaling for spehre light detected. Might lead to graphical artifacts!");
+					}
 					break;
 
 				case PLTDisk:
