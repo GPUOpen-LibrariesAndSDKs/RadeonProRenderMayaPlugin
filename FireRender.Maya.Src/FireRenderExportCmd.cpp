@@ -133,7 +133,7 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 		,{RPR_AOV_OPACITY, L"opacity" }
 		,{RPR_AOV_WORLD_COORDINATE, L"world.coordinate" }
 		,{RPR_AOV_UV, L"uv" }
-		,{RPR_AOV_MATERIAL_IDX, L"material.id" }
+		,{RPR_AOV_MATERIAL_ID, L"material.id" }
 		,{RPR_AOV_GEOMETRIC_NORMAL, L"normal.geom" }
 		,{RPR_AOV_SHADING_NORMAL, L"normal" }
 		,{RPR_AOV_DEPTH, L"depth" }
