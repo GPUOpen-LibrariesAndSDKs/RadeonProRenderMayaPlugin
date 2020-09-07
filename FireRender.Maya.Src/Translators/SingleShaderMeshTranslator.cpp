@@ -99,7 +99,7 @@ void FireMaya::SingleShaderMeshTranslator::TranslateMesh(
 		triangleVertexIndices.data(), sizeof(rpr_int),
 		triangleNormalIndices.data(), sizeof(rpr_int),
 		puvIndices.data(), texIndexStride.data(),
-		std::vector<int>(triangleVertexIndices.size() / 3, 3).data(), triangleVertexIndices.size() / 3);
+		std::vector<int>(triangleVertexIndices.size() / 3, 3).data(), triangleVertexIndices.size() / 3, fnMesh.name().asChar());
 
 	if (!vertexColors.empty())
 	{

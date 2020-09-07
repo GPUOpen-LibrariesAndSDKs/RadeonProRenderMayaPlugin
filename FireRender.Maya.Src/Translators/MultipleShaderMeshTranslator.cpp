@@ -37,7 +37,7 @@ void FireMaya::MultipleShaderMeshTranslator::TranslateMesh(
 	ChangeUVArrsSizes(shaderData.data(), outElements.size(), meshPolygonData.uvSetNames.length());
 
 	// export shader data to context
-	CreateRPRMeshes(outElements, context, shaderData.data(), meshPolygonData.uvCoords, outElements.size(), meshPolygonData.uvSetNames.length());
+	CreateRPRMeshes(outElements, context, shaderData.data(), meshPolygonData.uvCoords, outElements.size(), meshPolygonData.uvSetNames.length(), fnMesh);
 }
 
 void FireMaya::MultipleShaderMeshTranslator::AddPolygonMultipleShader(
@@ -321,7 +321,8 @@ void FireMaya::MultipleShaderMeshTranslator::CreateRPRMeshes(
 	const MeshTranslator::MeshIdxDictionary* shaderData,
 	std::vector<std::vector<Float2> >& uvCoords,
 	const size_t elementCount,
-	const unsigned int uvSetCount)
+	const unsigned int uvSetCount,
+	const MFnMesh& fnMesh)
 {
 #ifdef OPTIMIZATION_CLOCK
 	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
@@ -370,7 +371,7 @@ void FireMaya::MultipleShaderMeshTranslator::CreateRPRMeshes(
 			currShaderData.vertexCoordsIndices.data(), sizeof(rpr_int),
 			currShaderData.normalIndices.data(), sizeof(rpr_int),
 			puvIndices.data(), texIndexStride.data(),
-			num_face_vertices.data(), num_faces
+			num_face_vertices.data(), num_faces, fnMesh.name().asChar()
 		);
 
 		if (!currShaderData.vertexColors.empty())

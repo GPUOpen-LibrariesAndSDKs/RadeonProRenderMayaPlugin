@@ -144,6 +144,10 @@ bool FireRenderIpr::start()
 	MStatus status = MGlobal::getActiveSelectionList(m_previousSelectionList);
 	CHECK_MSTATUS(status);
 
+	MObject radeonProRenderGlobalsNode;
+	GetRadeonProRenderGlobals(radeonProRenderGlobalsNode);
+	m_renderGlobalsCallback = MNodeMessage::addAttributeChangedCallback(radeonProRenderGlobalsNode, FireRenderIpr::globalsChangedCallback, this, &status);
+
 	auto ret = FireRenderThread::RunOnceAndWait<bool>([this, &showWarningDialog]()
 	{
 		// Stop before restarting if already running.
@@ -286,6 +290,12 @@ bool FireRenderIpr::stop()
 			FireRenderThread::RunItemsQueuedForTheMainThread();
 			this_thread::sleep_for(1ms);
 		}
+	}
+
+	if (m_renderGlobalsCallback)
+	{
+		MMessage::removeCallback(m_renderGlobalsCallback);
+		m_renderGlobalsCallback = 0;
 	}
 
 	return true;
@@ -565,4 +575,49 @@ void FireRenderIpr::refreshContext()
 		AutoMutexLock contextLock(m_contextLock);
 		m_contextPtr->Freshen(false);
 	});
+}
+
+void FireRenderIpr::SwitchCurrentAOVToBeDisplayed(int newAOV)
+{
+	AutoMutexLock contextLock(m_contextLock);
+
+	if (ShouldOldAOVBeDisabled(m_currentAOVToDisplay))
+	{
+		m_contextPtr->enableAOVAndReset(m_currentAOVToDisplay, false, nullptr);
+	}
+
+	m_currentAOVToDisplay = newAOV;
+	m_contextPtr->enableAOVAndReset(m_currentAOVToDisplay, true, nullptr);
+}
+
+void FireRenderIpr::globalsChangedCallback(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
+{
+	MString name = plug.name();
+
+	if ( (name != "RadeonProRenderGlobals.aovDisplayedInRenderView") ||
+		!(msg | MNodeMessage::AttributeMessage::kAttributeSet))
+	{
+		return;
+	}
+
+	FireRenderIpr*  thisObject = reinterpret_cast<FireRenderIpr*> (clientData);
+
+	thisObject->SwitchCurrentAOVToBeDisplayed(plug.asInt());
+}
+
+bool FireRenderIpr::ShouldOldAOVBeDisabled(int aov)
+{
+	// We need to keep enabled both of these AOV because of Core restrictmenets. VARIANCE is used for adaptive sampling
+	if (m_currentAOVToDisplay == RPR_AOV_COLOR ||
+		m_currentAOVToDisplay == RPR_AOV_VARIANCE)
+	{
+		return false;
+	}
+
+	MObject radeonProRenderGlobalsNode;
+	GetRadeonProRenderGlobals(radeonProRenderGlobalsNode);
+
+	FireRenderAOVs aovs;
+	aovs.readFromGlobals(MFnDependencyNode(radeonProRenderGlobalsNode));
+	return !aovs.IsAOVActive(aov);
 }

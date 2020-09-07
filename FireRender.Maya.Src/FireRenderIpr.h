@@ -111,6 +111,12 @@ private:
 	/** Updates Render information at the bottom of Maya's render view */
 	void updateMayaRenderInfo();
 
+	void SwitchCurrentAOVToBeDisplayed(int newAOV);
+	bool ShouldOldAOVBeDisabled(int aov);
+
+	// Called when an attribute on the FireRenderGlobals node change
+	static void globalsChangedCallback(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
+
 private:
 
 	// Members
@@ -169,4 +175,6 @@ private:
 	std::mutex m_regionUpdateMutex;
 
 	MSelectionList m_previousSelectionList;
+
+	MCallbackId m_renderGlobalsCallback = 0;
 };

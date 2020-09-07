@@ -84,7 +84,8 @@ namespace FireMaya
 			const MeshTranslator::MeshIdxDictionary* shaderData,
 			std::vector<std::vector<Float2> >& uvCoords,
 			const size_t elementCount,
-			const unsigned int uvSetCount
+			const unsigned int uvSetCount,
+			const MFnMesh& fnMesh
 		);
 
 	};

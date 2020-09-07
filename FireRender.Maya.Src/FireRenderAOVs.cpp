@@ -382,6 +382,19 @@ int FireRenderAOVs::getNumberOfAOVs()
 	return (int)m_aovs.size();
 }
 
+bool FireRenderAOVs::IsAOVActive(unsigned int aov) const
+{
+	auto it = m_aovs.find(aov);
+
+	if (it == m_aovs.end())
+	{
+		assert(false);
+		return false;
+	}
+
+	return it->second->active;
+}
+
 MString FireRenderAOVs::GetEXRCompressionType() const 
 { 
 	return m_exrCompressionType; 
