@@ -27,6 +27,7 @@ md $(SolutionDir)dist\renderDesc
 
 XCOPY /E /Y $(ProjectDir)\scripts\* $(SolutionDir)dist\scripts\
 XCOPY /E /Y $(ProjectDir)\python $(SolutionDir)dist\scripts\
+COPY $(SolutionDir)RadeonProRenderSharedComponents\SceneConversionScripts\*.py $(SolutionDir)dist\scripts\fireRender\
 
 COPY $(TargetPath) $(SolutionDir)dist\plug-ins\$(FR_MAYA_VERSION)\* /Y
 
