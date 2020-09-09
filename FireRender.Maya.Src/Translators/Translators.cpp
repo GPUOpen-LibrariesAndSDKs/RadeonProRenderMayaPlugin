@@ -422,9 +422,19 @@ namespace FireMaya
 					frstatus = rprSphereLightSetRadius(frlight.light.Handle(), lightData.sphereRadius);
 					checkStatus(frstatus);
 
-					if (!IsAlmostEqual(mfloats[0][0], mfloats[1][1]) || !IsAlmostEqual(mfloats[0][0], mfloats[2][2]) )
 					{
-						MGlobal::displayWarning("Non-uniform scaling for spehre light detected. Might lead to graphical artifacts!");
+						// Maya let user to set only up to 3 digits after point in scale parameter of transform.
+						// So we need to take only these 3 digits into account
+						int revert_precision = 1000;
+						
+						long long scalex = matrix[0][0] * revert_precision;
+						long long scaley = matrix[1][1] * revert_precision;
+						long long scalez = matrix[2][2] * revert_precision;
+
+						if (scalex != scaley || scalex != scalez)
+						{
+							MGlobal::displayWarning("Non-uniform scaling for spehre light detected. Might lead to graphical artifacts!");
+						}
 					}
 					break;
 
