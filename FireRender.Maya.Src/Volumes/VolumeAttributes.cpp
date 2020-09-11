@@ -205,6 +205,7 @@ void RPRVolumeAttributes::Initialize()
 	vdbFile = tAttr.create("VdbFilePath", "file", MFnData::kString, defaultStringData, &status);
 	CHECK_MSTATUS(status);
 	tAttr.setConnectable(false);
+	tAttr.setUsedAsFilename(true);
 	status = addAttribute(vdbFile);
 	CHECK_MSTATUS(status);
 
@@ -220,7 +221,11 @@ void RPRVolumeAttributes::Initialize()
 	tAttr.setArray(true);
 	tAttr.setHidden(true);
 	tAttr.setUsesArrayDataBuilder(true);
-	setAttribProps(tAttr, loadedGrids);
+	CHECK_MSTATUS(tAttr.setKeyable(true));
+	CHECK_MSTATUS(tAttr.setStorable(false));
+	CHECK_MSTATUS(tAttr.setReadable(true));
+	CHECK_MSTATUS(tAttr.setWritable(true));
+	CHECK_MSTATUS(MPxNode::addAttribute(loadedGrids));
 
 	// Albedo
 	albedoEnabled = nAttr.create("albedoEnabled", "ealb", MFnNumericData::kBoolean, 0);
@@ -643,23 +648,31 @@ void RPRVolumeAttributes::SetupVolumeFromFile(MObject& node, FireRenderVolumeLoc
 	// read file and set grids list with grids from file
 	ReadVolumeDataFromFile(filename, gridParams);
 
-	// prepare writing read grid names to array attribute
+	// write grid names to array attribute
+	// - get array builder
 	MStatus status;
 	MPlug wPlug(node, RPRVolumeAttributes::loadedGrids);
 	MDataHandle wHandle = wPlug.asMDataHandle(&status);
 	MArrayDataHandle arrayHandle(wHandle, &status);
+	status = arrayHandle.jumpToArrayElement(0);
+	CHECK_MSTATUS(status);
 	MArrayDataBuilder arrayBuilder = arrayHandle.builder(&status);
+	CHECK_MSTATUS(status);
 
-	int elementCount = arrayHandle.elementCount(&status);
-	for (int idx = 0; idx < elementCount; ++idx)
+	// - clear array attribute from old data
+	MIntArray indices;
+	wPlug.getExistingArrayAttributeIndices(indices, &status);
+
+	for (int idx = 0; idx < indices.length(); ++idx) // turns out removeElement takes not the element in the array index but "internal" index
 	{
-		arrayBuilder.removeElement(idx);
+		MStatus success = arrayBuilder.removeElement(indices[idx]);
+		CHECK_MSTATUS(success);
 	}
 
-	elementCount = arrayHandle.elementCount(&status);
+	// - write fresh data that was read from grids into array attribute
 	for (auto it = gridParams.begin(); it != gridParams.end(); ++it)
 	{
-		MDataHandle handle = arrayBuilder.addElement(elementCount++, &status);
+		MDataHandle handle = arrayBuilder.addLast(&status);
 		MString val = MString(it->first.c_str());
 		handle.set(val);		 
 	}
