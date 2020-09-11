@@ -884,7 +884,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		}
 		else
 		{
-			material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE, frw::Value(0.4f));
+			material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE, frw::Value(0.04f));
 		}
 	}
 	else
