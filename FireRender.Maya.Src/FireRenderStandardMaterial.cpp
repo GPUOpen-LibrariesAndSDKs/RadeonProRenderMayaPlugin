@@ -884,11 +884,12 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		}
 		else
 		{
-			material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE, frw::Value(0.04f));
+			material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE, frw::Value(0.5f));
 		}
 	}
 	else
 	{
+		material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE, frw::Value(0.0f));
 		material.xSetParameterF(RPR_MATERIAL_INPUT_UBER_REFLECTION_WEIGHT, 0, 0, 0, 0);
 	}
 
