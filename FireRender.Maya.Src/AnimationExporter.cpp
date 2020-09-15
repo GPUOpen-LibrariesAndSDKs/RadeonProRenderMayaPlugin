@@ -29,17 +29,43 @@ AnimationExporter::AnimationExporter(bool gltfExport) :
 		m_runtimeMoveTypeTranslation = RPRGLTF_ANIMATION_MOVEMENTTYPE_TRANSLATION;
 		m_runtimeMoveTypeRotation = RPRGLTF_ANIMATION_MOVEMENTTYPE_ROTATION;
 		m_runtimeMoveTypeScale = RPRGLTF_ANIMATION_MOVEMENTTYPE_SCALE;
+
+		m_pFunc_AddExtraCamera = rprGLTF_AddExtraCamera;
+		m_pFunc_AssignCameraToGroup = rprGLTF_AssignCameraToGroup;
+		m_pFunc_AddExtraShapeParameter = rprGLTF_AddExtraShapeParameter;
+		m_pFunc_AssignLightToGroup = rprGLTF_AssignLightToGroup;
+		m_pFunc_SetTransformGroup = rprGLTF_SetTransformGroup;
+		m_pFunc_AssignParentGroupToGroup = rprGLTF_AssignParentGroupToGroup;
+
+		m_pFunc_AddAnimationTrackToRPR = &AnimationExporter::AddAnimationToGLTFRPR;
 	}
 	else
 	{
 		m_runtimeMoveTypeTranslation = RPRS_ANIMATION_MOVEMENTTYPE_TRANSLATION;
 		m_runtimeMoveTypeRotation = RPRS_ANIMATION_MOVEMENTTYPE_ROTATION;
 		m_runtimeMoveTypeScale = RPRS_ANIMATION_MOVEMENTTYPE_SCALE;
+
+		m_pFunc_AddExtraCamera = nullptr;// rprsAddExtraCamera;
+		m_pFunc_AssignCameraToGroup = rprsAssignCameraToGroup;
+		m_pFunc_AddExtraShapeParameter = nullptr; //rprsAddExtraShapeParameter;
+		m_pFunc_AssignLightToGroup = nullptr; // rprsAssignLightToGroup;
+		m_pFunc_SetTransformGroup = rprsSetTransformGroup;
+		m_pFunc_AssignParentGroupToGroup = rprsAssignParentGroupToGroup;
+
+		m_pFunc_AddAnimationTrackToRPR = &AnimationExporter::AddAnimationToRPRS;
 	}
 }
 
+void AnimationExporter::Export(FireRenderContext& context, MDagPathArray* renderableCamera)
+{
+	m_dataHolder.animationDataVector.clear();
+	m_dataHolder.cameraVector.clear();
+	m_dataHolder.inputRenderableCameras = renderableCamera;
 
-MString AnimationExporter::getGroupNameForDagPath(MDagPath dagPath, int pop)
+	AddAnimations(m_dataHolder, context);
+}
+
+MString AnimationExporter::GetGroupNameForDagPath(MDagPath dagPath, int pop)
 {
 	if (pop > 0)
 	{
@@ -78,7 +104,7 @@ void FillArrayWithScaledMMatrixData(std::array<float, 16>& arr, float coeff = 0.
 	FillArrayWithMMatrixData(arr, matrix);
 }
 
-void AnimationExporter::assignCameras(GLTFDataHolderStruct& dataHolder, FireRenderContext& context)
+void AnimationExporter::AssignCameras(DataHolderStruct& dataHolder, FireRenderContext& context)
 {
 	MDagPathArray& renderableCameras = *dataHolder.inputRenderableCameras;
 	bool mainCameraSet = false;
@@ -102,7 +128,10 @@ void AnimationExporter::assignCameras(GLTFDataHolderStruct& dataHolder, FireRend
 			FireMaya::translateCamera(extraCamera, dagPath.node(), camIdentityMatrix, true,
 				(float)context.width() / context.height(), true, cameraType);
 
-			rprGLTF_AddExtraCamera(rprCamera);
+			if (m_pFunc_AddExtraCamera != nullptr)
+			{
+				m_pFunc_AddExtraCamera(rprCamera);
+			}
 		}
 		else
 		{
@@ -111,9 +140,9 @@ void AnimationExporter::assignCameras(GLTFDataHolderStruct& dataHolder, FireRend
 			mainCameraSet = true;
 		}
 
-		// set gltf group name for camera
-		MString camGroupName = getGroupNameForDagPath(dagPath);
-		rprGLTF_AssignCameraToGroup(rprCamera, camGroupName.asChar());
+		// set gltf/rprs group name for camera
+		MString camGroupName = GetGroupNameForDagPath(dagPath);
+		m_pFunc_AssignCameraToGroup(rprCamera, camGroupName.asChar());
 	}
 }
 
@@ -138,11 +167,11 @@ int getUVLightGroup(const MDagPath& inDagPath)
 	return -1;
 }
 
-void assignMesh(FireRenderMesh* pMesh, const MString& groupName, const MDagPath& dagPath)
+void AnimationExporter::assignMesh(FireRenderMesh* pMesh, const MString& groupName, const MDagPath& dagPath)
 {
 	for (auto& element : pMesh->Elements())
 	{
-		rprGLTF_AssignShapeToGroup(element.shape.Handle(), groupName.asChar());
+		m_pFunc_AssignShapeToGroup(element.shape.Handle(), groupName.asChar());
 
 		//Reset transform for shape since we already have transformation in parent groups
 		std::array<float, 16> arr;
@@ -153,16 +182,19 @@ void assignMesh(FireRenderMesh* pMesh, const MString& groupName, const MDagPath&
 
 		if (lightGroup >= 0)
 		{
-			rprGLTF_AddExtraShapeParameter(element.shape.Handle(), "lightmapUVGroup", lightGroup);
+			if (m_pFunc_AddExtraShapeParameter != nullptr)
+			{
+				m_pFunc_AddExtraShapeParameter(element.shape.Handle(), "lightmapUVGroup", lightGroup);
+			}
 		}
 	}
 }
 
-void assignLight(FireRenderLight* pLight, const MString& groupName)
+void AnimationExporter::assignLight(FireRenderLight* pLight, const MString& groupName)
 {
 	// this function was not included in dylib for some reason
 #ifdef _WIN32
-	rprGLTF_AssignLightToGroup(pLight->data().light.Handle(), groupName.asChar());
+	m_pFunc_AssignLightToGroup(pLight->data().light.Handle(), groupName.asChar());
 #endif
 	//Reset transform for shape since we already have transformation in parent groups
 	std::array<float, 16> arr;
@@ -170,10 +202,10 @@ void assignLight(FireRenderLight* pLight, const MString& groupName)
 	pLight->GetFrLight().light.SetTransform(arr.data());
 }
 
-void AnimationExporter::assignMeshesAndLights(FireRenderContext& context)
+void AnimationExporter::AssignMeshesAndLights(FireRenderContext& context)
 {
 	FireRenderContext::FireRenderObjectMap& sceneObjects = context.GetSceneObjects();
-	// set gltf group name for meshes
+	// set gltf/rprs group name for meshes
 	for (FireRenderContext::FireRenderObjectMap::iterator it = sceneObjects.begin(); it != sceneObjects.end(); ++it)
 	{
 		FireRenderNode* pNode = dynamic_cast<FireRenderNode*>(it->second.get());
@@ -185,12 +217,12 @@ void AnimationExporter::assignMeshesAndLights(FireRenderContext& context)
 
 		MDagPath dagPath = pNode->DagPath();
 
-		if (!isNeedToSetANameForTransform(dagPath))
+		if (!IsNeedToSetANameForTransform(dagPath))
 		{
 			continue;
 		}
 
-		MString groupName = getGroupNameForDagPath(dagPath);
+		MString groupName = GetGroupNameForDagPath(dagPath);
 
 		FireRenderMesh* pMesh = dynamic_cast<FireRenderMesh*>(pNode);
 		FireRenderLight* pLight = dynamic_cast<FireRenderLight*>(pNode);
@@ -206,14 +238,14 @@ void AnimationExporter::assignMeshesAndLights(FireRenderContext& context)
 	}
 }
 
-void AnimationExporter::addGLTFAnimations(GLTFDataHolderStruct& dataHolder, FireRenderContext& context)
+void AnimationExporter::AddAnimations(DataHolderStruct& dataHolder, FireRenderContext& context)
 {
-	assignCameras(dataHolder, context);
-	assignMeshesAndLights(context);
-	animateGLTFGroups(dataHolder.animationDataVector);
+	AssignCameras(dataHolder, context);
+	AssignMeshesAndLights(context);
+	AnimateGroups(dataHolder.animationDataVector);
 }
 
-bool AnimationExporter::isNeedToSetANameForTransform(const MDagPath& dagPath)
+bool AnimationExporter::IsNeedToSetANameForTransform(const MDagPath& dagPath)
 {
 	MObject transform = dagPath.transform();
 
@@ -228,7 +260,7 @@ bool AnimationExporter::isNeedToSetANameForTransform(const MDagPath& dagPath)
 	return true;
 }
 
-void AnimationExporter::setGLTFTransformationForNode(MObject transform, const char* groupName)
+void AnimationExporter::SetTransformationForNode(MObject transform, const char* groupName)
 {
 	MFnDependencyNode fnTransform(transform);
 
@@ -270,10 +302,10 @@ void AnimationExporter::setGLTFTransformationForNode(MObject transform, const ch
 		arr[index++] = (float)scale[i];
 	}
 
-	rprGLTF_SetTransformGroup(groupName, arr.data());
+	m_pFunc_SetTransformGroup(groupName, arr.data());
 }
 
-void AnimationExporter::animateGLTFGroups(GLTFAnimationDataHolderVector& dataHolder)
+void AnimationExporter::AnimateGroups(AnimationDataHolderVector& dataHolder)
 {
 	MStatus status;
 
@@ -293,7 +325,7 @@ void AnimationExporter::animateGLTFGroups(GLTFAnimationDataHolderVector& dataHol
 			continue;
 		}
 
-		if (!isNeedToSetANameForTransform(dagPath))
+		if (!IsNeedToSetANameForTransform(dagPath))
 		{
 			continue;
 		}
@@ -308,19 +340,19 @@ void AnimationExporter::animateGLTFGroups(GLTFAnimationDataHolderVector& dataHol
 
 		MObject transform = dagPath.transform();
 
-		MString transformGroupName = getGroupNameForDagPath(dagPath);
+		MString transformGroupName = GetGroupNameForDagPath(dagPath);
 
-		setGLTFTransformationForNode(transform, transformGroupName.asChar());
+		SetTransformationForNode(transform, transformGroupName.asChar());
 
 		MString parentOfTransformGroupName = "";
 
 		// if non-root transform
 		if (dagPath.length() > 1)
 		{
-			parentOfTransformGroupName = getGroupNameForDagPath(dagPath, 1);
+			parentOfTransformGroupName = GetGroupNameForDagPath(dagPath, 1);
 		}
 
-		rprGLTF_AssignParentGroupToGroup(transformGroupName.asChar(), parentOfTransformGroupName.asChar());
+		m_pFunc_AssignParentGroupToGroup(transformGroupName.asChar(), parentOfTransformGroupName.asChar());
 
 		MSelectionList selList;
 		selList.add(transform);
@@ -331,13 +363,13 @@ void AnimationExporter::animateGLTFGroups(GLTFAnimationDataHolderVector& dataHol
 			continue;
 		}
 
-		applyGLTFAnimationForTransform(dagPath, dataHolder);
+		ApplyAnimationForTransform(dagPath, dataHolder);
 
 		ReportProgress((int)(100 * (i + 1) / groupDagPathVector.size()));
 	}
 }
 
-MString AnimationExporter::getGLTFAttributeNameById(int id)
+MString AnimationExporter::GetAttributeNameById(int id)
 {
 	if (id == m_runtimeMoveTypeTranslation)
 	{
@@ -356,7 +388,7 @@ MString AnimationExporter::getGLTFAttributeNameById(int id)
 	return "";
 }
 
-int AnimationExporter::getOutputComponentCount(int attrId)
+int AnimationExporter::GetOutputComponentCount(int attrId)
 {
 	if (attrId == m_runtimeMoveTypeTranslation)
 	{
@@ -375,7 +407,7 @@ int AnimationExporter::getOutputComponentCount(int attrId)
 	return 0;
 }
 
-void AnimationExporter::addTimesFromCurve(const MFnAnimCurve& curve, TimeKeySet& outUniqueTimeKeySet, int attributeId)
+void AnimationExporter::AddTimesFromCurve(const MFnAnimCurve& curve, TimeKeySet& outUniqueTimeKeySet, int attributeId)
 {
 	int keyCount = curve.numKeys();
 
@@ -391,15 +423,15 @@ void AnimationExporter::addTimesFromCurve(const MFnAnimCurve& curve, TimeKeySet&
 			continue;
 		}
 
-		addOneTimePoint(time, curve, outUniqueTimeKeySet, attributeId, keyIndex);
+		AddOneTimePoint(time, curve, outUniqueTimeKeySet, attributeId, keyIndex);
 	}
 
 	// Add auto point for the start and end animation point
-	addOneTimePoint(startTime, curve, outUniqueTimeKeySet, attributeId, 0);
-	addOneTimePoint(endTime, curve, outUniqueTimeKeySet, attributeId, keyCount - 1);
+	AddOneTimePoint(startTime, curve, outUniqueTimeKeySet, attributeId, 0);
+	AddOneTimePoint(endTime, curve, outUniqueTimeKeySet, attributeId, keyCount - 1);
 }
 
-void AnimationExporter::addOneTimePoint(const MTime time, const MFnAnimCurve& curve, TimeKeySet& outUniqueTimeKeySet, int attributeId, int keyIndex)
+void AnimationExporter::AddOneTimePoint(const MTime time, const MFnAnimCurve& curve, TimeKeySet& outUniqueTimeKeySet, int attributeId, int keyIndex)
 {
 	TimeKeyStruct timeKey(time, attributeId);
 
@@ -439,7 +471,7 @@ void AnimationExporter::addOneTimePoint(const MTime time, const MFnAnimCurve& cu
 	}
 }
 
-inline float AnimationExporter::getValueForTime(const MPlug& plug, const MFnAnimCurve& curve, const MTime& time)
+inline float AnimationExporter::GetValueForTime(const MPlug& plug, const MFnAnimCurve& curve, const MTime& time)
 {
 	if (!curve.object().isNull())
 	{
@@ -451,7 +483,7 @@ inline float AnimationExporter::getValueForTime(const MPlug& plug, const MFnAnim
 	}
 }
 
-void AnimationExporter::addAnimationToGLTFRPR(GLTFAnimationDataHolderStruct& gltfDataHolderStruct, int attrId)
+void AnimationExporter::AddAnimationToGLTFRPR(AnimationDataHolderStruct& gltfDataHolderStruct, int attrId)
 {
 	size_t keyCount = gltfDataHolderStruct.m_timePoints.size();
 
@@ -474,7 +506,31 @@ void AnimationExporter::addAnimationToGLTFRPR(GLTFAnimationDataHolderStruct& glt
 	}
 }
 
-void AnimationExporter::applyGLTFAnimationForTransform(const MDagPath& dagPath, GLTFAnimationDataHolderVector& gltfDataHolder)
+void AnimationExporter::AddAnimationToRPRS(AnimationDataHolderStruct& gltfDataHolderStruct, int attrId)
+{
+	size_t keyCount = gltfDataHolderStruct.m_timePoints.size();
+
+	rprs_animation rprsAnimData;
+	rprsAnimData.structSize = sizeof(rprsAnimData);
+
+	// RPR GLTF takes char* that's why const cast is needed
+	rprsAnimData.groupName = const_cast<char*>(gltfDataHolderStruct.groupName.asChar());
+	rprsAnimData.movementType = attrId;
+	rprsAnimData.interpolationType = 0;
+	rprsAnimData.nbTimeKeys = (unsigned int)keyCount;
+	rprsAnimData.nbTransformValues = (unsigned int)keyCount;
+	rprsAnimData.timeKeys = gltfDataHolderStruct.m_timePoints.data();
+	rprsAnimData.transformValues = gltfDataHolderStruct.m_values.data();
+
+	int res = rprsAddAnimation(&rprsAnimData);
+	if (res != RPR_SUCCESS)
+	{
+		MGlobal::displayError("rprGLTF_AddAnimation returned error: ");
+	}
+}
+
+
+void AnimationExporter::ApplyAnimationForTransform(const MDagPath& dagPath, AnimationDataHolderVector& dataHolder)
 {
 	// do not change order
 	const int attrCount = 3;
@@ -482,7 +538,7 @@ void AnimationExporter::applyGLTFAnimationForTransform(const MDagPath& dagPath, 
 								m_runtimeMoveTypeRotation,
 								m_runtimeMoveTypeScale };
 
-	MString groupName = getGroupNameForDagPath(dagPath);
+	MString groupName = GetGroupNameForDagPath(dagPath);
 
 	MFnDependencyNode depNodeTransform(dagPath.transform());
 	MFnTransform fnTransform(dagPath.transform());
@@ -499,7 +555,7 @@ void AnimationExporter::applyGLTFAnimationForTransform(const MDagPath& dagPath, 
 	MString componentNames[inputPlugCount] = { "X", "Y", "Z" };
 	for (int attributeId : attrIds)
 	{
-		MString attributeName = getGLTFAttributeNameById(attributeId);
+		MString attributeName = GetAttributeNameById(attributeId);
 
 		MPlugArray plugArray;
 
@@ -509,7 +565,7 @@ void AnimationExporter::applyGLTFAnimationForTransform(const MDagPath& dagPath, 
 			MPlug plug = depNodeTransform.findPlug(plugName, false, &status);
 			if (status != MStatus::kSuccess || plug.isNull())
 			{
-				MGlobal::displayError("GLTF export error: Necessary plug not found: " + plugName);
+				MGlobal::displayError("GLTF/RPRS export error: Necessary plug not found: " + plugName);
 				continue;
 			}
 
@@ -519,7 +575,7 @@ void AnimationExporter::applyGLTFAnimationForTransform(const MDagPath& dagPath, 
 			if (MAnimUtil::findAnimation(plug, curveObj, &status))
 			{
 				tempCurve.setObject(curveObj[0]);
-				addTimesFromCurve(tempCurve, uniqueTimeKeys, attributeId);
+				AddTimesFromCurve(tempCurve, uniqueTimeKeys, attributeId);
 			}
 		}
 	}
@@ -534,8 +590,8 @@ void AnimationExporter::applyGLTFAnimationForTransform(const MDagPath& dagPath, 
 	// Export necessary attributes
 	for (int attributeId : attrIds)
 	{
-		gltfDataHolder.emplace(gltfDataHolder.end());
-		GLTFAnimationDataHolderStruct& gltfDataHolderStruct = gltfDataHolder.back();
+		dataHolder.emplace(dataHolder.end());
+		AnimationDataHolderStruct& dataHolderStruct = dataHolder.back();
 
 		for (TimeKeySet::iterator it = uniqueTimeKeys.begin(); it != uniqueTimeKeys.end(); it++)
 		{
@@ -557,7 +613,7 @@ void AnimationExporter::applyGLTFAnimationForTransform(const MDagPath& dagPath, 
 
 			MTransformationMatrix transformMatrix(newMatrix);
 
-			gltfDataHolderStruct.m_timePoints.push_back((float)it->GetTime().as(MTime::Unit::kSeconds));
+			dataHolderStruct.m_timePoints.push_back((float)it->GetTime().as(MTime::Unit::kSeconds));
 
 			if (attributeId == m_runtimeMoveTypeTranslation)
 			{
@@ -565,26 +621,26 @@ void AnimationExporter::applyGLTFAnimationForTransform(const MDagPath& dagPath, 
 				//cm to m
 				float coeff = 0.01f;
 
-				gltfDataHolderStruct.m_values.push_back((float)vec1.x * coeff);
-				gltfDataHolderStruct.m_values.push_back((float)vec1.y * coeff);
-				gltfDataHolderStruct.m_values.push_back((float)vec1.z * coeff);
+				dataHolderStruct.m_values.push_back((float)vec1.x * coeff);
+				dataHolderStruct.m_values.push_back((float)vec1.y * coeff);
+				dataHolderStruct.m_values.push_back((float)vec1.z * coeff);
 			}
 			else if (attributeId == m_runtimeMoveTypeRotation)
 			{
 				MQuaternion rotation = transformMatrix.rotation();
-				gltfDataHolderStruct.m_values.push_back((float)rotation.x);
-				gltfDataHolderStruct.m_values.push_back((float)rotation.y);
-				gltfDataHolderStruct.m_values.push_back((float)rotation.z);
-				gltfDataHolderStruct.m_values.push_back((float)rotation.w);
+				dataHolderStruct.m_values.push_back((float)rotation.x);
+				dataHolderStruct.m_values.push_back((float)rotation.y);
+				dataHolderStruct.m_values.push_back((float)rotation.z);
+				dataHolderStruct.m_values.push_back((float)rotation.w);
 			}
 			else if (attributeId == m_runtimeMoveTypeScale)
 			{
 				double scale[3];
 				transformMatrix.getScale(scale, MSpace::kTransform);
 
-				gltfDataHolderStruct.m_values.push_back((float)scale[0]);
-				gltfDataHolderStruct.m_values.push_back((float)scale[1]);
-				gltfDataHolderStruct.m_values.push_back((float)scale[2]);
+				dataHolderStruct.m_values.push_back((float)scale[0]);
+				dataHolderStruct.m_values.push_back((float)scale[1]);
+				dataHolderStruct.m_values.push_back((float)scale[2]);
 			}
 
 			if (m_progressBars != nullptr && m_progressBars->isCancelled())
@@ -598,11 +654,11 @@ void AnimationExporter::applyGLTFAnimationForTransform(const MDagPath& dagPath, 
 			}
 		}
 
-		gltfDataHolderStruct.groupName = groupName;
+		dataHolderStruct.groupName = groupName;
 
-		if (gltfDataHolderStruct.m_timePoints.size() > 0)
+		if (dataHolderStruct.m_timePoints.size() > 0)
 		{
-			addAnimationToGLTFRPR(gltfDataHolderStruct, attributeId);
+			m_pFunc_AddAnimationTrackToRPR(dataHolderStruct, attributeId);
 		}
 	}
 }
@@ -627,7 +683,7 @@ void AnimationExporter::ReportProgress(int progress)
 	}
 }
 
-void AnimationExporter::reportGLTFExportError(MString strPath)
+void AnimationExporter::ReportGLTFExportError(MString strPath)
 {
 	MGlobal::displayError("GLTF export error: cannot get animation for transform: " + strPath);
 }

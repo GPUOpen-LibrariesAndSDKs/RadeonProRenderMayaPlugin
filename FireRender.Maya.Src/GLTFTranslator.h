@@ -16,6 +16,7 @@ limitations under the License.
 #include <maya/MPxFileTranslator.h>
 
 #include "Context/FireRenderContext.h"
+#include "RenderProgressBars.h"
 
 namespace FireMaya
 {

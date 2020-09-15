@@ -104,9 +104,8 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	try
 	{
 		m_progressBars->SetTextAboveProgress("Preparing Animation...", true);
-		GLTFDataHolderStruct dataHolder;
-		dataHolder.inputRenderableCameras = &renderableCameras;
-		addGLTFAnimations(dataHolder, *fireRenderContext);
+
+		animationExporter.Export(*fireRenderContext, &renderableCameras);
 
 		std::vector<rpr_scene> scenes;
 		scenes.push_back(scene.Handle());

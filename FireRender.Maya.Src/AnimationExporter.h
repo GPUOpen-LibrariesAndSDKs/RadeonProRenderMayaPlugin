@@ -71,6 +71,8 @@ private:
 
 typedef std::set<TimeKeyStruct> TimeKeySet;
 
+//class FireRenderContext;
+
 class AnimationExporter
 {
 public:
@@ -81,56 +83,77 @@ public:
 	void SetProgressBars(RenderProgressBars* progressBars) { m_progressBars = progressBars; }
 	RenderProgressBars* GetProgressBars() { return m_progressBars; }
 
+	void Export(FireRenderContext& context, MDagPathArray* renderableCamera);
+
 private:
-	struct GLTFAnimationDataHolderStruct
+	struct AnimationDataHolderStruct
 	{
 		std::vector<float> m_timePoints;
 		std::vector<float> m_values;
 		MString groupName;
 	};
 
-	typedef std::vector<GLTFAnimationDataHolderStruct> GLTFAnimationDataHolderVector;
+	typedef std::vector<AnimationDataHolderStruct> AnimationDataHolderVector;
 	typedef std::vector<frw::Camera> CameraVector;
 
-	struct GLTFDataHolderStruct
+	struct DataHolderStruct
 	{
-		GLTFAnimationDataHolderVector animationDataVector;
+		AnimationDataHolderVector animationDataVector;
 		CameraVector cameraVector;
 		MDagPathArray* inputRenderableCameras = nullptr;
 	};
 
-	MString getGroupNameForDagPath(MDagPath dagPath, int pop = 0);
-	void addGLTFAnimations(GLTFDataHolderStruct& dataHolder, FireRenderContext& context);
-	void animateGLTFGroups(GLTFAnimationDataHolderVector& dataHolder);
-	MString getGLTFAttributeNameById(int id);
+	MString GetGroupNameForDagPath(MDagPath dagPath, int pop = 0);
+	void AddAnimations(DataHolderStruct& dataHolder, FireRenderContext& context);
+	void AnimateGroups(AnimationDataHolderVector& dataHolder);
+	MString GetAttributeNameById(int id);
 
-	void setGLTFTransformationForNode(MObject transform, const char* groupName);
+	void SetTransformationForNode(MObject transform, const char* groupName);
 
-	void assignCameras(GLTFDataHolderStruct& dataHolder, FireRenderContext& context);
-	void assignMeshesAndLights(FireRenderContext& context);
+	void AssignCameras(DataHolderStruct& dataHolder, FireRenderContext& context);
+	void AssignMeshesAndLights(FireRenderContext& context);
 
 	// addAdditionalKeys param means that we need to add additional keys for Rotation, 
-	void addTimesFromCurve(const MFnAnimCurve& curve, TimeKeySet& outUniqueTimeKeySet, int attributeId);
+	void AddTimesFromCurve(const MFnAnimCurve& curve, TimeKeySet& outUniqueTimeKeySet, int attributeId);
 
-	void addOneTimePoint(const MTime time, const MFnAnimCurve& curve, TimeKeySet& outUniqueTimeKeySet, int attributeId, int keyIndex);
+	void AddOneTimePoint(const MTime time, const MFnAnimCurve& curve, TimeKeySet& outUniqueTimeKeySet, int attributeId, int keyIndex);
 
-	int getOutputComponentCount(int attrId);
-	inline float getValueForTime(const MPlug& plug, const MFnAnimCurve& curve, const MTime& time);
-	void addAnimationToGLTFRPR(GLTFAnimationDataHolderStruct& gltfDataHolderStruct, int attrId);
-	void applyGLTFAnimationForTransform(const MDagPath& dagPath, GLTFAnimationDataHolderVector& gltfDataHolder);
-	void reportGLTFExportError(MString strPath);
+	int GetOutputComponentCount(int attrId);
+	inline float GetValueForTime(const MPlug& plug, const MFnAnimCurve& curve, const MTime& time);
 
-	bool isNeedToSetANameForTransform(const MDagPath& dagPath);
+	void AddAnimationToGLTFRPR(AnimationDataHolderStruct& gltfDataHolderStruct, int attrId);
+	void AddAnimationToRPRS(AnimationDataHolderStruct& gltfDataHolderStruct, int attrId);
+
+	void ApplyAnimationForTransform(const MDagPath& dagPath, AnimationDataHolderVector& gltfDataHolder);
+	void ReportGLTFExportError(MString strPath);
+
+	bool IsNeedToSetANameForTransform(const MDagPath& dagPath);
 
 	void ReportProgress(int progress);
 	void ReportDataChunk(size_t dataChunkIndex, size_t count);
 
-private:
+	void assignMesh(FireRenderMesh* pMesh, const MString& groupName, const MDagPath& dagPath);
+	void assignLight(FireRenderLight* pLight, const MString& groupName);
 
+private:
 	int m_runtimeMoveTypeTranslation;
 	int m_runtimeMoveTypeRotation;
 	int m_runtimeMoveTypeScale;
 
 	RenderProgressBars* m_progressBars;
 	bool m_IsGLTFExport;
+
+	DataHolderStruct m_dataHolder;
+
+	int (*m_pFunc_AddExtraCamera) (rpr_camera extraCam);
+
+	int (*m_pFunc_AssignCameraToGroup) (rpr_camera camera, const rpr_char* groupName);
+	int (*m_pFunc_AssignShapeToGroup) (rpr_shape shape, const rpr_char* groupName);
+	int (*m_pFunc_AddExtraShapeParameter) (rpr_shape shape, const rpr_char* parameterName, int value);
+	int (*m_pFunc_AssignLightToGroup) (rpr_light light, const rpr_char* groupName);
+
+	int (*m_pFunc_SetTransformGroup) (const rpr_char* groupChild, const float* matrixComponents);
+	int (*m_pFunc_AssignParentGroupToGroup) (const rpr_char* groupChild, const rpr_char* groupParent);
+
+	void (AnimationExporter::*m_pFunc_AddAnimationTrackToRPR) (AnimationDataHolderStruct&, int);
 };
