@@ -44,6 +44,9 @@ public:
 
 	static void GetSpotLightSettings(const MFnDependencyNode& node, float& innerAngle, float& outerfalloff);
 
+	static void GetDiskLightSettings(const MFnDependencyNode& node, float& radius, float& angle);
+	static void GetSphereLightSettings(const MFnDependencyNode& node, float& radius);
+
 	static bool GetShadowsEnabled(const MFnDependencyNode& node);
 	static float GetShadowsSoftnessAngle(const MFnDependencyNode& node);
 	static MString GetAreaLightMeshSelectedName(const MFnDependencyNode& node);
@@ -80,6 +83,14 @@ public:
 	static MObject spotLightInnerConeAngle;
 	static MObject spotLightOuterConeFalloff;
 
+	// Sphere Light
+	static MObject sphereLightRadius;
+
+	// Disk light
+	static MObject diskLightRadius;
+	static MObject diskLightAngle;
+
+
 	//Light Decay
 	static MObject decayType;
 	static MObject decayFalloffStart;
@@ -100,7 +111,9 @@ private:
 	static void CreateGeneralAttributes();
 	static void CreateIntensityAttributes();
 	static void CreateAreaLightAttrbutes();
+	static void CreateSphereLightAttrbutes();
 	static void CreateSpotLightAttrbutes();
+	static void CreateDiskLightAttrbutes();
 	static void CreateDecayAttrbutes();
 	static void CreateShadowsAttrbutes();
 	static void CreateVolumeAttrbutes();

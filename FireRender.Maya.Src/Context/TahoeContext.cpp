@@ -427,6 +427,16 @@ bool TahoeContext::IsVolumeSupported() const
 	return m_PluginVersion == TahoePluginVersion::RPR1;
 }
 
+bool TahoeContext::IsPhysicalLightTypeSupported(PLType lightType) const
+{
+	if (lightType == PLTDisk || lightType == PLTSphere)
+	{
+		return m_PluginVersion == TahoePluginVersion::RPR2;
+	}
+
+	return true;
+}
+
 bool TahoeContext::IsGLInteropEnabled() const
 {
 	return m_PluginVersion == TahoePluginVersion::RPR1;

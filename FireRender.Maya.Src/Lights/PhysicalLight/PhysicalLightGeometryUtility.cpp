@@ -32,7 +32,7 @@ void FillBuffersForRectangle(GizmoVertexVector& vertices, IndexVector& indices)
 }
 
 // Viewport representation
-void FillBuffersForDisc(GizmoVertexVector& vertices, IndexVector& indices)
+void FillBuffersForDisc(GizmoVertexVector& vertices, IndexVector& indices, float diskRadius = 1.0f)
 {
 	const int segments = 40;
 
@@ -42,7 +42,7 @@ void FillBuffersForDisc(GizmoVertexVector& vertices, IndexVector& indices)
 	{
 		double rad = 2 * M_PI * i / segments;
 
-		vertices.push_back(MFloatVector((float) cos(rad), (float) sin(rad), 0.0f));
+		vertices.push_back(MFloatVector((float) cos(rad) * diskRadius, (float) sin(rad) * diskRadius, 0.0f));
 	}
 
 	vertices.push_back(MFloatVector(0.0f, 0.0f, 0.0f));
@@ -116,13 +116,13 @@ void FillBuffersForCylinder(GizmoVertexVector& vertices, IndexVector& indices)
 }
 
 // Viewport representation
-void FillBufferWithSphere(GizmoVertexVector& vertices, IndexVector& indices)
+void FillBufferWithSphere(GizmoVertexVector& vertices, IndexVector& indices, float radius = 1.0f)
 {
 	const int vertCount = 1146;
 
 	for (int i = 0; i < vertCount; i += 3)
 	{
-		vertices.push_back(MFloatVector(lowSpherePoints[i], lowSpherePoints[i + 1], lowSpherePoints[i + 2]));
+		vertices.push_back(MFloatVector(lowSpherePoints[i] * radius, lowSpherePoints[i + 1] * radius, lowSpherePoints[i + 2] * radius));
 	}
 
 	const int indicesCount = 3120;
@@ -248,12 +248,25 @@ bool PhysicalLightGeometryUtility::FillGizmoGeometryForDirectionalLight(GizmoVer
 
 	AddArrowForDirectional(vertices, indices, xOffset, 0.25f, arrowWidthSmall, rotAngle);
 	AddArrowForDirectional(vertices, indices, -xOffset, 0.25f, arrowWidthSmall , -rotAngle);
+
 	return true;
 }
 
 bool PhysicalLightGeometryUtility::FillGizmoGeometryForPointLight(GizmoVertexVector& vertices, IndexVector& indices)
 {
 	return false;
+}
+
+bool PhysicalLightGeometryUtility::FillGizmoGeometryForDiskLight(GizmoVertexVector& vertexVector, IndexVector& indexVector, float diskAngle, float diskRadius)
+{
+	FillBuffersForDisc(vertexVector, indexVector, diskRadius);
+	return true;
+}
+
+bool PhysicalLightGeometryUtility::FillGizmoGeometryForSphereLight(GizmoVertexVector& vertexVector, IndexVector& indexVector, float sphereRadius)
+{
+	FillBufferWithSphere(vertexVector, indexVector, sphereRadius);
+	return true;
 }
 
 // Shape for mesh while rendering in RPR
