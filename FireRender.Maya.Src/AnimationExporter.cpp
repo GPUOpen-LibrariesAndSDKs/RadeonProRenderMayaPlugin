@@ -22,7 +22,8 @@ const int COMPONENT_COUNT_SCALE = 3;
 const int INPUT_PLUG_COUNT = 3;
 
 AnimationExporter::AnimationExporter(bool gltfExport) :
-	m_IsGLTFExport(gltfExport)
+	m_IsGLTFExport(gltfExport),
+	m_progressBars(nullptr)
 {
 	if (m_IsGLTFExport)
 	{
@@ -34,7 +35,8 @@ AnimationExporter::AnimationExporter(bool gltfExport) :
 		m_pFunc_AssignCameraToGroup = rprGLTF_AssignCameraToGroup;
 		m_pFunc_AddExtraShapeParameter = rprGLTF_AddExtraShapeParameter;
 		m_pFunc_AssignLightToGroup = rprGLTF_AssignLightToGroup;
-		m_pFunc_SetTransformGroup = rprGLTF_SetTransformGroup;
+		m_pFunc_AssignShapeToGroup = rprGLTF_AssignShapeToGroup;
+		//m_pFunc_SetTransformGroup = rprGLTF_SetTransformGroup;
 		m_pFunc_AssignParentGroupToGroup = rprGLTF_AssignParentGroupToGroup;
 
 		m_pFunc_AddAnimationTrackToRPR = &AnimationExporter::AddAnimationToGLTFRPR;
@@ -49,7 +51,8 @@ AnimationExporter::AnimationExporter(bool gltfExport) :
 		m_pFunc_AssignCameraToGroup = rprsAssignCameraToGroup;
 		m_pFunc_AddExtraShapeParameter = nullptr; //rprsAddExtraShapeParameter;
 		m_pFunc_AssignLightToGroup = nullptr; // rprsAssignLightToGroup;
-		m_pFunc_SetTransformGroup = rprsSetTransformGroup;
+		m_pFunc_AssignShapeToGroup = rprsAssignShapeToGroup;
+		//m_pFunc_SetTransformGroup = rprsSetTransformGroup;
 		m_pFunc_AssignParentGroupToGroup = rprsAssignParentGroupToGroup;
 
 		m_pFunc_AddAnimationTrackToRPR = &AnimationExporter::AddAnimationToRPRS;
@@ -171,7 +174,7 @@ void AnimationExporter::assignMesh(FireRenderMesh* pMesh, const MString& groupNa
 {
 	for (auto& element : pMesh->Elements())
 	{
-		m_pFunc_AssignShapeToGroup(element.shape.Handle(), groupName.asChar());
+		assert (m_pFunc_AssignShapeToGroup(element.shape.Handle(), groupName.asChar()) == RPR_SUCCESS);
 
 		//Reset transform for shape since we already have transformation in parent groups
 		std::array<float, 16> arr;
@@ -302,7 +305,14 @@ void AnimationExporter::SetTransformationForNode(MObject transform, const char* 
 		arr[index++] = (float)scale[i];
 	}
 
-	m_pFunc_SetTransformGroup(groupName, arr.data());
+	if (m_IsGLTFExport)
+	{
+		rprGLTF_SetTransformGroup(groupName, arr.data());
+	}
+	else
+	{
+		rprsSetTransformGroup(groupName, arr.data());
+	}
 }
 
 void AnimationExporter::AnimateGroups(AnimationDataHolderVector& dataHolder)
@@ -658,7 +668,7 @@ void AnimationExporter::ApplyAnimationForTransform(const MDagPath& dagPath, Anim
 
 		if (dataHolderStruct.m_timePoints.size() > 0)
 		{
-			m_pFunc_AddAnimationTrackToRPR(dataHolderStruct, attributeId);
+			(this->*m_pFunc_AddAnimationTrackToRPR)(dataHolderStruct, attributeId);
 		}
 	}
 }
