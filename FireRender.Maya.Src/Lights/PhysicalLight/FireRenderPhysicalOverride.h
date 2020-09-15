@@ -72,6 +72,9 @@ private:
 		float spotLightInnerConeAngle;
 		float spotLightOuterConeFalloff;
 		MString attachedMeshName;
+		float diskRadius;
+		float diskAngle;
+		float sphereRadius;
 	} m_currentTrackedValues;
 
 	MFnDependencyNode m_depNodeObj;
