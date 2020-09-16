@@ -516,21 +516,21 @@ void AnimationExporter::AddAnimationToGLTFRPR(AnimationDataHolderStruct& gltfDat
 	}
 }
 
-void AnimationExporter::AddAnimationToRPRS(AnimationDataHolderStruct& gltfDataHolderStruct, int attrId)
+void AnimationExporter::AddAnimationToRPRS(AnimationDataHolderStruct& dataHolderStruct, int attrId)
 {
-	size_t keyCount = gltfDataHolderStruct.m_timePoints.size();
+	size_t keyCount = dataHolderStruct.m_timePoints.size();
 
 	rprs_animation rprsAnimData;
 	rprsAnimData.structSize = sizeof(rprsAnimData);
 
-	// RPR GLTF takes char* that's why const cast is needed
-	rprsAnimData.groupName = const_cast<char*>(gltfDataHolderStruct.groupName.asChar());
+	// RPRs takes char* that's why const cast is needed
+	rprsAnimData.groupName = const_cast<char*>(dataHolderStruct.groupName.asChar());
 	rprsAnimData.movementType = attrId;
 	rprsAnimData.interpolationType = 0;
 	rprsAnimData.nbTimeKeys = (unsigned int)keyCount;
 	rprsAnimData.nbTransformValues = (unsigned int)keyCount;
-	rprsAnimData.timeKeys = gltfDataHolderStruct.m_timePoints.data();
-	rprsAnimData.transformValues = gltfDataHolderStruct.m_values.data();
+	rprsAnimData.timeKeys = dataHolderStruct.m_timePoints.data();
+	rprsAnimData.transformValues = dataHolderStruct.m_values.data();
 
 	int res = rprsAddAnimation(&rprsAnimData);
 	if (res != RPR_SUCCESS)
@@ -695,5 +695,5 @@ void AnimationExporter::ReportProgress(int progress)
 
 void AnimationExporter::ReportGLTFExportError(MString strPath)
 {
-	MGlobal::displayError("GLTF export error: cannot get animation for transform: " + strPath);
+	MGlobal::displayError("GLTF/RPRs export error: cannot get animation for transform: " + strPath);
 }
