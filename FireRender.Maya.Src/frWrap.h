@@ -1272,6 +1272,24 @@ namespace frw
 		}
 	};
 
+	class SphereLight : public Light
+	{
+		DECLARE_OBJECT_NO_DATA(SphereLight, Light);
+	public:
+		SphereLight(rpr_light h, const Context &context) : Light(h, context, new Data()) {}
+		void SetRadiantPower(float r, float g, float b)
+		{
+			auto res = rprSphereLightSetRadiantPower3f(Handle(), r, g, b);
+			checkStatus(res);
+		}
+
+		void SetRadius(float radius)
+		{
+			auto res = rprSphereLightSetRadius(Handle(), radius);
+			checkStatus(res);
+		}
+	};
+
 	class SpotLight : public Light
 	{
 		DECLARE_OBJECT_NO_DATA(SpotLight, Light);
@@ -1282,9 +1300,34 @@ namespace frw
 			auto res = rprSpotLightSetRadiantPower3f(Handle(), r, g, b);
 			checkStatus(res);
 		}
+
 		void SetConeShape(float innerAngle, float outerAngle)
 		{
 			auto res = rprSpotLightSetConeShape(Handle(), innerAngle, outerAngle);
+			checkStatus(res);
+		}
+	};
+
+	class DiskLight : public Light
+	{
+		DECLARE_OBJECT_NO_DATA(DiskLight, Light);
+	public:
+		DiskLight(rpr_light h, const Context &context) : Light(h, context, new Data()) {}
+		void SetRadiantPower(float r, float g, float b)
+		{
+			auto res = rprDiskLightSetRadiantPower3f(Handle(), r, g, b);
+			checkStatus(res);
+		}
+
+		void SetRadius(float radius)
+		{
+			auto res = rprDiskLightSetRadius(Handle(), radius);
+			checkStatus(res);
+		}
+
+		void SetAngle(float angle)
+		{
+			auto res = rprDiskLightSetAngle(Handle(), angle);
 			checkStatus(res);
 		}
 	};
@@ -1864,6 +1907,16 @@ namespace frw
 			return PointLight(h, *this);
 		}
 
+		SphereLight CreateSphereLight()
+		{
+			FRW_PRINT_DEBUG("CreateSphereLight()");
+			rpr_light h;
+			auto status = rprContextCreateSphereLight(Handle(), &h);
+			checkStatusThrow(status, "Unable to create sphere light");
+
+			return SphereLight(h, *this);
+		}
+
 		SpotLight CreateSpotLight()
 		{
 			FRW_PRINT_DEBUG("CreateSpotLight()");
@@ -1872,6 +1925,16 @@ namespace frw
 			checkStatusThrow(status, "Unable to create spot light");
 
 			return SpotLight(h, *this);
+		}
+
+		DiskLight CreateDiskLight()
+		{
+			FRW_PRINT_DEBUG("CreateDiskLight()");
+			rpr_light h;
+			auto status = rprContextCreateDiskLight(Handle(), &h);
+			checkStatusThrow(status, "Unable to create disk light");
+
+			return DiskLight(h, *this);
 		}
 
 		EnvironmentLight CreateEnvironmentLight()

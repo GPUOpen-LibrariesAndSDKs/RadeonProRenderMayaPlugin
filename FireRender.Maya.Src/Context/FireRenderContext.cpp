@@ -2153,7 +2153,10 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 			}
 			else if (dagNode.typeId() == FireMaya::TypeId::FireRenderPhysicalLightLocator)
 			{
-				ob = CreateSceneObject<FireRenderPhysLight, NodeCachingOptions::AddPath>(dagPath);
+				if (IsPhysicalLightTypeSupported(FireRenderPhysLight::GetPhysLightType(dagPath.node())))
+				{
+					ob = CreateSceneObject<FireRenderPhysLight, NodeCachingOptions::AddPath>(dagPath);
+				}
 			}
 			else
 			{
