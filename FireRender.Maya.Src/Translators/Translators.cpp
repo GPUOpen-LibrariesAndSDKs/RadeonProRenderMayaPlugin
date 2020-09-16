@@ -410,6 +410,49 @@ namespace FireMaya
 					checkStatus(frstatus);
 					break;
 				}
+				case PLTSphere:
+					if (!update)
+					{
+						frlight.light = frcontext.CreateSphereLight();
+					}
+
+					frstatus = rprSphereLightSetRadiantPower3f(frlight.light.Handle(), color.r, color.g, color.b);
+					checkStatus(frstatus);
+
+					frstatus = rprSphereLightSetRadius(frlight.light.Handle(), lightData.sphereRadius);
+					checkStatus(frstatus);
+
+					{
+						// Maya let user to set only up to 3 digits after point in scale parameter of transform.
+						// So we need to take only these 3 digits into account
+						int revert_precision = 1000;
+						
+						long long scalex = matrix[0][0] * revert_precision;
+						long long scaley = matrix[1][1] * revert_precision;
+						long long scalez = matrix[2][2] * revert_precision;
+
+						if (scalex != scaley || scalex != scalez)
+						{
+							MGlobal::displayWarning("Non-uniform scaling for spehre light detected. Might lead to graphical artifacts!");
+						}
+					}
+					break;
+
+				case PLTDisk:
+					if (!update)
+					{
+						frlight.light = frcontext.CreateDiskLight();
+					}
+
+					frstatus = rprDiskLightSetRadiantPower3f(frlight.light.Handle(), color.r, color.g, color.b);
+					checkStatus(frstatus);
+
+					frstatus = rprDiskLightSetRadius(frlight.light.Handle(), lightData.diskRadius);
+					checkStatus(frstatus);
+
+					frstatus = rprDiskLightSetAngle(frlight.light.Handle(), lightData.diskAngle);
+					checkStatus(frstatus);
+					break;
 
 				case PLTUnknown:
 					return false;
