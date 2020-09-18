@@ -47,10 +47,17 @@ AnimationExporter::AnimationExporter(bool gltfExport) :
 		m_runtimeMoveTypeRotation = RPRS_ANIMATION_MOVEMENTTYPE_ROTATION;
 		m_runtimeMoveTypeScale = RPRS_ANIMATION_MOVEMENTTYPE_SCALE;
 
-		m_pFunc_AddExtraCamera = nullptr;// rprsAddExtraCamera;
+#if RPR_API_VERSION > 0x00103505
+		m_pFunc_AddExtraCamera = rprsAddExtraCamera;
+		m_pFunc_AddExtraShapeParameter = rprsAddExtraShapeParameter;
+		m_pFunc_AssignLightToGroup = rprsAssignLightToGroup;
+#else
+		m_pFunc_AddExtraCamera = nullptr;
+		m_pFunc_AddExtraShapeParameter = nullptr;
+		m_pFunc_AssignLightToGroup = nullptr;
+#endif
+
 		m_pFunc_AssignCameraToGroup = rprsAssignCameraToGroup;
-		m_pFunc_AddExtraShapeParameter = nullptr; //rprsAddExtraShapeParameter;
-		m_pFunc_AssignLightToGroup = nullptr; // rprsAssignLightToGroup;
 		m_pFunc_AssignShapeToGroup = rprsAssignShapeToGroup;
 		//m_pFunc_SetTransformGroup = rprsSetTransformGroup;
 		m_pFunc_AssignParentGroupToGroup = rprsAssignParentGroupToGroup;
