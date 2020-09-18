@@ -174,6 +174,9 @@ private:
 	/** Clean up resources. */
 	void cleanUp();
 
+	friend void RenderUpdateCallback(float progress, void* pData);
+	void OnRenderUpdateCallback(float progress);
+
 	/** Get the viewport size. */
 	MStatus getSize(unsigned int& width, unsigned int& height);
 

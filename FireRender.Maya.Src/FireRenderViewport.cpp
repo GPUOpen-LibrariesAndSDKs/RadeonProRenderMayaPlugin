@@ -212,6 +212,37 @@ void FireRenderViewport::removed(bool panelDestroyed)
 	removeMenu();
 }
 
+void RenderUpdateCallback(float progress, void* pData)
+{
+	(static_cast<FireRenderViewport*>(pData))->OnRenderUpdateCallback(progress);
+}
+
+void FireRenderViewport::OnRenderUpdateCallback(float progress)
+{
+	readFrameBuffer(false);
+
+	updateTexture(m_pixels.data(), m_contextPtr->width(), m_contextPtr->height());
+	/*FireRenderThread::RunProcOnMainThread([&]()
+		{
+			// Schedule a Maya viewport refresh or set exit flag
+			MStatus status;
+			M3dView activeView;
+			status = M3dView::getM3dViewFromModelPanel(m_panelName, activeView);
+			if (status == MStatus::kSuccess) // Regular render view
+			{
+				m_view.scheduleRefresh();
+			}
+			else //Standalone render view (hypershade only?)
+			{
+				activeView = M3dView::active3dView(&status);
+				if (activeView.widget() == m_widget)
+					m_view.scheduleRefresh();
+				else
+					m_contextPtr->SetState(FireRenderContext::StateExiting);
+			}
+		});*/
+}
+
 // -----------------------------------------------------------------------------
 bool FireRenderViewport::RunOnViewportThread()
 {
@@ -243,7 +274,8 @@ bool FireRenderViewport::RunOnViewportThread()
 					m_contextPtr->render(false);
 					m_closeDialogNeeded = true;
 
-                    readFrameBuffer();
+					// for tahoe 1.0 only
+                    //readFrameBuffer();
 				}
 
 				if (m_renderingErrors > 0)
@@ -488,7 +520,11 @@ bool FireRenderViewport::initialize()
 			}
 
 			if (!m_contextPtr->buildScene(true, glViewport))
+			{
 				return false;
+			}
+
+			m_contextPtr->SetRenderUpdateCallback(RenderUpdateCallback, this);
 		}
 		catch (...)
 		{
