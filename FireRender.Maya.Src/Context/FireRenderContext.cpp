@@ -940,15 +940,6 @@ void FireRenderContext::render(bool lock)
 	// may need to change iteration step
 	int iterationStep = m_samplesPerUpdate;
 
-	if (m_IterationsPowerOf2Mode)
-	{
-		const int maxIterations = 32;
-		if (m_samplesPerUpdate < maxIterations)
-		{
-			m_samplesPerUpdate *= 2;
-		}
-	}
-
 	if (!m_completionCriteriaParams.isUnlimitedIterations())
 	{
 		int remainingIterations = m_completionCriteriaParams.completionCriteriaMaxIterations - m_currentIteration;
@@ -974,6 +965,15 @@ void FireRenderContext::render(bool lock)
 		context.RenderTile(m_region.left, m_region.right+1, m_height - m_region.top - 1, m_height - m_region.bottom);
 	else
 		context.Render();
+
+	if (m_IterationsPowerOf2Mode)
+	{
+		const int maxIterations = 32;
+		if (m_samplesPerUpdate < maxIterations)
+		{
+			m_samplesPerUpdate = m_samplesPerUpdate * 2;
+		}
+	}
 
 	if (m_currentIteration == 0)
 	{

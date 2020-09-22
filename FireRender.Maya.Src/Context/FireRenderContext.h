@@ -624,6 +624,8 @@ public:
 	void SetWorkProgressCallback(WorkProgressCallback callback) { m_WorkProgressCallback = callback; }
 	void SetIterationsPowerOf2Mode(bool flag) { m_IterationsPowerOf2Mode = flag; }
 
+	int GetSamplesPerUpdate() const { return m_samplesPerUpdate; }
+
 protected:
 	static int INCORRECT_PLUGIN_ID;
 
@@ -776,7 +778,7 @@ private:
 	/** map corresponding dag path of the node with the mode **/
 	std::map<std::string, MDagPath> m_nodePathCache;
 
-	int	m_samplesPerUpdate;
+	std::atomic<int> m_samplesPerUpdate;
 
 	// render type information
 	RenderType m_RenderType;

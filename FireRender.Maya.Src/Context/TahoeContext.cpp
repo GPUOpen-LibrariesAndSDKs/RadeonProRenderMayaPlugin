@@ -459,3 +459,15 @@ void TahoeContext::SetRenderUpdateCallback(RenderUpdateCallback callback, void* 
 		GetScope().Context().SetUpdateCallback(callback, data);
 	}
 }
+
+bool TahoeContext::IsGivenContextRPR2(FireRenderContext* pContext)
+{
+	TahoeContext* pTahoeContext = dynamic_cast<TahoeContext*> (pContext);
+
+	if (pTahoeContext == nullptr)
+	{
+		return false;
+	}
+
+	return pTahoeContext->m_PluginVersion == TahoePluginVersion::RPR2;
+}

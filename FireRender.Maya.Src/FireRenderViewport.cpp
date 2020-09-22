@@ -12,7 +12,7 @@ limitations under the License.
 ********************************************************************/
 #include <cassert>
 #include <sstream>
-#include <thread>
+#include <functional>
 
 #include "common.h"
 #include "frWrap.h"
@@ -212,17 +212,11 @@ void FireRenderViewport::removed(bool panelDestroyed)
 	removeMenu();
 }
 
-void RenderUpdateCallback(float progress, void* pData)
-{
-	(static_cast<FireRenderViewport*>(pData))->OnRenderUpdateCallback(progress);
-}
-
-void FireRenderViewport::OnRenderUpdateCallback(float progress)
+void FireRenderViewport::OnBufferAvailableCallback()
 {
 	readFrameBuffer(false);
 
-	updateTexture(m_pixels.data(), m_contextPtr->width(), m_contextPtr->height());
-	/*FireRenderThread::RunProcOnMainThread([&]()
+	FireRenderThread::RunProcOnMainThread([&]()
 		{
 			// Schedule a Maya viewport refresh or set exit flag
 			MStatus status;
@@ -240,7 +234,7 @@ void FireRenderViewport::OnRenderUpdateCallback(float progress)
 				else
 					m_contextPtr->SetState(FireRenderContext::StateExiting);
 			}
-		});*/
+		});
 }
 
 // -----------------------------------------------------------------------------
@@ -269,13 +263,16 @@ bool FireRenderViewport::RunOnViewportThread()
 				// Perform a render iteration.
 				{
 					AutoMutexLock contextLock(m_contextLock);
-                    AutoMutexLock pixelsLock(m_pixelsLock);
+
+					if (!TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
+					{
+						AutoMutexLock pixelsLock(m_pixelsLock);
+					}
 
 					m_contextPtr->render(false);
 					m_closeDialogNeeded = true;
 
-					// for tahoe 1.0 only
-                    //readFrameBuffer();
+					readFrameBuffer();
 				}
 
 				if (m_renderingErrors > 0)
@@ -346,7 +343,7 @@ bool FireRenderViewport::start()
 		m_contextPtr->SetState(FireRenderContext::StateRendering);
 	}
 
-	m_isRunning = false;
+	m_isRunning = true;
 
 	m_renderingErrors = 0;
 
@@ -365,6 +362,8 @@ bool FireRenderViewport::start()
 		return m_isRunning;
 	});
 
+	m_NorthStarRenderingHelper.Start();
+
 	return true;
 }
 
@@ -372,6 +371,8 @@ bool FireRenderViewport::start()
 bool FireRenderViewport::stop()
 {
 	MAIN_THREAD_ONLY;
+
+	m_NorthStarRenderingHelper.Stop();
 
 	// should wait for thread
 	// m_isRunning could be not updated when exiting Maya during rendering, so check for two conditions
@@ -524,7 +525,10 @@ bool FireRenderViewport::initialize()
 				return false;
 			}
 
-			m_contextPtr->SetRenderUpdateCallback(RenderUpdateCallback, this);
+			if (TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
+			{
+				m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderViewport::OnBufferAvailableCallback, this));
+			}
 		}
 		catch (...)
 		{

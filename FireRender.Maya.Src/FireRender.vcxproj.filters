@@ -674,6 +674,9 @@
     <ClCompile Include="..\RadeonProRenderSharedComponents\src\Alembic\AlembicWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NorthStarRenderingHelper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -1154,6 +1157,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\RadeonProRenderSharedComponents\src\Alembic\AlembicWrapper.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NorthStarRenderingHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
