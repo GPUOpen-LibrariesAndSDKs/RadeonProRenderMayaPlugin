@@ -13,6 +13,12 @@
 		50C1EDBF247EC23700E53230 /* SetRangeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */; };
 		50C1EDC0247EC23700E53230 /* SetRangeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */; };
 		50C1EDC1247EC23700E53230 /* SetRangeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */; };
+		50ED2476251A24DE006A318A /* AnimationExporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50ED2474251A24DE006A318A /* AnimationExporter.cpp */; };
+		50ED2477251A24DE006A318A /* AnimationExporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50ED2474251A24DE006A318A /* AnimationExporter.cpp */; };
+		50ED2478251A24DE006A318A /* AnimationExporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50ED2474251A24DE006A318A /* AnimationExporter.cpp */; };
+		50ED2479251A24DE006A318A /* AnimationExporter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50ED2475251A24DE006A318A /* AnimationExporter.h */; };
+		50ED247A251A24DE006A318A /* AnimationExporter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50ED2475251A24DE006A318A /* AnimationExporter.h */; };
+		50ED247B251A24DE006A318A /* AnimationExporter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50ED2475251A24DE006A318A /* AnimationExporter.h */; };
 		8D28372E2199D73B0004852B /* OptionVarHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D28372B2199D6C90004852B /* OptionVarHelpers.h */; };
 		8D28372F2199D7480004852B /* OptionVarHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D2837292199D6C90004852B /* OptionVarHelpers.cpp */; };
 		8D55909F20C874BA00567EEC /* MeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D55909520C8743800567EEC /* MeshTranslator.h */; };
@@ -1027,6 +1033,8 @@
 		4DE645101DA339A60076E6A7 /* Readme.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Readme.txt; path = ../../Readme.txt; sourceTree = "<group>"; };
 		50C1EDB9247EC23700E53230 /* SetRangeConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SetRangeConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/SetRangeConverter.h; sourceTree = "<group>"; };
 		50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SetRangeConverter.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/SetRangeConverter.cpp; sourceTree = "<group>"; };
+		50ED2474251A24DE006A318A /* AnimationExporter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AnimationExporter.cpp; path = ../../../FireRender.Maya.Src/AnimationExporter.cpp; sourceTree = "<group>"; };
+		50ED2475251A24DE006A318A /* AnimationExporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnimationExporter.h; path = ../../../FireRender.Maya.Src/AnimationExporter.h; sourceTree = "<group>"; };
 		8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRprLoadStore64.dylib; path = ../../../RadeonProRenderSDK/RadeonProRender/binMacOS/libRprLoadStore64.dylib; sourceTree = "<group>"; };
 		8D1E289B2034A0550060BB11 /* FireRenderPBRMaterial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderPBRMaterial.h; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.h; sourceTree = "<group>"; };
 		8D1E289D2034A0550060BB11 /* FireRenderPBRMaterial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderPBRMaterial.cpp; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.cpp; sourceTree = "<group>"; };
@@ -1427,6 +1435,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				50ED2474251A24DE006A318A /* AnimationExporter.cpp */,
+				50ED2475251A24DE006A318A /* AnimationExporter.h */,
 				F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */,
 				F1EEA1F024ADE93A008AFB18 /* CompositeWrapper.h */,
 				F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */,
@@ -1859,6 +1869,7 @@
 				B72F820A239F813F00C2BFB3 /* MultDoubleLinearConverter.h in Headers */,
 				CE5E271522804A3E00F3B6D7 /* TileRenderer.h in Headers */,
 				8DB9AEA72256529D00543147 /* FireRenderVolumeOverride.h in Headers */,
+				50ED2479251A24DE006A318A /* AnimationExporter.h in Headers */,
 				8DB9AEA42256526900543147 /* FastNoise.h in Headers */,
 				8DB9AEA32256523400543147 /* VolumeAttributes.h in Headers */,
 				8D28372E2199D73B0004852B /* OptionVarHelpers.h in Headers */,
@@ -2011,6 +2022,7 @@
 				B72F820B239F813F00C2BFB3 /* MultDoubleLinearConverter.h in Headers */,
 				CE5E271622804A3E00F3B6D7 /* TileRenderer.h in Headers */,
 				8DB9AEA9225652C200543147 /* FireRenderVolumeOverride.h in Headers */,
+				50ED247A251A24DE006A318A /* AnimationExporter.h in Headers */,
 				8DB9AEA62256528900543147 /* VolumeAttributes.h in Headers */,
 				8DB9AEA52256527A00543147 /* FastNoise.h in Headers */,
 				8DBCC29E22304666003EE361 /* OptionVarHelpers.h in Headers */,
@@ -2163,6 +2175,7 @@
 				B7531FCC23D9ED5600246738 /* MultDoubleLinearConverter.h in Headers */,
 				B7531FCD23D9ED5600246738 /* TileRenderer.h in Headers */,
 				B7531FCE23D9ED5600246738 /* FireRenderVolumeOverride.h in Headers */,
+				50ED247B251A24DE006A318A /* AnimationExporter.h in Headers */,
 				B7531FCF23D9ED5600246738 /* VolumeAttributes.h in Headers */,
 				B7531FD023D9ED5600246738 /* FastNoise.h in Headers */,
 				B7531FD223D9ED5600246738 /* OptionVarHelpers.h in Headers */,
@@ -2458,6 +2471,7 @@
 				8D595DEC20372FE20031988A /* FireRenderUtils.cpp in Sources */,
 				8D595DED20372FE20031988A /* FireRenderNoise.cpp in Sources */,
 				8D595DEE20372FE20031988A /* FireRenderMaterialSwatchRender.cpp in Sources */,
+				50ED2476251A24DE006A318A /* AnimationExporter.cpp in Sources */,
 				8D595DEF20372FE20031988A /* FireRenderAddMaterial.cpp in Sources */,
 				8D595DF020372FE20031988A /* FireRenderImageUtil.cpp in Sources */,
 				B7D1F0142367616000BB07CE /* InstancerMASH.cpp in Sources */,
@@ -2609,6 +2623,7 @@
 				8DBCC31122304666003EE361 /* FireRenderUtils.cpp in Sources */,
 				8DBCC31222304666003EE361 /* FireRenderNoise.cpp in Sources */,
 				8DBCC31322304666003EE361 /* FireRenderMaterialSwatchRender.cpp in Sources */,
+				50ED2477251A24DE006A318A /* AnimationExporter.cpp in Sources */,
 				8DBCC31422304666003EE361 /* FireRenderAddMaterial.cpp in Sources */,
 				8DBCC31522304666003EE361 /* FireRenderImageUtil.cpp in Sources */,
 				B7D1F0152367616000BB07CE /* InstancerMASH.cpp in Sources */,
@@ -2760,6 +2775,7 @@
 				B753207F23D9ED5600246738 /* FireRenderShadowCatcherMaterial.cpp in Sources */,
 				B753208023D9ED5600246738 /* FireRenderUtils.cpp in Sources */,
 				B753208123D9ED5600246738 /* FireRenderNoise.cpp in Sources */,
+				50ED2478251A24DE006A318A /* AnimationExporter.cpp in Sources */,
 				B753208223D9ED5600246738 /* FireRenderMaterialSwatchRender.cpp in Sources */,
 				B753208323D9ED5600246738 /* FireRenderAddMaterial.cpp in Sources */,
 				B753208423D9ED5600246738 /* FireRenderImageUtil.cpp in Sources */,
