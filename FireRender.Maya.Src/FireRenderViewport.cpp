@@ -214,7 +214,7 @@ void FireRenderViewport::removed(bool panelDestroyed)
 
 void FireRenderViewport::OnBufferAvailableCallback()
 {
-	readFrameBuffer(false);
+	readFrameBuffer();
 
 	FireRenderThread::RunProcOnMainThread([&]()
 		{

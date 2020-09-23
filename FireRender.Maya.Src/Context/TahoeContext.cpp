@@ -456,7 +456,7 @@ void TahoeContext::SetRenderUpdateCallback(RenderUpdateCallback callback, void* 
 {
 	if (m_PluginVersion == TahoePluginVersion::RPR2)
 	{
-		GetScope().Context().SetUpdateCallback(callback, data);
+		GetScope().Context().SetUpdateCallback((void*)callback, data);
 	}
 }
 
