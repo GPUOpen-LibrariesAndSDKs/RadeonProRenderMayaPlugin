@@ -96,9 +96,6 @@ namespace frw
 			NODE_ENTRY(ShaderTypeEmissive),
 			NODE_ENTRY(ShaderTypeWard),
 			NODE_ENTRY(ShaderTypeBlend),
-#if (RPR_VERSION_MINOR < 34)
-			NODE_ENTRY(ShaderTypeStandard),
-#endif
 			NODE_ENTRY(ShaderTypeOrenNayer),
 			NODE_ENTRY(ShaderTypeDiffuseRefraction),
 			NODE_ENTRY(ShaderTypeAdd),
