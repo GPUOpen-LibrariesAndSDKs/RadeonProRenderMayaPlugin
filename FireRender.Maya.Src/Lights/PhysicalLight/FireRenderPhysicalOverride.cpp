@@ -38,6 +38,10 @@ FireRenderPhysicalOverride::FireRenderPhysicalOverride(const MObject& obj)
 	m_currentTrackedValues.lightType = PLType::PLTArea;
 	m_currentTrackedValues.spotLightInnerConeAngle = 0.0f;
 	m_currentTrackedValues.spotLightOuterConeFalloff = 0.0f;
+
+	m_currentTrackedValues.diskRadius = 0.0f;
+	m_currentTrackedValues.diskAngle = 0.0f;
+	m_currentTrackedValues.sphereRadius = 0.0f;
 }
 
 FireRenderPhysicalOverride::~FireRenderPhysicalOverride()
@@ -66,6 +70,27 @@ void FireRenderPhysicalOverride::updateDG()
 	if (m_currentTrackedValues.areaLightShape != areaLightShape)
 	{
 		m_currentTrackedValues.areaLightShape = areaLightShape;
+		m_changed = true;
+	}
+
+	float diskRadius;
+	float diskAngle;
+
+	PhysicalLightAttributes::GetDiskLightSettings(m_depNodeObj.object(), diskRadius, diskAngle);
+
+	if (m_currentTrackedValues.diskRadius != diskRadius || m_currentTrackedValues.diskAngle != diskAngle)
+	{
+		m_currentTrackedValues.diskRadius = diskRadius;
+		m_currentTrackedValues.diskAngle = diskAngle;
+		m_changed = true;
+	}
+
+	float sphereRadius;
+	PhysicalLightAttributes::GetSphereLightSettings(m_depNodeObj.object(), sphereRadius);
+
+	if (m_currentTrackedValues.sphereRadius != sphereRadius)
+	{
+		m_currentTrackedValues.sphereRadius = sphereRadius;
 		m_changed = true;
 	}
 
@@ -357,6 +382,12 @@ void FireRenderPhysicalOverride::CreateGizmoGeometry(GizmoVertexVector& vertexVe
 		break;
 	case PLTDirectional:
 		PhysicalLightGeometryUtility::FillGizmoGeometryForDirectionalLight(vertexVector, indexVector);
+		break;
+	case PLTDisk:
+		PhysicalLightGeometryUtility::FillGizmoGeometryForDiskLight(vertexVector, indexVector, data.diskAngle, data.diskRadius);
+		break;
+	case PLTSphere:
+		PhysicalLightGeometryUtility::FillGizmoGeometryForSphereLight(vertexVector, indexVector, data.sphereRadius);
 		break;
 	}
 }
