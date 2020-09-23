@@ -263,16 +263,23 @@ bool FireRenderViewport::RunOnViewportThread()
 				// Perform a render iteration.
 				{
 					AutoMutexLock contextLock(m_contextLock);
-
+					
 					if (!TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
 					{
 						AutoMutexLock pixelsLock(m_pixelsLock);
+
+						m_contextPtr->render(false);
+						m_closeDialogNeeded = true;
+
+						readFrameBuffer();
 					}
+					else
+					{
+						m_contextPtr->render(false);
+						m_closeDialogNeeded = true;
 
-					m_contextPtr->render(false);
-					m_closeDialogNeeded = true;
-
-					readFrameBuffer();
+						readFrameBuffer();
+					}
 				}
 
 				if (m_renderingErrors > 0)
@@ -344,7 +351,6 @@ bool FireRenderViewport::start()
 	}
 
 	m_isRunning = true;
-
 	m_renderingErrors = 0;
 
 	FireRenderThread::KeepRunning([this]()
@@ -371,9 +377,7 @@ bool FireRenderViewport::start()
 bool FireRenderViewport::stop()
 {
 	MAIN_THREAD_ONLY;
-
-	m_NorthStarRenderingHelper.Stop();
-
+	
 	// should wait for thread
 	// m_isRunning could be not updated when exiting Maya during rendering, so check for two conditions
 	while (m_isRunning && FireRenderThread::IsThreadRunning())
@@ -385,6 +389,8 @@ bool FireRenderViewport::stop()
 		m_contextPtr->SetState(FireRenderContext::StateExiting);
 		this_thread::sleep_for(10ms); // 10.03.2017 - perhaps this is better than yield()
 	}
+
+	m_NorthStarRenderingHelper.Stop();
 
 	if (rcWarningDialog.shown && m_closeDialogNeeded)
 		rcWarningDialog.close();
