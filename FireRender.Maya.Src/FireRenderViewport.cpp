@@ -378,6 +378,8 @@ bool FireRenderViewport::stop()
 {
 	MAIN_THREAD_ONLY;
 	
+	m_NorthStarRenderingHelper.SetStopFlag();
+
 	// should wait for thread
 	// m_isRunning could be not updated when exiting Maya during rendering, so check for two conditions
 	while (m_isRunning && FireRenderThread::IsThreadRunning())
@@ -482,7 +484,9 @@ void FireRenderViewport::preBlit()
 	// has exclusive access to the OpenGL frame
 	// buffer before using it to draw to the viewport.
 	if (m_contextPtr->isGLInteropActive())
+	{
 		m_pixelsLock.lock();
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -491,7 +495,9 @@ void FireRenderViewport::postBlit()
 	// Release the context lock after the shared
 	// GL frame buffer has been drawn to the viewport.
 	if (m_contextPtr->isGLInteropActive())
+	{
 		m_pixelsLock.unlock();
+	}
 }
 
 

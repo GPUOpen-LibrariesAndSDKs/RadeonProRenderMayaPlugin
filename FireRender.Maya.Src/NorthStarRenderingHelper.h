@@ -15,6 +15,7 @@ public:
 	void SetData(FireRenderContext* pContext, std::function<void(void)> readBufferAndUpdateCallback);
 	void Start();
 	void Stop();
+	void SetStopFlag();
 
 private:
 	std::atomic<bool> m_DataReady;

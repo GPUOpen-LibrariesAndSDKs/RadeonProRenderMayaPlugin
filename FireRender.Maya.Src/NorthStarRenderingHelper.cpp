@@ -34,6 +34,11 @@ void NorthStarRenderingHelper::Start()
 	m_UpdateThreadPtr = std::make_unique<std::thread>(&NorthStarRenderingHelper::UpdateThreadFunc, this);
 }
 
+void NorthStarRenderingHelper::SetStopFlag()
+{
+	m_UpdateThreadRunning = false;
+}
+
 void NorthStarRenderingHelper::Stop()
 {
 	if (!m_UpdateThreadRunning)
@@ -41,7 +46,7 @@ void NorthStarRenderingHelper::Stop()
 		return;
 	}
 
-	m_UpdateThreadRunning = false;
+	SetStopFlag();
 	m_UpdateThreadPtr->join();
 }
 
