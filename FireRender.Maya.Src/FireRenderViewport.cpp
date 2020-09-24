@@ -392,7 +392,7 @@ bool FireRenderViewport::stop()
 		this_thread::sleep_for(10ms); // 10.03.2017 - perhaps this is better than yield()
 	}
 
-	m_NorthStarRenderingHelper.Stop();
+	m_NorthStarRenderingHelper.StopAndJoin();
 
 	if (rcWarningDialog.shown && m_closeDialogNeeded)
 		rcWarningDialog.close();

@@ -16,6 +16,7 @@ NorthStarRenderingHelper::NorthStarRenderingHelper() :
 
 NorthStarRenderingHelper::~NorthStarRenderingHelper()
 {
+    m_UpdateThreadPtr.reset();
 }
 
 void NorthStarRenderingHelper::Start()
@@ -27,7 +28,7 @@ void NorthStarRenderingHelper::Start()
 
 	if (m_UpdateThreadRunning)
 	{
-		Stop();
+		StopAndJoin();
 	}
 
 	m_UpdateThreadRunning = true;
@@ -39,15 +40,14 @@ void NorthStarRenderingHelper::SetStopFlag()
 	m_UpdateThreadRunning = false;
 }
 
-void NorthStarRenderingHelper::Stop()
+void NorthStarRenderingHelper::StopAndJoin()
 {
-	if (!m_UpdateThreadRunning)
-	{
-		return;
-	}
-
 	SetStopFlag();
-	m_UpdateThreadPtr->join();
+    if (m_UpdateThreadPtr != nullptr)
+    {
+        m_UpdateThreadPtr->join();
+        m_UpdateThreadPtr.reset();
+    }
 }
 
 void ContextRenderUpdateCallback(float progress, void* pData)
