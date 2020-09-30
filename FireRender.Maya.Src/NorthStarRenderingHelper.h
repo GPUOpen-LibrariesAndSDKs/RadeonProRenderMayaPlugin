@@ -3,6 +3,7 @@
 #include <atomic>
 #include <thread>
 #include <memory>
+#include <condition_variable>
 
 class FireRenderContext;
 
@@ -30,5 +31,8 @@ private:
 	FireRenderContext* m_pContext;
 
 	std::function<void(void)> m_readBufferAndUpdateCallback;
+
+	std::mutex m_DataReadyMutex;
+	std::condition_variable m_DataReadyConditionalVariable;
 };
 

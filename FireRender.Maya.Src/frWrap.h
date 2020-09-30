@@ -2222,6 +2222,13 @@ namespace frw
 			assert(status == RPR_SUCCESS);
 		}
 
+		void AbortRender()
+		{
+			rpr_int status = RPR_SUCCESS;
+			status = rprContextAbortRender(Handle());
+			assert(status == RPR_SUCCESS);
+		}
+
 		void Render()
 		{
 			auto status = rprContextRender(Handle());

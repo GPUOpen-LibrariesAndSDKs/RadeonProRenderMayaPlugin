@@ -471,3 +471,11 @@ bool TahoeContext::IsGivenContextRPR2(FireRenderContext* pContext)
 
 	return pTahoeContext->m_PluginVersion == TahoePluginVersion::RPR2;
 }
+
+void TahoeContext::AbortRender()
+{
+	if (m_PluginVersion == TahoePluginVersion::RPR2)
+	{
+		GetScope().Context().AbortRender();
+	}
+}

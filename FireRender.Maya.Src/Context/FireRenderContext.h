@@ -246,6 +246,7 @@ public:
 	typedef void(*RenderUpdateCallback)(float, void*);
 
 	virtual void SetRenderUpdateCallback(RenderUpdateCallback callback, void* data) {}
+	virtual void AbortRender() {}
 
 	struct ReadFrameBufferRequestParams
 	{

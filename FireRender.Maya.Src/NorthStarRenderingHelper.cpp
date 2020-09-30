@@ -45,6 +45,9 @@ void NorthStarRenderingHelper::StopAndJoin()
 	SetStopFlag();
     if (m_UpdateThreadPtr != nullptr)
     {
+		std::unique_lock<std::mutex> lck(m_DataReadyMutex);
+		m_DataReadyConditionalVariable.notify_one();
+
         m_UpdateThreadPtr->join();
         m_UpdateThreadPtr.reset();
     }
@@ -66,29 +69,31 @@ void NorthStarRenderingHelper::SetData(FireRenderContext* pContext, std::functio
 
 void NorthStarRenderingHelper::OnContextRenderUpdateCallback(float progress)
 {
-	/*if (m_contextPtr->GetSamplesPerUpdate() == 1)
-	{
-		return;
-	}*/
-
 	if (m_pContext->isDirty())
 	{
 		// ABORT RENDER !!!
-		int res = rprContextAbortRender(m_pContext->context());
+		m_pContext->AbortRender();
 		return;
 	}
 
+	std::unique_lock<std::mutex> lck(m_DataReadyMutex);
 	m_DataReady = true;
+	m_DataReadyConditionalVariable.notify_one();
 }
 
 void NorthStarRenderingHelper::UpdateThreadFunc()
 {
 	while (m_UpdateThreadRunning)
 	{
-		while (!m_DataReady && m_UpdateThreadRunning)
+		{
+			std::unique_lock<std::mutex> lck(m_DataReadyMutex);
+			m_DataReadyConditionalVariable.wait(lck, [this] { return !m_UpdateThreadRunning || m_DataReady; });
+		}
+
+		/*while (!m_DataReady && m_UpdateThreadRunning)
 		{
 			std::this_thread::sleep_for(1ms);
-		}
+		}*/
 
 		if (!m_UpdateThreadRunning)
 		{
