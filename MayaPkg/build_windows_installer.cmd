@@ -62,6 +62,7 @@ xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2020" "system\PluginI
 mkdir "system\PluginInstaller\InputData\feature_ConvScripts"
 copy /Y "%SharedComponentsDir%\SceneConversionScripts\convertAI2RPR.py" "system\PluginInstaller\InputData\feature_ConvScripts\convertAI2RPR.py"
 copy /Y "%SharedComponentsDir%\SceneConversionScripts\convertRS2RPR.py" "system\PluginInstaller\InputData\feature_ConvScripts\convertRS2RPR.py"
+copy /Y "%SharedComponentsDir%\SceneConversionScripts\convertVR2RPR.py" "system\PluginInstaller\InputData\feature_ConvScripts\convertVR2RPR.py"
 
 
 :: copy material library

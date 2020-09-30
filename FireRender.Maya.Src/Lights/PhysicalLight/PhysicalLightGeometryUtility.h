@@ -41,6 +41,9 @@ public:
 	static bool FillGizmoGeometryForDirectionalLight(GizmoVertexVector& vertices, IndexVector& indices);
 	static bool FillGizmoGeometryForPointLight(GizmoVertexVector& vertices, IndexVector& indices);
 
+	static bool FillGizmoGeometryForDiskLight(GizmoVertexVector& vertexVector, IndexVector& indexVector, float diskAngle, float diskRadius);
+	static bool FillGizmoGeometryForSphereLight(GizmoVertexVector& vertexVector, IndexVector& indexVector, float sphereRadius);
+
 	// Mesh Area calculation
 	static float GetAreaOfMesh(const MFnMesh& mesh, const MMatrix & transformMatrix);
 	static float GetAreaOfMeshPrimitive(PLAreaLightShape shapeType, const MMatrix & transformMatrix);

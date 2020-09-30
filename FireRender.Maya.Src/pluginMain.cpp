@@ -387,12 +387,28 @@ MStatus registerNodesInPathEditor(void)
 		CHECK_MSTATUS(status);
 	}
 
+	// add rpr volume paths to path editor
+	{
+		std::stringstream reg_command;
+		reg_command << "filePathEditor -registerType \"" << FIRE_RENDER_NODE_PREFIX << "Volume.VdbFilePath\"" << " -typeLabel " << "\"RPR Volume\"";
+		status = MGlobal::executeCommand(reg_command.str().c_str());
+		CHECK_MSTATUS(status);
+	}
+
 	return status;
 }
 
 MStatus deRegisterNodesInPathEditor(void)
 {
 	MStatus status;
+
+	// deregister rpr volume from path editor
+	{
+		std::stringstream reg_command;
+		reg_command << "filePathEditor -deregisterType \"" << FIRE_RENDER_NODE_PREFIX << "Volume.VdbFilePath\"";
+		status = MGlobal::executeCommand(reg_command.str().c_str());
+		CHECK_MSTATUS(status);
+	}
 
 	// deregister IES from path editor
 	{

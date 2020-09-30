@@ -41,9 +41,17 @@ global proc AERPRPhysicalLightTemplate( string $nodeName )
 		editorTemplate -endLayout;
 
 		editorTemplate -beginLayout "Spot Light" -collapse 0 plSpotLightSection;
-			editorTemplate -label "Visible" -addControl "spotLightVisible";
 			editorTemplate -label "Inner Cone Angle" -addControl "spotLightInnerConeAngle" onConeAngleChanged;
 			editorTemplate -label "Outer Cone Falloff" -addControl "spotLightOuterConeFalloff" onConeAngleChanged;
+		editorTemplate -endLayout;
+
+		editorTemplate -beginLayout "Disk Light (RPR 2.0 only)" -collapse 0 plDiskLightSection;
+			editorTemplate -label "Angle" -addControl "diskLightAngle";
+			editorTemplate -label "Radius" -addControl "diskLightRadius";
+		editorTemplate -endLayout;
+
+		editorTemplate -beginLayout "Sphere Light (RPR 2.0 only)" -collapse 0 plSphereLightSection;
+			editorTemplate -label "Radius" -addControl "sphereLightRadius";
 		editorTemplate -endLayout;
 
 		editorTemplate -beginLayout "Decay" -collapse 0 plDecaySection;
@@ -113,11 +121,15 @@ global proc onLightTypeChanged(string $nodeName)
 	$spotType = 1;
 	$pointType = 2;
 	$directionalType = 3;
+	$sphereType = 4;
+	$diskType = 5;
 
 	$type = `getAttr ($nodeName + ".lightType")`;
 
 	enableAreaSection($nodeName, $type == $areaType);
 	enableSpotSection($nodeName, $type == $spotType);
+	enableSphereSection($nodeName, $type == $sphereType);
+	enableDiskSection($nodeName, $type == $diskType);
 
 	// Shadow Softness is supported only for directional light at the moment
 	//enableShadowsSection($nodeName, $type == $directionalType);
@@ -201,9 +213,23 @@ global proc enableSpotSection(string $nodeName, int $flag)
 {
 	$val = $flag == 0;
 
-	//editorTemplate -dimControl $nodeName "spotLightVisible" $val;
 	editorTemplate -dimControl $nodeName "spotLightInnerConeAngle" $val;
 	editorTemplate -dimControl $nodeName "spotLightOuterConeFalloff" $val;
+}
+
+global proc enableDiskSection(string $nodeName, int $flag)
+{
+	$val = $flag == 0;
+
+	editorTemplate -dimControl $nodeName "diskLightAngle" $val;
+	editorTemplate -dimControl $nodeName "diskLightRadius" $val;
+}
+
+global proc enableSphereSection(string $nodeName, int $flag)
+{
+	$val = $flag == 0;
+
+	editorTemplate -dimControl $nodeName "sphereLightRadius" $val;
 }
 
 global proc enableVolumeSection(string $nodeName, int $flag)
@@ -234,7 +260,6 @@ global proc dimUnsupportedAttributes(string $nodeName)
 	enableDecaySection($nodeName, 0);
 
 	editorTemplate -dimControl $nodeName "shadowsTransparency" 1;
-	editorTemplate -dimControl $nodeName "spotLightVisible" 1;
 	editorTemplate -dimControl $nodeName "areaLightIntensityNorm" 1;
 	editorTemplate -dimControl $nodeName "areaLightBidirectional" 1;
 }

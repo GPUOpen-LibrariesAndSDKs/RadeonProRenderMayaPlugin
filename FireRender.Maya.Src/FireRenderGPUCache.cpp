@@ -10,6 +10,8 @@
 #include <istream>
 #include <ostream>
 #include <sstream>
+#include <iostream>  
+#include <fstream>
 
 #include <maya/MFnDependencyNode.h>
 #include <maya/MPlug.h>
@@ -95,6 +97,12 @@ void FireRenderGPUCache::ReadAlembicFile()
 	std::string cacheFilePath = ProcessEnvVarsInFilePath<std::string, char>(plug.asString(&res).asChar());
 	CHECK_MSTATUS(res);
 
+	// ensure that file with such name exists
+	const std::ifstream abcFile (cacheFilePath.c_str(), std::ios::in);
+	if (!abcFile.good())
+		return;
+
+	// proceed reading file
 	try
 	{
 		m_archive = IArchive(Alembic::AbcCoreOgawa::ReadArchive(), cacheFilePath);
@@ -317,6 +325,13 @@ void GenerateIndicesArray(std::vector<int>& out, const std::string& key, const R
 
 frw::Shape TranslateAlembicMesh(const RPRAlembicWrapper::PolygonMeshObject* mesh, frw::Context& context)
 {
+	// ensure RPR can process mesh
+	for (uint32_t faceCount : mesh->faceCounts)
+	{
+		if (faceCount != 3 && faceCount != 4)
+			return frw::Shape();
+	}
+
 	// get indices
 	std::vector<int> vertexIndices(mesh->indices.size(), 0); // output indices of vertexes (3 for triangle and 4 for quad)
 

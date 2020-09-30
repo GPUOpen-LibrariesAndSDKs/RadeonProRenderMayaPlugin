@@ -22,6 +22,8 @@ limitations under the License.
 #include <atomic>
 #include "FireMaya.h"
 
+#include "PhysicalLightData.h"
+
 // Forward declarations
 class FireRenderContext;
 class SkyBuilder;
@@ -447,6 +449,8 @@ class FireRenderPhysLight : public FireRenderLight
 public:
 	// Constructor
 	FireRenderPhysLight(FireRenderContext* context, const MDagPath& dagPath);
+
+	static PLType GetPhysLightType(MObject dagPath);
 
 protected:
 	virtual bool ShouldUpdateTransformOnly() const;

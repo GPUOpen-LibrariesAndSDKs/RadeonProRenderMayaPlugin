@@ -48,6 +48,13 @@ MObject PhysicalLightAttributes::spotLightVisible;
 MObject PhysicalLightAttributes::spotLightInnerConeAngle;
 MObject PhysicalLightAttributes::spotLightOuterConeFalloff;
 
+// Sphere Light
+MObject PhysicalLightAttributes::sphereLightRadius;
+
+// Disk light
+MObject PhysicalLightAttributes::diskLightRadius;
+MObject PhysicalLightAttributes::diskLightAngle;
+
 //Light Decay
 MObject PhysicalLightAttributes::decayType;
 MObject PhysicalLightAttributes::decayFalloffStart;
@@ -126,7 +133,9 @@ void PhysicalLightAttributes::Initialize()
 	CreateGeneralAttributes();
 	CreateIntensityAttributes();
 	CreateAreaLightAttrbutes();
+	CreateSphereLightAttrbutes();
 	CreateSpotLightAttrbutes();
+	CreateDiskLightAttrbutes();
 	CreateDecayAttrbutes();
 	CreateShadowsAttrbutes();
 	CreateVolumeAttrbutes();
@@ -141,7 +150,7 @@ void PhysicalLightAttributes::CreateGeneralAttributes()
 
 	CreateBoolAttribute(enabled, "enabled", "en", true);
 
-	std::vector<const char*> values = { "Area" , "Spot", "Point", "Directional" };
+	std::vector<const char*> values = { "Area" , "Spot", "Point", "Directional", "Sphere (RPR 2 only)", "Disk (RPR 2 only)"};
 
 	CreateEnumAttribute(lightType, "lightType", "lt", values, PLTArea);
 
@@ -187,6 +196,17 @@ void PhysicalLightAttributes::CreateSpotLightAttrbutes()
 
 	CreateFloatAttribute(spotLightInnerConeAngle, "spotLightInnerConeAngle", "slia", 0.0f, 179.0f, 43.0f);
 	CreateFloatAttribute(spotLightOuterConeFalloff, "spotLightOuterConeFalloff", "slof", 0.0f, 179.0f, 45.0f);
+}
+
+void PhysicalLightAttributes::CreateSphereLightAttrbutes()
+{
+	CreateFloatAttribute(sphereLightRadius, "sphereLightRadius", "slr", 0.0f, 1.0f, 0.1f);
+}
+
+void PhysicalLightAttributes::CreateDiskLightAttrbutes()
+{
+	CreateFloatAttribute(diskLightRadius, "diskLightRadius", "dlr", 0.0f, 10.0f, 0.1f);
+	CreateFloatAttribute(diskLightAngle, "diskLightAngle", "dla", 0.0f, 179.0f, 45.0f);
 }
 
 void PhysicalLightAttributes::CreateDecayAttrbutes()
@@ -357,6 +377,18 @@ void PhysicalLightAttributes::GetSpotLightSettings(const MFnDependencyNode& node
 	outerfalloff = GetFloatAttribute(node, PhysicalLightAttributes::spotLightOuterConeFalloff);
 }
 
+void PhysicalLightAttributes::GetDiskLightSettings(const MFnDependencyNode& node, float& radius, float& angle)
+{
+	radius = GetFloatAttribute(node, PhysicalLightAttributes::diskLightRadius);
+	angle = GetFloatAttribute(node, PhysicalLightAttributes::diskLightAngle);
+}
+
+void PhysicalLightAttributes::GetSphereLightSettings(const MFnDependencyNode& node, float& radius)
+{
+	radius = GetFloatAttribute(node, PhysicalLightAttributes::sphereLightRadius);
+}
+
+
 bool PhysicalLightAttributes::GetShadowsEnabled(const MFnDependencyNode& node)
 {
 	return GetBoolAttribute(node, PhysicalLightAttributes::shadowsEnabled);
@@ -423,5 +455,14 @@ void PhysicalLightAttributes::FillPhysicalLightData(PhysicalLightData& physicalL
 		// We should divide by 2 because Core accepts half of an angle value
 		physicalLightData.spotInnerAngle = (float) deg2rad(physicalLightData.spotInnerAngle / 2.0f);
 		physicalLightData.spotOuterFallOff = (float) deg2rad(physicalLightData.spotOuterFallOff / 2.0f);
+	}
+	else if (physicalLightData.lightType == PLTDisk)
+	{
+		physicalLightData.diskRadius = GetFloatAttribute(node, PhysicalLightAttributes::diskLightRadius);
+		physicalLightData.diskAngle = (float) deg2rad(GetFloatAttribute(node, PhysicalLightAttributes::diskLightAngle));
+	}
+	else if (physicalLightData.lightType == PLTSphere)
+	{
+		physicalLightData.sphereRadius = GetFloatAttribute(node, PhysicalLightAttributes::sphereLightRadius);
 	}
 }

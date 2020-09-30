@@ -1746,6 +1746,13 @@ bool FireRenderPhysLight::ShouldUpdateTransformOnly() const
 	return false;
 }
 
+PLType FireRenderPhysLight::GetPhysLightType(MObject node)
+{
+	MPlug plug = MFnDependencyNode(node).findPlug("lightType");
+
+	return (PLType) plug.asInt();
+}
+
 void FireRenderLight::Freshen()
 {
 	if (ShouldUpdateTransformOnly())

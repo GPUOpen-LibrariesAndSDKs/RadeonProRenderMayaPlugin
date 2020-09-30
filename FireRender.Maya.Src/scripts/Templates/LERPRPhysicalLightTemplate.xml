@@ -33,6 +33,16 @@
 		<attribute name='colorMode' type='maya.enum'>
 			<label>Color Mode</label>
 		</attribute>
+		<attribute name='sphereLightRadius' type='maya.float'>
+			<label>Sphere Light Radius</label>
+		</attribute>
+		<attribute name='diskLightRadius' type='maya.float'>
+			<label>Disk Light Radius</label>
+		</attribute>
+		<attribute name='diskLightAngle' type='maya.float'>
+			<label>Disk Light Angle</label>
+		</attribute>
+	
 		<!-- 
 		Attributes below are used to specify construction data to the Light Editor.
 		They are not existing node attributes.
@@ -61,6 +71,9 @@
 		<property name='lightType'/>
 		<property name='areaLightVisible'/>
 		<property name='areaLightShape'/>
+		<property name='sphereLightRadius'/>
+		<property name='diskLightRadius'/>
+		<property name='diskLightAngle'/>
 		<property name='LEcreateCmd'/>
 		<property name='LEicon'/>
 	</view>
