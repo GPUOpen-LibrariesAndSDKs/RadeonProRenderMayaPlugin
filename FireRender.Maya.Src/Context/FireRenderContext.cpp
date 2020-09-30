@@ -2218,7 +2218,14 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		}
 		else if (dagNode.typeName() == "locator" && m_bIsGLTFExport)
 		{
-			ob = CreateSceneObject<FireRenderCustomEmitter, NodeCachingOptions::DontAddPath>(dagPath);
+			// Custom locators with custom RPR "RPRIsEmitter" flag set to 1 should be treated as custom emitters
+			// Needed for DEMO preparations
+			MPlug plug = dagNode.findPlug("RPRIsEmitter", false);
+
+			if (!plug.isNull() && plug.asInt() > 0)
+			{
+				ob = CreateSceneObject<FireRenderCustomEmitter, NodeCachingOptions::DontAddPath>(dagPath);
+			}
 		}
 		else if (dagNode.typeName() == "transform")
 		{
