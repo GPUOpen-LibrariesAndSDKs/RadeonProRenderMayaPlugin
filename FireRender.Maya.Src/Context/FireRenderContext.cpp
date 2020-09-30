@@ -1327,7 +1327,7 @@ void FireRenderContext::DebugDumpAOV(int aov) const
 		,{RPR_AOV_OPACITY, "RPR_AOV_OPACITY" }
 		,{RPR_AOV_WORLD_COORDINATE, "RPR_AOV_WORLD_COORDINATE" }
 		,{RPR_AOV_UV, "RPR_AOV_UV" }
-		,{RPR_AOV_MATERIAL_IDX, "RPR_AOV_MATERIAL_IDX" }
+		,{RPR_AOV_MATERIAL_ID, "RPR_AOV_MATERIAL_IDX" }
 		,{RPR_AOV_GEOMETRIC_NORMAL, "RPR_AOV_GEOMETRIC_NORMAL" }
 		,{RPR_AOV_SHADING_NORMAL, "RPR_AOV_SHADING_NORMAL" }
 		,{RPR_AOV_DEPTH, "RPR_AOV_DEPTH" }
@@ -2153,7 +2153,10 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 			}
 			else if (dagNode.typeId() == FireMaya::TypeId::FireRenderPhysicalLightLocator)
 			{
-				ob = CreateSceneObject<FireRenderPhysLight, NodeCachingOptions::AddPath>(dagPath);
+				if (IsPhysicalLightTypeSupported(FireRenderPhysLight::GetPhysLightType(dagPath.node())))
+				{
+					ob = CreateSceneObject<FireRenderPhysLight, NodeCachingOptions::AddPath>(dagPath);
+				}
 			}
 			else
 			{
