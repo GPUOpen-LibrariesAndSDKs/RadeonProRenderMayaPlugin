@@ -45,8 +45,10 @@ void NorthStarRenderingHelper::StopAndJoin()
 	SetStopFlag();
     if (m_UpdateThreadPtr != nullptr)
     {
-		std::unique_lock<std::mutex> lck(m_DataReadyMutex);
-		m_DataReadyConditionalVariable.notify_one();
+		{
+			std::unique_lock<std::mutex> lck(m_DataReadyMutex);
+			m_DataReadyConditionalVariable.notify_one();
+		}
 
         m_UpdateThreadPtr->join();
         m_UpdateThreadPtr.reset();
