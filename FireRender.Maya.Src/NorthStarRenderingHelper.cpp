@@ -90,11 +90,6 @@ void NorthStarRenderingHelper::UpdateThreadFunc()
 			m_DataReadyConditionalVariable.wait(lck, [this] { return !m_UpdateThreadRunning || m_DataReady; });
 		}
 
-		/*while (!m_DataReady && m_UpdateThreadRunning)
-		{
-			std::this_thread::sleep_for(1ms);
-		}*/
-
 		if (!m_UpdateThreadRunning)
 		{
 			break;
