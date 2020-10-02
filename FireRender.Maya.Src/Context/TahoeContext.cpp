@@ -172,6 +172,11 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 	{
 		setSamplesPerUpdate(1);
 
+		if (m_PluginVersion == TahoePluginVersion::RPR2)
+		{
+			SetIterationsPowerOf2Mode(true);
+		}
+
 		frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_THRESHOLD, fireRenderGlobalsData.adaptiveThresholdViewport);
 		checkStatus(frstatus);
 
@@ -445,4 +450,32 @@ bool TahoeContext::IsGLInteropEnabled() const
 bool TahoeContext::MetalContextAvailable() const
 {
 	return m_PluginVersion == TahoePluginVersion::RPR1;
+}
+
+void TahoeContext::SetRenderUpdateCallback(RenderUpdateCallback callback, void* data)
+{
+	if (m_PluginVersion == TahoePluginVersion::RPR2)
+	{
+		GetScope().Context().SetUpdateCallback((void*)callback, data);
+	}
+}
+
+bool TahoeContext::IsGivenContextRPR2(FireRenderContext* pContext)
+{
+	TahoeContext* pTahoeContext = dynamic_cast<TahoeContext*> (pContext);
+
+	if (pTahoeContext == nullptr)
+	{
+		return false;
+	}
+
+	return pTahoeContext->m_PluginVersion == TahoePluginVersion::RPR2;
+}
+
+void TahoeContext::AbortRender()
+{
+	if (m_PluginVersion == TahoePluginVersion::RPR2)
+	{
+		GetScope().Context().AbortRender();
+	}
 }

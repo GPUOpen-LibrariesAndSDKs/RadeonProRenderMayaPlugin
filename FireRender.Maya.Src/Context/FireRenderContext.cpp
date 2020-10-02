@@ -119,7 +119,8 @@ FireRenderContext::FireRenderContext() :
 	m_shadowWeight(1),
 	m_bgWeight(1),
 	m_RenderType(RenderType::Undefined),
-	m_bIsGLTFExport(false)
+	m_bIsGLTFExport(false),
+	m_IterationsPowerOf2Mode(false)
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
 
@@ -929,6 +930,11 @@ void FireRenderContext::render(bool lock)
 		m_renderStartTime = clock();
 		m_currentIteration = 0;
 		m_currentFrame = 0;
+
+		if (m_IterationsPowerOf2Mode)
+		{
+			m_samplesPerUpdate = 1;
+		}
 	}
 
 	// may need to change iteration step
@@ -959,6 +965,15 @@ void FireRenderContext::render(bool lock)
 		context.RenderTile(m_region.left, m_region.right+1, m_height - m_region.top - 1, m_height - m_region.bottom);
 	else
 		context.Render();
+
+	if (m_IterationsPowerOf2Mode)
+	{
+		const int maxIterations = 32;
+		if (m_samplesPerUpdate < maxIterations)
+		{
+			m_samplesPerUpdate = m_samplesPerUpdate * 2;
+		}
+	}
 
 	if (m_currentIteration == 0)
 	{
