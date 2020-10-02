@@ -119,7 +119,8 @@ FireRenderContext::FireRenderContext() :
 	m_shadowWeight(1),
 	m_bgWeight(1),
 	m_RenderType(RenderType::Undefined),
-	m_bIsGLTFExport(false)
+	m_bIsGLTFExport(false),
+	m_IterationsPowerOf2Mode(false)
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
 
@@ -929,6 +930,11 @@ void FireRenderContext::render(bool lock)
 		m_renderStartTime = clock();
 		m_currentIteration = 0;
 		m_currentFrame = 0;
+
+		if (m_IterationsPowerOf2Mode)
+		{
+			m_samplesPerUpdate = 1;
+		}
 	}
 
 	// may need to change iteration step
@@ -959,6 +965,15 @@ void FireRenderContext::render(bool lock)
 		context.RenderTile(m_region.left, m_region.right+1, m_height - m_region.top - 1, m_height - m_region.bottom);
 	else
 		context.Render();
+
+	if (m_IterationsPowerOf2Mode)
+	{
+		const int maxIterations = 32;
+		if (m_samplesPerUpdate < maxIterations)
+		{
+			m_samplesPerUpdate = m_samplesPerUpdate * 2;
+		}
+	}
 
 	if (m_currentIteration == 0)
 	{
@@ -2218,7 +2233,14 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		}
 		else if (dagNode.typeName() == "locator" && m_bIsGLTFExport)
 		{
-			ob = CreateSceneObject<FireRenderCustomEmitter, NodeCachingOptions::DontAddPath>(dagPath);
+			// Custom locators with custom RPR "RPRIsEmitter" flag set to 1 should be treated as custom emitters
+			// Needed for DEMO preparations
+			MPlug plug = dagNode.findPlug("RPRIsEmitter", false);
+
+			if (!plug.isNull() && plug.asInt() > 0)
+			{
+				ob = CreateSceneObject<FireRenderCustomEmitter, NodeCachingOptions::DontAddPath>(dagPath);
+			}
 		}
 		else if (dagNode.typeName() == "transform")
 		{
@@ -2708,10 +2730,10 @@ void FireRenderContext::rifShadowCatcherOutput(const ReadFrameBufferRequestParam
 {
 	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
 
-	const rpr_framebuffer colorFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_COLOR].Handle();
-	const rpr_framebuffer opacityFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_OPACITY].Handle();
-	const rpr_framebuffer shadowCatcherFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_SHADOW_CATCHER].Handle();
-	const rpr_framebuffer backgroundFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_BACKGROUND].Handle();
+	const rpr_framebuffer colorFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
+	const rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
+	const rpr_framebuffer shadowCatcherFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_SHADOW_CATCHER);
+	const rpr_framebuffer backgroundFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_BACKGROUND);
 
 	try
 	{
