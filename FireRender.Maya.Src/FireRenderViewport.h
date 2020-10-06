@@ -30,13 +30,14 @@ limitations under the License.
 
 #include "RenderCacheWarningDialog.h"
 
+#include "NorthStarRenderingHelper.h"
+
 /**
  * A viewport is responsible for rendering to a texture
  * that is then rendered to a Maya viewport panel.
  */
 class FireRenderViewport
 {
-
 public:
 
 	// Life Cycle
@@ -102,6 +103,8 @@ public:
     static MStatus FindMayaView(const MString& panelName, M3dView *view);
 
 	bool ShouldBeRecreated() const { return m_contextPtr && !m_contextPtr->DoesContextSupportCurrentSettings(); }
+
+	void OnBufferAvailableCallback();
 private:
 
 	// Members
@@ -164,15 +167,20 @@ private:
 	bool m_showDialogNeeded;
 	bool m_closeDialogNeeded;
 
+	NorthStarRenderingHelper m_NorthStarRenderingHelper;
 
 	// Private Methods
 	// -----------------------------------------------------------------------------
+private:
 
 	/** Initialize resources. */
 	bool initialize();
 
 	/** Clean up resources. */
 	void cleanUp();
+
+	friend void RenderUpdateCallback(float progress, void* pData);
+	void OnRenderUpdateCallback(float progress);
 
 	/** Get the viewport size. */
 	MStatus getSize(unsigned int& width, unsigned int& height);

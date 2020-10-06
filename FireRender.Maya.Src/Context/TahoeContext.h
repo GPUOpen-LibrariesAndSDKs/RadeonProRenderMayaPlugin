@@ -22,6 +22,7 @@ public:
 	TahoeContext();
 
 	static rpr_int GetPluginID(TahoePluginVersion version);
+	static bool IsGivenContextRPR2(FireRenderContext* pContext);
 
 	void setupContext(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) override;
 
@@ -37,6 +38,9 @@ public:
 	virtual bool IsPhysicalLightTypeSupported(PLType lightType) const override;
 
 	virtual bool MetalContextAvailable() const override;
+
+	virtual void SetRenderUpdateCallback(RenderUpdateCallback callback, void* data) override;
+	virtual void AbortRender() override;
 
 protected:
 	rpr_int CreateContextInternal(rpr_creation_flags createFlags, rpr_context* pContext) override;

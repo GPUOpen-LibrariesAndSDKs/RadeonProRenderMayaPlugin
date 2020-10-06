@@ -427,9 +427,9 @@ namespace FireMaya
 						// So we need to take only these 3 digits into account
 						int revert_precision = 1000;
 						
-						long long scalex = matrix[0][0] * revert_precision;
-						long long scaley = matrix[1][1] * revert_precision;
-						long long scalez = matrix[2][2] * revert_precision;
+						long long scalex = (long long) (matrix[0][0] * revert_precision);
+						long long scaley = (long long) (matrix[1][1] * revert_precision);
+						long long scalez = (long long) (matrix[2][2] * revert_precision);
 
 						if (scalex != scaley || scalex != scalez)
 						{
