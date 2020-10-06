@@ -306,7 +306,7 @@ namespace FireMaya
 				nextMatrix *= scaleM;
 
 				// get linear motion
-				outLinearMotion = MVector(-(nextMatrix[3][0] - matrix[3][0]), -(nextMatrix[3][1] - matrix[3][1]), -(nextMatrix[3][2] - matrix[3][2]));
+				outLinearMotion = MVector(nextMatrix[3][0] - matrix[3][0], nextMatrix[3][1] - matrix[3][1], nextMatrix[3][2] - matrix[3][2]);
 				outLinearMotion *= timeMultiplier;
 
 				MTransformationMatrix transformationMatrix(matrix);
