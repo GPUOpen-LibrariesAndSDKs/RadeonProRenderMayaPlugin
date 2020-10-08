@@ -314,6 +314,8 @@ bool FireRenderIpr::stop()
 
 void FireRenderIpr::OnBufferAvailableCallback()
 {
+	AutoMutexLock pixelsLock(m_pixelsLock);
+
 	readFrameBuffer();
 
 	scheduleRenderViewUpdate();
@@ -598,6 +600,7 @@ void FireRenderIpr::refreshContext()
 void FireRenderIpr::SwitchCurrentAOVToBeDisplayed(int newAOV)
 {
 	AutoMutexLock contextLock(m_contextLock);
+	AutoMutexLock pixelsLock(m_pixelsLock);
 
 	if (ShouldOldAOVBeDisabled(m_currentAOVToDisplay))
 	{
