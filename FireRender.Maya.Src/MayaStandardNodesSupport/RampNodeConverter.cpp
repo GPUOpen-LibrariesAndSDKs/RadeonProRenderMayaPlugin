@@ -152,6 +152,9 @@ bool CreateCtrlPointsFromPlug(MObject rampObject, std::vector<RampCtrlPoint<T>>&
 		return false;
 
 	unsigned int count = rampPlug.numElements();
+	if (count == 0)
+		return false;
+
 	out.reserve(count); 
 
 	// this is executed for each element of array plug fakeRampPlug
