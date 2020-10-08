@@ -83,21 +83,13 @@ rpr_int TahoeContext::CreateContextInternal(rpr_creation_flags createFlags, rpr_
 
 	// setup CPU thread count
 	std::vector<rpr_context_properties> ctxProperties;
-#if (RPR_VERSION_MINOR < 34)
-	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_SAMPLER_TYPE);
-#else
 	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_SAMPLER_TYPE);
-#endif
 	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_SAMPLER_TYPE_CMJ);
 
 	int threadCountToOverride = getThreadCountToOverride();
 	if ((createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) && threadCountToOverride > 0)
 	{
-#if (RPR_VERSION_MINOR < 34)
-		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_CPU_THREAD_LIMIT);
-#else
 		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CPU_THREAD_LIMIT);
-#endif
 		ctxProperties.push_back((void*)(size_t)threadCountToOverride);
 	}
 

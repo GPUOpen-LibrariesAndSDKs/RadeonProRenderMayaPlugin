@@ -219,11 +219,7 @@ void FireRenderContext::enableAOVAndReset(int index, bool flag, rpr_GLuint* glTe
 	resetAOV(index, flag ? glTexture : nullptr);
 }
 
-#if (RPR_VERSION_MINOR < 34)
-std::set<int> aovsExcluded;
-#else
 std::set<int> aovsExcluded{ RPR_AOV_VIEW_SHADING_NORMAL, RPR_AOV_COLOR_RIGHT };
-#endif
 
 void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture)
 {
