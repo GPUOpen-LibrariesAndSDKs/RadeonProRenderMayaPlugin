@@ -674,7 +674,7 @@
     <ClCompile Include="..\RadeonProRenderSharedComponents\src\Alembic\AlembicWrapper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AnimationExporter.cpp">
+    <ClCompile Include="NorthStarRenderingHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -1159,7 +1159,7 @@
     <ClInclude Include="..\RadeonProRenderSharedComponents\src\Alembic\AlembicWrapper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AnimationExporter.h">
+    <ClInclude Include="NorthStarRenderingHelper.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -34,6 +34,7 @@ limitations under the License.
 #include <functional>
 
 #include <future>
+#include <functional>
 
 #include "FireRenderUtils.h"
 #include "FireRenderContextIFace.h"
@@ -241,6 +242,11 @@ public:
 	// Return the framebuffer
 	rpr_framebuffer frameBufferAOV(int aov) const;
 	rpr_framebuffer frameBufferAOV_Resolved(int aov);
+
+	typedef void(*RenderUpdateCallback)(float, void*);
+
+	virtual void SetRenderUpdateCallback(RenderUpdateCallback callback, void* data) {}
+	virtual void AbortRender() {}
 
 	struct ReadFrameBufferRequestParams
 	{
@@ -617,6 +623,9 @@ public:
 	void SetGLTFExport(bool isGLTFExport) { m_bIsGLTFExport = isGLTFExport; }
 
 	void SetWorkProgressCallback(WorkProgressCallback callback) { m_WorkProgressCallback = callback; }
+	void SetIterationsPowerOf2Mode(bool flag) { m_IterationsPowerOf2Mode = flag; }
+
+	int GetSamplesPerUpdate() const { return m_samplesPerUpdate; }
 
 protected:
 	static int INCORRECT_PLUGIN_ID;
@@ -770,7 +779,7 @@ private:
 	/** map corresponding dag path of the node with the mode **/
 	std::map<std::string, MDagPath> m_nodePathCache;
 
-	int	m_samplesPerUpdate;
+	std::atomic<int> m_samplesPerUpdate;
 
 	// render type information
 	RenderType m_RenderType;
@@ -784,6 +793,9 @@ private:
 	bool m_bIsGLTFExport;
 
 	WorkProgressCallback m_WorkProgressCallback;
+
+	// Increasing iterations - 1, 2, 4, 8, etc up to 32 for now
+	bool m_IterationsPowerOf2Mode;
 
 public:
 	FireRenderEnvLight *iblLight = nullptr;
@@ -937,66 +949,6 @@ public:
 	};
 
 	friend class Lock;
-
-   
-private:
-    
-#ifdef DEBUG_LOCKS
-    struct frcinfo
-    {
-        frcinfo(const char* s="") : count(1), str(s) {}
-        int count;
-        std::string str;
-    };
-    static std::map<FireRenderContext*,frcinfo> lockMap;
-    
-    void addMapLock(FireRenderContext* ctx, const char* str)
-    {
-        if (lockMap.count(ctx) == 0)
-        {
-            frcinfo i(str);
-            lockMap[ctx] = i;
-        }
-        else
-        {
-            frcinfo i = lockMap[ctx];
-            if (i.count > 0)
-            {
-                printf("###### Collision: \n\t%s\n\t%s\n",i.str.c_str(),str);
-                assert(false);
-            }
-            i.count++;
-            i.str = str;
-            lockMap[ctx] = i;
-        }
-        dumpMapLock("addMapLock");
-    }
-    
-    void removeMapLock(FireRenderContext* ctx)
-    {
-        if (lockMap.count(ctx) == 0)
-        {
-            assert(false);
-        }
-        else
-        {
-            frcinfo i = lockMap[ctx];
-            i.count--;
-            i.str = "";
-            lockMap[ctx] = i;
-        }
-        dumpMapLock("removeMapLock");
-    }
-    
-    void dumpMapLock(const char*str = "Unknown")
-    {
-        for (auto& i : lockMap)
-        {
-            printf("%s : Map Lock ctx %p count %d\n",str,i.first,i.second.count);
-        }
-    }
-#endif
-
 };
 
 typedef std::shared_ptr<FireRenderContext> FireRenderContextPtr;
