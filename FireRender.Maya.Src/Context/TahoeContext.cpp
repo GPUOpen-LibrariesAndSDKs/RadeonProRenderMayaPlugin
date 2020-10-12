@@ -441,7 +441,7 @@ bool TahoeContext::IsGLInteropEnabled() const
 
 bool TahoeContext::MetalContextAvailable() const
 {
-	return m_PluginVersion == TahoePluginVersion::RPR1;
+    return true;
 }
 
 void TahoeContext::SetRenderUpdateCallback(RenderUpdateCallback callback, void* data)
