@@ -17,6 +17,7 @@ limitations under the License.
 #include <maya/MThreadAsync.h>
 #include "RenderCacheWarningDialog.h"
 #include "maya/MSelectionList.h"
+#include "NorthStarRenderingHelper.h"
 
 #include <mutex>
 
@@ -117,6 +118,8 @@ private:
 	// Called when an attribute on the FireRenderGlobals node change
 	static void globalsChangedCallback(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
 
+	void OnBufferAvailableCallback();
+
 private:
 
 	// Members
@@ -177,4 +180,6 @@ private:
 	MSelectionList m_previousSelectionList;
 
 	MCallbackId m_renderGlobalsCallback = 0;
+
+	NorthStarRenderingHelper m_NorthStarRenderingHelper;
 };
