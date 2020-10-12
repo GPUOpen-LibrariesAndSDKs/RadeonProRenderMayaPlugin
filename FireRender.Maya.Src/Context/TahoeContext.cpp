@@ -424,6 +424,11 @@ bool TahoeContext::IsVolumeSupported() const
 	return m_PluginVersion == TahoePluginVersion::RPR1;
 }
 
+bool TahoeContext::IsAOVSupported(int aov) const 
+{
+	return (aov != RPR_AOV_VIEW_SHADING_NORMAL) && (aov != RPR_AOV_COLOR_RIGHT);
+}
+
 bool TahoeContext::IsPhysicalLightTypeSupported(PLType lightType) const
 {
 	if (lightType == PLTDisk || lightType == PLTSphere)
