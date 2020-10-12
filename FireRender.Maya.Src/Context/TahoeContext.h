@@ -35,6 +35,8 @@ public:
 	virtual bool IsHairSupported() const override;
 	virtual bool IsVolumeSupported() const override;
 
+	virtual bool IsAOVSupported(int aov) const;
+
 	virtual bool IsPhysicalLightTypeSupported(PLType lightType) const override;
 
 	virtual bool MetalContextAvailable() const override;
