@@ -25,6 +25,8 @@ limitations under the License.
 #include "FireRenderGlobals.h"
 #include "FireRenderUtils.h"
 
+#include "NorthStarRenderingHelper.h"
+
 #include <functional>
 #include <numeric>
 
@@ -131,6 +133,8 @@ private:
 
 	std::tuple<size_t, long long> GeSceneTexturesCountAndSize() const;
 
+	void OnBufferAvailableCallback();
+
 private:
 
 	// Members
@@ -205,4 +209,6 @@ private:
 
 	/* Counts how many render calls done */
 	unsigned int m_rendersCount;
+
+	NorthStarRenderingHelper m_NorthStarRenderingHelper;
 };

@@ -303,6 +303,8 @@ bool FireRenderProduction::start()
 			return false;
 		}
 
+		m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderProduction::OnBufferAvailableCallback, this));
+
 		m_aovs->setFromContext(*m_contextPtr);
 
 		m_needsContextRefresh = true;
@@ -368,7 +370,7 @@ bool FireRenderProduction::start()
 		{
 			try
 			{
-				if (m_globals.tileRenderingEnabled)
+				if (m_globals.tileRenderingEnabled && !TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
 				{
 					RenderTiles();
 					stop();
@@ -389,9 +391,28 @@ bool FireRenderProduction::start()
 
 			return m_isRunning;
 		});
+
+		m_NorthStarRenderingHelper.Start();
 	}
 
 	return ret;
+}
+
+void FireRenderProduction::OnBufferAvailableCallback()
+{
+	{
+		AutoMutexLock pixelsLock(m_pixelsLock);
+		m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
+	}
+
+	FireRenderThread::RunProcOnMainThread([this]()
+		{
+			// Update the Maya render view.
+			m_renderViewAOV->sendToRenderView();
+
+			if (rcWarningDialog.shown)
+				rcWarningDialog.close();
+		});
 }
 
 // -----------------------------------------------------------------------------
@@ -418,6 +439,8 @@ bool FireRenderProduction::stop()
 {
 	if (m_isRunning)
 	{
+		m_NorthStarRenderingHelper.SetStopFlag();
+
 		if (m_contextPtr)
 		{
 			m_contextPtr->SetState(FireRenderContext::StateExiting);
@@ -439,6 +462,8 @@ bool FireRenderProduction::stop()
 
 			RenderStampUtils::ClearCache();
 		});
+
+		m_NorthStarRenderingHelper.StopAndJoin();
 
 		if (m_contextPtr)
 		{
@@ -1001,7 +1026,10 @@ void FireRenderProduction::RenderFullFrame()
 
 	// Read pixel data for the AOV displayed in the render
 	// view. Flip the image so it's the right way up in the view.
-	m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
+	{
+		AutoMutexLock pixelsLock(m_pixelsLock);
+		m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
+	}
 
 	FireRenderThread::RunProcOnMainThread([this]()
 	{
@@ -1141,6 +1169,7 @@ bool FireRenderProduction::mainThreadPump()
 			if (m_cancelled)
 			{
 				DebugPrint("Rendering canceled!");
+				m_contextPtr->AbortRender();
 
 				m_progressBars.reset();
 			}

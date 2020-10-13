@@ -172,11 +172,6 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 	{
 		setSamplesPerUpdate(1);
 
-		if (m_PluginVersion == TahoePluginVersion::RPR2)
-		{
-			SetIterationsPowerOf2Mode(true);
-		}
-
 		frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_THRESHOLD, fireRenderGlobalsData.adaptiveThresholdViewport);
 		checkStatus(frstatus);
 
@@ -211,7 +206,10 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_IMAGE_FILTER_TYPE, fireRenderGlobalsData.filterType);
 	checkStatus(frstatus);
 
-	//
+	if (m_PluginVersion == TahoePluginVersion::RPR2)
+	{
+		SetIterationsPowerOf2Mode(true);
+	}
 
 	rpr_material_node_input filterAttrName = RPR_CONTEXT_IMAGE_FILTER_BOX_RADIUS;
 	switch (fireRenderGlobalsData.filterType)
