@@ -251,6 +251,9 @@ bool FireRenderProduction::start()
 
 	// Read RPR globals.
 	m_globals.readFromCurrentScene();
+
+	// Disable tile rendering for RPR2
+
 	MString renderStamp;
 	if (m_globals.useRenderStamp)
 		renderStamp = m_globals.renderStampText;
@@ -261,6 +264,12 @@ bool FireRenderProduction::start()
 	int contextHeight = m_height;
 
 	RenderRegion region = m_region;
+
+	// We don't use tiling with RPR2
+	if (GetTahoeVersionToUse() == TahoePluginVersion::RPR2)
+	{
+		m_globals.tileRenderingEnabled = false;
+	}
 
 	if (m_globals.tileRenderingEnabled)
 	{
@@ -370,7 +379,7 @@ bool FireRenderProduction::start()
 		{
 			try
 			{
-				if (m_globals.tileRenderingEnabled && !TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
+				if (m_globals.tileRenderingEnabled)
 				{
 					RenderTiles();
 					stop();
@@ -1041,7 +1050,7 @@ void FireRenderProduction::RenderFullFrame()
 	});
 
 	// _TODO Investigate this, looks like this call is performance waste. Why we need to read all AOVs on every render call ?
-	m_aovs->readFrameBuffers(*m_contextPtr, false);
+	//m_aovs->readFrameBuffers(*m_contextPtr, false);
 
 	if (GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())
 	{
