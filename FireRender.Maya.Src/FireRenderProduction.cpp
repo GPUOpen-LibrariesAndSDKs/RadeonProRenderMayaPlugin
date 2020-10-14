@@ -409,10 +409,8 @@ bool FireRenderProduction::start()
 
 void FireRenderProduction::OnBufferAvailableCallback()
 {
-	{
-		AutoMutexLock pixelsLock(m_pixelsLock);
-		m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
-	}
+	AutoMutexLock pixelsLock(m_pixelsLock);
+	m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
 
 	FireRenderThread::RunProcOnMainThread([this]()
 		{
@@ -1038,16 +1036,18 @@ void FireRenderProduction::RenderFullFrame()
 	{
 		AutoMutexLock pixelsLock(m_pixelsLock);
 		m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
+
+		FireRenderThread::RunProcOnMainThread([this]()
+		{
+			// Update the Maya render view.
+			m_renderViewAOV->sendToRenderView();
+
+			if (rcWarningDialog.shown)
+				rcWarningDialog.close();
+		});
+
+		m_aovs->readFrameBuffers(*m_contextPtr, false);
 	}
-
-	FireRenderThread::RunProcOnMainThread([this]()
-	{
-		// Update the Maya render view.
-		m_renderViewAOV->sendToRenderView();
-
-		if (rcWarningDialog.shown)
-			rcWarningDialog.close();
-	});
 
 	if (GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())
 	{
