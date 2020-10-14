@@ -1049,9 +1049,6 @@ void FireRenderProduction::RenderFullFrame()
 			rcWarningDialog.close();
 	});
 
-	// _TODO Investigate this, looks like this call is performance waste. Why we need to read all AOVs on every render call ?
-	//m_aovs->readFrameBuffers(*m_contextPtr, false);
-
 	if (GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())
 	{
 		bool shouldSave = GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->ShouldSaveFrame(m_contextPtr->m_currentIteration);
@@ -1141,25 +1138,6 @@ void FireRenderProduction::stopMayaRender()
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderProduction::readFrameBuffer()
-{
-	RPR_THREAD_ONLY;
-
-	// setup params
-	FireRenderContext::ReadFrameBufferRequestParams params(m_region);
-	params.pixels = m_pixels.data();
-	params.aov = RPR_AOV_COLOR;
-	params.width = m_contextPtr->width();
-	params.height = m_contextPtr->height();
-	params.flip = true;
-	params.mergeOpacity = false;
-	params.mergeShadowCatcher = false;
-	params.shadowColor = m_contextPtr->m_shadowColor;
-	params.shadowTransp = m_contextPtr->m_shadowTransparency;
-
-	// process frame buffer
-	m_contextPtr->readFrameBuffer(params);
-}
 
 bool FireRenderProduction::mainThreadPump()
 {

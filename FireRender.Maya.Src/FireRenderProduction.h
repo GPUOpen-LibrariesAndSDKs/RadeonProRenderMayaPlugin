@@ -121,7 +121,7 @@ private:
 	void stopMayaRender();
 
 	/** Read data from the RPR frame buffer into the texture. */
-	void readFrameBuffer();
+//	void readFrameBuffer();
 
 	/** Refresh the context. */
 	void refreshContext();
