@@ -2263,3 +2263,13 @@ void GetUINameFrameExtPattern(std::wstring& nameOut, std::wstring& extOut)
 	extOut = nameOut.substr(lastDelimiter + 1, nameOut.length() - 1);
 	nameOut = nameOut.substr(0, firstDelimiter);
 }
+
+TimePoint GetCurrentChronoTime()
+{
+	return std::chrono::high_resolution_clock::now();
+}
+
+long TimeDiffChrono(TimePoint currTime, TimePoint startTime)
+{
+	return (long)std::chrono::duration_cast<std::chrono::milliseconds>(currTime - startTime).count();
+}
