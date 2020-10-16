@@ -33,7 +33,7 @@ cp -r "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/models/" "/Users/Shared
 #cp    "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/OSX/libRadeonImageFilters.1.dylib" "/Users/Shared/RadeonProRender/lib/libRadeonImageFilters.1.dylib"
 #cp    "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/OSX/libOpenImageDenoise.dylib" "/Users/Shared/RadeonProRender/lib/libOpenImageDenoise.dylib"
 #cp    "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/OSX/libRadeonML-MPS.dylib" "/Users/Shared/RadeonProRender/lib/libRadeonML-MPS.dylib"
-cp -PR   "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/OSX/" "/Users/Shared/RadeonProRender/lib/"
+cp -PR   "$PROJECT_DIR/../../../RadeonProImageProcessingSDK/OSX/Dynamic/" "/Users/Shared/RadeonProRender/lib/"
 
 
 cp -r  "$PROJECT_DIR/../../../RadeonProRenderSharedComponents/OpenImageIO/OSX/bin/" "/Users/Shared/RadeonProRender/lib"
