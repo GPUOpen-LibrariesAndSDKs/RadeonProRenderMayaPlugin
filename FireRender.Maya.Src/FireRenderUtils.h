@@ -1156,4 +1156,10 @@ T ProcessEnvVarsInFilePath(const C* in)
 }
 
 TimePoint GetCurrentChronoTime();
-long TimeDiffChrono(TimePoint currTime, TimePoint startTime);
+
+template <typename T>
+long TimeDiffChrono(TimePoint currTime, TimePoint startTime)
+{
+	return (long)std::chrono::duration_cast<T>(currTime - startTime).count();
+}
+

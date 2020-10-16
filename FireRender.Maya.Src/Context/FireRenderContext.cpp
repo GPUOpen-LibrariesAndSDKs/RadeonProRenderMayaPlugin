@@ -941,7 +941,7 @@ void FireRenderContext::render(bool lock)
 
 	progressData.currentIndex = m_currentIteration;
 	progressData.totalCount = m_completionCriteriaParams.completionCriteriaMaxIterations;
-	progressData.currentTimeInMiliseconds = TimeDiffChrono(GetCurrentChronoTime(), m_workStartTime);
+	progressData.currentTimeInMiliseconds = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_workStartTime);
 	progressData.progressType = ProgressType::RenderPassStarted;
 
 	TriggerProgressCallback(progressData);
@@ -2340,7 +2340,7 @@ void FireRenderContext::UpdateTimeAndTriggerProgressCallback(ContextWorkProgress
 		syncProgressData.progressType = progressType;
 	}
 
-	syncProgressData.currentTimeInMiliseconds = TimeDiffChrono(GetCurrentChronoTime(), m_workStartTime);
+	syncProgressData.currentTimeInMiliseconds = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_workStartTime);
 	TriggerProgressCallback(syncProgressData);
 }
 
@@ -2437,7 +2437,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		}
 	}
 
-	syncProgressData.elapsed = TimeDiffChrono(GetCurrentChronoTime(), syncStartTime);
+	syncProgressData.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), syncStartTime);
 	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncComplete);
 
 	if (changed)
@@ -2477,7 +2477,7 @@ void FireRenderContext::SetState(StateEnum newState)
 	if (m_state == StateEnum::StateExiting)
 	{
 		ContextWorkProgressData data;
-		data.elapsed = TimeDiffChrono(GetCurrentChronoTime(), m_renderStartTime);
+		data.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_renderStartTime);
 
 		UpdateTimeAndTriggerProgressCallback(data, ProgressType::RenderComplete);
 	}
@@ -2588,7 +2588,7 @@ bool FireRenderContext::keepRenderRunning()
 	}
 
 	// check time limit completion criteria
-	double secondsSpentRendering = TimeDiffChrono(GetCurrentChronoTime(), m_renderStartTime) / 1000;
+	double secondsSpentRendering = TimeDiffChrono<std::chrono::seconds>(GetCurrentChronoTime(), m_renderStartTime);
 
 	return secondsSpentRendering < m_completionCriteriaParams.getTotalSecondsCount();
 }
@@ -2610,7 +2610,7 @@ bool FireRenderContext::isFirstIterationAndShadersNOTCached()
 
 void FireRenderContext::updateProgress()
 {
-	double secondsSpentRendering = TimeDiffChrono(GetCurrentChronoTime(), m_renderStartTime) / 1000;
+	double secondsSpentRendering = TimeDiffChrono<std::chrono::seconds>(GetCurrentChronoTime(), m_renderStartTime);
 
 	m_secondsSpentOnLastRender = secondsSpentRendering;
 

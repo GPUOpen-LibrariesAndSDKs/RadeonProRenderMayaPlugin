@@ -228,7 +228,7 @@ namespace RenderStampUtils
 				case 't': // %pt - total elapsed time
 				{
 					char buffer[32];
-					unsigned int secs = (TimeDiffChrono(GetCurrentChronoTime(), context.m_renderStartTime) / 1000);
+					unsigned int secs = (TimeDiffChrono<std::chrono::seconds>(GetCurrentChronoTime(), context.m_renderStartTime));
 					int hrs = secs / (60 * 60);
 					secs = secs % (60 * 60);
 					int mins = secs / 60;
