@@ -25,6 +25,8 @@ limitations under the License.
 #include "FireRenderGlobals.h"
 #include "FireRenderUtils.h"
 
+#include "NorthStarRenderingHelper.h"
+
 #include <functional>
 #include <numeric>
 
@@ -119,7 +121,7 @@ private:
 	void stopMayaRender();
 
 	/** Read data from the RPR frame buffer into the texture. */
-	void readFrameBuffer();
+//	void readFrameBuffer();
 
 	/** Refresh the context. */
 	void refreshContext();
@@ -130,6 +132,8 @@ private:
 	size_t GetScenePolyCount() const;
 
 	std::tuple<size_t, long long> GeSceneTexturesCountAndSize() const;
+
+	void OnBufferAvailableCallback();
 
 private:
 
@@ -205,4 +209,6 @@ private:
 
 	/* Counts how many render calls done */
 	unsigned int m_rendersCount;
+
+	NorthStarRenderingHelper m_NorthStarRenderingHelper;
 };
