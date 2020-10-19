@@ -45,6 +45,7 @@ class FireRenderViewport;
 class ImageFilter;
 struct RV_PIXEL;
 
+
 // Turn on to track lock information
 //#define DEBUG_LOCKS 1
 
@@ -851,9 +852,9 @@ public:
 	bool m_restartRender;
 
 	// completion criteria sections:
-	clock_t	m_renderStartTime;
+	TimePoint m_renderStartTime;
 
-	clock_t m_workStartTime;
+	TimePoint m_workStartTime;
 
 	CompletionCriteriaParams m_completionCriteriaParams;
 
