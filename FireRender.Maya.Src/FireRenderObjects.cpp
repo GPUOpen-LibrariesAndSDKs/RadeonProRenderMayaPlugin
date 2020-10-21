@@ -2594,13 +2594,6 @@ void FireRenderCustomEmitter::Freshen()
 		m_light.light = Context().CreateSpotLight();
 		Scene().Attach(m_light.light);
 		
-		MFnDependencyNode node(Object());
-
-		MPlug plug = node.findPlug("RPRIsEmitter", false);
-
-		if (!plug.isNull())
-		{
-			m_light.light.AddGLTFExtraIntAttribute("isEmitter", plug.asInt());
-		}
+		m_light.light.AddGLTFExtraIntAttribute("isEmitter", 1);
 	}
 }

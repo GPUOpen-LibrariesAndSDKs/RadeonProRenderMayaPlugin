@@ -36,6 +36,8 @@ limitations under the License.
 		<!-- UI stuff -->
 		<MediaTemplate EmbedCab="yes"/>
 
+		<Property Id='REINSTALLMODE' Value='amus'/>
+
 		<Icon Id="amd_icon.ico" SourceFile=".\amd_icon.ico"/>
 		<Property Id="ARPPRODUCTICON" Value="amd_icon.ico" />
 

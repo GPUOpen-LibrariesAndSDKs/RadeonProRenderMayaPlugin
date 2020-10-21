@@ -2212,6 +2212,23 @@ namespace frw
 		/// set the target buffer for render calls
 		void SetAOV(FrameBuffer frameBuffer, rpr_aov aov = RPR_AOV_COLOR);
 
+		void SetUpdateCallback(void* callback, void* userData)
+		{
+			rpr_int status = RPR_SUCCESS;
+			status = rprContextSetParameterByKeyPtr(Handle(), RPR_CONTEXT_RENDER_UPDATE_CALLBACK_FUNC, callback);
+			assert(status == RPR_SUCCESS);
+
+			status = rprContextSetParameterByKeyPtr(Handle(), RPR_CONTEXT_RENDER_UPDATE_CALLBACK_DATA, userData);
+			assert(status == RPR_SUCCESS);
+		}
+
+		void AbortRender()
+		{
+			rpr_int status = RPR_SUCCESS;
+			status = rprContextAbortRender(Handle());
+			assert(status == RPR_SUCCESS);
+		}
+
 		void Render()
 		{
 			auto status = rprContextRender(Handle());

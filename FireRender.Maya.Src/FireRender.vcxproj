@@ -265,6 +265,7 @@
     <ClCompile Include="MayaStandardNodesSupport\RGBToHSVConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\SetRangeConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\VectorProductConverter.cpp" />
+    <ClCompile Include="NorthStarRenderingHelper.cpp" />
     <ClCompile Include="OptionVarHelpers.cpp" />
     <ClCompile Include="pluginMain.cpp" />
     <ClCompile Include="FireRenderMaterial.cpp" />
@@ -426,6 +427,7 @@
     <ClInclude Include="MayaStandardNodesSupport\RGBToHSVConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\SetRangeConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\VectorProductConverter.h" />
+    <ClInclude Include="NorthStarRenderingHelper.h" />
     <ClInclude Include="OptionVarHelpers.h" />
     <ClInclude Include="RenderCacheWarningDialog.h" />
     <ClInclude Include="RenderProgressBars.h" />

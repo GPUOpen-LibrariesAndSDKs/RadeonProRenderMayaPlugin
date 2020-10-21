@@ -185,6 +185,11 @@ bool FireRenderIpr::start()
 			return false;
 		}
 
+		if (TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
+		{
+			m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderIpr::OnBufferAvailableCallback, this));
+		}
+
 		SetupOOC(globals);
 
 		m_needsContextRefresh = true;
@@ -233,6 +238,8 @@ bool FireRenderIpr::start()
 
 			return m_isRunning;
 		});
+
+		m_NorthStarRenderingHelper.Start();
 	}
 
 	return ret;
@@ -278,6 +285,8 @@ bool FireRenderIpr::pause(bool value)
 // -----------------------------------------------------------------------------
 bool FireRenderIpr::stop()
 {
+	m_NorthStarRenderingHelper.SetStopFlag();
+
 	if (m_isRunning)
 	{
 		m_contextPtr->SetState(FireRenderContext::StateExiting);
@@ -298,7 +307,18 @@ bool FireRenderIpr::stop()
 		m_renderGlobalsCallback = 0;
 	}
 
+	m_NorthStarRenderingHelper.StopAndJoin();
+
 	return true;
+}
+
+void FireRenderIpr::OnBufferAvailableCallback()
+{
+	AutoMutexLock pixelsLock(m_pixelsLock);
+
+	readFrameBuffer();
+
+	scheduleRenderViewUpdate();
 }
 
 // -----------------------------------------------------------------------------
@@ -580,6 +600,7 @@ void FireRenderIpr::refreshContext()
 void FireRenderIpr::SwitchCurrentAOVToBeDisplayed(int newAOV)
 {
 	AutoMutexLock contextLock(m_contextLock);
+	AutoMutexLock pixelsLock(m_pixelsLock);
 
 	if (ShouldOldAOVBeDisabled(m_currentAOVToDisplay))
 	{

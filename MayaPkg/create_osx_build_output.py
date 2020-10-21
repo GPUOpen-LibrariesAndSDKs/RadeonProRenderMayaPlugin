@@ -97,7 +97,7 @@ target=%s
             yield Path(rprsdk_bin)/name, name
 
         name_ending = ""
-        rpipsdk_bin = repo_root / 'RadeonProImageProcessingSDK/OSX'
+        rpipsdk_bin = repo_root / 'RadeonProImageProcessingSDK/OSX/Dynamic'
         name_ending = ".dylib"
         for name in os.listdir((str(rpipsdk_bin))):
             if name.endswith(name_ending):
@@ -237,7 +237,7 @@ def install_tool_name(src,myzip,package_path,opath,npath):
 def enumerate_lib_data():
     name_ending = ".dylib"
     paths_to_copy_to_maya_lib_folder = ['RadeonProRenderSDK/RadeonProRender/binMacOS', 
-                    'RadeonProImageProcessingSDK/OSX', 
+                    'RadeonProImageProcessingSDK/OSX/Dynamic', 
                     'RadeonProRenderSharedComponents/OpenImageIO/OSX/bin']
 
     for dirToTakeFrom in paths_to_copy_to_maya_lib_folder:
