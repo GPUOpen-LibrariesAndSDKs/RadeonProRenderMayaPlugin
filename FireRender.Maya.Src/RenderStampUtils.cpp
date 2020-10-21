@@ -16,6 +16,8 @@ limitations under the License.
 #include "Context/FireRenderContext.h" // used for scene stats
 #include "FireRenderThread.h"
 
+#include "FireRenderUtils.h"
+
 #include <Maya/MAnimControl.h>
 
 
@@ -226,7 +228,7 @@ namespace RenderStampUtils
 				case 't': // %pt - total elapsed time
 				{
 					char buffer[32];
-					unsigned int secs = (clock() - context.m_renderStartTime) / CLOCKS_PER_SEC;
+					unsigned int secs = (TimeDiffChrono<std::chrono::seconds>(GetCurrentChronoTime(), context.m_renderStartTime));
 					int hrs = secs / (60 * 60);
 					secs = secs % (60 * 60);
 					int mins = secs / 60;
