@@ -18,6 +18,7 @@ limitations under the License.
 #include <maya/MStatus.h>
 #include <maya/MSceneMessage.h>
 #include <maya/MFileIO.h>
+#include <maya/MNodeClass.h>
 
 #include "common.h"
 #include "FireRenderMaterial.h"
@@ -85,6 +86,7 @@ limitations under the License.
 #include "FireRenderSurfaceOverride.h"
 #include "FireRenderBlendOverride.h"
 #include <maya/MCommonSystemUtils.h>
+#include <maya/MNodeClass.h>
 
 #include "FireRenderThread.h"
 
@@ -385,12 +387,28 @@ MStatus registerNodesInPathEditor(void)
 		CHECK_MSTATUS(status);
 	}
 
+	// add rpr volume paths to path editor
+	{
+		std::stringstream reg_command;
+		reg_command << "filePathEditor -registerType \"" << FIRE_RENDER_NODE_PREFIX << "Volume.VdbFilePath\"" << " -typeLabel " << "\"RPR Volume\"";
+		status = MGlobal::executeCommand(reg_command.str().c_str());
+		CHECK_MSTATUS(status);
+	}
+
 	return status;
 }
 
 MStatus deRegisterNodesInPathEditor(void)
 {
 	MStatus status;
+
+	// deregister rpr volume from path editor
+	{
+		std::stringstream reg_command;
+		reg_command << "filePathEditor -deregisterType \"" << FIRE_RENDER_NODE_PREFIX << "Volume.VdbFilePath\"";
+		status = MGlobal::executeCommand(reg_command.str().c_str());
+		CHECK_MSTATUS(status);
+	}
 
 	// deregister IES from path editor
 	{
@@ -439,6 +457,47 @@ void SetVersionsForMel()
 
 	MGlobal::executeCommand(commandStr.c_str());
 
+}
+
+void AddExtensionAttributes()
+{
+	// Add RPR UI to Maya native nodes
+	MFnNumericAttribute nAttr;
+	MObject hairMaterialAttr = nAttr.createColor("rprHairMaterial", "rhm");
+	MNodeClass hairSystemClass("hairSystem");
+	hairSystemClass.addExtensionAttribute(hairMaterialAttr);
+
+	// Adding RPRObjectId to all transforms
+	MObject objectIdAttr = nAttr.create("RPRObjectId", "roi", MFnNumericData::kLong, 0);
+
+	nAttr.setNiceNameOverride("RPR Object Id");
+	nAttr.setMin(0);
+	MNodeClass transformNodeClass("transform");
+	transformNodeClass.addExtensionAttribute(objectIdAttr);
+
+	////// light group attributes for Light Group AOVs
+
+	MString lightClassNames[] = { "RPRPhysicalLight", "RPRIBL", "pointLight", "directionalLight", "spotLight", "areaLight" };
+
+	for (MString className : lightClassNames)
+	{
+		MNodeClass lightClass(className);
+
+		MObject lightGroupAttr = nAttr.create("RPRLightGroup", "lg", MFnNumericData::kLong, -1);
+
+		nAttr.setNiceNameOverride("RPR Light Group");
+		nAttr.setMin(-1);
+		nAttr.setMax(3);
+
+		lightClass.addExtensionAttribute(lightGroupAttr);
+	}
+
+	/// Add emitter attribute to locator node
+	MNodeClass locatorClass("locator");
+
+	MObject emitterAttr = nAttr.create("RPRIsEmitter", "iem", MFnNumericData::kBoolean, false);
+	nAttr.setNiceNameOverride("RPR Is Emitter");
+	locatorClass.addExtensionAttribute(emitterAttr);
 }
 
 
@@ -663,6 +722,10 @@ MStatus initializePlugin(MObject obj)
 
 	MGlobal::executeCommand("setupFireRenderNodeClassification()");
 
+	AddExtensionAttributes();
+	MGlobal::executeCommand("setupFireRenderExtraUI()");
+
+	// GLTF
 	MGlobal::executeCommand("rprExportsGLTF(1)");
 
 	// register shaders

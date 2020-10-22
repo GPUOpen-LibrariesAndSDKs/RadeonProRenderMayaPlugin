@@ -22,9 +22,6 @@ namespace MayaStandardNodeConverters
 	public:
 		RemapHSVConverter(const ConverterParams& params);
 		virtual frw::Value Convert() const override;
-
-	private:
-		frw::Value GetSamplerNodeForForPlugName(const MString& plugName, frw::Value valueInput) const;
 	};
 
 }

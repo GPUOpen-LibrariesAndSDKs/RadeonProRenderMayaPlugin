@@ -22,6 +22,8 @@ limitations under the License.
 #include <atomic>
 #include "FireMaya.h"
 
+#include "PhysicalLightData.h"
+
 // Forward declarations
 class FireRenderContext;
 class SkyBuilder;
@@ -248,11 +250,75 @@ protected:
 
 protected:
 	virtual void UpdateTransform(const MMatrix& matrix) {}
+
+	void MarkDirtyTransformRecursive(const MFnTransform& transform);
+	void MarkDirtyAllDirectChildren(const MFnTransform& transform);
+};
+
+// Common class for mesh and gpuCache
+class FireRenderMeshCommon : public FireRenderNode
+{
+public:
+	// Constructor
+	FireRenderMeshCommon(FireRenderContext* context, const MDagPath& dagPath);
+
+	// Copy constructor with custom uuid
+	FireRenderMeshCommon(const FireRenderMeshCommon& rhs, const std::string& uuid);
+
+	// Destructor
+	virtual ~FireRenderMeshCommon();
+
+	// for UVs (a bit of a hack; see belo for more info)
+	unsigned int GetAssignedUVMapIdx(const MString& textureFile) const;
+
+	void AddForceShaderDirtyDependOnOtherObjectCallback(MObject dependency);
+	static void ForceShaderDirtyCallback(MObject& node, void* clientData);
+
+	// utility functions
+	void setRenderStats(MDagPath dagPath);
+	void setVisibility(bool visibility);
+	void setReflectionVisibility(bool reflectionVisibility);
+	void setRefractionVisibility(bool refractionVisibility);
+	void setCastShadows(bool castShadow);
+	void setPrimaryVisibility(bool primaryVisibility);
+
+protected:
+	// Detach from the scene
+	virtual void detachFromScene() override;
+
+	// Attach to the scene
+	virtual void attachToScene() override;
+
+	// utility functions
+	void AssignShadingEngines(const MObjectArray& shadingEngines);
+
+	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const = 0;
+
+protected:
+
+	struct
+	{
+		std::vector<FrElement> elements;
+		bool isEmissive = false;
+		bool isMainInstance = false;
+		struct
+		{
+			bool mesh = false;
+			bool transform = false;
+			bool shader = false;
+		} changed;
+	} m;
+
+	// only one uv coordinates set can be attached to texture file
+	// this is the limitation of Maya's relationship editor
+	// thus, it is correct to match filename with UV map index
+	std::unordered_map<std::string /*texture file name*/, unsigned int /*UV map index*/ > m_uvSetCachedMappingData;
+
 };
 
 // Fire render mesh
 // Bridge class between a Maya mesh node and a fr_shape
-class FireRenderMesh : public FireRenderNode
+class FireRenderMesh : public FireRenderMeshCommon
 {
 public:
 
@@ -267,12 +333,7 @@ public:
 
 	// Clear
 	virtual void clear() override;
-private:
-	// Detach from the scene
-	virtual void detachFromScene() override;
 
-	// Attach to the scene
-	virtual void attachToScene() override;
 public:
 	// Register the callback
 	virtual void RegisterCallbacks() override;
@@ -293,13 +354,6 @@ public:
 	// build a sphere
 	void buildSphere();
 
-	void setRenderStats(MDagPath dagPath);
-	void setVisibility(bool visibility);
-	void setReflectionVisibility(bool reflectionVisibility);
-	void setRefractionVisibility(bool refractionVisibility);
-	void setCastShadows(bool castShadow);
-	void setPrimaryVisibility(bool primaryVisibility);
-
 	virtual bool IsEmissive() override { return m.isEmissive; }
 
 	void setupDisplacement(MObject shadingEngine, frw::Shape shape);
@@ -309,7 +363,6 @@ public:
 	void ProcessIBLLight(void);
 	void ProcessSkyLight(void);
 	void RebuildTransforms(void);
-	void AssignShadingEngines(const MObjectArray& shadingEngines);
 
 	// Mesh bits (each one may have separate shading engine)
 	std::vector<FrElement>& Elements() { return m.elements; }
@@ -318,27 +371,11 @@ public:
 
 	bool IsMainInstance() const { return m.isMainInstance; }
 
-	unsigned int GetAssignedUVMapIdx(const MString& textureFile) const;
-
-	static void ForceShaderDirtyCallback(MObject& node, void* clientData);
-	void AddForceShaderDirtyDependOnOtherObjectCallback(MObject dependency);
-
 protected:
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;
 	void SaveUsedUV(const MObject& meshNode);
 
-	struct
-	{
-		std::vector<FrElement> elements;
-		bool isEmissive = false;
-		bool isMainInstance = false;
-		struct
-		{
-			bool mesh = false;
-			bool transform = false;
-			bool shader = false;
-		} changed;
-	} m;
+	void SetupObjectId(MObject parentTransform);
 
 private:
 	void GetShapes(std::vector<frw::Shape>& outShapes);
@@ -350,11 +387,6 @@ private:
 	// so this return the list of all the fr_shapes created for this Maya mesh
 
 	virtual HashValue CalculateHash() override;
-
-	// only one uv coordinates set can be attached to texture file
-	// this is the limitation of Maya's relationship editor
-	// thus, it is correct to match filename with UV map index
-	std::unordered_map<std::string /*texture file name*/, unsigned int /*UV map index*/ > m_uvSetCachedMappingData;
 };
 
 // Fire render light
@@ -371,6 +403,7 @@ public:
 
 	// Return the fr light
 	const FrLight& data() { return m_light; }
+	FrLight& GetFrLight() { return m_light; }
 
 	// clear
 	virtual void clear() override;
@@ -397,7 +430,9 @@ public:
 protected:
 	void UpdateTransform(const MMatrix& matrix) override;
 
-private:
+	virtual bool ShouldUpdateTransformOnly() const;
+
+protected:
 
 	// Transform matrix
 	MMatrix m_matrix;
@@ -407,6 +442,18 @@ private:
 
 	// portal flag
 	bool m_portal;
+};
+
+class FireRenderPhysLight : public FireRenderLight
+{
+public:
+	// Constructor
+	FireRenderPhysLight(FireRenderContext* context, const MDagPath& dagPath);
+
+	static PLType GetPhysLightType(MObject dagPath);
+
+protected:
+	virtual bool ShouldUpdateTransformOnly() const;
 };
 
 // Fire render environment light
@@ -795,3 +842,29 @@ public:
 protected:
 	virtual bool CreateCurves(void);
 };
+
+class FireRenderHairNHair : public FireRenderHair
+{
+public:
+	// Constructor
+	FireRenderHairNHair(FireRenderContext* context, const MDagPath& dagPath);
+
+	// Destructor
+	virtual ~FireRenderHairNHair();
+
+	// Register the callback
+	virtual void RegisterCallbacks(void) override;
+
+protected:
+	virtual bool CreateCurves(void);
+};
+
+class FireRenderCustomEmitter : public FireRenderLight
+{
+public:
+	FireRenderCustomEmitter(FireRenderContext* context, const MDagPath& dagPath);
+
+	void Freshen() override;
+};
+
+bool IsUberEmissive(frw::Shader shader);

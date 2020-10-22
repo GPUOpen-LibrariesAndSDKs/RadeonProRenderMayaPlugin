@@ -20,14 +20,15 @@ limitations under the License.
 #include <maya/MFnTransform.h>
 #include <maya/MEventMessage.h>
 #include <maya/MHWGeometryUtilities.h>
+#include <maya/MDGMessage.h>
 
 #include "FireRenderPhysicalLightLocator.h"
 #include "PhysicalLightAttributes.h"
 #include "FireMaya.h"
 
 MTypeId FireRenderPhysicalLightLocator::id(FireMaya::TypeId::FireRenderPhysicalLightLocator);
-MString FireRenderPhysicalLightLocator::drawDbClassification("light:drawdb/light/directionalLight:drawdb/geometry/FireRenderPhysicalLightLocator");
-MString FireRenderPhysicalLightLocator::drawDbGeomClassification("drawdb/geometry/FireRenderPhysicalLightLocator");
+MString FireRenderPhysicalLightLocator::drawDbClassification("drawdb/geometry/light/FireRenderPhysicalLightLocator:drawdb/light/directionalLight:light");
+MString FireRenderPhysicalLightLocator::drawDbGeomClassification("drawdb/geometry/light/FireRenderPhysicalLightLocator");
 MString FireRenderPhysicalLightLocator::drawRegistrantId("FireRenderPhysicalLightNode");
 
 FireRenderPhysicalLightLocator::FireRenderPhysicalLightLocator() :
@@ -48,10 +49,29 @@ FireRenderPhysicalLightLocator::~FireRenderPhysicalLightLocator()
 
 void FireRenderPhysicalLightLocator::postConstructor()
 {
+	FireRenderLightCommon::postConstructor();
+
 	MStatus status;
 	MObject mobj = thisMObject();
+	
 	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(mobj, FireRenderPhysicalLightLocator::onAttributeChanged, this, &status);
 	assert(status == MStatus::kSuccess);
+
+	// rename node
+	MFnDependencyNode nodeFn(thisMObject());
+	nodeFn.setName("RPRPhysicalLightShape#");
+
+	MFnDagNode dagNode(thisMObject());
+	MObject parent = dagNode.parent(0, &status);
+	CHECK_MSTATUS(status);
+
+	MFnDependencyNode parentFn(parent);
+	parentFn.setName("RPRPhysicalLight#");
+}
+
+const MString FireRenderPhysicalLightLocator::GetNodeTypeName(void) const
+{
+	return "RPRPhysicalLight";
 }
 
 MStatus FireRenderPhysicalLightLocator::compute(const MPlug& plug, MDataBlock& data)

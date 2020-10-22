@@ -138,7 +138,7 @@ bool HybridContext::IsAOVSupported(int aov) const
 		RPR_AOV_COLOR_RIGHT,
 		RPR_AOV_WORLD_COORDINATE,
 		RPR_AOV_UV,
-		RPR_AOV_MATERIAL_IDX,
+		RPR_AOV_MATERIAL_ID,
 		RPR_AOV_SHADING_NORMAL,
 		RPR_AOV_DEPTH,
 		RPR_AOV_OBJECT_ID,
@@ -185,6 +185,16 @@ FireRenderSky* HybridContext::CreateSky(const MDagPath& dagPath)
 bool HybridContext::IsRenderQualitySupported(RenderQuality quality) const
 {
 	return quality != RenderQuality::RenderQualityFull;
+}
+
+bool HybridContext::IsPhysicalLightTypeSupported(PLType lightType) const
+{
+	if (lightType == PLTDisk || lightType == PLTSphere)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 bool HybridContext::IsShaderSupported(frw::ShaderType type) const 

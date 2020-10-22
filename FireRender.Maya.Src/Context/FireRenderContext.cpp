@@ -13,7 +13,6 @@ limitations under the License.
 #include <GL/glew.h>
 #include <maya/M3dView.h>
 #include "FireRenderContext.h"
-#include "FireRenderUtils.h"
 #include <cassert>
 #include <float.h>
 #include <maya/MDagPathArray.h>
@@ -43,6 +42,11 @@ limitations under the License.
 
 #include "FireRenderThread.h"
 #include "FireRenderMaterialSwatchRender.h"
+#include "CompositeWrapper.h"
+
+#ifdef WIN32 // alembic support is disabled on MAC until alembic build issue on MAC is resolved
+#include "FireRenderGPUCache.h"
+#endif
 
 #ifdef OPTIMIZATION_CLOCK
 	#include <chrono>
@@ -55,16 +59,9 @@ using namespace FireMaya;
 std::map<FireRenderContext*,FireRenderContext::Lock::frcinfo> FireRenderContext::Lock::lockMap;
 #endif
 
-#ifdef MAYA2015
-#undef min
-#undef max
-#endif
-
 #include <imageio.h>
 
-#ifndef MAYA2015
 #include <maya/MUuid.h>
-#endif
 #include "FireRenderIBL.h"
 #include <maya/MFnRenderLayer.h>
 
@@ -91,7 +88,6 @@ FireRenderContext::FireRenderContext() :
 	m_viewportMotionBlur(false),
 	m_motionBlurCameraExposure(0.0f),
 	m_cameraAttributeChanged(false),
-	m_startTime(0),
 	m_samplesPerUpdate(1),
 	m_secondsSpentOnLastRender(0.0),
 	m_lastRenderResultState(NOT_SET),
@@ -99,8 +95,6 @@ FireRenderContext::FireRenderContext() :
 	m_currentIteration(0),
 	m_currentFrame(0),
 	m_progress(0),
-	m_lastIterationTime(0),
-	m_timeIntervalForOutputUpdate(0.1),
 	m_interactive(false),
 	m_camera(this, MDagPath()),
 	m_glInteropActive(false),
@@ -115,11 +109,14 @@ FireRenderContext::FireRenderContext() :
 	m_backgroundTransparency(0),
 	m_shadowWeight(1),
 	m_bgWeight(1),
-	m_RenderType(RenderType::Undefined)
+	m_RenderType(RenderType::Undefined),
+	m_bIsGLTFExport(false),
+	m_IterationsPowerOf2Mode(false)
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
 
-	state = StateUpdating;
+	m_workStartTime = GetCurrentChronoTime();
+	m_state = StateUpdating;
 	m_dirty = false;
 }
 
@@ -295,12 +292,18 @@ void FireRenderContext::updateLimitsFromGlobalData(const FireRenderGlobalsData &
 	setCompletionCriteria(params);
 }
 
-bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshen, BuildSceneProgressCallback progressCallback)
+bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshen)
 {
 	MAIN_THREAD_ONLY;
 	DebugPrint("FireRenderContext::buildScene()");
 
 	m_globals.readFromCurrentScene();
+
+	// Backdoor for enabling aovs in IPR/Viewport
+	if (isInteractive())
+	{
+		EnableAOVsFromRSIfEnvVarSet(*this, m_globals.aovs);
+	}
 
 	if (m_globals.denoiserSettings.enabled)
 	{
@@ -392,7 +395,7 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 	}
 
 	if(freshen)
-		Freshen(true, [] { return false; }, progressCallback);
+		Freshen(true, [] { return false; });
 
 	return true;
 }
@@ -849,8 +852,24 @@ void FireRenderContext::initSwatchScene()
 	m_globals.readFromCurrentScene();
 	setupContext(m_globals);
 
+	UpdateCompletionCriteriaForSwatch();
+
+	setPreview();
+}
+
+void FireRenderContext::UpdateCompletionCriteriaForSwatch()
+{
 	CompletionCriteriaParams completionParams;
-	int iterations = FireRenderGlobalsData::getThumbnailIterCount();
+
+	bool enableSwatches = false;
+
+	int iterations = FireRenderGlobalsData::getThumbnailIterCount(&enableSwatches);
+
+	if (!enableSwatches)
+	{
+		iterations = 0;
+	}
+
 	completionParams.completionCriteriaMaxIterations = iterations;
 	completionParams.completionCriteriaMinIterations = iterations;
 
@@ -858,8 +877,6 @@ void FireRenderContext::initSwatchScene()
 
 	setSamplesPerUpdate(iterations);
 	setCompletionCriteria(completionParams);
-
-	setPreview();
 }
 
 void FireRenderContext::render(bool lock)
@@ -895,9 +912,14 @@ void FireRenderContext::render(bool lock)
 		}
 
 		m_restartRender = false;
-		m_startTime = clock();
+		m_renderStartTime = GetCurrentChronoTime();
 		m_currentIteration = 0;
 		m_currentFrame = 0;
+
+		if (m_IterationsPowerOf2Mode)
+		{
+			m_samplesPerUpdate = 1;
+		}
 	}
 
 	// may need to change iteration step
@@ -915,10 +937,28 @@ void FireRenderContext::render(bool lock)
 	context.SetParameter(RPR_CONTEXT_ITERATIONS, iterationStep);
 	context.SetParameter(RPR_CONTEXT_FRAMECOUNT, m_currentFrame);
 
+	ContextWorkProgressData progressData;
+
+	progressData.currentIndex = m_currentIteration;
+	progressData.totalCount = m_completionCriteriaParams.completionCriteriaMaxIterations;
+	progressData.currentTimeInMiliseconds = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_workStartTime);
+	progressData.progressType = ProgressType::RenderPassStarted;
+
+	TriggerProgressCallback(progressData);
+
 	if (m_useRegion)
 		context.RenderTile(m_region.left, m_region.right+1, m_height - m_region.top - 1, m_height - m_region.bottom);
 	else
 		context.Render();
+
+	if (m_IterationsPowerOf2Mode)
+	{
+		const int maxIterations = 32;
+		if (m_samplesPerUpdate < maxIterations)
+		{
+			m_samplesPerUpdate = m_samplesPerUpdate * 2;
+		}
+	}
 
 	if (m_currentIteration == 0)
 	{
@@ -1022,12 +1062,12 @@ std::vector<float> FireRenderContext::getRenderImageData()
 	return data;
 }
 
-unsigned int FireRenderContext::width()
+unsigned int FireRenderContext::width() const
 {
 	return m_width;
 }
 
-unsigned int FireRenderContext::height()
+unsigned int FireRenderContext::height() const
 {
 	return m_height;
 }
@@ -1046,10 +1086,17 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 	bool useThread = (createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) == RPR_CREATION_FLAGS_ENABLE_CPU;
 	DebugPrint("* Creating Context: %d (0x%x) - useThread: %d", createFlags, createFlags, useThread);
 
-	if (isMetalOn() && !(createFlags & RPR_CREATION_FLAGS_ENABLE_CPU))
-	{
-		createFlags = createFlags | RPR_CREATION_FLAGS_ENABLE_METAL;
-	}
+    if (MetalContextAvailable())
+    {
+        if (isMetalOn() && !(createFlags & RPR_CREATION_FLAGS_ENABLE_CPU))
+        {
+            createFlags = createFlags | RPR_CREATION_FLAGS_ENABLE_METAL;
+        }
+    }
+    else
+    {
+        createFlags = createFlags & ~RPR_CREATION_FLAGS_ENABLE_METAL;
+    }
 
 	int res = CreateContextInternal(createFlags, &context);
 
@@ -1225,21 +1272,45 @@ bool FireRenderContext::ConsiderShadowReflectionCatcherOverride(const ReadFrameB
 		m.framebufferAOV[RPR_AOV_OPACITY] &&
 		scope.GetReflectionCatcherShader();
 
+	TahoePluginVersion version = GetTahoeVersionToUse();
+	bool isRPR20 = version == TahoePluginVersion::RPR2;
+
 	if (isShadowCather && isReflectionCatcher)
 	{
-		compositeReflectionShadowCatcherOutput(params.pixels, params.width, params.height, params.region, params.flip, params.shadowColor, params.bgColor, params.shadowTransp, params.bgTransparency, params.bgWeight, params.shadowWeight);
+		if (isRPR20)
+		{
+			rifReflectionShadowCatcherOutput(params);
+		}
+		else
+		{
+			compositeReflectionShadowCatcherOutput(params);
+		}
 		return true;
 	}
 
 	if (isShadowCather)
 	{
-		compositeShadowCatcherOutput(params.pixels, params.width, params.height, params.region, params.flip, params.shadowColor, params.bgColor, params.shadowTransp, params.bgTransparency, params.bgWeight, params.shadowWeight);
+		if (isRPR20)
+		{
+			rifShadowCatcherOutput(params);
+		}
+		else
+		{
+			compositeShadowCatcherOutput(params);
+		}
 		return true;
 	}
 
 	if (isReflectionCatcher)
 	{
-		compositeReflectionCatcherOutput(params.pixels, params.width, params.height, params.region, params.flip, params.bgColor, params.bgTransparency, params.bgWeight, params.shadowWeight);
+		if (isRPR20)
+		{
+			rifReflectionCatcherOutput(params);
+		}
+		else
+		{
+			compositeReflectionCatcherOutput(params);
+		}
 		return true;
 	}
 
@@ -1256,7 +1327,7 @@ void FireRenderContext::DebugDumpAOV(int aov) const
 		,{RPR_AOV_OPACITY, "RPR_AOV_OPACITY" }
 		,{RPR_AOV_WORLD_COORDINATE, "RPR_AOV_WORLD_COORDINATE" }
 		,{RPR_AOV_UV, "RPR_AOV_UV" }
-		,{RPR_AOV_MATERIAL_IDX, "RPR_AOV_MATERIAL_IDX" }
+		,{RPR_AOV_MATERIAL_ID, "RPR_AOV_MATERIAL_IDX" }
 		,{RPR_AOV_GEOMETRIC_NORMAL, "RPR_AOV_GEOMETRIC_NORMAL" }
 		,{RPR_AOV_SHADING_NORMAL, "RPR_AOV_SHADING_NORMAL" }
 		,{RPR_AOV_DEPTH, "RPR_AOV_DEPTH" }
@@ -2072,10 +2143,6 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::AddPath>(dagPath);
 		}
-		else if (isTransformWithInstancedShape(node, dagPathTmp))
-		{
-			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::DontAddPath>(dagPathTmp);
-		}
 		else if (dagNode.typeId() == TypeId::FireRenderIESLightLocator
 			|| isLight(node)
 			|| VRay::isNonEnvironmentLight(dagNode))
@@ -2083,6 +2150,13 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 			if (dagNode.typeName() == "ambientLight") 
 			{
 				ob = CreateSceneObject<FireRenderEnvLight, NodeCachingOptions::AddPath>(dagPath);
+			}
+			else if (dagNode.typeId() == FireMaya::TypeId::FireRenderPhysicalLightLocator)
+			{
+				if (IsPhysicalLightTypeSupported(FireRenderPhysLight::GetPhysLightType(dagPath.node())))
+				{
+					ob = CreateSceneObject<FireRenderPhysLight, NodeCachingOptions::AddPath>(dagPath);
+				}
 			}
 			else
 			{
@@ -2134,18 +2208,47 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			ob = CreateSceneObject<FireRenderHairOrnatrix, NodeCachingOptions::AddPath>(dagPath);
 		}
+		else if (isTransformWithInstancedShape(node, dagPathTmp))
+		{
+			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::DontAddPath>(dagPathTmp);
+		}
+		else if (dagNode.typeName() == "pfxHair" && hairSupported)
+		{
+			ob = CreateSceneObject<FireRenderHairNHair, NodeCachingOptions::AddPath>(dagPath);
+		}
+		else if (dagNode.typeName() == "locator" && m_bIsGLTFExport)
+		{
+			// Custom locators with custom RPR "RPRIsEmitter" flag set to 1 should be treated as custom emitters
+			// Needed for DEMO preparations
+			MPlug plug = dagNode.findPlug("RPRIsEmitter", false);
+
+			if (!plug.isNull() && plug.asInt() > 0)
+			{
+				ob = CreateSceneObject<FireRenderCustomEmitter, NodeCachingOptions::DontAddPath>(dagPath);
+			}
+		}
 		else if (dagNode.typeName() == "transform")
 		{
 			ob = CreateSceneObject<FireRenderNode, NodeCachingOptions::AddPath>(dagPath);
 		}
+#ifdef WIN32
+		else if (dagNode.typeName() == "gpuCache")
+		{
+			ob = CreateSceneObject<FireRenderGPUCache, NodeCachingOptions::AddPath>(dagPath);
+		}
+#endif
 		else
 		{
+			std::string typeName = dagNode.typeName().asUTF8();
+			std::string nodeName = dagNode.name().asUTF8();
 			DebugPrint("Ignoring %s: %s", dagNode.typeName().asUTF8(), dagNode.name().asUTF8());
 		}
 	}
 	else
 	{
 		MFnDependencyNode depNode(node);
+		std::string typeName = depNode.typeName().asUTF8();
+		std::string nodeName = depNode.name().asUTF8();
 		DebugPrint("Ignoring %s: %s", depNode.typeName().asUTF8(), depNode.name().asUTF8());
 	}
 
@@ -2230,7 +2333,26 @@ HashValue FireRenderContext::GetStateHash()
 	return hash;
 }
 
-bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled, BuildSceneProgressCallback progressCallback)
+void FireRenderContext::UpdateTimeAndTriggerProgressCallback(ContextWorkProgressData& syncProgressData, ProgressType progressType)
+{
+	if (progressType != ContextWorkProgressData::ProgressType::Unknown)
+	{
+		syncProgressData.progressType = progressType;
+	}
+
+	syncProgressData.currentTimeInMiliseconds = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_workStartTime);
+	TriggerProgressCallback(syncProgressData);
+}
+
+void FireRenderContext::TriggerProgressCallback(const ContextWorkProgressData& syncProgressData)
+{
+	if (m_WorkProgressCallback)
+	{
+		m_WorkProgressCallback(syncProgressData);
+	}
+}
+
+bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 {
 	MAIN_THREAD_ONLY;
 
@@ -2270,25 +2392,17 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled, Buil
 		changed = true;
 	}
 
-#ifdef OPTIMIZATION_CLOCK
-	int overallFreshen = 0;
-	timeInInnerAddPolygon = 0;
-	overallAddPolygon = 0;
-	overallCreateMeshEx = 0;
-	timeGetDataFromMaya = 0;
-	translateData = 0;
-	inTranslateMesh = 0;
-	inGetFaceMaterials = 0;
-	getTessellatedObj = 0;
-	deleteNodes = 0;
-
-	auto start = std::chrono::steady_clock::now();
-#endif
 	size_t dirtyObjectsSize = m_dirtyObjects.size();
-	size_t currentIndex = 0;
+
+	ContextWorkProgressData syncProgressData;
+	syncProgressData.totalCount = dirtyObjectsSize;
+	TimePoint syncStartTime = GetCurrentChronoTime();
+
+	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncStarted);
+
 	for (auto it = m_dirtyObjects.begin(); it != m_dirtyObjects.end(); )
 	{
-		if ((state != FireRenderContext::StateRendering) && (state != FireRenderContext::StateUpdating))
+		if ((m_state != FireRenderContext::StateRendering) && (m_state != FireRenderContext::StateUpdating))
 			break;
 
 		// Request the object with removal it from the dirty list. Use mutex to prevent list's modifications.
@@ -2303,28 +2417,14 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled, Buil
 		// Now perform update
 		if (ptr)
 		{
-#ifdef OPTIMIZATION_CLOCK
-			auto start_iter = std::chrono::steady_clock::now();
-#endif
-
+			changed = true;
 			DebugPrint("Freshing object");
 
+			UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectPreSync);
 			ptr->Freshen();
-			changed = true;
 
-			currentIndex++;
-
-			if (progressCallback)
-			{
-				progressCallback((int)(100 * currentIndex / dirtyObjectsSize));
-			}
-
-#ifdef OPTIMIZATION_CLOCK
-			auto end_iter = std::chrono::steady_clock::now();
-			auto elapsed_iter = std::chrono::duration_cast<std::chrono::milliseconds>(end_iter - start_iter);
-			int ms_iter = elapsed_iter.count();
-			overallFreshen += ms_iter;
-#endif
+			syncProgressData.currentIndex++;
+			UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectSyncComplete);
 
 			if (cancelled())
 			{
@@ -2337,12 +2437,8 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled, Buil
 		}
 	}
 
-#ifdef OPTIMIZATION_CLOCK
-	auto end = std::chrono::steady_clock::now();
-	auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-	int ms = elapsed.count();
-	LogPrint("time spent in Freshen = %d ms", overallFreshen);
-#endif
+	syncProgressData.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), syncStartTime);
+	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncComplete);
 
 	if (changed)
 	{
@@ -2362,25 +2458,29 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled, Buil
 	auto hash = GetStateHash();
 	DebugPrint("Hash Value: %08X", int(hash));
 
-#ifdef OPTIMIZATION_CLOCK
-	auto total_end = std::chrono::steady_clock::now();
-	LogPrint("time spent in after CommitShaders till end = %d ms", std::chrono::duration_cast<std::chrono::milliseconds>(total_end - after_commit_shd));
-	LogPrint("Elapsed time in Translate Mesh: %d ms", inTranslateMesh);
-	LogPrint("Elapsed time in AddPolygon: %d ms", overallAddPolygon);
-	LogPrint("Elapsed time in CreateMeshEx: %d ms", overallCreateMeshEx);
-	LogPrint("Elapsed time in timeGetDataFromMaya: %llu nanoS", timeGetDataFromMaya);
-	LogPrint("Elapsed time in innerAddPolygon: %d microS", timeInInnerAddPolygon);
-	LogPrint("Elapsed time in translateData: %llu nanoS", translateData);
-	LogPrint("Elapsed time in inGetFaceMaterials: %d microS", inGetFaceMaterials);
-	LogPrint("Elapsed time in getTessellatedObj: %d microS", getTessellatedObj);
-	LogPrint("Elapsed time in deleteNodes: %d microS", deleteNodes);
-#endif
-
 	m_inRefresh = false;
 
 	m_needRedraw = true;
 
 	return true;
+}
+
+void FireRenderContext::SetState(StateEnum newState)
+{
+	if (m_state == newState)
+	{
+		return;
+	}
+
+	m_state = newState;
+
+	if (m_state == StateEnum::StateExiting)
+	{
+		ContextWorkProgressData data;
+		data.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_renderStartTime);
+
+		UpdateTimeAndTriggerProgressCallback(data, ProgressType::RenderComplete);
+	}
 }
 
 bool FireRenderContext::setUseRegion(bool value)
@@ -2447,15 +2547,22 @@ void FireRenderContext::setCompletionCriteria(const CompletionCriteriaParams& co
 	m_completionCriteriaParams = completionCriteriaParams;
 }
 
+const CompletionCriteriaParams& FireRenderContext::getCompletionCriteria(void) const
+{
+	return m_completionCriteriaParams;
+}
+
 bool FireRenderContext::isUnlimited()
 {
 	// Corresponds to the kUnlimited enum in FireRenderGlobals.
 	return m_completionCriteriaParams.isUnlimited();
 }
 
+std::chrono::time_point<std::chrono::steady_clock> start = std::chrono::high_resolution_clock::now();
+
 void FireRenderContext::setStartedRendering()
 {
-	m_startTime = clock();
+	m_renderStartTime = GetCurrentChronoTime();
 	m_currentIteration = 0;
 }
 
@@ -2481,8 +2588,7 @@ bool FireRenderContext::keepRenderRunning()
 	}
 
 	// check time limit completion criteria
-	long numberOfClicks = clock() - m_startTime;
-	double secondsSpentRendering = numberOfClicks / (double)CLOCKS_PER_SEC;
+	double secondsSpentRendering = TimeDiffChrono<std::chrono::seconds>(GetCurrentChronoTime(), m_renderStartTime);
 
 	return secondsSpentRendering < m_completionCriteriaParams.getTotalSecondsCount();
 }
@@ -2504,8 +2610,7 @@ bool FireRenderContext::isFirstIterationAndShadersNOTCached()
 
 void FireRenderContext::updateProgress()
 {
-	long numberOfClocks = clock() - m_startTime;
-	double secondsSpentRendering = numberOfClocks / (double)CLOCKS_PER_SEC;
+	double secondsSpentRendering = TimeDiffChrono<std::chrono::seconds>(GetCurrentChronoTime(), m_renderStartTime);
 
 	m_secondsSpentOnLastRender = secondsSpentRendering;
 
@@ -2535,590 +2640,364 @@ void FireRenderContext::setProgress(int percents)
 	m_progress = std::min(percents, 100);
 }
 
-bool FireRenderContext::updateOutput()
+
+
+void FireRenderContext::doOutputFromComposites(const ReadFrameBufferRequestParams& params, size_t dataSize, const frw::FrameBuffer& frameBufferOut)
 {
-	long numberOfClicks = clock() - m_lastIterationTime;
-	double secondsSpentRendering = numberOfClicks / (double)CLOCKS_PER_SEC;
-	if (m_timeIntervalForOutputUpdate < secondsSpentRendering) {
-		m_lastIterationTime = clock();
-		return true;
-	}
-	else {
-		return false;
+	// Find the number of pixels in the frame buffer.
+	int pixelCount = params.PixelCount();
+	// Check that the reported frame buffer size
+	// in bytes matches the required dimensions.
+	assert(dataSize == (sizeof(RV_PIXEL) * pixelCount));
+
+	// A temporary pixel buffer is required if the region is less
+	// than the full width and height, or the image should be flipped.
+	bool useTempData = params.UseTempData();
+	if (useTempData)
+		m_tempData.resize(pixelCount);
+
+	RV_PIXEL* data = useTempData ? m_tempData.get() : params.pixels;
+	rpr_int frstatus = rprFrameBufferGetInfo(frameBufferOut.Handle(), RPR_FRAMEBUFFER_DATA, dataSize, &data[0], nullptr);
+	checkStatus(frstatus);
+
+	if (useTempData)
+	{
+		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
 	}
 }
 
-// -----------------------------------------------------------------------------
-void FireRenderContext::compositeShadowCatcherOutput(
-	RV_PIXEL* pixels, 
-	unsigned int width, 
+void ShadowCatcherOutDbg(
+	unsigned int width,
 	unsigned int height, 
-	const RenderRegion& region, 
-	bool flip, 
-	const std::array<float, 3>& scColor,
-	const std::array<float, 3>& bgColor,
-	float transparency, 
-	float bgTransp,
-	float bgWeight,
-	float weight)
+	frw::Context& context,
+	const RprComposite& compositeToSave,
+	std::string name
+	)
 {
-	RPR_THREAD_ONLY;
-	// A temporary pixel buffer is required if the region is less
-	// than the full width and height, or the image should be flipped.
-	bool useTempData = flip || region.getWidth() < width || region.getHeight() < height;
+#define SHADOWCATCHERDEBUG
+#ifdef SHADOWCATCHERDEBUG
+	rpr_framebuffer frameBufferOutDbg = 0;
+	rpr_framebuffer_format fmtOutDbg = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
+	rpr_framebuffer_desc descOutDbg;
+	descOutDbg.fb_width = width;
+	descOutDbg.fb_height = height;
 
-	// Find the number of pixels in the frame buffer.
-	int pixelCount = width * height;
+	rpr_int frstatus = rprContextCreateFrameBuffer(context.Handle(), fmtOutDbg, &descOutDbg, &frameBufferOutDbg);
+	checkStatus(frstatus);
+	frstatus = rprCompositeCompute(compositeToSave, frameBufferOutDbg);
+	checkStatus(frstatus);
 
-	rpr_framebuffer frameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
-	rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
-	rpr_framebuffer shadowCatcherFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_SHADOW_CATCHER);
-	rpr_framebuffer backgroundFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_BACKGROUND);
+	std::string outputName ("C:/temp/dbg/"); 
+	outputName += name;
+	outputName += ".png";
+	frstatus = rprFrameBufferSaveToFile(frameBufferOutDbg, outputName.c_str());
+#endif
+}
 
-	// Get data from the RPR frame buffer.
+size_t GetDataSize(rpr_framebuffer frameBuffer)
+{
+	// Get data from the RPR frame buffer
 	size_t dataSize;
 	rpr_int frstatus = rprFrameBufferGetInfo(frameBuffer, RPR_FRAMEBUFFER_DATA, 0, nullptr, &dataSize);
 	checkStatus(frstatus);
+	return dataSize;
+}
 
-	// Check that the reported frame buffer size
-	// in bytes matches the required dimensions.
-	assert(dataSize == (sizeof(RV_PIXEL) * pixelCount));
-
-	frw::Context context = GetContext();
-
-	RprComposite noAlpha(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	noAlpha.SetInput4f("constant.input", 1.0f, 1.0f, 1.0f, 0.0f);
-
-	/* background * (1-min(alpha+sc*shadowTransp*(1-shadowColor), 1)) + color*alpha */
-	// step 1 
-	// color*alpha
-	RprComposite compositeColor1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeColor1.SetInputFb("framebuffer.input", frameBuffer);
-
-	RprComposite compositeOpacity1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeOpacity1.SetInputFb("framebuffer.input", opacityFrameBuffer);
-
-	RprComposite compositeOpacityNoAlpha(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	compositeOpacityNoAlpha.SetInputC("arithmetic.color0", noAlpha);
-	compositeOpacityNoAlpha.SetInputC("arithmetic.color1", compositeOpacity1);
-	compositeOpacityNoAlpha.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	RprComposite step1(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step1.SetInputC("arithmetic.color0", compositeColor1);
-	step1.SetInputC("arithmetic.color1", compositeOpacityNoAlpha);
-	step1.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// step 2
-	// 1-min(alpha+sc*shadowTransp*(1-shadowColor), 1)
-	RprComposite compositeShadowCatcher1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeShadowCatcher1.SetInputFb("framebuffer.input", shadowCatcherFrameBuffer);
-
-	// - sc
-	RprComposite compositeShadowCatcherNoAlpha(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	compositeShadowCatcherNoAlpha.SetInputC("arithmetic.color0", noAlpha);
-	compositeShadowCatcherNoAlpha.SetInputC("arithmetic.color1", compositeShadowCatcher1);
-	compositeShadowCatcherNoAlpha.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// shadowTransp*(1-shadowColor)
-	RprComposite shadowColor(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	shadowColor.SetInput4f("constant.input", 1.0f - scColor[0], 1.0f - scColor[1], 1.0f - scColor[2], 1.0f);
-
-	RprComposite shadowTransp(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	shadowTransp.SetInput4f("constant.input", 1.0f*weight - transparency, 1.0f*weight - transparency, 1.0f*weight - transparency, 1.0f*weight - transparency);
-
-	RprComposite shadowTranspColor(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	shadowTranspColor.SetInputC("arithmetic.color0", shadowTransp);
-	shadowTranspColor.SetInputC("arithmetic.color1", shadowColor);
-	shadowTranspColor.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// sc*shadowTransp*(1-shadowColor)
-	RprComposite step20(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step20.SetInputC("arithmetic.color0", compositeShadowCatcherNoAlpha);
-	step20.SetInputC("arithmetic.color1", shadowTranspColor);
-	step20.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// - alpha+sc
-	RprComposite step21(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step21.SetInputC("arithmetic.color0", step20);
-	step21.SetInputC("arithmetic.color1", compositeOpacityNoAlpha);
-	step21.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_ADD);
-
-	RprComposite constant_1(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	constant_1.SetInput4f("constant.input", 1.0f, 1.0f, 1.0f, 1.0f);
-
-	RprComposite step22(context.Handle(), RPR_COMPOSITE_ARITHMETIC); //min(alpha+sc*shadowTransp*(1-shadowColor), 1)
-	step22.SetInputC("arithmetic.color0", constant_1);
-	step22.SetInputC("arithmetic.color1", step21);
-	step22.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MIN);
-
-	RprComposite step23(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step23.SetInputC("arithmetic.color0", constant_1);
-	step23.SetInputC("arithmetic.color1", step22);
-	step23.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_SUB);
-
-	// step 3
-	RprComposite compositeBackground1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeBackground1.SetInputFb("framebuffer.input", backgroundFrameBuffer);
-
-	// - step 31
-	// background * bgTransparency
-	RprComposite bgTransparency(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	bgTransparency.SetInput4f("constant.input", 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp);
-
-	RprComposite step31(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step31.SetInputC("arithmetic.color0", compositeBackground1);
-	step31.SetInputC("arithmetic.color1", bgTransparency);
-	step31.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// - step 32
-	RprComposite backgroundColor(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	backgroundColor.SetInput4f("constant.input", bgColor[0], bgColor[1], bgColor[2], 1.0f);
-
-	RprComposite step32(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step32.SetInputC("arithmetic.color0", backgroundColor);
-	step32.SetInputC("arithmetic.color1", step31);
-	step32.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// background * step 2
-	RprComposite step3(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step3.SetInputC("arithmetic.color0", step32);
-	step3.SetInputC("arithmetic.color1", step23);
-	step3.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// step 4
-	// step 3 + step 1
-	RprComposite step4(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step4.SetInputC("arithmetic.color0", step3);
-	step4.SetInputC("arithmetic.color1", step1);
-	step4.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_ADD);
-
+frw::FrameBuffer GetOutFrameBuffer(const FireRenderContext::ReadFrameBufferRequestParams& params, frw::Context& context)
+{
 	rpr_framebuffer_format fmtOut = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
-	frw::FrameBuffer frameBufferOut(context, width, height, fmtOut);
-	checkStatus(frstatus);
-	frstatus = rprCompositeCompute(step4, frameBufferOut.Handle());
-	checkStatus(frstatus);
-
-#ifdef SHADOWCATCHERDEBUG
-	frstatus = rprFrameBufferSaveToFile(frameBufferOut, "C:/temp/step4.png");
-#endif
-
-	// Copy the frame buffer into temporary memory, if
-	// required, or directly into the supplied pixel buffer.
-	if (useTempData)
-		m_tempData.resize(pixelCount);
-	RV_PIXEL* data = useTempData ? m_tempData.get() : pixels;
-	frstatus = rprFrameBufferGetInfo(frameBufferOut.Handle(), RPR_FRAMEBUFFER_DATA, dataSize, &data[0], nullptr);
-	checkStatus(frstatus);
-
-	if (useTempData)
-	{
-		copyPixels(pixels, data, width, height, region, flip);
-	}
+	frw::FrameBuffer frameBufferOut(context, params.width, params.height, fmtOut);
+	return frameBufferOut;
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderContext::compositeReflectionCatcherOutput(
-	RV_PIXEL* pixels, 
-	unsigned int width, 
-	unsigned int height, 
-	const RenderRegion& region, 
-	bool flip, 
-	const std::array<float, 3>& bgColor,
-	float bgTransp, 
-	float bgWeight,
-	float weight)
+void FireRenderContext::rifShadowCatcherOutput(const ReadFrameBufferRequestParams& params)
 {
-	RPR_THREAD_ONLY;
-	// A temporary pixel buffer is required if the region is less
-	// than the full width and height, or the image should be flipped.
-	bool useTempData = flip || region.getWidth() < width || region.getHeight() < height;
+	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
 
-	// Find the number of pixels in the frame buffer.
-	int pixelCount = width * height;
+	const rpr_framebuffer colorFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
+	const rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
+	const rpr_framebuffer shadowCatcherFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_SHADOW_CATCHER);
+	const rpr_framebuffer backgroundFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_BACKGROUND);
 
-	rpr_framebuffer frameBufferColor = frameBufferAOV_Resolved(RPR_AOV_COLOR);
-	rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
-	rpr_framebuffer reflectionCatcherFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_REFLECTION_CATCHER);
-	rpr_framebuffer backgroundFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_BACKGROUND);
-
-#ifdef REFLECTIONCATCHERDEBUG
-	rprFrameBufferSaveToFile(reflectionCatcherFrameBuffer, "C:/temp/RC/rc_aov.png");
-	rprFrameBufferSaveToFile(frameBufferColor, "C:/temp/RC/color_aov.png");
-#endif
-
-	// Get data from the RPR frame buffer.
-	size_t dataSize;
-	rpr_int frstatus = rprFrameBufferGetInfo(frameBufferColor, RPR_FRAMEBUFFER_DATA, 0, nullptr, &dataSize);
-	checkStatus(frstatus);
-
-	// Check that the reported frame buffer size
-	// in bytes matches the required dimensions.
-	assert(dataSize == (sizeof(RV_PIXEL) * pixelCount));
-
-	frw::Context context = GetContext();
-
-	RprComposite noAlpha(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	noAlpha.SetInput4f("constant.input", 1.0f, 1.0f, 1.0f, 0.0f);
-
-	RprComposite compositeOpacity1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeOpacity1.SetInputFb("framebuffer.input", opacityFrameBuffer);
-
-	RprComposite compositeOpacityNoAlpha(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	compositeOpacityNoAlpha.SetInputC("arithmetic.color0", noAlpha);
-	compositeOpacityNoAlpha.SetInputC("arithmetic.color1", compositeOpacity1);
-	compositeOpacityNoAlpha.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	/* background * (1-alpha) + color * (alpha+rc) */
-	// step 1 
-	// color * (alpha+rc)
-	RprComposite compositeRC(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeRC.SetInputFb("framebuffer.input", reflectionCatcherFrameBuffer);
-
-	// alpha+rc
-	RprComposite step11(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step11.SetInputC("arithmetic.color0", compositeOpacityNoAlpha);
-	step11.SetInputC("arithmetic.color1", compositeRC);
-	step11.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_ADD);
-
+	try
 	{
-#ifdef REFLECTIONCATCHERDEBUG
-		rpr_framebuffer frameBufferOutDbg = 0;
-		rpr_framebuffer_format fmtOutDbg = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
-		rpr_framebuffer_desc descOutDbg;
-		descOutDbg.fb_width = width;
-		descOutDbg.fb_height = height;
+		MString path;
+		MStatus s = MGlobal::executeCommand("getModulePath -moduleName RadeonProRender", path);
+		MString mlModelsFolder = path + "/data/models";
+		std::shared_ptr<ImageFilter> shadowCatcherFilter = std::shared_ptr<ImageFilter>(new ImageFilter(context(), m_width, m_height, mlModelsFolder.asChar(), forceCPUContext));
+		shadowCatcherFilter->CreateFilter(RifFilterType::ShadowCatcher);
+		shadowCatcherFilter->AddInput(RifColor, colorFrameBuffer, 0.1f);
+		shadowCatcherFilter->AddInput(RifOpacity, opacityFrameBuffer, 0.1f);
+		shadowCatcherFilter->AddInput(RifShadowCatcher, shadowCatcherFrameBuffer, 0.1f);
+		shadowCatcherFilter->AddInput(RifBackground, backgroundFrameBuffer, 0.1f);
 
-		frstatus = rprContextCreateFrameBuffer(context.Handle(), fmtOutDbg, &descOutDbg, &frameBufferOutDbg);
-		checkStatus(frstatus);
-		frstatus = rprCompositeCompute(step11, frameBufferOutDbg);
-		checkStatus(frstatus);
+		RifParam p;
 
-		frstatus = rprFrameBufferSaveToFile(frameBufferOutDbg, "C:/temp/RC/step11.png");
-#endif
+		p = { RifParamType::RifOther, (rif_float)params.shadowColor[0] };
+		shadowCatcherFilter->AddParam("shadowColor[0]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowColor[1] };
+		shadowCatcherFilter->AddParam("shadowColor[1]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowColor[2] };
+		shadowCatcherFilter->AddParam("shadowColor[2]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowWeight };
+		shadowCatcherFilter->AddParam("shadowWeight", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowTransp };
+		shadowCatcherFilter->AddParam("shadowTransp", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgWeight };
+		shadowCatcherFilter->AddParam("bgWeight", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgTransparency };
+		shadowCatcherFilter->AddParam("bgTransparency", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[0] };
+		shadowCatcherFilter->AddParam("bgColor[0]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[1] };
+		shadowCatcherFilter->AddParam("bgColor[1]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[2] };
+		shadowCatcherFilter->AddParam("bgColor[2]", p);
+
+		shadowCatcherFilter->AttachFilter();
+
+		shadowCatcherFilter->Run();
+		std::vector<float> vecData = shadowCatcherFilter->GetData();
+		RV_PIXEL* data = (RV_PIXEL*)&vecData[0];
+		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
 	}
-
-	// color * (alpha+rc)
-	RprComposite compositeColor1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeColor1.SetInputFb("framebuffer.input", frameBufferColor);
-
-	RprComposite step12(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step12.SetInputC("arithmetic.color0", compositeColor1);
-	step12.SetInputC("arithmetic.color1", step11);
-	step12.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
+	catch (std::exception& e)
 	{
-#ifdef REFLECTIONCATCHERDEBUG
-		rpr_framebuffer frameBufferOutDbg = 0;
-		rpr_framebuffer_format fmtOutDbg = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
-		rpr_framebuffer_desc descOutDbg;
-		descOutDbg.fb_width = width;
-		descOutDbg.fb_height = height;
-
-		frstatus = rprContextCreateFrameBuffer(context.Handle(), fmtOutDbg, &descOutDbg, &frameBufferOutDbg);
-		checkStatus(frstatus);
-		frstatus = rprCompositeCompute(step12, frameBufferOutDbg);
-		checkStatus(frstatus);
-
-		frstatus = rprFrameBufferSaveToFile(frameBufferOutDbg, "C:/temp/RC/step12.png");
-#endif
-	}
-
-	// step 2
-	// (1-alpha) 
-	RprComposite constant_1(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	constant_1.SetInput4f("constant.input", 1.0f, 1.0f, 1.0f, 1.0f);
-
-	RprComposite step2(context.Handle(), RPR_COMPOSITE_ARITHMETIC); //min(alpha+rc, 1)
-	step2.SetInputC("arithmetic.color0", constant_1);
-	step2.SetInputC("arithmetic.color1", compositeOpacityNoAlpha);
-	step2.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_SUB);
-
-	{
-#ifdef REFLECTIONCATCHERDEBUG
-		rpr_framebuffer frameBufferOutDbg = 0;
-		rpr_framebuffer_format fmtOutDbg = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
-		rpr_framebuffer_desc descOutDbg;
-		descOutDbg.fb_width = width;
-		descOutDbg.fb_height = height;
-
-		frstatus = rprContextCreateFrameBuffer(context.Handle(), fmtOutDbg, &descOutDbg, &frameBufferOutDbg);
-		checkStatus(frstatus);
-		frstatus = rprCompositeCompute(step2, frameBufferOutDbg);
-		checkStatus(frstatus);
-
-		frstatus = rprFrameBufferSaveToFile(frameBufferOutDbg, "C:/temp/RC/step2.png");
-#endif
-	}
-
-	// step 3
-	RprComposite compositeBackground1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeBackground1.SetInputFb("framebuffer.input", backgroundFrameBuffer);
-
-	// - step 31
-	// background * bgTransparency
-	RprComposite bgTransparency(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	bgTransparency.SetInput4f("constant.input", 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp);
-
-	RprComposite step31(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step31.SetInputC("arithmetic.color0", compositeBackground1);
-	step31.SetInputC("arithmetic.color1", bgTransparency);
-	step31.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// - step 32
-	RprComposite backgroundColor(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	backgroundColor.SetInput4f("constant.input", bgColor[0], bgColor[1], bgColor[2], 1.0f);
-
-	RprComposite step32(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step32.SetInputC("arithmetic.color0", backgroundColor);
-	step32.SetInputC("arithmetic.color1", step31);
-	step32.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// background * step 2
-	RprComposite step3(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step3.SetInputC("arithmetic.color0", step32);
-	step3.SetInputC("arithmetic.color1", step2);
-	step3.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	{
-#ifdef REFLECTIONCATCHERDEBUG
-		rpr_framebuffer frameBufferOutDbg = 0;
-		rpr_framebuffer_format fmtOutDbg = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
-		rpr_framebuffer_desc descOutDbg;
-		descOutDbg.fb_width = width;
-		descOutDbg.fb_height = height;
-
-		frstatus = rprContextCreateFrameBuffer(context.Handle(), fmtOutDbg, &descOutDbg, &frameBufferOutDbg);
-		checkStatus(frstatus);
-		frstatus = rprCompositeCompute(step3, frameBufferOutDbg);
-		checkStatus(frstatus);
-
-		frstatus = rprFrameBufferSaveToFile(frameBufferOutDbg, "C:/temp/RC/step3.png");
-#endif
-	}
-
-	// step 4
-	// step 3 + step 1
-	RprComposite step4(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step4.SetInputC("arithmetic.color0", step3);
-	step4.SetInputC("arithmetic.color1", step12);
-	step4.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_ADD);
-
-	rpr_framebuffer_format fmtOut = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
-	frw::FrameBuffer frameBufferOut (context, width, height, fmtOut);
-	checkStatus(frstatus);
-	frstatus = rprCompositeCompute(step4, frameBufferOut.Handle());
-	checkStatus(frstatus);
-
-#ifdef REFLECTIONCATCHERDEBUG
-	frstatus = rprFrameBufferSaveToFile(frameBufferOut, "C:/temp/RC/step4.png");
-#endif
-
-	// Copy the frame buffer into temporary memory, if
-	// required, or directly into the supplied pixel buffer.
-	if (useTempData)
-		m_tempData.resize(pixelCount);
-	RV_PIXEL* data = useTempData ? m_tempData.get() : pixels;
-	frstatus = rprFrameBufferGetInfo(frameBufferOut.Handle(), RPR_FRAMEBUFFER_DATA, dataSize, &data[0], nullptr);
-	checkStatus(frstatus);
-
-	if (useTempData)
-	{
-		copyPixels(pixels, data, width, height, region, flip);
+		ErrorPrint(e.what());
 	}
 }
 
-void FireRenderContext::compositeReflectionShadowCatcherOutput(
-	RV_PIXEL* pixels, 
-	unsigned int width, 
-	unsigned int height, 
-	const RenderRegion& region, 
-	bool flip, 
-	const std::array<float, 3>& color,
-	const std::array<float, 3>& bgColor,
-	float transparency, 
-	float bgTransp, 
-	float bgWeight,
-	float weight)
+void FireRenderContext::rifReflectionCatcherOutput(const ReadFrameBufferRequestParams& params)
+{
+	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
+
+	const rpr_framebuffer colorFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_COLOR].Handle();
+	const rpr_framebuffer opacityFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_OPACITY].Handle();
+	const rpr_framebuffer reflectionCatcherFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_REFLECTION_CATCHER].Handle();
+	const rpr_framebuffer backgroundFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_BACKGROUND].Handle();
+	
+	try
+	{
+		MString path;
+		MStatus s = MGlobal::executeCommand("getModulePath -moduleName RadeonProRender", path);
+		MString mlModelsFolder = path + "/data/models";
+		std::shared_ptr<ImageFilter> catcherFilter = std::shared_ptr<ImageFilter>(new ImageFilter(context(), m_width, m_height, mlModelsFolder.asChar(), forceCPUContext));
+		catcherFilter->CreateFilter(RifFilterType::ReflectionCatcher);
+		catcherFilter->AddInput(RifColor, colorFrameBuffer, 0.1f);
+		catcherFilter->AddInput(RifOpacity, opacityFrameBuffer, 0.1f);
+		catcherFilter->AddInput(RifReflectionCatcher, reflectionCatcherFrameBuffer, 0.1f);
+		catcherFilter->AddInput(RifBackground, backgroundFrameBuffer, 0.1f);
+
+		RifParam p;
+
+		p = { RifParamType::RifOther, (rif_float)params.bgWeight };
+		catcherFilter->AddParam("bgWeight", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgTransparency };
+		catcherFilter->AddParam("bgTransparency", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[0] };
+		catcherFilter->AddParam("bgColor[0]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[1] };
+		catcherFilter->AddParam("bgColor[1]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[2] };
+		catcherFilter->AddParam("bgColor[2]", p);
+
+		catcherFilter->AttachFilter();
+
+		catcherFilter->Run();
+		std::vector<float> vecData = catcherFilter->GetData();
+		RV_PIXEL* data = (RV_PIXEL*)&vecData[0];
+		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
+	}
+	catch (std::exception& e)
+	{
+		ErrorPrint(e.what());
+	}
+}
+
+void FireRenderContext::rifReflectionShadowCatcherOutput(const ReadFrameBufferRequestParams& params)
+{
+	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
+
+	const rpr_framebuffer colorFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_COLOR].Handle();
+	const rpr_framebuffer opacityFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_OPACITY].Handle();
+	const rpr_framebuffer shadowCatcherFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_SHADOW_CATCHER].Handle();
+	const rpr_framebuffer reflectionCatcherFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_REFLECTION_CATCHER].Handle();
+	const rpr_framebuffer backgroundFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_BACKGROUND].Handle();
+
+	try
+	{
+		MString path;
+		MStatus s = MGlobal::executeCommand("getModulePath -moduleName RadeonProRender", path);
+		MString mlModelsFolder = path + "/data/models";
+		std::shared_ptr<ImageFilter> catcherFilter = std::shared_ptr<ImageFilter>(new ImageFilter(context(), m_width, m_height, mlModelsFolder.asChar(), forceCPUContext));
+		catcherFilter->CreateFilter(RifFilterType::ShadowReflectionCatcher);
+		catcherFilter->AddInput(RifColor, colorFrameBuffer, 0.1f);
+		catcherFilter->AddInput(RifOpacity, opacityFrameBuffer, 0.1f);
+		catcherFilter->AddInput(RifShadowCatcher, shadowCatcherFrameBuffer, 0.1f);
+		catcherFilter->AddInput(RifReflectionCatcher, reflectionCatcherFrameBuffer, 0.1f);
+		catcherFilter->AddInput(RifBackground, backgroundFrameBuffer, 0.1f);
+
+		RifParam p;
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowColor[0] };
+		catcherFilter->AddParam("shadowColor[0]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowColor[1] };
+		catcherFilter->AddParam("shadowColor[1]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowColor[2] };
+		catcherFilter->AddParam("shadowColor[2]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowWeight };
+		catcherFilter->AddParam("shadowWeight", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowTransp };
+		catcherFilter->AddParam("shadowTransp", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgWeight };
+		catcherFilter->AddParam("bgWeight", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgTransparency };
+		catcherFilter->AddParam("bgTransparency", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[0] };
+		catcherFilter->AddParam("bgColor[0]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[1] };
+		catcherFilter->AddParam("bgColor[1]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[2] };
+		catcherFilter->AddParam("bgColor[2]", p);
+
+		catcherFilter->AttachFilter();
+
+		catcherFilter->Run();
+		std::vector<float> vecData = catcherFilter->GetData();
+		RV_PIXEL* data = (RV_PIXEL*)&vecData[0];
+		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
+	}
+	catch (std::exception& e)
+	{
+		ErrorPrint(e.what());
+	}
+}
+
+void FireRenderContext::compositeShadowCatcherOutput(const ReadFrameBufferRequestParams& params)
 {
 	RPR_THREAD_ONLY;
-	// A temporary pixel buffer is required if the region is less
-	// than the full width and height, or the image should be flipped.
-	bool useTempData = flip || region.getWidth() < width || region.getHeight() < height;
 
-	// Find the number of pixels in the frame buffer.
-	int pixelCount = width * height;
-
-	rpr_framebuffer frameBufferColor = frameBufferAOV_Resolved(RPR_AOV_COLOR);
+	// get data from frame buffers
+	rpr_framebuffer colorFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
 	rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
 	rpr_framebuffer shadowCatcherFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_SHADOW_CATCHER);
 	rpr_framebuffer backgroundFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_BACKGROUND);
-	rpr_framebuffer reflectionCatcherFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_REFLECTION_CATCHER);
 
-	// Get data from the RPR frame buffer.
-	size_t dataSize;
-	rpr_int frstatus = rprFrameBufferGetInfo(frameBufferColor, RPR_FRAMEBUFFER_DATA, 0, nullptr, &dataSize);
-	checkStatus(frstatus);
-
-	// Check that the reported frame buffer size
-	// in bytes matches the required dimensions.
-	assert(dataSize == (sizeof(RV_PIXEL) * pixelCount));
-
+	// inputs
 	frw::Context context = GetContext();
+	CompositeWrapper noAlpha(context, 1.0f, 0.0f); // Input Wrapper
+	CompositeWrapper color(context, colorFrameBuffer);
+	CompositeWrapper opacity(context, opacityFrameBuffer);
+	CompositeWrapper shadowCatcher(context, shadowCatcherFrameBuffer);
+	CompositeWrapper shadowColor(context, params.shadowColor[0], params.shadowColor[1], params.shadowColor[2], 1.0f);
+	CompositeWrapper const1(context, 1.0f);
+	CompositeWrapper shadowTransp(context, 1.0f*params.shadowWeight - params.shadowTransp);
+	CompositeWrapper background(context, backgroundFrameBuffer);
+	CompositeWrapper backgroundTransp(context, 1.0f*params.bgWeight - params.bgTransparency);
+	CompositeWrapper backgroundColor(context, params.bgColor[0], params.bgColor[1], params.bgColor[2], 1.0f);
 
-	RprComposite noAlpha(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	noAlpha.SetInput4f("constant.input", 1.0f, 1.0f, 1.0f, 0.0f);
+	// background * (1-min(alpha+sc*shadowTransp*(1-shadowColor), 1)) + color*alpha 
+	CompositeWrapper step1 = noAlpha * opacity + noAlpha * shadowCatcher * shadowTransp * (const1 - shadowColor);
+	CompositeWrapper step2 = const1 - CompositeWrapper::min(step1, const1);
+	CompositeWrapper res = background * backgroundTransp * backgroundColor * step2 + noAlpha * color * opacity;
 
-	RprComposite compositeOpacity1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeOpacity1.SetInputFb("framebuffer.input", opacityFrameBuffer);
+	// write result to output
+	frw::FrameBuffer frameBufferOut = GetOutFrameBuffer(params, context);
+	res.Compute(frameBufferOut);
+	doOutputFromComposites(params, GetDataSize(colorFrameBuffer), frameBufferOut);
+}
 
-	RprComposite compositeOpacityNoAlpha(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	compositeOpacityNoAlpha.SetInputC("arithmetic.color0", noAlpha);
-	compositeOpacityNoAlpha.SetInputC("arithmetic.color1", compositeOpacity1);
-	compositeOpacityNoAlpha.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+// -----------------------------------------------------------------------------
+void FireRenderContext::compositeReflectionCatcherOutput(const ReadFrameBufferRequestParams& params)
+{
+	RPR_THREAD_ONLY;
 
-	/* background * (1-min(alpha+sc, 1)) + color*(alpha+rc) */
-	// color * (alpha+rc)
-	RprComposite compositeRC(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeRC.SetInputFb("framebuffer.input", reflectionCatcherFrameBuffer);
+	// get data from frame buffers
+	rpr_framebuffer frameBufferColor = frameBufferAOV_Resolved(RPR_AOV_COLOR);
+	rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
+	rpr_framebuffer reflectionCatcherFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_REFLECTION_CATCHER);
+	rpr_framebuffer backgroundFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_BACKGROUND);
 
-	// alpha+rc
-	RprComposite step11(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step11.SetInputC("arithmetic.color0", compositeOpacityNoAlpha);
-	step11.SetInputC("arithmetic.color1", compositeRC);
-	step11.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_ADD);
+	// inputs
+	frw::Context context = GetContext();
+	CompositeWrapper noAlpha(context, 1.0f, 0.0f);
+	CompositeWrapper color(context, frameBufferColor);
+	CompositeWrapper opacity(context, opacityFrameBuffer);
+	CompositeWrapper reflectionCatcher(context, reflectionCatcherFrameBuffer);
+	CompositeWrapper const1(context, 1.0f);
+	CompositeWrapper background(context, backgroundFrameBuffer);
+	CompositeWrapper backgroundTransp(context, 1.0f*params.bgWeight - params.bgTransparency);
+	CompositeWrapper backgroundColor(context, params.bgColor[0], params.bgColor[1], params.bgColor[2], 1.0f);
 
-	{
-#ifdef REFLECTIONCATCHERDEBUG
-		rpr_framebuffer frameBufferOutDbg = 0;
-		rpr_framebuffer_format fmtOutDbg = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
-		rpr_framebuffer_desc descOutDbg;
-		descOutDbg.fb_width = width;
-		descOutDbg.fb_height = height;
+	// background * (1-alpha) + color * (alpha+rc)
+	CompositeWrapper step1 = const1 - noAlpha * opacity;
+	CompositeWrapper step2 = background * backgroundTransp * backgroundColor * step1;
+	CompositeWrapper res = step2 + color * (noAlpha * opacity + reflectionCatcher);
 
-		frstatus = rprContextCreateFrameBuffer(context.Handle(), fmtOutDbg, &descOutDbg, &frameBufferOutDbg);
-		checkStatus(frstatus);
-		frstatus = rprCompositeCompute(step11, frameBufferOutDbg);
-		checkStatus(frstatus);
+	// write result to output
+	frw::FrameBuffer frameBufferOut = GetOutFrameBuffer(params, context);
+	res.Compute(frameBufferOut);
+	doOutputFromComposites(params, GetDataSize(frameBufferColor), frameBufferOut);
+}
 
-		frstatus = rprFrameBufferSaveToFile(frameBufferOutDbg, "C:/temp/RC/step11.png");
-#endif
-	}
+void FireRenderContext::compositeReflectionShadowCatcherOutput(const ReadFrameBufferRequestParams& params)
+{
+	RPR_THREAD_ONLY;
+	
+	// get data from frame buffers
+	rpr_framebuffer frameBufferColor = frameBufferAOV_Resolved(RPR_AOV_COLOR);
+	rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
+	rpr_framebuffer reflectionCatcherFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_REFLECTION_CATCHER);
+	rpr_framebuffer backgroundFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_BACKGROUND);
+	rpr_framebuffer shadowCatcherFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_SHADOW_CATCHER);
 
-	// color * (alpha+rc)
-	RprComposite compositeColor1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeColor1.SetInputFb("framebuffer.input", frameBufferColor);
+	// inputs
+	frw::Context context = GetContext();
+	CompositeWrapper noAlpha(context, 1.0f, 0.0f);
+	CompositeWrapper color(context, frameBufferColor);
+	CompositeWrapper opacity(context, opacityFrameBuffer);
+	CompositeWrapper reflectionCatcher(context, reflectionCatcherFrameBuffer);
+	CompositeWrapper shadowCatcher(context, shadowCatcherFrameBuffer);
+	CompositeWrapper shadowColor(context, params.shadowColor[0], params.shadowColor[1], params.shadowColor[2], 1.0f);
+	CompositeWrapper const1(context, 1.0f);
+	CompositeWrapper shadowTransp(context, 1.0f*params.shadowWeight - params.shadowTransp);
+	CompositeWrapper background(context, backgroundFrameBuffer);
+	CompositeWrapper backgroundTransp(context, 1.0f*params.bgWeight - params.bgTransparency);
+	CompositeWrapper backgroundColor(context, params.bgColor[0], params.bgColor[1], params.bgColor[2], 1.0f);
 
-	RprComposite step12(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step12.SetInputC("arithmetic.color0", compositeColor1);
-	step12.SetInputC("arithmetic.color1", step11);
-	step12.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
+	// background * (1-min(alpha+sc, 1)) + color*(alpha+rc)
+	CompositeWrapper step1 = noAlpha * opacity + noAlpha * shadowCatcher * shadowTransp * (const1 - shadowColor);
+	CompositeWrapper step2 = const1 - CompositeWrapper::min(step1, const1);
+	CompositeWrapper step3 = color * (noAlpha * opacity + reflectionCatcher);
+	CompositeWrapper res = background * backgroundTransp * backgroundColor * step2 + step3;
 
-	// step 2
-	// 1-min(alpha+sc*shadowTransp*(1-shadowColor), 1)
-	RprComposite compositeShadowCatcher1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeShadowCatcher1.SetInputFb("framebuffer.input", shadowCatcherFrameBuffer);
-
-	// - sc
-	RprComposite compositeShadowCatcherNoAlpha(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	compositeShadowCatcherNoAlpha.SetInputC("arithmetic.color0", noAlpha);
-	compositeShadowCatcherNoAlpha.SetInputC("arithmetic.color1", compositeShadowCatcher1);
-	compositeShadowCatcherNoAlpha.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// shadowTransp*(1-shadowColor)
-	RprComposite shadowColor(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	shadowColor.SetInput4f("constant.input", 1.0f - color[0], 1.0f - color[1], 1.0f - color[2], 1.0f);
-
-	RprComposite shadowTransp(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	shadowTransp.SetInput4f("constant.input", 1.0f*weight - transparency, 1.0f*weight - transparency, 1.0f*weight - transparency, 1.0f*weight - transparency);
-
-	RprComposite shadowTranspColor(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	shadowTranspColor.SetInputC("arithmetic.color0", shadowTransp);
-	shadowTranspColor.SetInputC("arithmetic.color1", shadowColor);
-	shadowTranspColor.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// sc*shadowTransp*(1-shadowColor)
-	RprComposite step20(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step20.SetInputC("arithmetic.color0", compositeShadowCatcherNoAlpha);
-	step20.SetInputC("arithmetic.color1", shadowTranspColor);
-	step20.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// - alpha+sc
-	RprComposite step21(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step21.SetInputC("arithmetic.color0", step20);
-	step21.SetInputC("arithmetic.color1", compositeOpacityNoAlpha);
-	step21.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_ADD);
-
-	RprComposite constant_1(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	constant_1.SetInput4f("constant.input", 1.0f, 1.0f, 1.0f, 1.0f);
-
-	RprComposite step22(context.Handle(), RPR_COMPOSITE_ARITHMETIC); //min(alpha+sc*shadowTransp*(1-shadowColor), 1)
-	step22.SetInputC("arithmetic.color0", constant_1);
-	step22.SetInputC("arithmetic.color1", step21);
-	step22.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MIN);
-
-	RprComposite step23(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step23.SetInputC("arithmetic.color0", constant_1);
-	step23.SetInputC("arithmetic.color1", step22);
-	step23.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_SUB);
-
-	// step 3
-	RprComposite compositeBackground1(context.Handle(), RPR_COMPOSITE_FRAMEBUFFER);
-	compositeBackground1.SetInputFb("framebuffer.input", backgroundFrameBuffer);
-
-	// - step 31
-	// background * bgTransparency
-	RprComposite bgTransparency(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	bgTransparency.SetInput4f("constant.input", 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp, 1.0f*bgWeight - bgTransp);
-
-	RprComposite step31(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step31.SetInputC("arithmetic.color0", compositeBackground1);
-	step31.SetInputC("arithmetic.color1", bgTransparency);
-	step31.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// - step 32
-	RprComposite backgroundColor(context.Handle(), RPR_COMPOSITE_CONSTANT);
-	backgroundColor.SetInput4f("constant.input", bgColor[0], bgColor[1], bgColor[2], 1.0f);
-
-	RprComposite step32(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step32.SetInputC("arithmetic.color0", backgroundColor);
-	step32.SetInputC("arithmetic.color1", step31);
-	step32.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// background * step 2
-	RprComposite step3(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step3.SetInputC("arithmetic.color0", step32);
-	step3.SetInputC("arithmetic.color1", step23);
-	step3.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_MUL);
-
-	// step 4
-	// step 3 + step 1
-	RprComposite step4(context.Handle(), RPR_COMPOSITE_ARITHMETIC);
-	step4.SetInputC("arithmetic.color0", step3);
-	step4.SetInputC("arithmetic.color1", step12);
-	step4.SetInputOp("arithmetic.op", RPR_MATERIAL_NODE_OP_ADD);
-
-	rpr_framebuffer_format fmtOut = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
-	frw::FrameBuffer frameBufferOut(context, width, height, fmtOut);
-	checkStatus(frstatus);
-	frstatus = rprCompositeCompute(step4, frameBufferOut.Handle());
-	checkStatus(frstatus);
-
-#ifdef SHADOWCATCHERDEBUG
-	frstatus = rprFrameBufferSaveToFile(frameBufferOut, "C:/temp/step4.png");
-#endif
-
-	// Copy the frame buffer into temporary memory, if
-	// required, or directly into the supplied pixel buffer.
-	if (useTempData)
-		m_tempData.resize(pixelCount);
-	RV_PIXEL* data = useTempData ? m_tempData.get() : pixels;
-	frstatus = rprFrameBufferGetInfo(frameBufferOut.Handle(), RPR_FRAMEBUFFER_DATA, dataSize, &data[0], nullptr);
-	checkStatus(frstatus);
-
-	if (useTempData)
-	{
-		copyPixels(pixels, data, width, height, region, flip);
-	}
+	// write result to output
+	frw::FrameBuffer frameBufferOut = GetOutFrameBuffer(params, context);
+	res.Compute(frameBufferOut);
+	doOutputFromComposites(params, GetDataSize(frameBufferColor), frameBufferOut);
 }
 
 RenderType FireRenderContext::GetRenderType() const
@@ -3149,7 +3028,7 @@ bool FireRenderContext::ShouldResizeTexture(unsigned int& max_width, unsigned in
 	return false;
 }
 
-frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMesh* pMesh, bool forceUpdate)
+frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMeshCommon* pMesh, bool forceUpdate)
 { 
 	scope.SetContextInfo(this);
 
@@ -3170,7 +3049,7 @@ void FireRenderContext::enableAOV(int aov, bool flag)
 	}
 }
 
-bool FireRenderContext::isAOVEnabled(int aov) 
+bool FireRenderContext::isAOVEnabled(int aov) const 
 {
 	return aovEnabled[aov];
 }

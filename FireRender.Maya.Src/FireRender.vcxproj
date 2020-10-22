@@ -138,6 +138,7 @@
     <None Include="Shelfs\shelf_Radeon_ProRender.mel" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\RadeonProRenderSharedComponents\src\Alembic\AlembicWrapper.cpp" />
     <ClCompile Include="..\RadeonProRenderSharedComponents\src\Athena\athenaWrap.cpp" />
     <ClCompile Include="..\RadeonProRenderSharedComponents\src\SunPosition\SPA.cpp" />
     <ClCompile Include="..\RadeonProRenderSharedComponents\src\IESLight\IESLightRepresentationCalc.cpp" />
@@ -150,6 +151,7 @@
     <ClCompile Include="..\RadeonProRenderSDK\RadeonProRender\rprTools\RprTools.cpp" />
     <ClCompile Include="athenaCmd.cpp" />
     <ClCompile Include="athenaSystemInfo_Win.cpp" />
+    <ClCompile Include="CompositeWrapper.cpp" />
     <ClCompile Include="Context\ContextCreator.cpp" />
     <ClCompile Include="Context\FireRenderContext.cpp" />
     <ClCompile Include="Context\HybridContext.cpp" />
@@ -181,6 +183,7 @@
     <ClCompile Include="FireRenderFresnel.cpp" />
     <ClCompile Include="FireRenderFresnelSchlick.cpp" />
     <ClCompile Include="FireRenderGlobals.cpp" />
+    <ClCompile Include="FireRenderGPUCache.cpp" />
     <ClCompile Include="FireRenderGradient.cpp" />
     <ClCompile Include="FireRenderHairs.cpp" />
     <ClCompile Include="FireRenderIBL.cpp" />
@@ -225,6 +228,7 @@
     <ClCompile Include="GlobalRenderUtilsDataHolder.cpp" />
     <ClCompile Include="GLTFTranslator.cpp" />
     <ClCompile Include="Hosek\ArHosekSkyModel.cpp" />
+    <ClCompile Include="Lights\FireRenderLightCommon.cpp" />
     <ClCompile Include="Lights\IES\FireRenderIESLight.cpp" />
     <ClCompile Include="Lights\IES\IESLightLocatorMesh.cpp" />
     <ClCompile Include="Lights\PhysicalLight\FireRenderPhysicalLightLocator.cpp" />
@@ -249,15 +253,19 @@
     <ClCompile Include="MayaStandardNodesSupport\MultiplyDivideConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\NodeCheckerConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\NodeConverterUtil.cpp" />
+    <ClCompile Include="MayaStandardNodesSupport\NodeProcessingUtils.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\NoiseConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\Place2dTextureConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\PlusMinusAverageConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\ProjectionNodeConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\RampNodeConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\RemapHSVConverter.cpp" />
+    <ClCompile Include="MayaStandardNodesSupport\RemapValueConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\ReverseMapConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\RGBToHSVConverter.cpp" />
+    <ClCompile Include="MayaStandardNodesSupport\SetRangeConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\VectorProductConverter.cpp" />
+    <ClCompile Include="NorthStarRenderingHelper.cpp" />
     <ClCompile Include="OptionVarHelpers.cpp" />
     <ClCompile Include="pluginMain.cpp" />
     <ClCompile Include="FireRenderMaterial.cpp" />
@@ -286,6 +294,7 @@
     <ClCompile Include="VRay.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\Alembic\AlembicWrapper.hpp" />
     <ClInclude Include="..\RadeonProRenderSharedComponents\src\Athena\athenaWrap.h" />
     <ClInclude Include="..\RadeonProRenderSharedComponents\src\SunPosition\SPA.h" />
     <ClInclude Include="..\RadeonProRenderSharedComponents\src\IESLight\IESLightRepresentationCalc.h" />
@@ -299,6 +308,7 @@
     <ClInclude Include="AutoLock.h" />
     <ClInclude Include="base_mesh.h" />
     <ClInclude Include="common.h" />
+    <ClInclude Include="CompositeWrapper.h" />
     <ClInclude Include="Context\ContextCreator.h" />
     <ClInclude Include="Context\FireRenderContext.h" />
     <ClInclude Include="Context\HybridContext.h" />
@@ -328,6 +338,7 @@
     <ClInclude Include="FireRenderError.h" />
     <ClInclude Include="FireRenderFresnelSchlick.h" />
     <ClInclude Include="FireRenderGlobals.h" />
+    <ClInclude Include="FireRenderGPUCache.h" />
     <ClInclude Include="FireRenderGradient.h" />
     <ClInclude Include="FireRenderIBL.h" />
     <ClInclude Include="FireRenderImageComparing.h" />
@@ -378,6 +389,7 @@
     <ClInclude Include="Hosek\ArHosekSkyModelData_CIEXYZ.h" />
     <ClInclude Include="Hosek\ArHosekSkyModelData_RGB.h" />
     <ClInclude Include="Hosek\ArHosekSkyModelData_Spectral.h" />
+    <ClInclude Include="Lights\FireRenderLightCommon.h" />
     <ClInclude Include="Lights\IES\FireRenderIESLight.h" />
     <ClInclude Include="Lights\IES\IESLightLocatorMesh.h" />
     <ClInclude Include="Lights\PhysicalLight\FireRenderPhysicalLightLocator.h" />
@@ -410,9 +422,12 @@
     <ClInclude Include="MayaStandardNodesSupport\ProjectionNodeConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\RampNodeConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\RemapHSVConverter.h" />
+    <ClInclude Include="MayaStandardNodesSupport\RemapValueConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\ReverseMapConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\RGBToHSVConverter.h" />
+    <ClInclude Include="MayaStandardNodesSupport\SetRangeConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\VectorProductConverter.h" />
+    <ClInclude Include="NorthStarRenderingHelper.h" />
     <ClInclude Include="OptionVarHelpers.h" />
     <ClInclude Include="RenderCacheWarningDialog.h" />
     <ClInclude Include="RenderProgressBars.h" />
@@ -719,10 +734,6 @@
       <AdditionalDependencies>OpenMayaFX.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release2019|x64'">
     <ClCompile>
@@ -753,10 +764,6 @@
       <AdditionalDependencies>OpenMayaFX.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release2020|x64'">
     <ClCompile>
@@ -787,10 +794,6 @@
       <AdditionalDependencies>OpenMayaFX.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
-    <PreBuildEvent>
-      <Command>
-      </Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -900,13 +900,15 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 		MAIN_THREAD_ONLY; // MTextureManager will not work in other threads
 		DebugPrint("Loading Image: %s in colorSpace: %s", texturePath.asUTF8(), colorSpace.asUTF8());
 
+		std::string processedTexturePath = ProcessEnvVarsInFilePath<std::string, char>(texturePath.asChar());
+
 		frw::Image image;
 
-		image = frw::Image(m->context, texturePath.asUTF8());
+		image = frw::Image(m->context, processedTexturePath.c_str());
 
 		if (!image)
 		{
-			image = LoadImageUsingMTexture(texturePath, colorSpace, ownerNodeName);
+			image = LoadImageUsingMTexture(MString(processedTexturePath.c_str()), colorSpace, ownerNodeName);
 		}
 
 		if (image)
@@ -1384,13 +1386,18 @@ bool FireMaya::Scope::FindFileNodeRecursive(MObject objectNode, int& width, int&
 	MFnDependencyNode node(objectNode);
 	if (node.getConnections(connections) == MStatus::kSuccess)
 	{
-		for (auto c : connections)
+		for (MPlug& plug : connections)
 		{
-			auto name = c.name(&status);
+			MString name = plug.name(&status);
 
-			if (c.isDestination())
+			if (plug.attribute().hasFn(MFn::kMessageAttribute))
 			{
-				MObject node = GetConnectedNode(c);
+				continue;
+			}
+
+			if (plug.isDestination())
+			{
+				MObject node = GetConnectedNode(plug);
 
 				if (FindFileNodeRecursive(node, width, height))
 				{
@@ -1937,7 +1944,7 @@ FireMaya::Scope::~Scope()
 }
 
 
-frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMesh* pMesh, bool forceUpdate)
+frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMeshCommon* pMesh, bool forceUpdate)
 {
 	if (node.isNull())
 	{

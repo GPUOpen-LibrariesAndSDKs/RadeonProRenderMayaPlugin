@@ -28,9 +28,11 @@ limitations under the License.
 #include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFileObject.h>
+
 #include <cassert>
 #include <vector>
 #include <time.h>
+#include <iostream>
 
 #include "attributeNames.h"
 #include "OptionVarHelpers.h"
@@ -106,7 +108,8 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	tileSizeX(0),
 	tileSizeY(0),
 	cameraType(0),
-	useMPS(false)
+	useMPS(false),
+	useDetailedContextWorkLog(false)
 {
 
 }
@@ -403,13 +406,18 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			useMPS = plug.asBool();
 
+		plug = frGlobalsNode.findPlug("detailedLog");
+		if (!plug.isNull())
+			useDetailedContextWorkLog = plug.asBool();
+		
+
 		aovs.readFromGlobals(frGlobalsNode);
 
 		readDenoiserParameters(frGlobalsNode);
 	});
 }
 
-int FireRenderGlobalsData::getThumbnailIterCount()
+int FireRenderGlobalsData::getThumbnailIterCount(bool* pSwatchesEnabled)
 {
 	MObject fireRenderGlobals;
 	GetRadeonProRenderGlobals(fireRenderGlobals);
@@ -417,12 +425,21 @@ int FireRenderGlobalsData::getThumbnailIterCount()
 	// Get Fire render globals attributes
 	MFnDependencyNode frGlobalsNode(fireRenderGlobals);
 
+	if (pSwatchesEnabled != nullptr)
+	{
+		MPlug plug = frGlobalsNode.findPlug("enableSwatches");
+		if (!plug.isNull())
+		{
+			*pSwatchesEnabled = plug.asBool();
+		}
+	}
+
 	MPlug plug = frGlobalsNode.findPlug("thumbnailIterationCount");
 	if (!plug.isNull())
 	{
 		return plug.asInt();
 	}
-
+	
 	return 0;
 }
 
@@ -1395,6 +1412,27 @@ MDagPathArray GetSceneCameras(bool renderableOnly /*= false*/)
 	return cameras;
 }
 
+void GetResolutionFromCommonTab(unsigned int& width, unsigned int& height)
+{
+	MObject defaultResolutionObject;
+	MSelectionList slist;
+	slist.add("defaultResolution");
+	slist.getDependNode(0, defaultResolutionObject);
+
+	MFnDependencyNode globalsNode(defaultResolutionObject);
+	MPlug plug = globalsNode.findPlug("width");
+	if (!plug.isNull())
+	{
+		width = plug.asInt();
+	}
+
+	plug = globalsNode.findPlug("height");
+	if (!plug.isNull())
+	{
+		height = plug.asInt();
+	}
+}
+
 MStatus GetDefaultRenderGlobals(MObject& outGlobalsNode)
 {
 	MSelectionList slist;
@@ -2109,7 +2147,6 @@ RenderQuality GetRenderQualityForRenderType(RenderType renderType)
 
 TahoePluginVersion GetTahoeVersionToUse()
 {
-#ifdef WIN32
 	MPlug plug = GetRadeonProRenderGlobalsPlug("tahoeVersion");
 
 	if (!plug.isNull())
@@ -2121,14 +2158,113 @@ TahoePluginVersion GetTahoeVersionToUse()
 		// plug should not be null
 		assert(false);
 	}
-#endif
 
 	return TahoePluginVersion::RPR1;
 }
 
 bool CheckIsInteractivePossible()
 {
-	return (GetTahoeVersionToUse() != TahoePluginVersion::RPR2 ||
-		GetRenderQualityForRenderType(RenderType::IPR) != RenderQuality::RenderQualityFull);
+	// return treu in anticipation that IPR For RPR2 would be fixed for the next Release.
+	return true;
 }
 
+// Backdoor to enable different AOVs from Render Settings in IPR and Viewport
+void EnableAOVsFromRSIfEnvVarSet(FireRenderContext& context, FireRenderAOVs& aovs)
+{
+	char* result = std::getenv("ENABLE_ADD_AOVS_FOR_INTERACTIVE");
+
+	if (result == nullptr || std::string(result) != "1")
+	{
+		return;
+	}
+
+	aovs.applyToContext(context);
+}
+
+template<>
+char** GetEnviron(void)
+{
+	return environ;
+}
+
+template<>
+wchar_t** GetEnviron(void)
+{
+#ifndef __APPLE__
+	return _wenviron;
+#else
+	return nullptr;
+#endif
+}
+
+bool IsUnicodeSystem(void)
+{
+#ifdef __APPLE__
+	return false;
+#else
+	return GetEnviron<wchar_t*>() != nullptr;
+#endif
+}
+
+template <>
+std::pair<std::string, std::string> GetPathDelimiter(void)
+{ 
+	return std::make_pair(std::string("\\\\"), std::string("\\")); 
+}
+
+template <>
+std::pair<std::wstring, std::wstring> GetPathDelimiter(void)
+{ 
+	return std::make_pair(std::wstring(L"\\\\"), std::wstring(L"\\"));
+}
+
+template <>
+size_t FindDelimiter(std::string& tmp)
+{
+	return tmp.find("=");
+}
+
+template <>
+size_t FindDelimiter(std::wstring& tmp)
+{
+	return tmp.find(L"=");
+}
+
+template <>
+std::tuple<std::string, std::string> ProcessEVarSchema(const std::string& eVar)
+{
+	return std::make_tuple(std::string("%" + eVar + "%"), std::string("${" + eVar + "}"));
+}
+
+template <>
+std::tuple<std::wstring, std::wstring> ProcessEVarSchema(const std::wstring& eVar)
+{
+	return std::make_tuple(std::wstring(L"%" + eVar + L"%"), std::wstring(L"${" + eVar + L"}"));
+}
+
+// m_createMayaSoftwareCommonGlobalsTab.kExt3 = name.#.ext <= and corresponding pattern on non-English Mayas
+void GetUINameFrameExtPattern(std::wstring& nameOut, std::wstring& extOut)
+{
+	MString command = R"(
+		proc string _mayaVarToPlugin() 
+		{
+			return (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt3"));
+		}
+		_mayaVarToPlugin();
+	)";
+	MString result;
+	MStatus res = MGlobal::executeCommand(command, result);
+	CHECK_MSTATUS(res);
+
+	nameOut = result.asWChar();
+	size_t firstDelimiter = nameOut.find(L".");
+	size_t lastDelimiter = nameOut.rfind(L".");
+
+	extOut = nameOut.substr(lastDelimiter + 1, nameOut.length() - 1);
+	nameOut = nameOut.substr(0, firstDelimiter);
+}
+
+TimePoint GetCurrentChronoTime()
+{
+	return std::chrono::high_resolution_clock::now();
+}

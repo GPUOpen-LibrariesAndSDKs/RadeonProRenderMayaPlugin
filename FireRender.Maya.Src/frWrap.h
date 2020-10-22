@@ -38,6 +38,7 @@ limitations under the License.
 #include <maya/MDistance.h>
 #include <maya/MColor.h>
 #include "FireRenderMath.h"
+#include "ProRenderGLTF.h"
 
 //#define FRW_LOGGING 1
 
@@ -1009,10 +1010,22 @@ namespace frw
 			checkStatus(res);
 		}
 
+		void SetLightGroupId(rpr_uint id)
+		{
+			rpr_status res = rprShapeSetLightGroupID(Handle(), id);
+			checkStatus(res);
+		}
+
 		Shape CreateInstance(Context context) const;
 		void SetTransform(const float* tm, bool transpose = false)
 		{
 			auto res = rprShapeSetTransform(Handle(), transpose, tm);
+			checkStatus(res);
+		}
+
+		void SetObjectId(rpr_uint id)
+		{
+			auto res = rprShapeSetObjectID(Handle(), id);
 			checkStatus(res);
 		}
 
@@ -1180,36 +1193,62 @@ namespace frw
 			auto res = rprLightSetTransform(Handle(), transpose, tm);
 			checkStatus(res);
 		}
-#ifdef FRW_USE_MAX_TYPES
-		void SetTransform(const Matrix3& tm)
-		{
-			float m44[16] = {};
-			float* p = m44;
-			for (int x = 0; x < 4; ++x)
-			{
-				for (int y = 0; y < 3; ++y)
-					*p++ = tm.GetRow(x)[y];
 
-				*p++ = (x == 3) ? 1.f : 0.f;
-			}
-			SetTransform(m44);
+		void SetLightGroupId(rpr_uint id)
+		{
+			rpr_status res = rprLightSetGroupId(Handle(), id);
+			checkStatus(res);
 		}
-#endif
+
+		void AddGLTFExtraIntAttribute(const std::string& attrName, int value)
+		{
+			rprGLTF_AddExtraLightParameter(Handle(), attrName.c_str(), value);
+		}
 	};
 
 	class Image : public Object
 	{
-		DECLARE_OBJECT_NO_DATA(Image, Object);
+		DECLARE_OBJECT(Image, Object);
+
+		class Data : public Object::Data
+		{
+			DECLARE_OBJECT_DATA
+		public:
+			virtual ~Data()
+			{
+				for (auto it = m_udimsMap.begin(); it != m_udimsMap.end(); ++it)
+				{
+					rprImageSetUDIM(Handle(), it->first, nullptr);
+				}
+
+				m_udimsMap.clear();
+			}
+			
+			std::map<rpr_uint, Image> m_udimsMap;
+		};
+
+
 	public:
 		explicit Image(rpr_image h, const Context& context) : Object(h, context, true, new Data()) {}
 
 		Image(Context context, float r, float g, float b);
 		Image(Context context, const rpr_image_format& format, const rpr_image_desc& image_desc, const void* data);
+
+		// create empty image (used for UDIM creation of master image
+		Image(Context context, const rpr_image_format& format);
 		Image(Context context, const char * filename);
 		void SetGamma(float gamma)
 		{
 			rpr_int res = rprImageSetGamma(Handle(), gamma);
 			checkStatus(res);
+		}
+
+		void SetUDIM(rpr_uint tileIndex, frw::Image image)
+		{
+			rpr_int res = rprImageSetUDIM(Handle(), tileIndex, image.Handle());
+			checkStatus(res);
+
+			data().m_udimsMap[tileIndex] = image;
 		}
 
 		bool HasAlphaChannel()
@@ -1233,6 +1272,24 @@ namespace frw
 		}
 	};
 
+	class SphereLight : public Light
+	{
+		DECLARE_OBJECT_NO_DATA(SphereLight, Light);
+	public:
+		SphereLight(rpr_light h, const Context &context) : Light(h, context, new Data()) {}
+		void SetRadiantPower(float r, float g, float b)
+		{
+			auto res = rprSphereLightSetRadiantPower3f(Handle(), r, g, b);
+			checkStatus(res);
+		}
+
+		void SetRadius(float radius)
+		{
+			auto res = rprSphereLightSetRadius(Handle(), radius);
+			checkStatus(res);
+		}
+	};
+
 	class SpotLight : public Light
 	{
 		DECLARE_OBJECT_NO_DATA(SpotLight, Light);
@@ -1243,9 +1300,34 @@ namespace frw
 			auto res = rprSpotLightSetRadiantPower3f(Handle(), r, g, b);
 			checkStatus(res);
 		}
+
 		void SetConeShape(float innerAngle, float outerAngle)
 		{
 			auto res = rprSpotLightSetConeShape(Handle(), innerAngle, outerAngle);
+			checkStatus(res);
+		}
+	};
+
+	class DiskLight : public Light
+	{
+		DECLARE_OBJECT_NO_DATA(DiskLight, Light);
+	public:
+		DiskLight(rpr_light h, const Context &context) : Light(h, context, new Data()) {}
+		void SetRadiantPower(float r, float g, float b)
+		{
+			auto res = rprDiskLightSetRadiantPower3f(Handle(), r, g, b);
+			checkStatus(res);
+		}
+
+		void SetRadius(float radius)
+		{
+			auto res = rprDiskLightSetRadius(Handle(), radius);
+			checkStatus(res);
+		}
+
+		void SetAngle(float angle)
+		{
+			auto res = rprDiskLightSetAngle(Handle(), angle);
 			checkStatus(res);
 		}
 	};
@@ -1813,7 +1895,7 @@ namespace frw
 			rpr_int numberOfTexCoordLayers, const rpr_float** texcoords, const size_t* num_texcoords, const rpr_int* texcoord_stride,
 			const rpr_int* vertex_indices, rpr_int vidx_stride,
 			const rpr_int* normal_indices, rpr_int nidx_stride, const rpr_int** texcoord_indices,
-			const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces) const;
+			const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces, std::string optionalMeshName = "") const;
 
 		PointLight CreatePointLight()
 		{
@@ -1825,6 +1907,16 @@ namespace frw
 			return PointLight(h, *this);
 		}
 
+		SphereLight CreateSphereLight()
+		{
+			FRW_PRINT_DEBUG("CreateSphereLight()");
+			rpr_light h;
+			auto status = rprContextCreateSphereLight(Handle(), &h);
+			checkStatusThrow(status, "Unable to create sphere light");
+
+			return SphereLight(h, *this);
+		}
+
 		SpotLight CreateSpotLight()
 		{
 			FRW_PRINT_DEBUG("CreateSpotLight()");
@@ -1833,6 +1925,16 @@ namespace frw
 			checkStatusThrow(status, "Unable to create spot light");
 
 			return SpotLight(h, *this);
+		}
+
+		DiskLight CreateDiskLight()
+		{
+			FRW_PRINT_DEBUG("CreateDiskLight()");
+			rpr_light h;
+			auto status = rprContextCreateDiskLight(Handle(), &h);
+			checkStatusThrow(status, "Unable to create disk light");
+
+			return DiskLight(h, *this);
 		}
 
 		EnvironmentLight CreateEnvironmentLight()
@@ -2109,6 +2211,23 @@ namespace frw
 
 		/// set the target buffer for render calls
 		void SetAOV(FrameBuffer frameBuffer, rpr_aov aov = RPR_AOV_COLOR);
+
+		void SetUpdateCallback(void* callback, void* userData)
+		{
+			rpr_int status = RPR_SUCCESS;
+			status = rprContextSetParameterByKeyPtr(Handle(), RPR_CONTEXT_RENDER_UPDATE_CALLBACK_FUNC, callback);
+			assert(status == RPR_SUCCESS);
+
+			status = rprContextSetParameterByKeyPtr(Handle(), RPR_CONTEXT_RENDER_UPDATE_CALLBACK_DATA, userData);
+			assert(status == RPR_SUCCESS);
+		}
+
+		void AbortRender()
+		{
+			rpr_int status = RPR_SUCCESS;
+			status = rprContextAbortRender(Handle());
+			assert(status == RPR_SUCCESS);
+		}
 
 		void Render()
 		{
@@ -3798,7 +3917,9 @@ namespace frw
 		rpr_image h = nullptr;
 		auto res = rprContextCreateImage(context.Handle(), format, &image_desc, data, &h);
 		if (checkStatus(res, "Unable to create image"))
+		{
 			m->Attach(h);
+		}
 	}
 
 	inline Image::Image(Context context, const rpr_image_format& format, const rpr_image_desc& image_desc, const void* data)
@@ -3808,8 +3929,23 @@ namespace frw
 		rpr_image h = nullptr;
 		auto res = rprContextCreateImage(context.Handle(), format, &image_desc, data, &h);
 		if (checkStatus(res, "Unable to create image"))
+		{
 			m->Attach(h);
+		}
 	}
+
+	inline Image::Image(Context context, const rpr_image_format& format)
+		: Object(nullptr, context, true, new Data())
+	{
+		FRW_PRINT_DEBUG("CreateImage()");
+		rpr_image h = nullptr;
+		auto res = rprContextCreateImage(context.Handle(), format, nullptr, nullptr, &h);
+		if (checkStatus(res, "Unable to create image"))
+		{
+			m->Attach(h);
+		}
+	}
+
 
 	inline Image::Image(Context context, const char* filename)
 		: Object(nullptr, context, true, new Data())
@@ -3934,7 +4070,7 @@ namespace frw
 		rpr_int numberOfTexCoordLayers, const rpr_float** texcoords, const size_t* num_texcoords, const rpr_int* texcoord_stride,
 		const rpr_int* vertex_indices, rpr_int vidx_stride,
 		const rpr_int* normal_indices, rpr_int nidx_stride, const rpr_int** texcoord_indices,
-		const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces) const
+		const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces, std::string optionalMeshName) const
 	{
 		FRW_PRINT_DEBUG("CreateMesh() - %d faces\n", num_faces);
 		rpr_shape shape = nullptr;
@@ -3949,7 +4085,7 @@ namespace frw
 			tidx_stride, num_face_vertices, num_faces,
 			&shape);
 
-		checkStatusThrow(status, "Unable to create mesh");
+		checkStatusThrow(status, ("Unable to create mesh: " + optionalMeshName).c_str());
 
 		Shape shapeObj (shape, *this);
 		shapeObj.SetUVCoordinatesSetFlag(numberOfTexCoordLayers > 0);
