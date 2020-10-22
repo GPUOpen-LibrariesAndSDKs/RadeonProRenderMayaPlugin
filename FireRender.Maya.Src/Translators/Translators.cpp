@@ -275,6 +275,26 @@ namespace FireMaya
 		return true;
 	}
 
+	void GetMatrixForTheNextFrame(const MFnDependencyNode& nodeFn, float matrixFloats[4][4])
+	{
+		MTime nextTime = MAnimControl::currentTime();
+		MTime maxTime = MAnimControl::maxTime();
+
+		if (MAnimControl::currentTime() != maxTime)
+		{
+			nextTime++;
+		}
+
+		MDGContext dgcontext(nextTime);
+		MObject val;
+		MPlug matrixPlug = nodeFn.findPlug("worldMatrix");
+		matrixPlug = matrixPlug.elementByLogicalIndex(0);
+		matrixPlug.getValue(val, dgcontext);
+		MMatrix nextFrameMatrix = MFnMatrixData(val).matrix();
+
+		ScaleMatrixFromCmToMFloats(nextFrameMatrix, matrixFloats);
+	}
+
 	void CalculateMotionBlurParams(const MFnDependencyNode& nodeFn, const MMatrix& inMatrix, MVector& outLinearMotion, MVector& outAngularMotion, double& outRotationAngle)
 	{
 		// convert Maya mesh in cm to m
@@ -287,7 +307,7 @@ namespace FireMaya
 		MTime nextTime = MAnimControl::currentTime();
 		MTime maxTime = MAnimControl::maxTime();
 
-		if ((MAnimControl::currentTime() != maxTime))
+		if (MAnimControl::currentTime() != maxTime)
 		{
 			nextTime++;
 			MDGContext dgcontext(nextTime);

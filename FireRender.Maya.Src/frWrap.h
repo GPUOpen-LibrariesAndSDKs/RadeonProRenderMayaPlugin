@@ -1023,6 +1023,15 @@ namespace frw
 			checkStatus(res);
 		}
 
+		void SetMotionTransform(const float* tm, bool transpose = false)
+		{
+			rpr_status res = rprShapeSetMotionTransform(Handle(), false, tm, 1); // matrix at time=1
+			checkStatus(res);
+
+			res = rprShapeSetMotionTransformCount(Handle(), 1);
+			checkStatus(res);
+		}
+
 		void SetObjectId(rpr_uint id)
 		{
 			auto res = rprShapeSetObjectID(Handle(), id);
