@@ -156,6 +156,83 @@ void FireRenderProduction::setCamera(MDagPath& camera)
 	MRenderView::setCurrentCamera(camera);
 }
 
+void getTimeDigits(size_t timeInMs, unsigned int& minutes, unsigned int& seconds, unsigned int& mmseconds)
+{
+	unsigned int secondsTotal = (unsigned int)(timeInMs / 1000);
+	minutes = secondsTotal / 60;
+	seconds = secondsTotal % 60;
+	mmseconds = timeInMs % 1000;
+}
+
+std::string getTimeSpentString(size_t timeInMs)
+{
+	unsigned int minutes = 0;
+	unsigned int seconds = 0;
+	unsigned int mmseconds = 0;
+
+	getTimeDigits(timeInMs, minutes, seconds, mmseconds);
+
+	std::string str = string_format("%dm %ds %dms", minutes, seconds, mmseconds);
+	
+	return str;
+}
+
+std::string getFormattedTime(size_t timeInMs)
+{
+	unsigned int minutes = 0;
+	unsigned int seconds = 0;
+	unsigned int mmseconds = 0;
+
+	getTimeDigits(timeInMs, minutes, seconds, mmseconds);
+
+	return string_format("%02d:%02d.%03d", minutes, seconds, mmseconds);
+}
+
+void FireRenderProduction::SetupWorkProgressCallback()
+{
+	m_contextPtr->SetWorkProgressCallback([this](const ContextWorkProgressData& progressData)
+		{
+			if (!m_globals.useDetailedContextWorkLog &&
+				progressData.progressType != ProgressType::RenderComplete &&
+				progressData.progressType != ProgressType::SyncComplete)
+			{
+				return;
+			}
+
+			std::string strTime = getFormattedTime(progressData.currentTimeInMiliseconds);
+
+			std::string strOutput;
+
+			switch (progressData.progressType)
+			{
+			case ProgressType::ObjectPreSync:
+			{
+				strOutput = string_format("Syncing object: %d/%d", progressData.currentIndex, progressData.totalCount);
+				break;
+			}
+			case ProgressType::ObjectSyncComplete:
+				m_progressBars->update(progressData.GetPercentProgress());
+				break;
+			case ProgressType::SyncComplete:
+				strOutput = string_format("RPR scene synchronization time: %s", getTimeSpentString(progressData.elapsed).c_str());
+				break;
+			case ProgressType::RenderPassStarted:
+				strOutput = string_format("Render Pass: %d/%d", progressData.currentIndex, progressData.totalCount);
+				break;
+			case ProgressType::RenderComplete:
+				strOutput = string_format("RPR render time: %s", getTimeSpentString(progressData.elapsed).c_str());
+				break;
+			}
+
+			if (!strOutput.empty())
+			{
+				strOutput = strTime + ": " + strOutput;
+
+				MGlobal::displayInfo(MString(strOutput.c_str()));
+			}
+		});
+}
+
 // -----------------------------------------------------------------------------
 bool FireRenderProduction::start()
 {
@@ -174,6 +251,9 @@ bool FireRenderProduction::start()
 
 	// Read RPR globals.
 	m_globals.readFromCurrentScene();
+
+	// Disable tile rendering for RPR2
+
 	MString renderStamp;
 	if (m_globals.useRenderStamp)
 		renderStamp = m_globals.renderStampText;
@@ -184,6 +264,12 @@ bool FireRenderProduction::start()
 	int contextHeight = m_height;
 
 	RenderRegion region = m_region;
+
+	// We don't use tiling with RPR2
+	if (GetTahoeVersionToUse() == TahoePluginVersion::RPR2)
+	{
+		m_globals.tileRenderingEnabled = false;
+	}
 
 	if (m_globals.tileRenderingEnabled)
 	{
@@ -225,6 +311,8 @@ bool FireRenderProduction::start()
 		{
 			return false;
 		}
+
+		m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderProduction::OnBufferAvailableCallback, this));
 
 		m_aovs->setFromContext(*m_contextPtr);
 
@@ -277,7 +365,10 @@ bool FireRenderProduction::start()
 
 		m_isRunning = true;
 
-		refreshContext( [this](int progress) { m_progressBars->update(progress); });
+		SetupWorkProgressCallback();
+
+		refreshContext();
+
 		m_needsContextRefresh = false;
 
 		m_progressBars->SetRenderingText(true);
@@ -309,9 +400,26 @@ bool FireRenderProduction::start()
 
 			return m_isRunning;
 		});
+
+		m_NorthStarRenderingHelper.Start();
 	}
 
 	return ret;
+}
+
+void FireRenderProduction::OnBufferAvailableCallback()
+{
+	AutoMutexLock pixelsLock(m_pixelsLock);
+	m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
+
+	FireRenderThread::RunProcOnMainThread([this]()
+		{
+			// Update the Maya render view.
+			m_renderViewAOV->sendToRenderView();
+
+			if (rcWarningDialog.shown)
+				rcWarningDialog.close();
+		});
 }
 
 // -----------------------------------------------------------------------------
@@ -321,11 +429,11 @@ bool FireRenderProduction::pause(bool value)
 
 	if (m_isPaused)
 	{
-		m_contextPtr->state = FireRenderContext::StatePaused;
+		m_contextPtr->SetState(FireRenderContext::StatePaused);
 	}
 	else
 	{
-		m_contextPtr->state = FireRenderContext::StateRendering;
+		m_contextPtr->SetState(FireRenderContext::StateRendering);
 
 		m_needsContextRefresh = true;
 	}
@@ -338,8 +446,12 @@ bool FireRenderProduction::stop()
 {
 	if (m_isRunning)
 	{
+		m_NorthStarRenderingHelper.SetStopFlag();
+
 		if (m_contextPtr)
-			m_contextPtr->state = FireRenderContext::StateExiting;
+		{
+			m_contextPtr->SetState(FireRenderContext::StateExiting);
+		}
 
 		stopMayaRender();
 
@@ -357,6 +469,8 @@ bool FireRenderProduction::stop()
 
 			RenderStampUtils::ClearCache();
 		});
+
+		m_NorthStarRenderingHelper.StopAndJoin();
 
 		if (m_contextPtr)
 		{
@@ -599,7 +713,7 @@ void FireRenderProduction::UploadAthenaData()
 		,{RPR_AOV_OPACITY, "RPR_AOV_OPACITY" }
 		,{RPR_AOV_WORLD_COORDINATE, "RPR_AOV_WORLD_COORDINATE" }
 		,{RPR_AOV_UV, "RPR_AOV_UV" }
-		,{RPR_AOV_MATERIAL_IDX, "RPR_AOV_MATERIAL_IDX" }
+		,{RPR_AOV_MATERIAL_ID, "RPR_AOV_MATERIAL_IDX" }
 		,{RPR_AOV_GEOMETRIC_NORMAL, "RPR_AOV_GEOMETRIC_NORMAL" }
 		,{RPR_AOV_SHADING_NORMAL, "RPR_AOV_SHADING_NORMAL" }
 		,{RPR_AOV_DEPTH, "RPR_AOV_DEPTH" }
@@ -727,7 +841,7 @@ bool FireRenderProduction::RunOnViewportThread()
 {
 	RPR_THREAD_ONLY;
 
-	switch (m_contextPtr->state)
+	switch (m_contextPtr->GetState())
 	{
 		// The context is exiting.
 		case FireRenderContext::StateExiting:
@@ -759,7 +873,7 @@ bool FireRenderProduction::RunOnViewportThread()
 			try
 			{	// Render.
 				AutoMutexLock contextLock(m_contextLock);
-				if (m_contextPtr->state != FireRenderContext::StateRendering) 
+				if (m_contextPtr->GetState() != FireRenderContext::StateRendering) 
 					return false;
 
 				RenderFullFrame();
@@ -919,19 +1033,21 @@ void FireRenderProduction::RenderFullFrame()
 
 	// Read pixel data for the AOV displayed in the render
 	// view. Flip the image so it's the right way up in the view.
-	m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
-
-	FireRenderThread::RunProcOnMainThread([this]()
 	{
-		// Update the Maya render view.
-		m_renderViewAOV->sendToRenderView();
+		AutoMutexLock pixelsLock(m_pixelsLock);
+		m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
 
-		if (rcWarningDialog.shown)
-			rcWarningDialog.close();
-	});
+		FireRenderThread::RunProcOnMainThread([this]()
+		{
+			// Update the Maya render view.
+			m_renderViewAOV->sendToRenderView();
 
-	// _TODO Investigate this, looks like this call is performance waste. Why we need to read all AOVs on every render call ?
-	m_aovs->readFrameBuffers(*m_contextPtr, false);
+			if (rcWarningDialog.shown)
+				rcWarningDialog.close();
+		});
+
+		m_aovs->readFrameBuffers(*m_contextPtr, false);
+	}
 
 	if (GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())
 	{
@@ -1022,25 +1138,6 @@ void FireRenderProduction::stopMayaRender()
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderProduction::readFrameBuffer()
-{
-	RPR_THREAD_ONLY;
-
-	// setup params
-	FireRenderContext::ReadFrameBufferRequestParams params(m_region);
-	params.pixels = m_pixels.data();
-	params.aov = RPR_AOV_COLOR;
-	params.width = m_contextPtr->width();
-	params.height = m_contextPtr->height();
-	params.flip = true;
-	params.mergeOpacity = false;
-	params.mergeShadowCatcher = false;
-	params.shadowColor = m_contextPtr->m_shadowColor;
-	params.shadowTransp = m_contextPtr->m_shadowTransparency;
-
-	// process frame buffer
-	m_contextPtr->readFrameBuffer(params);
-}
 
 bool FireRenderProduction::mainThreadPump()
 {
@@ -1059,6 +1156,7 @@ bool FireRenderProduction::mainThreadPump()
 			if (m_cancelled)
 			{
 				DebugPrint("Rendering canceled!");
+				m_contextPtr->AbortRender();
 
 				m_progressBars.reset();
 			}
@@ -1071,12 +1169,8 @@ bool FireRenderProduction::mainThreadPump()
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderProduction::refreshContext(FireRenderContext::BuildSceneProgressCallback progressCallback)
+void FireRenderProduction::refreshContext()
 {
-#ifdef OPTIMIZATION_CLOCK
-	auto start = std::chrono::steady_clock::now();
-#endif
-
 	if (!m_contextPtr->isDirty())
 		return;
 
@@ -1086,8 +1180,7 @@ void FireRenderProduction::refreshContext(FireRenderContext::BuildSceneProgressC
 			[this]() -> bool
 			{
 				return m_cancelled;
-			}, 
-			progressCallback);
+			});
 	}
 	catch (...)
 	{
@@ -1095,11 +1188,4 @@ void FireRenderProduction::refreshContext(FireRenderContext::BuildSceneProgressC
 		m_isRunning = false;
 		m_error.set(current_exception());
 	}
-
-#ifdef OPTIMIZATION_CLOCK
-	auto end = std::chrono::steady_clock::now();
-	auto elapsed = duration_cast<milliseconds>(end - start);
-	int ms = elapsed.count();
-	LogPrint("time spent in refreshContext() = %d ms", ms);
-#endif
 }

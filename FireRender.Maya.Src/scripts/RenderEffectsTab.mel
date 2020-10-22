@@ -69,18 +69,28 @@ global proc createFireRenderMotionBlurFrame(string $parent)
 
 	setParent $parent;
 
-	columnLayout -adjustableColumn true;
+	columnLayout -adjustableColumn true -cat "left" 10;
 
-	attrControlGrp
-		 -label "Enable"
-		 -attribute "RadeonProRenderGlobals.motionBlur"
-		 -changeCommand "onUpdateMotionBlur";
-	attrControlGrp
-		 -label "Camera Motion Blur"
-		 -attribute "RadeonProRenderGlobals.cameraMotionBlur" cameraMotionBlur;
 	attrControlGrp
 		 -label "Camera Exposure"
 		 -attribute "RadeonProRenderGlobals.motionBlurCameraExposure" cameraExposure;
+
+	frameLayout -label "Final Render" -cll false -cl 0 fireRenderFinalMotionBlurFrame;
+		attrControlGrp
+			 -label "Enable"
+			 -attribute "RadeonProRenderGlobals.motionBlur"
+			 -changeCommand "onUpdateMotionBlur";
+		attrControlGrp
+			 -label "Camera Motion Blur"
+			 -attribute "RadeonProRenderGlobals.cameraMotionBlur" cameraMotionBlur;
+	setParent ..;
+
+	frameLayout -label "Viewport Render" -cll false -cl 0 fireRenderViewportMotionBlurFrame;
+	attrControlGrp
+		-label "Enable"
+		-attribute "RadeonProRenderGlobals.motionBlurViewport";
+	setParent ..;
+
 
 	setParent ..;
 	setUITemplate -popTemplate;

@@ -13,6 +13,8 @@ limitations under the License.
 #include "FireRenderExportCmd.h"
 #include "Context/TahoeContext.h"
 #include "FireRenderUtils.h"
+#include "RenderStampUtils.h"
+
 #include <maya/MArgDatabase.h>
 #include <maya/MItDag.h>
 #include <maya/MDagPath.h>
@@ -37,6 +39,11 @@ limitations under the License.
 	#include <../inc/RprLoadStore.h>
 #endif
 #include <iomanip>
+
+#include <codecvt>
+#include <locale>
+
+#include "Utils/Utils.h"
 
 FireRenderExportCmd::FireRenderExportCmd()
 {
@@ -68,6 +75,195 @@ MSyntax FireRenderExportCmd::newSyntax()
 	return syntax;
 }
 
+bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std::wstring& fileName)
+{
+	// get directory path and name of generated files
+	std::wstring directory = filePath;
+	const size_t lastIdx = filePath.rfind('/');
+	if (std::string::npos != lastIdx)
+	{
+		directory = filePath.substr(0, lastIdx);
+	}
+	std::wstring tmpFileName(fileName);
+	tmpFileName.erase(0, directory.length() + 1);
+	directory += L"/config.json";
+
+#ifdef WIN32
+	// MSVS added an overload to accommodate using open with wide strings where xcode did not.
+	std::wofstream json(directory.c_str());
+#else
+	// thus different path for xcode is needed
+	std::string s_directory = SharedComponentsUtils::ws2s(directory);
+	std::wofstream json(s_directory);
+#endif
+
+	if (!json)
+		return false;
+
+	const std::locale utf8_locale
+		= std::locale(std::locale(), new std::codecvt_utf8<wchar_t>());
+	json.imbue(utf8_locale);
+
+	json << "{" << std::endl;
+
+	json << "\"output\" : " << "\"" << fileName.c_str() << ".png\",\n";
+
+	json << "\"output.json\" : \"output.json\",\n";
+
+	// write file data fields
+	json << "\"width\" : " << ctx.width() << ",\n";
+	json << "\"height\" : " << ctx.height() << ",\n";
+
+	bool isUnlimitedIterations = ctx.getCompletionCriteria().isUnlimitedIterations();
+	if (isUnlimitedIterations)
+	{
+		json << "\"iterations\" : " << 100 << ",\n";
+	}
+	else
+	{
+		json << "\"iterations\" : " << ctx.getCompletionCriteria().completionCriteriaMaxIterations << ",\n";
+	}
+
+	json << "\"gamma\" : " << 1 << ",\n";
+
+	// - aovs
+	static std::map<unsigned int, std::wstring> aov2name =
+	{
+		 {RPR_AOV_COLOR, L"color"}
+		,{RPR_AOV_OPACITY, L"opacity" }
+		,{RPR_AOV_WORLD_COORDINATE, L"world.coordinate" }
+		,{RPR_AOV_UV, L"uv" }
+		,{RPR_AOV_MATERIAL_ID, L"material.id" }
+		,{RPR_AOV_GEOMETRIC_NORMAL, L"normal.geom" }
+		,{RPR_AOV_SHADING_NORMAL, L"normal" }
+		,{RPR_AOV_DEPTH, L"depth" }
+		,{RPR_AOV_OBJECT_ID, L"object.id" }
+		,{RPR_AOV_OBJECT_GROUP_ID, L"group.id" }
+		,{RPR_AOV_SHADOW_CATCHER, L"shadow.catcher" }
+		,{RPR_AOV_BACKGROUND, L"background" }
+		,{RPR_AOV_EMISSION, L"emission" }
+		,{RPR_AOV_VELOCITY, L"velocity" }
+		,{RPR_AOV_DIRECT_ILLUMINATION, L"direct.illumination" }
+		,{RPR_AOV_INDIRECT_ILLUMINATION, L"indirect.illumination"}
+		,{RPR_AOV_AO, L"ao" }
+		,{RPR_AOV_DIRECT_DIFFUSE, L"direct.diffuse" }
+		,{RPR_AOV_DIRECT_REFLECT, L"direct.reflect" }
+		,{RPR_AOV_INDIRECT_DIFFUSE, L"indirect.diffuse" }
+		,{RPR_AOV_INDIRECT_REFLECT, L"indirect.reflect" }
+		,{RPR_AOV_REFRACT, L"refract" }
+		,{RPR_AOV_VOLUME, L"volume" }
+		,{RPR_AOV_LIGHT_GROUP0, L"light.group0" }
+		,{RPR_AOV_LIGHT_GROUP1, L"light.group1" }
+		,{RPR_AOV_LIGHT_GROUP2, L"light.group2" }
+		,{RPR_AOV_LIGHT_GROUP3, L"light.group3" }
+		,{RPR_AOV_DIFFUSE_ALBEDO, L"albedo.diffuse" }
+		,{RPR_AOV_VARIANCE, L"variance" }
+		,{RPR_AOV_VIEW_SHADING_NORMAL, L"normal.view" }
+		,{RPR_AOV_REFLECTION_CATCHER, L"reflection.catcher" }
+		,{RPR_AOV_MAX, L"RPR_AOV_MAX" }
+	};
+
+	FireRenderGlobalsData globals;
+	globals.readFromCurrentScene();
+	FireRenderAOVs& aovsGlobal = globals.aovs;
+	aovsGlobal.applyToContext(ctx);
+
+	std::vector<std::wstring> aovs;
+	for (auto aov = RPR_AOV_OPACITY; aov != RPR_AOV_MAX; aov++)
+	{
+		auto it = aov2name.find(aov);
+		if (it == aov2name.end())
+			continue;
+
+		if (!ctx.isAOVEnabled(aov))
+			continue;
+
+		aovs.push_back(it->second);
+	}
+
+	// aovs
+	auto aov = aovs.begin();
+	if (aov != aovs.end())
+	{
+		json << "\"aovs\" : {\n";
+		json << "\"" << *aov << "\":\"" << (*aov + L".png") << "\"";
+		++aov;
+
+		for (; aov != aovs.end(); ++aov)
+		{
+			json << ",\n" << "\"" << *aov << "\":\"" << (*aov + L".png") << "\"";
+		}
+		json << "\n}," << std::endl;
+	}
+
+	// - devices
+	std::vector<std::pair<std::wstring, int>> context;
+	MIntArray devicesUsing;
+	MGlobal::executeCommand("optionVar -q RPR_DevicesSelected", devicesUsing);
+	std::vector<HardwareResources::Device> allDevices = HardwareResources::GetAllDevices();
+	size_t numDevices = std::min<size_t>(devicesUsing.length(), allDevices.size());
+	for (size_t idx = 0; idx < numDevices; ++idx)
+	{
+		std::wstring device(L"gpu");
+		device += std::to_wstring(idx);
+		context.emplace_back();
+		context.back().first = device;
+		context.back().second = (devicesUsing[(unsigned int)idx] != 0);
+	}
+	context.emplace_back(L"debug", 0);
+
+	json << "\"context\" : {\n";
+	auto it = context.begin();
+	json << "\"" << it->first << "\":" << it->second;
+	++it;
+	for (; it != context.end(); ++it)
+	{
+		json << ",\n" << "\"" << it->first << "\":" << it->second;
+	}
+	json << "\n}" << std::endl;
+
+	json << "}" << std::endl;
+	json.close();
+
+	return true;
+}
+
+unsigned int SetupExportFlags(bool isExportAsSingleFileEnabled, MString& compressionOption)
+{
+	unsigned int exportFlags = 0;
+	if (!isExportAsSingleFileEnabled)
+	{
+		exportFlags = RPRLOADSTORE_EXPORTFLAG_EXTERNALFILES;
+	}
+
+	if (compressionOption == "None")
+	{
+		// don't set any flag
+		// this line exists for better logic readibility; also maybe will need to set flag here in the future
+	}
+	else if (compressionOption == "Level 1")
+	{
+		exportFlags = exportFlags | RPRLOADSTORE_EXPORTFLAG_COMPRESS_IMAGE_LEVEL_1;
+	}
+	else if (compressionOption == "Level 2")
+	{
+		exportFlags = exportFlags | RPRLOADSTORE_EXPORTFLAG_COMPRESS_IMAGE_LEVEL_2;
+	}
+	else if (compressionOption == "Level 3")
+	{
+		exportFlags = exportFlags | RPRLOADSTORE_EXPORTFLAG_COMPRESS_IMAGE_LEVEL_2 | RPRLOADSTORE_EXPORTFLAG_COMPRESS_FLOAT_TO_HALF_NORMALS | RPRLOADSTORE_EXPORTFLAG_COMPRESS_FLOAT_TO_HALF_UV;
+	}
+
+#if RPR_VERSION_MAJOR_MINOR_REVISION >= 0x00103404 
+	// Always using this flag by default doesn't hurt :
+	// If rprObjectSetName(<path to image file>) has been called on all rpr_image, the performance of export is really better ( ~100x faster )
+	// If <path to image file> has not been set, or doesn't exist, then data from RPR is used to export the image.
+	exportFlags = exportFlags | RPRLOADSTORE_EXPORTFLAG_EMBED_FILE_IMAGES_USING_OBJECTNAME;
+#endif
+
+	return exportFlags;
+}
+
 MStatus FireRenderExportCmd::doIt(const MArgList & args)
 {
 	MStatus status;
@@ -81,15 +277,25 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		return MS::kFailure;
 	}
 
-	MString filePath;
+	MString inFilePath;
 	if (argData.isFlagSet(kFilePathFlag))
 	{
-		argData.getFlagArgument(kFilePathFlag, 0, filePath);
+		argData.getFlagArgument(kFilePathFlag, 0, inFilePath);
 	}
 	else
 	{
 		MGlobal::displayError("File path is missing, use -file flag");
 		return MS::kFailure;
+	}
+
+	MString processedFilePath; // using MString to convert between char and wchar because why not?
+	if (IsUnicodeSystem())
+	{
+		processedFilePath = ProcessEnvVarsInFilePath<std::wstring, wchar_t>(inFilePath.asWChar()).c_str();
+	}
+	else
+	{
+		processedFilePath = ProcessEnvVarsInFilePath<std::string, char>(inFilePath.asChar()).c_str();
 	}
 
 	MString materialName;
@@ -191,7 +397,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 				{
 					MDagPath& cameraPath = cameras[selectedCameraIdx];
 					MString cameraName = getNameByDagPath(cameraPath);
-					if (std::string(selectedCameraName.asChar()).find(std::string(cameraName.asChar())) != std::string::npos)
+					if (selectedCameraName == cameraName)
 					{
 						context.setCamera(cameras[selectedCameraIdx], true);
 						break;
@@ -207,19 +413,21 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		}
 
 		// process file path
-		MString fileName;
-		MString fileExtension = "rpr";
+		std::wstring fileName;
+		std::wstring fileExtension = L"rpr";
+		std::wstring filePath = processedFilePath.asWChar();
 
 		// Remove extension from file name, because it would be added later
-		int fileExtensionIndex = filePath.rindexW("." + fileExtension);
+		size_t fileExtensionIndex = filePath.find(L"." + fileExtension);
 		bool fileExtensionNotProvided = fileExtensionIndex == -1;
+
 		if (fileExtensionNotProvided)
 		{
 			fileName = filePath;
 		}
 		else
 		{
-			fileName = filePath.substringW(0, fileExtensionIndex - 1);
+			fileName = filePath.substr(0, fileExtensionIndex);
 		}
 
 		// read file name pattern and padding
@@ -248,67 +456,44 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			context.Freshen();
 
 			// update file path
-			MString newFilePath;
+			std::wstring newFilePath;
 			if (isSequenceExportEnabled)
 			{
-				std::regex name_regex("name");
-				std::regex frame_regex("#");
-				std::regex extension_regex("ext");
-
-				std::string pattern = namePattern.asChar();
+				//GetPattern();
+				std::wstring name_regex;
+				std::wstring frame_regex(L"#");
+				std::wstring extension_regex;
+				GetUINameFrameExtPattern(name_regex, extension_regex);
+				std::wstring pattern = namePattern.asWChar();
 
 				// Replace extension at first, because it shouldn't match name_regex or frame_regex for given .rpr format
-				std::string result = std::regex_replace(pattern, extension_regex, fileExtension.asChar());
+				std::wstring result = std::regex_replace(pattern, std::wregex(extension_regex), fileExtension);
 
-				std::stringstream frameStream;
-				frameStream << std::setfill('0') << std::setw(framePadding) << frame;
-				result = std::regex_replace(result, frame_regex, frameStream.str().c_str());
+				std::wstringstream frameStream;
+				frameStream << std::setfill(L'0') << std::setw(framePadding) << frame;
+				result = std::regex_replace(result, std::wregex(frame_regex), frameStream.str().c_str());
 
 				// Replace name after all operations, because it could match frame or extension regex
-				result = std::regex_replace(result, name_regex, fileName.asChar());
+				result = std::regex_replace(result, std::wregex(name_regex), fileName);
 
 				newFilePath = result.c_str();
 			}
 			else
 			{
-				newFilePath = fileName + "." + fileExtension;
+				newFilePath = fileName + L"." + fileExtension;
 			}
-
-			unsigned int exportFlags = 0;
-			if (!isExportAsSingleFileEnabled)
-			{
-				exportFlags = RPRLOADSTORE_EXPORTFLAG_EXTERNALFILES;
-			}
-
-			if (compressionOption == "None")
-			{
-				// don't set any flag
-				// this line exists for better logic readibility; also maybe will need to set flag here in the future
-			}
-			else if (compressionOption == "Level 1")
-			{
-				exportFlags = exportFlags | RPRLOADSTORE_EXPORTFLAG_COMPRESS_IMAGE_LEVEL_1;
-			}
-			else if (compressionOption == "Level 2")
-			{
-				exportFlags = exportFlags | RPRLOADSTORE_EXPORTFLAG_COMPRESS_IMAGE_LEVEL_2;
-			}
-			else if (compressionOption == "Level 3")
-			{
-				exportFlags = exportFlags | RPRLOADSTORE_EXPORTFLAG_COMPRESS_IMAGE_LEVEL_2 | RPRLOADSTORE_EXPORTFLAG_COMPRESS_FLOAT_TO_HALF_NORMALS | RPRLOADSTORE_EXPORTFLAG_COMPRESS_FLOAT_TO_HALF_UV;
-			}
-
-			#if RPR_VERSION_MAJOR_MINOR_REVISION >= 0x00103404 
-			// Always using this flag by default doesn't hurt :
-			// If rprObjectSetName(<path to image file>) has been called on all rpr_image, the performance of export is really better ( ~100x faster )
-			// If <path to image file> has not been set, or doesn't exist, then data from RPR is used to export the image.
-			exportFlags = exportFlags | RPRLOADSTORE_EXPORTFLAG_EMBED_FILE_IMAGES_USING_OBJECTNAME;
-			#endif
 
 			// launch export
-			rpr_int statusExport = rprsExport(newFilePath.asChar(), context.context(), context.scene(),
-				0, 0, 0, 0, 0, 0, exportFlags);
-
+			rpr_int statusExport = rprsExport(MString(newFilePath.c_str()).asUTF8(), context.context(), context.scene(),
+				0, 0, 0, 0, 0, 0, SetupExportFlags(isExportAsSingleFileEnabled, compressionOption));
+			
+			// save config
+			bool res = SaveExportConfig(filePath, context, fileName);
+			if (!res)
+			{
+				MGlobal::displayError("Unable to export render config!\n");
+			}
+			
 			if (statusExport != RPR_SUCCESS)
 			{
 				MGlobal::displayError("Unable to export fire render scene\n");

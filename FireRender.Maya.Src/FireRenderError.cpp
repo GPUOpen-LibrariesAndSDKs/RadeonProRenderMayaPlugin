@@ -323,3 +323,4 @@ void checkStatusThrow(rpr_int status, const MString message)
 	if (status != RPR_SUCCESS)
 		throw FireRenderException(status, message);
 }
+

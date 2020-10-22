@@ -12,7 +12,7 @@ limitations under the License.
 ********************************************************************/
 #include <cassert>
 #include <sstream>
-#include <thread>
+#include <functional>
 
 #include "common.h"
 #include "frWrap.h"
@@ -212,12 +212,37 @@ void FireRenderViewport::removed(bool panelDestroyed)
 	removeMenu();
 }
 
+void FireRenderViewport::OnBufferAvailableCallback()
+{
+	readFrameBuffer();
+
+	FireRenderThread::RunProcOnMainThread([&]()
+		{
+			// Schedule a Maya viewport refresh or set exit flag
+			MStatus status;
+			M3dView activeView;
+			status = M3dView::getM3dViewFromModelPanel(m_panelName, activeView);
+			if (status == MStatus::kSuccess) // Regular render view
+			{
+				m_view.scheduleRefresh();
+			}
+			else //Standalone render view (hypershade only?)
+			{
+				activeView = M3dView::active3dView(&status);
+				if (activeView.widget() == m_widget)
+					m_view.scheduleRefresh();
+				else
+					m_contextPtr->SetState(FireRenderContext::StateExiting);
+			}
+		});
+}
+
 // -----------------------------------------------------------------------------
 bool FireRenderViewport::RunOnViewportThread()
 {
 	RPR_THREAD_ONLY;
 
-	switch (m_contextPtr->state)
+	switch (m_contextPtr->GetState())
 	{
 		// The context is exiting.
 	case FireRenderContext::StateExiting:
@@ -238,12 +263,23 @@ bool FireRenderViewport::RunOnViewportThread()
 				// Perform a render iteration.
 				{
 					AutoMutexLock contextLock(m_contextLock);
-                    AutoMutexLock pixelsLock(m_pixelsLock);
+					
+					if (!TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
+					{
+						AutoMutexLock pixelsLock(m_pixelsLock);
 
-					m_contextPtr->render(false);
-					m_closeDialogNeeded = true;
+						m_contextPtr->render(false);
+						m_closeDialogNeeded = true;
 
-                    readFrameBuffer();
+						readFrameBuffer();
+					}
+					else
+					{
+						m_contextPtr->render(false);
+						m_closeDialogNeeded = true;
+
+						readFrameBuffer();
+					}
 				}
 
 				if (m_renderingErrors > 0)
@@ -274,7 +310,7 @@ bool FireRenderViewport::RunOnViewportThread()
                     if (activeView.widget() == m_widget)
                         m_view.scheduleRefresh();
                     else
-                        m_contextPtr->state = FireRenderContext::StateExiting;
+                        m_contextPtr->SetState(FireRenderContext::StateExiting);
                 }
             });
 		}
@@ -311,11 +347,10 @@ bool FireRenderViewport::start()
 		// We should lock context, otherwise another asynchronous lock could
 		// change context's state, and rendering will stall in StateUpdating.
 		FireRenderContext::Lock lock(m_contextPtr.get(), "FireRenderViewport::start"); // lock constructor which do not change state
-		m_contextPtr->state = FireRenderContext::StateRendering;
+		m_contextPtr->SetState(FireRenderContext::StateRendering);
 	}
 
-	m_isRunning = false;
-
+	m_isRunning = true;
 	m_renderingErrors = 0;
 
 	FireRenderThread::KeepRunning([this]()
@@ -333,6 +368,8 @@ bool FireRenderViewport::start()
 		return m_isRunning;
 	});
 
+	m_NorthStarRenderingHelper.Start();
+
 	return true;
 }
 
@@ -340,6 +377,8 @@ bool FireRenderViewport::start()
 bool FireRenderViewport::stop()
 {
 	MAIN_THREAD_ONLY;
+	
+	m_NorthStarRenderingHelper.SetStopFlag();
 
 	// should wait for thread
 	// m_isRunning could be not updated when exiting Maya during rendering, so check for two conditions
@@ -349,9 +388,11 @@ bool FireRenderViewport::stop()
 		FireRenderThread::RunItemsQueuedForTheMainThread();
 
 		// terminate the thread
-		m_contextPtr->state = FireRenderContext::StateExiting;
+		m_contextPtr->SetState(FireRenderContext::StateExiting);
 		this_thread::sleep_for(10ms); // 10.03.2017 - perhaps this is better than yield()
 	}
+
+	m_NorthStarRenderingHelper.StopAndJoin();
 
 	if (rcWarningDialog.shown && m_closeDialogNeeded)
 		rcWarningDialog.close();
@@ -443,7 +484,9 @@ void FireRenderViewport::preBlit()
 	// has exclusive access to the OpenGL frame
 	// buffer before using it to draw to the viewport.
 	if (m_contextPtr->isGLInteropActive())
+	{
 		m_pixelsLock.lock();
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -452,7 +495,9 @@ void FireRenderViewport::postBlit()
 	// Release the context lock after the shared
 	// GL frame buffer has been drawn to the viewport.
 	if (m_contextPtr->isGLInteropActive())
+	{
 		m_pixelsLock.unlock();
+	}
 }
 
 
@@ -488,7 +533,14 @@ bool FireRenderViewport::initialize()
 			}
 
 			if (!m_contextPtr->buildScene(true, glViewport))
+			{
 				return false;
+			}
+
+			if (TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
+			{
+				m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderViewport::OnBufferAvailableCallback, this));
+			}
 		}
 		catch (...)
 		{
@@ -941,7 +993,7 @@ def setFireViewportMode_ambientOcclusion(checked=True):
 def createAOVsMenu(frMenu):
 
 	# numbers in the following arrays are IDs of RPR AOVs that are declared in RadeonProRender.h
-	aov_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 27, 28]
+	aov_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]
 
 	def setFireViewportAOV(aov):
 		maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportAOV=aov)
@@ -957,7 +1009,8 @@ def createAOVsMenu(frMenu):
 
 	aovs = ["Color", "Opacity", "World Corrdinate", "UV", "Material Idx", "Geometric Normal", "Shading Normal", "Depth", "Object ID", "Object Group ID"]
 	aovs.extend(["Shadow Catcher", "Background", "Emission", "Velocity", "Direct Illumination", "Indirect Illumination", "AO", "Direct Diffuse"])
-	aovs.extend(["Direct Reflect", "Indirect Diffuse", "Indirect Reflect", "Refract", "Subsurface / Volume", "Albedo", "Variance"])
+	aovs.extend(["Direct Reflect", "Indirect Diffuse", "Indirect Reflect", "Refract", "Subsurface / Volume"]) 
+	aovs.extend(["Light Group 0", "Light Group 1", "Light Group 2", "Light Group 3", "Albedo", "Variance"])
 
 	ag = QtWidgets.QActionGroup(frSubMenu)
 	count = 0

@@ -319,6 +319,8 @@ global proc exportSceneRPR()
 
 global proc openMaterialLibraryRPR()
 {
+	print("openMaterialLibraryRPR called from shelf!\n");
+
 	if (!checkPluginLoadedRPR())
 		return;
 
@@ -377,17 +379,15 @@ global proc createIESLight()
 	if (!checkPluginLoadedRPR())
 		return;
 
-	string $IESNode = `shadingNode -asLight RPRIES -n RPRIESLight`;
-	rename $IESNode "RPRIES#";
+	shadingNode -asLight RPRIES;
 }
 
 global proc createPhysicalLight()
 {
 	if (!checkPluginLoadedRPR())
 		return;
-
-	string $physicalNode = `shadingNode -asLight RPRPhysicalLight -n RPRPhysicalLightShape`;
-	rename $physicalNode "RPRPhysicalLight#";
+	
+	shadingNode -asLight RPRPhysicalLight;
 }
 
 global proc createLightsSubmenuItems(string $parentMenu)
@@ -407,6 +407,7 @@ global proc createVolumeRPR()
 	string $VolumeNode = `createNode RPRVolume -n RPRVolumeObj`;
 	string $parent[] = `listRelatives -p $VolumeNode`;
 	rename $parent[0] "RPRVolume#";
+	rename $VolumeNode "RPRVolumeObj#";
 }
 
 global proc createVolumesSubmenuItems(string $parentMenu)

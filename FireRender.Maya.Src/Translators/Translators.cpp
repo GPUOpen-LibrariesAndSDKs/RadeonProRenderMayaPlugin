@@ -256,13 +256,14 @@ namespace FireMaya
 		frstatus = rprCameraSetFarPlane(frcamera, (float)(fnCamera.farClippingPlane() * cmToMCoefficient));
 		checkStatus(frstatus);
 		
-		float lensShiftX = (float) fnCamera.horizontalFilmOffset(&mstatus);
+		float filmOffsetX = (float) fnCamera.horizontalFilmOffset(&mstatus);
 		assert(mstatus == MStatus::kSuccess);
 
-		float lensShiftY = (float) fnCamera.verticalFilmOffset(&mstatus);
+		float filmOffsetY = (float) fnCamera.verticalFilmOffset(&mstatus);
 		assert(mstatus == MStatus::kSuccess);
 
-		frstatus = rprCameraSetLensShift(frcamera, lensShiftX, lensShiftY);
+		float inchesToMM = 25.4f;
+		frstatus = rprCameraSetLensShift(frcamera, inchesToMM * filmOffsetX / apertureWidth, inchesToMM * filmOffsetY / apertureHeight);
 		if (frstatus != RPR_ERROR_UNSUPPORTED)
 		{
 			checkStatus(frstatus);
@@ -409,6 +410,49 @@ namespace FireMaya
 					checkStatus(frstatus);
 					break;
 				}
+				case PLTSphere:
+					if (!update)
+					{
+						frlight.light = frcontext.CreateSphereLight();
+					}
+
+					frstatus = rprSphereLightSetRadiantPower3f(frlight.light.Handle(), color.r, color.g, color.b);
+					checkStatus(frstatus);
+
+					frstatus = rprSphereLightSetRadius(frlight.light.Handle(), lightData.sphereRadius);
+					checkStatus(frstatus);
+
+					{
+						// Maya let user to set only up to 3 digits after point in scale parameter of transform.
+						// So we need to take only these 3 digits into account
+						int revert_precision = 1000;
+						
+						long long scalex = (long long) (matrix[0][0] * revert_precision);
+						long long scaley = (long long) (matrix[1][1] * revert_precision);
+						long long scalez = (long long) (matrix[2][2] * revert_precision);
+
+						if (scalex != scaley || scalex != scalez)
+						{
+							MGlobal::displayWarning("Non-uniform scaling for spehre light detected. Might lead to graphical artifacts!");
+						}
+					}
+					break;
+
+				case PLTDisk:
+					if (!update)
+					{
+						frlight.light = frcontext.CreateDiskLight();
+					}
+
+					frstatus = rprDiskLightSetRadiantPower3f(frlight.light.Handle(), color.r, color.g, color.b);
+					checkStatus(frstatus);
+
+					frstatus = rprDiskLightSetRadius(frlight.light.Handle(), lightData.diskRadius);
+					checkStatus(frstatus);
+
+					frstatus = rprDiskLightSetAngle(frlight.light.Handle(), lightData.diskAngle);
+					checkStatus(frstatus);
+					break;
 
 				case PLTUnknown:
 					return false;
@@ -425,6 +469,19 @@ namespace FireMaya
 		else if (frlight.areaLight)
 		{
 			frlight.areaLight.SetName(lightName);
+		}
+
+		MPlug plug = dagNode.findPlug("RPRLightGroup");
+
+		if (!plug.isNull())
+		{
+			const int maxLightGroupId = 3;
+			int lightGroupId = plug.asInt();
+
+			if (lightGroupId >= 0 && lightGroupId <= maxLightGroupId)
+			{
+				frlight.SetLightGroupId((rpr_uint) lightGroupId);
+			}
 		}
 
 		return ret;
@@ -729,7 +786,7 @@ namespace FireMaya
 			scaleM[0][0] = -scaleM[0][0];
 		}
 
-		m *= scaleM;
+		m = scaleM * m;
 		float mfloats[4][4];
 		m.get(mfloats);
 		frlight.SetTransform((rpr_float*)mfloats);

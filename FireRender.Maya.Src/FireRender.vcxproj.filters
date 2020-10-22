@@ -105,6 +105,9 @@
     <Filter Include="FireRender.Components\Utils">
       <UniqueIdentifier>{71f57e19-1856-44ee-87d1-3f9b603bc501}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FireRender.Components\Alembic">
+      <UniqueIdentifier>{2c6f0ce5-b6e0-4427-989d-c4a997e950d5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="python\__init__.py">
@@ -434,12 +437,6 @@
     <ClCompile Include="RprComposite.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.cpp">
-      <Filter>FireRender.Components\IESLight</Filter>
-    </ClCompile>
-    <ClCompile Include="..\FireRender.Components\cpp\IESLight\IESprocessor.cpp">
-      <Filter>FireRender.Components\IESLight</Filter>
-    </ClCompile>
     <ClCompile Include="GLTFTranslator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -464,9 +461,6 @@
     <ClCompile Include="Lights\PhysicalLight\PhysicalLightAttributes.cpp">
       <Filter>Lights\PhysicalLight</Filter>
     </ClCompile>
-    <ClCompile Include="..\FireRender.Components\cpp\ImageFilter\ImageFilter.cpp">
-      <Filter>FireRender.Components\Denoiser</Filter>
-    </ClCompile>
     <ClCompile Include="Lights\PhysicalLight\PhysicalLightData.cpp">
       <Filter>Lights\PhysicalLight</Filter>
     </ClCompile>
@@ -482,17 +476,11 @@
     <ClCompile Include="OptionVarHelpers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\FireRender.Components\cpp\SunPosition\SPA.cpp">
-      <Filter>FireRender.Components\SunPosition</Filter>
-    </ClCompile>
     <ClCompile Include="FireRenderImportXML.cpp">
       <Filter>Commands</Filter>
     </ClCompile>
     <ClCompile Include="FireRenderSwatchInstance.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\FireRender.Components\cpp\XMLMaterialExport\XMLMaterialExportCommon.cpp">
-      <Filter>FireRender.Components\XMLExport</Filter>
     </ClCompile>
     <ClCompile Include="Volumes\FireRenderVolumeLocator.cpp">
       <Filter>Volumes</Filter>
@@ -538,9 +526,6 @@
     </ClCompile>
     <ClCompile Include="StartupContextChecker.cpp">
       <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="..\FireRender.Components\cpp\Athena\athenaWrap.cpp">
-      <Filter>FireRender.Components\Athena</Filter>
     </ClCompile>
     <ClCompile Include="athenaSystemInfo_Win.cpp">
       <Filter>Utils</Filter>
@@ -644,10 +629,52 @@
     <ClCompile Include="RadeonProRender.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\FireRender.Components\cpp\Utils\Utils.cpp">
-      <Filter>FireRender.Components\Utils</Filter>
-    </ClCompile>
     <ClCompile Include="FireRenderHairs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RadeonProRenderSharedComponents\src\Athena\athenaWrap.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RadeonProRenderSharedComponents\src\SunPosition\SPA.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RadeonProRenderSharedComponents\src\IESLight\IESLightRepresentationCalc.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RadeonProRenderSharedComponents\src\IESLight\IESprocessor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RadeonProRenderSharedComponents\src\ImageFilter\ImageFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RadeonProRenderSharedComponents\src\Utils\Utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RadeonProRenderSharedComponents\src\XMLMaterialExport\XMLMaterialExportCommon.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Lights\FireRenderLightCommon.cpp">
+      <Filter>Lights</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\RemapValueConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\NodeProcessingUtils.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="MayaStandardNodesSupport\SetRangeConverter.cpp">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClCompile>
+    <ClCompile Include="CompositeWrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderGPUCache.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\RadeonProRenderSharedComponents\src\Alembic\AlembicWrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NorthStarRenderingHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -889,12 +916,6 @@
     <ClInclude Include="RprComposite.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESLightRepresentationCalc.h">
-      <Filter>FireRender.Components\IESLight</Filter>
-    </ClInclude>
-    <ClInclude Include="..\FireRender.Components\cpp\IESLight\IESprocessor.h">
-      <Filter>FireRender.Components\IESLight</Filter>
-    </ClInclude>
     <ClInclude Include="GLTFTranslator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -919,9 +940,6 @@
     <ClInclude Include="Lights\PhysicalLight\PhysicalLightAttributes.h">
       <Filter>Lights\PhysicalLight</Filter>
     </ClInclude>
-    <ClInclude Include="..\FireRender.Components\cpp\ImageFilter\ImageFilter.h">
-      <Filter>FireRender.Components\Denoiser</Filter>
-    </ClInclude>
     <ClInclude Include="Lights\PhysicalLight\PhysicalLightData.h">
       <Filter>Lights\PhysicalLight</Filter>
     </ClInclude>
@@ -937,9 +955,6 @@
     <ClInclude Include="OptionVarHelpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\FireRender.Components\cpp\SunPosition\SPA.h">
-      <Filter>FireRender.Components\SunPosition</Filter>
-    </ClInclude>
     <ClInclude Include="attributeNames.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -948,9 +963,6 @@
     </ClInclude>
     <ClInclude Include="FireRenderContextIFace.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\FireRender.Components\cpp\XMLMaterialExport\XMLMaterialExportCommon.h">
-      <Filter>FireRender.Components\XMLExport</Filter>
     </ClInclude>
     <ClInclude Include="Volumes\FireRenderVolumeLocator.h">
       <Filter>Volumes</Filter>
@@ -993,9 +1005,6 @@
     </ClInclude>
     <ClInclude Include="StartupContextChecker.h">
       <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="..\FireRender.Components\cpp\Athena\athenaWrap.h">
-      <Filter>FireRender.Components\Athena</Filter>
     </ClInclude>
     <ClInclude Include="athenaSystemInfo_Win.h">
       <Filter>Utils</Filter>
@@ -1087,11 +1096,71 @@
     <ClInclude Include="MayaStandardNodesSupport\ProjectionNodeConverter.h">
       <Filter>MayaStandardNodesSupport</Filter>
     </ClInclude>
-    <ClInclude Include="..\FireRender.Components\cpp\Utils\Utils.h">
-      <Filter>FireRender.Components\Utils</Filter>
-    </ClInclude>
     <ClInclude Include="MayaStandardNodesSupport\NodeProcessingUtils.h">
       <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\Athena\athenaWrap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\SunPosition\SPA.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\IESLight\IESLightRepresentationCalc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\IESLight\IESprocessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\ImageFilter\ImageFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\Utils\Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\XMLMaterialExport\XMLMaterialExportCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\RemapValueConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="MayaStandardNodesSupport\SetRangeConverter.h">
+      <Filter>MayaStandardNodesSupport</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\Athena\athenaWrap.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\SunPosition\SPA.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\IESLight\IESLightRepresentationCalc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\IESLight\IESprocessor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\ImageFilter\ImageFilter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\Utils\Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\XMLMaterialExport\XMLMaterialExportCommon.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Lights\FireRenderLightCommon.h">
+      <Filter>Lights</Filter>
+    </ClInclude>
+    <ClInclude Include="CompositeWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderGPUCache.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RadeonProRenderSharedComponents\src\Alembic\AlembicWrapper.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NorthStarRenderingHelper.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

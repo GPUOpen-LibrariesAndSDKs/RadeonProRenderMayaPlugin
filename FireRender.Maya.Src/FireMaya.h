@@ -24,7 +24,7 @@ limitations under the License.
 #include <maya/MNodeMessage.h>
 #include "Context/FireRenderContextIFace.h"
 
-class FireRenderMesh;
+class FireRenderMeshCommon;
 
 namespace FireMaya
 {
@@ -209,7 +209,7 @@ namespace FireMaya
 			std::map<NodeId, MCallbackId> m_AttributeChangedCallbacks;
 			std::map<std::string, frw::Image> imageCache;
 
-			FireRenderMesh const* m_pCurrentlyParsedMesh; // is not supposed to keep any data outside of during mesh parsing 
+			FireRenderMeshCommon const* m_pCurrentlyParsedMesh; // is not supposed to keep any data outside of during mesh parsing 
 
 			Data();
 			~Data();
@@ -230,7 +230,7 @@ namespace FireMaya
 		void NodeDirtyCallback(MObject& node);
 		void AttributeChangedCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug);
 
-		FireRenderMesh const* GetCurrentlyParsedMesh() const { return m->m_pCurrentlyParsedMesh; }
+		FireRenderMeshCommon const* GetCurrentlyParsedMesh() const { return m->m_pCurrentlyParsedMesh; }
 		void SetIsLastPassTextureMissing(bool value) const { m_IsLastPassTextureMissing = value; }
 
 		frw::Value createImageFromShaderNode(MObject node, MString plugName = "outColor", int width = 256, int height = 256) const;
@@ -281,7 +281,7 @@ namespace FireMaya
 		~Scope();
 
 		// by object
-		frw::Shader GetShader(MObject ob, const FireRenderMesh* pMesh = nullptr, bool forceUpdate = false);
+		frw::Shader GetShader(MObject ob, const FireRenderMeshCommon* pMesh = nullptr, bool forceUpdate = false);
 		frw::Shader GetShader(MPlug ob);
 		frw::Shader GetShadowCatcherShader();
 		frw::Shader GetReflectionCatcherShader();

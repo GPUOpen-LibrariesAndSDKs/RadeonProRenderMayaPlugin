@@ -25,6 +25,8 @@ limitations under the License.
 #include "FireRenderGlobals.h"
 #include "FireRenderUtils.h"
 
+#include "NorthStarRenderingHelper.h"
+
 #include <functional>
 #include <numeric>
 
@@ -104,6 +106,8 @@ private:
 	// Private Methods
 	// -----------------------------------------------------------------------------
 
+	void SetupWorkProgressCallback();
+
 	void RenderFullFrame();
 	void RenderTiles();
 
@@ -117,10 +121,10 @@ private:
 	void stopMayaRender();
 
 	/** Read data from the RPR frame buffer into the texture. */
-	void readFrameBuffer();
+//	void readFrameBuffer();
 
 	/** Refresh the context. */
-	void refreshContext(FireRenderContext::BuildSceneProgressCallback progressCallback = nullptr);
+	void refreshContext();
 
 	/* Gather and send render data by Athena */
 	void UploadAthenaData();
@@ -128,6 +132,8 @@ private:
 	size_t GetScenePolyCount() const;
 
 	std::tuple<size_t, long long> GeSceneTexturesCountAndSize() const;
+
+	void OnBufferAvailableCallback();
 
 private:
 
@@ -203,4 +209,6 @@ private:
 
 	/* Counts how many render calls done */
 	unsigned int m_rendersCount;
+
+	NorthStarRenderingHelper m_NorthStarRenderingHelper;
 };

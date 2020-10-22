@@ -43,6 +43,8 @@ limitations under the License.
 #define PI 3.14159265358979323846
 #endif
 
+typedef std::chrono::time_point<std::chrono::steady_clock> TimePoint;
+
 // FireRenderGlobals
 // Utility class used to read attributes form the render global node
 // and configure the rpr_context
@@ -175,7 +177,7 @@ public:
 	static bool IsMotionBlur(MString name);
 
 	static void getCPUThreadSetup(bool& overriden, int& cpuThreadCount, RenderType renderType);
-	static int getThumbnailIterCount();
+	static int getThumbnailIterCount(bool* pSwatchesEnabled = nullptr);
 	static bool isExrMultichannelEnabled(void);
 
 public:
@@ -301,6 +303,8 @@ public:
 	// Use Metal Performance Shaders for MacOS
 	bool useMPS;
 
+	bool useDetailedContextWorkLog;
+
 private:
 	short getMaxRayDepth(const FireRenderContext& context) const;
 	short getSamples(const FireRenderContext& context) const;
@@ -397,6 +401,9 @@ MPlug GetRadeonProRenderGlobalsPlug(const char* name, MStatus* status = nullptr)
 
 // Is IBL image fliping switched on
 bool IsFlipIBL();
+
+// Get Render Size from Common Tab
+void GetResolutionFromCommonTab(unsigned int& width, unsigned int& height);
 
 class HardwareResources
 {
@@ -1032,3 +1039,127 @@ std::vector<T> splitString(const T& s, typename T::traits_type::char_type delim)
 
 	return elems;
 }
+
+// Backdoor to enable different AOVs from Render Settings in IPR and Viewport
+void EnableAOVsFromRSIfEnvVarSet(FireRenderContext& context, FireRenderAOVs& aovs);
+
+template<typename ... Args>
+std::string string_format(const std::string& format, Args ... args)
+{
+	size_t size = snprintf(nullptr, 0, format.c_str(), args ...) + 1; // Extra space for '\0'
+	if (size <= 0) 
+	{ 
+		throw std::runtime_error("Error during formatting."); 
+	}
+
+	std::unique_ptr<char[]> buf(new char[size]);
+	snprintf(buf.get(), size, format.c_str(), args ...);
+	return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
+}
+
+void GetUINameFrameExtPattern(std::wstring& nameOut, std::wstring& extOut);
+
+#ifdef __APPLE__ // https://stackoverflow.com/questions/31346887/header-for-environ-on-mac
+extern char **environ;
+#endif
+
+template<typename T>
+T* GetEnviron(void);
+
+bool IsUnicodeSystem(void);
+
+template <typename T>
+std::pair<T, T> GetPathDelimiter(void);
+
+// replaces environment variables in file path string into actual paths
+template <typename T, typename C>
+T ProcessEnvVarsInFilePath(const C* in);
+
+template <typename T>
+size_t FindDelimiter(T& tmp);
+
+template <typename T>
+class EnvironmentVarsWrapper
+{
+	using xstring = std::basic_string<T, std::char_traits<T>, std::allocator<T> >;
+
+public:
+	static const std::map<xstring, xstring>& GetEnvVarsTable(void)
+	{
+		static EnvironmentVarsWrapper instance;
+
+		return instance.m_eVars;
+	}
+
+	EnvironmentVarsWrapper(EnvironmentVarsWrapper const&) = delete;
+	void operator=(EnvironmentVarsWrapper const&) = delete;
+
+private:
+	EnvironmentVarsWrapper(void)
+	{
+		T* pEnvVarPair = *GetEnviron<T*>();
+		for (int idx = 1; pEnvVarPair; idx++)
+		{
+			xstring tmp(pEnvVarPair);
+			size_t delimiter = FindDelimiter(tmp);
+			xstring varName = tmp.substr(0, delimiter);
+			xstring varValue = tmp.substr(delimiter + 1, tmp.length());
+
+			m_eVars[varName] = varValue;
+			pEnvVarPair = *(GetEnviron<T*>() + idx);
+		};
+	}
+
+private:
+	std::map<xstring, xstring> m_eVars;
+};
+
+template <typename T>
+std::tuple<T, T> ProcessEVarSchema(const T& eVar);
+
+template <typename T, typename C>
+T ProcessEnvVarsInFilePath(const C* in)
+{
+	T out(in);
+
+	const std::map<T, T>& eVars = EnvironmentVarsWrapper<C>::GetEnvVarsTable();
+
+	// find environment variables in the string
+	// and replace them with real path
+	for (auto& eVar : eVars)
+	{
+		auto processedEVar = ProcessEVarSchema(eVar.first);
+
+		T tmpVar = std::get<0>(processedEVar);
+		size_t found = out.find(tmpVar);
+
+		if (found == T::npos)
+		{
+			tmpVar = std::get<1>(processedEVar);
+			found = out.find(tmpVar);
+		}
+
+		if (found == T::npos)
+			continue;
+
+		out.replace(found, tmpVar.length(), eVar.second);
+	}
+
+	// replace "\\" with "/"
+	static const std::pair<T, T> toBeReplaced = GetPathDelimiter<T>();
+	while (out.find(toBeReplaced.first) != T::npos)
+	{
+		out.replace(out.find(toBeReplaced.first), toBeReplaced.first.size(), toBeReplaced.second);
+	}
+
+	return out;
+}
+
+TimePoint GetCurrentChronoTime();
+
+template <typename T>
+long TimeDiffChrono(TimePoint currTime, TimePoint startTime)
+{
+	return (long)std::chrono::duration_cast<T>(currTime - startTime).count();
+}
+
