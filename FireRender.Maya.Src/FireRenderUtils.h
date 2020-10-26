@@ -43,6 +43,8 @@ limitations under the License.
 #define PI 3.14159265358979323846
 #endif
 
+typedef std::chrono::time_point<std::chrono::steady_clock> TimePoint;
+
 // FireRenderGlobals
 // Utility class used to read attributes form the render global node
 // and configure the rpr_context
@@ -1152,3 +1154,12 @@ T ProcessEnvVarsInFilePath(const C* in)
 
 	return out;
 }
+
+TimePoint GetCurrentChronoTime();
+
+template <typename T>
+long TimeDiffChrono(TimePoint currTime, TimePoint startTime)
+{
+	return (long)std::chrono::duration_cast<T>(currTime - startTime).count();
+}
+
