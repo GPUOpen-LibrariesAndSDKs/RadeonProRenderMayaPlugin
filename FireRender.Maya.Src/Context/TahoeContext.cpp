@@ -83,21 +83,13 @@ rpr_int TahoeContext::CreateContextInternal(rpr_creation_flags createFlags, rpr_
 
 	// setup CPU thread count
 	std::vector<rpr_context_properties> ctxProperties;
-#if (RPR_VERSION_MINOR < 34)
-	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_SAMPLER_TYPE);
-#else
 	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_SAMPLER_TYPE);
-#endif
 	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_SAMPLER_TYPE_CMJ);
 
 	int threadCountToOverride = getThreadCountToOverride();
 	if ((createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) && threadCountToOverride > 0)
 	{
-#if (RPR_VERSION_MINOR < 34)
-		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_CPU_THREAD_LIMIT);
-#else
 		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CPU_THREAD_LIMIT);
-#endif
 		ctxProperties.push_back((void*)(size_t)threadCountToOverride);
 	}
 
@@ -430,6 +422,11 @@ bool TahoeContext::IsVolumeSupported() const
 	return m_PluginVersion == TahoePluginVersion::RPR1;
 }
 
+bool TahoeContext::IsAOVSupported(int aov) const 
+{
+	return (aov != RPR_AOV_VIEW_SHADING_NORMAL) && (aov != RPR_AOV_COLOR_RIGHT);
+}
+
 bool TahoeContext::IsPhysicalLightTypeSupported(PLType lightType) const
 {
 	if (lightType == PLTDisk || lightType == PLTSphere)
@@ -447,7 +444,7 @@ bool TahoeContext::IsGLInteropEnabled() const
 
 bool TahoeContext::MetalContextAvailable() const
 {
-	return m_PluginVersion == TahoePluginVersion::RPR1;
+    return true;
 }
 
 void TahoeContext::SetRenderUpdateCallback(RenderUpdateCallback callback, void* data)
