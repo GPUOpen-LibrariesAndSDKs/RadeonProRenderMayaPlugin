@@ -210,8 +210,6 @@ void FireRenderContext::enableAOVAndReset(int index, bool flag, rpr_GLuint* glTe
 	resetAOV(index, flag ? glTexture : nullptr);
 }
 
-std::set<int> aovsExcluded{ RPR_AOV_VIEW_SHADING_NORMAL, RPR_AOV_COLOR_RIGHT };
-
 void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture)
 {
 	rpr_framebuffer_format fmt = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
@@ -219,9 +217,10 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 	m.framebufferAOV[index].Reset();
 	m.framebufferAOV_resolved[index].Reset();
 
-	auto it = aovsExcluded.find(index); // not all AOVs listed in RadeonProRender.h are supported by Tahoe
-	if (it != aovsExcluded.end())
+	if (!IsAOVSupported(index))
+	{
 		return;
+	}
 
 	if (aovEnabled[index]) 
     {
@@ -244,10 +243,7 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 	}
 	else
 	{
-		if (IsAOVSupported(index))
-		{
-			context.SetAOV(nullptr, index);
-		}
+		context.SetAOV(nullptr, index);
 	}
 }
 
