@@ -86,14 +86,15 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 	}
 	std::wstring tmpFileName(fileName);
 	tmpFileName.erase(0, directory.length() + 1);
-	directory += L"/config.json";
+	std::wstring configName = std::regex_replace(filePath, std::wregex(tmpFileName.c_str()), L"config");
+	configName = std::regex_replace(configName, std::wregex(L".rpr"), L".json");
 
 #ifdef WIN32
 	// MSVS added an overload to accommodate using open with wide strings where xcode did not.
-	std::wofstream json(directory.c_str());
+	std::wofstream json(configName.c_str());
 #else
 	// thus different path for xcode is needed
-	std::string s_directory = SharedComponentsUtils::ws2s(directory);
+	std::string s_directory = SharedComponentsUtils::ws2s(configName);
 	std::wofstream json(s_directory);
 #endif
 
@@ -108,7 +109,7 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 
 	json << "\"output\" : " << "\"" << fileName.c_str() << ".png\",\n";
 
-	json << "\"output.json\" : \"output.json\",\n";
+	json << "\"output.json\" : " << "\"" << configName.c_str() << "\",\n";
 
 	// write file data fields
 	json << "\"width\" : " << ctx.width() << ",\n";
@@ -488,7 +489,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 				0, 0, 0, 0, 0, 0, SetupExportFlags(isExportAsSingleFileEnabled, compressionOption));
 			
 			// save config
-			bool res = SaveExportConfig(filePath, context, fileName);
+			bool res = SaveExportConfig(newFilePath, context, fileName);
 			if (!res)
 			{
 				MGlobal::displayError("Unable to export render config!\n");
