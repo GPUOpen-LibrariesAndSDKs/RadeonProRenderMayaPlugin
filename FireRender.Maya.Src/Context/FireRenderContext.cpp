@@ -13,7 +13,6 @@ limitations under the License.
 #include <GL/glew.h>
 #include <maya/M3dView.h>
 #include "FireRenderContext.h"
-#include "FireRenderUtils.h"
 #include <cassert>
 #include <float.h>
 #include <maya/MDagPathArray.h>
@@ -60,16 +59,9 @@ using namespace FireMaya;
 std::map<FireRenderContext*,FireRenderContext::Lock::frcinfo> FireRenderContext::Lock::lockMap;
 #endif
 
-#ifdef MAYA2015
-#undef min
-#undef max
-#endif
-
 #include <imageio.h>
 
-#ifndef MAYA2015
 #include <maya/MUuid.h>
-#endif
 #include "FireRenderIBL.h"
 #include <maya/MFnRenderLayer.h>
 
@@ -96,7 +88,6 @@ FireRenderContext::FireRenderContext() :
 	m_viewportMotionBlur(false),
 	m_motionBlurCameraExposure(0.0f),
 	m_cameraAttributeChanged(false),
-	m_renderStartTime(0),
 	m_samplesPerUpdate(1),
 	m_secondsSpentOnLastRender(0.0),
 	m_lastRenderResultState(NOT_SET),
@@ -124,7 +115,7 @@ FireRenderContext::FireRenderContext() :
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
 
-	m_workStartTime = clock();
+	m_workStartTime = GetCurrentChronoTime();
 	m_state = StateUpdating;
 	m_dirty = false;
 }
@@ -219,8 +210,6 @@ void FireRenderContext::enableAOVAndReset(int index, bool flag, rpr_GLuint* glTe
 	resetAOV(index, flag ? glTexture : nullptr);
 }
 
-std::set<int> aovsExcluded{ RPR_AOV_VIEW_SHADING_NORMAL, RPR_AOV_COLOR_RIGHT };
-
 void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture)
 {
 	rpr_framebuffer_format fmt = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
@@ -228,9 +217,10 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 	m.framebufferAOV[index].Reset();
 	m.framebufferAOV_resolved[index].Reset();
 
-	auto it = aovsExcluded.find(index); // not all AOVs listed in RadeonProRender.h are supported by Tahoe
-	if (it != aovsExcluded.end())
+	if (!IsAOVSupported(index))
+	{
 		return;
+	}
 
 	if (aovEnabled[index]) 
     {
@@ -253,10 +243,7 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 	}
 	else
 	{
-		if (IsAOVSupported(index))
-		{
-			context.SetAOV(nullptr, index);
-		}
+		context.SetAOV(nullptr, index);
 	}
 }
 
@@ -884,12 +871,6 @@ void FireRenderContext::UpdateCompletionCriteriaForSwatch()
 	setCompletionCriteria(completionParams);
 }
 
-long TimeDiff(time_t currTime, time_t startTime)
-{
-	return (long)((currTime - startTime) * 1000 / CLOCKS_PER_SEC);
-}
-
-
 void FireRenderContext::render(bool lock)
 {
 	RPR_THREAD_ONLY;
@@ -923,7 +904,7 @@ void FireRenderContext::render(bool lock)
 		}
 
 		m_restartRender = false;
-		m_renderStartTime = clock();
+		m_renderStartTime = GetCurrentChronoTime();
 		m_currentIteration = 0;
 		m_currentFrame = 0;
 
@@ -952,7 +933,7 @@ void FireRenderContext::render(bool lock)
 
 	progressData.currentIndex = m_currentIteration;
 	progressData.totalCount = m_completionCriteriaParams.completionCriteriaMaxIterations;
-	progressData.currentTimeInMiliseconds = TimeDiff(clock(), m_workStartTime);
+	progressData.currentTimeInMiliseconds = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_workStartTime);
 	progressData.progressType = ProgressType::RenderPassStarted;
 
 	TriggerProgressCallback(progressData);
@@ -2351,7 +2332,7 @@ void FireRenderContext::UpdateTimeAndTriggerProgressCallback(ContextWorkProgress
 		syncProgressData.progressType = progressType;
 	}
 
-	syncProgressData.currentTimeInMiliseconds = TimeDiff(clock(), m_workStartTime);
+	syncProgressData.currentTimeInMiliseconds = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_workStartTime);
 	TriggerProgressCallback(syncProgressData);
 }
 
@@ -2407,7 +2388,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 	ContextWorkProgressData syncProgressData;
 	syncProgressData.totalCount = dirtyObjectsSize;
-	time_t syncStartTime = clock();
+	TimePoint syncStartTime = GetCurrentChronoTime();
 
 	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncStarted);
 
@@ -2448,7 +2429,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		}
 	}
 
-	syncProgressData.elapsed = TimeDiff(clock(), syncStartTime);
+	syncProgressData.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), syncStartTime);
 	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncComplete);
 
 	if (changed)
@@ -2488,7 +2469,7 @@ void FireRenderContext::SetState(StateEnum newState)
 	if (m_state == StateEnum::StateExiting)
 	{
 		ContextWorkProgressData data;
-		data.elapsed = TimeDiff(clock(), m_renderStartTime);
+		data.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_renderStartTime);
 
 		UpdateTimeAndTriggerProgressCallback(data, ProgressType::RenderComplete);
 	}
@@ -2569,9 +2550,11 @@ bool FireRenderContext::isUnlimited()
 	return m_completionCriteriaParams.isUnlimited();
 }
 
+std::chrono::time_point<std::chrono::steady_clock> start = std::chrono::high_resolution_clock::now();
+
 void FireRenderContext::setStartedRendering()
 {
-	m_renderStartTime = clock();
+	m_renderStartTime = GetCurrentChronoTime();
 	m_currentIteration = 0;
 }
 
@@ -2597,8 +2580,7 @@ bool FireRenderContext::keepRenderRunning()
 	}
 
 	// check time limit completion criteria
-	long numberOfClicks = clock() - m_renderStartTime;
-	double secondsSpentRendering = numberOfClicks / (double)CLOCKS_PER_SEC;
+	double secondsSpentRendering = TimeDiffChrono<std::chrono::seconds>(GetCurrentChronoTime(), m_renderStartTime);
 
 	return secondsSpentRendering < m_completionCriteriaParams.getTotalSecondsCount();
 }
@@ -2620,8 +2602,7 @@ bool FireRenderContext::isFirstIterationAndShadersNOTCached()
 
 void FireRenderContext::updateProgress()
 {
-	long numberOfClocks = clock() - m_renderStartTime;
-	double secondsSpentRendering = numberOfClocks / (double)CLOCKS_PER_SEC;
+	double secondsSpentRendering = TimeDiffChrono<std::chrono::seconds>(GetCurrentChronoTime(), m_renderStartTime);
 
 	m_secondsSpentOnLastRender = secondsSpentRendering;
 
