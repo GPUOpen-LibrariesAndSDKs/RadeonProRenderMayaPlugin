@@ -2593,6 +2593,9 @@ void FireRenderCustomEmitter::Freshen()
 	{
 		m_light.light = Context().CreateSpotLight();
 		Scene().Attach(m_light.light);
+
+		const char* lightName = MFnDependencyNode(DagPath().transform()).name().asChar();
+		m_light.light.SetName(lightName);
 		
 		m_light.light.AddGLTFExtraIntAttribute("isEmitter", 1);
 	}
