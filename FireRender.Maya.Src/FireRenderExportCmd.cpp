@@ -86,8 +86,7 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 	}
 	std::wstring tmpFileName(fileName);
 	tmpFileName.erase(0, directory.length() + 1);
-	std::wstring configName = std::regex_replace(filePath, std::wregex(tmpFileName.c_str()), L"config");
-	configName = std::regex_replace(configName, std::wregex(L".rpr"), L".json");
+	std::wstring configName = std::regex_replace(filePath, std::wregex(L".rpr"), L".json");
 
 #ifdef WIN32
 	// MSVS added an overload to accommodate using open with wide strings where xcode did not.
