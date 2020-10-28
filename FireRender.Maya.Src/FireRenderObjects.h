@@ -798,6 +798,8 @@ protected:
 	// returns false if no such material was found
 	bool ApplyMaterial(void);
 
+	virtual frw::Shader ParseNodeAttributes(MObject hairObject, const FireMaya::Scope& scope) { return frw::Shader(); }
+
 	// set albedo
 	// NIY
 
@@ -857,6 +859,8 @@ public:
 
 protected:
 	virtual bool CreateCurves(void);
+
+	virtual frw::Shader ParseNodeAttributes(MObject hairObject, const FireMaya::Scope& scope);
 };
 
 class FireRenderCustomEmitter : public FireRenderLight
