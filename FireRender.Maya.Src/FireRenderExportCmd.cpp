@@ -12,9 +12,9 @@ limitations under the License.
 ********************************************************************/
 #include "FireRenderExportCmd.h"
 #include "Context/TahoeContext.h"
+#include "Context/ContextCreator.h"
 #include "FireRenderUtils.h"
 #include "RenderStampUtils.h"
-
 #include <maya/MArgDatabase.h>
 #include <maya/MItDag.h>
 #include <maya/MDagPath.h>
@@ -315,10 +315,11 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			return MS::kFailure;
 		}
 
-		TahoeContext context;
-		context.setCallbackCreationDisabled(true);
+		TahoeContextPtr tahoeContextPtr = ContextCreator::CreateTahoeContext(GetTahoeVersionToUse());
 
-		rpr_int res = context.initializeContext();
+		tahoeContextPtr->setCallbackCreationDisabled(true);
+
+		rpr_int res = tahoeContextPtr->initializeContext();
 		if (res != RPR_SUCCESS)
 		{
 			MString msg;
@@ -326,9 +327,9 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			return MS::kFailure;
 		}
 
-		context.setCallbackCreationDisabled(true);
+		tahoeContextPtr->setCallbackCreationDisabled(true);
 
-		auto shader = context.GetShader(node);
+		auto shader = tahoeContextPtr->GetShader(node);
 		if (!shader)
 		{
 			MGlobal::displayError("Invalid shader");
@@ -363,12 +364,12 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		MCommonRenderSettingsData settings;
 		MRenderUtil::getCommonRenderSettings(settings);
 
-		TahoeContext context;
-		context.SetRenderType(RenderType::ProductionRender);
-		context.buildScene();
+		TahoeContextPtr tahoeContextPtr = ContextCreator::CreateTahoeContext(GetTahoeVersionToUse());
+		tahoeContextPtr->SetRenderType(RenderType::ProductionRender);
+		tahoeContextPtr->buildScene();
 
-		context.setResolution(settings.width, settings.height, true);
-		context.ConsiderSetupDenoiser();
+		tahoeContextPtr->setResolution(settings.width, settings.height, true);
+		tahoeContextPtr->ConsiderSetupDenoiser();
 
 		MDagPathArray cameras = GetSceneCameras();
 		unsigned int countCameras = cameras.length();
@@ -379,7 +380,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 
 			MDagPath cameraPath = getDefaultCamera();
 			MString cameraName = getNameByDagPath(cameraPath);
-			context.setCamera(cameraPath, true);
+			tahoeContextPtr->setCamera(cameraPath, true);
 		}
 		else  // (cameras.length() >= 1)
 		{
@@ -387,12 +388,12 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			MStatus res = argData.getFlagArgument(kSelectedCamera, 0, selectedCameraName);
 			if (res != MStatus::kSuccess)
 			{
-				context.setCamera(cameras[0], true);
+				tahoeContextPtr->setCamera(cameras[0], true);
 			}
 			else
 			{
 				unsigned int selectedCameraIdx = 0;
-				context.setCamera(cameras[selectedCameraIdx], true);
+				tahoeContextPtr->setCamera(cameras[selectedCameraIdx], true);
 
 				for (; selectedCameraIdx < countCameras; ++selectedCameraIdx)
 				{
@@ -400,7 +401,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 					MString cameraName = getNameByDagPath(cameraPath);
 					if (selectedCameraName == cameraName)
 					{
-						context.setCamera(cameras[selectedCameraIdx], true);
+						tahoeContextPtr->setCamera(cameras[selectedCameraIdx], true);
 						break;
 					}
 				}
@@ -454,7 +455,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 
 			// Refresh the context so it matches the
 			// current animation state and start the render.
-			context.Freshen();
+			tahoeContextPtr->Freshen();
 
 			// update file path
 			std::wstring newFilePath;
@@ -485,11 +486,11 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			}
 
 			// launch export
-			rpr_int statusExport = rprsExport(MString(newFilePath.c_str()).asUTF8(), context.context(), context.scene(),
+			rpr_int statusExport = rprsExport(MString(newFilePath.c_str()).asUTF8(), tahoeContextPtr->context(), tahoeContextPtr->scene(),
 				0, 0, 0, 0, 0, 0, SetupExportFlags(isExportAsSingleFileEnabled, compressionOption));
 			
 			// save config
-			bool res = SaveExportConfig(newFilePath, context, fileName);
+			bool res = SaveExportConfig(newFilePath, *tahoeContextPtr, fileName);
 			if (!res)
 			{
 				MGlobal::displayError("Unable to export render config!\n");
@@ -508,14 +509,15 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 	if (argData.isFlagSet(kSelectionFlag))
 	{
 		//initialize
-		TahoeContext context;
-		context.setCallbackCreationDisabled(true);
-		context.buildScene();
+		TahoeContextPtr tahoeContextPtr = ContextCreator::CreateTahoeContext(GetTahoeVersionToUse());
+
+		tahoeContextPtr->setCallbackCreationDisabled(true);
+		tahoeContextPtr->buildScene();
 
 		MDagPathArray cameras = GetSceneCameras(true);
 		if ( cameras.length() >= 1 )
 		{
-			context.setCamera(cameras[0]);
+			tahoeContextPtr->setCamera(cameras[0]);
 		}
 
 		MSelectionList sList;
@@ -537,7 +539,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 
 			MFnDependencyNode nodeFn(node);
 
-			FireRenderObject* frObject = context.getRenderObject(getNodeUUid(node));
+			FireRenderObject* frObject = tahoeContextPtr->getRenderObject(getNodeUUid(node));
 			if (!frObject)
 				continue;
 
