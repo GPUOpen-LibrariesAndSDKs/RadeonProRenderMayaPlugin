@@ -12,6 +12,7 @@ limitations under the License.
 ********************************************************************/
 #include "FileNodeConverter.h"
 #include "FireMaya.h"
+#include "../Context/TahoeContext.h"
 
 #include <sstream>
 
@@ -126,7 +127,24 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 			MPlug alphaIsLuminancePlug = m_params.shaderNode.findPlug("alphaIsLuminance");
 			bool alphaIsLuminance = alphaIsLuminancePlug.asBool();
 
-			bool shouldUseAlphaIsLuminance = alphaIsLuminance || !image.HasAlphaChannel();
+			bool imageHasAlpha = false;
+			
+			if (TahoeContext::IsGivenContextRPR2(dynamic_cast<const FireRenderContext*>(m_params.scope.GetIContextInfo())))
+			{
+				MPlug fileHasAlphaPlug = m_params.shaderNode.findPlug("fileHasAlpha");
+
+				if (!fileHasAlphaPlug.isNull())
+				{
+					imageHasAlpha = fileHasAlphaPlug.asBool();
+				}
+			}
+			else
+			{
+				// RPR1 case
+				imageHasAlpha = image.HasAlphaChannel();
+			}
+
+			bool shouldUseAlphaIsLuminance = alphaIsLuminance || !imageHasAlpha;
 			if (shouldUseAlphaIsLuminance)
 			{
 				// Calculate alpha is luminance value
