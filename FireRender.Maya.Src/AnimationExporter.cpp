@@ -36,7 +36,7 @@ AnimationExporter::AnimationExporter(bool gltfExport) :
 		m_pFunc_AddExtraShapeParameter = rprGLTF_AddExtraShapeParameter;
 		m_pFunc_AssignLightToGroup = rprGLTF_AssignLightToGroup;
 		m_pFunc_AssignShapeToGroup = rprGLTF_AssignShapeToGroup;
-		//m_pFunc_SetTransformGroup = rprGLTF_SetTransformGroup;
+		m_pFunc_SetTransformGroup = rprGLTF_SetTransformGroup;
 		m_pFunc_AssignParentGroupToGroup = rprGLTF_AssignParentGroupToGroup;
 
 		m_pFunc_AddAnimationTrackToRPR = &AnimationExporter::AddAnimationToGLTFRPR;
@@ -47,19 +47,13 @@ AnimationExporter::AnimationExporter(bool gltfExport) :
 		m_runtimeMoveTypeRotation = RPRS_ANIMATION_MOVEMENTTYPE_ROTATION;
 		m_runtimeMoveTypeScale = RPRS_ANIMATION_MOVEMENTTYPE_SCALE;
 
-#if RPR_API_VERSION > 0x00103505
 		m_pFunc_AddExtraCamera = rprsAddExtraCamera;
 		m_pFunc_AddExtraShapeParameter = rprsAddExtraShapeParameter;
 		m_pFunc_AssignLightToGroup = rprsAssignLightToGroup;
-#else
-		m_pFunc_AddExtraCamera = nullptr;
-		m_pFunc_AddExtraShapeParameter = nullptr;
-		m_pFunc_AssignLightToGroup = nullptr;
-#endif
 
 		m_pFunc_AssignCameraToGroup = rprsAssignCameraToGroup;
 		m_pFunc_AssignShapeToGroup = rprsAssignShapeToGroup;
-		//m_pFunc_SetTransformGroup = rprsSetTransformGroup;
+		m_pFunc_SetTransformGroup = rprsSetTransformGroup;
 		m_pFunc_AssignParentGroupToGroup = rprsAssignParentGroupToGroup;
 
 		m_pFunc_AddAnimationTrackToRPR = &AnimationExporter::AddAnimationToRPRS;
@@ -312,14 +306,7 @@ void AnimationExporter::SetTransformationForNode(MObject transform, const char* 
 		arr[index++] = (float)scale[i];
 	}
 
-	if (m_IsGLTFExport)
-	{
-		rprGLTF_SetTransformGroup(groupName, arr.data());
-	}
-	else
-	{
-		rprsSetTransformGroup(groupName, arr.data());
-	}
+	m_pFunc_SetTransformGroup(groupName, arr.data());
 }
 
 void AnimationExporter::AnimateGroups(AnimationDataHolderVector& dataHolder)
