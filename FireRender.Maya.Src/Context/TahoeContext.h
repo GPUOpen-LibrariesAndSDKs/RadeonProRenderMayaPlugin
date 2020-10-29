@@ -22,7 +22,7 @@ public:
 	TahoeContext();
 
 	static rpr_int GetPluginID(TahoePluginVersion version);
-	static bool IsGivenContextRPR2(FireRenderContext* pContext);
+	static bool IsGivenContextRPR2(const FireRenderContext* pContext);
 
 	void setupContext(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) override;
 

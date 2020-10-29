@@ -372,21 +372,8 @@ frw::Value GetBufferSamplerConvertor(
 	if (!res)
 		return frw::Value();
 
-	std::vector<MColor> remapedRampValue(bufferSize, MColor(0.0f, 0.0f, 0.0f, 1.0f));
-	RemapRampControlPoints(remapedRampValue.size(), remapedRampValue, rampCtrlPoints);
-
-	// create buffer desc
-	rpr_buffer_desc bufferDesc;
-	bufferDesc.nb_element = bufferSize;
-	bufferDesc.element_type = RPR_BUFFER_ELEMENT_TYPE_FLOAT32;
-	bufferDesc.element_channel_size = 4;
-
-	// create buffer
-	frw::DataBuffer dataBuffer(scope.Context(), bufferDesc, &remapedRampValue[0][0]);
-
 	// create buffer node
-	frw::BufferNode bufferNode(scope.MaterialSystem());
-	bufferNode.SetBuffer(dataBuffer);
+	frw::BufferNode bufferNode = CreateRPRRampNode(rampCtrlPoints, scope, bufferSize);
 
 	// get arithmetic mul node tree for lookup
 	const auto& nodeTreeGeneratorImpl = m_rampGenerators.find(rampType);

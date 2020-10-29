@@ -217,10 +217,6 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 	m.framebufferAOV[index].Reset();
 	m.framebufferAOV_resolved[index].Reset();
 
-	//auto it = aovsExcluded.find(index); // not all AOVs listed in RadeonProRender.h are supported by Tahoe
-	//if (it != aovsExcluded.end())
-		//return;
-
 	if (!IsAOVSupported(index))
 	{
 		return;

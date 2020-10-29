@@ -989,6 +989,33 @@ bool GetValuesFromUIRamp(MObject rampObject, const MString& rampKey, std::vector
 	return true;
 }
 
+template<typename valType>
+frw::BufferNode CreateRPRRampNode(std::vector<RampCtrlPoint<valType>>& rampCtrlPoints, const FireMaya::Scope& scope, const unsigned int bufferSize)
+{
+	// ensure correct input
+	if (rampCtrlPoints.size() == 0)
+		return frw::BufferNode(scope.MaterialSystem());
+
+	// create buffer desc
+	rpr_buffer_desc bufferDesc;
+	bufferDesc.nb_element = bufferSize;
+	bufferDesc.element_type = RPR_BUFFER_ELEMENT_TYPE_FLOAT32;
+	bufferDesc.element_channel_size = 4;
+
+	// convert control points into continious vector of data
+	std::vector<valType> remapedRampValue(bufferSize, valType());
+	RemapRampControlPoints(remapedRampValue.size(), remapedRampValue, rampCtrlPoints);
+
+	// create buffer
+	frw::DataBuffer dataBuffer(scope.Context(), bufferDesc, &remapedRampValue[0][0]);
+
+	// create buffer node
+	frw::BufferNode bufferNode(scope.MaterialSystem());
+	bufferNode.SetBuffer(dataBuffer);
+
+	return bufferNode;
+}
+
 // wrapper for maya call to Python
 static std::function<int(std::string)> pythonCallWrap = [](std::string arg)->int
 {

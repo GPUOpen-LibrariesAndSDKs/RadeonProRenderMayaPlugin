@@ -194,12 +194,22 @@ bool FireRenderHair::ApplyMaterial(void)
 	if (m_Curves.empty())
 		return false;
 
-	auto node = Object();
+	MObject node = Object();
 	MDagPath path = MDagPath::getAPathTo(node);
 
+	// try getting uber
 	MObject uberMObj = GetUberMObject(path);	
 
-	frw::Shader shader = m.context->GetShader(uberMObj);
+	frw::Shader shader;
+	if (!uberMObj.isNull())
+		shader = m.context->GetShader(uberMObj);
+
+	if (!shader.IsValid())
+	{
+		// no uber => try creating uber from node attributes
+		shader = ParseNodeAttributes(node, Scope());
+	}
+
 	if (!shader.IsValid())
 		return false;
 
@@ -893,3 +903,111 @@ void FireRenderHairNHair::RegisterCallbacks()
 
 	AddCallback(MNodeMessage::addNodeDirtyCallback(shader, HairShaderDirtyCallback, this));
 }
+
+MObject GetHairSystemFromHairShape(MObject hairObject)
+{
+	// ensure correct input
+	if (hairObject.isNull())
+	{
+		return MObject::kNullObj;
+	}
+
+	// traverse graph to hairSystemShape node
+	// - get connection attribute
+	MFnDagNode mfn_hairObject(hairObject);
+	MObject attr = mfn_hairObject.attribute("renderHairs");
+	if (attr.isNull())
+		return MObject::kNullObj; // attribute not found
+
+	MPlug renderHairsPlug = mfn_hairObject.findPlug(attr);
+	// - get connected object
+	MPlugArray connections;
+	renderHairsPlug.connectedTo(connections, true, false);
+	for (auto connection : connections)
+	{
+		// assuming that first found connection is node that we need
+		MObject connNode = connection.node();
+		return connNode;
+	}
+
+	// failed to find hairSystemShape node
+	return MObject::kNullObj;
+}
+
+frw::Shader FireRenderHairNHair::ParseNodeAttributes(MObject hairObject, const FireMaya::Scope& scope)
+{
+	// get hairSystemShape object from pfxHairShape object
+	MObject hairSystemShapeObj = GetHairSystemFromHairShape(hairObject);
+	if (hairSystemShapeObj.isNull())
+		return frw::Shader(); // failed to find hairSystemShape node
+
+	// get attribute values from the node
+	MFnDagNode dagHairSystemShapeObj(hairSystemShapeObj);
+
+	// - get opacity
+	MObject opacityAttr = dagHairSystemShapeObj.attribute("opacity");
+	if (opacityAttr.isNull())
+		return frw::Shader();
+
+	float opacity = findPlugTryGetValue(dagHairSystemShapeObj, opacityAttr, 1.0f);
+
+	// - get hair color
+	MObject hairColorAttr = dagHairSystemShapeObj.attribute("hairColor");
+	if (hairColorAttr.isNull())
+		return frw::Shader();
+
+	MColor hairColor = getColorAttribute(dagHairSystemShapeObj, hairColorAttr);
+
+	// - get specularColor
+	MObject specularColorAttr = dagHairSystemShapeObj.attribute("specularColor");
+	if (specularColorAttr.isNull())
+		return frw::Shader();
+
+	MColor specularColor = getColorAttribute(dagHairSystemShapeObj, specularColorAttr);
+
+	// - get specularPower
+	MObject specularPowerAttr = dagHairSystemShapeObj.attribute("specularPower");
+	if (specularPowerAttr.isNull())
+		return frw::Shader();
+
+	float specularPower = findPlugTryGetValue(dagHairSystemShapeObj, specularPowerAttr, 1.0f);
+
+	// - get castShadows
+	MObject castShadowsAttr = dagHairSystemShapeObj.attribute("castShadows");
+	if (castShadowsAttr.isNull())
+		return frw::Shader();
+
+	bool castShadows = findPlugTryGetValue(dagHairSystemShapeObj, castShadowsAttr, 1.0f);
+
+	// - get hairColorScale (this is ramp)
+	MObject hairColorScaleAttr = dagHairSystemShapeObj.attribute("hairColorScale");
+	MPlug hairColorScalePlug = dagHairSystemShapeObj.findPlug(hairColorScaleAttr);
+	if (hairColorScalePlug.isNull())
+		return frw::Shader();
+
+	std::vector<RampCtrlPoint<MColor>> outRampCtrlPoints;
+	bool isRampParced = GetRampValues<MColorArray>(hairColorScalePlug, outRampCtrlPoints);
+	if (!isRampParced)
+		return frw::Shader();
+
+	const unsigned int bufferSize = 256; // same as in Blender
+	frw::BufferNode rampNode = CreateRPRRampNode(outRampCtrlPoints, scope, bufferSize);
+	frw::LookupNode lookupNode(scope.MaterialSystem(), frw::LookupTypeUV0);
+	frw::ArithmeticNode bufferLookupMulNode(scope.MaterialSystem(), frw::OperatorMultiply, lookupNode, frw::Value(bufferSize, bufferSize, bufferSize));
+	frw::ArithmeticNode selectZ(scope.MaterialSystem(), frw::OperatorSelectZ, bufferLookupMulNode);
+	rampNode.SetUV(selectZ);
+	frw::ArithmeticNode coloredRamp(scope.MaterialSystem(), frw::OperatorMultiply, rampNode, frw::Value(hairColor.r, hairColor.g, hairColor.b));
+
+	// create uber from read values
+	frw::Shader translatedHairShader = frw::Shader(context()->GetMaterialSystem(), frw::ShaderType::ShaderTypeStandard);
+	translatedHairShader.xSetValue(RPR_MATERIAL_INPUT_UBER_DIFFUSE_COLOR, coloredRamp);
+	translatedHairShader.xSetValue(RPR_MATERIAL_INPUT_UBER_DIFFUSE_WEIGHT, { 1.0f });
+	translatedHairShader.xSetValue(RPR_MATERIAL_INPUT_UBER_TRANSPARENCY, { 1 - opacity });
+	translatedHairShader.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_COLOR, { specularColor.r, specularColor.g, specularColor.b });
+	translatedHairShader.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_WEIGHT, { 0.5f });
+	translatedHairShader.xSetValue(RPR_MATERIAL_INPUT_UBER_REFRACTION_WEIGHT, { 0.05*specularPower });
+
+	return translatedHairShader;
+}
+
+
