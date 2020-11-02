@@ -29,6 +29,7 @@ limitations under the License.
 #include <maya/MRenderUtil.h>
 #include <maya/MCommonRenderSettingsData.h>
 #include <maya/MFnRenderLayer.h>
+#include "AnimationExporter.h"
 
 #include <fstream>
 #include <regex>
@@ -364,6 +365,8 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		MRenderUtil::getCommonRenderSettings(settings);
 
 		TahoeContextPtr tahoeContextPtr = ContextCreator::CreateTahoeContext(GetTahoeVersionToUse());
+		AnimationExporter animationExporter(false);
+
 		tahoeContextPtr->SetRenderType(RenderType::ProductionRender);
 		tahoeContextPtr->buildScene();
 
@@ -482,6 +485,8 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			else
 			{
 				newFilePath = fileName + L"." + fileExtension;
+
+				animationExporter.Export(*tahoeContextPtr, &cameras);
 			}
 
 			// launch export
