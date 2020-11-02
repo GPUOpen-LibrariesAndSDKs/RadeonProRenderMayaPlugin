@@ -131,6 +131,7 @@ namespace FireMaya
 
 	void FillLightData(PhysicalLightData& physicalLightData, const MObject& object, Scope& scope);
 
+	void GetMatrixForTheNextFrame(const MFnDependencyNode& nodeFn, float matrixFloats[4][4]);
 	void CalculateMotionBlurParams(const MFnDependencyNode& nodeFn, const MMatrix& inMatrix, MVector& outLinearMotion, MVector& outAngularMotion, double& outRotationAngle);
 
 	template<typename T,

@@ -22,6 +22,12 @@
 		50ED249C251B8889006A318A /* NorthStarRenderingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 50ED2498251B8889006A318A /* NorthStarRenderingHelper.h */; };
 		50ED249D251B8889006A318A /* NorthStarRenderingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 50ED2498251B8889006A318A /* NorthStarRenderingHelper.h */; };
 		50ED249E251B8889006A318A /* NorthStarRenderingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 50ED2498251B8889006A318A /* NorthStarRenderingHelper.h */; };
+		50FCE4F42530985900BF404F /* AnimationExporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50FCE4F12530985900BF404F /* AnimationExporter.cpp */; };
+		50FCE4F52530985900BF404F /* AnimationExporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50FCE4F12530985900BF404F /* AnimationExporter.cpp */; };
+		50FCE4F62530985900BF404F /* AnimationExporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50FCE4F12530985900BF404F /* AnimationExporter.cpp */; };
+		50FCE4F72530985900BF404F /* AnimationExporter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50FCE4F32530985900BF404F /* AnimationExporter.h */; };
+		50FCE4F82530985900BF404F /* AnimationExporter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50FCE4F32530985900BF404F /* AnimationExporter.h */; };
+		50FCE4F92530985900BF404F /* AnimationExporter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50FCE4F32530985900BF404F /* AnimationExporter.h */; };
 		8D28372E2199D73B0004852B /* OptionVarHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D28372B2199D6C90004852B /* OptionVarHelpers.h */; };
 		8D28372F2199D7480004852B /* OptionVarHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D2837292199D6C90004852B /* OptionVarHelpers.cpp */; };
 		8D55909F20C874BA00567EEC /* MeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D55909520C8743800567EEC /* MeshTranslator.h */; };
@@ -1030,6 +1036,8 @@
 		50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SetRangeConverter.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/SetRangeConverter.cpp; sourceTree = "<group>"; };
 		50ED2496251B8889006A318A /* NorthStarRenderingHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NorthStarRenderingHelper.cpp; path = ../../../FireRender.Maya.Src/NorthStarRenderingHelper.cpp; sourceTree = "<group>"; };
 		50ED2498251B8889006A318A /* NorthStarRenderingHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NorthStarRenderingHelper.h; path = ../../../FireRender.Maya.Src/NorthStarRenderingHelper.h; sourceTree = "<group>"; };
+		50FCE4F12530985900BF404F /* AnimationExporter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AnimationExporter.cpp; path = ../../../FireRender.Maya.Src/AnimationExporter.cpp; sourceTree = "<group>"; };
+		50FCE4F32530985900BF404F /* AnimationExporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnimationExporter.h; path = ../../../FireRender.Maya.Src/AnimationExporter.h; sourceTree = "<group>"; };
 		8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRprLoadStore64.dylib; path = ../../../RadeonProRenderSDK/RadeonProRender/binMacOS/libRprLoadStore64.dylib; sourceTree = "<group>"; };
 		8D1E289B2034A0550060BB11 /* FireRenderPBRMaterial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderPBRMaterial.h; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.h; sourceTree = "<group>"; };
 		8D1E289D2034A0550060BB11 /* FireRenderPBRMaterial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderPBRMaterial.cpp; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.cpp; sourceTree = "<group>"; };
@@ -1429,6 +1437,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				50FCE4F12530985900BF404F /* AnimationExporter.cpp */,
+				50FCE4F32530985900BF404F /* AnimationExporter.h */,
 				F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */,
 				F1EEA1F024ADE93A008AFB18 /* CompositeWrapper.h */,
 				F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */,
@@ -1999,6 +2009,7 @@
 				B72F8228239F813F00C2BFB3 /* Bump2dConverter.h in Headers */,
 				8D595DE320372FE20031988A /* FireRenderIpr.h in Headers */,
 				8D595DE420372FE20031988A /* FireRenderOverride.h in Headers */,
+				50FCE4F72530985900BF404F /* AnimationExporter.h in Headers */,
 				8D595DE620372FE20031988A /* AutoLock.h in Headers */,
 				8D595DE720372FE20031988A /* FireRenderArithmetic.h in Headers */,
 			);
@@ -2152,6 +2163,7 @@
 				B72F8229239F813F00C2BFB3 /* Bump2dConverter.h in Headers */,
 				8DBCC2F822304666003EE361 /* FireRenderIpr.h in Headers */,
 				8DBCC2F922304666003EE361 /* FireRenderOverride.h in Headers */,
+				50FCE4F82530985900BF404F /* AnimationExporter.h in Headers */,
 				8DBCC2FA22304666003EE361 /* AutoLock.h in Headers */,
 				8DBCC2FB22304666003EE361 /* FireRenderArithmetic.h in Headers */,
 			);
@@ -2305,6 +2317,7 @@
 				B753205123D9ED5600246738 /* Bump2dConverter.h in Headers */,
 				B753205223D9ED5600246738 /* FireRenderIpr.h in Headers */,
 				B753205423D9ED5600246738 /* FireRenderOverride.h in Headers */,
+				50FCE4F92530985900BF404F /* AnimationExporter.h in Headers */,
 				B753205523D9ED5600246738 /* AutoLock.h in Headers */,
 				B753205623D9ED5600246738 /* FireRenderArithmetic.h in Headers */,
 			);
@@ -2465,6 +2478,7 @@
 				8D595DF020372FE20031988A /* FireRenderImageUtil.cpp in Sources */,
 				B7D1F0142367616000BB07CE /* InstancerMASH.cpp in Sources */,
 				8D595DF120372FE20031988A /* FireRenderBlendMaterial.cpp in Sources */,
+				50FCE4F42530985900BF404F /* AnimationExporter.cpp in Sources */,
 				8D595DF220372FE20031988A /* FireRenderExportCmd.cpp in Sources */,
 				B7EC453623743C9C001E49F7 /* ContextCreator.cpp in Sources */,
 				8D595DF320372FE20031988A /* ArHosekSkyModel.cpp in Sources */,
@@ -2617,6 +2631,7 @@
 				8DBCC31522304666003EE361 /* FireRenderImageUtil.cpp in Sources */,
 				B7D1F0152367616000BB07CE /* InstancerMASH.cpp in Sources */,
 				8DBCC31622304666003EE361 /* FireRenderBlendMaterial.cpp in Sources */,
+				50FCE4F52530985900BF404F /* AnimationExporter.cpp in Sources */,
 				8DBCC31722304666003EE361 /* FireRenderExportCmd.cpp in Sources */,
 				B7EC453B23743C9D001E49F7 /* ContextCreator.cpp in Sources */,
 				8DBCC31822304666003EE361 /* ArHosekSkyModel.cpp in Sources */,
@@ -2769,6 +2784,7 @@
 				B753208323D9ED5600246738 /* FireRenderAddMaterial.cpp in Sources */,
 				B753208423D9ED5600246738 /* FireRenderImageUtil.cpp in Sources */,
 				B753208523D9ED5600246738 /* InstancerMASH.cpp in Sources */,
+				50FCE4F62530985900BF404F /* AnimationExporter.cpp in Sources */,
 				B753208623D9ED5600246738 /* FireRenderBlendMaterial.cpp in Sources */,
 				B753208723D9ED5600246738 /* FireRenderExportCmd.cpp in Sources */,
 				B753208823D9ED5600246738 /* ContextCreator.cpp in Sources */,

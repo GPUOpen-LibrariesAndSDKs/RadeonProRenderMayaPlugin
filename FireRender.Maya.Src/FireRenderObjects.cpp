@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ********************************************************************/
 #include "FireRenderObjects.h"
-#include "Context/FireRenderContext.h"
+#include "Context/TahoeContext.h"
 #include "FireRenderUtils.h"
 #include "base_mesh.h"
 #include "FireRenderDisplacement.h"
@@ -1556,16 +1556,8 @@ void FireRenderMesh::RebuildTransforms()
 	MMatrix matrix = GetSelfTransform();
 	
 	// convert Maya mesh in cm to m
-	MMatrix scaleM;
-	scaleM.setToIdentity();
-	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
-	matrix *= scaleM;
 	float mfloats[4][4];
-	matrix.get(mfloats);
-
-	MVector linearMotion(0, 0, 0);
-	MVector rotationAxis(1, 0, 0);
-	double rotationAngle = 0.0;
+	FireMaya::ScaleMatrixFromCmToMFloats(matrix, mfloats);
 
 	// Checking of MotionBlur parameter in RenderStats group of mesh
 	bool objectMotionBlur = true;
@@ -1578,7 +1570,37 @@ void FireRenderMesh::RebuildTransforms()
 
 	if (context()->motionBlur() && objectMotionBlur)
 	{
-		FireMaya::CalculateMotionBlurParams(meshFn, GetSelfTransform(), linearMotion, rotationAxis, rotationAngle);
+		// We use different schemes for MotionBlur for Tahoe and NorthStar
+		if (TahoeContext::IsGivenContextRPR2(context()))
+		{
+			float nextFrameFloats[4][4];
+			FireMaya::GetMatrixForTheNextFrame(meshFn, nextFrameFloats);
+
+			for (auto& element : m.elements)
+			{
+				if (element.shape)
+				{
+					element.shape.SetMotionTransform(&nextFrameFloats[0][0], false);
+				}
+			}
+		}
+		else
+		{
+			MVector linearMotion(0, 0, 0);
+			MVector rotationAxis(1, 0, 0);
+			double rotationAngle = 0.0;
+
+			FireMaya::CalculateMotionBlurParams(meshFn, GetSelfTransform(), linearMotion, rotationAxis, rotationAngle);
+
+			for (auto& element : m.elements)
+			{
+				if (element.shape)
+				{
+					element.shape.SetLinearMotion(float(linearMotion.x), float(linearMotion.y), float(linearMotion.z));
+					element.shape.SetAngularMotion(float(rotationAxis.x), float(rotationAxis.y), float(rotationAxis.z), float(rotationAngle));
+				}
+			}
+		}
 	}
 
 	for (auto& element : m.elements)
@@ -1586,8 +1608,6 @@ void FireRenderMesh::RebuildTransforms()
 		if (element.shape)
 		{
 			element.shape.SetTransform(&mfloats[0][0]);
-			element.shape.SetLinearMotion(float(linearMotion.x), float(linearMotion.y), float(linearMotion.z));
-			element.shape.SetAngularMotion(float(rotationAxis.x), float(rotationAxis.y), float(rotationAxis.z), float(rotationAngle));
 		}
 	}
 }
@@ -2593,6 +2613,9 @@ void FireRenderCustomEmitter::Freshen()
 	{
 		m_light.light = Context().CreateSpotLight();
 		Scene().Attach(m_light.light);
+
+		const char* lightName = MFnDependencyNode(DagPath().transform()).name().asChar();
+		m_light.light.SetName(lightName);
 		
 		m_light.light.AddGLTFExtraIntAttribute("isEmitter", 1);
 	}
