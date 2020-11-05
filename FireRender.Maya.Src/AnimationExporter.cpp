@@ -175,7 +175,8 @@ void AnimationExporter::assignMesh(FireRenderMesh* pMesh, const MString& groupNa
 {
 	for (auto& element : pMesh->Elements())
 	{
-		assert (m_pFunc_AssignShapeToGroup(element.shape.Handle(), groupName.asChar()) == RPR_SUCCESS);
+		int res = m_pFunc_AssignShapeToGroup(element.shape.Handle(), groupName.asChar());
+		assert(res == RPR_SUCCESS);
 
 		//Reset transform for shape since we already have transformation in parent groups
 		std::array<float, 16> arr;
