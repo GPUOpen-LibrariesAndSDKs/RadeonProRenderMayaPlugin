@@ -110,7 +110,7 @@ global proc createAboutFrame(string $parent)
 
 			canvas -width 20 -height 1 -enableBackground false;
 			button -label "Main Site" -height 19 -command "showRPRUrl(\"http://pro.radeon.com/en-us/software/prorender/\")";
-			button -label "Documentation" -height 19 -command "showRPRUrl(\"https://radeon-pro.github.io/RadeonProRenderDocs/plugins/maya/about.html\")";
+			button -label "Documentation" -height 19 -command "showRPRUrl(\"https://radeon-pro.github.io/RadeonProRenderDocs/en/index.html\")";
 			button -label "Downloads" -height 19 -command "showRPRUrl(\"https://www.amd.com/en/technologies/radeon-prorender-downloads/\")";
 			button -label "Community" -height 19 -command "showRPRUrl(\"https://community.amd.com/community/prorender/\")";
 			canvas -width 20 -height 1 -enableBackground false;
