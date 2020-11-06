@@ -434,9 +434,9 @@ MStatus FireRenderGlobals::initialize()
 	addRenderQualityModes(eAttr);
 	MAKE_INPUT_CONST(eAttr);
 
-	Attribute::tahoeVersion = eAttr.create("tahoeVersion", "tahv", TahoePluginVersion::RPR1, &status);
-	eAttr.addField("RPR 1", TahoePluginVersion::RPR1);
-	eAttr.addField("RPR 2 (Experimental)", TahoePluginVersion::RPR2);
+	Attribute::tahoeVersion = eAttr.create("tahoeVersion", "tahv", TahoePluginVersion::RPR2, &status);
+	eAttr.addField("RPR 1 (Legacy)", TahoePluginVersion::RPR1);
+	eAttr.addField("RPR 2", TahoePluginVersion::RPR2);
 
 	MAKE_INPUT_CONST(eAttr);
 	CHECK_MSTATUS(addAttribute(Attribute::tahoeVersion));
