@@ -85,12 +85,17 @@ global proc createFireRenderMotionBlurFrame(string $parent)
 			 -attribute "RadeonProRenderGlobals.cameraMotionBlur" cameraMotionBlur;
 	setParent ..;
 
+	frameLayout -label "Motion Blur only in Velocity AOV" -cll false -cl 0 fireRenderVelocityAOVMotionBlur;
+	attrControlGrp
+		-label "Enable"
+		-attribute "RadeonProRenderGlobals.velocityAOVMotionBlur" velocityAOVMotionBlur;
+	setParent ..;
+
 	frameLayout -label "Viewport Render" -cll false -cl 0 fireRenderViewportMotionBlurFrame;
 	attrControlGrp
 		-label "Enable"
 		-attribute "RadeonProRenderGlobals.motionBlurViewport";
 	setParent ..;
-
 
 	setParent ..;
 	setUITemplate -popTemplate;

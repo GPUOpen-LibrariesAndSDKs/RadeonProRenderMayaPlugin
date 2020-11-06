@@ -92,6 +92,7 @@ namespace
 		MObject motionBlur;
 		MObject cameraMotionBlur;
 		MObject motionBlurCameraExposure;
+		MObject velocityAOVMotionBlur;
 		MObject cameraType;
 
 		// for MacOS only: "Use Metal Performance Shaders"
@@ -407,6 +408,9 @@ MStatus FireRenderGlobals::initialize()
 	nAttr.setMin(0.0);
 	nAttr.setMax(1.0);
 
+	Attribute::velocityAOVMotionBlur = nAttr.create("velocityAOVMotionBlur", "vavb", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+
 	Attribute::cameraType = eAttr.create("cameraType", "camt", kCameraDefault, &status);
 	eAttr.addField("Default", kCameraDefault);
 	eAttr.addField("Spherical Panorama", kSphericalPanorama);
@@ -464,6 +468,7 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::motionBlur));
 	CHECK_MSTATUS(addAttribute(Attribute::cameraMotionBlur));
 	CHECK_MSTATUS(addAttribute(Attribute::motionBlurCameraExposure));
+	CHECK_MSTATUS(addAttribute(Attribute::velocityAOVMotionBlur));
 
 	CHECK_MSTATUS(addAttribute(Attribute::applyGammaToMayaViews));
 	CHECK_MSTATUS(addAttribute(Attribute::displayGamma));
