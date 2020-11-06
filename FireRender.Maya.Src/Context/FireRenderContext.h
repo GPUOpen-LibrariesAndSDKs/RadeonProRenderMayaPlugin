@@ -720,6 +720,7 @@ private:
 	bool m_cameraMotionBlur;
 
 	bool m_viewportMotionBlur;
+	bool m_velocityAOVMotionBlur;
 
 	// Motion blur camera exposure
 	float m_motionBlurCameraExposure;

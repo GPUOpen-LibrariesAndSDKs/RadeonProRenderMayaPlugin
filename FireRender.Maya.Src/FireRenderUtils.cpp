@@ -392,6 +392,10 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("motionBlurViewport");
 		if (!plug.isNull())
 			viewportMotionBlur = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("velocityAOVMotionBlur");
+		if (!plug.isNull())
+			velocityAOVMotionBlur = plug.asBool();
 		
 		plug = frGlobalsNode.findPlug("motionBlurCameraExposure");
 		if (!plug.isNull())
@@ -567,7 +571,7 @@ bool FireRenderGlobalsData::IsMotionBlur(MString name)
 {
 	name = GetPropertyNameFromPlugName(name);
 
-	static const std::set<std::string> propNames { "motionBlur", "cameraMotionBlur", "motionBlurCameraExposure", "viewportMotionBlur"};
+	static const std::set<std::string> propNames { "motionBlur", "cameraMotionBlur", "motionBlurCameraExposure", "viewportMotionBlur", "velocityAOVMotionBlur"};
 
 	return propNames.find(name.asChar()) != propNames.end();
 }
