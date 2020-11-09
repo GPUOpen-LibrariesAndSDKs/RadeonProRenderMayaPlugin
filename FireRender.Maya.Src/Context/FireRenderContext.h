@@ -720,6 +720,8 @@ private:
 	bool m_cameraMotionBlur;
 
 	bool m_viewportMotionBlur;
+
+	// motion blur only in velocity aov
 	bool m_velocityAOVMotionBlur;
 
 	// Motion blur camera exposure
