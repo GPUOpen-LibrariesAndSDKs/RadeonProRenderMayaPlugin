@@ -2038,6 +2038,7 @@ void FireRenderContext::setMotionBlurParameters(const FireRenderGlobalsData& glo
 	m_cameraMotionBlur = m_globals.cameraMotionBlur;
 	m_motionBlurCameraExposure = m_globals.motionBlurCameraExposure;
 	m_viewportMotionBlur = globalData.viewportMotionBlur;
+	m_velocityAOVMotionBlur = globalData.velocityAOVMotionBlur;
 }
 
 bool FireRenderContext::isInteractive() const
