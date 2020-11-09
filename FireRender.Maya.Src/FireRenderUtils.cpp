@@ -218,6 +218,10 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			renderMode = plug.asInt();
 
+		plug = frGlobalsNode.findPlug("textureCachePath");
+		if (!plug.isNull())
+			textureCachePath = plug.asString();
+
 		plug = frGlobalsNode.findPlug("giClampIrradiance");
 		if (!plug.isNull())
 			giClampIrradiance = plug.asBool();

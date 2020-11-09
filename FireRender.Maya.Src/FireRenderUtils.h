@@ -195,6 +195,8 @@ public:
 	int viewportRenderMode;
 	int renderMode;
 
+	MString textureCachePath;
+
 	// Global Illumination
 	bool giClampIrradiance;
 	float giClampIrradianceValue;
