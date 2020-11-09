@@ -16,6 +16,7 @@ limitations under the License.
 #include <maya/MFnMessageAttribute.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnStringData.h>
+
 #include "FireMaya.h"
 #include "FireRenderUtils.h"
 #include "FireRenderAOVs.h"
@@ -25,6 +26,7 @@ limitations under the License.
 #include <thread>
 #include <string>
 #include <thread>
+#include <experimental/filesystem>
 #include "StartupContextChecker.h"
 
 #define DEFAULT_RENDER_STAMP "Radeon ProRender for Maya %b | %h | Time: %pt | Passes: %pp | Objects: %so | Lights: %sl"
@@ -128,6 +130,8 @@ namespace
 		MObject renderQuality;
 
 		MObject tahoeVersion;
+
+		MObject textureCachePath;
 	}
 
     struct RenderingDeviceAttributes
@@ -236,6 +240,17 @@ void FireRenderGlobals::postConstructor()
 	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(obj, FireRenderGlobals::onAttributeChanged, nullptr, &status);
 
 	CHECK_MSTATUS(status);
+
+	// try creating folder for texture cache
+	MString workspace;
+	status = MGlobal::executeCommand(MString("workspace -q -dir;"),	workspace);
+	workspace += "/texture_cache";
+
+	namespace fs = std::experimental::filesystem;
+	if (!fs::is_directory(workspace.asChar()) || !fs::exists(workspace.asChar()))
+	{ // Check if src folder exists
+		fs::create_directory(workspace.asChar());
+	}
 }
 
 MStatus FireRenderGlobals::compute(const MPlug & plug, MDataBlock & data)
@@ -441,9 +456,17 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::tahoeVersion = eAttr.create("tahoeVersion", "tahv", TahoePluginVersion::RPR2, &status);
 	eAttr.addField("RPR 1 (Legacy)", TahoePluginVersion::RPR1);
 	eAttr.addField("RPR 2", TahoePluginVersion::RPR2);
-
 	MAKE_INPUT_CONST(eAttr);
 	CHECK_MSTATUS(addAttribute(Attribute::tahoeVersion));
+
+	MString workspace;
+	status = MGlobal::executeCommand(MString("workspace -q -dir;"), workspace);
+	workspace += "texture_cache";
+	MGlobal::executeCommand(MString("optionVar -sv RPR_textureCachePath") + workspace);
+	MObject defaultTextureCachePath = sData.create(workspace);
+	Attribute::textureCachePath = tAttr.create("textureCachePath", "tcp", MFnData::kString, defaultTextureCachePath);
+	tAttr.setUsedAsFilename(true);
+	addAsGlobalAttribute(tAttr);
 
 	MObject switchDetailedLogAttribute = nAttr.create("detailedLog", "rdl", MFnNumericData::kBoolean, 0, &status);
 	MAKE_INPUT(nAttr);
@@ -877,7 +900,6 @@ void FireRenderGlobals::addAsGlobalAttribute(MFnAttribute& attr)
 	MObject attrObj = attr.object();
 	
 	attr.setStorable(false);
-	attr.setConnectable(false);
 	CHECK_MSTATUS(addAttribute(attrObj));
 
 	m_globalAttributesList.push_back(attrObj);
