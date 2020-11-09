@@ -444,7 +444,7 @@ global proc shelf_Radeon_ProRender () {
 		-style "iconOnly"
 		-marginWidth 1
 		-marginHeight 1
-		-command "launch -web \"https://radeon-prorender.github.io/maya/\";"
+		-command "launch -web \"https://radeon-pro.github.io/RadeonProRenderDocs/en/index.html\";"
 		-sourceType "mel"
 		-commandRepeatable 1
 		-flat 1

@@ -279,6 +279,7 @@ public:
 	bool motionBlur;
 	bool cameraMotionBlur;
 	bool viewportMotionBlur;
+	bool velocityAOVMotionBlur;
 	float motionBlurCameraExposure;
 
 	// Camera type.
