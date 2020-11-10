@@ -19,7 +19,10 @@ limitations under the License.
 #include <maya/MGlobal.h>
 #include <maya/MPlug.h>
 #include <maya/MFnNumericAttribute.h>
+#include <maya/MFnTypedAttribute.h>
 #include <maya/MFnEnumAttribute.h>
+#include <maya/MFnStringArrayData.h>
+#include <maya/MFnStringData.h>
 
 #include <maya/MDGModifier.h>
 
@@ -75,9 +78,10 @@ MString getOptionVarStringValue(const MString& varName)
 	MString command = getOptionVarMelCommand("-q", varName, "");
 
 	MString val;
-	MGlobal::executeCommand(command, val);
+	MStatus res = MGlobal::executeCommand(command, val);
 
-	return val;
+	MString out = val;
+	return out;
 }
 
 void updateAttributeFromOptionVar(MPlug& plug, const MString& varName)
@@ -131,6 +135,27 @@ void updateAttributeFromOptionVar(MPlug& plug, const MString& varName)
 		dg.newPlugValueInt(plug, val);
 		dg.doIt();
 	}
+	else if (attrObj.hasFn(MFn::kTypedAttribute))
+	{
+		MFnTypedAttribute tAttr(attrObj);
+
+		MString optionVarName = getOptionVarNameForAttributeName(tAttr.name());
+
+		switch (tAttr.attrType())
+		{
+		case MFnData::Type::kString:
+		{
+			MString val = getOptionVarStringValue(varName);
+
+			dg.newPlugValueString(plug, val);
+			dg.doIt();
+
+			break;
+		}
+		default:
+			assert(false);
+		}
+	}
 	else
 	{
 		assert(false);
@@ -179,6 +204,29 @@ void updateCorrespondingOptionVar(const MPlug& plug)
 		int val;
 		plug.getValue(val);
 		setOptionVarIntValue(optionVarName, val);
+	}
+	else if (attrObj.hasFn(MFn::kTypedAttribute))
+	{
+		MFnTypedAttribute tAttr(attrObj);
+
+		MString optionVarName = getOptionVarNameForAttributeName(tAttr.name());
+
+		MFnData::Type type = tAttr.attrType();
+
+		switch (type)
+		{
+		case MFnData::Type::kString:
+		{
+			MStatus res;
+			MString val;
+			val = plug.asString(&res);
+			setOptionVarStringValue(optionVarName, val);
+
+			break;
+		}
+		default:
+			assert(false); // souldn't be here
+		}
 	}
 	else
 	{
