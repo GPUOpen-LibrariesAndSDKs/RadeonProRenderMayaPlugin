@@ -68,6 +68,12 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 	frw::Image image;
 	MString colorSpace;
 
+	MPlug colorSpacePlug = m_params.shaderNode.findPlug("colorSpace");
+	if (!colorSpacePlug.isNull())
+	{
+		colorSpace = colorSpacePlug.asString();
+	}
+
 	if (fileNodeUdimMode != uvMode)
 	{	
 		bool useFrameExt = m_params.shaderNode.findPlug("useFrameExtension").asBool();
@@ -81,13 +87,7 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 			{
 				texturePath = fileNames[0];
 			}
-		}		
-
-		MPlug colorSpacePlug = m_params.shaderNode.findPlug("colorSpace");
-		if (!colorSpacePlug.isNull())
-		{
-			colorSpace = colorSpacePlug.asString();
-		}
+		}	
 
 		image = m_params.scope.GetImage(texturePath, colorSpace, m_params.shaderNode.name());
 		if (!image.IsValid())
@@ -106,7 +106,9 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 	}
 
 	frw::ImageNode imageNode(m_params.scope.MaterialSystem());
+
 	image.SetGamma(ColorSpace2Gamma(colorSpace));
+	image.SetColorSpace(colorSpace.asChar()); // if RPR_CONTEXT_OCIO_CONFIG_PATH is invalid, this colorspace is automatically ignored and the gamma will be used.
 	imageNode.SetMap(image);
 
 	frw::Value uvVal = m_params.scope.GetConnectedValue(m_params.shaderNode.findPlug("uvCoord"));
