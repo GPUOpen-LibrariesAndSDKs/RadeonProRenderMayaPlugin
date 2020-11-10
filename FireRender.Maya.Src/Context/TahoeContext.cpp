@@ -11,6 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ********************************************************************/
 #include "TahoeContext.h"
+#include "maya/MColorManagementUtilities.h"
 
 TahoeContext::LoadedPluginMap TahoeContext::m_gLoadedPluginsIDsMap;
 
@@ -129,8 +130,8 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_TILE_SIZE, fireRenderGlobalsData.adaptiveTileSize);
 	checkStatus(frstatus);
 
-	bool velocityAOVMotionBlur = fireRenderGlobalsData.velocityAOVMotionBlur;
-	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_BEAUTY_MOTION_BLUR, fireRenderGlobalsData.velocityAOVMotionBlur);
+	bool velocityAOVMotionBlur = !fireRenderGlobalsData.velocityAOVMotionBlur;
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_BEAUTY_MOTION_BLUR, velocityAOVMotionBlur);
 
 	if (GetRenderType() == RenderType::ProductionRender) // production (final) rendering
 	{
@@ -244,7 +245,43 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_METAL_PERFORMANCE_SHADER, fireRenderGlobalsData.useMPS ? 1 : 0);
 	checkStatus(frstatus);
 
+	frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_TEXTURE_CACHE_PATH, fireRenderGlobalsData.textureCachePath.asChar());
+	checkStatus(frstatus);
+	
 	updateTonemapping(fireRenderGlobalsData, disableWhiteBalance);
+
+	// OCIO
+	{
+		MStatus colorManagementStatus;
+		int isColorManagementOn = 0;
+		colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -cmEnabled;"), isColorManagementOn);
+
+		int isConfigFileEnable = 0;
+		colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -cmConfigFileEnabled;"), isConfigFileEnable);
+
+		if ((isColorManagementOn > 0) && (isConfigFileEnable > 0))
+		{
+			MString configFilePath;
+			colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -cfp;"), configFilePath);
+
+			MString renderingSpaceName;
+			colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -rsn;"), renderingSpaceName);
+
+			frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_CONFIG_PATH, configFilePath.asChar());
+			checkStatus(frstatus);
+
+			frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_RENDERING_COLOR_SPACE, renderingSpaceName.asChar());
+			checkStatus(frstatus);
+		}
+		else
+		{
+			frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_CONFIG_PATH, "");
+			checkStatus(frstatus);
+
+			frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_RENDERING_COLOR_SPACE, "");
+			checkStatus(frstatus);
+		}
+	}
 }
 
 void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance)
