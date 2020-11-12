@@ -28,6 +28,7 @@ limitations under the License.
 #include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFileObject.h>
+#include <maya/MCommonSystemUtils.h>
 
 #include <cassert>
 #include <vector>
@@ -1112,35 +1113,40 @@ int areShadersCached()
 
 MString getLogFolder()
 {
-	auto path = MGlobal::executeCommandStringResult("getenv RPR_MAYA_TRACE_PATH");
-	if (path.length() == 0)
-	{
-#ifdef WIN32
-		PWSTR sz = nullptr;
-		if (S_OK == ::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &sz))
-		{
-			static wchar_t buff[256 + 1] = {};
-			if (!buff[0])
-			{
-				auto t = time(NULL);
-				auto tm = localtime(&t);
-				wsprintfW(buff, L"%02d.%02d.%02d-%02d.%02d", tm->tm_year - 100, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
-			}
+    MString path = MGlobal::executeCommandStringResult("getenv RPR_MAYA_TRACE_PATH");
+    if (path.length() == 0)
+    {
+        static char buff[256 + 1] = {};
+        if (!buff[0])
+        {
+            auto t = time(NULL);
+            auto tm = localtime(&t);
+            sprintf(buff, "%02d.%02d.%02d-%02d.%02d", tm->tm_year - 100, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
+        }
 
-			auto cacheFolder = std::wstring(sz) + L"\\RadeonProRender\\Maya\\Trace\\" + buff;
-			switch (SHCreateDirectoryExW(nullptr, cacheFolder.c_str(), nullptr))
-			{
-			case ERROR_SUCCESS:
-			case ERROR_FILE_EXISTS:
-			case ERROR_ALREADY_EXISTS:
-				path = cacheFolder.c_str();
-			}
-		}
+#ifdef WIN32
+        std::string folderPart(buff);
+
+        PWSTR sz = nullptr;
+        if (S_OK == ::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &sz))
+        {
+            auto cacheFolder = std::wstring(sz) + L"\\RadeonProRender\\Maya\\Trace\\" + std::wstring(folderPart.begin(), folderPart.end());
+            switch (SHCreateDirectoryExW(nullptr, cacheFolder.c_str(), nullptr))
+            {
+            case ERROR_SUCCESS:
+            case ERROR_FILE_EXISTS:
+            case ERROR_ALREADY_EXISTS:
+                path = cacheFolder.c_str();
+            }
+        }
+        
 #elif defined(OSMac_)
-		path = "/Users/Shared/RadeonProRender/trace";
+        path = "/Users/Shared/RadeonProRender/trace/" + MString(buff);
+        MCommonSystemUtils::makeDirectory(path);
 #endif
-	}
-	return path;
+        
+    }
+    return path;
 }
 
 MString getSourceImagesPath()
