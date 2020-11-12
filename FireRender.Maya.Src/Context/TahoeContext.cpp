@@ -12,6 +12,7 @@ limitations under the License.
 ********************************************************************/
 #include "TahoeContext.h"
 #include "maya/MColorManagementUtilities.h"
+#include "maya/MFileObject.h"
 
 TahoeContext::LoadedPluginMap TahoeContext::m_gLoadedPluginsIDsMap;
 
@@ -252,6 +253,18 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 
 	// OCIO
 	{
+		const std::map<std::string, std::string>& eVars = EnvironmentVarsWrapper<char>::GetEnvVarsTable();
+		auto envOCIOPath = eVars.find("OCIO");
+		if (envOCIOPath != eVars.end())
+		{
+			MFileObject path;
+			path.setRawFullName(envOCIOPath->second.c_str());
+			MString setupCommand = MString("colorManagementPrefs -e -configFilePath \"") + path.resolvedFullName() + MString("\";");
+			MGlobal::executeCommand(setupCommand);
+			MGlobal::executeCommand(MString("colorManagementPrefs -e -cmEnabled 1;"));
+			MGlobal::executeCommand(MString("colorManagementPrefs -e -cmConfigFileEnabled 1;"));
+		}
+
 		MStatus colorManagementStatus;
 		int isColorManagementOn = 0;
 		colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -cmEnabled;"), isColorManagementOn);
