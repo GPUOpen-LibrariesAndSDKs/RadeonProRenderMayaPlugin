@@ -512,7 +512,8 @@ public:
 
 	void setRenderMode(RenderMode renderMode);
 
-	void setPreview();
+	virtual void SetupPreviewMode() {}
+	void SetPreviewMode(int preview);
 
 	bool hasTonemappingChanged() const { return m_tonemappingChanged; }
 
@@ -645,6 +646,8 @@ protected:
 	void UpdateTimeAndTriggerProgressCallback(ContextWorkProgressData& syncProgressData, ProgressType progressType = ProgressType::Unknown);
 
 	void TriggerProgressCallback(const ContextWorkProgressData& syncProgressData);
+
+	virtual void OnPreRender() {}
 
 private:
 	struct CallbacksAttachmentHelper
