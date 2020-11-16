@@ -16,6 +16,7 @@ limitations under the License.
 #include <maya/MFnMessageAttribute.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnStringData.h>
+
 #include "FireMaya.h"
 #include "FireRenderUtils.h"
 #include "FireRenderAOVs.h"
@@ -25,6 +26,7 @@ limitations under the License.
 #include <thread>
 #include <string>
 #include <thread>
+#include <experimental/filesystem>
 #include "StartupContextChecker.h"
 
 #define DEFAULT_RENDER_STAMP "Radeon ProRender for Maya %b | %h | Time: %pt | Passes: %pp | Objects: %so | Lights: %sl"
@@ -92,6 +94,7 @@ namespace
 		MObject motionBlur;
 		MObject cameraMotionBlur;
 		MObject motionBlurCameraExposure;
+		MObject velocityAOVMotionBlur;
 		MObject cameraType;
 
 		// for MacOS only: "Use Metal Performance Shaders"
@@ -127,6 +130,8 @@ namespace
 		MObject renderQuality;
 
 		MObject tahoeVersion;
+
+		MObject textureCachePath;
 	}
 
     struct RenderingDeviceAttributes
@@ -153,6 +158,7 @@ namespace
 		MObject maxDiffuseRayDepth;
 		MObject maxDepthGlossy;
 
+		MObject enableSwatches;
 		MObject thumbnailIterCount;
 		MObject renderMode;
 		MObject motionBlur;
@@ -234,6 +240,17 @@ void FireRenderGlobals::postConstructor()
 	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(obj, FireRenderGlobals::onAttributeChanged, nullptr, &status);
 
 	CHECK_MSTATUS(status);
+
+	// try creating folder for texture cache
+	MString workspace;
+	status = MGlobal::executeCommand(MString("workspace -q -dir;"),	workspace);
+	workspace += "/cache";
+
+	namespace fs = std::experimental::filesystem;
+	if (!fs::is_directory(workspace.asChar()) || !fs::exists(workspace.asChar()))
+	{ // Check if src folder exists
+		fs::create_directory(workspace.asChar());
+	}
 }
 
 MStatus FireRenderGlobals::compute(const MPlug & plug, MDataBlock & data)
@@ -401,10 +418,13 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::cameraMotionBlur = nAttr.create("cameraMotionBlur", "cmb", MFnNumericData::kBoolean, 0, &status);
 	MAKE_INPUT(nAttr);
 
-	Attribute::motionBlurCameraExposure = nAttr.create("motionBlurCameraExposure", "mbce", MFnNumericData::kFloat, 0.1f, &status);
+	Attribute::motionBlurCameraExposure = nAttr.create("motionBlurCameraExposure", "mbce", MFnNumericData::kFloat, 0.5f, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0.0);
-	nAttr.setSoftMax(10.0);
+	nAttr.setMax(1.0);
+
+	Attribute::velocityAOVMotionBlur = nAttr.create("velocityAOVMotionBlur", "vavb", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
 
 	Attribute::cameraType = eAttr.create("cameraType", "camt", kCameraDefault, &status);
 	eAttr.addField("Default", kCameraDefault);
@@ -433,12 +453,20 @@ MStatus FireRenderGlobals::initialize()
 	addRenderQualityModes(eAttr);
 	MAKE_INPUT_CONST(eAttr);
 
-	Attribute::tahoeVersion = eAttr.create("tahoeVersion", "tahv", TahoePluginVersion::RPR1, &status);
-	eAttr.addField("RPR 1", TahoePluginVersion::RPR1);
-	eAttr.addField("RPR 2 (Experimental)", TahoePluginVersion::RPR2);
-
+	Attribute::tahoeVersion = eAttr.create("tahoeVersion", "tahv", TahoePluginVersion::RPR2, &status);
+	eAttr.addField("RPR 1 (Legacy)", TahoePluginVersion::RPR1);
+	eAttr.addField("RPR 2", TahoePluginVersion::RPR2);
 	MAKE_INPUT_CONST(eAttr);
 	CHECK_MSTATUS(addAttribute(Attribute::tahoeVersion));
+
+	MString workspace;
+	status = MGlobal::executeCommand(MString("workspace -q -dir;"), workspace);
+	workspace += "cache";
+	MGlobal::executeCommand(MString("optionVar -sv RPR_textureCachePath") + workspace);
+	MObject defaultTextureCachePath = sData.create(workspace);
+	Attribute::textureCachePath = tAttr.create("textureCachePath", "tcp", MFnData::kString, defaultTextureCachePath);
+	tAttr.setUsedAsFilename(true);
+	addAsGlobalAttribute(tAttr);
 
 	MObject switchDetailedLogAttribute = nAttr.create("detailedLog", "rdl", MFnNumericData::kBoolean, 0, &status);
 	MAKE_INPUT(nAttr);
@@ -463,6 +491,7 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::motionBlur));
 	CHECK_MSTATUS(addAttribute(Attribute::cameraMotionBlur));
 	CHECK_MSTATUS(addAttribute(Attribute::motionBlurCameraExposure));
+	CHECK_MSTATUS(addAttribute(Attribute::velocityAOVMotionBlur));
 
 	CHECK_MSTATUS(addAttribute(Attribute::applyGammaToMayaViews));
 	CHECK_MSTATUS(addAttribute(Attribute::displayGamma));
@@ -871,7 +900,6 @@ void FireRenderGlobals::addAsGlobalAttribute(MFnAttribute& attr)
 	MObject attrObj = attr.object();
 	
 	attr.setStorable(false);
-	attr.setConnectable(false);
 	CHECK_MSTATUS(addAttribute(attrObj));
 
 	m_globalAttributesList.push_back(attrObj);
@@ -981,6 +1009,10 @@ void FireRenderGlobals::createViewportAttributes()
 	nAttr.setSoftMax(100);
 	nAttr.setMax(INT_MAX);
 	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::completionCriteriaMinIterations));
+
+	ViewportRenderAttributes::enableSwatches = nAttr.create("enableSwatches", "ses", MFnNumericData::kBoolean, true, &status);
+	MAKE_INPUT(nAttr);
+	addAsGlobalAttribute(nAttr);
 
 	ViewportRenderAttributes::thumbnailIterCount = nAttr.create("thumbnailIterationCount", "tic", MFnNumericData::kInt, 50, &status);
 	MAKE_INPUT(nAttr);

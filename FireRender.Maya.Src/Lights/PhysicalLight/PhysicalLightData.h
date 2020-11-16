@@ -21,9 +21,11 @@ enum PLType
 {
 	PLTUnknown = -1,
 	PLTArea = 0,
-	PLTSpot,
-	PLTPoint,
-	PLTDirectional
+	PLTSpot = 1,
+	PLTPoint = 2,
+	PLTDirectional = 3,
+	PLTSphere = 4,		// RPR 2.0 only
+	PLTDisk = 5			// RPR 2.0 only
 };
 
 enum PLIntensityUnit
@@ -83,6 +85,14 @@ struct PhysicalLightData
 	// Spot
 	float spotInnerAngle;
 	float spotOuterFallOff;
+
+	// Disk
+	float diskRadius;
+	float diskAngle;
+
+	// Sphere
+
+	float sphereRadius;
 
 	bool shadowsEnabled;
 	float shadowsSoftnessAngle;

@@ -17,6 +17,7 @@ limitations under the License.
 #include <maya/MThreadAsync.h>
 #include "RenderCacheWarningDialog.h"
 #include "maya/MSelectionList.h"
+#include "NorthStarRenderingHelper.h"
 
 #include <mutex>
 
@@ -111,6 +112,14 @@ private:
 	/** Updates Render information at the bottom of Maya's render view */
 	void updateMayaRenderInfo();
 
+	void SwitchCurrentAOVToBeDisplayed(int newAOV);
+	bool ShouldOldAOVBeDisabled(int aov);
+
+	// Called when an attribute on the FireRenderGlobals node change
+	static void globalsChangedCallback(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
+
+	void OnBufferAvailableCallback();
+
 private:
 
 	// Members
@@ -148,6 +157,8 @@ private:
 
 	bool m_needsContextRefresh;
 
+	unsigned int m_currentAOVToDisplay;
+
 	/** True if a render view update is scheduled. */
 	tbb::atomic<bool> m_renderViewUpdateScheduled;
 
@@ -167,4 +178,8 @@ private:
 	std::mutex m_regionUpdateMutex;
 
 	MSelectionList m_previousSelectionList;
+
+	MCallbackId m_renderGlobalsCallback = 0;
+
+	NorthStarRenderingHelper m_NorthStarRenderingHelper;
 };

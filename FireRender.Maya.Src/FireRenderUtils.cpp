@@ -28,9 +28,12 @@ limitations under the License.
 #include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFileObject.h>
+#include <maya/MCommonSystemUtils.h>
+
 #include <cassert>
 #include <vector>
 #include <time.h>
+#include <iostream>
 
 #include "attributeNames.h"
 #include "OptionVarHelpers.h"
@@ -216,6 +219,10 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			renderMode = plug.asInt();
 
+		plug = frGlobalsNode.findPlug("textureCachePath");
+		if (!plug.isNull())
+			textureCachePath = plug.asString();
+
 		plug = frGlobalsNode.findPlug("giClampIrradiance");
 		if (!plug.isNull())
 			giClampIrradiance = plug.asBool();
@@ -390,6 +397,10 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("motionBlurViewport");
 		if (!plug.isNull())
 			viewportMotionBlur = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("velocityAOVMotionBlur");
+		if (!plug.isNull())
+			velocityAOVMotionBlur = plug.asBool();
 		
 		plug = frGlobalsNode.findPlug("motionBlurCameraExposure");
 		if (!plug.isNull())
@@ -415,7 +426,7 @@ void FireRenderGlobalsData::readFromCurrentScene()
 	});
 }
 
-int FireRenderGlobalsData::getThumbnailIterCount()
+int FireRenderGlobalsData::getThumbnailIterCount(bool* pSwatchesEnabled)
 {
 	MObject fireRenderGlobals;
 	GetRadeonProRenderGlobals(fireRenderGlobals);
@@ -423,12 +434,21 @@ int FireRenderGlobalsData::getThumbnailIterCount()
 	// Get Fire render globals attributes
 	MFnDependencyNode frGlobalsNode(fireRenderGlobals);
 
+	if (pSwatchesEnabled != nullptr)
+	{
+		MPlug plug = frGlobalsNode.findPlug("enableSwatches");
+		if (!plug.isNull())
+		{
+			*pSwatchesEnabled = plug.asBool();
+		}
+	}
+
 	MPlug plug = frGlobalsNode.findPlug("thumbnailIterationCount");
 	if (!plug.isNull())
 	{
 		return plug.asInt();
 	}
-
+	
 	return 0;
 }
 
@@ -556,7 +576,7 @@ bool FireRenderGlobalsData::IsMotionBlur(MString name)
 {
 	name = GetPropertyNameFromPlugName(name);
 
-	static const std::set<std::string> propNames { "motionBlur", "cameraMotionBlur", "motionBlurCameraExposure", "viewportMotionBlur"};
+	static const std::set<std::string> propNames { "motionBlur", "cameraMotionBlur", "motionBlurCameraExposure", "viewportMotionBlur", "velocityAOVMotionBlur"};
 
 	return propNames.find(name.asChar()) != propNames.end();
 }
@@ -1093,35 +1113,40 @@ int areShadersCached()
 
 MString getLogFolder()
 {
-	auto path = MGlobal::executeCommandStringResult("getenv RPR_MAYA_TRACE_PATH");
-	if (path.length() == 0)
-	{
-#ifdef WIN32
-		PWSTR sz = nullptr;
-		if (S_OK == ::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &sz))
-		{
-			static wchar_t buff[256 + 1] = {};
-			if (!buff[0])
-			{
-				auto t = time(NULL);
-				auto tm = localtime(&t);
-				wsprintfW(buff, L"%02d.%02d.%02d-%02d.%02d", tm->tm_year - 100, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
-			}
+    MString path = MGlobal::executeCommandStringResult("getenv RPR_MAYA_TRACE_PATH");
+    if (path.length() == 0)
+    {
+        static char buff[256 + 1] = {};
+        if (!buff[0])
+        {
+            auto t = time(NULL);
+            auto tm = localtime(&t);
+            sprintf(buff, "%02d.%02d.%02d-%02d.%02d", tm->tm_year - 100, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
+        }
 
-			auto cacheFolder = std::wstring(sz) + L"\\RadeonProRender\\Maya\\Trace\\" + buff;
-			switch (SHCreateDirectoryExW(nullptr, cacheFolder.c_str(), nullptr))
-			{
-			case ERROR_SUCCESS:
-			case ERROR_FILE_EXISTS:
-			case ERROR_ALREADY_EXISTS:
-				path = cacheFolder.c_str();
-			}
-		}
+#ifdef WIN32
+        std::string folderPart(buff);
+
+        PWSTR sz = nullptr;
+        if (S_OK == ::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &sz))
+        {
+            auto cacheFolder = std::wstring(sz) + L"\\RadeonProRender\\Maya\\Trace\\" + std::wstring(folderPart.begin(), folderPart.end());
+            switch (SHCreateDirectoryExW(nullptr, cacheFolder.c_str(), nullptr))
+            {
+            case ERROR_SUCCESS:
+            case ERROR_FILE_EXISTS:
+            case ERROR_ALREADY_EXISTS:
+                path = cacheFolder.c_str();
+            }
+        }
+        
 #elif defined(OSMac_)
-		path = "/Users/Shared/RadeonProRender/trace";
+        path = "/Users/Shared/RadeonProRender/trace/" + MString(buff);
+        MCommonSystemUtils::makeDirectory(path);
 #endif
-	}
-	return path;
+        
+    }
+    return path;
 }
 
 MString getSourceImagesPath()
@@ -2168,4 +2193,92 @@ void EnableAOVsFromRSIfEnvVarSet(FireRenderContext& context, FireRenderAOVs& aov
 	}
 
 	aovs.applyToContext(context);
+}
+
+template<>
+char** GetEnviron(void)
+{
+	return environ;
+}
+
+template<>
+wchar_t** GetEnviron(void)
+{
+#ifndef __APPLE__
+	return _wenviron;
+#else
+	return nullptr;
+#endif
+}
+
+bool IsUnicodeSystem(void)
+{
+#ifdef __APPLE__
+	return false;
+#else
+	return GetEnviron<wchar_t*>() != nullptr;
+#endif
+}
+
+template <>
+std::pair<std::string, std::string> GetPathDelimiter(void)
+{ 
+	return std::make_pair(std::string("\\\\"), std::string("\\")); 
+}
+
+template <>
+std::pair<std::wstring, std::wstring> GetPathDelimiter(void)
+{ 
+	return std::make_pair(std::wstring(L"\\\\"), std::wstring(L"\\"));
+}
+
+template <>
+size_t FindDelimiter(std::string& tmp)
+{
+	return tmp.find("=");
+}
+
+template <>
+size_t FindDelimiter(std::wstring& tmp)
+{
+	return tmp.find(L"=");
+}
+
+template <>
+std::tuple<std::string, std::string> ProcessEVarSchema(const std::string& eVar)
+{
+	return std::make_tuple(std::string("%" + eVar + "%"), std::string("${" + eVar + "}"));
+}
+
+template <>
+std::tuple<std::wstring, std::wstring> ProcessEVarSchema(const std::wstring& eVar)
+{
+	return std::make_tuple(std::wstring(L"%" + eVar + L"%"), std::wstring(L"${" + eVar + L"}"));
+}
+
+// m_createMayaSoftwareCommonGlobalsTab.kExt3 = name.#.ext <= and corresponding pattern on non-English Mayas
+void GetUINameFrameExtPattern(std::wstring& nameOut, std::wstring& extOut)
+{
+	MString command = R"(
+		proc string _mayaVarToPlugin() 
+		{
+			return (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt3"));
+		}
+		_mayaVarToPlugin();
+	)";
+	MString result;
+	MStatus res = MGlobal::executeCommand(command, result);
+	CHECK_MSTATUS(res);
+
+	nameOut = result.asWChar();
+	size_t firstDelimiter = nameOut.find(L".");
+	size_t lastDelimiter = nameOut.rfind(L".");
+
+	extOut = nameOut.substr(lastDelimiter + 1, nameOut.length() - 1);
+	nameOut = nameOut.substr(0, firstDelimiter);
+}
+
+TimePoint GetCurrentChronoTime()
+{
+	return std::chrono::high_resolution_clock::now();
 }

@@ -12,6 +12,7 @@ limitations under the License.
 ********************************************************************/
 #include "FileNodeConverter.h"
 #include "FireMaya.h"
+#include "../Context/TahoeContext.h"
 
 #include <sstream>
 
@@ -48,6 +49,8 @@ void LoadAndAssignUdimImages(const MString& nodeName,  frw::Context context, frw
 		rpr_uint tileIndex = std::stoi(fileName.substr(index, tagLength));
 		
 		frw::Image tile(context, fileName.c_str());
+		tile.SetName(fileName.c_str());
+
 		masterImage.SetUDIM(tileIndex, tile);
 	}
 }
@@ -67,6 +70,12 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 	frw::Image image;
 	MString colorSpace;
 
+	MPlug colorSpacePlug = m_params.shaderNode.findPlug("colorSpace");
+	if (!colorSpacePlug.isNull())
+	{
+		colorSpace = colorSpacePlug.asString();
+	}
+
 	if (fileNodeUdimMode != uvMode)
 	{	
 		bool useFrameExt = m_params.shaderNode.findPlug("useFrameExtension").asBool();
@@ -80,13 +89,7 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 			{
 				texturePath = fileNames[0];
 			}
-		}		
-
-		MPlug colorSpacePlug = m_params.shaderNode.findPlug("colorSpace");
-		if (!colorSpacePlug.isNull())
-		{
-			colorSpace = colorSpacePlug.asString();
-		}
+		}	
 
 		image = m_params.scope.GetImage(texturePath, colorSpace, m_params.shaderNode.name());
 		if (!image.IsValid())
@@ -105,7 +108,9 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 	}
 
 	frw::ImageNode imageNode(m_params.scope.MaterialSystem());
+
 	image.SetGamma(ColorSpace2Gamma(colorSpace));
+	image.SetColorSpace(colorSpace.asChar()); // if RPR_CONTEXT_OCIO_CONFIG_PATH is invalid, this colorspace is automatically ignored and the gamma will be used.
 	imageNode.SetMap(image);
 
 	frw::Value uvVal = m_params.scope.GetConnectedValue(m_params.shaderNode.findPlug("uvCoord"));
@@ -126,7 +131,24 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 			MPlug alphaIsLuminancePlug = m_params.shaderNode.findPlug("alphaIsLuminance");
 			bool alphaIsLuminance = alphaIsLuminancePlug.asBool();
 
-			bool shouldUseAlphaIsLuminance = alphaIsLuminance || !image.HasAlphaChannel();
+			bool imageHasAlpha = false;
+			
+			if (TahoeContext::IsGivenContextRPR2(dynamic_cast<const FireRenderContext*>(m_params.scope.GetIContextInfo())))
+			{
+				MPlug fileHasAlphaPlug = m_params.shaderNode.findPlug("fileHasAlpha");
+
+				if (!fileHasAlphaPlug.isNull())
+				{
+					imageHasAlpha = fileHasAlphaPlug.asBool();
+				}
+			}
+			else
+			{
+				// RPR1 case
+				imageHasAlpha = image.HasAlphaChannel();
+			}
+
+			bool shouldUseAlphaIsLuminance = alphaIsLuminance || !imageHasAlpha;
 			if (shouldUseAlphaIsLuminance)
 			{
 				// Calculate alpha is luminance value

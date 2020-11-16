@@ -22,6 +22,7 @@ public:
 	TahoeContext();
 
 	static rpr_int GetPluginID(TahoePluginVersion version);
+	static bool IsGivenContextRPR2(const FireRenderContext* pContext);
 
 	void setupContext(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) override;
 
@@ -34,7 +35,16 @@ public:
 	virtual bool IsHairSupported() const override;
 	virtual bool IsVolumeSupported() const override;
 
+	virtual bool IsAOVSupported(int aov) const;
+
+	virtual bool IsPhysicalLightTypeSupported(PLType lightType) const override;
+
 	virtual bool MetalContextAvailable() const override;
+
+	virtual void SetRenderUpdateCallback(RenderUpdateCallback callback, void* data) override;
+	virtual void AbortRender() override;
+
+	virtual void SetupPreviewMode() override;
 
 protected:
 	rpr_int CreateContextInternal(rpr_creation_flags createFlags, rpr_context* pContext) override;
@@ -45,11 +55,15 @@ protected:
 
 	bool IsGLInteropEnabled() const;
 
+	virtual void OnPreRender() override;
+
 private:
 	TahoePluginVersion m_PluginVersion;
 
 	typedef std::map< TahoePluginVersion, rpr_int> LoadedPluginMap;
 	static LoadedPluginMap m_gLoadedPluginsIDsMap;
+
+	bool m_PreviewMode;
 };
 
 typedef std::shared_ptr<TahoeContext> TahoeContextPtr;

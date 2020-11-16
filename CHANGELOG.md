@@ -1,43 +1,45 @@
-# Version 2.9.42
+# Version 3.0
 
-## New features
--   **Beta support for RPR 2.0 and the capability of using it for Maya Interactive Photorealistic Render (IPR) has been added.**
--   The Arnold to RPR conversion script has been updated.
--   Support for Maya nHair has been added.  
--   A field has been added to the Transform nodes to set RPR Object ID (used with the Object ID AOV).
--   Support for UDIM (Mari) textures in the File node has been added.
--   Sync and Render time are now displayed in the Maya console.
--   A config.json file for rendering via the command line or cloud is exported with an .rpr file.
--   The ML Denoising filter speed has been improved.
--   The capability to assign a “Light Group ID” attribute to lights has been added. With the corresponding AOV, this allows artists to separate lighting via groups of lights.  
--   Support for Image texture sequences for the Image File node has been added.
--   Support for Maya GPU cache objects (Alembic files) has been added.
--   For users interested in testing the latest developments in the Radeon ProRender for Maya plugin, a weekly “Development Build” will be posted on future Mondays.  See https://github.com/GPUOpen-LibrariesAndSDKs/RadeonProRenderMayaPlugin/releases or follow the repository on github to get weekly updates.
+## New Features:
+-   The new plug-in version incorporates version 2.0 of our Radeon™ ProRender system and brings about significant changes and enhancements:
+    - Hardware-accelerated ray tracing on AMD Radeon™ RX 6000 series GPUs.
+    - Better scaling across multiple devices: the use of two or more GPUs gives a better performance improvement with Radeon ProRender 2.0 than with Radeon ProRender 1.0 in most cases.
+    - Less noise for a given number of render samples.  Using the same number of samples as with Radeon ProRender 1.0 may be slower in some scenes, but noise will be significantly lower.  
+    - RPR 2.0 is the default render mode called “Full”.  Users who wish to use RPR 1.0 can set the render quality mode to “Legacy”.
+    - A new setting for the texture cache has been added.  The specified folder will cache textures for rendering, and can be cleaned up by the user if it becomes too large.
+    - Support for disk and sphere light types in the Physical Light has been added.
+-   A script to convert V-Ray scenes to RPR has been added.
+-   A setting has been added to allow “Motion Blur only in the Velocity AOV” in the Motion Blur settings.  Enabling this setting means that all AOVs will not have motion blur, but the Velocity AOV will contain motion blur information to allow compositing of post-process motion blur.
+-   Support of OpenColorIO color space management via Maya’s preferences has been added.
 
-## Fixed issues
--   The SetRange, RemapHSV and RemapValue nodes now process faster.
--   A crash can no longer occur if the Material nodes are connected to a Transform node.
--   In some instances when the render settings were imported to a scene, some render layers failed to export — fixed.
--   Instances of lights were not exported correctly — fixed.
--   .rpr Export did not always use the correct camera — fixed.
--   The Anti-Aliasing filter could not be set to < 1.0 — the minimum value now is 0.0.
--   Physical Light normalization was not taking transform scaling into account — fixed.
--   Various Conversion scripts no longer can result in failures.
--   RPR lights were showing up in the viewport as Locators. They are now Lights.
--   The camera size in GLTF files is now correct.
--   Various issues have been fixed with render layers using shader overrides and with updating them for IPR.
--   The plugin can now start on macOS with the Japanese language set.
--   Various bugs have been fixed in the OpenVDB node UI.
--   Lights created from the Hypershade no longer have incorrect names in the outliner.
--   Some settings in the “System” Tab have been moved to other tabs. In particular, the Render Engine and Ray Depth settings have been moved to the Quality tab and are now saved with the scene, not in the Maya preferences.
--   Animated lights are exported correctly with GLTF
+## Issues Fixed:
+-   Using the Uber shader with the Metalness reflection mode now matches the Disney shader PBR standard more closely.
+-   File paths for textures can now include environment variables.
+-   Changes in the Thumbnail iteration Count parameter did not cause any changes without a restart of Maya — fixed.
+-   The setting to “Save all AOVs” was not being saved with the scene — fixed.
+-   Any AOV can now be viewed in the IPR viewer.
+-   Errors of the type “Unable to create mesh” now contain more info.
+-   Some alembic shapes were receiving incorrect UV coordinates — fixed.
+-   A crash which could occur when the user edited a ramp node in the IPR mode has been fixed.
+-   Better logging during batch rendering has been enabled.
+-   nHair node attributes can now be used to render the hair color.
+-   The issues fixed relating to .rpr file export:
+    - The config.json file now has the same name as the exported .rpr file.
+    - Support of non-ASCII characters in the file path when exporting an .rpr file has been added.
+    - Export of .rpr config.json files now reflects the selected render quality mode.
+    - Animated .rpr files can now be exported.
+    - The same number of config.json files and .rpr files are now exported.
+-   Motion blur was previously scaled using “frames per second”.  Now it simply uses frame time.  That is, the camera “exposure” setting is specified in fractions of the length of a frame.  This corresponds to the camera’s shutter being open for some fraction of the frame time.  Motion Blur, particularly for rotation, is now more correct.
+-   Some fixes were done to the Arnold converter to support the aiFacingRatio and aiRange nodes, as well as fixes for SSS in aiStandardSurface conversion.
 
-## Known issues
--   RPR 2.0 known issues
-    - Shadow and reflection catchers are not yet enabled
-    - Adaptive sampling is disabled
-    - Adaptive subdivision is disabled
-    - On macOS, currently RPR 2.0 uses OpenCL and not metal.
+## Known Issues:
+-   RPR 2.0 has some forthcoming features.  If these are needed, please use the “Legacy” render mode:
+    - Heterogenous volumes;
+    - Adaptive sampling;
+    - Adaptive subdivision.
+-   The first render on macOS® with RPR 2.0 can take a few minutes to start, while the kernels are being compiled.
+-   macOS® Mojave users should use Legacy mode if seeing crashes with Full mode.
+-   Pixelated textures or color artifacts in textures can sometimes happen in Full mode.  
 
 
 # Version 2.9.4
