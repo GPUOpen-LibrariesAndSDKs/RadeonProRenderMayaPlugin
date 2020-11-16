@@ -49,6 +49,8 @@ void LoadAndAssignUdimImages(const MString& nodeName,  frw::Context context, frw
 		rpr_uint tileIndex = std::stoi(fileName.substr(index, tagLength));
 		
 		frw::Image tile(context, fileName.c_str());
+		tile.SetName(fileName.c_str());
+
 		masterImage.SetUDIM(tileIndex, tile);
 	}
 }
