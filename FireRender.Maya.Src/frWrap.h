@@ -1023,6 +1023,15 @@ namespace frw
 			checkStatus(res);
 		}
 
+		void SetMotionTransform(const float* tm, bool transpose = false)
+		{
+			rpr_status res = rprShapeSetMotionTransform(Handle(), false, tm, 1); // matrix at time=1
+			checkStatus(res);
+
+			res = rprShapeSetMotionTransformCount(Handle(), 1);
+			checkStatus(res);
+		}
+
 		void SetObjectId(rpr_uint id)
 		{
 			auto res = rprShapeSetObjectID(Handle(), id);
@@ -1147,7 +1156,7 @@ namespace frw
 		Node GetDisplacementMap();
 		void RemoveDisplacement();
 		void SetSubdivisionFactor(int sub);
-		void SetAdaptiveSubdivisionFactor(float adaptiveFactor, rpr_camera camera, rpr_framebuffer frameBuf);
+		void SetAdaptiveSubdivisionFactor(float adaptiveFactor, float height, rpr_camera camera, rpr_framebuffer frameBuf, bool isRpr20);
 		void SetSubdivisionCreaseWeight(float weight);
 		void SetSubdivisionBoundaryInterop(rpr_subdiv_boundary_interfop_type type);
 
@@ -1243,6 +1252,22 @@ namespace frw
 			checkStatus(res);
 		}
 
+		void SetColorSpace(const char *colorspace)
+		{
+			if (data().m_udimsMap.empty())
+			{
+				rpr_int res = rprImageSetOcioColorspace(Handle(), colorspace);
+				checkStatus(res);
+			}
+			else
+			{
+				for (auto udimMap : data().m_udimsMap)
+				{
+					udimMap.second.SetColorSpace(colorspace);
+				}
+			}
+		}
+
 		void SetUDIM(rpr_uint tileIndex, frw::Image image)
 		{
 			rpr_int res = rprImageSetUDIM(Handle(), tileIndex, image.Handle());
@@ -1272,6 +1297,24 @@ namespace frw
 		}
 	};
 
+	class SphereLight : public Light
+	{
+		DECLARE_OBJECT_NO_DATA(SphereLight, Light);
+	public:
+		SphereLight(rpr_light h, const Context &context) : Light(h, context, new Data()) {}
+		void SetRadiantPower(float r, float g, float b)
+		{
+			auto res = rprSphereLightSetRadiantPower3f(Handle(), r, g, b);
+			checkStatus(res);
+		}
+
+		void SetRadius(float radius)
+		{
+			auto res = rprSphereLightSetRadius(Handle(), radius);
+			checkStatus(res);
+		}
+	};
+
 	class SpotLight : public Light
 	{
 		DECLARE_OBJECT_NO_DATA(SpotLight, Light);
@@ -1282,9 +1325,34 @@ namespace frw
 			auto res = rprSpotLightSetRadiantPower3f(Handle(), r, g, b);
 			checkStatus(res);
 		}
+
 		void SetConeShape(float innerAngle, float outerAngle)
 		{
 			auto res = rprSpotLightSetConeShape(Handle(), innerAngle, outerAngle);
+			checkStatus(res);
+		}
+	};
+
+	class DiskLight : public Light
+	{
+		DECLARE_OBJECT_NO_DATA(DiskLight, Light);
+	public:
+		DiskLight(rpr_light h, const Context &context) : Light(h, context, new Data()) {}
+		void SetRadiantPower(float r, float g, float b)
+		{
+			auto res = rprDiskLightSetRadiantPower3f(Handle(), r, g, b);
+			checkStatus(res);
+		}
+
+		void SetRadius(float radius)
+		{
+			auto res = rprDiskLightSetRadius(Handle(), radius);
+			checkStatus(res);
+		}
+
+		void SetAngle(float angle)
+		{
+			auto res = rprDiskLightSetAngle(Handle(), angle);
 			checkStatus(res);
 		}
 	};
@@ -1852,7 +1920,7 @@ namespace frw
 			rpr_int numberOfTexCoordLayers, const rpr_float** texcoords, const size_t* num_texcoords, const rpr_int* texcoord_stride,
 			const rpr_int* vertex_indices, rpr_int vidx_stride,
 			const rpr_int* normal_indices, rpr_int nidx_stride, const rpr_int** texcoord_indices,
-			const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces) const;
+			const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces, std::string optionalMeshName = "") const;
 
 		PointLight CreatePointLight()
 		{
@@ -1864,6 +1932,16 @@ namespace frw
 			return PointLight(h, *this);
 		}
 
+		SphereLight CreateSphereLight()
+		{
+			FRW_PRINT_DEBUG("CreateSphereLight()");
+			rpr_light h;
+			auto status = rprContextCreateSphereLight(Handle(), &h);
+			checkStatusThrow(status, "Unable to create sphere light");
+
+			return SphereLight(h, *this);
+		}
+
 		SpotLight CreateSpotLight()
 		{
 			FRW_PRINT_DEBUG("CreateSpotLight()");
@@ -1872,6 +1950,16 @@ namespace frw
 			checkStatusThrow(status, "Unable to create spot light");
 
 			return SpotLight(h, *this);
+		}
+
+		DiskLight CreateDiskLight()
+		{
+			FRW_PRINT_DEBUG("CreateDiskLight()");
+			rpr_light h;
+			auto status = rprContextCreateDiskLight(Handle(), &h);
+			checkStatusThrow(status, "Unable to create disk light");
+
+			return DiskLight(h, *this);
 		}
 
 		EnvironmentLight CreateEnvironmentLight()
@@ -2148,6 +2236,23 @@ namespace frw
 
 		/// set the target buffer for render calls
 		void SetAOV(FrameBuffer frameBuffer, rpr_aov aov = RPR_AOV_COLOR);
+
+		void SetUpdateCallback(void* callback, void* userData)
+		{
+			rpr_int status = RPR_SUCCESS;
+			status = rprContextSetParameterByKeyPtr(Handle(), RPR_CONTEXT_RENDER_UPDATE_CALLBACK_FUNC, callback);
+			assert(status == RPR_SUCCESS);
+
+			status = rprContextSetParameterByKeyPtr(Handle(), RPR_CONTEXT_RENDER_UPDATE_CALLBACK_DATA, userData);
+			assert(status == RPR_SUCCESS);
+		}
+
+		void AbortRender()
+		{
+			rpr_int status = RPR_SUCCESS;
+			status = rprContextAbortRender(Handle());
+			assert(status == RPR_SUCCESS);
+		}
 
 		void Render()
 		{
@@ -3781,7 +3886,7 @@ namespace frw
 		checkStatus(res);
 	}
 
-	inline void Shape::SetAdaptiveSubdivisionFactor(float adaptiveFactor, rpr_camera camera, rpr_framebuffer frameBuf)
+	inline void Shape::SetAdaptiveSubdivisionFactor(float adaptiveFactor, float image_height, rpr_camera camera, rpr_framebuffer frameBuf, bool isRpr20)
 	{
 		// convert factor from size of subdiv in pixel to RPR
 		// RPR wants the subdiv factor as the "number of faces per pixel" 
@@ -3795,11 +3900,23 @@ namespace frw
 			adaptiveFactor = 0.0001f;
 		}
 
+		// commenting out the formula but not deleting it in case we will need to return it
 		rpr_int calculatedFactor = int(log2(1.0 / adaptiveFactor * 16.0));
 
-		rpr_int res = rprShapeAutoAdaptSubdivisionFactor(Handle(), frameBuf, camera, calculatedFactor);
+		if (!isRpr20)
+		{
+			rpr_int res = rprShapeAutoAdaptSubdivisionFactor(Handle(), frameBuf, camera, calculatedFactor);
+			checkStatusThrow(res, "Unable to set Adaptive Subdivision!");
+		}
+		else
+		{
+			float autoRatioCap = 1.0 / image_height;
+			rpr_int res = rprShapeSetSubdivisionAutoRatioCap(Handle(), autoRatioCap);
+			checkStatusThrow(res, "Unable to set Adaptive Subdivision!");
 
-		checkStatusThrow(res, "Unable to set Adaptive Subdivision!");
+			res = rprShapeSetSubdivisionFactor(Handle(), calculatedFactor);
+			checkStatusThrow(res, "Unable to set Adaptive Subdivision!");
+		}
 	}
 
 	inline void Shape::SetSubdivisionCreaseWeight(float weight)
@@ -3990,7 +4107,7 @@ namespace frw
 		rpr_int numberOfTexCoordLayers, const rpr_float** texcoords, const size_t* num_texcoords, const rpr_int* texcoord_stride,
 		const rpr_int* vertex_indices, rpr_int vidx_stride,
 		const rpr_int* normal_indices, rpr_int nidx_stride, const rpr_int** texcoord_indices,
-		const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces) const
+		const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces, std::string optionalMeshName) const
 	{
 		FRW_PRINT_DEBUG("CreateMesh() - %d faces\n", num_faces);
 		rpr_shape shape = nullptr;
@@ -4005,7 +4122,7 @@ namespace frw
 			tidx_stride, num_face_vertices, num_faces,
 			&shape);
 
-		checkStatusThrow(status, "Unable to create mesh");
+		checkStatusThrow(status, ("Unable to create mesh: " + optionalMeshName).c_str());
 
 		Shape shapeObj (shape, *this);
 		shapeObj.SetUVCoordinatesSetFlag(numberOfTexCoordLayers > 0);

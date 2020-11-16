@@ -149,6 +149,7 @@
     <ClCompile Include="..\RadeonProRenderSDK\RadeonProRender\inc\Math\half.cpp" />
     <ClCompile Include="..\RadeonProRenderSDK\RadeonProRender\rprTools\RPRStringIDMapper.cpp" />
     <ClCompile Include="..\RadeonProRenderSDK\RadeonProRender\rprTools\RprTools.cpp" />
+    <ClCompile Include="AnimationExporter.cpp" />
     <ClCompile Include="athenaCmd.cpp" />
     <ClCompile Include="athenaSystemInfo_Win.cpp" />
     <ClCompile Include="CompositeWrapper.cpp" />
@@ -265,6 +266,7 @@
     <ClCompile Include="MayaStandardNodesSupport\RGBToHSVConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\SetRangeConverter.cpp" />
     <ClCompile Include="MayaStandardNodesSupport\VectorProductConverter.cpp" />
+    <ClCompile Include="NorthStarRenderingHelper.cpp" />
     <ClCompile Include="OptionVarHelpers.cpp" />
     <ClCompile Include="pluginMain.cpp" />
     <ClCompile Include="FireRenderMaterial.cpp" />
@@ -301,6 +303,7 @@
     <ClInclude Include="..\RadeonProRenderSharedComponents\src\ImageFilter\ImageFilter.h" />
     <ClInclude Include="..\RadeonProRenderSharedComponents\src\Utils\Utils.h" />
     <ClInclude Include="..\RadeonProRenderSharedComponents\src\XMLMaterialExport\XMLMaterialExportCommon.h" />
+    <ClInclude Include="AnimationExporter.h" />
     <ClInclude Include="athenaCmd.h" />
     <ClInclude Include="athenaSystemInfo_Win.h" />
     <ClInclude Include="attributeNames.h" />
@@ -426,6 +429,7 @@
     <ClInclude Include="MayaStandardNodesSupport\RGBToHSVConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\SetRangeConverter.h" />
     <ClInclude Include="MayaStandardNodesSupport\VectorProductConverter.h" />
+    <ClInclude Include="NorthStarRenderingHelper.h" />
     <ClInclude Include="OptionVarHelpers.h" />
     <ClInclude Include="RenderCacheWarningDialog.h" />
     <ClInclude Include="RenderProgressBars.h" />

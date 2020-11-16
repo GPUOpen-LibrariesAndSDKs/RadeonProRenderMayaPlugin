@@ -13,7 +13,6 @@ limitations under the License.
 #include <GL/glew.h>
 #include <maya/M3dView.h>
 #include "FireRenderContext.h"
-#include "FireRenderUtils.h"
 #include <cassert>
 #include <float.h>
 #include <maya/MDagPathArray.h>
@@ -60,16 +59,9 @@ using namespace FireMaya;
 std::map<FireRenderContext*,FireRenderContext::Lock::frcinfo> FireRenderContext::Lock::lockMap;
 #endif
 
-#ifdef MAYA2015
-#undef min
-#undef max
-#endif
-
 #include <imageio.h>
 
-#ifndef MAYA2015
 #include <maya/MUuid.h>
-#endif
 #include "FireRenderIBL.h"
 #include <maya/MFnRenderLayer.h>
 
@@ -96,7 +88,6 @@ FireRenderContext::FireRenderContext() :
 	m_viewportMotionBlur(false),
 	m_motionBlurCameraExposure(0.0f),
 	m_cameraAttributeChanged(false),
-	m_renderStartTime(0),
 	m_samplesPerUpdate(1),
 	m_secondsSpentOnLastRender(0.0),
 	m_lastRenderResultState(NOT_SET),
@@ -119,11 +110,12 @@ FireRenderContext::FireRenderContext() :
 	m_shadowWeight(1),
 	m_bgWeight(1),
 	m_RenderType(RenderType::Undefined),
-	m_bIsGLTFExport(false)
+	m_bIsGLTFExport(false),
+	m_IterationsPowerOf2Mode(false)
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
 
-	m_workStartTime = clock();
+	m_workStartTime = GetCurrentChronoTime();
 	m_state = StateUpdating;
 	m_dirty = false;
 }
@@ -218,12 +210,6 @@ void FireRenderContext::enableAOVAndReset(int index, bool flag, rpr_GLuint* glTe
 	resetAOV(index, flag ? glTexture : nullptr);
 }
 
-#if (RPR_VERSION_MINOR < 34)
-std::set<int> aovsExcluded;
-#else
-std::set<int> aovsExcluded{ RPR_AOV_VIEW_SHADING_NORMAL, RPR_AOV_COLOR_RIGHT };
-#endif
-
 void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture)
 {
 	rpr_framebuffer_format fmt = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
@@ -231,9 +217,10 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 	m.framebufferAOV[index].Reset();
 	m.framebufferAOV_resolved[index].Reset();
 
-	auto it = aovsExcluded.find(index); // not all AOVs listed in RadeonProRender.h are supported by Tahoe
-	if (it != aovsExcluded.end())
+	if (!IsAOVSupported(index))
+	{
 		return;
+	}
 
 	if (aovEnabled[index]) 
     {
@@ -256,10 +243,7 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 	}
 	else
 	{
-		if (IsAOVSupported(index))
-		{
-			context.SetAOV(nullptr, index);
-		}
+		context.SetAOV(nullptr, index);
 	}
 }
 
@@ -736,9 +720,8 @@ void FireRenderContext::setRenderMode(RenderMode renderMode)
 	setDirty();
 }
 
-void FireRenderContext::setPreview()
+void FireRenderContext::SetPreviewMode(int preview)
 {
-	int preview = m_interactive || (m_RenderType == RenderType::Thumbnail); 
 	GetContext().SetParameter(RPR_CONTEXT_PREVIEW, preview);
 }
 
@@ -860,8 +843,24 @@ void FireRenderContext::initSwatchScene()
 	m_globals.readFromCurrentScene();
 	setupContext(m_globals);
 
+	UpdateCompletionCriteriaForSwatch();
+
+	SetupPreviewMode();
+}
+
+void FireRenderContext::UpdateCompletionCriteriaForSwatch()
+{
 	CompletionCriteriaParams completionParams;
-	int iterations = FireRenderGlobalsData::getThumbnailIterCount();
+
+	bool enableSwatches = false;
+
+	int iterations = FireRenderGlobalsData::getThumbnailIterCount(&enableSwatches);
+
+	if (!enableSwatches)
+	{
+		iterations = 0;
+	}
+
 	completionParams.completionCriteriaMaxIterations = iterations;
 	completionParams.completionCriteriaMinIterations = iterations;
 
@@ -869,15 +868,7 @@ void FireRenderContext::initSwatchScene()
 
 	setSamplesPerUpdate(iterations);
 	setCompletionCriteria(completionParams);
-
-	setPreview();
 }
-
-long TimeDiff(time_t currTime, time_t startTime)
-{
-	return (long)((currTime - startTime) * 1000 / CLOCKS_PER_SEC);
-}
-
 
 void FireRenderContext::render(bool lock)
 {
@@ -888,6 +879,8 @@ void FireRenderContext::render(bool lock)
 
 	if (!context)
 		return;
+
+	OnPreRender();
 
 	if (m_restartRender)
 	{
@@ -912,9 +905,14 @@ void FireRenderContext::render(bool lock)
 		}
 
 		m_restartRender = false;
-		m_renderStartTime = clock();
+		m_renderStartTime = GetCurrentChronoTime();
 		m_currentIteration = 0;
 		m_currentFrame = 0;
+
+		if (m_IterationsPowerOf2Mode)
+		{
+			m_samplesPerUpdate = 1;
+		}
 	}
 
 	// may need to change iteration step
@@ -936,7 +934,7 @@ void FireRenderContext::render(bool lock)
 
 	progressData.currentIndex = m_currentIteration;
 	progressData.totalCount = m_completionCriteriaParams.completionCriteriaMaxIterations;
-	progressData.currentTimeInMiliseconds = TimeDiff(clock(), m_workStartTime);
+	progressData.currentTimeInMiliseconds = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_workStartTime);
 	progressData.progressType = ProgressType::RenderPassStarted;
 
 	TriggerProgressCallback(progressData);
@@ -945,6 +943,15 @@ void FireRenderContext::render(bool lock)
 		context.RenderTile(m_region.left, m_region.right+1, m_height - m_region.top - 1, m_height - m_region.bottom);
 	else
 		context.Render();
+
+	if (m_IterationsPowerOf2Mode)
+	{
+		const int maxIterations = 32;
+		if (m_samplesPerUpdate < maxIterations)
+		{
+			m_samplesPerUpdate = m_samplesPerUpdate * 2;
+		}
+	}
 
 	if (m_currentIteration == 0)
 	{
@@ -1258,21 +1265,45 @@ bool FireRenderContext::ConsiderShadowReflectionCatcherOverride(const ReadFrameB
 		m.framebufferAOV[RPR_AOV_OPACITY] &&
 		scope.GetReflectionCatcherShader();
 
+	TahoePluginVersion version = GetTahoeVersionToUse();
+	bool isRPR20 = version == TahoePluginVersion::RPR2;
+
 	if (isShadowCather && isReflectionCatcher)
 	{
-		compositeReflectionShadowCatcherOutput(params);
+		if (isRPR20)
+		{
+			rifReflectionShadowCatcherOutput(params);
+		}
+		else
+		{
+			compositeReflectionShadowCatcherOutput(params);
+		}
 		return true;
 	}
 
 	if (isShadowCather)
 	{
-		compositeShadowCatcherOutput(params);
+		if (isRPR20)
+		{
+			rifShadowCatcherOutput(params);
+		}
+		else
+		{
+			compositeShadowCatcherOutput(params);
+		}
 		return true;
 	}
 
 	if (isReflectionCatcher)
 	{
-		compositeReflectionCatcherOutput(params);
+		if (isRPR20)
+		{
+			rifReflectionCatcherOutput(params);
+		}
+		else
+		{
+			compositeReflectionCatcherOutput(params);
+		}
 		return true;
 	}
 
@@ -1289,7 +1320,7 @@ void FireRenderContext::DebugDumpAOV(int aov) const
 		,{RPR_AOV_OPACITY, "RPR_AOV_OPACITY" }
 		,{RPR_AOV_WORLD_COORDINATE, "RPR_AOV_WORLD_COORDINATE" }
 		,{RPR_AOV_UV, "RPR_AOV_UV" }
-		,{RPR_AOV_MATERIAL_IDX, "RPR_AOV_MATERIAL_IDX" }
+		,{RPR_AOV_MATERIAL_ID, "RPR_AOV_MATERIAL_IDX" }
 		,{RPR_AOV_GEOMETRIC_NORMAL, "RPR_AOV_GEOMETRIC_NORMAL" }
 		,{RPR_AOV_SHADING_NORMAL, "RPR_AOV_SHADING_NORMAL" }
 		,{RPR_AOV_DEPTH, "RPR_AOV_DEPTH" }
@@ -2008,6 +2039,7 @@ void FireRenderContext::setMotionBlurParameters(const FireRenderGlobalsData& glo
 	m_cameraMotionBlur = m_globals.cameraMotionBlur;
 	m_motionBlurCameraExposure = m_globals.motionBlurCameraExposure;
 	m_viewportMotionBlur = globalData.viewportMotionBlur;
+	m_velocityAOVMotionBlur = globalData.velocityAOVMotionBlur;
 }
 
 bool FireRenderContext::isInteractive() const
@@ -2115,7 +2147,10 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 			}
 			else if (dagNode.typeId() == FireMaya::TypeId::FireRenderPhysicalLightLocator)
 			{
-				ob = CreateSceneObject<FireRenderPhysLight, NodeCachingOptions::AddPath>(dagPath);
+				if (IsPhysicalLightTypeSupported(FireRenderPhysLight::GetPhysLightType(dagPath.node())))
+				{
+					ob = CreateSceneObject<FireRenderPhysLight, NodeCachingOptions::AddPath>(dagPath);
+				}
 			}
 			else
 			{
@@ -2177,7 +2212,14 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		}
 		else if (dagNode.typeName() == "locator" && m_bIsGLTFExport)
 		{
-			ob = CreateSceneObject<FireRenderCustomEmitter, NodeCachingOptions::DontAddPath>(dagPath);
+			// Custom locators with custom RPR "RPRIsEmitter" flag set to 1 should be treated as custom emitters
+			// Needed for DEMO preparations
+			MPlug plug = dagNode.findPlug("RPRIsEmitter", false);
+
+			if (!plug.isNull() && plug.asInt() > 0)
+			{
+				ob = CreateSceneObject<FireRenderCustomEmitter, NodeCachingOptions::DontAddPath>(dagPath);
+			}
 		}
 		else if (dagNode.typeName() == "transform")
 		{
@@ -2292,7 +2334,7 @@ void FireRenderContext::UpdateTimeAndTriggerProgressCallback(ContextWorkProgress
 		syncProgressData.progressType = progressType;
 	}
 
-	syncProgressData.currentTimeInMiliseconds = TimeDiff(clock(), m_workStartTime);
+	syncProgressData.currentTimeInMiliseconds = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_workStartTime);
 	TriggerProgressCallback(syncProgressData);
 }
 
@@ -2348,7 +2390,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 	ContextWorkProgressData syncProgressData;
 	syncProgressData.totalCount = dirtyObjectsSize;
-	time_t syncStartTime = clock();
+	TimePoint syncStartTime = GetCurrentChronoTime();
 
 	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncStarted);
 
@@ -2389,7 +2431,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		}
 	}
 
-	syncProgressData.elapsed = TimeDiff(clock(), syncStartTime);
+	syncProgressData.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), syncStartTime);
 	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncComplete);
 
 	if (changed)
@@ -2398,7 +2440,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		setCameraAttributeChanged(true);
 	}
 
-	setPreview();
+	SetupPreviewMode();
 
 	if (cancelled())
 		return false;
@@ -2429,7 +2471,7 @@ void FireRenderContext::SetState(StateEnum newState)
 	if (m_state == StateEnum::StateExiting)
 	{
 		ContextWorkProgressData data;
-		data.elapsed = TimeDiff(clock(), m_renderStartTime);
+		data.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_renderStartTime);
 
 		UpdateTimeAndTriggerProgressCallback(data, ProgressType::RenderComplete);
 	}
@@ -2510,9 +2552,11 @@ bool FireRenderContext::isUnlimited()
 	return m_completionCriteriaParams.isUnlimited();
 }
 
+std::chrono::time_point<std::chrono::steady_clock> start = std::chrono::high_resolution_clock::now();
+
 void FireRenderContext::setStartedRendering()
 {
-	m_renderStartTime = clock();
+	m_renderStartTime = GetCurrentChronoTime();
 	m_currentIteration = 0;
 }
 
@@ -2538,8 +2582,7 @@ bool FireRenderContext::keepRenderRunning()
 	}
 
 	// check time limit completion criteria
-	long numberOfClicks = clock() - m_renderStartTime;
-	double secondsSpentRendering = numberOfClicks / (double)CLOCKS_PER_SEC;
+	double secondsSpentRendering = TimeDiffChrono<std::chrono::seconds>(GetCurrentChronoTime(), m_renderStartTime);
 
 	return secondsSpentRendering < m_completionCriteriaParams.getTotalSecondsCount();
 }
@@ -2561,8 +2604,7 @@ bool FireRenderContext::isFirstIterationAndShadersNOTCached()
 
 void FireRenderContext::updateProgress()
 {
-	long numberOfClocks = clock() - m_renderStartTime;
-	double secondsSpentRendering = numberOfClocks / (double)CLOCKS_PER_SEC;
+	double secondsSpentRendering = TimeDiffChrono<std::chrono::seconds>(GetCurrentChronoTime(), m_renderStartTime);
 
 	m_secondsSpentOnLastRender = secondsSpentRendering;
 
@@ -2663,6 +2705,191 @@ frw::FrameBuffer GetOutFrameBuffer(const FireRenderContext::ReadFrameBufferReque
 }
 
 // -----------------------------------------------------------------------------
+void FireRenderContext::rifShadowCatcherOutput(const ReadFrameBufferRequestParams& params)
+{
+	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
+
+	const rpr_framebuffer colorFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
+	const rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
+	const rpr_framebuffer shadowCatcherFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_SHADOW_CATCHER);
+	const rpr_framebuffer backgroundFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_BACKGROUND);
+
+	try
+	{
+		MString path;
+		MStatus s = MGlobal::executeCommand("getModulePath -moduleName RadeonProRender", path);
+		MString mlModelsFolder = path + "/data/models";
+		std::shared_ptr<ImageFilter> shadowCatcherFilter = std::shared_ptr<ImageFilter>(new ImageFilter(context(), m_width, m_height, mlModelsFolder.asChar(), forceCPUContext));
+		shadowCatcherFilter->CreateFilter(RifFilterType::ShadowCatcher);
+		shadowCatcherFilter->AddInput(RifColor, colorFrameBuffer, 0.1f);
+		shadowCatcherFilter->AddInput(RifOpacity, opacityFrameBuffer, 0.1f);
+		shadowCatcherFilter->AddInput(RifShadowCatcher, shadowCatcherFrameBuffer, 0.1f);
+		shadowCatcherFilter->AddInput(RifBackground, backgroundFrameBuffer, 0.1f);
+
+		RifParam p;
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowColor[0] };
+		shadowCatcherFilter->AddParam("shadowColor[0]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowColor[1] };
+		shadowCatcherFilter->AddParam("shadowColor[1]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowColor[2] };
+		shadowCatcherFilter->AddParam("shadowColor[2]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowWeight };
+		shadowCatcherFilter->AddParam("shadowWeight", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowTransp };
+		shadowCatcherFilter->AddParam("shadowTransp", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgWeight };
+		shadowCatcherFilter->AddParam("bgWeight", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgTransparency };
+		shadowCatcherFilter->AddParam("bgTransparency", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[0] };
+		shadowCatcherFilter->AddParam("bgColor[0]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[1] };
+		shadowCatcherFilter->AddParam("bgColor[1]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[2] };
+		shadowCatcherFilter->AddParam("bgColor[2]", p);
+
+		shadowCatcherFilter->AttachFilter();
+
+		shadowCatcherFilter->Run();
+		std::vector<float> vecData = shadowCatcherFilter->GetData();
+		RV_PIXEL* data = (RV_PIXEL*)&vecData[0];
+		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
+	}
+	catch (std::exception& e)
+	{
+		ErrorPrint(e.what());
+	}
+}
+
+void FireRenderContext::rifReflectionCatcherOutput(const ReadFrameBufferRequestParams& params)
+{
+	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
+
+	const rpr_framebuffer colorFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_COLOR].Handle();
+	const rpr_framebuffer opacityFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_OPACITY].Handle();
+	const rpr_framebuffer reflectionCatcherFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_REFLECTION_CATCHER].Handle();
+	const rpr_framebuffer backgroundFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_BACKGROUND].Handle();
+	
+	try
+	{
+		MString path;
+		MStatus s = MGlobal::executeCommand("getModulePath -moduleName RadeonProRender", path);
+		MString mlModelsFolder = path + "/data/models";
+		std::shared_ptr<ImageFilter> catcherFilter = std::shared_ptr<ImageFilter>(new ImageFilter(context(), m_width, m_height, mlModelsFolder.asChar(), forceCPUContext));
+		catcherFilter->CreateFilter(RifFilterType::ReflectionCatcher);
+		catcherFilter->AddInput(RifColor, colorFrameBuffer, 0.1f);
+		catcherFilter->AddInput(RifOpacity, opacityFrameBuffer, 0.1f);
+		catcherFilter->AddInput(RifReflectionCatcher, reflectionCatcherFrameBuffer, 0.1f);
+		catcherFilter->AddInput(RifBackground, backgroundFrameBuffer, 0.1f);
+
+		RifParam p;
+
+		p = { RifParamType::RifOther, (rif_float)params.bgWeight };
+		catcherFilter->AddParam("bgWeight", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgTransparency };
+		catcherFilter->AddParam("bgTransparency", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[0] };
+		catcherFilter->AddParam("bgColor[0]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[1] };
+		catcherFilter->AddParam("bgColor[1]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[2] };
+		catcherFilter->AddParam("bgColor[2]", p);
+
+		catcherFilter->AttachFilter();
+
+		catcherFilter->Run();
+		std::vector<float> vecData = catcherFilter->GetData();
+		RV_PIXEL* data = (RV_PIXEL*)&vecData[0];
+		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
+	}
+	catch (std::exception& e)
+	{
+		ErrorPrint(e.what());
+	}
+}
+
+void FireRenderContext::rifReflectionShadowCatcherOutput(const ReadFrameBufferRequestParams& params)
+{
+	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
+
+	const rpr_framebuffer colorFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_COLOR].Handle();
+	const rpr_framebuffer opacityFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_OPACITY].Handle();
+	const rpr_framebuffer shadowCatcherFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_SHADOW_CATCHER].Handle();
+	const rpr_framebuffer reflectionCatcherFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_REFLECTION_CATCHER].Handle();
+	const rpr_framebuffer backgroundFrameBuffer = m.framebufferAOV_resolved[RPR_AOV_BACKGROUND].Handle();
+
+	try
+	{
+		MString path;
+		MStatus s = MGlobal::executeCommand("getModulePath -moduleName RadeonProRender", path);
+		MString mlModelsFolder = path + "/data/models";
+		std::shared_ptr<ImageFilter> catcherFilter = std::shared_ptr<ImageFilter>(new ImageFilter(context(), m_width, m_height, mlModelsFolder.asChar(), forceCPUContext));
+		catcherFilter->CreateFilter(RifFilterType::ShadowReflectionCatcher);
+		catcherFilter->AddInput(RifColor, colorFrameBuffer, 0.1f);
+		catcherFilter->AddInput(RifOpacity, opacityFrameBuffer, 0.1f);
+		catcherFilter->AddInput(RifShadowCatcher, shadowCatcherFrameBuffer, 0.1f);
+		catcherFilter->AddInput(RifReflectionCatcher, reflectionCatcherFrameBuffer, 0.1f);
+		catcherFilter->AddInput(RifBackground, backgroundFrameBuffer, 0.1f);
+
+		RifParam p;
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowColor[0] };
+		catcherFilter->AddParam("shadowColor[0]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowColor[1] };
+		catcherFilter->AddParam("shadowColor[1]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowColor[2] };
+		catcherFilter->AddParam("shadowColor[2]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowWeight };
+		catcherFilter->AddParam("shadowWeight", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.shadowTransp };
+		catcherFilter->AddParam("shadowTransp", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgWeight };
+		catcherFilter->AddParam("bgWeight", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgTransparency };
+		catcherFilter->AddParam("bgTransparency", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[0] };
+		catcherFilter->AddParam("bgColor[0]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[1] };
+		catcherFilter->AddParam("bgColor[1]", p);
+
+		p = { RifParamType::RifOther, (rif_float)params.bgColor[2] };
+		catcherFilter->AddParam("bgColor[2]", p);
+
+		catcherFilter->AttachFilter();
+
+		catcherFilter->Run();
+		std::vector<float> vecData = catcherFilter->GetData();
+		RV_PIXEL* data = (RV_PIXEL*)&vecData[0];
+		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
+	}
+	catch (std::exception& e)
+	{
+		ErrorPrint(e.what());
+	}
+}
+
 void FireRenderContext::compositeShadowCatcherOutput(const ReadFrameBufferRequestParams& params)
 {
 	RPR_THREAD_ONLY;

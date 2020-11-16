@@ -251,6 +251,9 @@ bool FireRenderProduction::start()
 
 	// Read RPR globals.
 	m_globals.readFromCurrentScene();
+
+	// Disable tile rendering for RPR2
+
 	MString renderStamp;
 	if (m_globals.useRenderStamp)
 		renderStamp = m_globals.renderStampText;
@@ -261,6 +264,12 @@ bool FireRenderProduction::start()
 	int contextHeight = m_height;
 
 	RenderRegion region = m_region;
+
+	// We don't use tiling with RPR2
+	if (GetTahoeVersionToUse() == TahoePluginVersion::RPR2)
+	{
+		m_globals.tileRenderingEnabled = false;
+	}
 
 	if (m_globals.tileRenderingEnabled)
 	{
@@ -302,6 +311,8 @@ bool FireRenderProduction::start()
 		{
 			return false;
 		}
+
+		m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderProduction::OnBufferAvailableCallback, this));
 
 		m_aovs->setFromContext(*m_contextPtr);
 
@@ -389,9 +400,26 @@ bool FireRenderProduction::start()
 
 			return m_isRunning;
 		});
+
+		m_NorthStarRenderingHelper.Start();
 	}
 
 	return ret;
+}
+
+void FireRenderProduction::OnBufferAvailableCallback()
+{
+	AutoMutexLock pixelsLock(m_pixelsLock);
+	m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
+
+	FireRenderThread::RunProcOnMainThread([this]()
+		{
+			// Update the Maya render view.
+			m_renderViewAOV->sendToRenderView();
+
+			if (rcWarningDialog.shown)
+				rcWarningDialog.close();
+		});
 }
 
 // -----------------------------------------------------------------------------
@@ -418,6 +446,8 @@ bool FireRenderProduction::stop()
 {
 	if (m_isRunning)
 	{
+		m_NorthStarRenderingHelper.SetStopFlag();
+
 		if (m_contextPtr)
 		{
 			m_contextPtr->SetState(FireRenderContext::StateExiting);
@@ -439,6 +469,8 @@ bool FireRenderProduction::stop()
 
 			RenderStampUtils::ClearCache();
 		});
+
+		m_NorthStarRenderingHelper.StopAndJoin();
 
 		if (m_contextPtr)
 		{
@@ -681,7 +713,7 @@ void FireRenderProduction::UploadAthenaData()
 		,{RPR_AOV_OPACITY, "RPR_AOV_OPACITY" }
 		,{RPR_AOV_WORLD_COORDINATE, "RPR_AOV_WORLD_COORDINATE" }
 		,{RPR_AOV_UV, "RPR_AOV_UV" }
-		,{RPR_AOV_MATERIAL_IDX, "RPR_AOV_MATERIAL_IDX" }
+		,{RPR_AOV_MATERIAL_ID, "RPR_AOV_MATERIAL_IDX" }
 		,{RPR_AOV_GEOMETRIC_NORMAL, "RPR_AOV_GEOMETRIC_NORMAL" }
 		,{RPR_AOV_SHADING_NORMAL, "RPR_AOV_SHADING_NORMAL" }
 		,{RPR_AOV_DEPTH, "RPR_AOV_DEPTH" }
@@ -1001,19 +1033,21 @@ void FireRenderProduction::RenderFullFrame()
 
 	// Read pixel data for the AOV displayed in the render
 	// view. Flip the image so it's the right way up in the view.
-	m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
-
-	FireRenderThread::RunProcOnMainThread([this]()
 	{
-		// Update the Maya render view.
-		m_renderViewAOV->sendToRenderView();
+		AutoMutexLock pixelsLock(m_pixelsLock);
+		m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
 
-		if (rcWarningDialog.shown)
-			rcWarningDialog.close();
-	});
+		FireRenderThread::RunProcOnMainThread([this]()
+		{
+			// Update the Maya render view.
+			m_renderViewAOV->sendToRenderView();
 
-	// _TODO Investigate this, looks like this call is performance waste. Why we need to read all AOVs on every render call ?
-	m_aovs->readFrameBuffers(*m_contextPtr, false);
+			if (rcWarningDialog.shown)
+				rcWarningDialog.close();
+		});
+
+		m_aovs->readFrameBuffers(*m_contextPtr, false);
+	}
 
 	if (GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())
 	{
@@ -1104,25 +1138,6 @@ void FireRenderProduction::stopMayaRender()
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderProduction::readFrameBuffer()
-{
-	RPR_THREAD_ONLY;
-
-	// setup params
-	FireRenderContext::ReadFrameBufferRequestParams params(m_region);
-	params.pixels = m_pixels.data();
-	params.aov = RPR_AOV_COLOR;
-	params.width = m_contextPtr->width();
-	params.height = m_contextPtr->height();
-	params.flip = true;
-	params.mergeOpacity = false;
-	params.mergeShadowCatcher = false;
-	params.shadowColor = m_contextPtr->m_shadowColor;
-	params.shadowTransp = m_contextPtr->m_shadowTransparency;
-
-	// process frame buffer
-	m_contextPtr->readFrameBuffer(params);
-}
 
 bool FireRenderProduction::mainThreadPump()
 {
@@ -1141,6 +1156,7 @@ bool FireRenderProduction::mainThreadPump()
 			if (m_cancelled)
 			{
 				DebugPrint("Rendering canceled!");
+				m_contextPtr->AbortRender();
 
 				m_progressBars.reset();
 			}

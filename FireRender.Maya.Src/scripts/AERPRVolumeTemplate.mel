@@ -143,31 +143,40 @@ global proc albedoGridSelectNew( string $attrName, string $listAttrName )
 
 global proc albedoGridSelectReplace( string $attrName, string $listAttrName )
 {	
-	connectControl albedoGridList $attrName;
+	vdbGridSelectReplace($attrName, $listAttrName, "albedoGridList");
+}
 
-	textScrollList -e -removeAll albedoGridList;
+global proc vdbGridSelectReplace(string $attrName, string $listAttrName, string $widgetName)
+{
+	connectControl $widgetName $attrName;
+
+	textScrollList -e -removeAll $widgetName;
 	
 	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
 	for ( $attr in $multiAttr )
 	{
-		$len = size($listAttrName) - size($attr) + 3; // 3 is length of "[0]"
+		string $buffer[];
+		tokenize $attr "[" $buffer;
+
+		$len = size($listAttrName) - size($attr) + size($buffer[1]) + 1;
 		string $tmpstr = $listAttrName;
 		string $nodestr = `substring $tmpstr 1 $len`;
 		$attr = $nodestr + $attr;
+		
 		$val = `getAttr $attr`;
-		textScrollList -e -append $val albedoGridList;
+		textScrollList -e -append $val $widgetName;
 	}
 
 	string $selectedValue = `getAttr $attrName`;
 
 	string $listAllItems[];
-	$listAllItems = `textScrollList -q -allItems albedoGridList`;
+	$listAllItems = `textScrollList -q -allItems $widgetName`;
 	
 	for ($tmp in $listAllItems)
 	{
 		if ($tmp == $selectedValue)
 		{
-			textScrollList -e -selectItem $selectedValue albedoGridList;
+			textScrollList -e -selectItem $selectedValue $widgetName;
 			break;
 		}
 	}
@@ -199,36 +208,10 @@ global proc densityGridSelectNew( string $attrName, string $listAttrName )
 
 global proc densityGridSelectReplace( string $attrName, string $listAttrName )
 {	
-	connectControl densityGridList $attrName;
+	vdbGridSelectReplace($attrName, $listAttrName, "densityGridList");
 
-	textScrollList -e -removeAll densityGridList;
-	
-	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
-	for ( $attr in $multiAttr )
-	{
-		$len = size($listAttrName) - size($attr) + 3; // 3 is length of "[0]"
-		string $tmpstr = $listAttrName;
-		string $nodestr = `substring $tmpstr 1 $len`;
-		$attr = $nodestr + $attr;
-		$val = `getAttr $attr`;
-		textScrollList -e -append $val densityGridList;
-	}
-
-	string $selectedValue = `getAttr $attrName`;
-
-	string $listAllItems[];
-	$listAllItems = `textScrollList -q -allItems densityGridList`;
-	
-	for ($tmp in $listAllItems)
-	{
-		if ($tmp == $selectedValue)
-		{
-			textScrollList -e -selectItem $selectedValue densityGridList;
-			break;
-		}
-	}
-
-	// without selected density grid volume will not render (and will not give any warnings!), thus this safety routine is added
+	// without selected density grid volume will not render (and will not give any warnings!)
+	// thus this safety routine is added
 	$isselectd = `textScrollList -q -selectItem densityGridList`;
 	if (size($isselectd) == 0)
 	{
@@ -263,33 +246,7 @@ global proc emissionGridSelectNew( string $attrName, string $listAttrName )
 
 global proc emissionGridSelectReplace( string $attrName, string $listAttrName )
 {	
-	connectControl emissionGridList $attrName;
-
-	textScrollList -e -removeAll emissionGridList;
-	
-	string $multiAttr[] = `listAttr -multi ( $listAttrName )`;
-	for ( $attr in $multiAttr )
-	{
-		$len = size($listAttrName) - size($attr) + 3; // 3 is length of "[0]"
-		string $tmpstr = $listAttrName;
-		string $nodestr = `substring $tmpstr 1 $len`;
-		$attr = $nodestr + $attr;
-		$val = `getAttr $attr`;
-		textScrollList -e -append $val emissionGridList;
-	}
-
-	string $selectedValue = `getAttr $attrName`;
-
-	string $listAllItems[];
-	$listAllItems = `textScrollList -q -allItems emissionGridList`;
-	for ($tmp in $listAllItems)
-	{
-		if ($tmp == $selectedValue)
-		{
-			textScrollList -e -selectItem $selectedValue emissionGridList;
-			break;
-		}
-	}
+	vdbGridSelectReplace($attrName, $listAttrName, "emissionGridList");
 }
 
 global proc onEmissionGridSelectClicked()
@@ -301,6 +258,45 @@ global proc onEmissionGridSelectClicked()
 	setAttr $attrName -type "string" $selectedItems[0];
 }
 
+global proc uiVDBFileSchemaNew( string $attr )
+{
+	optionMenu 
+		-label "Frame Extention" 
+		-enable true 
+		vdbSequenceNamingSchema;
+	menuItem 
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt3")) 
+		-data 0
+		mayaSoftwareNameDotFrameDotExtension;
+	menuItem 
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt4")) 
+		-data 1
+		mayaSoftwareNameDotExtensionDotFrame;
+	menuItem 
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt5")) 
+		-data 2
+		mayaSoftwareNameDotFrame;
+	menuItem 
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt6")) 
+		-data 3
+		mayaSoftwareFrameDotExtension;
+	menuItem 
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kExt7")) 
+		-data 4
+		mayaSoftwareNameUnderFrameDotExtension;
+		
+    connectControl vdbSequenceNamingSchema $attr;
+
+    setParent ..;
+}
+
+global proc uiVDBFileSchemaReplace( string $attr )
+{
+    connectControl vdbSequenceNamingSchema $attr;
+    
+    setParent ..;
+}
+
 global proc AERPRVolumeTemplate(string $nodeName)
 {
 	editorTemplate -beginScrollLayout;
@@ -310,6 +306,11 @@ global proc AERPRVolumeTemplate(string $nodeName)
 				editorTemplate -callCustom "importVDBFilePathNew" "importVDBFilePathReplace" "VdbFilePath";
 			}
 			editorTemplate -endLayout;
+			editorTemplate -beginLayout "Sequence Naming Schema" -collapse 0;
+			{
+				editorTemplate -callCustom "uiVDBFileSchemaNew" "uiVDBFileSchemaReplace" "namingSchema";
+			}
+
 		editorTemplate -endLayout;
 
 		editorTemplate -beginLayout "Albedo" -collapse 0 AlbedoLayout;

@@ -11,11 +11,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ********************************************************************/
 #include "TahoeContext.h"
+#include "maya/MColorManagementUtilities.h"
+#include "maya/MFileObject.h"
 
 TahoeContext::LoadedPluginMap TahoeContext::m_gLoadedPluginsIDsMap;
 
 TahoeContext::TahoeContext() :
-	m_PluginVersion(TahoePluginVersion::RPR1)
+	m_PluginVersion(TahoePluginVersion::RPR1),
+	m_PreviewMode(true)
 {
 
 }
@@ -83,21 +86,13 @@ rpr_int TahoeContext::CreateContextInternal(rpr_creation_flags createFlags, rpr_
 
 	// setup CPU thread count
 	std::vector<rpr_context_properties> ctxProperties;
-#if (RPR_VERSION_MINOR < 34)
-	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_SAMPLER_TYPE);
-#else
 	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_SAMPLER_TYPE);
-#endif
 	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_SAMPLER_TYPE_CMJ);
 
 	int threadCountToOverride = getThreadCountToOverride();
 	if ((createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) && threadCountToOverride > 0)
 	{
-#if (RPR_VERSION_MINOR < 34)
-		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_CPU_THREAD_LIMIT);
-#else
 		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CPU_THREAD_LIMIT);
-#endif
 		ctxProperties.push_back((void*)(size_t)threadCountToOverride);
 	}
 
@@ -137,6 +132,9 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_TILE_SIZE, fireRenderGlobalsData.adaptiveTileSize);
 	checkStatus(frstatus);
 
+	bool velocityAOVMotionBlur = !fireRenderGlobalsData.velocityAOVMotionBlur;
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_BEAUTY_MOTION_BLUR, velocityAOVMotionBlur);
+
 	if (GetRenderType() == RenderType::ProductionRender) // production (final) rendering
 	{
 		frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_THRESHOLD, fireRenderGlobalsData.adaptiveThreshold);
@@ -171,6 +169,11 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 	else if (isInteractive())
 	{
 		setSamplesPerUpdate(1);
+        
+        if (m_PluginVersion == TahoePluginVersion::RPR2)
+        {
+            SetIterationsPowerOf2Mode(true);
+        }
 
 		frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_THRESHOLD, fireRenderGlobalsData.adaptiveThresholdViewport);
 		checkStatus(frstatus);
@@ -205,8 +208,6 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_IMAGE_FILTER_TYPE, fireRenderGlobalsData.filterType);
 	checkStatus(frstatus);
-
-	//
 
 	rpr_material_node_input filterAttrName = RPR_CONTEXT_IMAGE_FILTER_BOX_RADIUS;
 	switch (fireRenderGlobalsData.filterType)
@@ -246,7 +247,55 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_METAL_PERFORMANCE_SHADER, fireRenderGlobalsData.useMPS ? 1 : 0);
 	checkStatus(frstatus);
 
+	frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_TEXTURE_CACHE_PATH, fireRenderGlobalsData.textureCachePath.asChar());
+	checkStatus(frstatus);
+	
 	updateTonemapping(fireRenderGlobalsData, disableWhiteBalance);
+
+	// OCIO
+	{
+		const std::map<std::string, std::string>& eVars = EnvironmentVarsWrapper<char>::GetEnvVarsTable();
+		auto envOCIOPath = eVars.find("OCIO");
+		if (envOCIOPath != eVars.end())
+		{
+			MFileObject path;
+			path.setRawFullName(envOCIOPath->second.c_str());
+			MString setupCommand = MString("colorManagementPrefs -e -configFilePath \"") + path.resolvedFullName() + MString("\";");
+			MGlobal::executeCommand(setupCommand);
+			MGlobal::executeCommand(MString("colorManagementPrefs -e -cmEnabled 1;"));
+			MGlobal::executeCommand(MString("colorManagementPrefs -e -cmConfigFileEnabled 1;"));
+		}
+
+		MStatus colorManagementStatus;
+		int isColorManagementOn = 0;
+		colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -cmEnabled;"), isColorManagementOn);
+
+		int isConfigFileEnable = 0;
+		colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -cmConfigFileEnabled;"), isConfigFileEnable);
+
+		if ((isColorManagementOn > 0) && (isConfigFileEnable > 0))
+		{
+			MString configFilePath;
+			colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -cfp;"), configFilePath);
+
+			MString renderingSpaceName;
+			colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -rsn;"), renderingSpaceName);
+
+			frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_CONFIG_PATH, configFilePath.asChar());
+			checkStatus(frstatus);
+
+			frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_RENDERING_COLOR_SPACE, renderingSpaceName.asChar());
+			checkStatus(frstatus);
+		}
+		else
+		{
+			frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_CONFIG_PATH, "");
+			checkStatus(frstatus);
+
+			frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_RENDERING_COLOR_SPACE, "");
+			checkStatus(frstatus);
+		}
+	}
 }
 
 void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance)
@@ -427,6 +476,21 @@ bool TahoeContext::IsVolumeSupported() const
 	return m_PluginVersion == TahoePluginVersion::RPR1;
 }
 
+bool TahoeContext::IsAOVSupported(int aov) const 
+{
+	return (aov != RPR_AOV_VIEW_SHADING_NORMAL) && (aov != RPR_AOV_COLOR_RIGHT);
+}
+
+bool TahoeContext::IsPhysicalLightTypeSupported(PLType lightType) const
+{
+	if (lightType == PLTDisk || lightType == PLTSphere)
+	{
+		return m_PluginVersion == TahoePluginVersion::RPR2;
+	}
+
+	return true;
+}
+
 bool TahoeContext::IsGLInteropEnabled() const
 {
 	return m_PluginVersion == TahoePluginVersion::RPR1;
@@ -434,5 +498,81 @@ bool TahoeContext::IsGLInteropEnabled() const
 
 bool TahoeContext::MetalContextAvailable() const
 {
-	return m_PluginVersion == TahoePluginVersion::RPR1;
+    return true;
+}
+
+void TahoeContext::SetRenderUpdateCallback(RenderUpdateCallback callback, void* data)
+{
+	if (m_PluginVersion == TahoePluginVersion::RPR2)
+	{
+		GetScope().Context().SetUpdateCallback((void*)callback, data);
+	}
+}
+
+bool TahoeContext::IsGivenContextRPR2(const FireRenderContext* pContext)
+{
+	const TahoeContext* pTahoeContext = dynamic_cast<const TahoeContext*> (pContext);
+
+	if (pTahoeContext == nullptr)
+	{
+		return false;
+	}
+
+	return pTahoeContext->m_PluginVersion == TahoePluginVersion::RPR2;
+}
+
+void TahoeContext::AbortRender()
+{
+	if (m_PluginVersion == TahoePluginVersion::RPR2)
+	{
+		GetScope().Context().AbortRender();
+	}
+}
+
+void TahoeContext::SetupPreviewMode()
+{
+	if (m_PluginVersion == TahoePluginVersion::RPR1)
+	{
+		RenderType renderType = GetRenderType();
+		int preview = 0;
+
+		if ((renderType == RenderType::ViewportRender) ||
+			(renderType == RenderType::IPR) ||
+			(renderType == RenderType::Thumbnail))
+		{
+			preview = 1;
+		}
+
+		SetPreviewMode(preview);
+	}
+}
+
+void TahoeContext::OnPreRender()
+{
+	RenderType renderType = GetRenderType();
+
+	if ( (m_PluginVersion == TahoePluginVersion::RPR1) || 
+		((renderType != RenderType::ViewportRender) &&
+			(renderType != RenderType::IPR)))
+	{
+		return;
+	}
+
+	const int previewModeLevel = 2;
+	if (m_restartRender)
+	{
+		m_PreviewMode = true;
+		SetPreviewMode(previewModeLevel);
+	}
+
+	if (m_currentFrame == 2 && m_PreviewMode)
+	{
+		SetPreviewMode(0);
+		m_PreviewMode = false;
+		m_restartRender = true;
+	}
+	else if (m_currentFrame < 2 && m_PreviewMode)
+	{
+		SetPreviewMode(previewModeLevel);
+	}
 }

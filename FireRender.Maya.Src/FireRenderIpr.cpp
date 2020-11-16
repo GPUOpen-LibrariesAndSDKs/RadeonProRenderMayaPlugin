@@ -41,7 +41,8 @@ FireRenderIpr::FireRenderIpr() :
 	m_isRegion(false),
 	m_renderStarted(false),
 	m_needsContextRefresh(false),
-	m_previousSelectionList()
+	m_previousSelectionList(),
+	m_currentAOVToDisplay(RPR_AOV_COLOR)
 {
 	m_renderViewUpdateScheduled = false;
 }
@@ -143,6 +144,10 @@ bool FireRenderIpr::start()
 	MStatus status = MGlobal::getActiveSelectionList(m_previousSelectionList);
 	CHECK_MSTATUS(status);
 
+	MObject radeonProRenderGlobalsNode;
+	GetRadeonProRenderGlobals(radeonProRenderGlobalsNode);
+	m_renderGlobalsCallback = MNodeMessage::addAttributeChangedCallback(radeonProRenderGlobalsNode, FireRenderIpr::globalsChangedCallback, this, &status);
+
 	auto ret = FireRenderThread::RunOnceAndWait<bool>([this, &showWarningDialog]()
 	{
 		// Stop before restarting if already running.
@@ -156,13 +161,15 @@ bool FireRenderIpr::start()
 		m_contextPtr = ContextCreator::CreateAppropriateContextForRenderType(RenderType::IPR);
 		m_contextPtr->SetRenderType(RenderType::IPR);
 
-		//enable AOV-COLOR and Variance so that it can be resolved and used properly
-		m_contextPtr->enableAOV(RPR_AOV_COLOR);
-		m_contextPtr->enableAOV(RPR_AOV_VARIANCE);
-
 		// Enable SC related AOVs if they was turned on
 		FireRenderGlobalsData globals;
 		globals.readFromCurrentScene();
+
+		m_currentAOVToDisplay = globals.aovs.getRenderViewAOV().id;
+
+		m_contextPtr->enableAOV(m_currentAOVToDisplay);
+		m_contextPtr->enableAOV(RPR_AOV_COLOR);
+		m_contextPtr->enableAOV(RPR_AOV_VARIANCE);
 
 		if (globals.aovs.getAOV(RPR_AOV_OPACITY)->active)
 			m_contextPtr->enableAOV(RPR_AOV_OPACITY);
@@ -176,6 +183,11 @@ bool FireRenderIpr::start()
 		if (!m_contextPtr->buildScene(false, false, false))
 		{
 			return false;
+		}
+
+		if (TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
+		{
+			m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderIpr::OnBufferAvailableCallback, this));
 		}
 
 		SetupOOC(globals);
@@ -226,6 +238,8 @@ bool FireRenderIpr::start()
 
 			return m_isRunning;
 		});
+
+		m_NorthStarRenderingHelper.Start();
 	}
 
 	return ret;
@@ -271,6 +285,8 @@ bool FireRenderIpr::pause(bool value)
 // -----------------------------------------------------------------------------
 bool FireRenderIpr::stop()
 {
+	m_NorthStarRenderingHelper.SetStopFlag();
+
 	if (m_isRunning)
 	{
 		m_contextPtr->SetState(FireRenderContext::StateExiting);
@@ -285,7 +301,24 @@ bool FireRenderIpr::stop()
 		}
 	}
 
+	if (m_renderGlobalsCallback)
+	{
+		MMessage::removeCallback(m_renderGlobalsCallback);
+		m_renderGlobalsCallback = 0;
+	}
+
+	m_NorthStarRenderingHelper.StopAndJoin();
+
 	return true;
+}
+
+void FireRenderIpr::OnBufferAvailableCallback()
+{
+	AutoMutexLock pixelsLock(m_pixelsLock);
+
+	readFrameBuffer();
+
+	scheduleRenderViewUpdate();
 }
 
 // -----------------------------------------------------------------------------
@@ -532,8 +565,9 @@ void FireRenderIpr::readFrameBuffer()
 	// We need to made SC merge here, but we don't want to do opacity merge 
 	// since we render in interactive mode
 	FireRenderContext::ReadFrameBufferRequestParams params(m_region);
+
 	params.pixels = m_pixels.data();
-	params.aov = RPR_AOV_COLOR;
+	params.aov = m_currentAOVToDisplay;
 	params.width = m_contextPtr->width();
 	params.height = m_contextPtr->height();
 	params.flip = true;
@@ -561,4 +595,50 @@ void FireRenderIpr::refreshContext()
 		AutoMutexLock contextLock(m_contextLock);
 		m_contextPtr->Freshen(false);
 	});
+}
+
+void FireRenderIpr::SwitchCurrentAOVToBeDisplayed(int newAOV)
+{
+	AutoMutexLock contextLock(m_contextLock);
+	AutoMutexLock pixelsLock(m_pixelsLock);
+
+	if (ShouldOldAOVBeDisabled(m_currentAOVToDisplay))
+	{
+		m_contextPtr->enableAOVAndReset(m_currentAOVToDisplay, false, nullptr);
+	}
+
+	m_currentAOVToDisplay = newAOV;
+	m_contextPtr->enableAOVAndReset(m_currentAOVToDisplay, true, nullptr);
+}
+
+void FireRenderIpr::globalsChangedCallback(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData)
+{
+	MString name = plug.name();
+
+	if ( (name != "RadeonProRenderGlobals.aovDisplayedInRenderView") ||
+		!(msg | MNodeMessage::AttributeMessage::kAttributeSet))
+	{
+		return;
+	}
+
+	FireRenderIpr*  thisObject = reinterpret_cast<FireRenderIpr*> (clientData);
+
+	thisObject->SwitchCurrentAOVToBeDisplayed(plug.asInt());
+}
+
+bool FireRenderIpr::ShouldOldAOVBeDisabled(int aov)
+{
+	// We need to keep enabled both of these AOV because of Core restrictmenets. VARIANCE is used for adaptive sampling
+	if (m_currentAOVToDisplay == RPR_AOV_COLOR ||
+		m_currentAOVToDisplay == RPR_AOV_VARIANCE)
+	{
+		return false;
+	}
+
+	MObject radeonProRenderGlobalsNode;
+	GetRadeonProRenderGlobals(radeonProRenderGlobalsNode);
+
+	FireRenderAOVs aovs;
+	aovs.readFromGlobals(MFnDependencyNode(radeonProRenderGlobalsNode));
+	return !aovs.IsAOVActive(aov);
 }

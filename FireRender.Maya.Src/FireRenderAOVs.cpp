@@ -40,7 +40,7 @@ FireRenderAOVs::FireRenderAOVs() :
 	AddAOV(RPR_AOV_UV, "aovUV", "UV", "uv", { { "U", "V", "W" },
 		{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::POINT } });
 
-	AddAOV(RPR_AOV_MATERIAL_IDX, "aovMaterialIndex", "Material Index", "material_index",
+	AddAOV(RPR_AOV_MATERIAL_ID, "aovMaterialIndex", "Material Index", "material_index",
 		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
 
 	AddAOV(RPR_AOV_GEOMETRIC_NORMAL, "aovGeometricNormal", "Geometric Normal", "geometric_normal",
@@ -380,6 +380,19 @@ void FireRenderAOVs::writeToFile(const MString& filePath, unsigned int imageForm
 int FireRenderAOVs::getNumberOfAOVs() 
 {
 	return (int)m_aovs.size();
+}
+
+bool FireRenderAOVs::IsAOVActive(unsigned int aov) const
+{
+	auto it = m_aovs.find(aov);
+
+	if (it == m_aovs.end())
+	{
+		assert(false);
+		return false;
+	}
+
+	return it->second->active;
 }
 
 MString FireRenderAOVs::GetEXRCompressionType() const 

@@ -7,12 +7,27 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		50AC4CEC2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 50AC4CEB2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib */; };
+		50AC4CED2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 50AC4CEB2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib */; };
+		50AC4CEE2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 50AC4CEB2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib */; };
 		50C1EDBC247EC23700E53230 /* SetRangeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50C1EDB9247EC23700E53230 /* SetRangeConverter.h */; };
 		50C1EDBD247EC23700E53230 /* SetRangeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50C1EDB9247EC23700E53230 /* SetRangeConverter.h */; };
 		50C1EDBE247EC23700E53230 /* SetRangeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50C1EDB9247EC23700E53230 /* SetRangeConverter.h */; };
 		50C1EDBF247EC23700E53230 /* SetRangeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */; };
 		50C1EDC0247EC23700E53230 /* SetRangeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */; };
 		50C1EDC1247EC23700E53230 /* SetRangeConverter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */; };
+		50ED2499251B8889006A318A /* NorthStarRenderingHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50ED2496251B8889006A318A /* NorthStarRenderingHelper.cpp */; };
+		50ED249A251B8889006A318A /* NorthStarRenderingHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50ED2496251B8889006A318A /* NorthStarRenderingHelper.cpp */; };
+		50ED249B251B8889006A318A /* NorthStarRenderingHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50ED2496251B8889006A318A /* NorthStarRenderingHelper.cpp */; };
+		50ED249C251B8889006A318A /* NorthStarRenderingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 50ED2498251B8889006A318A /* NorthStarRenderingHelper.h */; };
+		50ED249D251B8889006A318A /* NorthStarRenderingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 50ED2498251B8889006A318A /* NorthStarRenderingHelper.h */; };
+		50ED249E251B8889006A318A /* NorthStarRenderingHelper.h in Headers */ = {isa = PBXBuildFile; fileRef = 50ED2498251B8889006A318A /* NorthStarRenderingHelper.h */; };
+		50FCE4F42530985900BF404F /* AnimationExporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50FCE4F12530985900BF404F /* AnimationExporter.cpp */; };
+		50FCE4F52530985900BF404F /* AnimationExporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50FCE4F12530985900BF404F /* AnimationExporter.cpp */; };
+		50FCE4F62530985900BF404F /* AnimationExporter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 50FCE4F12530985900BF404F /* AnimationExporter.cpp */; };
+		50FCE4F72530985900BF404F /* AnimationExporter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50FCE4F32530985900BF404F /* AnimationExporter.h */; };
+		50FCE4F82530985900BF404F /* AnimationExporter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50FCE4F32530985900BF404F /* AnimationExporter.h */; };
+		50FCE4F92530985900BF404F /* AnimationExporter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50FCE4F32530985900BF404F /* AnimationExporter.h */; };
 		8D28372E2199D73B0004852B /* OptionVarHelpers.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D28372B2199D6C90004852B /* OptionVarHelpers.h */; };
 		8D28372F2199D7480004852B /* OptionVarHelpers.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 8D2837292199D6C90004852B /* OptionVarHelpers.cpp */; };
 		8D55909F20C874BA00567EEC /* MeshTranslator.h in Headers */ = {isa = PBXBuildFile; fileRef = 8D55909520C8743800567EEC /* MeshTranslator.h */; };
@@ -904,12 +919,6 @@
 		F19A160B248A737000A959C7 /* FireRenderLightCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = F19A1607248A737000A959C7 /* FireRenderLightCommon.h */; };
 		F19A160C248A737000A959C7 /* FireRenderLightCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = F19A1607248A737000A959C7 /* FireRenderLightCommon.h */; };
 		F19A160D248A737000A959C7 /* FireRenderLightCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = F19A1607248A737000A959C7 /* FireRenderLightCommon.h */; };
-		F1B3270624D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */; };
-		F1B3270724D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		F1B3270924D81D5E001C0430 /* libRadeonImageFilters.1.5.4.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */; };
-		F1B3270A24D81D5F001C0430 /* libRadeonImageFilters.1.5.4.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
-		F1B3270C24D81D87001C0430 /* libRadeonImageFilters.1.5.4.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */; };
-		F1B3270D24D81D87001C0430 /* libRadeonImageFilters.1.5.4.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		F1EEA1F124ADE93A008AFB18 /* CompositeWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */; };
 		F1EEA1F224ADE93A008AFB18 /* CompositeWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */; };
 		F1EEA1F324ADE93A008AFB18 /* CompositeWrapper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */; };
@@ -968,7 +977,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				F1B3270724D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib in Embed Libraries */,
 			);
 			name = "Embed Libraries";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -979,7 +987,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				F1B3270A24D81D5F001C0430 /* libRadeonImageFilters.1.5.4.dylib in Embed Libraries */,
 			);
 			name = "Embed Libraries";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -990,7 +997,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
-				F1B3270D24D81D87001C0430 /* libRadeonImageFilters.1.5.4.dylib in Embed Libraries */,
 			);
 			name = "Embed Libraries";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1025,8 +1031,13 @@
 		4DE6450A1DA2774A0076E6A7 /* RenderProgressBars.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RenderProgressBars.cpp; path = ../../../FireRender.Maya.Src/RenderProgressBars.cpp; sourceTree = "<group>"; };
 		4DE6450D1DA277BC0076E6A7 /* RenderProgressBars.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RenderProgressBars.h; path = ../../../FireRender.Maya.Src/RenderProgressBars.h; sourceTree = "<group>"; };
 		4DE645101DA339A60076E6A7 /* Readme.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Readme.txt; path = ../../Readme.txt; sourceTree = "<group>"; };
+		50AC4CEB2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonImageFilters.1.6.1.dylib; path = ../../../RadeonProImageProcessingSDK/OSX/Dynamic/libRadeonImageFilters.1.6.1.dylib; sourceTree = "<group>"; };
 		50C1EDB9247EC23700E53230 /* SetRangeConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SetRangeConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/SetRangeConverter.h; sourceTree = "<group>"; };
 		50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SetRangeConverter.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/SetRangeConverter.cpp; sourceTree = "<group>"; };
+		50ED2496251B8889006A318A /* NorthStarRenderingHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NorthStarRenderingHelper.cpp; path = ../../../FireRender.Maya.Src/NorthStarRenderingHelper.cpp; sourceTree = "<group>"; };
+		50ED2498251B8889006A318A /* NorthStarRenderingHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NorthStarRenderingHelper.h; path = ../../../FireRender.Maya.Src/NorthStarRenderingHelper.h; sourceTree = "<group>"; };
+		50FCE4F12530985900BF404F /* AnimationExporter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AnimationExporter.cpp; path = ../../../FireRender.Maya.Src/AnimationExporter.cpp; sourceTree = "<group>"; };
+		50FCE4F32530985900BF404F /* AnimationExporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnimationExporter.h; path = ../../../FireRender.Maya.Src/AnimationExporter.h; sourceTree = "<group>"; };
 		8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRprLoadStore64.dylib; path = ../../../RadeonProRenderSDK/RadeonProRender/binMacOS/libRprLoadStore64.dylib; sourceTree = "<group>"; };
 		8D1E289B2034A0550060BB11 /* FireRenderPBRMaterial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderPBRMaterial.h; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.h; sourceTree = "<group>"; };
 		8D1E289D2034A0550060BB11 /* FireRenderPBRMaterial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderPBRMaterial.cpp; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.cpp; sourceTree = "<group>"; };
@@ -1242,7 +1253,6 @@
 		B7190C562449C9970071D47F /* IESLightRepresentationCalc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IESLightRepresentationCalc.h; path = ../../../RadeonProRenderSharedComponents/src/IESLight/IESLightRepresentationCalc.h; sourceTree = "<group>"; };
 		B7190C572449C9970071D47F /* IESLightRepresentationCalc.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = IESLightRepresentationCalc.cpp; path = ../../../RadeonProRenderSharedComponents/src/IESLight/IESLightRepresentationCalc.cpp; sourceTree = "<group>"; };
 		B7190C582449C9970071D47F /* IESprocessor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IESprocessor.h; path = ../../../RadeonProRenderSharedComponents/src/IESLight/IESprocessor.h; sourceTree = "<group>"; };
-		B7190C7C2452F6850071D47F /* libRadeonImageFilters.1.5.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonImageFilters.1.5.1.dylib; path = ../../../RadeonProImageProcessingSDK/OSX/libRadeonImageFilters.1.5.1.dylib; sourceTree = "<group>"; };
 		B7190C802452F6D70071D47F /* libOpenImageIO.1.6.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libOpenImageIO.1.6.dylib; path = ../../../RadeonProRenderSharedComponents/OpenImageIO/OSX/bin/libOpenImageIO.1.6.dylib; sourceTree = "<group>"; };
 		B72001C224742A7400A32CC0 /* NodeProcessingUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = NodeProcessingUtils.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/NodeProcessingUtils.h; sourceTree = "<group>"; };
 		B72001C424742A7400A32CC0 /* NodeProcessingUtils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NodeProcessingUtils.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/NodeProcessingUtils.cpp; sourceTree = "<group>"; };
@@ -1336,10 +1346,8 @@
 		CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderVolume.cpp; path = ../../../FireRender.Maya.Src/FireRenderVolume.cpp; sourceTree = "<group>"; };
 		F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderLightCommon.cpp; path = ../../../FireRender.Maya.Src/Lights/FireRenderLightCommon.cpp; sourceTree = "<group>"; };
 		F19A1607248A737000A959C7 /* FireRenderLightCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderLightCommon.h; path = ../../../FireRender.Maya.Src/Lights/FireRenderLightCommon.h; sourceTree = "<group>"; };
-		F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonImageFilters.1.5.4.dylib; path = ../../../RadeonProImageProcessingSDK/OSX/libRadeonImageFilters.1.5.4.dylib; sourceTree = "<group>"; };
 		F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CompositeWrapper.cpp; path = ../../../FireRender.Maya.Src/CompositeWrapper.cpp; sourceTree = "<group>"; };
 		F1EEA1F024ADE93A008AFB18 /* CompositeWrapper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CompositeWrapper.h; path = ../../../FireRender.Maya.Src/CompositeWrapper.h; sourceTree = "<group>"; };
-		F1F815AD24CADC4A00599CFD /* libRadeonImageFilters.1.5.3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonImageFilters.1.5.3.dylib; path = ../../../RadeonProImageProcessingSDK/OSX/libRadeonImageFilters.1.5.3.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1348,13 +1356,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				8D8613C021EE273F009DF99F /* libAdskXGen.dylib in Frameworks */,
-				F1B3270624D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib in Frameworks */,
 				B7190C812452F6D70071D47F /* libOpenImageIO.1.6.dylib in Frameworks */,
 				8D595E3B20372FE20031988A /* libRprLoadStore64.dylib in Frameworks */,
 				B7190BC32448AD3C0071D47F /* libblosc.a in Frameworks */,
 				B7190BC62448AD3C0071D47F /* libopenvdb.a in Frameworks */,
 				B7190BCF2448AD3C0071D47F /* libz.a in Frameworks */,
 				8D595E3E20372FE20031988A /* libRadeonProRender64.dylib in Frameworks */,
+				50AC4CEC2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */,
 				B7D5515A23EB152A00F9E160 /* libProRenderGLTF.dylib in Frameworks */,
 				B7190BCC2448AD3C0071D47F /* libsnappy.a in Frameworks */,
 				8D595E3F20372FE20031988A /* libTahoe64.dylib in Frameworks */,
@@ -1367,13 +1375,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				8DBCC35E22304666003EE361 /* libRprLoadStore64.dylib in Frameworks */,
-				F1B3270924D81D5E001C0430 /* libRadeonImageFilters.1.5.4.dylib in Frameworks */,
 				B7190C822452F6D70071D47F /* libOpenImageIO.1.6.dylib in Frameworks */,
 				B7190BC42448AD3C0071D47F /* libblosc.a in Frameworks */,
 				B7190C162448C6E90071D47F /* libAdskXGen.dylib in Frameworks */,
 				B7190BC72448AD3C0071D47F /* libopenvdb.a in Frameworks */,
 				B7190BD02448AD3C0071D47F /* libz.a in Frameworks */,
 				8DBCC36122304666003EE361 /* libRadeonProRender64.dylib in Frameworks */,
+				50AC4CED2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */,
 				B7D5515B23EB152E00F9E160 /* libProRenderGLTF.dylib in Frameworks */,
 				B7190BCD2448AD3C0071D47F /* libsnappy.a in Frameworks */,
 				8DBCC36222304666003EE361 /* libTahoe64.dylib in Frameworks */,
@@ -1386,13 +1394,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				B75320E423D9ED5600246738 /* libRprLoadStore64.dylib in Frameworks */,
-				F1B3270C24D81D87001C0430 /* libRadeonImageFilters.1.5.4.dylib in Frameworks */,
 				B7190C832452F6D70071D47F /* libOpenImageIO.1.6.dylib in Frameworks */,
 				B7190BC52448AD3C0071D47F /* libblosc.a in Frameworks */,
 				B7190C182448C71D0071D47F /* libAdskXGen.dylib in Frameworks */,
 				B7190BC82448AD3C0071D47F /* libopenvdb.a in Frameworks */,
 				B7190BD12448AD3C0071D47F /* libz.a in Frameworks */,
 				B75320E623D9ED5600246738 /* libRadeonProRender64.dylib in Frameworks */,
+				50AC4CEE2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */,
 				B7D5515C23EB152F00F9E160 /* libProRenderGLTF.dylib in Frameworks */,
 				B7190BCE2448AD3C0071D47F /* libsnappy.a in Frameworks */,
 				B75320E723D9ED5600246738 /* libTahoe64.dylib in Frameworks */,
@@ -1406,6 +1414,8 @@
 		08FB7794FE84155DC02AAC07 /* helloWorldCmdPlugin */ = {
 			isa = PBXGroup;
 			children = (
+				50ED2496251B8889006A318A /* NorthStarRenderingHelper.cpp */,
+				50ED2498251B8889006A318A /* NorthStarRenderingHelper.h */,
 				B7190BD32448B1410071D47F /* SharedComponenetsSources */,
 				CE1ECBC122EB8F7E0074C7E7 /* GlobalRenderUtilsDataHolder.cpp */,
 				CE1ECBC322EB8F7F0074C7E7 /* GlobalRenderUtilsDataHolder.h */,
@@ -1427,6 +1437,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				50FCE4F12530985900BF404F /* AnimationExporter.cpp */,
+				50FCE4F32530985900BF404F /* AnimationExporter.h */,
 				F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */,
 				F1EEA1F024ADE93A008AFB18 /* CompositeWrapper.h */,
 				F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */,
@@ -1711,10 +1723,8 @@
 		4DE645121DA349C10076E6A7 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				F1B3270524D81D42001C0430 /* libRadeonImageFilters.1.5.4.dylib */,
-				F1F815AD24CADC4A00599CFD /* libRadeonImageFilters.1.5.3.dylib */,
+				50AC4CEB2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib */,
 				B7190C802452F6D70071D47F /* libOpenImageIO.1.6.dylib */,
-				B7190C7C2452F6850071D47F /* libRadeonImageFilters.1.5.1.dylib */,
 				B7190BBE2448AD3C0071D47F /* libblosc.a */,
 				B7190BC02448AD3C0071D47F /* libboost_iostreams.a */,
 				B7190BBF2448AD3C0071D47F /* libopenvdb.a */,
@@ -1922,6 +1932,7 @@
 				8D595DAF20372FE20031988A /* RenderCacheWarningDialog.h in Headers */,
 				B7EC453923743C9C001E49F7 /* FireRenderContext.h in Headers */,
 				8D595DB020372FE20031988A /* FireRenderIBL.h in Headers */,
+				50ED249C251B8889006A318A /* NorthStarRenderingHelper.h in Headers */,
 				B72F8210239F813F00C2BFB3 /* BlendColorsConverter.h in Headers */,
 				F19A160B248A737000A959C7 /* FireRenderLightCommon.h in Headers */,
 				8D595DB120372FE20031988A /* RprComposite.h in Headers */,
@@ -1998,6 +2009,7 @@
 				B72F8228239F813F00C2BFB3 /* Bump2dConverter.h in Headers */,
 				8D595DE320372FE20031988A /* FireRenderIpr.h in Headers */,
 				8D595DE420372FE20031988A /* FireRenderOverride.h in Headers */,
+				50FCE4F72530985900BF404F /* AnimationExporter.h in Headers */,
 				8D595DE620372FE20031988A /* AutoLock.h in Headers */,
 				8D595DE720372FE20031988A /* FireRenderArithmetic.h in Headers */,
 			);
@@ -2074,6 +2086,7 @@
 				8DBCC2C522304666003EE361 /* RenderCacheWarningDialog.h in Headers */,
 				B7EC453E23743C9D001E49F7 /* FireRenderContext.h in Headers */,
 				8DBCC2C622304666003EE361 /* FireRenderIBL.h in Headers */,
+				50ED249D251B8889006A318A /* NorthStarRenderingHelper.h in Headers */,
 				B72F8211239F813F00C2BFB3 /* BlendColorsConverter.h in Headers */,
 				F19A160C248A737000A959C7 /* FireRenderLightCommon.h in Headers */,
 				8DBCC2C722304666003EE361 /* RprComposite.h in Headers */,
@@ -2150,6 +2163,7 @@
 				B72F8229239F813F00C2BFB3 /* Bump2dConverter.h in Headers */,
 				8DBCC2F822304666003EE361 /* FireRenderIpr.h in Headers */,
 				8DBCC2F922304666003EE361 /* FireRenderOverride.h in Headers */,
+				50FCE4F82530985900BF404F /* AnimationExporter.h in Headers */,
 				8DBCC2FA22304666003EE361 /* AutoLock.h in Headers */,
 				8DBCC2FB22304666003EE361 /* FireRenderArithmetic.h in Headers */,
 			);
@@ -2226,6 +2240,7 @@
 				B753200A23D9ED5600246738 /* FireRenderContext.h in Headers */,
 				B753200B23D9ED5600246738 /* FireRenderIBL.h in Headers */,
 				B753200C23D9ED5600246738 /* BlendColorsConverter.h in Headers */,
+				50ED249E251B8889006A318A /* NorthStarRenderingHelper.h in Headers */,
 				B753200D23D9ED5600246738 /* RprComposite.h in Headers */,
 				F19A160D248A737000A959C7 /* FireRenderLightCommon.h in Headers */,
 				B753200E23D9ED5600246738 /* FireMaya.h in Headers */,
@@ -2302,6 +2317,7 @@
 				B753205123D9ED5600246738 /* Bump2dConverter.h in Headers */,
 				B753205223D9ED5600246738 /* FireRenderIpr.h in Headers */,
 				B753205423D9ED5600246738 /* FireRenderOverride.h in Headers */,
+				50FCE4F92530985900BF404F /* AnimationExporter.h in Headers */,
 				B753205523D9ED5600246738 /* AutoLock.h in Headers */,
 				B753205623D9ED5600246738 /* FireRenderArithmetic.h in Headers */,
 			);
@@ -2462,6 +2478,7 @@
 				8D595DF020372FE20031988A /* FireRenderImageUtil.cpp in Sources */,
 				B7D1F0142367616000BB07CE /* InstancerMASH.cpp in Sources */,
 				8D595DF120372FE20031988A /* FireRenderBlendMaterial.cpp in Sources */,
+				50FCE4F42530985900BF404F /* AnimationExporter.cpp in Sources */,
 				8D595DF220372FE20031988A /* FireRenderExportCmd.cpp in Sources */,
 				B7EC453623743C9C001E49F7 /* ContextCreator.cpp in Sources */,
 				8D595DF320372FE20031988A /* ArHosekSkyModel.cpp in Sources */,
@@ -2516,6 +2533,7 @@
 				8D595E1320372FE20031988A /* FireRenderProduction.cpp in Sources */,
 				B72001C824742A7400A32CC0 /* NodeProcessingUtils.cpp in Sources */,
 				8D595E1420372FE20031988A /* pluginMain.cpp in Sources */,
+				50ED2499251B8889006A318A /* NorthStarRenderingHelper.cpp in Sources */,
 				8D595E1520372FE20031988A /* FireRenderBump.cpp in Sources */,
 				8D595E1620372FE20031988A /* FireRenderError.cpp in Sources */,
 				8D595E1720372FE20031988A /* FireRenderCmd.cpp in Sources */,
@@ -2613,6 +2631,7 @@
 				8DBCC31522304666003EE361 /* FireRenderImageUtil.cpp in Sources */,
 				B7D1F0152367616000BB07CE /* InstancerMASH.cpp in Sources */,
 				8DBCC31622304666003EE361 /* FireRenderBlendMaterial.cpp in Sources */,
+				50FCE4F52530985900BF404F /* AnimationExporter.cpp in Sources */,
 				8DBCC31722304666003EE361 /* FireRenderExportCmd.cpp in Sources */,
 				B7EC453B23743C9D001E49F7 /* ContextCreator.cpp in Sources */,
 				8DBCC31822304666003EE361 /* ArHosekSkyModel.cpp in Sources */,
@@ -2667,6 +2686,7 @@
 				8DBCC33622304666003EE361 /* FireRenderProduction.cpp in Sources */,
 				B72001C924742A7400A32CC0 /* NodeProcessingUtils.cpp in Sources */,
 				8DBCC33722304666003EE361 /* pluginMain.cpp in Sources */,
+				50ED249A251B8889006A318A /* NorthStarRenderingHelper.cpp in Sources */,
 				8DBCC33822304666003EE361 /* FireRenderBump.cpp in Sources */,
 				8DBCC33922304666003EE361 /* FireRenderError.cpp in Sources */,
 				8DBCC33A22304666003EE361 /* FireRenderCmd.cpp in Sources */,
@@ -2764,6 +2784,7 @@
 				B753208323D9ED5600246738 /* FireRenderAddMaterial.cpp in Sources */,
 				B753208423D9ED5600246738 /* FireRenderImageUtil.cpp in Sources */,
 				B753208523D9ED5600246738 /* InstancerMASH.cpp in Sources */,
+				50FCE4F62530985900BF404F /* AnimationExporter.cpp in Sources */,
 				B753208623D9ED5600246738 /* FireRenderBlendMaterial.cpp in Sources */,
 				B753208723D9ED5600246738 /* FireRenderExportCmd.cpp in Sources */,
 				B753208823D9ED5600246738 /* ContextCreator.cpp in Sources */,
@@ -2818,6 +2839,7 @@
 				B75320B523D9ED5600246738 /* RampNodeConverter.cpp in Sources */,
 				B72001CA24742A7400A32CC0 /* NodeProcessingUtils.cpp in Sources */,
 				B75320B623D9ED5600246738 /* FireRenderProduction.cpp in Sources */,
+				50ED249B251B8889006A318A /* NorthStarRenderingHelper.cpp in Sources */,
 				B75320B723D9ED5600246738 /* pluginMain.cpp in Sources */,
 				B75320B823D9ED5600246738 /* FireRenderBump.cpp in Sources */,
 				B75320B923D9ED5600246738 /* FireRenderError.cpp in Sources */,
@@ -2910,7 +2932,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					../../../RadeonProRenderSDK/RadeonProRender/binMacOS,
-					../../../RadeonProImageProcessingSDK/OSX,
+					../../../RadeonProImageProcessingSDK/OSX/Dynamic,
 					../../../RadeonProRenderSharedComponents/OpenImageIO/OSX/bin,
 					../../../RadeonProRenderSharedComponents/OpenVDB/OSX/lib,
 				);
@@ -2965,7 +2987,7 @@
 				);
 				LIBRARY_SEARCH_PATHS = (
 					../../../RadeonProRenderSDK/RadeonProRender/binMacOS,
-					../../../RadeonProImageProcessingSDK/OSX,
+					../../../RadeonProImageProcessingSDK/OSX/Dynamic,
 					../../../RadeonProRenderSharedComponents/OpenImageIO/OSX/bin,
 					../../../RadeonProRenderSharedComponents/OpenVDB/OSX/lib,
 				);

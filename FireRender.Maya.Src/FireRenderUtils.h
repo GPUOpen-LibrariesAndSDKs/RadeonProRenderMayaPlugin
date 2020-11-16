@@ -43,6 +43,8 @@ limitations under the License.
 #define PI 3.14159265358979323846
 #endif
 
+typedef std::chrono::time_point<std::chrono::steady_clock> TimePoint;
+
 // FireRenderGlobals
 // Utility class used to read attributes form the render global node
 // and configure the rpr_context
@@ -175,7 +177,7 @@ public:
 	static bool IsMotionBlur(MString name);
 
 	static void getCPUThreadSetup(bool& overriden, int& cpuThreadCount, RenderType renderType);
-	static int getThumbnailIterCount();
+	static int getThumbnailIterCount(bool* pSwatchesEnabled = nullptr);
 	static bool isExrMultichannelEnabled(void);
 
 public:
@@ -192,6 +194,8 @@ public:
 
 	int viewportRenderMode;
 	int renderMode;
+
+	MString textureCachePath;
 
 	// Global Illumination
 	bool giClampIrradiance;
@@ -277,6 +281,7 @@ public:
 	bool motionBlur;
 	bool cameraMotionBlur;
 	bool viewportMotionBlur;
+	bool velocityAOVMotionBlur;
 	float motionBlurCameraExposure;
 
 	// Camera type.
@@ -987,6 +992,33 @@ bool GetValuesFromUIRamp(MObject rampObject, const MString& rampKey, std::vector
 	return true;
 }
 
+template<typename valType>
+frw::BufferNode CreateRPRRampNode(std::vector<RampCtrlPoint<valType>>& rampCtrlPoints, const FireMaya::Scope& scope, const unsigned int bufferSize)
+{
+	// ensure correct input
+	if (rampCtrlPoints.size() == 0)
+		return frw::BufferNode(scope.MaterialSystem());
+
+	// create buffer desc
+	rpr_buffer_desc bufferDesc;
+	bufferDesc.nb_element = bufferSize;
+	bufferDesc.element_type = RPR_BUFFER_ELEMENT_TYPE_FLOAT32;
+	bufferDesc.element_channel_size = 4;
+
+	// convert control points into continious vector of data
+	std::vector<valType> remapedRampValue(bufferSize, valType());
+	RemapRampControlPoints(remapedRampValue.size(), remapedRampValue, rampCtrlPoints);
+
+	// create buffer
+	frw::DataBuffer dataBuffer(scope.Context(), bufferDesc, &remapedRampValue[0][0]);
+
+	// create buffer node
+	frw::BufferNode bufferNode(scope.MaterialSystem());
+	bufferNode.SetBuffer(dataBuffer);
+
+	return bufferNode;
+}
+
 // wrapper for maya call to Python
 static std::function<int(std::string)> pythonCallWrap = [](std::string arg)->int
 {
@@ -1054,3 +1086,110 @@ std::string string_format(const std::string& format, Args ... args)
 	snprintf(buf.get(), size, format.c_str(), args ...);
 	return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
 }
+
+void GetUINameFrameExtPattern(std::wstring& nameOut, std::wstring& extOut);
+
+#ifdef __APPLE__ // https://stackoverflow.com/questions/31346887/header-for-environ-on-mac
+extern char **environ;
+#endif
+
+template<typename T>
+T* GetEnviron(void);
+
+bool IsUnicodeSystem(void);
+
+template <typename T>
+std::pair<T, T> GetPathDelimiter(void);
+
+// replaces environment variables in file path string into actual paths
+template <typename T, typename C>
+T ProcessEnvVarsInFilePath(const C* in);
+
+template <typename T>
+size_t FindDelimiter(T& tmp);
+
+template <typename T>
+class EnvironmentVarsWrapper
+{
+	using xstring = std::basic_string<T, std::char_traits<T>, std::allocator<T> >;
+
+public:
+	static const std::map<xstring, xstring>& GetEnvVarsTable(void)
+	{
+		static EnvironmentVarsWrapper instance;
+
+		return instance.m_eVars;
+	}
+
+	EnvironmentVarsWrapper(EnvironmentVarsWrapper const&) = delete;
+	void operator=(EnvironmentVarsWrapper const&) = delete;
+
+private:
+	EnvironmentVarsWrapper(void)
+	{
+		T* pEnvVarPair = *GetEnviron<T*>();
+		for (int idx = 1; pEnvVarPair; idx++)
+		{
+			xstring tmp(pEnvVarPair);
+			size_t delimiter = FindDelimiter(tmp);
+			xstring varName = tmp.substr(0, delimiter);
+			xstring varValue = tmp.substr(delimiter + 1, tmp.length());
+
+			m_eVars[varName] = varValue;
+			pEnvVarPair = *(GetEnviron<T*>() + idx);
+		};
+	}
+
+private:
+	std::map<xstring, xstring> m_eVars;
+};
+
+template <typename T>
+std::tuple<T, T> ProcessEVarSchema(const T& eVar);
+
+template <typename T, typename C>
+T ProcessEnvVarsInFilePath(const C* in)
+{
+	T out(in);
+
+	const std::map<T, T>& eVars = EnvironmentVarsWrapper<C>::GetEnvVarsTable();
+
+	// find environment variables in the string
+	// and replace them with real path
+	for (auto& eVar : eVars)
+	{
+		auto processedEVar = ProcessEVarSchema(eVar.first);
+
+		T tmpVar = std::get<0>(processedEVar);
+		size_t found = out.find(tmpVar);
+
+		if (found == T::npos)
+		{
+			tmpVar = std::get<1>(processedEVar);
+			found = out.find(tmpVar);
+		}
+
+		if (found == T::npos)
+			continue;
+
+		out.replace(found, tmpVar.length(), eVar.second);
+	}
+
+	// replace "\\" with "/"
+	static const std::pair<T, T> toBeReplaced = GetPathDelimiter<T>();
+	while (out.find(toBeReplaced.first) != T::npos)
+	{
+		out.replace(out.find(toBeReplaced.first), toBeReplaced.first.size(), toBeReplaced.second);
+	}
+
+	return out;
+}
+
+TimePoint GetCurrentChronoTime();
+
+template <typename T>
+long TimeDiffChrono(TimePoint currTime, TimePoint startTime)
+{
+	return (long)std::chrono::duration_cast<T>(currTime - startTime).count();
+}
+
