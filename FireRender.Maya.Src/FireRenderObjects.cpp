@@ -1038,11 +1038,16 @@ void FireRenderMesh::setupDisplacement(MObject shadingEngine, frw::Shape shape)
 						else
 						{
 							FireRenderContext *ctx = this->context();
+
+							TahoePluginVersion version = GetTahoeVersionToUse();
+							bool isRPR20 = version == TahoePluginVersion::RPR2;
+
 							frw::Scene scn = ctx->GetScene();
 							frw::Camera cam = scn.GetCamera();
 							frw::Context ctx2 = scn.GetContext();
 							rpr_framebuffer fb = ctx->frameBufferAOV(RPR_AOV_COLOR);
-							shape.SetAdaptiveSubdivisionFactor(adaptiveFactor, cam.Handle(), fb);
+
+							shape.SetAdaptiveSubdivisionFactor(adaptiveFactor, ctx->height(), cam.Handle(), fb, isRPR20);
 						}
 						shape.SetSubdivisionCreaseWeight(creaseWeight);
 						shape.SetSubdivisionBoundaryInterop(boundary);

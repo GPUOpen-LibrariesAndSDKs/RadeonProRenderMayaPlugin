@@ -12,11 +12,13 @@ limitations under the License.
 ********************************************************************/
 #include "TahoeContext.h"
 #include "maya/MColorManagementUtilities.h"
+#include "maya/MFileObject.h"
 
 TahoeContext::LoadedPluginMap TahoeContext::m_gLoadedPluginsIDsMap;
 
 TahoeContext::TahoeContext() :
-	m_PluginVersion(TahoePluginVersion::RPR1)
+	m_PluginVersion(TahoePluginVersion::RPR1),
+	m_PreviewMode(true)
 {
 
 }
@@ -252,6 +254,18 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 
 	// OCIO
 	{
+		const std::map<std::string, std::string>& eVars = EnvironmentVarsWrapper<char>::GetEnvVarsTable();
+		auto envOCIOPath = eVars.find("OCIO");
+		if (envOCIOPath != eVars.end())
+		{
+			MFileObject path;
+			path.setRawFullName(envOCIOPath->second.c_str());
+			MString setupCommand = MString("colorManagementPrefs -e -configFilePath \"") + path.resolvedFullName() + MString("\";");
+			MGlobal::executeCommand(setupCommand);
+			MGlobal::executeCommand(MString("colorManagementPrefs -e -cmEnabled 1;"));
+			MGlobal::executeCommand(MString("colorManagementPrefs -e -cmConfigFileEnabled 1;"));
+		}
+
 		MStatus colorManagementStatus;
 		int isColorManagementOn = 0;
 		colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -cmEnabled;"), isColorManagementOn);
@@ -512,5 +526,53 @@ void TahoeContext::AbortRender()
 	if (m_PluginVersion == TahoePluginVersion::RPR2)
 	{
 		GetScope().Context().AbortRender();
+	}
+}
+
+void TahoeContext::SetupPreviewMode()
+{
+	if (m_PluginVersion == TahoePluginVersion::RPR1)
+	{
+		RenderType renderType = GetRenderType();
+		int preview = 0;
+
+		if ((renderType == RenderType::ViewportRender) ||
+			(renderType == RenderType::IPR) ||
+			(renderType == RenderType::Thumbnail))
+		{
+			preview = 1;
+		}
+
+		SetPreviewMode(preview);
+	}
+}
+
+void TahoeContext::OnPreRender()
+{
+	RenderType renderType = GetRenderType();
+
+	if ( (m_PluginVersion == TahoePluginVersion::RPR1) || 
+		((renderType != RenderType::ViewportRender) &&
+			(renderType != RenderType::IPR)))
+	{
+		return;
+	}
+
+	const int previewModeLevel = 2;
+	if (m_restartRender)
+	{
+		m_PreviewMode = true;
+		SetPreviewMode(previewModeLevel);
+	}
+
+	if (m_currentFrame == 2 && m_PreviewMode)
+	{
+		SetPreviewMode(0);
+		m_PreviewMode = false;
+		m_restartRender = true;
+	}
+	else if (m_currentFrame < 2 && m_PreviewMode)
+	{
+		SetPreviewMode(previewModeLevel);
 	}
 }
