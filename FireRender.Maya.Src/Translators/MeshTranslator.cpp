@@ -432,7 +432,7 @@ void FireMaya::MeshTranslator::GetUVCoords(
 	if (uvSetCount > rprMaxUVSetCount)
 	{
 		uvSetCount = rprMaxUVSetCount;
-		FireRenderError err("UV set error", "One or more objects have multiple UV sets. Only two UV sets per object supported. Scene will be rendered with first two UV sets.", true);
+		MGlobal::displayError("Object " + fnMesh.fullPathName() + " have more than 2 UV sets. Only two UV sets per object supported. Scene will be rendered with first two UV sets.");
 	}
 
 	uvSetNames.setLength(uvSetCount);
