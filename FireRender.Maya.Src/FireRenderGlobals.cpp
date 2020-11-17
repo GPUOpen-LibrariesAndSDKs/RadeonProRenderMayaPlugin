@@ -244,7 +244,7 @@ void FireRenderGlobals::postConstructor()
 	// try creating folder for texture cache
 	MString workspace;
 	status = MGlobal::executeCommand(MString("workspace -q -dir;"),	workspace);
-	workspace += "/texture_cache";
+	workspace += "/cache";
 
 	namespace fs = std::experimental::filesystem;
 	if (!fs::is_directory(workspace.asChar()) || !fs::exists(workspace.asChar()))
@@ -461,7 +461,7 @@ MStatus FireRenderGlobals::initialize()
 
 	MString workspace;
 	status = MGlobal::executeCommand(MString("workspace -q -dir;"), workspace);
-	workspace += "texture_cache";
+	workspace += "cache";
 	MGlobal::executeCommand(MString("optionVar -sv RPR_textureCachePath") + workspace);
 	MObject defaultTextureCachePath = sData.create(workspace);
 	Attribute::textureCachePath = tAttr.create("textureCachePath", "tcp", MFnData::kString, defaultTextureCachePath);
