@@ -265,12 +265,6 @@ bool FireRenderProduction::start()
 
 	RenderRegion region = m_region;
 
-	// We don't use tiling with RPR2
-	if (GetTahoeVersionToUse() == TahoePluginVersion::RPR2)
-	{
-		m_globals.tileRenderingEnabled = false;
-	}
-
 	if (m_globals.tileRenderingEnabled)
 	{
 		contextWidth = m_globals.tileSizeX;
@@ -278,8 +272,6 @@ bool FireRenderProduction::start()
 
 		region = RenderRegion(contextWidth, contextHeight);
 	}
-
-	//m_isRegion = true;
 
 	auto ret = FireRenderThread::RunOnceAndWait<bool>([this, &showWarningDialog, contextWidth, contextHeight]()
 	{
@@ -312,7 +304,10 @@ bool FireRenderProduction::start()
 			return false;
 		}
 
-		m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderProduction::OnBufferAvailableCallback, this));
+		if (!m_globals.tileRenderingEnabled)
+		{
+			m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderProduction::OnBufferAvailableCallback, this));
+		}
 
 		m_aovs->setFromContext(*m_contextPtr);
 
