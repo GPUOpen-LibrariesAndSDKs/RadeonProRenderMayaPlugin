@@ -1156,7 +1156,7 @@ namespace frw
 		Node GetDisplacementMap();
 		void RemoveDisplacement();
 		void SetSubdivisionFactor(int sub);
-		void SetAdaptiveSubdivisionFactor(float adaptiveFactor, float height, rpr_camera camera, rpr_framebuffer frameBuf, bool isRpr20);
+		void SetAdaptiveSubdivisionFactor(float adaptiveFactor, int height, rpr_camera camera, rpr_framebuffer frameBuf, bool isRpr20);
 		void SetSubdivisionCreaseWeight(float weight);
 		void SetSubdivisionBoundaryInterop(rpr_subdiv_boundary_interfop_type type);
 
@@ -3886,7 +3886,7 @@ namespace frw
 		checkStatus(res);
 	}
 
-	inline void Shape::SetAdaptiveSubdivisionFactor(float adaptiveFactor, float image_height, rpr_camera camera, rpr_framebuffer frameBuf, bool isRpr20)
+	inline void Shape::SetAdaptiveSubdivisionFactor(float adaptiveFactor, int image_height, rpr_camera camera, rpr_framebuffer frameBuf, bool isRpr20)
 	{
 		// convert factor from size of subdiv in pixel to RPR
 		// RPR wants the subdiv factor as the "number of faces per pixel" 
@@ -3910,7 +3910,7 @@ namespace frw
 		}
 		else
 		{
-			float autoRatioCap = 1.0 / image_height;
+			float autoRatioCap = 1.0f / image_height;
 			rpr_int res = rprShapeSetSubdivisionAutoRatioCap(Handle(), autoRatioCap);
 			checkStatusThrow(res, "Unable to set Adaptive Subdivision!");
 
