@@ -977,7 +977,7 @@ frw::Shader FireRenderHairNHair::ParseNodeAttributes(MObject hairObject, const F
 	if (castShadowsAttr.isNull())
 		return frw::Shader();
 
-	bool castShadows = findPlugTryGetValue(dagHairSystemShapeObj, castShadowsAttr, 1.0f);
+	bool castShadows = findPlugTryGetValue(dagHairSystemShapeObj, castShadowsAttr, 1) > 0;
 
 	// - get hairColorScale (this is ramp)
 	MObject hairColorScaleAttr = dagHairSystemShapeObj.attribute("hairColorScale");
