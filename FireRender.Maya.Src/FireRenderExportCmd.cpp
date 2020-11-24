@@ -78,16 +78,7 @@ MSyntax FireRenderExportCmd::newSyntax()
 
 bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std::wstring& fileName)
 {
-	// get directory path and name of generated files
-	std::wstring directory = filePath;
-	const size_t lastIdx = filePath.rfind('/');
-	if (std::string::npos != lastIdx)
-	{
-		directory = filePath.substr(0, lastIdx);
-	}
-	std::wstring tmpFileName(fileName);
-	tmpFileName.erase(0, directory.length() + 1);
-	std::wstring configName = std::regex_replace(filePath, std::wregex(L".rpr"), L".json");
+	std::wstring configName = std::regex_replace(filePath, std::wregex(L"rpr$"), L"json");
 
 #ifdef WIN32
 	// MSVS added an overload to accommodate using open with wide strings where xcode did not.
