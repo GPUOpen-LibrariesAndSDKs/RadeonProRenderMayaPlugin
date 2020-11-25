@@ -247,13 +247,15 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_METAL_PERFORMANCE_SHADER, fireRenderGlobalsData.useMPS ? 1 : 0);
 	checkStatus(frstatus);
 
-	frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_TEXTURE_CACHE_PATH, fireRenderGlobalsData.textureCachePath.asChar());
-	checkStatus(frstatus);
-	
 	updateTonemapping(fireRenderGlobalsData, disableWhiteBalance);
 
-	// OCIO
+
+	if (GetTahoeVersionToUse() == TahoePluginVersion::RPR2)
 	{
+		frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_TEXTURE_CACHE_PATH, fireRenderGlobalsData.textureCachePath.asChar());
+		checkStatus(frstatus);
+
+		// OCIO
 		const std::map<std::string, std::string>& eVars = EnvironmentVarsWrapper<char>::GetEnvVarsTable();
 		auto envOCIOPath = eVars.find("OCIO");
 		if (envOCIOPath != eVars.end())
