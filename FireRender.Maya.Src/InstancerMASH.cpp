@@ -38,26 +38,27 @@ void InstancerMASH::Freshen()
 		GenerateInstances();
 	}
 
-	const MObject firstInstancedObject = GetTargetObjects().at(0);
-	const FireRenderMesh* renderMesh = static_cast<FireRenderMesh*>(context()->getRenderObject(firstInstancedObject));
-
-	//Target node translation shouldn't affect the result 
-	MTransformationMatrix targetNodeMatrix = MFnTransform(MFnDagNode(renderMesh->Object()).parent(0)).transformation();
-	targetNodeMatrix.setTranslation({ 0., 0., 0. }, MSpace::kObject);
-
 	MTransformationMatrix instancerMatrix = MFnTransform(m.object).transformation();
 	std::vector<MMatrix> matricesFromMASH = GetTransformMatrices();
 
 	for (size_t i = 0; i < GetInstanceCount(); i++)
 	{
+		const MObject instancedObject = GetTargetObjects().at(i);
+		const FireRenderMesh* renderMesh = static_cast<FireRenderMesh*>(context()->getRenderObject(instancedObject));
+
+		//Target node translation shouldn't affect the result 
+		MTransformationMatrix targetNodeMatrix = MFnTransform(MFnDagNode(renderMesh->Object()).parent(0)).transformation();
+		targetNodeMatrix.setTranslation({ 0., 0., 0. }, MSpace::kObject);
+
+
 		MMatrix newTransform = targetNodeMatrix.asMatrix();
 		newTransform *= matricesFromMASH.at(i);
 		newTransform *= instancerMatrix.asMatrix();
 
-		auto instancedObject = m_instancedObjects.at(i);
-		instancedObject->SetSelfTransform(newTransform);
-		instancedObject->Rebuild();
-		instancedObject->setDirty();
+		auto instancedFRObject = m_instancedObjects.at(i);
+		instancedFRObject->SetSelfTransform(newTransform);
+		instancedFRObject->Rebuild();
+		instancedFRObject->setDirty();
 	}
 
 	m_instancedObjectsCachedSize = GetInstanceCount();
@@ -114,7 +115,7 @@ std::vector<MObject> InstancerMASH::GetTargetObjects() const
 		}
 	}
 
-	return targetObjects;
+	return std::move(targetObjects);
 }
 
 std::vector<MMatrix> InstancerMASH::GetTransformMatrices() const
@@ -155,13 +156,15 @@ void InstancerMASH::GenerateInstances()
 {
 	//Generate unique uuid, because we can't use instancer uuid - it initiates infinite Freshen() on whole hierarchy
 	MUuid uuid;
-	uuid.generate();
 
 	//Generate instances with almost copy constructor with custom uuid passed
-	const auto firstInstancedObject = GetTargetObjects().at(0);
-	for (size_t i = 0; i < GetInstanceCount(); i++)
+	std::vector<MObject> targetObjects = GetTargetObjects();
+
+	size_t count = GetInstanceCount();
+	for (size_t i = 0; i < count; i++)
 	{
-		FireRenderMesh* renderMesh = static_cast<FireRenderMesh*>(context()->getRenderObject(firstInstancedObject));
+		uuid.generate();
+		FireRenderMesh* renderMesh = static_cast<FireRenderMesh*>(context()->getRenderObject(targetObjects.at(i)));
 		auto instance = std::make_shared<FireRenderMeshMASH>(*renderMesh, uuid.asString().asChar(), m.object);
 		m_instancedObjects[i] = instance;
 	}
