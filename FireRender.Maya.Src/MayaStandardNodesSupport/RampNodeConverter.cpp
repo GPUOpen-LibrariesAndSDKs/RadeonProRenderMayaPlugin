@@ -346,7 +346,7 @@ void ArrangeBufferViaRampCtrlPoints(MObject& shaderNodeObject, const FireMaya::S
 			return (std::get<MString>(tmp) == el.ctrlPointData.second);
 		});
 		assert(it != rampCtrlPoints.end());
-		unsigned int position = std::distance(rampCtrlPoints.begin(), it);
+		unsigned int position = (unsigned int) std::distance(rampCtrlPoints.begin(), it);
 		positions.push_back(position);
 	}
 
