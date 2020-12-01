@@ -24,9 +24,14 @@ public:
 	FireRenderMeshMASH(const FireRenderMesh& rhs, const std::string& uuid, const MObject instancer);
 	void SetSelfTransform(const MMatrix& matrix);
 
+	const FireRenderMesh& GetOriginalFRMeshinstancedObject() const { return m_originalFRMesh; }
+
 protected:
 	/** Logic should be changed to not pass DagPath into the function, because it's not used in MASH visibility check */
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const final override;
 	virtual MMatrix GetSelfTransform() final override;
+
+private:
+	const FireRenderMesh& m_originalFRMesh;
 };
 

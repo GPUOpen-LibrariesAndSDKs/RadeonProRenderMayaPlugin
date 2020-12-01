@@ -41,21 +41,21 @@ void InstancerMASH::Freshen()
 	MTransformationMatrix instancerMatrix = MFnTransform(m.object).transformation();
 	std::vector<MMatrix> matricesFromMASH = GetTransformMatrices();
 
+	std::vector<MObject> targetObjects = GetTargetObjects();
+
 	for (size_t i = 0; i < GetInstanceCount(); i++)
 	{
-		const MObject instancedObject = GetTargetObjects().at(i);
-		const FireRenderMesh* renderMesh = static_cast<FireRenderMesh*>(context()->getRenderObject(instancedObject));
+		std::shared_ptr<FireRenderMeshMASH> instancedFRObject = m_instancedObjects.at(i);
+		const FireRenderMesh& renderMesh = instancedFRObject->GetOriginalFRMeshinstancedObject();
 
 		//Target node translation shouldn't affect the result 
-		MTransformationMatrix targetNodeMatrix = MFnTransform(MFnDagNode(renderMesh->Object()).parent(0)).transformation();
+		MTransformationMatrix targetNodeMatrix = MFnTransform(MFnDagNode(renderMesh.Object()).parent(0)).transformation();
 		targetNodeMatrix.setTranslation({ 0., 0., 0. }, MSpace::kObject);
-
 
 		MMatrix newTransform = targetNodeMatrix.asMatrix();
 		newTransform *= matricesFromMASH.at(i);
 		newTransform *= instancerMatrix.asMatrix();
 
-		auto instancedFRObject = m_instancedObjects.at(i);
 		instancedFRObject->SetSelfTransform(newTransform);
 		instancedFRObject->Rebuild();
 		instancedFRObject->setDirty();
@@ -68,6 +68,7 @@ void InstancerMASH::OnPlugDirty(MObject& node, MPlug& plug)
 {
 	(void) node;
 	(void) plug;
+
 	if (ShouldBeRecreated())
 	{
 		for (auto o : m_instancedObjects)
@@ -132,7 +133,7 @@ std::vector<MMatrix> InstancerMASH::GetTransformMatrices() const
 	MVectorArray rotationData = arrayAttrsData.getVectorData("rotation");
 	MVectorArray scaleData = arrayAttrsData.getVectorData("scale");
 
-	for (unsigned i = 0; i < static_cast<unsigned>(GetInstanceCount()); i++)
+	for (unsigned int i = 0; i < static_cast<unsigned int>(GetInstanceCount()); i++)
 	{
 		MVector position = positionData[i];
 		MVector rotation = rotationData[i];
@@ -155,18 +156,35 @@ std::vector<MMatrix> InstancerMASH::GetTransformMatrices() const
 void InstancerMASH::GenerateInstances()
 {
 	//Generate unique uuid, because we can't use instancer uuid - it initiates infinite Freshen() on whole hierarchy
-	MUuid uuid;
+	std::vector<MUuid> uuidVector;
 
 	//Generate instances with almost copy constructor with custom uuid passed
 	std::vector<MObject> targetObjects = GetTargetObjects();
 
-	size_t count = GetInstanceCount();
-	for (size_t i = 0; i < count; i++)
+	MFnDependencyNode instancerDagNode(m.object);
+	MPlug plug(m.object, instancerDagNode.attribute("inp"));
+	MObject data = plug.asMDataHandle().data();
+	MFnArrayAttrsData arrayAttrsData(data);
+
+	// These two arrays are filled with doubles instead of ints in maya for some reason.
+	MDoubleArray objectIndexArray = arrayAttrsData.getDoubleData("objectIndex");
+	MDoubleArray idArray = arrayAttrsData.getDoubleData("id");
+
+	for (unsigned int idArrayIndex = 0; idArrayIndex < idArray.length(); ++idArrayIndex)
 	{
-		uuid.generate();
-		FireRenderMesh* renderMesh = static_cast<FireRenderMesh*>(context()->getRenderObject(targetObjects.at(i)));
-		auto instance = std::make_shared<FireRenderMeshMASH>(*renderMesh, uuid.asString().asChar(), m.object);
-		m_instancedObjects[i] = instance;
+		size_t id = (size_t) idArray[idArrayIndex];
+		size_t objectIndex = (size_t) objectIndexArray[idArrayIndex];
+
+		if (objectIndex >= uuidVector.size())
+		{
+			MUuid uuid;
+			uuid.generate();
+			uuidVector.push_back(uuid);
+		}
+
+		FireRenderMesh* renderMesh = static_cast<FireRenderMesh*>(context()->getRenderObject(targetObjects.at(objectIndex)));
+		auto instance = std::make_shared<FireRenderMeshMASH>(*renderMesh, uuidVector[objectIndex].asString().asChar(), m.object);
+		m_instancedObjects[id] = instance;
 	}
 }
 
