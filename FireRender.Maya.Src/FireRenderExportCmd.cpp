@@ -188,6 +188,26 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 		json << "\n}," << std::endl;
 	}
 
+	// - contour
+	if (globals.contourIsEnabled)
+	{
+		json << "\"contour\" : {\n";
+
+		json << "\"object.id\" : " << (globals.contourUseObjectID ? 1 : 0) << ",\n";
+		json << "\"material.id\" : " << (globals.contourUseMaterialID ? 1 : 0) << ",\n";
+		json << "\"normal\" : " << (globals.contourUseShadingNormal ? 1 : 0) << ",\n";
+
+		json << "\"threshold.normal\" : " << globals.contourNormalThreshold << ",\n";
+		json << "\"linewidth.objid\" : " << globals.contourLineWidthObjectID << ",\n";
+		json << "\"linewidth.matid\" : " << globals.contourLineWidthMaterialID << ",\n";
+		json << "\"linewidth.normal\" : " << globals.contourLineWidthShadingNormal << ",\n";
+		json << "\"antialiasing\" : " << globals.contourAntialiasing << ",\n";
+
+		json << "\"debug\" : " << (globals.contourIsDebugEnabled ? 1 : 0);
+
+		json << "\n}," << std::endl;
+	}
+
 	// - devices
 	std::vector<std::pair<std::wstring, int>> context;
 	MIntArray devicesUsing;

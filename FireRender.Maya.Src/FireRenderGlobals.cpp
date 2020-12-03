@@ -132,6 +132,18 @@ namespace
 		MObject tahoeVersion;
 
 		MObject textureCachePath;
+
+		// contour
+		MObject contourIsEnabled;
+		MObject contourUseObjectID;
+		MObject contourUseMaterialID;
+		MObject contourUseShadingNormal;
+		MObject contourLineWidthObjectID;
+		MObject contourLineWidthMaterialID;
+		MObject contourLineWidthShadingNormal;
+		MObject contourNormalThreshold;
+		MObject contourAntialiasing;
+		MObject contourIsDebugEnabled;
 	}
 
     struct RenderingDeviceAttributes
@@ -276,6 +288,7 @@ MStatus FireRenderGlobals::initialize()
 	createViewportAttributes();
 	createCompletionCriteriaAttributes();
 	createTileRenderAttributes();
+	createContourEffectAttributes();
 
 	Attribute::textureCompression = nAttr.create("textureCompression", "texC", MFnNumericData::kBoolean, false, &status);
 	MAKE_INPUT(nAttr);
@@ -570,6 +583,63 @@ void FireRenderGlobals::createTileRenderAttributes()
 	nAttr.setSoftMax(tileDefaultSizeMax);
 
 	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::tileRenderY));
+}
+
+void FireRenderGlobals::createContourEffectAttributes()
+{
+	MFnNumericAttribute nAttr;
+	MStatus status;
+
+	Attribute::contourIsEnabled = nAttr.create("contourIsEnabled", "coen", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+
+	Attribute::contourUseObjectID = nAttr.create("contourUseObjectID", "coob", MFnNumericData::kBoolean, 1, &status);
+	MAKE_INPUT(nAttr);
+
+	Attribute::contourUseMaterialID = nAttr.create("contourUseMaterialID", "comt", MFnNumericData::kBoolean, 1, &status);
+	MAKE_INPUT(nAttr);
+
+	Attribute::contourUseShadingNormal = nAttr.create("contourUseShadingNormal", "cosn", MFnNumericData::kBoolean, 1, &status);
+	MAKE_INPUT(nAttr);
+
+	Attribute::contourLineWidthObjectID = nAttr.create("contourLineWidthObjectID", "cowb", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(1.0f);
+	nAttr.setMax(10.0f);
+
+	Attribute::contourLineWidthMaterialID = nAttr.create("contourLineWidthMaterialID", "cowm", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(1.0f);
+	nAttr.setMax(10.0f);
+
+	Attribute::contourLineWidthShadingNormal = nAttr.create("contourLineWidthShadingNormal", "cows", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(1.0f);
+	nAttr.setMax(10.0f);
+
+	Attribute::contourNormalThreshold = nAttr.create("contourNormalThreshold", "cont", MFnNumericData::kFloat, 45.0f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0f);
+	nAttr.setMax(180.0f);
+
+	Attribute::contourAntialiasing = nAttr.create("contourAntialiasing", "coaa", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0f);
+	nAttr.setMax(1.0f);
+
+	Attribute::contourIsDebugEnabled = nAttr.create("contourIsDebugEnabled", "code", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+
+	CHECK_MSTATUS(addAttribute(Attribute::contourIsEnabled));
+	CHECK_MSTATUS(addAttribute(Attribute::contourUseObjectID));
+	CHECK_MSTATUS(addAttribute(Attribute::contourUseMaterialID));
+	CHECK_MSTATUS(addAttribute(Attribute::contourUseShadingNormal));
+	CHECK_MSTATUS(addAttribute(Attribute::contourLineWidthObjectID));
+	CHECK_MSTATUS(addAttribute(Attribute::contourLineWidthMaterialID));
+	CHECK_MSTATUS(addAttribute(Attribute::contourLineWidthShadingNormal));
+	CHECK_MSTATUS(addAttribute(Attribute::contourNormalThreshold));
+	CHECK_MSTATUS(addAttribute(Attribute::contourAntialiasing));
+	CHECK_MSTATUS(addAttribute(Attribute::contourIsDebugEnabled));
 }
 
 void FireRenderGlobals::createCompletionCriteriaAttributes()

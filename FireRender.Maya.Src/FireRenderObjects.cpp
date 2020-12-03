@@ -809,11 +809,23 @@ void FireRenderMeshCommon::setRenderStats(MDagPath dagPath)
 	bool isVisisble = IsMeshVisible(dagPath, context());
 	setVisibility(isVisisble);
 
+	MFnDagNode mdag(dagPath.node());
+	MFnDependencyNode parentTransform(mdag.parent(0));
+	MPlug contourVisibilityPlug = parentTransform.findPlug("RPRContourVisibility");
+	bool isVisibleInContour = false;
+	if (!contourVisibilityPlug.isNull())
+	{
+		MStatus res = contourVisibilityPlug.getValue(isVisibleInContour);
+		CHECK_MSTATUS(res);
+	}
+
 	setPrimaryVisibility(primaryVisibility);
 
 	setReflectionVisibility(visibleInReflections);
 
 	setRefractionVisibility(visibleInRefractions);
+
+	setContourVisibility(isVisibleInContour);
 
 	setCastShadows(castsShadows);
 }
@@ -900,6 +912,15 @@ void FireRenderMeshCommon::setPrimaryVisibility(bool primaryVisibility)
 	{
 		if (auto shape = element.shape)
 			shape.SetPrimaryVisibility(primaryVisibility);
+	}
+}
+
+void FireRenderMeshCommon::setContourVisibility(bool contourVisibility)
+{
+	for (auto element : m.elements)
+	{
+		if (auto shape = element.shape)
+			shape.SetContourVisibilityFlag(contourVisibility);
 	}
 }
 
