@@ -232,7 +232,7 @@ public:
 
 	bool isRenderView() const;
 
-	bool createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete = true, bool glViewport = false, int* pOutRes = nullptr);
+	bool createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete = true, bool glViewport = false, int* pOutRes = nullptr, bool createScene = true);
 
 	// Return the context
 	rpr_context context();
@@ -602,7 +602,8 @@ public:
 
 	virtual rpr_int SetRenderQuality(RenderQuality quality) { return RPR_SUCCESS; }
 
-	virtual void setupContext(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) {}
+	virtual void setupContextPreSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance = false) {}
+	virtual void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) {}
 	virtual bool IsAOVSupported(int aov) const { return true; }
 
 	virtual bool IsRenderQualitySupported(RenderQuality quality) const override = 0;
@@ -669,7 +670,9 @@ private:
 
 	void initBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture = nullptr);
 
+	void forceTurnOnAOVs(const std::vector<int>& aovsToAdd, bool allocBuffer = false);
 	void turnOnAOVsForDenoiser(bool allocBuffer = false);
+	void turnOnAOVsForContour(bool allocBuffer = false);
 	bool CanCreateAiDenoiser() const;
 	void setupDenoiserFB(void);
 	void setupDenoiserRAM(void);
