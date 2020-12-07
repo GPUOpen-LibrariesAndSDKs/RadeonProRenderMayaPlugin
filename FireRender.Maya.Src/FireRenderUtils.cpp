@@ -418,7 +418,46 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("detailedLog");
 		if (!plug.isNull())
 			useDetailedContextWorkLog = plug.asBool();
-		
+
+		plug = frGlobalsNode.findPlug("contourIsEnabled");
+		if (!plug.isNull())
+			contourIsEnabled = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("contourUseObjectID");
+		if (!plug.isNull())
+			contourUseObjectID = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("contourUseMaterialID");
+		if (!plug.isNull())
+			contourUseMaterialID = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("contourUseShadingNormal");
+		if (!plug.isNull())
+			contourUseShadingNormal = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("contourLineWidthObjectID");
+		if (!plug.isNull())
+			contourLineWidthObjectID = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourLineWidthMaterialID");
+		if (!plug.isNull())
+			contourLineWidthMaterialID = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourLineWidthShadingNormal");
+		if (!plug.isNull())
+			contourLineWidthShadingNormal = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourNormalThreshold");
+		if (!plug.isNull())
+			contourNormalThreshold = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourAntialiasing");
+		if (!plug.isNull())
+			contourAntialiasing = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourIsDebugEnabled");
+		if (!plug.isNull())
+			contourIsDebugEnabled = plug.asBool();
 
 		aovs.readFromGlobals(frGlobalsNode);
 

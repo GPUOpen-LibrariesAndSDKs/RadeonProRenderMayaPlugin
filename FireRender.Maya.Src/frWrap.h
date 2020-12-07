@@ -1125,6 +1125,20 @@ namespace frw
 			}
 		}
 
+		void SetContourVisibilityFlag(bool isContourVisible)
+		{
+			auto res = rprShapeSetContourIgnore(Handle(), !isContourVisible);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
 		void SetShadowCatcherFlag(bool enableShadowCatcher)
 		{
 			auto res = rprShapeSetShadowCatcher(Handle(), enableShadowCatcher);

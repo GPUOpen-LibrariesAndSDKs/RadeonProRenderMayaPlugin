@@ -13,8 +13,9 @@ limitations under the License.
 #include "FireRenderMeshMASH.h"
 
 FireRenderMeshMASH::FireRenderMeshMASH(const FireRenderMesh& rhs, const std::string& uuid, const MObject instancer)
-	: FireRenderMesh(rhs, uuid), 
-	m_Instancer(instancer)
+	: FireRenderMesh(rhs, uuid),
+	m_Instancer(instancer),
+	m_originalFRMesh(rhs)
 { 
 	m_SelfTransform.setToIdentity();
 }
