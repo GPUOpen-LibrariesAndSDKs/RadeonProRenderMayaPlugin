@@ -475,6 +475,12 @@ void AddExtensionAttributes()
 	MNodeClass transformNodeClass("transform");
 	transformNodeClass.addExtensionAttribute(objectIdAttr);
 
+	// Adding visibility in contour render mode
+	MStatus status;
+	MObject contourVisibilityAttr = nAttr.create("RPRContourVisibility", "covs", MFnNumericData::kBoolean, true, &status);
+	nAttr.setNiceNameOverride("RPR Visible in Contour mode");
+	transformNodeClass.addExtensionAttribute(contourVisibilityAttr);
+
 	////// light group attributes for Light Group AOVs
 
 	MString lightClassNames[] = { "RPRPhysicalLight", "RPRIBL", "pointLight", "directionalLight", "spotLight", "areaLight" };

@@ -281,6 +281,7 @@ public:
 	void setRefractionVisibility(bool refractionVisibility);
 	void setCastShadows(bool castShadow);
 	void setPrimaryVisibility(bool primaryVisibility);
+	void setContourVisibility(bool contourVisibility);
 
 protected:
 	// Detach from the scene

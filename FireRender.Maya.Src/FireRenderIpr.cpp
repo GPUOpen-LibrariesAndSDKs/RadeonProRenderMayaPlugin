@@ -615,6 +615,18 @@ void FireRenderIpr::globalsChangedCallback(MNodeMessage::AttributeMessage msg, M
 {
 	MString name = plug.name();
 
+	if ((name == "RadeonProRenderGlobals.contourLineWidthObjectID") ||
+		(name == "RadeonProRenderGlobals.contourLineWidthMaterialID") ||
+		(name == "RadeonProRenderGlobals.contourLineWidthShadingNormal") ||
+		(name == "RadeonProRenderGlobals.contourNormalThreshold") ||
+		(name == "RadeonProRenderGlobals.contourAntialiasing") 
+		)
+	{
+		FireRenderIpr*  thisObject = reinterpret_cast<FireRenderIpr*> (clientData);
+		thisObject->refreshContext();
+		return;
+	}
+
 	if ( (name != "RadeonProRenderGlobals.aovDisplayedInRenderView") ||
 		!(msg | MNodeMessage::AttributeMessage::kAttributeSet))
 	{
