@@ -78,16 +78,7 @@ MSyntax FireRenderExportCmd::newSyntax()
 
 bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std::wstring& fileName)
 {
-	// get directory path and name of generated files
-	std::wstring directory = filePath;
-	const size_t lastIdx = filePath.rfind('/');
-	if (std::string::npos != lastIdx)
-	{
-		directory = filePath.substr(0, lastIdx);
-	}
-	std::wstring tmpFileName(fileName);
-	tmpFileName.erase(0, directory.length() + 1);
-	std::wstring configName = std::regex_replace(filePath, std::wregex(L".rpr"), L".json");
+	std::wstring configName = std::regex_replace(filePath, std::wregex(L"rpr$"), L"json");
 
 #ifdef WIN32
 	// MSVS added an overload to accommodate using open with wide strings where xcode did not.
@@ -194,6 +185,26 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 		{
 			json << ",\n" << "\"" << *aov << "\":\"" << (*aov + L".png") << "\"";
 		}
+		json << "\n}," << std::endl;
+	}
+
+	// - contour
+	if (globals.contourIsEnabled)
+	{
+		json << "\"contour\" : {\n";
+
+		json << "\"object.id\" : " << (globals.contourUseObjectID ? 1 : 0) << ",\n";
+		json << "\"material.id\" : " << (globals.contourUseMaterialID ? 1 : 0) << ",\n";
+		json << "\"normal\" : " << (globals.contourUseShadingNormal ? 1 : 0) << ",\n";
+
+		json << "\"threshold.normal\" : " << globals.contourNormalThreshold << ",\n";
+		json << "\"linewidth.objid\" : " << globals.contourLineWidthObjectID << ",\n";
+		json << "\"linewidth.matid\" : " << globals.contourLineWidthMaterialID << ",\n";
+		json << "\"linewidth.normal\" : " << globals.contourLineWidthShadingNormal << ",\n";
+		json << "\"antialiasing\" : " << globals.contourAntialiasing << ",\n";
+
+		json << "\"debug\" : " << (globals.contourIsDebugEnabled ? 1 : 0);
+
 		json << "\n}," << std::endl;
 	}
 

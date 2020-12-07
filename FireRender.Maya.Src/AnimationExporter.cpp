@@ -111,7 +111,8 @@ void FillArrayWithScaledMMatrixData(std::array<float, 16>& arr, float coeff = 0.
 void AnimationExporter::AssignCameras(DataHolderStruct& dataHolder, FireRenderContext& context)
 {
 	MDagPathArray& renderableCameras = *dataHolder.inputRenderableCameras;
-	bool mainCameraSet = false;
+
+	MDagPath mainCameraPath = context.camera().DagPath();
 
 	for (unsigned int i = 0; i < renderableCameras.length(); i++)
 	{
@@ -120,7 +121,9 @@ void AnimationExporter::AssignCameras(DataHolderStruct& dataHolder, FireRenderCo
 		MMatrix camIdentityMatrix;
 		rpr_camera rprCamera;
 
-		if (mainCameraSet)
+		MString camGroupName = GetGroupNameForDagPath(dagPath);
+
+		if (mainCameraPath.fullPathName() != dagPath.fullPathName())
 		{
 			frw::Camera extraCamera = context.GetContext().CreateCamera();
 			dataHolder.cameraVector.push_back(extraCamera);
@@ -141,11 +144,9 @@ void AnimationExporter::AssignCameras(DataHolderStruct& dataHolder, FireRenderCo
 		{
 			rprCamera = context.camera().data().Handle();
 			SetCameraLookatForMatrix(rprCamera, camIdentityMatrix);
-			mainCameraSet = true;
 		}
 
 		// set gltf/rprs group name for camera
-		MString camGroupName = GetGroupNameForDagPath(dagPath);
 		m_pFunc_AssignCameraToGroup(rprCamera, camGroupName.asChar());
 	}
 }

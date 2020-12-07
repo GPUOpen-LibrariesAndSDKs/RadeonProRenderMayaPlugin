@@ -86,7 +86,7 @@ rpr_int HybridContext::CreateContextInternal(rpr_creation_flags createFlags, rpr
 	return res;
 }
 
-void HybridContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance)
+void HybridContext::setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance)
 {
 	frw::Context context = GetContext();
 	rpr_context frcontext = context.Handle();

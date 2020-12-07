@@ -20,7 +20,7 @@ public:
 	HybridContext();
 
 	static rpr_int GetPluginID();
-	void setupContext(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) override;
+	void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) override;
 
 	bool IsAOVSupported(int aov) const override;
 
