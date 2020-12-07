@@ -2161,6 +2161,8 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		MFnDagNode dagNode(node);
 		MDagPath dagPathTmp;
 
+		bool isGPUCacheNode = false;
+
 		if (isGeometry(node))
 		{
 			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::AddPath>(dagPath);
@@ -2230,9 +2232,18 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			ob = CreateSceneObject<FireRenderHairOrnatrix, NodeCachingOptions::AddPath>(dagPath);
 		}
-		else if (isTransformWithInstancedShape(node, dagPathTmp))
+		else if (isTransformWithInstancedShape(node, dagPathTmp, isGPUCacheNode))
 		{
-			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::DontAddPath>(dagPathTmp);
+			if (isGPUCacheNode)
+			{
+				#ifdef WIN32
+				ob = CreateSceneObject<FireRenderGPUCache, NodeCachingOptions::DontAddPath>(dagPathTmp);
+				#endif
+			}
+			else
+			{
+				ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::DontAddPath>(dagPathTmp);
+			}
 		}
 		else if (dagNode.typeName() == "pfxHair" && hairSupported)
 		{

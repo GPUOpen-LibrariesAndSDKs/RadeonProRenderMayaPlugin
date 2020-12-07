@@ -274,6 +274,13 @@ public:
 	void AddForceShaderDirtyDependOnOtherObjectCallback(MObject dependency);
 	static void ForceShaderDirtyCallback(MObject& node, void* clientData);
 
+	// Mesh bits (each one may have separate shading engine)
+	std::vector<FrElement>& Elements() { return m.elements; }
+	const std::vector<FrElement>& Elements() const { return m.elements; }
+	FrElement& Element(int i) { return m.elements[i]; }
+
+	bool IsMainInstance() const { return m.isMainInstance; }
+
 	// utility functions
 	void setRenderStats(MDagPath dagPath);
 	void setVisibility(bool visibility);
@@ -364,13 +371,6 @@ public:
 	void ProcessIBLLight(void);
 	void ProcessSkyLight(void);
 	void RebuildTransforms(void);
-
-	// Mesh bits (each one may have separate shading engine)
-	std::vector<FrElement>& Elements() { return m.elements; }
-	const std::vector<FrElement>& Elements() const { return m.elements; }
-	FrElement& Element(int i) { return m.elements[i]; }
-
-	bool IsMainInstance() const { return m.isMainInstance; }
 
 protected:
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;
