@@ -107,7 +107,54 @@ rpr_int TahoeContext::CreateContextInternal(rpr_creation_flags createFlags, rpr_
 	return res;
 }
 
-void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance)
+void TahoeContext::setupContextPreSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance /*= false*/)
+{
+	frw::Context context = GetContext();
+	rpr_context frcontext = context.Handle();
+
+	rpr_int frstatus = RPR_SUCCESS;
+
+	if (m_PluginVersion == TahoePluginVersion::RPR2)
+	{
+		// contour must be set before scene creation
+		bool isContourModeOn = fireRenderGlobalsData.contourIsEnabled && !(createFlags & RPR_CREATION_FLAGS_ENABLE_CPU);
+
+		if (isContourModeOn)
+		{
+			frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_GPUINTEGRATOR, "gpucontour");
+			checkStatus(frstatus);
+
+			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_USE_OBJECTID, fireRenderGlobalsData.contourUseObjectID);
+			checkStatus(frstatus);
+
+			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_USE_MATERIALID, fireRenderGlobalsData.contourUseMaterialID);
+			checkStatus(frstatus);
+
+			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_USE_NORMAL, fireRenderGlobalsData.contourUseShadingNormal);
+			checkStatus(frstatus);
+
+			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_LINEWIDTH_OBJECTID, fireRenderGlobalsData.contourLineWidthObjectID);
+			checkStatus(frstatus);
+
+			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_LINEWIDTH_MATERIALID, fireRenderGlobalsData.contourLineWidthMaterialID);
+			checkStatus(frstatus);
+
+			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_LINEWIDTH_NORMAL, fireRenderGlobalsData.contourLineWidthShadingNormal);
+			checkStatus(frstatus);
+
+			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_NORMAL_THRESHOLD, fireRenderGlobalsData.contourNormalThreshold);
+			checkStatus(frstatus);
+
+			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_ANTIALIASING, fireRenderGlobalsData.contourAntialiasing);
+			checkStatus(frstatus);
+
+			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_DEBUG_ENABLED, fireRenderGlobalsData.contourIsDebugEnabled);
+			checkStatus(frstatus);
+		}
+	}
+}
+
+void TahoeContext::setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance)
 {
 	frw::Context context = GetContext();
 	rpr_context frcontext = context.Handle();
@@ -143,7 +190,14 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_RENDER_MODE, fireRenderGlobalsData.renderMode);
 		checkStatus(frstatus);
 
-		setSamplesPerUpdate(fireRenderGlobalsData.samplesPerUpdate);
+		if (fireRenderGlobalsData.contourIsEnabled)
+		{
+			setSamplesPerUpdate(1);
+		}
+		else
+		{
+			setSamplesPerUpdate(fireRenderGlobalsData.samplesPerUpdate);
+		}
 
 		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_RECURSION, fireRenderGlobalsData.maxRayDepth);
 		checkStatus(frstatus);
@@ -247,13 +301,15 @@ void TahoeContext::setupContext(const FireRenderGlobalsData& fireRenderGlobalsDa
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_METAL_PERFORMANCE_SHADER, fireRenderGlobalsData.useMPS ? 1 : 0);
 	checkStatus(frstatus);
 
-	frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_TEXTURE_CACHE_PATH, fireRenderGlobalsData.textureCachePath.asChar());
-	checkStatus(frstatus);
-	
 	updateTonemapping(fireRenderGlobalsData, disableWhiteBalance);
 
-	// OCIO
+
+	if (GetTahoeVersionToUse() == TahoePluginVersion::RPR2)
 	{
+		frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_TEXTURE_CACHE_PATH, fireRenderGlobalsData.textureCachePath.asChar());
+		checkStatus(frstatus);
+
+		// OCIO
 		const std::map<std::string, std::string>& eVars = EnvironmentVarsWrapper<char>::GetEnvVarsTable();
 		auto envOCIOPath = eVars.find("OCIO");
 		if (envOCIOPath != eVars.end())

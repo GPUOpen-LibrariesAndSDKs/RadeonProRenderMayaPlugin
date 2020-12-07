@@ -284,6 +284,18 @@ public:
 	bool velocityAOVMotionBlur;
 	float motionBlurCameraExposure;
 
+	// Contour
+	bool contourIsEnabled;
+	bool contourUseObjectID;
+	bool contourUseMaterialID;
+	bool contourUseShadingNormal;
+	float contourLineWidthObjectID;
+	float contourLineWidthMaterialID;
+	float contourLineWidthShadingNormal;
+	float contourNormalThreshold;
+	float contourAntialiasing;
+	bool contourIsDebugEnabled;
+
 	// Camera type.
 	short cameraType;
 
@@ -330,7 +342,7 @@ MString GetPropertyNameFromPlugName(const MString& name);
 bool isVisible(MFnDagNode & fnDag, MFn::Type type);
 bool isGeometry(const MObject& node);
 bool isLight(const MObject& node);
-bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath);
+bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath, bool& isGPUCacheNode);
 
 double rad2deg(double radians);
 double deg2rad(double degrees);
