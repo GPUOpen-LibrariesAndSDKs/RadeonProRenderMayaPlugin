@@ -68,7 +68,7 @@ MSyntax FireRenderExportCmd::newSyntax()
 	CHECK_MSTATUS(syntax.addFlag(kFilePathFlag, kFilePathFlagLong, MSyntax::kString));
 	CHECK_MSTATUS(syntax.addFlag(kSelectionFlag, kSelectionFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kAllFlag, kAllFlagLong, MSyntax::kNoArg));
-	CHECK_MSTATUS(syntax.addFlag(kFramesFlag, kFramesFlagLong, MSyntax::kBoolean, MSyntax::kLong, MSyntax::kLong, MSyntax::kBoolean));
+	CHECK_MSTATUS(syntax.addFlag(kFramesFlag, kFramesFlagLong, MSyntax::kBoolean, MSyntax::kLong, MSyntax::kLong, MSyntax::kBoolean, MSyntax::kBoolean));
 	CHECK_MSTATUS(syntax.addFlag(kCompressionFlag, kCompressionFlagLong, MSyntax::kString));
 	CHECK_MSTATUS(syntax.addFlag(kPadding, kPaddingLong, MSyntax::kString, MSyntax::kLong));
 	CHECK_MSTATUS(syntax.addFlag(kSelectedCamera, kSelectedCameraLong, MSyntax::kString));
@@ -240,12 +240,17 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 	return true;
 }
 
-unsigned int SetupExportFlags(bool isExportAsSingleFileEnabled, MString& compressionOption)
+unsigned int SetupExportFlags(bool isExportAsSingleFileEnabled, bool isIncludeTextureCacheEnabled, MString& compressionOption)
 {
 	unsigned int exportFlags = 0;
 	if (!isExportAsSingleFileEnabled)
 	{
 		exportFlags = RPRLOADSTORE_EXPORTFLAG_EXTERNALFILES;
+	}
+
+	if (isIncludeTextureCacheEnabled)
+	{
+		exportFlags = exportFlags | RPRLOADSTORE_EXPORTFLAG_USE_IMAGE_CACHE;
 	}
 
 	if (compressionOption == "None")
@@ -355,12 +360,14 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 	int firstFrame = 1;
 	int lastFrame = 1;
 	bool isExportAsSingleFileEnabled = false;
+	bool isIncludeTextureCacheEnabled = false;
 	if (argData.isFlagSet(kFramesFlag))
 	{
 		argData.getFlagArgument(kFramesFlag, 0, isSequenceExportEnabled);
 		argData.getFlagArgument(kFramesFlag, 1, firstFrame);
 		argData.getFlagArgument(kFramesFlag, 2, lastFrame);
 		argData.getFlagArgument(kFramesFlag, 3, isExportAsSingleFileEnabled);
+		argData.getFlagArgument(kFramesFlag, 4, isIncludeTextureCacheEnabled);
 	}
 
 	MString compressionOption = "None";
@@ -502,7 +509,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 
 			// launch export
 			rpr_int statusExport = rprsExport(MString(newFilePath.c_str()).asUTF8(), tahoeContextPtr->context(), tahoeContextPtr->scene(),
-				0, 0, 0, 0, 0, 0, SetupExportFlags(isExportAsSingleFileEnabled, compressionOption));
+				0, 0, 0, 0, 0, 0, SetupExportFlags(isExportAsSingleFileEnabled, isIncludeTextureCacheEnabled, compressionOption));
 			
 			// save config
 			bool res = SaveExportConfig(newFilePath, *tahoeContextPtr, fileName);
