@@ -12,6 +12,7 @@ limitations under the License.
 ********************************************************************/
 #include <InstancerMASH.h>
 #include <FireRenderMeshMASH.h>
+#include <maya/MItDag.h>
 
 InstancerMASH::InstancerMASH(FireRenderContext* context, const MDagPath& dagPath) :
 	FireRenderNode(context, dagPath),
@@ -45,20 +46,38 @@ void InstancerMASH::Freshen()
 
 	for (size_t i = 0; i < GetInstanceCount(); i++)
 	{
-		std::shared_ptr<FireRenderMeshMASH> instancedFRObject = m_instancedObjects.at(i);
-		const FireRenderMesh& renderMesh = instancedFRObject->GetOriginalFRMeshinstancedObject();
+		std::vector<std::shared_ptr<FireRenderMeshMASH>>& instancedObjects = m_instancedObjects.at(i);
+		for (auto& instancedFRObject : instancedObjects)
+		{
+			const FireRenderMesh& renderMesh = instancedFRObject->GetOriginalFRMeshinstancedObject();
 
-		//Target node translation shouldn't affect the result 
-		MTransformationMatrix targetNodeMatrix = MFnTransform(MFnDagNode(renderMesh.Object()).parent(0)).transformation();
-		targetNodeMatrix.setTranslation({ 0., 0., 0. }, MSpace::kObject);
+			//Target node translation shouldn't affect the result 
+			// translation of shape in group however should
+			MFnDagNode meshTransformNode(MFnDagNode(renderMesh.Object()).parent(0));
+			MTransformationMatrix targetNodeMatrix = MFnTransform(meshTransformNode.object()).transformation();
+			MFnDagNode groupTransformNode(meshTransformNode.parent(0));
+			if (groupTransformNode.name() != "world")
+			{
+				MTransformationMatrix groupNodeMatrix = MFnTransform(groupTransformNode.object()).transformation();
+				groupNodeMatrix.setTranslation({ 0., 0., 0. }, MSpace::kObject);
+				MMatrix groupTransform = groupNodeMatrix.asMatrix();
+				MMatrix meshTransform = targetNodeMatrix.asMatrix();
 
-		MMatrix newTransform = targetNodeMatrix.asMatrix();
-		newTransform *= matricesFromMASH.at(i);
-		newTransform *= instancerMatrix.asMatrix();
+				targetNodeMatrix = meshTransform * groupTransform;
+			}
+			else
+			{
+				targetNodeMatrix.setTranslation({ 0., 0., 0. }, MSpace::kObject);
+			}
 
-		instancedFRObject->SetSelfTransform(newTransform);
-		instancedFRObject->Rebuild();
-		instancedFRObject->setDirty();
+			MMatrix newTransform = targetNodeMatrix.asMatrix();
+			newTransform *= matricesFromMASH.at(i);
+			newTransform *= instancerMatrix.asMatrix();
+
+			instancedFRObject->SetSelfTransform(newTransform);
+			instancedFRObject->Rebuild();
+			instancedFRObject->setDirty();
+		}
 	}
 
 	m_instancedObjectsCachedSize = GetInstanceCount();
@@ -73,7 +92,8 @@ void InstancerMASH::OnPlugDirty(MObject& node, MPlug& plug)
 	{
 		for (auto o : m_instancedObjects)
 		{
-			o.second->setVisibility(false);
+			for (auto it = o.second.begin(); it != o.second.end(); ++it)
+				(*it)->setVisibility(false);
 		}
 		m_instancedObjects.clear();
 	}
@@ -101,6 +121,7 @@ std::vector<MObject> InstancerMASH::GetTargetObjects() const
 	for (const MPlug connection : dagConnections)
 	{
 		const std::string name(connection.partialName().asChar());
+
 		if (name.find("inh[") == std::string::npos)
 		{
 			continue;
@@ -108,15 +129,41 @@ std::vector<MObject> InstancerMASH::GetTargetObjects() const
 
 		MPlugArray connectedTo;
 		connection.connectedTo(connectedTo, true, false);
+
 		for (const MPlug instanceConnection : connectedTo)
 		{
-			MFnDagNode node(instanceConnection.node());
-			MObject mesh = node.child(0);
-			targetObjects.push_back(mesh);
+			targetObjects.push_back(instanceConnection.node());
 		}
 	}
 
 	return std::move(targetObjects);
+}
+
+std::vector<MObject> GetShapesFromNode(MObject node)
+{
+	MStatus status;
+
+	std::vector<MObject> out;
+
+	MItDag itDag(MItDag::kDepthFirst, MFn::kMesh, &status);
+	if (MStatus::kSuccess != status)
+		MGlobal::displayError("MItDag::MItDag");
+
+	status = itDag.reset(node, MItDag::kDepthFirst, MFn::kMesh);
+	if (MStatus::kSuccess != status)
+		MGlobal::displayError("MItDag::MItDag");
+
+	for (; !itDag.isDone(); itDag.next())
+	{
+		MObject mesh = itDag.currentItem(&status);
+
+		if (MStatus::kSuccess != status)
+			continue;
+
+		out.push_back(mesh);
+	}
+
+	return out;
 }
 
 std::vector<MMatrix> InstancerMASH::GetTransformMatrices() const
@@ -155,12 +202,6 @@ std::vector<MMatrix> InstancerMASH::GetTransformMatrices() const
 
 void InstancerMASH::GenerateInstances()
 {
-	//Generate unique uuid, because we can't use instancer uuid - it initiates infinite Freshen() on whole hierarchy
-	std::vector<MUuid> uuidVector;
-
-	//Generate instances with almost copy constructor with custom uuid passed
-	std::vector<MObject> targetObjects = GetTargetObjects();
-
 	MFnDependencyNode instancerDagNode(m.object);
 	MPlug plug(m.object, instancerDagNode.attribute("inp"));
 	MObject data = plug.asMDataHandle().data();
@@ -170,21 +211,61 @@ void InstancerMASH::GenerateInstances()
 	MDoubleArray objectIndexArray = arrayAttrsData.getDoubleData("objectIndex");
 	MDoubleArray idArray = arrayAttrsData.getDoubleData("id");
 
+	//Generate unique uuid, because we can't use instancer uuid - it initiates infinite Freshen() on whole hierarchy
+	std::vector<std::vector<MUuid>> uuidVectors;
+	uuidVectors.resize(objectIndexArray.length());
+
+	//Get list of objects that are instanced by mash
+	std::vector<MObject> targetObjects = GetTargetObjects();
+
+	std::map<size_t, std::vector<MObject>> shapesCache;
+	for (int idx = 0; idx < objectIndexArray.length(); ++idx)
+	{
+		size_t objectIndex = (size_t)objectIndexArray[idx];
+		shapesCache[(size_t)objectIndex] = GetShapesFromNode(targetObjects.at((size_t)objectIndex));
+	}
+
+	// generate objects
 	for (unsigned int idArrayIndex = 0; idArrayIndex < idArray.length(); ++idArrayIndex)
 	{
-		size_t id = (size_t) idArray[idArrayIndex];
-		size_t objectIndex = (size_t) objectIndexArray[idArrayIndex];
+		// get object(s) to be instanced
+		size_t objectIndex = (size_t)objectIndexArray[idArrayIndex];
+		auto it = shapesCache.find(objectIndex);
+		assert(it != shapesCache.end());
+		if (it == shapesCache.end())
+			continue;
 
-		if (objectIndex >= uuidVector.size())
+		std::vector<MObject>& shapesToBeCreated = it->second;
+
+		// generate objectId(s) for new objects if neceessary
+		std::vector<MUuid>& uuidVector = uuidVectors[objectIndex];
+		while (shapesToBeCreated.size() != uuidVector.size())
 		{
 			MUuid uuid;
 			uuid.generate();
 			uuidVector.push_back(uuid);
 		}
 
-		FireRenderMesh* renderMesh = static_cast<FireRenderMesh*>(context()->getRenderObject(targetObjects.at(objectIndex)));
-		auto instance = std::make_shared<FireRenderMeshMASH>(*renderMesh, uuidVector[objectIndex].asString().asChar(), m.object);
-		m_instancedObjects[id] = instance;
+		// proceeed with generating objects
+		size_t id = (size_t)idArray[idArrayIndex];
+		size_t currObjIdx = 0;
+		for (MObject& tmpObj : shapesToBeCreated)
+		{
+			FireRenderObject* pFoundObj = context()->getRenderObject(tmpObj);
+			if (!pFoundObj)
+				continue;
+
+			FireRenderMesh* renderMesh = static_cast<FireRenderMesh*>(pFoundObj);
+			assert(renderMesh);
+
+			auto instance = std::make_shared<FireRenderMeshMASH>(
+				*renderMesh, 
+				uuidVector[currObjIdx].asString().asChar(), 
+				m.object);
+			m_instancedObjects[id].push_back(instance);
+
+			currObjIdx++;
+		}
 	}
 }
 
