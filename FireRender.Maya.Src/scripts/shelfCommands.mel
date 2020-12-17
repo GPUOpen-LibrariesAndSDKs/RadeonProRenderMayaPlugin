@@ -138,6 +138,7 @@ global proc launchSceneExport()
 		int $firstFrameIdx = `intSliderGrp -query -value sliderFirstFrameName`;
 		int $lastFrameIdx = `intSliderGrp -query -value sliderLastFrameName`;
 		$isSingleFileEnabled = `checkBox  -query -value singleFileCheckBx`;
+		$isIncludeTextureCacheEnabled = `checkBox  -query -value includeTextureCacheCheckBx`;
 		string $selectedOption = `optionMenu -query -value compressionOption`;
 		string $namePattern = `optionMenu -query -value frameExtentionOption`;
 		int $framePadding = `getAttr defaultRenderGlobals.extensionPadding`;
@@ -148,7 +149,7 @@ global proc launchSceneExport()
 		fireRenderExport 
 			-scene 
 			-file $result 
-			-frames $isSqExEnabled $firstFrameIdx $lastFrameIdx $isSingleFileEnabled 
+			-frames $isSqExEnabled $firstFrameIdx $lastFrameIdx $isSingleFileEnabled $isIncludeTextureCacheEnabled 
 			-compress $selectedOption
 			-padding $namePattern $framePadding
 			-camera $selectedCam;
@@ -273,8 +274,13 @@ global proc exportSceneRPR()
 				-value false 
 				singleFileCheckBx;
 
+			checkBox
+				-label "Include texture cache" 
+				-value false 
+				includeTextureCacheCheckBx;
+
 			optionMenu 
-				-label "Compression" 
+				-label "Compression " 
 				compressionOption;
             menuItem 
 				-label "None";
