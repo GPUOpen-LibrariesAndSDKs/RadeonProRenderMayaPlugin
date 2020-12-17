@@ -1501,7 +1501,7 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 {
 	FireRenderContext* context = this->context();
 
-	const FireRenderMesh* mainMesh = context->GetMainMesh(uuid());
+	const FireRenderMeshCommon* mainMesh = context->GetMainMesh(uuid());
 
 	if (mainMesh != nullptr)
 	{

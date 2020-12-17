@@ -760,7 +760,7 @@ bool isVisible(MFnDagNode & fnDag, MFn::Type type)
 	return true;
 }
 
-bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath)
+bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath, bool& isGPUCacheNode)
 {
 	MDagPathArray pathArrayToTransform;
 	{
@@ -783,6 +783,12 @@ bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath)
 
 	MFnDagNode shapeNode(pathArrayToTransform[0].node());
 	bool isInstanced = shapeNode.isInstanced();
+
+	MString typeName = shapeNode.typeName();
+	if (typeName == "gpuCache")
+	{
+		isGPUCacheNode = true;
+	}
 	
 	// more than one reference to shape exist => shape is instanced
 	if (isInstanced)
