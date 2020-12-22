@@ -100,7 +100,7 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 
 	json << "\"output\" : " << "\"" << fileName.c_str() << ".png\",\n";
 
-	json << "\"output.json\" : " << "\"" << configName.c_str() << "\",\n";
+	json << "\"output.json\" : \"output.json\",\n";
 
 	// write file data fields
 	json << "\"width\" : " << ctx.width() << ",\n";
