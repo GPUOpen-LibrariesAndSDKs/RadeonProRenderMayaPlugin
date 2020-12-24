@@ -28,7 +28,7 @@ class FireRenderMeshMASH;
 */
 class InstancerMASH: public FireRenderNode
 {
-	using FireRenderObjectMap = std::map<std::size_t, std::shared_ptr<FireRenderMeshMASH>>;
+	using FireRenderObjectMap = std::map<std::size_t, std::vector<std::shared_ptr<FireRenderMeshMASH>>>;
 
 	/** All objects created by instancer */
 	FireRenderObjectMap m_instancedObjects;

@@ -418,7 +418,46 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("detailedLog");
 		if (!plug.isNull())
 			useDetailedContextWorkLog = plug.asBool();
-		
+
+		plug = frGlobalsNode.findPlug("contourIsEnabled");
+		if (!plug.isNull())
+			contourIsEnabled = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("contourUseObjectID");
+		if (!plug.isNull())
+			contourUseObjectID = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("contourUseMaterialID");
+		if (!plug.isNull())
+			contourUseMaterialID = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("contourUseShadingNormal");
+		if (!plug.isNull())
+			contourUseShadingNormal = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("contourLineWidthObjectID");
+		if (!plug.isNull())
+			contourLineWidthObjectID = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourLineWidthMaterialID");
+		if (!plug.isNull())
+			contourLineWidthMaterialID = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourLineWidthShadingNormal");
+		if (!plug.isNull())
+			contourLineWidthShadingNormal = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourNormalThreshold");
+		if (!plug.isNull())
+			contourNormalThreshold = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourAntialiasing");
+		if (!plug.isNull())
+			contourAntialiasing = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourIsDebugEnabled");
+		if (!plug.isNull())
+			contourIsDebugEnabled = plug.asBool();
 
 		aovs.readFromGlobals(frGlobalsNode);
 
@@ -721,7 +760,7 @@ bool isVisible(MFnDagNode & fnDag, MFn::Type type)
 	return true;
 }
 
-bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath)
+bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath, bool& isGPUCacheNode)
 {
 	MDagPathArray pathArrayToTransform;
 	{
@@ -744,6 +783,12 @@ bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath)
 
 	MFnDagNode shapeNode(pathArrayToTransform[0].node());
 	bool isInstanced = shapeNode.isInstanced();
+
+	MString typeName = shapeNode.typeName();
+	if (typeName == "gpuCache")
+	{
+		isGPUCacheNode = true;
+	}
 	
 	// more than one reference to shape exist => shape is instanced
 	if (isInstanced)
