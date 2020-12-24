@@ -24,6 +24,15 @@ limitations under the License.
 #include <sstream>
 #include <functional>
 
+struct RPRAlembicWrapperCacheEntry
+{
+	Alembic::Abc::IArchive m_archive;
+	RPRAlembicWrapper::AlembicStorage m_storage;
+	std::shared_ptr<RPRAlembicWrapper::AlembicScene> m_scene;
+};
+
+static std::map<std::string, RPRAlembicWrapperCacheEntry> abcCache;
+
 class FireRenderGPUCache : public FireRenderMeshCommon
 {
 public:
@@ -64,9 +73,7 @@ protected:
 
 protected:
 	bool m_changedFile;
-	Alembic::Abc::IArchive m_archive;
-	RPRAlembicWrapper::AlembicStorage m_storage;
-	std::shared_ptr<RPRAlembicWrapper::AlembicScene> m_scene;
+	std::map<std::string, RPRAlembicWrapperCacheEntry>::iterator m_file;
 };
 
 

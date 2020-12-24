@@ -2201,7 +2201,7 @@ void FireMaya::Scope::Reset()
 	m.reset();
 }
 
-void FireMaya::Scope::Init(rpr_context handle, bool destroyMaterialSystemOnDelete)
+void FireMaya::Scope::Init(rpr_context handle, bool destroyMaterialSystemOnDelete, bool createScene)
 {
 	RPR_THREAD_ONLY;
 
@@ -2209,6 +2209,16 @@ void FireMaya::Scope::Init(rpr_context handle, bool destroyMaterialSystemOnDelet
 
 	m->context = frw::Context(handle);
 	m->materialSystem = frw::MaterialSystem(m->context, nullptr, destroyMaterialSystemOnDelete);
+
+	if (createScene)
+	{
+		m->scene = m->context.CreateScene();
+		m->scene.SetActive();
+	}
+}
+
+void FireMaya::Scope::CreateScene()
+{
 	m->scene = m->context.CreateScene();
 	m->scene.SetActive();
 }
