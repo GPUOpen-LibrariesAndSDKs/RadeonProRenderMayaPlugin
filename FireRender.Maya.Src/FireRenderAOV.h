@@ -169,6 +169,11 @@ public:
 	/** Setup render stamp */
 	void setRenderStamp(const MString& renderStamp);
 
+	/** Is cryptomaterial aov*/
+	bool IsCryptomateiralAOV(void) const;
+
+	bool IsActive(void) const { return active; }
+
 	// Properties
 	// -----------------------------------------------------------------------------
 
