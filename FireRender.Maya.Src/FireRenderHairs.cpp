@@ -489,7 +489,7 @@ void FireRenderHair::Freshen()
 
 	auto node = Object();
 	MFnDagNode fnDagNode(node);
-	MString name = fnDagNode.name();
+	MString name = fnDagNode.fullPathName();
 
 	bool haveCurves = CreateCurves();
 
@@ -497,7 +497,16 @@ void FireRenderHair::Freshen()
 	{
 		MDagPath path = MDagPath::getAPathTo(node);
 		if (path.isVisible())
+		{
+			MDagPath dagPath = DagPath();
+			for (int i = 0; i < m_Curves.size(); i++)
+			{
+				std::string shapeName = std::string(name.asChar()) + "_" + std::to_string(i);
+				m_Curves[i].SetName(shapeName.c_str());
+			}
+
 			attachToScene();
+		}
 	}
 
 	FireRenderNode::Freshen();

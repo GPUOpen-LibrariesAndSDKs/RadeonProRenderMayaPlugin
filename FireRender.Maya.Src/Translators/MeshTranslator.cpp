@@ -148,12 +148,6 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 		MultipleShaderMeshTranslator::TranslateMesh(context, fnMesh, resultShapes, meshPolygonData, faceMaterialIndices);
 	}
 
-	// Export shape names
-	for (size_t i = 0; i < resultShapes.size(); i++)
-	{
-		resultShapes[i].SetName((std::string(node.name().asChar()) + "_" + std::to_string(i)).c_str());
-	}
-
 	// Now remove any temporary mesh we created.
 	if (!tessellated.isNull())
 	{

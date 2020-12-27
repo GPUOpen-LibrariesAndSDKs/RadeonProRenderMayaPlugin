@@ -489,6 +489,14 @@ void FireRenderGPUCache::GetShapes(std::vector<frw::Shape>& outShapes, std::vect
 		m.isMainInstance = true;
 		context()->AddMainMesh(this);
 	}
+
+	MDagPath dagPath = DagPath();
+	for (int i = 0; i < outShapes.size(); i++)
+	{
+		MString fullPathName = dagPath.fullPathName();
+		std::string shapeName = std::string(fullPathName.asChar()) + "_" + std::to_string(i);
+		outShapes[i].SetName(shapeName.c_str());
+	}
 }
 
 void FireRenderGPUCache::OnNodeDirty()
