@@ -153,6 +153,11 @@ void FireRenderContext::resize(unsigned int w, unsigned int h, bool renderView, 
 	setResolution(w, h, renderView, glTexture);
 }
 
+int FireRenderContext::GetAOVMaxValue()
+{
+	return 0x20;
+}
+
 void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture)
 {
 	RPR_THREAD_ONLY;
@@ -166,7 +171,8 @@ void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool rende
 	if (!context)
 		return;
 
-	for (int i = 0; i != RPR_AOV_MAX; ++i)
+	int MaxAOV = GetAOVMaxValue();
+	for (int i = 0; i != MaxAOV; ++i)
 	{
 		initBuffersForAOV(context, i, glTexture);
 	}
@@ -210,6 +216,20 @@ void FireRenderContext::enableAOVAndReset(int index, bool flag, rpr_GLuint* glTe
 	resetAOV(index, flag ? glTexture : nullptr);
 }
 
+bool aovExists(int index)
+{
+	if (index <= RPR_AOV_CAMERA_NORMAL)
+		return true;
+
+	if ((index >= RPR_AOV_CRYPTOMATTE_MAT0) && (index <= RPR_AOV_CRYPTOMATTE_MAT2))
+		return true;
+
+	if ((index >= RPR_AOV_CRYPTOMATTE_OBJ0) && (index <= RPR_AOV_CRYPTOMATTE_OBJ2))
+		return true;
+
+	return false;
+}
+
 void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture)
 {
 	rpr_framebuffer_format fmt = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
@@ -218,6 +238,11 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 	m.framebufferAOV_resolved[index].Reset();
 
 	if (!IsAOVSupported(index))
+	{
+		return;
+	}
+
+	if (!aovExists(index))
 	{
 		return;
 	}
@@ -909,7 +934,8 @@ void FireRenderContext::render(bool lock)
 
 	if (m_restartRender)
 	{
-		for (int i = 0; i != RPR_AOV_MAX; ++i) 
+		int MaxAOV = GetAOVMaxValue();
+		for (int i = 0; i != MaxAOV; ++i) 
 		{
 			if (aovEnabled[i])
 			{
@@ -1372,6 +1398,12 @@ void FireRenderContext::DebugDumpAOV(int aov) const
 		,{RPR_AOV_VARIANCE, "RPR_AOV_VARIANCE" }
 		,{RPR_AOV_VIEW_SHADING_NORMAL, "RPR_AOV_VIEW_SHADING_NORMAL" }
 		,{RPR_AOV_REFLECTION_CATCHER, "RPR_AOV_REFLECTION_CATCHER" }
+		,{RPR_AOV_CRYPTOMATTE_MAT0, "RPR_AOV_CRYPTOMATTE_MAT0" }
+		,{RPR_AOV_CRYPTOMATTE_MAT1, "RPR_AOV_CRYPTOMATTE_MAT1" }
+		,{RPR_AOV_CRYPTOMATTE_MAT2, "RPR_AOV_CRYPTOMATTE_MAT2" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ0, "RPR_AOV_CRYPTOMATTE_OBJ0" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ1, "RPR_AOV_CRYPTOMATTE_OBJ1" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ2, "RPR_AOV_CRYPTOMATTE_OBJ2" }
 		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
 	};
 
