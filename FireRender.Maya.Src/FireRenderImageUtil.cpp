@@ -148,7 +148,8 @@ void FireRenderImageUtil::saveMayaImage(MString filePath, unsigned int width, un
 bool FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 	unsigned int width, unsigned int height, unsigned int imageFormat, FireRenderAOVs& aovs)
 {
-	int aovs_component_count[RPR_AOV_MAX] = { 0 };
+	std::vector<int> aovs_component_count;
+	aovs_component_count.resize(RPR_AOV_MAX, 0);
 
 	auto outImage = OIIO::ImageOutput::create(filePath.asUTF8());
 	if (!outImage)
@@ -172,36 +173,44 @@ bool FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 	imgSpec.attribute("ImageDescription", comments);
 	imgSpec.attribute("compression", aovs.GetEXRCompressionType().asChar());
 
-	imgSpec.set_format(aovs.GetChannelFormat());
+	if (aovs.IsCryptomatteMaterial())
+	{
+		imgSpec.attribute("cryptomatte/be93ba3/conversion", "uint32_to_float32");
+		imgSpec.attribute("cryptomatte/be93ba3/hash", "MurmurHash3_32");
+		imgSpec.attribute("cryptomatte/be93ba3/name", "CryptoMaterial");
+	}
+
+	if (aovs.IsCryptomatteObject())
+	{
+		imgSpec.attribute("cryptomatte/d593dd7/conversion", "uint32_to_float32");
+		imgSpec.attribute("cryptomatte/d593dd7/hash", "MurmurHash3_32");
+		imgSpec.attribute("cryptomatte/d593dd7/name", "CryptoObject");
+	}
 
 	//fill image spec setting up channels for each aov
-	for (int i = 0; i < RPR_AOV_MAX; ++i)
+	aovs.ForEachActiveAOV([&](FireRenderAOV& aov)
 	{
-		FireRenderAOV* aov = aovs.getAOV(i);
+		assert(aov.IsActive());
 
-		if (aov != nullptr && aov->active)
+		int aov_component_count = 0;
+
+		for (const char* c : aov.description.components)
 		{
-			int aov_component_count = 0;
+			if (!c)
+				continue;
 
-			for (auto c : aov->description.components)
-			{
-				if (c)
-				{
-					++aov_component_count;
-					++imgSpec.nchannels;
+			++aov_component_count;
+			++imgSpec.nchannels;
 
-					std::string name;
-					if (0 == i)
-						name = c;//standard name for COLOR channel
-					else
-						name = std::string(aov->folder.asChar()) + "." + c;
+			std::string name = (0 == aov.id) ? c : (std::string(aov.folder.asChar()) + "." + c);
+			imgSpec.channelnames.push_back(name);
 
-					imgSpec.channelnames.push_back(name);
-				}
-			}
-			aovs_component_count[i] = aov_component_count;
+			TypeDesc::BASETYPE channelFormat = aov.IsCryptomateiralAOV() ? TypeDesc::FLOAT : aovs.GetChannelFormat();
+			imgSpec.channelformats.push_back(channelFormat);
 		}
-	}
+
+		aovs_component_count[aov.id] = aov_component_count;
+	});
 
 	size_t pixel_size = imgSpec.nchannels;
 	std::vector<float> pixels_for_oiio;
@@ -216,16 +225,15 @@ bool FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 
 			float* pixel = pixels_for_oiio.data() + pixel_size * pixel_index;
 
-			for (int i = 0; i < RPR_AOV_MAX; ++i)
+			aovs.ForEachActiveAOV([&](FireRenderAOV& aov)
 			{
-				FireRenderAOV* aov = aovs.getAOV(i);
-				int aov_component_count = aovs_component_count[i];
+				int aov_component_count = aovs_component_count[aov.id];
 				if (aov_component_count)
 				{
-					auto aov_pixel = aov->pixels.get()[pixel_index];
+					auto aov_pixel = aov.pixels.get()[pixel_index];
 					pixel = std::copy(&aov_pixel.r, (&aov_pixel.r) + aov_component_count, pixel);
 				}
-			}
+			});
 		}
 	}
 
@@ -237,10 +245,10 @@ bool FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 
 	delete outImage;
 
-	//This is to deallocate from our module, else it will be released in the openimageio.dll
-	//(in obj destructor) and lead to crash. Because we have filled those arrays in our code,
-	//oiio has no api functions to fill those safely(so that vector operations are called from ooio code)
-	//unfortunately
+	// This is to deallocate from our module, else it will be released in the openimageio.dll
+	// (in obj destructor) and lead to crash. Because we have filled those arrays in our code,
+	// oiio has no api functions to fill those safely(so that vector operations are called from ooio code)
+	// unfortunately
 	std::vector<OIIO::TypeDesc> temp0 = std::vector<OIIO::TypeDesc>();
 	imgSpec.channelformats.swap(temp0);
 	std::vector<std::string> temp1 = std::vector<std::string>();

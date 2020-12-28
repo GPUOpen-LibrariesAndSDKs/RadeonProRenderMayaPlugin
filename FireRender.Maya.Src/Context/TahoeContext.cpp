@@ -632,3 +632,14 @@ void TahoeContext::OnPreRender()
 		SetPreviewMode(previewModeLevel);
 	}
 }
+
+int TahoeContext::GetAOVMaxValue()
+{
+	bool isRPR20 = TahoeContext::IsGivenContextRPR2(this);
+
+	if (isRPR20)
+		return RPR_AOV_MAX;
+
+	return 0x20;
+}
+

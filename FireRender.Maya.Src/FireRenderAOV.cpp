@@ -285,6 +285,19 @@ void FireRenderAOV::setRenderStamp(const MString& inRenderStamp)
 }
 
 // -----------------------------------------------------------------------------
+bool FireRenderAOV::IsCryptomateiralAOV(void) const
+{
+	if		(id == RPR_AOV_CRYPTOMATTE_MAT0)		{ return true; } 
+	else if (id == RPR_AOV_CRYPTOMATTE_MAT1)		{ return true; }
+	else if	(id == RPR_AOV_CRYPTOMATTE_MAT2)		{ return true; }
+	else if (id == RPR_AOV_CRYPTOMATTE_OBJ0)		{ return true; }
+	else if (id == RPR_AOV_CRYPTOMATTE_OBJ1)		{ return true; }
+	else if (id == RPR_AOV_CRYPTOMATTE_OBJ2)		{ return true; }
+
+	return false;
+}
+
+// -----------------------------------------------------------------------------
 bool FireRenderAOV::writeToFile(const MString& filePath, bool colorOnly, unsigned int imageFormat, FileWrittenCallback fileWrittenCallback) const
 {
 	// Check that the AOV is active and in a valid state.

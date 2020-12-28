@@ -58,6 +58,8 @@ protected:
 
 	virtual void OnPreRender() override;
 
+	virtual int GetAOVMaxValue() override;
+
 private:
 	TahoePluginVersion m_PluginVersion;
 
