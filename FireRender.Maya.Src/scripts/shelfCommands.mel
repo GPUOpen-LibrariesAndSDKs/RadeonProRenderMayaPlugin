@@ -115,6 +115,8 @@ global proc onSqEx()
 	intSliderGrp -edit -enable true sliderLastFrameName;
 	optionMenu -edit -enable true frameExtentionOption;
 	attrControlGrp -edit -enable true extensionPaddingCtrlEx;
+
+	checkBox -edit -enable true singleAnimationFileCheckBx;
 }
 
 global proc offSqEx()
@@ -123,6 +125,8 @@ global proc offSqEx()
 	intSliderGrp -edit -enable false sliderLastFrameName;
 	optionMenu -edit -enable false frameExtentionOption;
 	attrControlGrp -edit -enable false extensionPaddingCtrlEx;
+
+	checkBox -edit -enable false singleAnimationFileCheckBx;
 }
 
 global proc launchSceneExport()
@@ -134,7 +138,15 @@ global proc launchSceneExport()
 
 	if ($countPaths > 0)
 	{
-		$isSqExEnabled = `checkBox  -query -value exportSqCheckBx`;
+		$isSqExEnabled = `checkBox -query -value exportSqCheckBx`;
+		if ($isSqExEnabled)
+		{
+			$isAnimSingleFileEnabled = `checkBox -query -value singleAnimationFileCheckBx`;
+			if ($isAnimSingleFileEnabled)
+			{
+				$isSqExEnabled = 0;
+			}
+		}
 		int $firstFrameIdx = `intSliderGrp -query -value sliderFirstFrameName`;
 		int $lastFrameIdx = `intSliderGrp -query -value sliderLastFrameName`;
 		$isSingleFileEnabled = `checkBox  -query -value singleFileCheckBx`;
@@ -268,9 +280,22 @@ global proc exportSceneRPR()
 				-onCommand "onSqEx" 
 				-offCommand "offSqEx" 
 				exportSqCheckBx;
+
+			columnLayout 
+				-rowSpacing 5 
+				-adjustableColumn true 
+				-columnOffset "left" 10;
+
+				checkBox
+					-label "Export animation as single file" 
+					-value true 
+					-enable false
+					singleAnimationFileCheckBx;
+
+			setParent ..;
 				
 			checkBox 
-				-label "Export As Single File" 
+				-label "Export Textures As Single File" 
 				-value false 
 				singleFileCheckBx;
 

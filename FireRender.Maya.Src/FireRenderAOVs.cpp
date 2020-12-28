@@ -118,6 +118,24 @@ FireRenderAOVs::FireRenderAOVs() :
 	AddAOV(RPR_AOV_REFLECTION_CATCHER, "aovReflectionCatcher", "ReflectionCatcher", "refcatcher",
 		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
 
+	AddAOV(RPR_AOV_CRYPTOMATTE_MAT0, "aovCryptoMaterialMat0", "Crypto Material Mat0", "CryptoMaterial00",
+		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
+
+	AddAOV(RPR_AOV_CRYPTOMATTE_MAT1, "aovCryptoMaterialMat1", "Crypto Material Mat1", "CryptoMaterial01",
+		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
+
+	AddAOV(RPR_AOV_CRYPTOMATTE_MAT2, "aovCryptoMaterialMat2", "Crypto Material Mat2", "CryptoMaterial02",
+		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
+
+	AddAOV(RPR_AOV_CRYPTOMATTE_OBJ0, "aovCryptoMaterialObj0", "Crypto Material Obj0", "CryptoObject00",
+		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
+
+	AddAOV(RPR_AOV_CRYPTOMATTE_OBJ1, "aovCryptoMaterialObj1", "Crypto Material Obj1", "CryptoObject01",
+		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
+
+	AddAOV(RPR_AOV_CRYPTOMATTE_OBJ2, "aovCryptoMaterialObj2", "Crypto Material Obj2", "CryptoObject02",
+		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
+
 	InitEXRCompressionMap();
 }
 
@@ -409,7 +427,36 @@ void FireRenderAOVs::ForEachActiveAOV(std::function<void(FireRenderAOV& aov)> ac
 {
 	for (auto& aov : m_aovs)
 	{
-		if (aov.second->active)
+		if (aov.second->IsActive())
 			actionFunc(*aov.second.get());
 	}
 }
+
+bool FireRenderAOVs::IsAOVActive(std::vector<int>& ids) const
+{
+	std::remove_reference<decltype(m_aovs)>::type::const_iterator it;
+
+	for (int id : ids)
+	{
+		it = m_aovs.find(id);
+		if ((it != m_aovs.end()) && (it->second->IsActive()))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool FireRenderAOVs::IsCryptomatteMaterial(void) const
+{
+	std::vector<int> ids = { RPR_AOV_CRYPTOMATTE_MAT0, RPR_AOV_CRYPTOMATTE_MAT1, RPR_AOV_CRYPTOMATTE_MAT2 };
+	return IsAOVActive(ids);
+}
+
+bool FireRenderAOVs::IsCryptomatteObject(void) const
+{
+	std::vector<int> ids = { RPR_AOV_CRYPTOMATTE_OBJ0, RPR_AOV_CRYPTOMATTE_OBJ1, RPR_AOV_CRYPTOMATTE_OBJ2 };
+	return IsAOVActive(ids);
+}
+
