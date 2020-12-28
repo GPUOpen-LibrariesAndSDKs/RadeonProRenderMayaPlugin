@@ -3103,6 +3103,13 @@ frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMeshCommon*
 
 	shader.SetName(node.name().asChar());
 
+	MPlug materialIdPlug = node.findPlug("rmi", false);
+
+	if (!materialIdPlug.isNull())
+	{
+		shader.SetMaterialId(materialIdPlug.asInt());
+	}
+
 	return shader;
 }
 
