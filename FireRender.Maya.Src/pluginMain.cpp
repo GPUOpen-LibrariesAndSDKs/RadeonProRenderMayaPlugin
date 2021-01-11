@@ -512,7 +512,9 @@ void AddExtensionAttributesForMaterials()
 {
 	MFnNumericAttribute nAttr;
 
-	MString materialNodeNames[] = { "RPRBlendMaterial", "RPRFlatColorMaterial", "RPRMaterial", "RPRMatteMaterial", "RPRPbrMaterial", "RPRSubsurfaceMaterial", "RPRTransparentMaterial", "RPRUberMaterial" };
+	MString materialNodeNames[] = { "RPRBlendMaterial", "RPRFlatColorMaterial", "RPRMaterial", "RPRMatteMaterial", 
+									"RPRPbrMaterial", "RPRSubsurfaceMaterial", "RPRTransparentMaterial", "RPRUberMaterial",
+									"lambert"};
 
 	for (MString className : materialNodeNames)
 	{

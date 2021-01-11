@@ -355,6 +355,7 @@ global proc createObjectMaterialIDFrame(string $parent)
 	columnLayout -adjustableColumn true;
 
 	button -label "Assign Object ID to all transforms" -command "OnAutoObjectIdAssign" objectIDAssignBtn;
+        button -label "Assign Material ID to supported materials" -command "OnAutoMaterialIdAssign" materialIDAssignBtn;
 
 	setParent ..;
 	setUITemplate -popTemplate;
@@ -372,6 +373,28 @@ global proc OnAutoObjectIdAssign()
 	setAttr $attr $index;
 	$index ++;
     }
+}
+
+global proc OnAutoMaterialIdAssign()
+{
+    string $arrNames[] = `ls -type "RPRBlendMaterial" -type "RPRFlatColorMaterial" -type "RPRMaterial" -type  "RPRMatteMaterial" 
+				-type "RPRPbrMaterial" -type "RPRSubsurfaceMaterial" -type "RPRTransparentMaterial" -type "RPRUberMaterial" 
+				-type "blinn" -type "lambert" -type "phong" -long`;
+	
+    int $index = 1;
+
+    for ($materialName in $arrNames)
+    {
+	string $attr = $materialName + ".RPRMaterialId";
+	int $materialId = `getAttr $attr`;
+
+	if ($materialId == 0)
+	{
+            setAttr $attr $index;
+	}
+
+	$index ++;
+    }                 
 }
 
 
