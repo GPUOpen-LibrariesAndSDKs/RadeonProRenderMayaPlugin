@@ -380,9 +380,9 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 			}
 		}
 
-		setupContextPreSceneCreation(m_globals, createFlags);
 		GetScope().CreateScene();
 		updateLimitsFromGlobalData(m_globals);
+		setupContextContourMode(m_globals, createFlags);
 		setupContextPostSceneCreation(m_globals);
 
 		setMotionBlurParameters(m_globals);
@@ -1941,7 +1941,7 @@ void FireRenderContext::updateFromGlobals(bool applyLock)
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags(m_RenderType);
 
 	m_globals.readFromCurrentScene();
-	setupContextPreSceneCreation(m_globals, createFlags);
+	setupContextContourMode(m_globals, createFlags);
 	setupContextPostSceneCreation(m_globals);
 
 	updateLimitsFromGlobalData(m_globals);
