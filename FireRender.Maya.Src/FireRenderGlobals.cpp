@@ -474,8 +474,8 @@ MStatus FireRenderGlobals::initialize()
 
 	MString workspace;
 	status = MGlobal::executeCommand(MString("workspace -q -dir;"), workspace);
-	workspace += "cache";
-	MGlobal::executeCommand(MString("optionVar -sv RPR_textureCachePath") + workspace);
+	workspace += "cache\"";
+	MGlobal::executeCommand(MString("optionVar -sv RPR_textureCachePath \"") + workspace);
 	MObject defaultTextureCachePath = sData.create(workspace);
 	Attribute::textureCachePath = tAttr.create("textureCachePath", "tcp", MFnData::kString, defaultTextureCachePath);
 	tAttr.setUsedAsFilename(true);

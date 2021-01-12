@@ -24,7 +24,7 @@ public:
 	static rpr_int GetPluginID(TahoePluginVersion version);
 	static bool IsGivenContextRPR2(const FireRenderContext* pContext);
 
-	void setupContextPreSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance = false) override;
+	void setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance) override;
 	void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) override;
 
 	bool IsRenderQualitySupported(RenderQuality quality) const override;
