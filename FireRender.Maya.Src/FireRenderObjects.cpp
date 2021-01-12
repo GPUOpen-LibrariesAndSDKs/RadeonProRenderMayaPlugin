@@ -1583,9 +1583,9 @@ void FireRenderMesh::SaveUsedUV(const MObject& meshNode)
 
 void FireRenderMesh::RebuildTransforms()
 {
-	auto node = Object();
+	MObject node = Object();
 	MFnDagNode meshFn(node);
-	auto meshPath = DagPath();
+	MDagPath meshPath = DagPath();
 
 	MMatrix matrix = GetSelfTransform();
 	
@@ -1608,7 +1608,7 @@ void FireRenderMesh::RebuildTransforms()
 		if (TahoeContext::IsGivenContextRPR2(context()))
 		{
 			float nextFrameFloats[4][4];
-			FireMaya::GetMatrixForTheNextFrame(meshFn, nextFrameFloats);
+			FireMaya::GetMatrixForTheNextFrame(meshFn, nextFrameFloats, Instance());
 
 			for (auto& element : m.elements)
 			{
@@ -1624,7 +1624,7 @@ void FireRenderMesh::RebuildTransforms()
 			MVector rotationAxis(1, 0, 0);
 			double rotationAngle = 0.0;
 
-			FireMaya::CalculateMotionBlurParams(meshFn, GetSelfTransform(), linearMotion, rotationAxis, rotationAngle);
+			FireMaya::CalculateMotionBlurParams(meshFn, GetSelfTransform(), linearMotion, rotationAxis, rotationAngle, Instance());
 
 			for (auto& element : m.elements)
 			{
