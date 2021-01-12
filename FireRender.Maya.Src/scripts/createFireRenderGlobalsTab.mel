@@ -380,8 +380,24 @@ global proc OnAutoMaterialIdAssign()
     string $arrNames[] = `ls -type "RPRBlendMaterial" -type "RPRFlatColorMaterial" -type "RPRMaterial" -type  "RPRMatteMaterial" 
 				-type "RPRPbrMaterial" -type "RPRSubsurfaceMaterial" -type "RPRTransparentMaterial" -type "RPRUberMaterial" 
 				-type "blinn" -type "lambert" -type "phong" -long`;
+
+    int $filledIDSCount = 0;
+    int $materialIDs[];
+
+    // Fills array with manually assigned IDs
+    for ($materialName in $arrNames)
+    {
+	string $attr = $materialName + ".RPRMaterialId";
+	int $materialId = `getAttr $attr`;
+                
+        if ($materialId > 0)
+	{
+            $materialIDs[$filledIDSCount] = $materialId;
+	    $filledIDSCount++;
+	}   
+    }
 	
-    int $index = 1;
+    int $idToAssign = 0;
 
     for ($materialName in $arrNames)
     {
@@ -389,11 +405,26 @@ global proc OnAutoMaterialIdAssign()
 	int $materialId = `getAttr $attr`;
 
 	if ($materialId == 0)
-	{
-            setAttr $attr $index;
-	}
+	{ 
+	    int $found;
+  
+            do
+	    {
+	    	$found = 0;
 
-	$index ++;
+		$idToAssign++;	
+	   	for ($id in $materialIDs)
+	    	{
+	       	    if ($id == $idToAssign)
+		    {
+		        $found = 1;
+		        break;
+		    }
+	        }
+            } while ($found > 0);
+	
+            setAttr $attr $idToAssign;
+	}
     }                 
 }
 
