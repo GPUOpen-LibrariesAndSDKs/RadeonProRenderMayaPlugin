@@ -313,6 +313,7 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 		attrControlGrp -label "Material Index" -attribute "RadeonProRenderGlobals.aovMaterialIndex";
 		attrControlGrp -label "Geometric Normal" -attribute "RadeonProRenderGlobals.aovGeometricNormal";
 		attrControlGrp -label "Shading Normal" -attribute "RadeonProRenderGlobals.aovShadingNormal";
+		attrControlGrp -label "Camera Normal" -attribute "RadeonProRenderGlobals.aovCameraNormal";
 		attrControlGrp -label "Depth" -attribute "RadeonProRenderGlobals.aovDepth";
 		attrControlGrp -label "Object ID" -attribute "RadeonProRenderGlobals.aovObjectId";
 		// Set change handler to automatically control BG and Opacity AOV checkboxes
