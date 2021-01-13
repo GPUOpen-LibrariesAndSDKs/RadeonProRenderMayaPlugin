@@ -514,7 +514,7 @@ void AddExtensionAttributesForMaterials()
 
 	MString materialNodeNames[] = { "RPRBlendMaterial", "RPRFlatColorMaterial", "RPRMaterial", "RPRMatteMaterial", 
 									"RPRPbrMaterial", "RPRSubsurfaceMaterial", "RPRTransparentMaterial", "RPRUberMaterial",
-									"lambert"};
+									"lambert", "standardSurface"};
 
 	for (MString className : materialNodeNames)
 	{

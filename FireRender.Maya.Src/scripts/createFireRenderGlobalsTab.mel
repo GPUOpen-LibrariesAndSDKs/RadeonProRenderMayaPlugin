@@ -379,7 +379,7 @@ global proc OnAutoMaterialIdAssign()
 {
     string $arrNames[] = `ls -type "RPRBlendMaterial" -type "RPRFlatColorMaterial" -type "RPRMaterial" -type  "RPRMatteMaterial" 
 				-type "RPRPbrMaterial" -type "RPRSubsurfaceMaterial" -type "RPRTransparentMaterial" -type "RPRUberMaterial" 
-				-type "blinn" -type "lambert" -type "phong" -long`;
+				-type "blinn" -type "lambert" -type "phong" -type "standardSurface" -long`;
 
     int $filledIDSCount = 0;
     int $materialIDs[];
