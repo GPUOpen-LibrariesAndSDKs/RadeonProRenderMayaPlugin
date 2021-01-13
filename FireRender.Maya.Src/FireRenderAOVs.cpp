@@ -49,6 +49,9 @@ FireRenderAOVs::FireRenderAOVs() :
 	AddAOV(RPR_AOV_SHADING_NORMAL, "aovShadingNormal", "Shading Normal", "shading_normal",
 		{ { "X", "Y", "Z" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::NORMAL } });
 
+	AddAOV(RPR_AOV_CAMERA_NORMAL, "aovCameraNormal", "CameraNormal", "camera_normal",
+		{ { "X", "Y", "Z" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::NORMAL } });
+
 	AddAOV(RPR_AOV_DEPTH, "aovDepth", "Depth", "depth",
 		{ { "Z" },{ TypeDesc::FLOAT } });
 
