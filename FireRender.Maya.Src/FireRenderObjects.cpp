@@ -1279,7 +1279,7 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 	for (int i = 0; i < m.elements.size(); i++)
 	{
 		auto& element = m.elements[i];
-		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this);
+		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), element.shadingEngine, this);
 		element.volumeShader = context->GetVolumeShader(getVolumeShader(element.shadingEngine));
 
 		if (context->IsDisplacementSupported())

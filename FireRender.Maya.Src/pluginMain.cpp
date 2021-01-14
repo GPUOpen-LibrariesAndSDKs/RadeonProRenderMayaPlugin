@@ -512,22 +512,15 @@ void AddExtensionAttributesForMaterials()
 {
 	MFnNumericAttribute nAttr;
 
-	MString materialNodeNames[] = { "RPRBlendMaterial", "RPRFlatColorMaterial", "RPRMaterial", "RPRMatteMaterial", 
-									"RPRPbrMaterial", "RPRSubsurfaceMaterial", "RPRTransparentMaterial", "RPRUberMaterial",
-									"lambert", "standardSurface"};
+	MNodeClass materialClass("shadingEngine");
 
-	for (MString className : materialNodeNames)
-	{
-		MNodeClass materialClass(className);
+	MObject materialIdAttribute = nAttr.create("RPRMaterialId", "rmi", MFnNumericData::kLong, 0);
 
-		MObject materialIdAttribute = nAttr.create("RPRMaterialId", "rmi", MFnNumericData::kLong, 0);
+	nAttr.setNiceNameOverride("RPR Material Id");
+	nAttr.setMin(0);
 
-		nAttr.setNiceNameOverride("RPR Material Id");
-		nAttr.setMin(0);
-
-		MStatus status = materialClass.addExtensionAttribute(materialIdAttribute);
-		assert(status == MStatus::kSuccess);
-	}
+	MStatus status = materialClass.addExtensionAttribute(materialIdAttribute);
+	assert(status == MStatus::kSuccess);
 }
 
 

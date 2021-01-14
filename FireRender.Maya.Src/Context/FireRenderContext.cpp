@@ -3093,7 +3093,7 @@ bool FireRenderContext::ShouldResizeTexture(unsigned int& max_width, unsigned in
 	return false;
 }
 
-frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMeshCommon* pMesh, bool forceUpdate)
+frw::Shader FireRenderContext::GetShader(MObject ob, MObject shadingEngine, const FireRenderMeshCommon* pMesh, bool forceUpdate)
 { 
 	scope.SetContextInfo(this);
 
@@ -3103,11 +3103,16 @@ frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMeshCommon*
 
 	shader.SetName(node.name().asChar());
 
-	MPlug materialIdPlug = node.findPlug("rmi", false);
-
-	if (!materialIdPlug.isNull())
+	if (!shadingEngine.isNull())
 	{
-		shader.SetMaterialId(materialIdPlug.asInt());
+		MFnDependencyNode sgDependecyNode(shadingEngine);
+
+		MPlug materialIdPlug = sgDependecyNode.findPlug("rmi", false);
+
+		if (!materialIdPlug.isNull())
+		{
+			shader.SetMaterialId(materialIdPlug.asInt());
+		}
 	}
 
 	return shader;
