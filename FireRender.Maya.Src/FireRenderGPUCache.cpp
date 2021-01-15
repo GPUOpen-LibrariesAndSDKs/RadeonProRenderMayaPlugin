@@ -2,6 +2,7 @@
 #include "FireRenderGPUCache.h"
 #include "Context/FireRenderContext.h"
 #include "FireRenderUtils.h"
+#include "Context/TahoeContext.h"
 
 #include <array>
 #include <algorithm>
@@ -167,7 +168,8 @@ frw::Shader FireRenderGPUCache::GetAlembicShadingEngines(MObject gpucacheNode)
 void FireRenderGPUCache::RebuildTransforms()
 {
 	MObject node = Object();
-	MMatrix matrix = GetSelfTransform();
+	MMatrix matrix = GetSelfTransform(); 
+	MFnDagNode meshFn(node);
 
 	MMatrix scaleM;
 	scaleM.setToIdentity();
@@ -176,22 +178,27 @@ void FireRenderGPUCache::RebuildTransforms()
 
 	for (auto& element : m.elements)
 	{
-		if (element.shape)
-		{
-			float(*f)[4][4] = reinterpret_cast<float(*)[4][4]>(element.TM.data());
-			MMatrix elementTransform(*f);
+		if (!element.shape)
+			continue;
+		
+		// transform
+		float(*f)[4][4] = reinterpret_cast<float(*)[4][4]>(element.TM.data());
+		MMatrix elementTransform(*f);
 
-			MMatrix mayaObjMatr = GetSelfTransform();
+		MMatrix mayaObjMatr = GetSelfTransform();
 
-			elementTransform *= mayaObjMatr;
-			elementTransform *= scaleM;
+		elementTransform *= mayaObjMatr;
+		elementTransform *= scaleM;
 
-			float mfloats[4][4];
-			elementTransform.get(mfloats);
+		float mfloats[4][4];
+		elementTransform.get(mfloats);
 
-			element.shape.SetTransform(&mfloats[0][0]);
-		}
+		element.shape.SetTransform(&mfloats[0][0]);
+
 	}
+
+	// motion blur
+	ProcessMotionBlur(meshFn);
 }
 
 void FireRenderGPUCache::ProcessShaders()

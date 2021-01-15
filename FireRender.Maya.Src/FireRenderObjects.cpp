@@ -1591,8 +1591,30 @@ void FireRenderMesh::RebuildTransforms()
 	
 	// convert Maya mesh in cm to m
 	float mfloats[4][4];
-	FireMaya::ScaleMatrixFromCmToMFloats(matrix, mfloats);
+	FireMaya::ScaleMatrixFromCmToMFloats(matrix, mfloats);	
 
+	for (auto& element : m.elements)
+	{
+		if (element.shape)
+		{
+			element.shape.SetTransform(&mfloats[0][0]);
+		}
+	}
+
+	// motion blur
+	ProcessMotionBlur(meshFn);
+}
+
+void FireRenderMeshCommon::AssignShadingEngines(const MObjectArray& shadingEngines)
+{
+	for (unsigned int i = 0; i < m.elements.size(); i++)
+	{
+		m.elements[i].shadingEngine = shadingEngines[i < shadingEngines.length() ? i : 0];
+	}
+}
+
+void FireRenderMeshCommon::ProcessMotionBlur(MFnDagNode& meshFn)
+{
 	// Checking of MotionBlur parameter in RenderStats group of mesh
 	bool objectMotionBlur = true;
 	MPlug objectMBPlug = meshFn.findPlug("motionBlur");
@@ -1602,55 +1624,39 @@ void FireRenderMesh::RebuildTransforms()
 		objectMotionBlur = objectMBPlug.asBool();
 	}
 
-	if (context()->motionBlur() && objectMotionBlur)
+	if (!context()->motionBlur() || !objectMotionBlur)
+		return;
+
+	// We use different schemes for MotionBlur for Tahoe and NorthStar
+	if (TahoeContext::IsGivenContextRPR2(context()))
 	{
-		// We use different schemes for MotionBlur for Tahoe and NorthStar
-		if (TahoeContext::IsGivenContextRPR2(context()))
+		float nextFrameFloats[4][4];
+		FireMaya::GetMatrixForTheNextFrame(meshFn, nextFrameFloats, Instance());
+
+		for (auto& element : m.elements)
 		{
-			float nextFrameFloats[4][4];
-			FireMaya::GetMatrixForTheNextFrame(meshFn, nextFrameFloats, Instance());
-
-			for (auto& element : m.elements)
+			if (element.shape)
 			{
-				if (element.shape)
-				{
-					element.shape.SetMotionTransform(&nextFrameFloats[0][0], false);
-				}
-			}
-		}
-		else
-		{
-			MVector linearMotion(0, 0, 0);
-			MVector rotationAxis(1, 0, 0);
-			double rotationAngle = 0.0;
-
-			FireMaya::CalculateMotionBlurParams(meshFn, GetSelfTransform(), linearMotion, rotationAxis, rotationAngle, Instance());
-
-			for (auto& element : m.elements)
-			{
-				if (element.shape)
-				{
-					element.shape.SetLinearMotion(float(linearMotion.x), float(linearMotion.y), float(linearMotion.z));
-					element.shape.SetAngularMotion(float(rotationAxis.x), float(rotationAxis.y), float(rotationAxis.z), float(rotationAngle));
-				}
+				element.shape.SetMotionTransform(&nextFrameFloats[0][0], false);
 			}
 		}
 	}
-
-	for (auto& element : m.elements)
+	else
 	{
-		if (element.shape)
+		MVector linearMotion(0, 0, 0);
+		MVector rotationAxis(1, 0, 0);
+		double rotationAngle = 0.0;
+
+		FireMaya::CalculateMotionBlurParams(meshFn, GetSelfTransform(), linearMotion, rotationAxis, rotationAngle, Instance());
+
+		for (auto& element : m.elements)
 		{
-			element.shape.SetTransform(&mfloats[0][0]);
+			if (element.shape)
+			{
+				element.shape.SetLinearMotion(float(linearMotion.x), float(linearMotion.y), float(linearMotion.z));
+				element.shape.SetAngularMotion(float(rotationAxis.x), float(rotationAxis.y), float(rotationAxis.z), float(rotationAngle));
+			}
 		}
-	}
-}
-
-void FireRenderMeshCommon::AssignShadingEngines(const MObjectArray& shadingEngines)
-{
-	for (unsigned int i = 0; i < m.elements.size(); i++)
-	{
-		m.elements[i].shadingEngine = shadingEngines[i < shadingEngines.length() ? i : 0];
 	}
 }
 
