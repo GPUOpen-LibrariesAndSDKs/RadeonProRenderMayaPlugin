@@ -208,7 +208,7 @@ void FireRenderGPUCache::ProcessShaders()
 	for (int i = 0; i < m.elements.size(); i++)
 	{
 		auto& element = m.elements[i];
-		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this);
+		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), element.shadingEngine, this);
 
 		if (element.shape)
 		{

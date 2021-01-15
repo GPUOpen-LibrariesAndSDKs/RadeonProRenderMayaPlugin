@@ -3522,6 +3522,13 @@ namespace frw
 			return false;
 		}
 
+		void SetMaterialId(rpr_uint id)
+		{
+			rpr_int res = rprMaterialNodeSetID(Handle(), id);
+
+			assert(res == MStatus::kSuccess);
+		}
+
 	};
 
 	class DiffuseShader : public Shader
