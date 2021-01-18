@@ -2272,6 +2272,9 @@ namespace frw
 		{
 			auto status = rprContextRender(Handle());
 
+			if (RPR_ERROR_ABORTED == status)
+				return;
+
 #define SHOW_EXTENDED_ERROR_MSG
 #ifndef SHOW_EXTENDED_ERROR_MSG
 			checkStatusThrow(status, "Unable to render");
@@ -2299,6 +2302,10 @@ namespace frw
 		void RenderTile(int rxmin, int rxmax, int rymin, int rymax)
 		{
 			auto status = rprContextRenderTile(Handle(), rxmin, rxmax, rymin, rymax);
+
+			if (RPR_ERROR_ABORTED == status)
+				return;
+
 			checkStatusThrow(status, "Unable to render tile");
 		}
 
