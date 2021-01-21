@@ -459,7 +459,7 @@ void SetVersionsForMel()
 
 }
 
-void AddExtensionAttributes()
+void AddExtensionAttributesCommon()
 {
 	// Add RPR UI to Maya native nodes
 	MFnNumericAttribute nAttr;
@@ -474,6 +474,8 @@ void AddExtensionAttributes()
 	nAttr.setMin(0);
 	MNodeClass transformNodeClass("transform");
 	transformNodeClass.addExtensionAttribute(objectIdAttr);
+
+	// Material Idx
 
 	// Adding visibility in contour render mode
 	MStatus status;
@@ -504,6 +506,21 @@ void AddExtensionAttributes()
 	MObject emitterAttr = nAttr.create("RPRIsEmitter", "iem", MFnNumericData::kBoolean, false);
 	nAttr.setNiceNameOverride("RPR Is Emitter");
 	locatorClass.addExtensionAttribute(emitterAttr);
+}
+
+void AddExtensionAttributesForMaterials()
+{
+	MFnNumericAttribute nAttr;
+
+	MNodeClass materialClass("shadingEngine");
+
+	MObject materialIdAttribute = nAttr.create("RPRMaterialId", "rmi", MFnNumericData::kLong, 0);
+
+	nAttr.setNiceNameOverride("RPR Material Id");
+	nAttr.setMin(0);
+
+	MStatus status = materialClass.addExtensionAttribute(materialIdAttribute);
+	assert(status == MStatus::kSuccess);
 }
 
 
@@ -728,7 +745,7 @@ MStatus initializePlugin(MObject obj)
 
 	MGlobal::executeCommand("setupFireRenderNodeClassification()");
 
-	AddExtensionAttributes();
+	AddExtensionAttributesCommon();
 	MGlobal::executeCommand("setupFireRenderExtraUI()");
 
 	// GLTF
@@ -925,6 +942,8 @@ MStatus initializePlugin(MObject obj)
 	}
 #endif
 
+	AddExtensionAttributesForMaterials();
+
 	return status;
 }
 
@@ -1001,9 +1020,7 @@ MStatus uninitializePlugin(MObject obj)
 	if (MGlobal::mayaState() != MGlobal::kBatch)
 	{
 		CHECK_MSTATUS(MSwatchRenderRegister::unregisterSwatchRender("swatchFireRenderMaterial"));
-#ifndef MAYA2015
 		CHECK_MSTATUS(plugin.deregisterRenderer(FIRE_RENDER_NAME));
-#endif
 	}
 
 	MMessage::removeCallback(newSceneCallback);
