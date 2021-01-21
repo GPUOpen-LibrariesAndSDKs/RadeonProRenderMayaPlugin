@@ -313,6 +313,7 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 		attrControlGrp -label "Material Index" -attribute "RadeonProRenderGlobals.aovMaterialIndex";
 		attrControlGrp -label "Geometric Normal" -attribute "RadeonProRenderGlobals.aovGeometricNormal";
 		attrControlGrp -label "Shading Normal" -attribute "RadeonProRenderGlobals.aovShadingNormal";
+		attrControlGrp -label "Camera Normal" -attribute "RadeonProRenderGlobals.aovCameraNormal";
 		attrControlGrp -label "Depth" -attribute "RadeonProRenderGlobals.aovDepth";
 		attrControlGrp -label "Object ID" -attribute "RadeonProRenderGlobals.aovObjectId";
 		// Set change handler to automatically control BG and Opacity AOV checkboxes
@@ -355,6 +356,7 @@ global proc createObjectMaterialIDFrame(string $parent)
 	columnLayout -adjustableColumn true;
 
 	button -label "Assign Object ID to all transforms" -command "OnAutoObjectIdAssign" objectIDAssignBtn;
+        button -label "Assign Material ID to supported materials" -command "OnAutoMaterialIdAssign" materialIDAssignBtn;
 
 	setParent ..;
 	setUITemplate -popTemplate;
@@ -372,6 +374,57 @@ global proc OnAutoObjectIdAssign()
 	setAttr $attr $index;
 	$index ++;
     }
+}
+
+global proc OnAutoMaterialIdAssign()
+{
+    string $arrNames[] = `ls -type "shadingEngine" -long`;
+
+    int $filledIDSCount = 0;
+    int $materialIDs[];
+
+    // Fills array with manually assigned IDs
+    for ($materialName in $arrNames)
+    {
+	string $attr = $materialName + ".RPRMaterialId";
+	int $materialId = `getAttr $attr`;
+                
+        if ($materialId > 0)
+	{
+            $materialIDs[$filledIDSCount] = $materialId;
+	    $filledIDSCount++;
+	}   
+    }
+	
+    int $idToAssign = 0;
+
+    for ($materialName in $arrNames)
+    {
+	string $attr = $materialName + ".RPRMaterialId";
+	int $materialId = `getAttr $attr`;
+
+	if ($materialId == 0)
+	{ 
+	    int $found;
+  
+            do
+	    {
+	    	$found = 0;
+
+		$idToAssign++;	
+	   	for ($id in $materialIDs)
+	    	{
+	       	    if ($id == $idToAssign)
+		    {
+		        $found = 1;
+		        break;
+		    }
+	        }
+            } while ($found > 0);
+	
+            setAttr $attr $idToAssign;
+	}
+    }                 
 }
 
 
