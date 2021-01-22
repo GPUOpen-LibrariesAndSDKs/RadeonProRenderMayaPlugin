@@ -227,13 +227,28 @@ void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
 	MString name = dnode.name();
 
 	// check for RPRObjectId attrbiute change. roi is brief name for this attribute
-	if (node.hasFn(MFn::kTransform) && (partialShortName == "roi"))
+	if (node.hasFn(MFn::kTransform))
 	{
 		MFnTransform transform(node);
 
-		MarkDirtyAllDirectChildren(transform);
-	}
+		if (partialShortName == "roi")
+		{
+			MarkDirtyAllDirectChildren(transform);
+		}
 
+		std::string longName = plug.name().asChar();
+		std::string shortName = longName.substr(longName.find(".") + 1);
+
+		if (shortName.find("translate") != std::string::npos ||
+			shortName.find("rotate") != std::string::npos ||
+			shortName.find("scale") != std::string::npos)
+		{
+			MDagPath dagPath = DagPath();
+
+			// get matrix to clean up plugs
+			dagPath.inclusiveMatrix();
+		}
+	}
 	// If changeing render layers or collections inside render layer
 	if (partialShortName.indexW("rlio[") != -1)
 	{
@@ -242,12 +257,6 @@ void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
 			MFnTransform transform(node);
 			MarkDirtyTransformRecursive(transform);
 		}
-		else
-		{
-
-		}
-
-
 	}
 
 	setDirty();
@@ -461,8 +470,8 @@ void FireRenderObject::attributeAddedOrRemoved_callback(MNodeMessage::AttributeM
 void FireRenderObject::OnPlugDirty(MObject& node, MPlug& plug)
 {
 	MFnDependencyNode nodeFn(node);
-	MString nodeName = nodeFn.name();
-	MString name = plug.partialName(false, true, true, true, true, true);
+
+	std::string name = plug.partialName(false, true, true, true, true, true).asChar();
 	if (name == "visibility" || name == "drawOverride") 
 	{
 		SetAllChildrenDirty();
