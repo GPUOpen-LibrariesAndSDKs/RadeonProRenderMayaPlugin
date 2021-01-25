@@ -235,20 +235,8 @@ void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
 		{
 			MarkDirtyAllDirectChildren(transform);
 		}
-
-		std::string longName = plug.name().asChar();
-		std::string shortName = longName.substr(longName.find(".") + 1);
-
-		if (shortName.find("translate") != std::string::npos ||
-			shortName.find("rotate") != std::string::npos ||
-			shortName.find("scale") != std::string::npos)
-		{
-			MDagPath dagPath = DagPath();
-
-			// get matrix to clean up plugs
-			dagPath.inclusiveMatrix();
-		}
 	}
+
 	// If changeing render layers or collections inside render layer
 	if (partialShortName.indexW("rlio[") != -1)
 	{
