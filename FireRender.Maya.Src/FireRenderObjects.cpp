@@ -227,14 +227,11 @@ void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
 	MString name = dnode.name();
 
 	// check for RPRObjectId attrbiute change. roi is brief name for this attribute
-	if (node.hasFn(MFn::kTransform))
+	if (node.hasFn(MFn::kTransform) && (partialShortName == "roi"))
 	{
 		MFnTransform transform(node);
 
-		if (partialShortName == "roi")
-		{
-			MarkDirtyAllDirectChildren(transform);
-		}
+		MarkDirtyAllDirectChildren(transform);
 	}
 
 	// If changeing render layers or collections inside render layer
@@ -245,6 +242,12 @@ void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
 			MFnTransform transform(node);
 			MarkDirtyTransformRecursive(transform);
 		}
+		else
+		{
+
+		}
+
+
 	}
 
 	setDirty();
@@ -458,8 +461,8 @@ void FireRenderObject::attributeAddedOrRemoved_callback(MNodeMessage::AttributeM
 void FireRenderObject::OnPlugDirty(MObject& node, MPlug& plug)
 {
 	MFnDependencyNode nodeFn(node);
-
-	std::string name = plug.partialName(false, true, true, true, true, true).asChar();
+	MString nodeName = nodeFn.name();
+	MString name = plug.partialName(false, true, true, true, true, true);
 	if (name == "visibility" || name == "drawOverride") 
 	{
 		SetAllChildrenDirty();
