@@ -142,8 +142,13 @@ HashValue FireRenderObject::GetHash(const MObject& ob)
 	hash << ob;
 	if (!ob.isNull() && ob.hasFn(MFn::kDependencyNode))
 	{
-		MFnDependencyNode depNode(ob);
-		for (unsigned int i = 0; i < depNode.attributeCount(); i++)
+		MStatus status;
+		MFnDependencyNode depNode(ob, &status);
+		if (status != MStatus::kSuccess)
+			return hash;
+
+		unsigned int attrCount = depNode.attributeCount();
+		for (unsigned int i = 0; i < attrCount; i++)
 		{
 			auto oAttr = depNode.attribute(i);
 			MFnAttribute attr(oAttr);
@@ -1442,7 +1447,7 @@ void FireRenderMesh::SetupObjectId(MObject parentTransformObject)
 
 	MPlug plug = parentTransform.findPlug("RPRObjectId");
 
-	rpr_uint objectId;
+	rpr_uint objectId = 0;
 	if (!plug.isNull())
 	{
 		objectId = plug.asInt();
