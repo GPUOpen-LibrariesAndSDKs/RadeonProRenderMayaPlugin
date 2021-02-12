@@ -463,9 +463,17 @@ void AddExtensionAttributesCommon()
 {
 	// Add RPR UI to Maya native nodes
 	MFnNumericAttribute nAttr;
-	MObject hairMaterialAttr = nAttr.createColor("rprHairMaterial", "rhm");
+	MStatus status;
+
+	// nhair
 	MNodeClass hairSystemClass("hairSystem");
-	hairSystemClass.addExtensionAttribute(hairMaterialAttr);
+
+	MObject hairMaterialAttr = nAttr.createColor("rprHairMaterial", "rhm");
+	status = hairSystemClass.addExtensionAttribute(hairMaterialAttr);
+
+	MObject hairCastShadows = nAttr.create("castsShadows", "csss", MFnNumericData::kBoolean, true, &status);
+	nAttr.setNiceNameOverride("Hair Casts Shadows");
+	status = hairSystemClass.addExtensionAttribute(hairCastShadows);
 
 	// Adding RPRObjectId to all transforms
 	MObject objectIdAttr = nAttr.create("RPRObjectId", "roi", MFnNumericData::kLong, 0);
@@ -478,7 +486,6 @@ void AddExtensionAttributesCommon()
 	// Material Idx
 
 	// Adding visibility in contour render mode
-	MStatus status;
 	MObject contourVisibilityAttr = nAttr.create("RPRContourVisibility", "covs", MFnNumericData::kBoolean, true, &status);
 	nAttr.setNiceNameOverride("RPR Visible in Contour mode");
 	transformNodeClass.addExtensionAttribute(contourVisibilityAttr);

@@ -1468,9 +1468,96 @@ namespace frw
 
 		void SetShader(Shader shader);
 		Shader GetShader() const;
+
 		void SetTransform(rpr_bool transpose, rpr_float const * transform)
 		{
 			rpr_int res = rprCurveSetTransform(Handle(), transpose, transform);
+			checkStatus(res);
+		}
+
+		void SetShadowFlag(bool castsShadows)
+		{
+			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_SHADOW, castsShadows);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
+		void SetPrimaryVisibility(bool visible)
+		{
+			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_PRIMARY_ONLY_FLAG, visible);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
+		void SetReflectionVisibility(bool visible)
+		{
+			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_REFLECTION, visible);
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+
+			res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_GLOSSY_REFLECTION, visible);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
+		void setRefractionVisibility(bool visible)
+		{
+			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_REFRACTION, visible);
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+
+			res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_GLOSSY_REFRACTION, visible);
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
+		void SetLightShapeVisibilityEx(bool visible)
+		{
+			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_LIGHT, visible);
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+
 			checkStatus(res);
 		}
 	};
