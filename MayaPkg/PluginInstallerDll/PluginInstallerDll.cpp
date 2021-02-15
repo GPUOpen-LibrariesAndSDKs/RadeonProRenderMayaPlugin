@@ -129,7 +129,7 @@ void installBoto3()
 
 		std::string cmdScript =
 			"cd " + fullPath + " &&"
-			"curl \"https://bootstrap.pypa.io/get-pip.py\" -o \"get-pip.py\" && "
+			"curl \"https://bootstrap.pypa.io/2.7/get-pip.py\" -o \"get-pip.py\" && "
 			"mayapy get-pip.py &&"
 			"mayapy -m pip install boto3\n"
 			;
