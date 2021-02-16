@@ -2465,40 +2465,43 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncStarted);
 
-	for (auto it = m_dirtyObjects.begin(); it != m_dirtyObjects.end(); )
+	while (!m_dirtyObjects.empty())
 	{
-		if ((m_state != FireRenderContext::StateRendering) && (m_state != FireRenderContext::StateUpdating))
-			break;
-
-		// Request the object with removal it from the dirty list. Use mutex to prevent list's modifications.
-		m_dirtyMutex.lock();
-		
-		std::shared_ptr<FireRenderObject> ptr = it->second.lock();
-
-		it = m_dirtyObjects.erase(it);
-
-		m_dirtyMutex.unlock();
-
-		// Now perform update
-		if (ptr)
+		for (auto it = m_dirtyObjects.begin(); it != m_dirtyObjects.end(); )
 		{
-			changed = true;
-			DebugPrint("Freshing object");
+			if ((m_state != FireRenderContext::StateRendering) && (m_state != FireRenderContext::StateUpdating))
+				break;
 
-			UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectPreSync);
-			ptr->Freshen();
+			// Request the object with removal it from the dirty list. Use mutex to prevent list's modifications.
+			m_dirtyMutex.lock();
 
-			syncProgressData.currentIndex++;
-			UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectSyncComplete);
+			std::shared_ptr<FireRenderObject> ptr = it->second.lock();
 
-			if (cancelled())
+			it = m_dirtyObjects.erase(it);
+
+			m_dirtyMutex.unlock();
+
+			// Now perform update
+			if (ptr)
 			{
-				return false;
+				changed = true;
+				DebugPrint("Freshing object");
+
+				UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectPreSync);
+				ptr->Freshen();
+
+				syncProgressData.currentIndex++;
+				UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectSyncComplete);
+
+				if (cancelled())
+				{
+					return false;
+				}
 			}
-		}
-		else
-		{
-			DebugPrint("Cancelled freshing null object");
+			else
+			{
+				DebugPrint("Cancelled freshing null object");
+			}
 		}
 	}
 
@@ -3093,7 +3096,7 @@ bool FireRenderContext::ShouldResizeTexture(unsigned int& max_width, unsigned in
 	return false;
 }
 
-frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMeshCommon* pMesh, bool forceUpdate)
+frw::Shader FireRenderContext::GetShader(MObject ob, MObject shadingEngine, const FireRenderMeshCommon* pMesh, bool forceUpdate)
 { 
 	scope.SetContextInfo(this);
 
@@ -3102,6 +3105,18 @@ frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMeshCommon*
 	frw::Shader shader = scope.GetShader(ob, pMesh, forceUpdate);
 
 	shader.SetName(node.name().asChar());
+
+	if (!shadingEngine.isNull())
+	{
+		MFnDependencyNode sgDependecyNode(shadingEngine);
+
+		MPlug materialIdPlug = sgDependecyNode.findPlug("rmi", false);
+
+		if (!materialIdPlug.isNull())
+		{
+			shader.SetMaterialId(materialIdPlug.asInt());
+		}
+	}
 
 	return shader;
 }
