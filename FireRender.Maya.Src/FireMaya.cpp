@@ -889,7 +889,7 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 		return NULL;
 	}
 
-	std::string key = texturePath.asUTF8();
+	std::string key = (texturePath + ":" + colorSpace).asUTF8();
 
 	auto it = m->imageCache.find(key);
 	if (it != m->imageCache.end())

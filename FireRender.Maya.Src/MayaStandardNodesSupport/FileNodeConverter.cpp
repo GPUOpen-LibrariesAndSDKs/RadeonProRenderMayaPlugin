@@ -28,7 +28,13 @@ void GetResolvedPatternStringArray(const MString& nodeName, MStringArray& resolv
 	MStatus status = MGlobal::executeCommand(ostream.str().c_str(), resolvedNames);
 }
 
-void LoadAndAssignUdimImages(const MString& nodeName,  frw::Context context, frw::Image masterImage, const MString& udimPathPattern)
+void LoadAndAssignUdimImages(
+	const MString& nodeName,  
+	frw::Context context, 
+	frw::Image masterImage, 
+	const MString& udimPathPattern, 
+	const MString& colorspace, 
+	const FireMaya::Scope& scope)
 {
 	size_t index = std::string(udimPathPattern.asChar()).find("<UDIM>");
 	const size_t tagLength = std::string("UDIM").length();
@@ -47,11 +53,19 @@ void LoadAndAssignUdimImages(const MString& nodeName,  frw::Context context, frw
 		std::string fileName = fileNames[(unsigned int) i].asChar();
 
 		rpr_uint tileIndex = std::stoi(fileName.substr(index, tagLength));
-		
-		frw::Image tile(context, fileName.c_str());
-		tile.SetName(fileName.c_str());
 
-		masterImage.SetUDIM(tileIndex, tile);
+		frw::Image image = scope.GetImage(MString(fileName.c_str()), colorspace, MString());
+		
+		if (!image.IsValid())
+		{
+			frw::Image tile(context, fileName.c_str());
+			tile.SetName(fileName.c_str());
+			masterImage.SetUDIM(tileIndex, tile);
+
+			continue;
+		}
+
+		masterImage.SetUDIM(tileIndex, image);
 	}
 }
 
@@ -104,7 +118,7 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 		rpr_image_format imageFormat = { 0, RPR_COMPONENT_TYPE_UINT8 };
 		image = frw::Image(context, imageFormat);
 
-		LoadAndAssignUdimImages(m_params.shaderNode.name(), context, image, texturePath);
+		LoadAndAssignUdimImages(m_params.shaderNode.name(), context, image, texturePath, colorSpace, m_params.scope);
 	}
 
 	frw::ImageNode imageNode(m_params.scope.MaterialSystem());

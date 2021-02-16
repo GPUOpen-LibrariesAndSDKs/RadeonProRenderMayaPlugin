@@ -288,6 +288,10 @@ namespace FireMaya
 		MDGContext dgcontext(nextTime);
 		MObject val;
 		MPlug matrixPlug = nodeFn.findPlug("worldMatrix");
+
+		if (matrixPlug.isNull())
+			return;
+
 		matrixPlug = matrixPlug.elementByLogicalIndex(dagPathIndex);
 		matrixPlug.getValue(val, dgcontext);
 		MMatrix nextFrameMatrix = MFnMatrixData(val).matrix();
