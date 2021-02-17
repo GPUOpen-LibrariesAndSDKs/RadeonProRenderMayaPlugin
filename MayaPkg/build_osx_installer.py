@@ -142,6 +142,9 @@ remappath.remapLibraryPaths(library_list, Path(libs_files_dist_dir), ".dylib", P
 for name in ['icons','images','plug-ins','renderDesc','scripts','shaders','shelves', 'data']:
     shutil.copytree(str(build_output_dir / name), str(addon_files_dist_dir / name))
 
+for name in ['convertAI2RPR.py', 'convertRS2RPR.py', 'convertVR2RPR.py']:
+    shutil.copy(str(Path('../RadeonProRenderSharedComponents/SceneConversionScripts') / name), str(Path(addon_files_dist_dir) / 'scripts/fireRender' / name))
+
 for dirlib in os.listdir(str(addon_files_dist_dir/"plug-ins")):
     if (dirlib != ".DS_Store"):
         remappath.remapLibraryPaths(library_list, Path(addon_files_dist_dir/"plug-ins"/dirlib), ".bundle", Path(npath))
