@@ -553,6 +553,10 @@ void FireRenderGlobalsData::readDenoiserParameters(const MFnDependencyNode& frGl
 	plug = frGlobalsNode.findPlug("denoiserColorOnly");
 	if (!plug.isNull())
 		denoiserSettings.colorOnly = plug.asInt() == 0;
+
+	plug = frGlobalsNode.findPlug("enable16bitCompute");
+	if (!plug.isNull())
+		denoiserSettings.enable16bitCompute = plug.asInt() == 1;
 }
 
 bool FireRenderGlobalsData::isTonemapping(MString name)
