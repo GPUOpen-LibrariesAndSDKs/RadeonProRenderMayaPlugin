@@ -350,7 +350,7 @@ void RprExportsGLTF(bool enable)
 		if (enable)
 		{
 			CHECK_MSTATUS(plugin.registerFileTranslator(translatorTitle,
-				nullptr, FireMaya::GLTFTranslator::creator));
+				nullptr, FireMaya::GLTFTranslator::creator, "rprGltfExport"));
 		}
 		else
 		{

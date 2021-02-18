@@ -1,0 +1,26 @@
+global proc int rprGltfExport (string $parent,
+                                     string $action,
+                                     string $initialSettings,
+                                     string $resultCallback )
+{
+	if ($action == "post") 
+	{
+		setParent $parent;
+		checkBoxGrp -l "Build Pbr Images" buildPbrImagesCheckBox;
+		return 1;
+	}
+	else if ($action == "query") 
+	{
+		int $val =  `checkBoxGrp -q -v1 buildPbrImagesCheckBox`;	
+		$currentOptions = "BuildPbrImages=" + $val;
+		eval($resultCallback+" \""+$currentOptions+"\"");
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+
+	return 1;
+}
+ 
