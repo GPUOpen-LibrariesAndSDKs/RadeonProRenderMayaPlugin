@@ -324,23 +324,30 @@ global proc exportSceneRPR()
 				-label "Select Camera" 
 				selectedCamera;
 
-				$layers = `ls -type "renderLayer"`;
-				for( $layer in $layers )
+			$layers = `ls -type "renderLayer"`;
+
+			$currentLayer = `editRenderLayerGlobals -q -currentRenderLayer`;
+			for( $layer in $layers )
+			{
+				if (catch ( `editRenderLayerGlobals -currentRenderLayer $layer` ))
 				{
-					if (catch ( `editRenderLayerGlobals -currentRenderLayer $layer` ))
+					print("cant use layer ");
+					print($layer);
+				} 
+				else 
+				{
+					string $camerasShapes[] = `ls -type camera`;
+					string $cameras[] = `listRelatives -p $camerasShapes`;
+					for ($camera in $cameras)
 					{
-						print("cant use layer ");
-						print($layer);
-					} else {
-						string $camerasShapes[] = `ls -type camera`;
-						string $cameras[] = `listRelatives -p $camerasShapes`;
-						for ($camera in $cameras)
-						{
-							menuItem 
-								-label $camera;
-						}	
-					}
+						menuItem 
+							-label $camera;
+					}	
 				}
+			}
+
+			// restore back old layer
+			editRenderLayerGlobals -currentRenderLayer $currentLayer;
 
 			columnLayout -columnOffset "left" 120;
 				button -label "Launch Export" -command "launchSceneExport";
