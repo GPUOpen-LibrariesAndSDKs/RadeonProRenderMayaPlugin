@@ -426,12 +426,12 @@ frw::Shape PhysicalLightGeometryUtility::CreateShapeForAreaLight(PLAreaLightShap
 	}
 
 	return frcontext.CreateMesh(
-		(rpr_float*) &vertices[0], vertices.size(), sizeof(PLUtilityVertex),
-		(rpr_float*)&vertices[0].norm, vertices.size(), sizeof(PLUtilityVertex),
-		(rpr_float*) (&vertices[0] + 6), vertices.size(), sizeof(PLUtilityVertex),
+		(rpr_float*) &vertices[0].pos, vertices.size(), sizeof(PLUtilityVertex),
+		(rpr_float*) &vertices[0].norm, vertices.size(), sizeof(PLUtilityVertex),
+		(rpr_float*) &vertices[0].uv, vertices.size(), sizeof(PLUtilityVertex),
 		(int*) &indices[0], sizeof(int),
-		(int*)&indices[0], sizeof(int),
-		(int*)&indices[0], sizeof(int),
+		(int*) &indices[0], sizeof(int),
+		(int*) &indices[0], sizeof(int),
 		(int*) &numFaceVertices[0], numFaceVertices.size());
 }
 
