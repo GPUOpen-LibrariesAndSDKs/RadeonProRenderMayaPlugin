@@ -200,6 +200,21 @@ global proc createFireRenderMotionBlurFrame(string $parent)
 	onUpdateMotionBlur();
 }
 
+global proc enableDisable16BitOption()
+{
+	$isAOVAndColor = `getAttr RadeonProRenderGlobals.denoiserColorOnly`;
+
+	if($isAOVAndColor == 1)
+	{
+		setAttr RadeonProRenderGlobals.enable16bitCompute 0;
+		attrControlGrp -edit -enable 0 enable16bitComputeCtr;
+	}
+	else
+	{
+		attrControlGrp -edit -enable 1 enable16bitComputeCtr;
+	}
+}
+
 global proc createFireRenderDenoiserFrame(string $parent)
 {
 	setUITemplate -pushTemplate attributeEditorTemplate;
@@ -275,7 +290,13 @@ global proc createFireRenderDenoiserFrame(string $parent)
 	frameLayout -label "Machine Learning" -cll 0 -li 30 denoiserMLFrame;
 		attrControlGrp
 			 -label ""
+			 -changeCommand "enableDisable16BitOption"
 			 -attribute "RadeonProRenderGlobals.denoiserColorOnly";
+		attrControlGrp
+			 -label "Enable 16 bit denoiser"
+			 -enable 0
+			 -attribute "RadeonProRenderGlobals.enable16bitCompute"
+			 enable16bitComputeCtr;
 	setParent ..;
 
 	setParent ..;	// columnLayout ends

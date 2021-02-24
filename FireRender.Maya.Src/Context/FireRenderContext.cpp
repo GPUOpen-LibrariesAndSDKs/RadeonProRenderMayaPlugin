@@ -667,6 +667,14 @@ void FireRenderContext::setupDenoiserFB()
 				m_denoiserFilter->AddInput(RifNormal, fbShadingNormal, 0.0f);
 				m_denoiserFilter->AddInput(RifDepth, fbDepth, 0.0f);
 				m_denoiserFilter->AddInput(RifAlbedo, fbDiffuseAlbedo, 0.0f);
+
+				p = { RifParamType::RifOther, false };
+				m_denoiserFilter->AddParam("enable16bitCompute", p);
+			}
+			else
+			{
+				p = { RifParamType::RifOther, m_globals.denoiserSettings.enable16bitCompute };
+				m_denoiserFilter->AddParam("enable16bitCompute", p);
 			}
 
 			break;
@@ -2420,6 +2428,20 @@ void FireRenderContext::TriggerProgressCallback(const ContextWorkProgressData& s
 bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 {
 	MAIN_THREAD_ONLY;
+
+	// update camera world coordinate plug. it needs to have callbacks works in command line mode.
+	// In UI it works better because viewport uses camera position in order to render the image thus it is cleaning and updating this plug.
+	if (!m_callbackCreationDisabled)
+	{
+		MDagPath cameraTransformDagPath = m_camera.DagPath();
+
+		// getting dagpath for camera transform here
+		cameraTransformDagPath.pop();
+
+		// Requesting value for World Matrix plug. It will recompute value, set plug as "clean" 
+		// and call callback if camera postion was changed before.
+		cameraTransformDagPath.inclusiveMatrix();
+	}
 
 	if (!isDirty() || cancelled())
 		return false;
