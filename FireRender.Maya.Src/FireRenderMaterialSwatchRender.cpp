@@ -102,8 +102,8 @@ bool FireRenderMaterialSwatchRender::setupFRNode()
 	auto disableSwatchPlug = nodeFn.findPlug("disableSwatch");
 
 	bool enableSwatches = false;
-	int iterations = FireRenderGlobalsData::getThumbnailIterCount(&enableSwatches);
-
+	FireRenderGlobalsData::getThumbnailIterCount(&enableSwatches);
+	 
 	if (enableSwatches && (disableSwatchPlug.isNull() || !disableSwatchPlug.asBool()))
 	{
 		FireRenderSwatchInstance& swatchInstance = getSwatchInstance();
