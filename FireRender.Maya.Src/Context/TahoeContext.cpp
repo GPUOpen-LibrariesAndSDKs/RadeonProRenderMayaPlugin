@@ -303,8 +303,7 @@ void TahoeContext::setupContextPostSceneCreation(const FireRenderGlobalsData& fi
 
 	updateTonemapping(fireRenderGlobalsData, disableWhiteBalance);
 
-
-	if (GetTahoeVersionToUse() == TahoePluginVersion::RPR2)
+	if (m_PluginVersion == TahoePluginVersion::RPR2)
 	{
 		frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_TEXTURE_CACHE_PATH, fireRenderGlobalsData.textureCachePath.asChar());
 		checkStatus(frstatus);
