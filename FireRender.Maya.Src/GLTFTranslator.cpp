@@ -23,6 +23,8 @@ limitations under the License.
 
 #include "ProRenderGLTF.h"
 
+#include <map>
+
 using namespace FireMaya;
 
 GLTFTranslator::GLTFTranslator() = default;
@@ -31,6 +33,31 @@ GLTFTranslator::~GLTFTranslator() = default;
 void* GLTFTranslator::creator()
 {
 	return new GLTFTranslator();
+}
+
+typedef std::map<std::string, std::string> OptionMap;
+
+void ParseOptionStringValues(OptionMap& optionMap, const MString& optionsString)
+{
+	MStringArray options;
+	optionsString.split(';', options);
+
+	MStringArray oneOption;
+
+	for (unsigned int i = 0; i < options.length(); ++i)
+	{
+		options[i].split('=', oneOption);
+
+		unsigned int len = oneOption.length();
+
+		if (len != 2)
+		{
+			assert(false);
+			continue;
+		}
+
+		optionMap[oneOption[0].asChar()] = oneOption[1].asChar();
+	}
 }
 
 MStatus	GLTFTranslator::writer(const MFileObject& file,
@@ -110,6 +137,20 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 		std::vector<rpr_scene> scenes;
 		scenes.push_back(scene.Handle());
 
+		OptionMap optionMap;
+		ParseOptionStringValues(optionMap, optionsString);
+
+		unsigned int gltfFlags = RPRGLTF_EXPORTFLAG_COPY_IMAGES_USING_OBJECTNAME | RPRGLTF_EXPORTFLAG_KHR_LIGHT;
+
+		OptionMap::const_iterator it = optionMap.find("BuildPbrImages");
+		if (it != optionMap.end())
+		{
+			if (MString(it->second.c_str()).asInt() > 0)
+			{
+				gltfFlags |= RPRGLTF_EXPORTFLAG_BUILD_STD_PBR_IMAGES;
+			}
+		}
+
 		m_progressBars->SetTextAboveProgress("Saving to GLTF file", true);
 		int err = rprExportToGLTF(
 			file.expandedFullName().asChar(),
@@ -117,7 +158,7 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 			materialSystem.Handle(),
 			scenes.data(),
 			scenes.size(),
-			RPRGLTF_EXPORTFLAG_COPY_IMAGES_USING_OBJECTNAME | RPRGLTF_EXPORTFLAG_KHR_LIGHT);
+			gltfFlags);
 
 		if (err != GLTF_SUCCESS)
 		{
