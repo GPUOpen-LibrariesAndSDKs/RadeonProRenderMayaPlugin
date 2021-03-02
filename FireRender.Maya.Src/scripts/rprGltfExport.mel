@@ -1,0 +1,35 @@
+global proc int rprGltfExport (string $parent,
+                                     string $action,
+                                     string $initialSettings,
+                                     string $resultCallback )
+{
+	string $buildPbrImageOptionVarName = "RPR_BuildPbrImages";
+
+	if ($action == "post") 
+	{
+		setParent $parent;
+		checkBoxGrp -l "Build Pbr Images" buildPbrImagesCheckBox;
+
+		int $val =  `optionVar -q "RPR_BuildPbrImages"`;
+
+		checkBoxGrp -e -v1 $val buildPbrImagesCheckBox;
+		
+		return 1;
+	}
+	else if ($action == "query") 
+	{
+		int $val =  `checkBoxGrp -q -v1 buildPbrImagesCheckBox`;	
+		$currentOptions = "BuildPbrImages=" + $val;
+		eval($resultCallback+" \""+$currentOptions+"\"");
+
+		optionVar -iv $buildPbrImageOptionVarName $val;
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+
+	return 1;
+}
+ 
