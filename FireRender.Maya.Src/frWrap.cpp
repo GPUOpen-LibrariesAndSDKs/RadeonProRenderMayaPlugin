@@ -142,4 +142,12 @@ namespace frw
 		SetValue(NodeInputUVScale, value);
 	}
 
+	void Node::_SetInputNode(rpr_material_node_input key, const Shader& shader)
+	{
+		if (shader)
+		{
+			AddReference(shader);
+			shader.AttachToMaterialInput(Handle(), key);
+		}
+	}
 }

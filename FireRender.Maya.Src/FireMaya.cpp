@@ -1799,7 +1799,7 @@ void FireMaya::Scope::RegisterCallback(MObject node)
 	if (m->m_nodeDirtyCallbacks.find(uuid) == m->m_nodeDirtyCallbacks.end())
 	{
 		m->m_nodeDirtyCallbacks[uuid] = MNodeMessage::addNodeDirtyCallback(node, NodeDirtyCallback, this);
-		m->m_AttributeChangedCallbacks[uuid] = MNodeMessage::addAttributeChangedCallback(node, AttributeChangedCallback, this);
+		//m->m_AttributeChangedCallbacks[uuid] = MNodeMessage::addAttributeChangedCallback(node, AttributeChangedCallback, this);
 	}
 }
 
@@ -1847,11 +1847,13 @@ void FireMaya::Scope::AttributeChangedCallback(MNodeMessage::AttributeMessage ms
 	bool connectionWasBroken = (MNodeMessage::AttributeMessage::kConnectionBroken & msg) > 0;
 	bool newIncomingDirection = (MNodeMessage::AttributeMessage::kIncomingDirection & msg) > 0;
 
+	std::string uuidNode = getNodeUUid(plug.node());
+	std::string uuidOtherNode = getNodeUUid(otherPlug.node());
+
 	if (connectionWasBroken & !newIncomingDirection)
 	{
-		std::string uuid = getNodeUUid(plug.node());
-		frw::Shader shader = GetCachedShader(uuid);
-		shader.DetachFromAllMaterialInputs();
+		frw::Shader shader = GetCachedShader(uuidNode);
+//		shader.DetachFromAllMaterialInputs();
 	}
 }
 
@@ -2187,8 +2189,8 @@ FireMaya::Scope::Data::~Data()
 	context.Reset();
 
 	// before deleting shader that have dependent shaders, we need to delete these dependencies first
-	for (auto it = shaderMap.begin(); it != shaderMap.end(); ++it)
-		it->second.ClearDependencies();
+	//for (auto it = shaderMap.begin(); it != shaderMap.end(); ++it)
+	//	it->second.ClearDependencies();
 
 	// delete shaders
 	shaderMap.clear();

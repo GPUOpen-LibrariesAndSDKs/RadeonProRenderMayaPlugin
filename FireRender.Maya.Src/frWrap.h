@@ -3307,10 +3307,13 @@ namespace frw
 			bool bDirty = true;
 
 			// Useful in case of BlendMaterial shader. 
-			std::vector<frw::Shader> dependentShaders;
 			int numAttachedShapes = 0;
 			ShaderType shaderType = ShaderTypeInvalid;
-			std::map<rpr_material_node_input, rpr_material_node> inputs;
+
+			typedef std::pair< rpr_material_node_input, rpr_material_node> InputNodePair;
+			//std::map<rpr_material_node_input, rpr_material_node> inputs;
+			std::vector<InputNodePair> inputs;
+
 			bool isShadowCatcher = false;
 			ShadowCatcherParams mShadowCatcherParams;
 			bool isReflectionCatcher = false;
@@ -3392,21 +3395,6 @@ namespace frw
 		Shader(const MaterialSystem& ms, const Context& context, bool destroyOnDelete = true) : Node(ms, ShaderType::ShaderTypeStandard, destroyOnDelete, new Data())
 		{
 			data().shaderType = ShaderType::ShaderTypeStandard;
-		}
-
-		void _SetInputNode(rpr_material_node_input key, const Shader& shader)
-		{
-			Node::_SetInputNode(key, shader);
-
-			if (shader)
-			{
-				AddDependentShader(shader);
-			}
-		}
-
-		void AddDependentShader(frw::Shader shader)
-		{
-			data().dependentShaders.push_back(shader);
 		}
 
 		frw::ShaderType GetShaderType() const
@@ -3512,30 +3500,45 @@ namespace frw
 			if (Handle())
 			{
 				// Attach rpr shader output to some material's input
-				auto it = d.inputs.find(inputKey);
-				if (it != d.inputs.end())
-					DetachFromMaterialInput(it->second, it->first);
+				//auto it = d.inputs.find(inputKey);
+				//if (it != d.inputs.end())
+				//	DetachFromMaterialInput(it->second, it->first);
 
 				res = rprMaterialNodeSetInputNByKey(node, inputKey, Handle());
 				checkStatus(res);
-				d.inputs.emplace(inputKey, node);
+
+				/*bool found = false;
+				for (const auto& pair : d.inputs)
+				{
+					if (pair.first == inputKey && pair.second == node)
+					{
+						found = true;
+						break;
+					}
+				}
+
+				if (!found)
+				{
+					d.inputs.push_back(Data::InputNodePair(inputKey, node));
+				}*/
 			}
 			checkStatus(res);
 		}
 
-		void DetachFromAllMaterialInputs()
+		/*void DetachFromAllMaterialInputs()
 		{
 			auto& d = data();
 			rpr_int res = RPR_ERROR_INVALID_PARAMETER;
-			for (const auto& input : d.inputs)
+
+			for (const auto& pair : d.inputs)
 			{
-				res = rprMaterialNodeSetInputNByKey(input.second, input.first, nullptr);
+				res = rprMaterialNodeSetInputNByKey(pair.second, pair.first, nullptr);
 				checkStatus(res);
 			}
 			d.inputs.clear();
-		}
+		}*/
 
-		void DetachFromMaterialInput(rpr_material_node node, rpr_material_node_input inputKey) const
+		/*void DetachFromMaterialInput(rpr_material_node node, rpr_material_node_input inputKey) const
 		{
 			auto& d = data();
 			rpr_int res = RPR_ERROR_INVALID_PARAMETER;
@@ -3547,7 +3550,7 @@ namespace frw
 				d.inputs.erase(inputKey);
 			}
 			checkStatus(res);
-		}
+		}*/
 
 		void xSetParameterN(rpr_material_node_input parameter, rpr_material_node node)
 		{
@@ -3759,15 +3762,6 @@ namespace frw
 		data().type = type;
 	}
 
-	inline void Node::_SetInputNode(rpr_material_node_input key, const Shader& shader)
-	{
-		if (shader)
-		{
-			AddReference(shader);
-			shader.AttachToMaterialInput(Handle(), key);
-		}
-	}
-
 	inline bool Node::SetValue(rpr_material_node_input key, const Value& v)
 	{
 		switch (v.type)
@@ -3817,6 +3811,7 @@ namespace frw
 		}
 
 		Shader node(*this, ShaderTypeBlend);
+
 		node._SetInputNode(RPR_MATERIAL_INPUT_COLOR0, a);
 		node._SetInputNode(RPR_MATERIAL_INPUT_COLOR1, b);
 		node.SetValue(RPR_MATERIAL_INPUT_WEIGHT, t);

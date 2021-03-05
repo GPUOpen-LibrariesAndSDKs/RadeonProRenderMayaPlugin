@@ -140,7 +140,7 @@ HashValue FireRenderObject::GetHash(const MObject& ob)
 {
 	HashValue hash;
 	hash << ob;
-	if (!ob.isNull() && ob.hasFn(MFn::kDependencyNode))
+	/*if (!ob.isNull() && ob.hasFn(MFn::kDependencyNode))
 	{
 		MStatus status;
 		MFnDependencyNode depNode(ob, &status);
@@ -158,7 +158,7 @@ HashValue FireRenderObject::GetHash(const MObject& ob)
 				hash << plug.node();
 			}
 		}
-	}
+	}*/
 	return hash;
 }
 
@@ -169,7 +169,7 @@ HashValue FireRenderObject::CalculateHash()
 
 HashValue FireRenderNode::CalculateHash()
 {
-	auto hash = FireRenderObject::CalculateHash();
+	HashValue hash = FireRenderObject::CalculateHash();
 	auto dagPath = DagPath();
 	if (dagPath.isValid())
 	{
