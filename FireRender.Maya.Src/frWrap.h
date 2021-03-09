@@ -3289,7 +3289,6 @@ namespace frw
 
 			bool bDirty = true;
 
-			// Useful in case of BlendMaterial shader. 
 			int numAttachedShapes = 0;
 			ShaderType shaderType = ShaderTypeInvalid;
 
