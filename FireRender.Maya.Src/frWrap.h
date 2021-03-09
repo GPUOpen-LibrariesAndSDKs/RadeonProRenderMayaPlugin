@@ -3287,32 +3287,11 @@ namespace frw
 				return Handle() != nullptr;
 			}
 
-			void ClearDependencies(void)
-			{
-				if (Handle() == nullptr)
-				{
-					return;
-				}
-
-				for (const auto& input : inputs)
-				{
-					// rprxMaterialDetachMaterial
-					rpr_int res = rprMaterialNodeSetInputNByKey(input.second, input.first, (rpr_material_node)NULL);
-					checkStatus(res);
-				}
-
-				inputs.clear();
-			}
-
 			bool bDirty = true;
 
 			// Useful in case of BlendMaterial shader. 
 			int numAttachedShapes = 0;
 			ShaderType shaderType = ShaderTypeInvalid;
-
-			typedef std::pair< rpr_material_node_input, rpr_material_node> InputNodePair;
-			//std::map<rpr_material_node_input, rpr_material_node> inputs;
-			std::vector<InputNodePair> inputs;
 
 			bool isShadowCatcher = false;
 			ShadowCatcherParams mShadowCatcherParams;
@@ -3365,11 +3344,6 @@ namespace frw
 		bool BgIsEnv() const
 		{
 			return data().mShadowCatcherParams.mBgIsEnv;
-		}
-
-		void ClearDependencies(void)
-		{
-			data().ClearDependencies();
 		}
 
 		void SetReflectionCatcher(bool isReflectionCatcher)
@@ -3499,58 +3473,12 @@ namespace frw
 			FRW_PRINT_DEBUG("\tShape.AttachToMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, Handle(), inputKey);
 			if (Handle())
 			{
-				// Attach rpr shader output to some material's input
-				//auto it = d.inputs.find(inputKey);
-				//if (it != d.inputs.end())
-				//	DetachFromMaterialInput(it->second, it->first);
-
 				res = rprMaterialNodeSetInputNByKey(node, inputKey, Handle());
 				checkStatus(res);
-
-				/*bool found = false;
-				for (const auto& pair : d.inputs)
-				{
-					if (pair.first == inputKey && pair.second == node)
-					{
-						found = true;
-						break;
-					}
-				}
-
-				if (!found)
-				{
-					d.inputs.push_back(Data::InputNodePair(inputKey, node));
-				}*/
 			}
+
 			checkStatus(res);
 		}
-
-		/*void DetachFromAllMaterialInputs()
-		{
-			auto& d = data();
-			rpr_int res = RPR_ERROR_INVALID_PARAMETER;
-
-			for (const auto& pair : d.inputs)
-			{
-				res = rprMaterialNodeSetInputNByKey(pair.second, pair.first, nullptr);
-				checkStatus(res);
-			}
-			d.inputs.clear();
-		}*/
-
-		/*void DetachFromMaterialInput(rpr_material_node node, rpr_material_node_input inputKey) const
-		{
-			auto& d = data();
-			rpr_int res = RPR_ERROR_INVALID_PARAMETER;
-			FRW_PRINT_DEBUG("\tShape.DetachFromMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, Handle(), inputKey);
-			if (Handle())
-			{
-				// Detach rpr shader output from some material's input
-				res = rprMaterialNodeSetInputNByKey(node, inputKey, nullptr);
-				d.inputs.erase(inputKey);
-			}
-			checkStatus(res);
-		}*/
 
 		void xSetParameterN(rpr_material_node_input parameter, rpr_material_node node)
 		{
