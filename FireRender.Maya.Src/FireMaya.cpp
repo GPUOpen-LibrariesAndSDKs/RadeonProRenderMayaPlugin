@@ -1835,26 +1835,6 @@ void FireMaya::Scope::NodeDirtyCallback(MObject& node, void* clientData)
 	self->NodeDirtyCallback(node);
 }
 
-void FireMaya::Scope::AttributeChangedCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug, void* clientData)
-{
-	Scope* self = static_cast<Scope*>(clientData);
-	self->AttributeChangedCallback(msg, plug, otherPlug);
-}
-
-void FireMaya::Scope::AttributeChangedCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug)
-{
-	bool connectionWasBroken = (MNodeMessage::AttributeMessage::kConnectionBroken & msg) > 0;
-	bool newIncomingDirection = (MNodeMessage::AttributeMessage::kIncomingDirection & msg) > 0;
-
-	std::string uuidNode = getNodeUUid(plug.node());
-	std::string uuidOtherNode = getNodeUUid(otherPlug.node());
-
-	if (connectionWasBroken & !newIncomingDirection)
-	{
-		frw::Shader shader = GetCachedShader(uuidNode);
-	}
-}
-
 void FireMaya::Scope::NodeDirtyPlugCallback(MObject& ob, MPlug& plug)
 {
 	MFnDependencyNode node(ob);
