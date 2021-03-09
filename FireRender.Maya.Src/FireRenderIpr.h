@@ -165,6 +165,8 @@ private:
 	/** A lock to control access to the system memory frame buffer pixels. */
 	MMutexLock m_pixelsLock;
 
+	MMutexLock m_refreshLock;
+
 	/** A lock to control access to the RPR context. */
 	MMutexLock m_contextLock;
 
