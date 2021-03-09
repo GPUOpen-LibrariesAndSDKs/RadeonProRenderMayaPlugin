@@ -123,6 +123,7 @@ namespace
 
 			// Denoiser type: ML
 		MObject denoiserColorOnly;
+		MObject enable16bitCompute;
 
 		// image saving
 		MObject renderaGlobalsExrMultilayerEnabled;
@@ -957,12 +958,17 @@ void FireRenderGlobals::createDenoiserAttributes()
 	nAttr.setMax(1.0f);
 
 	//ML
-	Attribute::denoiserColorOnly = eAttr.create("denoiserColorOnly", "do", 0, &status);
+	Attribute::denoiserColorOnly = eAttr.create("denoiserColorOnly", "do", 1, &status);
 	eAttr.addField("Color Only", 0);
 	eAttr.addField("Color + AOVs", 1);
 	MAKE_INPUT_CONST(eAttr);
 	eAttr.setReadable(true);
 	CHECK_MSTATUS(addAttribute(Attribute::denoiserColorOnly));
+
+	Attribute::enable16bitCompute = nAttr.create("enable16bitCompute", "bc", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setReadable(false);
+	CHECK_MSTATUS(addAttribute(Attribute::enable16bitCompute));
 }
 
 void FireRenderGlobals::addAsGlobalAttribute(MFnAttribute& attr)
