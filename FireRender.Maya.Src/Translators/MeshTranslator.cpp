@@ -233,6 +233,60 @@ MObject FireMaya::MeshTranslator::Smoothed2ndUV(const MObject& object, MStatus& 
 	return clonedSmoothedMesh;
 }
 
+MString GenerateSmoothOptions(const MFnDagNode& dagMesh)
+{
+	std::map<std::string, std::string> optionMap;
+
+	MPlug useSmoothPreviewForRenderPlug = dagMesh.findPlug("useSmoothPreviewForRender");
+	assert(!useSmoothPreviewForRenderPlug.isNull());
+
+	std::string smoothLevelPlugName = "smoothLevel";
+	if (useSmoothPreviewForRenderPlug.asInt() == 0)
+	{
+		smoothLevelPlugName = "renderSmoothLevel";
+	}
+
+	MPlug smoothLevelPlug = dagMesh.findPlug(smoothLevelPlugName.c_str());
+	assert(!smoothLevelPlug.isNull());
+	std::string smmothLevel = std::to_string(smoothLevelPlug.asInt());
+
+	optionMap["dv"] = smmothLevel;
+
+
+	MPlug useGlobalSmoothDrawTypePlug = dagMesh.findPlug("useGlobalSmoothDrawType");
+	assert(!useGlobalSmoothDrawTypePlug.isNull());
+
+	MPlug smoothDrawTypePlug = dagMesh.findPlug("smoothDrawType");
+	assert(!smoothDrawTypePlug.isNull());
+
+	MString addOptions;
+
+	// opensubdiv catmull-clark
+	if (useGlobalSmoothDrawTypePlug.asInt() > 0 || smoothDrawTypePlug.asInt() > 0)
+	{
+		optionMap["sdt"] = "1"; // 1 - constant according documentation
+	}
+	// maya catmull-clark
+	else 
+	{
+		optionMap["sdt"] = "0"; // 0 - constant according documentation
+
+		MPlug keepBordersPlug = dagMesh.findPlug("keepBorder");
+		assert(!keepBordersPlug.isNull());
+
+		optionMap["kb"] = std::to_string(keepBordersPlug.asInt());
+	}	
+
+	MString result;
+
+	for (auto it = optionMap.begin(); it != optionMap.end(); ++it)
+	{
+		result = result + "-" + it->first.c_str() + " " + it->second.c_str() + " ";
+	}
+
+	return result;
+}
+
 MObject FireMaya::MeshTranslator::GenerateSmoothMesh(const MObject& object, const MObject& parent, MStatus& status)
 {
 	status = MStatus::kSuccess;
@@ -258,18 +312,21 @@ MObject FireMaya::MeshTranslator::GenerateSmoothMesh(const MObject& object, cons
 	if (status != MStatus::kSuccess)
 		return MObject::kNullObj;
 
+	MString options = GenerateSmoothOptions(dagMesh);
+
 	MString command = R"(
 		proc string generateSmoothMesh() 
 		{
 			$res = `duplicate -rc ^1s`;
-			polySmooth -dv 4 $res[0];
+			polySmooth ^2s $res[0];
 			select -clear;
 			select -add $res[0];
 			return $res[0];
 		}
 		generateSmoothMesh();
 	)";
-	command.format(command, meshName);
+
+	command.format(command, meshName, options);
 	MString result;
 	status = MGlobal::executeCommand(command, result);
 

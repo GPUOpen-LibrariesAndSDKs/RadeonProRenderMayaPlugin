@@ -65,7 +65,7 @@ void FireRenderImageUtil::save(MString filePath, unsigned int width, unsigned in
 		float* fpixels = reinterpret_cast<float*> (pixels);
 
 		for (int idx = 0; idx < buffSize; ++idx)
-			buff.push_back(sRGB_to_linear(fpixels[idx]));
+			buff.push_back(fpixels[idx]);
 	}
 
 	// Try to open and write to the file.
