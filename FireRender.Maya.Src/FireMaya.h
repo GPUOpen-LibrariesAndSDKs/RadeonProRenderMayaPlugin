@@ -228,7 +228,6 @@ namespace FireMaya
 		// callbacks
 	public:
 		void NodeDirtyCallback(MObject& node);
-		void AttributeChangedCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug);
 
 		FireRenderMeshCommon const* GetCurrentlyParsedMesh() const { return m->m_pCurrentlyParsedMesh; }
 		void SetIsLastPassTextureMissing(bool value) const { m_IsLastPassTextureMissing = value; }
@@ -238,7 +237,6 @@ namespace FireMaya
 
 	private:
 		static void NodeDirtyCallback(MObject& node, void* clientData);
-		static void AttributeChangedCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug, void* clientData);
 
 		void NodeDirtyPlugCallback(MObject& node, MPlug &plug);
 		static void NodeDirtyPlugCallback(MObject& node, MPlug& plug, void* clientData);
