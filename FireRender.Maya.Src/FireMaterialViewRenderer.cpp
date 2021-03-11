@@ -79,7 +79,7 @@ bool FireMaterialViewRenderer::RunOnFireRenderThread()
 	switch (m_threadCmd)
 	{
 		case ThreadCommand::RENDER_IMAGE: {
-			RPR::AutoLock<MMutexLock> lock(m_renderData.m_mutex);
+			RPR::AutoMutexLock lock(m_renderData.m_mutex);
 			render();
 			return true;
 		}
@@ -122,7 +122,7 @@ MStatus FireMaterialViewRenderer::stopAsync()
 {
 	MAtomic::set(&m_threadCmd, ThreadCommand::STOP_THREAD);
 
-	RPR::AutoLock<MMutexLock> lock(m_renderData.m_mutex);
+	RPR::AutoMutexLock lock(m_renderData.m_mutex);
 
 	m_isThreadRunning = false;
 

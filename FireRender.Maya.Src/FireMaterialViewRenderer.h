@@ -21,7 +21,6 @@ limitations under the License.
 #include <maya/MGlobal.h>
 #include <maya/MString.h>
 #include <maya/MThreadAsync.h>
-#include <maya/MMutexLock.h>
 #include <map>
 #include <string>
 #include <tuple>
@@ -35,7 +34,7 @@ public:
 
 public:
 
-	MMutexLock m_mutex;
+	std::mutex m_mutex;
 
 	std::map<std::string, FrLight> m_lights;
 
