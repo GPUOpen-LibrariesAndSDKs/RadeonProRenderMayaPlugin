@@ -15,7 +15,6 @@ limitations under the License.
 #include <maya/M3dView.h>
 #include <maya/MMessage.h>
 #include <maya/MDGMessage.h>
-#include <maya/MMutexLock.h>
 #include <maya/MBoundingBox.h>
 #include <maya/MFnTransform.h>
 #include <maya/MCallbackIdArray.h>
@@ -694,7 +693,7 @@ private:
 	FireRenderObjectMap m_sceneObjects;
 
 	// Main mutex
-	MMutexLock m_mutex;
+	std::mutex m_mutex;
 
 	// these are all automatically destructing handles
 	struct Handles
@@ -751,7 +750,7 @@ private:
 	std::map<FireRenderObject*, std::weak_ptr<FireRenderObject> > m_dirtyObjects;
 
 	/** Mutex used for disabling simultaneous access to dirty objects list. */
-	MMutexLock m_dirtyMutex;
+	std::mutex m_dirtyMutex;
 
 	/** Holds current globals state obtained in previous refresh call. */
 	FireRenderGlobalsData m_globals;
