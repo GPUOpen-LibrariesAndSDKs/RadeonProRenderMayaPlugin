@@ -472,7 +472,7 @@ bool FireRenderProduction::stop()
 			if (FireRenderThread::AreWeOnMainThread())
 			{
 				// Try-lock context lock. If can't lock it then RPR thread is rendering - run item queue
-				while (!m_contextLock.tryLock())
+				while (!m_contextLock.try_lock())
 				{
 					FireRenderThread::RunItemsQueuedForTheMainThread();
 				}

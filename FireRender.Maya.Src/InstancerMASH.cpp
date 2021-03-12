@@ -13,6 +13,7 @@ limitations under the License.
 #include <InstancerMASH.h>
 #include <FireRenderMeshMASH.h>
 #include <maya/MItDag.h>
+#include <maya/MEulerRotation.h>
 
 InstancerMASH::InstancerMASH(FireRenderContext* context, const MDagPath& dagPath) :
 	FireRenderNode(context, dagPath),
@@ -200,6 +201,121 @@ std::vector<MMatrix> InstancerMASH::GetTransformMatrices() const
 	return result;
 }
 
+InstancerMASH::MASHContext::MASHContext()
+	: m_isValid(false)
+	, m_objectIndexArray()
+	, m_idArray()
+	, m_positionArray()
+	, m_rotationArray()
+	, m_scaleArray()
+	, m_shapesCache()
+	, m_uuidVectors()
+{}
+
+bool InstancerMASH::MASHContext::Init(MFnArrayAttrsData& arrayAttrsData, const InstancerMASH* pInstancer)
+{
+	assert(pInstancer);
+	if (!pInstancer)
+		return false;
+
+	MStatus res;
+	MFnArrayAttrsData::Type arrType;
+
+	// this data is essential!
+	bool ojectIndexArrayExists = arrayAttrsData.checkArrayExist("objectIndex", arrType, &res);
+	assert(res == MStatus::kSuccess);
+	assert(ojectIndexArrayExists); 
+	if (!ojectIndexArrayExists)
+		return false;
+
+	m_objectIndexArray = arrayAttrsData.getDoubleData("objectIndex", &res);
+	assert(res == MStatus::kSuccess);
+
+	// Generate unique uuid, because we can't use instancer uuid - it initiates infinite Freshen() on whole hierarchy
+	m_uuidVectors.resize(m_objectIndexArray.length());
+
+	// Get list of objects that are instanced by mash
+	std::vector<MObject> targetObjects = pInstancer->GetTargetObjects();
+
+	for (unsigned int idx = 0; idx < m_objectIndexArray.length(); ++idx)
+	{
+		size_t objectIndex = (size_t)m_objectIndexArray[idx];
+
+		if (m_shapesCache.count(objectIndex) != 0)
+			continue;
+
+		m_shapesCache[(size_t)objectIndex] = GetShapesFromNode(targetObjects.at((size_t)objectIndex));
+	}
+
+	// try get id array
+	bool idArrayExists = arrayAttrsData.checkArrayExist("id", arrType, &res);
+	assert(res == MStatus::kSuccess);
+	if (idArrayExists)
+	{
+		m_idArray = arrayAttrsData.getDoubleData("id", &res);
+		assert(res == MStatus::kSuccess);
+	}
+
+	// try get position array
+	bool positionArrayExists = arrayAttrsData.checkArrayExist("position", arrType, &res);
+	assert(res == MStatus::kSuccess);
+	if (positionArrayExists)
+	{
+		m_positionArray = arrayAttrsData.vectorArray("position", &res);
+		assert(res == MStatus::kSuccess);
+	}
+
+	// try get rotation array
+	bool rotationArrayExists = arrayAttrsData.checkArrayExist("rotation", arrType, &res);
+	assert(res == MStatus::kSuccess);
+	if (rotationArrayExists)
+	{
+		m_rotationArray = arrayAttrsData.vectorArray("rotation", &res);
+		assert(res == MStatus::kSuccess);
+	}
+
+	// try get scale array
+	bool scaleArrayExists = arrayAttrsData.checkArrayExist("scale", arrType, &res);
+	assert(res == MStatus::kSuccess);
+	if (scaleArrayExists)
+	{
+		m_scaleArray = arrayAttrsData.vectorArray("scale", &res);
+		assert(res == MStatus::kSuccess);
+	}
+
+	m_isValid = true;
+
+	return true;
+}
+
+bool InstancerMASH::MASHContext::IsValid(void) const
+{
+	if (!m_isValid)
+		return false;
+
+	if (IsByID())
+		return true;
+
+	unsigned int objLen = m_objectIndexArray.length();
+	unsigned int posLen = m_positionArray.length();
+	unsigned int rotLen = m_rotationArray.length();
+	unsigned int scaleLen = m_scaleArray.length();
+	bool sizeMatch = (objLen == posLen) && (objLen == rotLen) && (objLen == scaleLen);
+	if (IsByParams() && sizeMatch)
+		return true;
+
+	return false;
+}
+
+bool InstancerMASH::MASHContext::IsByParams(void) const
+{ 
+	unsigned int posLen = m_positionArray.length();
+	unsigned int rotLen = m_rotationArray.length();
+	unsigned int scaleLen = m_scaleArray.length();
+
+	return ((posLen != 0) && (rotLen != 0) && (scaleLen != 0));
+}
+
 void InstancerMASH::GenerateInstances()
 {
 	MFnDependencyNode instancerDagNode(m.object);
@@ -207,38 +323,45 @@ void InstancerMASH::GenerateInstances()
 	MObject data = plug.asMDataHandle().data();
 	MFnArrayAttrsData arrayAttrsData(data);
 
-	// These two arrays are filled with doubles instead of ints in maya for some reason.
-	MDoubleArray objectIndexArray = arrayAttrsData.getDoubleData("objectIndex");
-	MDoubleArray idArray = arrayAttrsData.getDoubleData("id");
+	// objectIndex and id arrays are filled with doubles instead of ints in maya for some reason.
+	MASHContext mashContext;
+	bool IsDataReadSuccessfully = mashContext.Init(arrayAttrsData, this);
+	assert(IsDataReadSuccessfully);
+	if (!IsDataReadSuccessfully)
+		return;
 
-	//Generate unique uuid, because we can't use instancer uuid - it initiates infinite Freshen() on whole hierarchy
-	std::vector<std::vector<MUuid>> uuidVectors;
-	uuidVectors.resize(objectIndexArray.length());
-
-	//Get list of objects that are instanced by mash
-	std::vector<MObject> targetObjects = GetTargetObjects();
-
-	std::map<size_t, std::vector<MObject>> shapesCache;
-	for (unsigned int idx = 0; idx < objectIndexArray.length(); ++idx)
+	if (mashContext.IsByID())
 	{
-		size_t objectIndex = (size_t)objectIndexArray[idx];
-		shapesCache[(size_t)objectIndex] = GetShapesFromNode(targetObjects.at((size_t)objectIndex));
+		GenerateInstancesById(mashContext);
 	}
 
+	if (mashContext.IsByParams())
+	{
+		GenerateInstancesByParams(mashContext);
+	}
+}
+
+void InstancerMASH::GenerateInstancesById(
+	MASHContext& mashContext
+	)
+{
+	assert(mashContext.IsValid());
+	assert(mashContext.IsByID());
+
 	// generate objects
-	for (unsigned int idArrayIndex = 0; idArrayIndex < idArray.length(); ++idArrayIndex)
+	for (unsigned int idArrayIndex = 0; idArrayIndex < mashContext.m_idArray.length(); ++idArrayIndex)
 	{
 		// get object(s) to be instanced
-		size_t objectIndex = (size_t)objectIndexArray[idArrayIndex];
-		auto it = shapesCache.find(objectIndex);
-		assert(it != shapesCache.end());
-		if (it == shapesCache.end())
+		size_t objectIndex = (size_t)mashContext.m_objectIndexArray[idArrayIndex];
+		auto it = mashContext.m_shapesCache.find(objectIndex);
+		assert(it != mashContext.m_shapesCache.end());
+		if (it == mashContext.m_shapesCache.end())
 			continue;
 
 		std::vector<MObject>& shapesToBeCreated = it->second;
 
 		// generate objectId(s) for new objects if neceessary
-		std::vector<MUuid>& uuidVector = uuidVectors[objectIndex];
+		std::vector<MUuid>& uuidVector = mashContext.m_uuidVectors[objectIndex];
 		while (shapesToBeCreated.size() != uuidVector.size())
 		{
 			MUuid uuid;
@@ -247,7 +370,7 @@ void InstancerMASH::GenerateInstances()
 		}
 
 		// proceeed with generating objects
-		size_t id = (size_t)idArray[idArrayIndex];
+		size_t id = (size_t)mashContext.m_idArray[idArrayIndex];
 		size_t currObjIdx = 0;
 		for (MObject& tmpObj : shapesToBeCreated)
 		{
@@ -259,10 +382,79 @@ void InstancerMASH::GenerateInstances()
 			assert(renderMesh);
 
 			auto instance = std::make_shared<FireRenderMeshMASH>(
-				*renderMesh, 
-				uuidVector[currObjIdx].asString().asChar(), 
+				*renderMesh,
+				uuidVector[currObjIdx].asString().asChar(),
 				m.object);
 			m_instancedObjects[id].push_back(instance);
+
+			currObjIdx++;
+		}
+	}
+}
+
+void InstancerMASH::GenerateInstancesByParams(
+	MASHContext& mashContext
+)
+{
+	assert(mashContext.IsValid());
+	assert(mashContext.IsByParams());
+
+	MStatus res;
+
+	unsigned int countObjects = mashContext.m_objectIndexArray.length();
+	for (unsigned int idx = 0; idx < countObjects; ++idx)
+	{
+		// make transformation matrix for object to be instanced
+		MTransformationMatrix matr;
+		double vec_scale[3];
+		res = mashContext.m_scaleArray[idx].get(vec_scale);
+		assert(res == MStatus::kSuccess);
+		matr.setScale(vec_scale, MSpace::kTransform);
+
+		MEulerRotation rot(mashContext.m_rotationArray[idx]);
+		matr.rotateTo(rot);
+
+		double vec_transform[3];
+		res = mashContext.m_positionArray[idx].get(vec_transform);
+		assert(res == MStatus::kSuccess);
+		matr.setTranslation(vec_transform, MSpace::kTransform);
+
+		// get object(s) to be instanced
+		size_t objectIndex = (size_t)mashContext.m_objectIndexArray[idx];
+		auto it = mashContext.m_shapesCache.find(objectIndex);
+		assert(it != mashContext.m_shapesCache.end());
+		if (it == mashContext.m_shapesCache.end())
+			continue;
+
+		std::vector<MObject>& shapesToBeCreated = it->second;
+
+		// generate objectId(s) for new objects if neceessary
+		std::vector<MUuid>& uuidVector = mashContext.m_uuidVectors[objectIndex];
+		while (shapesToBeCreated.size() != uuidVector.size())
+		{
+			MUuid uuid;
+			uuid.generate();
+			uuidVector.push_back(uuid);
+		}
+
+		// proceeed with generating objects
+		size_t currObjIdx = 0;
+		for (MObject& tmpObj : shapesToBeCreated)
+		{
+			FireRenderObject* pFoundObj = context()->getRenderObject(tmpObj);
+			if (!pFoundObj)
+				continue;
+
+			FireRenderMesh* renderMesh = static_cast<FireRenderMesh*>(pFoundObj);
+			assert(renderMesh);
+
+			auto instance = std::make_shared<FireRenderMeshMASH>(
+				*renderMesh,
+				uuidVector[currObjIdx].asString().asChar(),
+				m.object);
+			m_instancedObjects[idx].push_back(instance);
+
+			instance->SetSelfTransform(matr.asMatrix());
 
 			currObjIdx++;
 		}

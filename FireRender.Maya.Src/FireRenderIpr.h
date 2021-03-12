@@ -163,10 +163,12 @@ private:
 	tbb::atomic<bool> m_renderViewUpdateScheduled;
 
 	/** A lock to control access to the system memory frame buffer pixels. */
-	MMutexLock m_pixelsLock;
+	std::mutex m_pixelsLock;
+
+	std::mutex m_refreshLock;
 
 	/** A lock to control access to the RPR context. */
-	MMutexLock m_contextLock;
+	std::mutex m_contextLock;
 
 	/** Error handler. */
 	FireRenderError m_error;
