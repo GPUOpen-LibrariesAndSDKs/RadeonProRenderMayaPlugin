@@ -118,7 +118,7 @@ private:
 	// Called when an attribute on the FireRenderGlobals node change
 	static void globalsChangedCallback(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
 
-	void OnBufferAvailableCallback();
+	void OnBufferAvailableCallback(float progress);
 
 private:
 
@@ -156,6 +156,8 @@ private:
 	bool m_isPaused;
 
 	bool m_needsContextRefresh;
+
+	bool m_finishedFrame;
 
 	unsigned int m_currentAOVToDisplay;
 

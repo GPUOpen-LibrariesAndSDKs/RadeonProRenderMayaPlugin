@@ -20,6 +20,8 @@ limitations under the License.
 #include <maya/MViewport2Renderer.h>
 #include <maya/MGlobal.h>
 
+#include <ostream>
+
 
 void PixelBuffer::resize(size_t newCount)
 {
@@ -83,10 +85,9 @@ void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, u
 void generateBitmapImage(unsigned char *image, int height, int width, int pitch, const char* imageFileName);
 #endif
 
-void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, std::string& fbName)
+void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, const std::string& fbName, const std::string& pathToFile)
 {
 #ifdef _DEBUG
-#ifdef DUMP_PIXELS_PIXELBUFF
 	assert(sizeof(RV_PIXEL) * totalHeight * totalWidth == m_size);
 
 	std::vector<RV_PIXEL> sourcePixels;
@@ -121,10 +122,9 @@ void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, s
 	}
 
 	static int debugDumpIdx = 0;
-	std::string dumpAddr = "C:\\temp\\dbg\\" + fbName +std::to_string(debugDumpIdx++) + ".bmp";
+	std::string dumpAddr = pathToFile + fbName +std::to_string(debugDumpIdx++) + ".bmp";
 	unsigned char* dst2 = buffer2.data();
 	generateBitmapImage(dst2, totalHeight, totalWidth, totalWidth * 4, dumpAddr.c_str());
-#endif
 #endif
 }
 

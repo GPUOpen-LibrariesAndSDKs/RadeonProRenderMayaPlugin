@@ -233,12 +233,18 @@ void FireRenderProduction::SetupWorkProgressCallback()
 		});
 }
 
-// -----------------------------------------------------------------------------
-bool FireRenderProduction::start()
+void FireRenderProduction::UpdateGlobals(void)
 {
-	MStatus status;
+	m_globals.readFromCurrentScene();
+}
 
-	bool showWarningDialog = false;
+bool FireRenderProduction::isTileRender() const
+{
+	return m_globals.tileRenderingEnabled;
+}
+
+bool FireRenderProduction::Init(int contextWidth, int contextHeight, RenderRegion& region)
+{
 
 	if (GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())
 	{
@@ -249,163 +255,179 @@ bool FireRenderProduction::start()
 	// Read common render settings.
 	MRenderUtil::getCommonRenderSettings(m_settings);
 
-	// Read RPR globals.
-	m_globals.readFromCurrentScene();
-
-	// Disable tile rendering for RPR2
-
 	MString renderStamp;
 	if (m_globals.useRenderStamp)
 		renderStamp = m_globals.renderStampText;
 
 	m_aovs = &m_globals.aovs;
 
+	{
+		AutoMutexLock contextCreationLock(m_contextCreationLock);
+
+		m_contextPtr = ContextCreator::CreateAppropriateContextForRenderType(RenderType::ProductionRender);
+		m_contextPtr->SetRenderType(RenderType::ProductionRender);
+	}
+
+	m_contextPtr->enableAOV(RPR_AOV_OPACITY);
+	if (m_globals.adaptiveThreshold > 0.0f)
+	{
+		m_contextPtr->enableAOV(RPR_AOV_VARIANCE);
+	}
+
+	m_aovs->applyToContext(*m_contextPtr);
+
+	// Stop before restarting if already running.
+	if (m_isRunning)
+		stop();
+
+	// Check dimensions are valid.
+	if (m_width == 0 || m_height == 0)
+		return false;
+
+	m_contextPtr->setCallbackCreationDisabled(true);
+	if (!m_contextPtr->buildScene(false, false, false))
+	{
+		return false;
+	}
+
+	if (!m_globals.tileRenderingEnabled)
+	{
+		m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderProduction::OnBufferAvailableCallback, this, std::placeholders::_1));
+	}
+	m_aovs->setFromContext(*m_contextPtr);
+
+	m_needsContextRefresh = true;
+	m_contextPtr->setResolution(contextWidth, contextHeight, true);
+	m_contextPtr->setCamera(m_camera, true);
+
+	m_contextPtr->setUseRegion(m_isRegion);
+
+	bool showWarningDialog = false;
+	if (m_contextPtr->isFirstIterationAndShadersNOTCached())
+		showWarningDialog = true;	//first iteration and shaders are _NOT_ cached
+
+	if (m_isRegion)
+		m_contextPtr->setRenderRegion(m_region);
+
+	// Initialize the render progress bar UI.
+	m_progressBars = make_unique<RenderProgressBars>(m_contextPtr->isUnlimited());
+	m_progressBars->SetPreparingSceneText(true);
+
+	FireRenderThread::KeepRunningOnMainThread([this]() -> bool { return mainThreadPump(); });
+
+	// Allocate space for region pixels. This is equivalent to
+	// the size of the entire frame if a region isn't specified.
+
+	// Setup render stamp
+	m_aovs->setRenderStamp(renderStamp);
+
+	// Allocate memory for active AOV pixels and get
+	// the AOV that will be displayed in the render view.
+	m_aovs->setRegion(region, contextWidth, contextHeight);
+	m_aovs->allocatePixels();
+	m_renderViewAOV = &m_aovs->getRenderViewAOV();
+
+	if (showWarningDialog)
+	{
+		rcWarningDialog.show();
+	}
+	// Start the Maya render view render.
+	startMayaRender();
+
+	// Ensure the scheduled update flag is clear initially.
+	m_renderViewUpdateScheduled = false;
+
+	m_isRunning = true;
+
+	SetupWorkProgressCallback();
+
+	refreshContext();
+
+	m_needsContextRefresh = false;
+
+	m_progressBars->SetRenderingText(true);
+
+	m_contextPtr->setStartedRendering();
+
+	return true;
+}
+
+bool FireRenderProduction::startTileRender()
+{
+	assert(m_globals.tileRenderingEnabled);
+
+	int contextWidth = m_globals.tileSizeX;
+	int contextHeight = m_globals.tileSizeY;
+
+	RenderRegion region = RenderRegion(contextWidth, contextHeight);
+
+	Init(contextWidth, contextHeight, region);
+	FireRenderThread::KeepRunning([this]()
+	{
+		try
+		{
+			RenderTiles();
+			stop();
+			m_isRunning = false;
+		}
+		catch (...)
+		{
+			// We should stop rendering if some exception(error on core side) occured. It will close all progress bars etc
+			stop();
+			m_isRunning = false;
+			m_error.set(current_exception());
+		}
+		return m_isRunning;
+	});
+
+	return true;
+}
+// -----------------------------------------------------------------------------
+bool FireRenderProduction::startFullFrameRender()
+{
+	assert(!m_globals.tileRenderingEnabled);
+
 	int contextWidth = m_width;
 	int contextHeight = m_height;
 
 	RenderRegion region = m_region;
 
-	if (m_globals.tileRenderingEnabled)
+	Init(contextWidth, contextHeight, region);
+
+	// Start the render
+	FireRenderThread::KeepRunning([this]()
 	{
-		contextWidth = m_globals.tileSizeX;
-		contextHeight = m_globals.tileSizeY;
-
-		region = RenderRegion(contextWidth, contextHeight);
-	}
-
-	auto ret = FireRenderThread::RunOnceAndWait<bool>([this, &showWarningDialog, contextWidth, contextHeight]()
-	{
+		try
 		{
-			AutoMutexLock contextCreationLock(m_contextCreationLock);
-
-			m_contextPtr = ContextCreator::CreateAppropriateContextForRenderType(RenderType::ProductionRender);
-			m_contextPtr->SetRenderType(RenderType::ProductionRender);
+			m_isRunning = RunOnViewportThread();
 		}
-
-		m_contextPtr->enableAOV(RPR_AOV_OPACITY);
-		if (m_globals.adaptiveThreshold > 0.0f)
+		catch (...)
 		{
-			m_contextPtr->enableAOV(RPR_AOV_VARIANCE);
-		}
-
-		m_aovs->applyToContext(*m_contextPtr);
-
-		// Stop before restarting if already running.
-		if (m_isRunning)
+			// We should stop rendering if some exception(error on core side) occured. It will close all progress bars etc
 			stop();
-
-		// Check dimensions are valid.
-		if (m_width == 0 || m_height == 0)
-			return false;
-
-		m_contextPtr->setCallbackCreationDisabled(true);
-		if (!m_contextPtr->buildScene(false, false, false))
-		{
-			return false;
+			m_isRunning = false;
+			m_error.set(current_exception());
 		}
 
-		if (!m_globals.tileRenderingEnabled)
-		{
-			m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderProduction::OnBufferAvailableCallback, this));
-		}
-
-		m_aovs->setFromContext(*m_contextPtr);
-
-		m_needsContextRefresh = true;
-		m_contextPtr->setResolution(contextWidth, contextHeight, true);
-		m_contextPtr->ConsiderSetupDenoiser();
-		m_contextPtr->setCamera(m_camera, true);
-
-		m_contextPtr->setUseRegion(m_isRegion);
-
-		if (m_contextPtr->isFirstIterationAndShadersNOTCached())
-			showWarningDialog = true;	//first iteration and shaders are _NOT_ cached
-
-		if (m_isRegion)
-			m_contextPtr->setRenderRegion(m_region);
-
-		return true;
+		return m_isRunning;
 	});
 
-	if (ret)
-	{
-		// Initialize the render progress bar UI.
-		m_progressBars = make_unique<RenderProgressBars>(m_contextPtr->isUnlimited());
-		m_progressBars->SetPreparingSceneText(true);
+	m_NorthStarRenderingHelper.Start();
 
-		FireRenderThread::KeepRunningOnMainThread([this]() -> bool { return mainThreadPump(); });
-
-		// Allocate space for region pixels. This is equivalent to
-		// the size of the entire frame if a region isn't specified.
-
-		// Setup render stamp
-		m_aovs->setRenderStamp(renderStamp);
-
-		// Allocate memory for active AOV pixels and get
-		// the AOV that will be displayed in the render view.
-		m_aovs->setRegion(region, contextWidth, contextHeight);
-		m_aovs->allocatePixels();
-		m_renderViewAOV = &m_aovs->getRenderViewAOV();
-
-		if (showWarningDialog)
-		{
-			rcWarningDialog.show();
-		}
-
-		// Start the Maya render view render.
-		startMayaRender();
-
-		// Ensure the scheduled update flag is clear initially.
-		m_renderViewUpdateScheduled = false;
-
-		m_isRunning = true;
-
-		SetupWorkProgressCallback();
-
-		refreshContext();
-
-		m_needsContextRefresh = false;
-
-		m_progressBars->SetRenderingText(true);
-		m_contextPtr->setStartedRendering();
-
-		// Start the render
-		FireRenderThread::KeepRunning([this]()
-		{
-			try
-			{
-				if (m_globals.tileRenderingEnabled)
-				{
-					RenderTiles();
-					stop();
-					m_isRunning = false;
-				}
-				else
-				{
-					m_isRunning = RunOnViewportThread();
-				}
-			}
-			catch (...)
-			{
-				// We should stop rendering if some exception(error on core side) occured. It will close all progress bars etc
-				stop();
-				m_isRunning = false;
-				m_error.set(current_exception());
-			}
-
-			return m_isRunning;
-		});
-
-		m_NorthStarRenderingHelper.Start();
-	}
-
-	return ret;
+	return true;
 }
 
-void FireRenderProduction::OnBufferAvailableCallback()
+void FireRenderProduction::OnBufferAvailableCallback(float progress)
 {
 	AutoMutexLock pixelsLock(m_pixelsLock);
-	m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
+
+	bool frameFinished = fabs(1.0f - progress) <= FLT_EPSILON;
+	bool shouldUpdateRenderView = !m_contextPtr->IsDenoiserCreated() || (m_contextPtr->IsDenoiserCreated() && frameFinished);
+
+	m_renderViewAOV->readFrameBuffer(*m_contextPtr, true, !frameFinished);
+	
+	if (!shouldUpdateRenderView)
+		return;
 
 	FireRenderThread::RunProcOnMainThread([this]()
 		{
@@ -439,55 +461,55 @@ bool FireRenderProduction::pause(bool value)
 // -----------------------------------------------------------------------------
 bool FireRenderProduction::stop()
 {
-	if (m_isRunning)
+	if (!m_isRunning)
+		return true;
+
+	m_NorthStarRenderingHelper.SetStopFlag();
+
+	if (m_contextPtr)
 	{
-		m_NorthStarRenderingHelper.SetStopFlag();
+		m_contextPtr->SetState(FireRenderContext::StateExiting);
+	}
 
-		if (m_contextPtr)
+	stopMayaRender();
+
+	FireRenderThread::RunProcOnMainThread([&]()
+	{
+		m_stopCallback(m_aovs, m_settings);
+		m_progressBars.reset();
+
+		std::string renderStampText = RenderStampUtils::FormatRenderStamp(*m_contextPtr, "\\nFrame: %f  Render Time: %pt  Passes: %pp");
+
+		MString command;
+		command.format("renderWindowEditor -e -pcaption \"^1s\" renderView", renderStampText.c_str());
+
+		MGlobal::executeCommandOnIdle(command);
+
+		RenderStampUtils::ClearCache();
+	});
+
+	m_NorthStarRenderingHelper.StopAndJoin();
+
+	if (m_contextPtr)
+	{
+		if (FireRenderThread::AreWeOnMainThread())
 		{
-			m_contextPtr->SetState(FireRenderContext::StateExiting);
-		}
-
-		stopMayaRender();
-
-		FireRenderThread::RunProcOnMainThread([&]()
-		{
-			m_stopCallback(m_aovs, m_settings);
-			m_progressBars.reset();
-
-			std::string renderStampText = RenderStampUtils::FormatRenderStamp(*m_contextPtr, "\\nFrame: %f  Render Time: %pt  Passes: %pp");
-
-			MString command;
-			command.format("renderWindowEditor -e -pcaption \"^1s\" renderView", renderStampText.c_str());
-
-			MGlobal::executeCommandOnIdle(command);
-
-			RenderStampUtils::ClearCache();
-		});
-
-		m_NorthStarRenderingHelper.StopAndJoin();
-
-		if (m_contextPtr)
-		{
-			if (FireRenderThread::AreWeOnMainThread())
-			{
-				// Try-lock context lock. If can't lock it then RPR thread is rendering - run item queue
+			// Try-lock context lock. If can't lock it then RPR thread is rendering - run item queue
 				while (!m_contextLock.try_lock())
-				{
-					FireRenderThread::RunItemsQueuedForTheMainThread();
-				}
-
-				m_contextPtr->cleanScene();
-
-				m_contextLock.unlock();
-			}
-			else
 			{
-				std::shared_ptr<FireRenderContext> refToKeepAlive = m_contextPtr;
-				m_contextPtr.reset();
-
-				refToKeepAlive->cleanSceneAsync(refToKeepAlive);
+				FireRenderThread::RunItemsQueuedForTheMainThread();
 			}
+
+			m_contextPtr->cleanScene();
+
+			m_contextLock.unlock();
+		}
+		else
+		{
+			std::shared_ptr<FireRenderContext> refToKeepAlive = m_contextPtr;
+			m_contextPtr.reset();
+
+			refToKeepAlive->cleanSceneAsync(refToKeepAlive);
 		}
 	}
 
@@ -859,6 +881,7 @@ bool FireRenderProduction::RunOnViewportThread()
 
 				m_contextPtr->m_polycountLastRender = 0;
 
+				DenoiseFromAOVs();
 				stop();
 				m_rendersCount++;
 
@@ -893,6 +916,54 @@ bool FireRenderProduction::RunOnViewportThread()
 		default:
 			return true;
 	}
+}
+
+void FireRenderProduction::DenoiseFromAOVs()
+{
+	if (!m_contextPtr->IsDenoiserEnabled())
+		return;
+
+	// run denoiser
+	std::vector<float> vecData = m_contextPtr->DenoiseIntoRAM();
+
+	// output denoiser result
+	RV_PIXEL* data = nullptr;
+	auto it = m_contextPtr->PixelBuffers().find(RPR_AOV_COLOR);
+	bool hasAov = it != m_contextPtr->PixelBuffers().end();
+	if (hasAov)
+	{
+		data = (RV_PIXEL*)it->second.data();
+	}
+	else
+	{
+		data = (RV_PIXEL*)vecData.data();
+	}
+
+	m_renderViewAOV->pixels.overwrite(data, m_region, m_height, m_width, RPR_AOV_COLOR);
+
+	// apply render stamp
+	FireMaya::RenderStamp renderStamp;
+	MString stampStr;
+	m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov) 
+	{
+		if (aov.id != RPR_AOV_COLOR)
+			return;
+
+		stampStr = aov.renderStamp;
+	});
+	renderStamp.AddRenderStamp(*m_contextPtr, data, m_width, m_height, false, stampStr.asChar());
+
+	// Need to flip by Y because Maya render view is mirrored by Y compared to frame buffer in RPR 
+	ImageMirrorByY(data, m_width, m_height);
+
+	// Update the Maya render view.
+	FireRenderThread::RunProcOnMainThread([this, data]()
+	{
+		MRenderView::updatePixels(0, (m_width - 1),
+			0, (m_height - 1), data, true);
+
+		MRenderView::refresh(0, m_width - 1, 0, m_height - 1);
+	});
 }
 
 void FireRenderProduction::RenderTiles()
@@ -989,12 +1060,12 @@ void FireRenderProduction::RenderTiles()
 #endif
 
 	// setup denoiser if necessary
-	m_contextPtr->ConsiderSetupDenoiser(true);
+	m_contextPtr->TryCreateDenoiserImageFilters(true);
 
 	RV_PIXEL* data = nullptr;
 	std::vector<float> vecData;
 
-	if (m_contextPtr->IsDenoiserEnabled() && (m_renderViewAOV->id == RPR_AOV_COLOR))
+	if (m_contextPtr->IsDenoiserCreated() && (m_renderViewAOV->id == RPR_AOV_COLOR))
 	{
 		// run denoiser on cached data if necessary
 		bool denoiseResult = false;

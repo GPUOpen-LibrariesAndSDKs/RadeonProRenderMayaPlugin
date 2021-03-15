@@ -104,7 +104,7 @@ public:
 
 	bool ShouldBeRecreated() const { return m_contextPtr && !m_contextPtr->DoesContextSupportCurrentSettings(); }
 
-	void OnBufferAvailableCallback();
+	void OnBufferAvailableCallback(float progress);
 private:
 
 	// Members
