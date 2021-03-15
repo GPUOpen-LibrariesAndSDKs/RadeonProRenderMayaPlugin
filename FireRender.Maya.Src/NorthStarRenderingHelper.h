@@ -9,11 +9,13 @@ class FireRenderContext;
 
 class NorthStarRenderingHelper
 {
+	using RenderingHelperCallback = std::function<void(float)>;
+
 public:
 	NorthStarRenderingHelper();
 	~NorthStarRenderingHelper();
 
-	void SetData(FireRenderContext* pContext, std::function<void(void)> readBufferAndUpdateCallback);
+	void SetData(FireRenderContext* pContext, RenderingHelperCallback readBufferAndUpdateCallback);
 	void Start();
 	void StopAndJoin();
 	void SetStopFlag();
@@ -30,9 +32,10 @@ private:
 
 	FireRenderContext* m_pContext;
 
-	std::function<void(void)> m_readBufferAndUpdateCallback;
+	RenderingHelperCallback m_readBufferAndUpdateCallback;
 
 	std::mutex m_DataReadyMutex;
 	std::condition_variable m_DataReadyConditionalVariable;
+	float m_currProgress;
 };
 

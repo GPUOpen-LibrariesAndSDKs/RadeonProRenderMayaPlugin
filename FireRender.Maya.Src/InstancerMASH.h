@@ -17,6 +17,7 @@ limitations under the License.
 #include <maya/MFnCompoundAttribute.h>
 #include <maya/MUuid.h>
 #include <maya/MFnTypedAttribute.h>
+#include <maya/MDoubleArray.h>
 
 // Forward declaration
 class FireRenderMeshMASH;
@@ -37,15 +38,39 @@ class InstancerMASH: public FireRenderNode
 
 public:
     InstancerMASH(FireRenderContext* context, const MDagPath& dagPath);
-	virtual void RegisterCallbacks() override final;
-	virtual void Freshen() override final;
+	virtual void RegisterCallbacks(void) override final;
+	virtual void Freshen(void) override final;
 	virtual void OnPlugDirty(MObject& node, MPlug& plug) override final;
 
 private:
-	size_t GetInstanceCount() const;
-	std::vector<MObject> GetTargetObjects() const;
-	std::vector<MMatrix> GetTransformMatrices() const;
-	void GenerateInstances();
-	bool ShouldBeRecreated() const;
+	struct MASHContext
+	{
+		// objectIndex and id arrays are filled with doubles instead of ints in maya for some reason.
+		MDoubleArray m_objectIndexArray;
+		MDoubleArray m_idArray;
+		MVectorArray m_positionArray;
+		MVectorArray m_rotationArray;
+		MVectorArray m_scaleArray;
+
+		std::map<size_t, std::vector<MObject>> m_shapesCache;
+		std::vector<std::vector<MUuid>> m_uuidVectors;
+
+		bool m_isValid;
+
+		MASHContext();
+		~MASHContext() {}
+		bool Init(MFnArrayAttrsData& arrayAttrsData, const InstancerMASH* pInstancer);
+		bool IsValid(void) const;
+		bool IsByID(void) const { return m_idArray.length() != 0; }
+		bool IsByParams(void) const;
+	};
+
+	size_t GetInstanceCount(void) const;
+	std::vector<MObject> GetTargetObjects(void) const;
+	std::vector<MMatrix> GetTransformMatrices(void) const;
+	void GenerateInstances(void);
+	void GenerateInstancesById(MASHContext& mashContext);
+	void GenerateInstancesByParams(MASHContext& mashContext);
+	bool ShouldBeRecreated(void) const;
 };
 
