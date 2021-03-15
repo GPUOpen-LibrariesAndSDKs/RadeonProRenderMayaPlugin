@@ -137,7 +137,7 @@ namespace FireMaya
 		h = DlgFont::CHAR_HEIGHT;
 	}
 
-	void RenderStamp::AddRenderStamp(FireRenderContext& context, RV_PIXEL* pixels, int width, int height, bool flip, const char* format)
+	void RenderStamp::AddRenderStamp(FireRenderContext& context, RV_PIXEL* pixels, int width, int height, bool flip, const char* format) const
 	{
 		if (!format || !format[0])
 			return;

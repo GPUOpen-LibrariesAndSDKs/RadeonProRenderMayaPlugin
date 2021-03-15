@@ -228,7 +228,15 @@ MStatus FireRenderCmd::renderFrame(const MArgDatabase& argData)
 
 	s_rendering = true;
 
-	s_production->start();
+	s_production->UpdateGlobals();
+	if (!s_production->isTileRender())
+	{
+		s_production->startFullFrameRender();
+	}
+	else
+	{
+		s_production->startTileRender();
+	}
 
 	if (s_waitForIt || argData.isFlagSet(kWaitForIt))
 		s_production->waitForIt();
@@ -385,7 +393,7 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		context.buildScene();
 		context.updateLimitsFromGlobalData(globals, false, true);
 		context.setResolution(settings.width, settings.height, true);
-		context.ConsiderSetupDenoiser();
+		context.TryCreateDenoiserImageFilters();
 
 		// Initialize the command port so the
 		// batch process can communicate with Maya.

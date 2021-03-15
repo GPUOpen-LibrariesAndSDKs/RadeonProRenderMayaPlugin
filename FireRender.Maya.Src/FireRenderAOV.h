@@ -116,7 +116,7 @@ public:
 
 	void overwrite(const RV_PIXEL* input, const RenderRegion& region, unsigned int totalHeight, unsigned int totalWidth, int aov_id = 0);
 
-	void debugDump(unsigned int totalHeight, unsigned int totalWidth, std::string& fbName);
+	void debugDump(unsigned int totalHeight, unsigned int totalWidth, const std::string& fbName, const std::string& pathToFile);
 };
 
 typedef std::map<unsigned int, PixelBuffer> AOVPixelBuffers;
@@ -200,6 +200,8 @@ public:
 
 	/** AOV pixel data. Allocated if the buffer is active. */
 	PixelBuffer pixels;
+
+	const RenderRegion& GetRenderRegion(void) const { return m_region; }
 
 	/** Getting settings for making post processing*/
 	virtual void ReadFromGlobals(const MFnDependencyNode& globals) {}
