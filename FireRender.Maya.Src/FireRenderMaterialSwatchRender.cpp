@@ -146,7 +146,6 @@ void FireRenderMaterialSwatchRender::processFromBackgroundThread()
 			(swatchInstance.getContext().height() != (unsigned int) m_resolution))
 		{
 			swatchInstance.getContext().setResolution(m_resolution, m_resolution, false);
-			swatchInstance.getContext().ConsiderSetupDenoiser();
 		}
 
 		swatchInstance.getContext().setDirty();
