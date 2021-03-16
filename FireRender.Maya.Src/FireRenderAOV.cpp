@@ -16,6 +16,9 @@ limitations under the License.
 #include "Context/FireRenderContext.h"
 #include "FireRenderImageUtil.h"
 #include "RenderStamp.h"
+
+#include "RenderViewUpdater.h"
+
 #include <maya/MCommonSystemUtils.h>
 #include <maya/MViewport2Renderer.h>
 #include <maya/MGlobal.h>
@@ -110,9 +113,9 @@ void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, c
 		for (unsigned int x = 0; x < totalWidth; x++)
 		{
 			RV_PIXEL& pixel = sourcePixels[x + y * totalWidth];
-			char r = 255 * pixel.r;
-			char g = 255 * pixel.g;
-			char b = 255 * pixel.b;
+			char r = (char) (255 * pixel.r);
+			char g = (char) (255 * pixel.g);
+			char b = (char) (255 * pixel.b);
 
 			buffer2.push_back(b);
 			buffer2.push_back(g);
@@ -244,7 +247,7 @@ void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip, bool 
 	params.aov = id;
 	params.width = m_frameWidth;
 	params.height = m_frameHeight;
-	params.flip = flip;
+	params.flip = false;
 	params.mergeOpacity = context.camera().GetAlphaMask() && context.isAOVEnabled(RPR_AOV_OPACITY);
 	params.mergeShadowCatcher = true;
 	params.isDenoiserDisabled = isDenoiserDisabled;
@@ -270,12 +273,17 @@ void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip, bool 
 // -----------------------------------------------------------------------------
 void FireRenderAOV::sendToRenderView()
 {
+	RenderViewUpdater::UpdateAndRefreshRegion(
+		pixels.get(),
+		m_region.left, m_region.bottom,
+		m_region.right, m_region.top);
+
 	// Send pixels to the render view.
-	MRenderView::updatePixels(m_region.left, m_region.right,
+	/*MRenderView::updatePixels(m_region.left, m_region.right,
 		m_region.bottom, m_region.top, pixels.get(), true);
 
 	// Refresh the render view.
-	MRenderView::refresh(0, m_frameWidth - 1, 0, m_frameHeight - 1);
+	MRenderView::refresh(0, m_frameWidth - 1, 0, m_frameHeight - 1);*/
 }
 
 // -----------------------------------------------------------------------------

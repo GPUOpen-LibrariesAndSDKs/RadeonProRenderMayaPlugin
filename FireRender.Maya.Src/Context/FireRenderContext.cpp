@@ -17,7 +17,6 @@ limitations under the License.
 #include <float.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MMatrix.h>
-#include <maya/MRenderView.h>
 #include <maya/MFnNurbsSurface.h>
 #include <maya/MFnMeshData.h>
 #include <maya/MFnMesh.h>
@@ -1615,6 +1614,7 @@ void FireRenderContext::copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 	unsigned int sourceWidth, unsigned int sourceHeight,
 	const RenderRegion& region, bool flip) const
 {
+	flip = false;
 	RPR_THREAD_ONLY;
 	// Get region dimensions.
 	unsigned int regionWidth = region.getWidth();

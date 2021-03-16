@@ -11,20 +11,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ********************************************************************/
 #include "FireRenderIpr.h"
+
+#include "FireRenderThread.h"
+#include "AutoLock.h"
+
+#include "RenderViewUpdater.h"
+
+#include "FireRenderUtils.h"
+#include "RenderStampUtils.h"
+
+#include "Context/ContextCreator.h"
+
 #include <tbb/atomic.h>
 #include <maya/MRenderView.h>
 #include <maya/MViewport2Renderer.h>
 #include <maya/MGlobal.h>
-#include "FireRenderThread.h"
-#include "AutoLock.h"
-#include <thread>
-#include <mutex>
-
-#include "FireRenderUtils.h"
-#include "RenderStampUtils.h"
 #include "maya/MItSelectionList.h"
 
-#include "Context/ContextCreator.h"
+#include <thread>
+#include <mutex>
 
 using namespace std;
 using namespace std::chrono;
@@ -521,8 +526,10 @@ void FireRenderIpr::updateRenderView()
 		// Acquire the pixels lock.
 		AutoMutexLock pixelsLock(m_pixelsLock);
 
+		RenderViewUpdater::UpdateAndRefreshRegion(m_pixels.data(), m_region.left, m_region.bottom, m_region.right, m_region.top);
+
 		// Update the render view pixels.
-		MRenderView::updatePixels(
+		/*MRenderView::updatePixels(
 			m_region.left, m_region.right,
 			m_region.bottom, m_region.top,
 			m_pixels.data(), true);
@@ -530,7 +537,7 @@ void FireRenderIpr::updateRenderView()
 		// Refresh the render view.
 		MRenderView::refresh(
 			m_region.left, m_region.right,
-			m_region.bottom, m_region.top);
+			m_region.bottom, m_region.top);*/
 
 		updateMayaRenderInfo();
 
