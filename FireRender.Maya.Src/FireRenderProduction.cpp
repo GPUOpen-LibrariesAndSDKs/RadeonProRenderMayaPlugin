@@ -25,6 +25,7 @@ limitations under the License.
 #include "FireRenderGlobals.h"
 #include "FireRenderUtils.h"
 #include "RenderStampUtils.h"
+#include "RenderViewUpdater.h"
 
 #include "TileRenderer.h"
 #include "Athena/athenaWrap.h"
@@ -954,15 +955,16 @@ void FireRenderProduction::DenoiseFromAOVs()
 	renderStamp.AddRenderStamp(*m_contextPtr, data, m_width, m_height, false, stampStr.asChar());
 
 	// Need to flip by Y because Maya render view is mirrored by Y compared to frame buffer in RPR 
-	ImageMirrorByY(data, m_width, m_height);
+	//ImageMirrorByY(data, m_width, m_height);
 
 	// Update the Maya render view.
 	FireRenderThread::RunProcOnMainThread([this, data]()
 	{
-		MRenderView::updatePixels(0, (m_width - 1),
+		/*MRenderView::updatePixels(0, (m_width - 1),
 			0, (m_height - 1), data, true);
 
-		MRenderView::refresh(0, m_width - 1, 0, m_height - 1);
+		MRenderView::refresh(0, m_width - 1, 0, m_height - 1);*/
+		RenderViewUpdater::UpdateAndRefreshRegion(data, 0, 0, m_width - 1, m_height - 1);
 	});
 }
 
