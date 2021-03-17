@@ -16,6 +16,9 @@ limitations under the License.
 #include "Context/FireRenderContext.h"
 #include "FireRenderImageUtil.h"
 #include "RenderStamp.h"
+
+#include "RenderViewUpdater.h"
+
 #include <maya/MCommonSystemUtils.h>
 #include <maya/MViewport2Renderer.h>
 #include <maya/MGlobal.h>
@@ -63,12 +66,12 @@ void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, u
 	// copy line by line
 	for (unsigned int y = 0; y < regionHeight; y++)
 	{
-		unsigned int inputIndex = (regionHeight - 1 - y) * regionWidth; // writing to self
+		unsigned int inputIndex = y * regionWidth; // writing to self
 
 		// - keep in mind that y is inverted
 		//unsigned int destShiftY = (totalHeight - 1) - region.top;
 		//unsigned int destIndex = region.left + (destShiftY + y) * totalWidth;
-		unsigned int destShiftY = region.top - y;
+		unsigned int destShiftY = y + totalHeight - region.top - 1;
 		unsigned int destIndex = region.left + (destShiftY) * totalWidth;
 
 		memcpy(&m_pBuffer[destIndex], &input[inputIndex], sizeof(RV_PIXEL) * regionWidth);
@@ -110,9 +113,9 @@ void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, c
 		for (unsigned int x = 0; x < totalWidth; x++)
 		{
 			RV_PIXEL& pixel = sourcePixels[x + y * totalWidth];
-			char r = 255 * pixel.r;
-			char g = 255 * pixel.g;
-			char b = 255 * pixel.b;
+			char r = (char) (255 * pixel.r);
+			char g = (char) (255 * pixel.g);
+			char b = (char) (255 * pixel.b);
 
 			buffer2.push_back(b);
 			buffer2.push_back(g);
@@ -230,7 +233,7 @@ bool FireRenderAOV::IsValid(const FireRenderContext& context) const
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip, bool isDenoiserDisabled /*= false*/)
+void FireRenderAOV::readFrameBuffer(FireRenderContext& context)
 {
 	// Check that the AOV is active and in a valid state.
 	if (!active || !pixels || m_region.isZeroArea() || !context.IsAOVSupported(id))
@@ -244,10 +247,8 @@ void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip, bool 
 	params.aov = id;
 	params.width = m_frameWidth;
 	params.height = m_frameHeight;
-	params.flip = flip;
 	params.mergeOpacity = context.camera().GetAlphaMask() && context.isAOVEnabled(RPR_AOV_OPACITY);
 	params.mergeShadowCatcher = true;
-	params.isDenoiserDisabled = isDenoiserDisabled;
 	params.shadowColor = context.m_shadowColor;
 	params.bgColor = context.m_bgColor;
 	params.bgWeight = context.m_bgWeight;
@@ -263,19 +264,17 @@ void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip, bool 
 	// Render stamp, but only when region matches the whole frame buffer
 	if (m_region.getHeight() == m_frameHeight && m_region.getWidth() == m_frameWidth && renderStamp.numChars() > 0)
 	{
-		m_renderStamp->AddRenderStamp(context, pixels.get(), m_frameWidth, m_frameHeight, flip, renderStamp.asChar());
+		m_renderStamp->AddRenderStamp(context, pixels.get(), m_frameWidth, m_frameHeight, renderStamp.asChar());
 	}
 }
 
 // -----------------------------------------------------------------------------
 void FireRenderAOV::sendToRenderView()
 {
-	// Send pixels to the render view.
-	MRenderView::updatePixels(m_region.left, m_region.right,
-		m_region.bottom, m_region.top, pixels.get(), true);
-
-	// Refresh the render view.
-	MRenderView::refresh(0, m_frameWidth - 1, 0, m_frameHeight - 1);
+	RenderViewUpdater::UpdateAndRefreshRegion(
+		pixels.get(),
+		m_region.left, m_region.bottom,
+		m_region.right, m_region.top);
 }
 
 // -----------------------------------------------------------------------------
