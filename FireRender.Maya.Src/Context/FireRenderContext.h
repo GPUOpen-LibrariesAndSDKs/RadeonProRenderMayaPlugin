@@ -202,8 +202,9 @@ public:
 
 	// Sets the resolution and perform an initial render and frame buffer resolve.
 	void resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
-	// - Setup denoiser if necessary (this function was used to be called from resize and setResolution)
-	bool ConsiderSetupDenoiser(bool useRAMBufer = false);
+
+	// Setup denoiser if necessary
+	bool TryCreateDenoiserImageFilters(bool useRAMBufer = false);
 
 	// Set the frame buffer resolution
 	void setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
@@ -295,7 +296,7 @@ public:
 	bool ConsiderShadowReflectionCatcherOverride(const ReadFrameBufferRequestParams& params);
 
 	// writes input aov frame bufer on disk (both resolved and not resolved)
-	void DebugDumpAOV(int aov) const;
+	void DebugDumpAOV(int aov, char* pathToFile = nullptr) const;
 
 	// runs denoiser, returns pixel array as float vector if denoiser runs succesfully
 	std::vector<float> GetDenoisedData(bool& result);
@@ -303,7 +304,7 @@ public:
 	// reads aov directly into internal storage
 	RV_PIXEL* GetAOVData(const ReadFrameBufferRequestParams& params);
 
-	void MergeOpacity(const ReadFrameBufferRequestParams& params, size_t dataSize);
+	void MergeOpacity(const ReadFrameBufferRequestParams& params);
 
 	void CombineOpacity(ReadFrameBufferRequestParams& params);
 
@@ -328,6 +329,11 @@ public:
 	// Combine pixels (set alpha) with Opacity pixels
 	void combineWithOpacity(RV_PIXEL* pixels, unsigned int size, RV_PIXEL *opacityPixels = NULL) const;
 
+	// do action for each framebuffer matching filter
+	void ForEachFramebuffer(std::function<void(int aovId)> actionFunc, std::function<bool(int aovId)> filter);
+
+	// try running denoiser; result is svaed into RAM buffer in context
+	std::vector<float> DenoiseIntoRAM(void);
 
 	// Resolve the framebuffer using the current tone mapping
 
@@ -519,7 +525,9 @@ public:
 	// Returns true if context was recently Freshen and needs redraw
 	bool needsRedraw(bool setNotUpdatedOnExit = true);
 
-	bool IsDenoiserEnabled(void) { return m_denoiserFilter != nullptr; }
+	bool IsDenoiserCreated(void) const { return m_denoiserFilter != nullptr; }
+
+	bool IsDenoiserEnabled(void) const { return (IsDenoiserSupported() && m_globals.denoiserSettings.enabled);	}
 
 	frw::PostEffect white_balance;
 	frw::PostEffect simple_tonemap;
@@ -611,6 +619,7 @@ public:
 	virtual bool IsDisplacementSupported() const override { return true; }
 	virtual bool IsHairSupported() const override { return true; }
 	virtual bool IsVolumeSupported() const override { return true; }
+	virtual bool ShouldForceRAMDenoiser() const override { return false; }
 
 	virtual bool IsPhysicalLightTypeSupported(PLType lightType) const { return true; }
 
@@ -651,6 +660,8 @@ protected:
 
 	virtual int GetAOVMaxValue();
 
+	void ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestParams& params);
+
 private:
 	struct CallbacksAttachmentHelper
 	{
@@ -680,6 +691,7 @@ private:
 	void BuildLateinitObjects();
 
 private:
+	std::mutex m_rifLock;
 	std::shared_ptr<ImageFilter> m_denoiserFilter;
 
 	frw::DirectionalLight m_defaultLight;

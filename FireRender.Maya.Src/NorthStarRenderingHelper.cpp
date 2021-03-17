@@ -10,6 +10,7 @@ NorthStarRenderingHelper::NorthStarRenderingHelper() :
 	m_UpdateThreadRunning(false)
 	, m_DataReady(false)
 	, m_pContext(nullptr)
+	, m_currProgress(0.0f)
 {
 }
 
@@ -61,7 +62,7 @@ void ContextRenderUpdateCallback(float progress, void* pData)
 }
 
 
-void NorthStarRenderingHelper::SetData(FireRenderContext* pContext, std::function<void(void)> readBufferAndUpdateCallback)
+void NorthStarRenderingHelper::SetData(FireRenderContext* pContext, RenderingHelperCallback readBufferAndUpdateCallback)
 {
 	m_pContext = pContext;
 	m_readBufferAndUpdateCallback = readBufferAndUpdateCallback;
@@ -77,6 +78,8 @@ void NorthStarRenderingHelper::OnContextRenderUpdateCallback(float progress)
 		m_pContext->AbortRender();
 		return;
 	}
+
+	m_currProgress = progress;
 
 	std::unique_lock<std::mutex> lck(m_DataReadyMutex);
 	m_DataReady = true;
@@ -97,7 +100,7 @@ void NorthStarRenderingHelper::UpdateThreadFunc()
 			break;
 		}
 
-		m_readBufferAndUpdateCallback();
+		m_readBufferAndUpdateCallback(m_currProgress);
 		
 		m_DataReady = false;
 	}
