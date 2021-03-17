@@ -1000,9 +1000,7 @@ void FireRenderProduction::RenderTiles()
 
 		m_contextPtr->render(false);
 
-		// Read pixel data for the AOV displayed in the render
-		// view. 
-		// - readFrameBuffer function also can do denoiser setup
+		// copy data to buffer
 		m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov)
 		{
 			aov.readFrameBuffer(*m_contextPtr);
@@ -1014,17 +1012,6 @@ void FireRenderProduction::RenderTiles()
 
 			it->second.overwrite(aov.pixels.get(), region, info.totalHeight, info.totalWidth, aov.id);
 		});
-
-		// copy data to buffer
-/*		m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov)
-		{
-			auto it = out.find(aov.id);
-
-			if (it == out.end())
-				return;
-
-			it->second.overwrite(aov.pixels.get(), region, info.totalHeight, info.totalWidth, aov.id);
-		});*/
 
 		// send data to Maya render view
 		FireRenderThread::RunProcOnMainThread([this, region]()

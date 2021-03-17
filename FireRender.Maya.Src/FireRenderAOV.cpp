@@ -66,11 +66,8 @@ void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, u
 	// copy line by line
 	for (unsigned int y = 0; y < regionHeight; y++)
 	{
-		unsigned int inputIndex = y * regionWidth; // writing to self
+		unsigned int inputIndex = y * regionWidth;
 
-		// - keep in mind that y is inverted
-		//unsigned int destShiftY = (totalHeight - 1) - region.top;
-		//unsigned int destIndex = region.left + (destShiftY + y) * totalWidth;
 		unsigned int destShiftY = y + totalHeight - region.top - 1;
 		unsigned int destIndex = region.left + (destShiftY) * totalWidth;
 

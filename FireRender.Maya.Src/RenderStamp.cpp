@@ -74,16 +74,9 @@ namespace FireMaya
 
 		// compute loop parameters
 		int stride, pos;
-		//if (!data.flip)
-		{
-			stride = data.dstWidth - w;
-			pos = dstY * data.dstWidth + dstX;
-		}
-		/*else
-		{
-			stride = -(data.dstWidth + w);
-			pos = (data.dstHeight - dstY - 1) * data.dstWidth + dstX;
-		}*/
+
+		stride = data.dstWidth - w;
+		pos = dstY * data.dstWidth + dstX;
 
 		// blend source bitmap to destination bitmap
 		const unsigned char* srcPic = &data.srcBitmap[data.srcWidth * srcY + srcX];
