@@ -2331,3 +2331,21 @@ TimePoint GetCurrentChronoTime()
 {
 	return std::chrono::high_resolution_clock::now();
 }
+
+void ImageMirrorByY(RV_PIXEL* imageData, unsigned int width, unsigned int height)
+{
+	assert(imageData);
+
+	RV_PIXEL tmpPixel;
+
+	for (unsigned int y = 0; y < height / 2; ++y)
+	{
+		for (unsigned int x = 0; x < width; ++x)
+		{
+			tmpPixel = imageData[y * width + x];
+			imageData[y * width + x] = imageData[(height - y - 1) * width + x];
+			imageData[(height - y - 1) * width + x] = tmpPixel;
+		}
+	}
+}
+

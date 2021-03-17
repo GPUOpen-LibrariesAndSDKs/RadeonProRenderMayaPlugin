@@ -212,7 +212,7 @@ void FireRenderViewport::removed(bool panelDestroyed)
 	removeMenu();
 }
 
-void FireRenderViewport::OnBufferAvailableCallback()
+void FireRenderViewport::OnBufferAvailableCallback(float progress)
 {
 	readFrameBuffer();
 
@@ -539,7 +539,7 @@ bool FireRenderViewport::initialize()
 
 			if (TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
 			{
-				m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderViewport::OnBufferAvailableCallback, this));
+				m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderViewport::OnBufferAvailableCallback, this, std::placeholders::_1));
 			}
 		}
 		catch (...)
@@ -663,7 +663,7 @@ void FireRenderViewport::resizeFrameBufferStandard(unsigned int width, unsigned 
 {
 	// Update the RPR context dimensions.
 	m_contextPtr->resize(width, height, false);
-	m_contextPtr->ConsiderSetupDenoiser();
+	m_contextPtr->TryCreateDenoiserImageFilters();
 
 	// Resize the pixel buffer that
 	// will receive frame buffer data.
@@ -690,7 +690,7 @@ void FireRenderViewport::resizeFrameBufferGLInterop(unsigned int width, unsigned
 	{
 		// Update the RPR context.
 		m_contextPtr->resize(width, height, false, GetGlTexture());
-		m_contextPtr->ConsiderSetupDenoiser();
+		m_contextPtr->TryCreateDenoiserImageFilters();
 	}
 }
 
