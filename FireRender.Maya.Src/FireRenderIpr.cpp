@@ -528,17 +528,6 @@ void FireRenderIpr::updateRenderView()
 
 		RenderViewUpdater::UpdateAndRefreshRegion(m_pixels.data(), m_region.left, m_region.bottom, m_region.right, m_region.top);
 
-		// Update the render view pixels.
-		/*MRenderView::updatePixels(
-			m_region.left, m_region.right,
-			m_region.bottom, m_region.top,
-			m_pixels.data(), true);
-
-		// Refresh the render view.
-		MRenderView::refresh(
-			m_region.left, m_region.right,
-			m_region.bottom, m_region.top);*/
-
 		updateMayaRenderInfo();
 
 		if (rcWarningDialog.shown) {
@@ -615,7 +604,6 @@ void FireRenderIpr::readFrameBuffer()
 	params.aov = m_currentAOVToDisplay;
 	params.width = m_contextPtr->width();
 	params.height = m_contextPtr->height();
-	params.flip = true;
 	params.mergeOpacity = false;
 	params.mergeShadowCatcher = true;
 	params.shadowColor = m_contextPtr->m_shadowColor;
