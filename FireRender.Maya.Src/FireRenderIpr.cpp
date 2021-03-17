@@ -404,9 +404,6 @@ bool FireRenderIpr::RunOnViewportThread()
 
 					RV_PIXEL* data = (RV_PIXEL*)vecData.data();
 
-					// Need to flip by Y because Maya render view is mirrored by Y compared to frame buffer in RPR 
-					ImageMirrorByY(data, m_width, m_height);
-
 					// put denoised image to ipr buffer
 					memcpy(m_pixels.data(), data, sizeof(RV_PIXEL) * m_pixels.size());
 
