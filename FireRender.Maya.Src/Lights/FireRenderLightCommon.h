@@ -32,6 +32,7 @@ protected:
 	static void onNodeRemoved(MObject &node, void *clientData);
 	static void onAboutToDelete(MObject &node, MDGModifier& modifier, void* clientData);
 	static void OnModelEditorChanged(void* clientData);
+	static void OnSceneClose(void* clientData);
 
 	virtual const MString GetNodeTypeName(void) const = 0;
 
@@ -39,5 +40,8 @@ protected:
 	MCallbackId m_modelEditorChangedCallback;
 	MCallbackId m_aboutToDeleteCallback;
 	MCallbackId m_nodeRemovedCallback;
+	MCallbackId m_newFileCallback;
+	MCallbackId m_openFileCallback;
+
 	MObject m_transformObject;
 };

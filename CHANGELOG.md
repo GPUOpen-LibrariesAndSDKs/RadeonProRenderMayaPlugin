@@ -1,3 +1,46 @@
+# Version 3.0
+
+## New Features:
+-   The new plug-in version incorporates version 2.0 of our Radeon™ ProRender system and brings about significant changes and enhancements:
+    - Hardware-accelerated ray tracing on AMD Radeon™ RX 6000 series GPUs.
+    - Better scaling across multiple devices: the use of two or more GPUs gives a better performance improvement with Radeon ProRender 2.0 than with Radeon ProRender 1.0 in most cases.
+    - Less noise for a given number of render samples.  Using the same number of samples as with Radeon ProRender 1.0 may be slower in some scenes, but noise will be significantly lower.  
+    - RPR 2.0 is the default render mode called “Full”.  Users who wish to use RPR 1.0 can set the render quality mode to “Legacy”.
+    - A new setting for the texture cache has been added.  The specified folder will cache textures for rendering, and can be cleaned up by the user if it becomes too large.
+    - Support for disk and sphere light types in the Physical Light has been added.
+-   A script to convert V-Ray scenes to RPR has been added.
+-   A setting has been added to allow “Motion Blur only in the Velocity AOV” in the Motion Blur settings.  Enabling this setting means that all AOVs will not have motion blur, but the Velocity AOV will contain motion blur information to allow compositing of post-process motion blur.
+-   Support of OpenColorIO color space management via Maya’s preferences has been added.
+
+## Issues Fixed:
+-   Using the Uber shader with the Metalness reflection mode now matches the Disney shader PBR standard more closely.
+-   File paths for textures can now include environment variables.
+-   Changes in the Thumbnail iteration Count parameter did not cause any changes without a restart of Maya — fixed.
+-   The setting to “Save all AOVs” was not being saved with the scene — fixed.
+-   Any AOV can now be viewed in the IPR viewer.
+-   Errors of the type “Unable to create mesh” now contain more info.
+-   Some alembic shapes were receiving incorrect UV coordinates — fixed.
+-   A crash which could occur when the user edited a ramp node in the IPR mode has been fixed.
+-   Better logging during batch rendering has been enabled.
+-   nHair node attributes can now be used to render the hair color.
+-   The issues fixed relating to .rpr file export:
+    - The config.json file now has the same name as the exported .rpr file.
+    - Support of non-ASCII characters in the file path when exporting an .rpr file has been added.
+    - Export of .rpr config.json files now reflects the selected render quality mode.
+    - Animated .rpr files can now be exported.
+    - The same number of config.json files and .rpr files are now exported.
+-   Motion blur was previously scaled using “frames per second”.  Now it simply uses frame time.  That is, the camera “exposure” setting is specified in fractions of the length of a frame.  This corresponds to the camera’s shutter being open for some fraction of the frame time.  Motion Blur, particularly for rotation, is now more correct.
+-   Some fixes were done to the Arnold converter to support the aiFacingRatio and aiRange nodes, as well as fixes for SSS in aiStandardSurface conversion.
+
+## Known Issues:
+-   RPR 2.0 has some forthcoming features.  If these are needed, please use the “Legacy” render mode:
+    - Heterogenous volumes;
+    - Adaptive sampling;
+    - Adaptive subdivision.
+-   The first render on macOS® with RPR 2.0 can take a few minutes to start, while the kernels are being compiled.
+-   macOS® Mojave users should use Legacy mode if seeing crashes with Full mode.
+-   Pixelated textures or color artifacts in textures can sometimes happen in Full mode.  
+
 
 # Version 2.9.4
 

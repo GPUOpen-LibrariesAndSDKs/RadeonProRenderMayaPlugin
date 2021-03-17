@@ -212,7 +212,7 @@ void FireRenderViewport::removed(bool panelDestroyed)
 	removeMenu();
 }
 
-void FireRenderViewport::OnBufferAvailableCallback()
+void FireRenderViewport::OnBufferAvailableCallback(float progress)
 {
 	readFrameBuffer();
 
@@ -539,7 +539,7 @@ bool FireRenderViewport::initialize()
 
 			if (TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
 			{
-				m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderViewport::OnBufferAvailableCallback, this));
+				m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderViewport::OnBufferAvailableCallback, this, std::placeholders::_1));
 			}
 		}
 		catch (...)
@@ -663,7 +663,7 @@ void FireRenderViewport::resizeFrameBufferStandard(unsigned int width, unsigned 
 {
 	// Update the RPR context dimensions.
 	m_contextPtr->resize(width, height, false);
-	m_contextPtr->ConsiderSetupDenoiser();
+	m_contextPtr->TryCreateDenoiserImageFilters();
 
 	// Resize the pixel buffer that
 	// will receive frame buffer data.
@@ -690,7 +690,7 @@ void FireRenderViewport::resizeFrameBufferGLInterop(unsigned int width, unsigned
 	{
 		// Update the RPR context.
 		m_contextPtr->resize(width, height, false, GetGlTexture());
-		m_contextPtr->ConsiderSetupDenoiser();
+		m_contextPtr->TryCreateDenoiserImageFilters();
 	}
 }
 
@@ -993,7 +993,7 @@ def setFireViewportMode_ambientOcclusion(checked=True):
 def createAOVsMenu(frMenu):
 
 	# numbers in the following arrays are IDs of RPR AOVs that are declared in RadeonProRender.h
-	aov_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]
+	aov_ids = [0, 1, 2, 3, 4, 5, 6, 41, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]
 
 	def setFireViewportAOV(aov):
 		maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),viewportAOV=aov)
@@ -1007,7 +1007,7 @@ def createAOVsMenu(frMenu):
 
 	frSubMenu = frMenu.addMenu("AOV")
 
-	aovs = ["Color", "Opacity", "World Corrdinate", "UV", "Material Idx", "Geometric Normal", "Shading Normal", "Depth", "Object ID", "Object Group ID"]
+	aovs = ["Color", "Opacity", "World Corrdinate", "UV", "Material Idx", "Geometric Normal", "Shading Normal", "Camera Normal", "Depth", "Object ID", "Object Group ID"]
 	aovs.extend(["Shadow Catcher", "Background", "Emission", "Velocity", "Direct Illumination", "Indirect Illumination", "AO", "Direct Diffuse"])
 	aovs.extend(["Direct Reflect", "Indirect Diffuse", "Indirect Reflect", "Refract", "Subsurface / Volume"]) 
 	aovs.extend(["Light Group 0", "Light Group 1", "Light Group 2", "Light Group 3", "Albedo", "Variance"])

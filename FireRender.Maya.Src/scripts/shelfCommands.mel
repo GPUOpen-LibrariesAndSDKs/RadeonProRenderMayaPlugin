@@ -115,6 +115,8 @@ global proc onSqEx()
 	intSliderGrp -edit -enable true sliderLastFrameName;
 	optionMenu -edit -enable true frameExtentionOption;
 	attrControlGrp -edit -enable true extensionPaddingCtrlEx;
+
+	checkBox -edit -enable true singleAnimationFileCheckBx;
 }
 
 global proc offSqEx()
@@ -123,6 +125,8 @@ global proc offSqEx()
 	intSliderGrp -edit -enable false sliderLastFrameName;
 	optionMenu -edit -enable false frameExtentionOption;
 	attrControlGrp -edit -enable false extensionPaddingCtrlEx;
+
+	checkBox -edit -enable false singleAnimationFileCheckBx;
 }
 
 global proc launchSceneExport()
@@ -134,10 +138,19 @@ global proc launchSceneExport()
 
 	if ($countPaths > 0)
 	{
-		$isSqExEnabled = `checkBox  -query -value exportSqCheckBx`;
+		$isSqExEnabled = `checkBox -query -value exportSqCheckBx`;
+		if ($isSqExEnabled)
+		{
+			$isAnimSingleFileEnabled = `checkBox -query -value singleAnimationFileCheckBx`;
+			if ($isAnimSingleFileEnabled)
+			{
+				$isSqExEnabled = 0;
+			}
+		}
 		int $firstFrameIdx = `intSliderGrp -query -value sliderFirstFrameName`;
 		int $lastFrameIdx = `intSliderGrp -query -value sliderLastFrameName`;
 		$isSingleFileEnabled = `checkBox  -query -value singleFileCheckBx`;
+		$isIncludeTextureCacheEnabled = `checkBox  -query -value includeTextureCacheCheckBx`;
 		string $selectedOption = `optionMenu -query -value compressionOption`;
 		string $namePattern = `optionMenu -query -value frameExtentionOption`;
 		int $framePadding = `getAttr defaultRenderGlobals.extensionPadding`;
@@ -148,7 +161,7 @@ global proc launchSceneExport()
 		fireRenderExport 
 			-scene 
 			-file $result 
-			-frames $isSqExEnabled $firstFrameIdx $lastFrameIdx $isSingleFileEnabled 
+			-frames $isSqExEnabled $firstFrameIdx $lastFrameIdx $isSingleFileEnabled $isIncludeTextureCacheEnabled 
 			-compress $selectedOption
 			-padding $namePattern $framePadding
 			-camera $selectedCam;
@@ -267,14 +280,32 @@ global proc exportSceneRPR()
 				-onCommand "onSqEx" 
 				-offCommand "offSqEx" 
 				exportSqCheckBx;
+
+			columnLayout 
+				-rowSpacing 5 
+				-adjustableColumn true 
+				-columnOffset "left" 10;
+
+				checkBox
+					-label "Export animation as single file" 
+					-value true 
+					-enable false
+					singleAnimationFileCheckBx;
+
+			setParent ..;
 				
 			checkBox 
-				-label "Export As Single File" 
+				-label "Export Textures As Single File" 
 				-value false 
 				singleFileCheckBx;
 
+			checkBox
+				-label "Include texture cache" 
+				-value false 
+				includeTextureCacheCheckBx;
+
 			optionMenu 
-				-label "Compression" 
+				-label "Compression " 
 				compressionOption;
             menuItem 
 				-label "None";
@@ -293,23 +324,30 @@ global proc exportSceneRPR()
 				-label "Select Camera" 
 				selectedCamera;
 
-				$layers = `ls -type "renderLayer"`;
-				for( $layer in $layers )
+			$layers = `ls -type "renderLayer"`;
+
+			$currentLayer = `editRenderLayerGlobals -q -currentRenderLayer`;
+			for( $layer in $layers )
+			{
+				if (catch ( `editRenderLayerGlobals -currentRenderLayer $layer` ))
 				{
-					if (catch ( `editRenderLayerGlobals -currentRenderLayer $layer` ))
+					print("cant use layer ");
+					print($layer);
+				} 
+				else 
+				{
+					string $camerasShapes[] = `ls -type camera`;
+					string $cameras[] = `listRelatives -p $camerasShapes`;
+					for ($camera in $cameras)
 					{
-						print("cant use layer ");
-						print($layer);
-					} else {
-						string $camerasShapes[] = `ls -type camera`;
-						string $cameras[] = `listRelatives -p $camerasShapes`;
-						for ($camera in $cameras)
-						{
-							menuItem 
-								-label $camera;
-						}	
-					}
+						menuItem 
+							-label $camera;
+					}	
 				}
+			}
+
+			// restore back old layer
+			editRenderLayerGlobals -currentRenderLayer $currentLayer;
 
 			columnLayout -columnOffset "left" 120;
 				button -label "Launch Export" -command "launchSceneExport";

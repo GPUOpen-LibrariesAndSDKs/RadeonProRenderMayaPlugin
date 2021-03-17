@@ -28,6 +28,7 @@ limitations under the License.
 #include <maya/MFnSingleIndexedComponent.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MFileObject.h>
+#include <maya/MCommonSystemUtils.h>
 
 #include <cassert>
 #include <vector>
@@ -218,6 +219,10 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			renderMode = plug.asInt();
 
+		plug = frGlobalsNode.findPlug("textureCachePath");
+		if (!plug.isNull())
+			textureCachePath = plug.asString();
+
 		plug = frGlobalsNode.findPlug("giClampIrradiance");
 		if (!plug.isNull())
 			giClampIrradiance = plug.asBool();
@@ -392,6 +397,10 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("motionBlurViewport");
 		if (!plug.isNull())
 			viewportMotionBlur = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("velocityAOVMotionBlur");
+		if (!plug.isNull())
+			velocityAOVMotionBlur = plug.asBool();
 		
 		plug = frGlobalsNode.findPlug("motionBlurCameraExposure");
 		if (!plug.isNull())
@@ -409,7 +418,46 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("detailedLog");
 		if (!plug.isNull())
 			useDetailedContextWorkLog = plug.asBool();
-		
+
+		plug = frGlobalsNode.findPlug("contourIsEnabled");
+		if (!plug.isNull())
+			contourIsEnabled = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("contourUseObjectID");
+		if (!plug.isNull())
+			contourUseObjectID = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("contourUseMaterialID");
+		if (!plug.isNull())
+			contourUseMaterialID = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("contourUseShadingNormal");
+		if (!plug.isNull())
+			contourUseShadingNormal = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("contourLineWidthObjectID");
+		if (!plug.isNull())
+			contourLineWidthObjectID = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourLineWidthMaterialID");
+		if (!plug.isNull())
+			contourLineWidthMaterialID = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourLineWidthShadingNormal");
+		if (!plug.isNull())
+			contourLineWidthShadingNormal = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourNormalThreshold");
+		if (!plug.isNull())
+			contourNormalThreshold = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourAntialiasing");
+		if (!plug.isNull())
+			contourAntialiasing = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourIsDebugEnabled");
+		if (!plug.isNull())
+			contourIsDebugEnabled = plug.asBool();
 
 		aovs.readFromGlobals(frGlobalsNode);
 
@@ -505,6 +553,10 @@ void FireRenderGlobalsData::readDenoiserParameters(const MFnDependencyNode& frGl
 	plug = frGlobalsNode.findPlug("denoiserColorOnly");
 	if (!plug.isNull())
 		denoiserSettings.colorOnly = plug.asInt() == 0;
+
+	plug = frGlobalsNode.findPlug("enable16bitCompute");
+	if (!plug.isNull())
+		denoiserSettings.enable16bitCompute = plug.asInt() == 1;
 }
 
 bool FireRenderGlobalsData::isTonemapping(MString name)
@@ -567,7 +619,7 @@ bool FireRenderGlobalsData::IsMotionBlur(MString name)
 {
 	name = GetPropertyNameFromPlugName(name);
 
-	static const std::set<std::string> propNames { "motionBlur", "cameraMotionBlur", "motionBlurCameraExposure", "viewportMotionBlur"};
+	static const std::set<std::string> propNames { "motionBlur", "cameraMotionBlur", "motionBlurCameraExposure", "viewportMotionBlur", "velocityAOVMotionBlur"};
 
 	return propNames.find(name.asChar()) != propNames.end();
 }
@@ -712,7 +764,7 @@ bool isVisible(MFnDagNode & fnDag, MFn::Type type)
 	return true;
 }
 
-bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath)
+bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath, bool& isGPUCacheNode)
 {
 	MDagPathArray pathArrayToTransform;
 	{
@@ -735,6 +787,12 @@ bool isTransformWithInstancedShape(const MObject& node, MDagPath& nodeDagPath)
 
 	MFnDagNode shapeNode(pathArrayToTransform[0].node());
 	bool isInstanced = shapeNode.isInstanced();
+
+	MString typeName = shapeNode.typeName();
+	if (typeName == "gpuCache")
+	{
+		isGPUCacheNode = true;
+	}
 	
 	// more than one reference to shape exist => shape is instanced
 	if (isInstanced)
@@ -1104,35 +1162,40 @@ int areShadersCached()
 
 MString getLogFolder()
 {
-	auto path = MGlobal::executeCommandStringResult("getenv RPR_MAYA_TRACE_PATH");
-	if (path.length() == 0)
-	{
-#ifdef WIN32
-		PWSTR sz = nullptr;
-		if (S_OK == ::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &sz))
-		{
-			static wchar_t buff[256 + 1] = {};
-			if (!buff[0])
-			{
-				auto t = time(NULL);
-				auto tm = localtime(&t);
-				wsprintfW(buff, L"%02d.%02d.%02d-%02d.%02d", tm->tm_year - 100, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
-			}
+    MString path = MGlobal::executeCommandStringResult("getenv RPR_MAYA_TRACE_PATH");
+    if (path.length() == 0)
+    {
+        static char buff[256 + 1] = {};
+        if (!buff[0])
+        {
+            auto t = time(NULL);
+            auto tm = localtime(&t);
+            sprintf(buff, "%02d.%02d.%02d-%02d.%02d", tm->tm_year - 100, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
+        }
 
-			auto cacheFolder = std::wstring(sz) + L"\\RadeonProRender\\Maya\\Trace\\" + buff;
-			switch (SHCreateDirectoryExW(nullptr, cacheFolder.c_str(), nullptr))
-			{
-			case ERROR_SUCCESS:
-			case ERROR_FILE_EXISTS:
-			case ERROR_ALREADY_EXISTS:
-				path = cacheFolder.c_str();
-			}
-		}
+#ifdef WIN32
+        std::string folderPart(buff);
+
+        PWSTR sz = nullptr;
+        if (S_OK == ::SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, nullptr, &sz))
+        {
+            auto cacheFolder = std::wstring(sz) + L"\\RadeonProRender\\Maya\\Trace\\" + std::wstring(folderPart.begin(), folderPart.end());
+            switch (SHCreateDirectoryExW(nullptr, cacheFolder.c_str(), nullptr))
+            {
+            case ERROR_SUCCESS:
+            case ERROR_FILE_EXISTS:
+            case ERROR_ALREADY_EXISTS:
+                path = cacheFolder.c_str();
+            }
+        }
+        
 #elif defined(OSMac_)
-		path = "/Users/Shared/RadeonProRender/trace";
+        path = "/Users/Shared/RadeonProRender/trace/" + MString(buff);
+        MCommonSystemUtils::makeDirectory(path);
 #endif
-	}
-	return path;
+        
+    }
+    return path;
 }
 
 MString getSourceImagesPath()
@@ -2268,3 +2331,21 @@ TimePoint GetCurrentChronoTime()
 {
 	return std::chrono::high_resolution_clock::now();
 }
+
+void ImageMirrorByY(RV_PIXEL* imageData, unsigned int width, unsigned int height)
+{
+	assert(imageData);
+
+	RV_PIXEL tmpPixel;
+
+	for (unsigned int y = 0; y < height / 2; ++y)
+	{
+		for (unsigned int x = 0; x < width; ++x)
+		{
+			tmpPixel = imageData[y * width + x];
+			imageData[y * width + x] = imageData[(height - y - 1) * width + x];
+			imageData[(height - y - 1) * width + x] = tmpPixel;
+		}
+	}
+}
+

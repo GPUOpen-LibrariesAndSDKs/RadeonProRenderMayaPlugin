@@ -95,7 +95,7 @@ def openAbout(data):
     mel.eval('source shelfCommands.mel; openPluginInfoRPR();')
 
 def openDocumentation(data):
-    mel.eval('launch -web \"https://radeon-prorender.github.io/maya/\";')
+    mel.eval('launch -web \"https://radeon-pro.github.io/RadeonProRenderDocs/en/index.html\";')
 
 def createFireRenderMenu():
     gMainWindow = "MayaWindow";

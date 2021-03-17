@@ -11,7 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ********************************************************************/
 #include "FireRenderObjects.h"
-#include "Context/FireRenderContext.h"
+#include "Context/TahoeContext.h"
 #include "FireRenderUtils.h"
 #include "base_mesh.h"
 #include "FireRenderDisplacement.h"
@@ -140,20 +140,6 @@ HashValue FireRenderObject::GetHash(const MObject& ob)
 {
 	HashValue hash;
 	hash << ob;
-	if (!ob.isNull() && ob.hasFn(MFn::kDependencyNode))
-	{
-		MFnDependencyNode depNode(ob);
-		for (unsigned int i = 0; i < depNode.attributeCount(); i++)
-		{
-			auto oAttr = depNode.attribute(i);
-			MFnAttribute attr(oAttr);
-			auto plug = depNode.findPlug(attr.object());
-			if (!plug.isNull())
-			{
-				hash << plug.node();
-			}
-		}
-	}
 	return hash;
 }
 
@@ -164,7 +150,7 @@ HashValue FireRenderObject::CalculateHash()
 
 HashValue FireRenderNode::CalculateHash()
 {
-	auto hash = FireRenderObject::CalculateHash();
+	HashValue hash = FireRenderObject::CalculateHash();
 	auto dagPath = DagPath();
 	if (dagPath.isValid())
 	{
@@ -809,11 +795,23 @@ void FireRenderMeshCommon::setRenderStats(MDagPath dagPath)
 	bool isVisisble = IsMeshVisible(dagPath, context());
 	setVisibility(isVisisble);
 
+	MFnDagNode mdag(dagPath.node());
+	MFnDependencyNode parentTransform(mdag.parent(0));
+	MPlug contourVisibilityPlug = parentTransform.findPlug("RPRContourVisibility");
+	bool isVisibleInContour = false;
+	if (!contourVisibilityPlug.isNull())
+	{
+		MStatus res = contourVisibilityPlug.getValue(isVisibleInContour);
+		CHECK_MSTATUS(res);
+	}
+
 	setPrimaryVisibility(primaryVisibility);
 
 	setReflectionVisibility(visibleInReflections);
 
 	setRefractionVisibility(visibleInRefractions);
+
+	setContourVisibility(isVisibleInContour);
 
 	setCastShadows(castsShadows);
 }
@@ -900,6 +898,15 @@ void FireRenderMeshCommon::setPrimaryVisibility(bool primaryVisibility)
 	{
 		if (auto shape = element.shape)
 			shape.SetPrimaryVisibility(primaryVisibility);
+	}
+}
+
+void FireRenderMeshCommon::setContourVisibility(bool contourVisibility)
+{
+	for (auto element : m.elements)
+	{
+		if (auto shape = element.shape)
+			shape.SetContourVisibilityFlag(contourVisibility);
 	}
 }
 
@@ -1038,11 +1045,16 @@ void FireRenderMesh::setupDisplacement(MObject shadingEngine, frw::Shape shape)
 						else
 						{
 							FireRenderContext *ctx = this->context();
+
+							TahoePluginVersion version = GetTahoeVersionToUse();
+							bool isRPR20 = version == TahoePluginVersion::RPR2;
+
 							frw::Scene scn = ctx->GetScene();
 							frw::Camera cam = scn.GetCamera();
 							frw::Context ctx2 = scn.GetContext();
 							rpr_framebuffer fb = ctx->frameBufferAOV(RPR_AOV_COLOR);
-							shape.SetAdaptiveSubdivisionFactor(adaptiveFactor, cam.Handle(), fb);
+
+							shape.SetAdaptiveSubdivisionFactor(adaptiveFactor, ctx->height(), cam.Handle(), fb, isRPR20);
 						}
 						shape.SetSubdivisionCreaseWeight(creaseWeight);
 						shape.SetSubdivisionBoundaryInterop(boundary);
@@ -1253,7 +1265,7 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 	for (int i = 0; i < m.elements.size(); i++)
 	{
 		auto& element = m.elements[i];
-		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this);
+		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), element.shadingEngine, this);
 		element.volumeShader = context->GetVolumeShader(getVolumeShader(element.shadingEngine));
 
 		if (context->IsDisplacementSupported())
@@ -1416,7 +1428,7 @@ void FireRenderMesh::SetupObjectId(MObject parentTransformObject)
 
 	MPlug plug = parentTransform.findPlug("RPRObjectId");
 
-	rpr_uint objectId;
+	rpr_uint objectId = 0;
 	if (!plug.isNull())
 	{
 		objectId = plug.asInt();
@@ -1475,7 +1487,7 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 {
 	FireRenderContext* context = this->context();
 
-	const FireRenderMesh* mainMesh = context->GetMainMesh(uuid());
+	const FireRenderMeshCommon* mainMesh = context->GetMainMesh(uuid());
 
 	if (mainMesh != nullptr)
 	{
@@ -1496,6 +1508,14 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 		outShapes = FireMaya::MeshTranslator::TranslateMesh(context->GetContext(), Object());
 		m.isMainInstance = true;
 		context->AddMainMesh(this);
+	}
+
+	MDagPath dagPath = DagPath();
+	for (int i = 0; i < outShapes.size(); i++)
+	{
+		MString fullPathName = dagPath.fullPathName();
+		std::string shapeName = std::string(fullPathName.asChar()) + "_" + std::to_string(i);
+		outShapes[i].SetName(shapeName.c_str());
 	}
 
 	SaveUsedUV(Object());
@@ -1549,24 +1569,38 @@ void FireRenderMesh::SaveUsedUV(const MObject& meshNode)
 
 void FireRenderMesh::RebuildTransforms()
 {
-	auto node = Object();
+	MObject node = Object();
 	MFnDagNode meshFn(node);
-	auto meshPath = DagPath();
+	MDagPath meshPath = DagPath();
 
 	MMatrix matrix = GetSelfTransform();
 	
 	// convert Maya mesh in cm to m
-	MMatrix scaleM;
-	scaleM.setToIdentity();
-	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
-	matrix *= scaleM;
 	float mfloats[4][4];
-	matrix.get(mfloats);
+	FireMaya::ScaleMatrixFromCmToMFloats(matrix, mfloats);	
 
-	MVector linearMotion(0, 0, 0);
-	MVector rotationAxis(1, 0, 0);
-	double rotationAngle = 0.0;
+	for (auto& element : m.elements)
+	{
+		if (element.shape)
+		{
+			element.shape.SetTransform(&mfloats[0][0]);
+		}
+	}
 
+	// motion blur
+	ProcessMotionBlur(meshFn);
+}
+
+void FireRenderMeshCommon::AssignShadingEngines(const MObjectArray& shadingEngines)
+{
+	for (unsigned int i = 0; i < m.elements.size(); i++)
+	{
+		m.elements[i].shadingEngine = shadingEngines[i < shadingEngines.length() ? i : 0];
+	}
+}
+
+void FireRenderMeshCommon::ProcessMotionBlur(MFnDagNode& meshFn)
+{
 	// Checking of MotionBlur parameter in RenderStats group of mesh
 	bool objectMotionBlur = true;
 	MPlug objectMBPlug = meshFn.findPlug("motionBlur");
@@ -1576,27 +1610,39 @@ void FireRenderMesh::RebuildTransforms()
 		objectMotionBlur = objectMBPlug.asBool();
 	}
 
-	if (context()->motionBlur() && objectMotionBlur)
-	{
-		FireMaya::CalculateMotionBlurParams(meshFn, GetSelfTransform(), linearMotion, rotationAxis, rotationAngle);
-	}
+	if (!context()->motionBlur() || !objectMotionBlur)
+		return;
 
-	for (auto& element : m.elements)
+	// We use different schemes for MotionBlur for Tahoe and NorthStar
+	if (TahoeContext::IsGivenContextRPR2(context()))
 	{
-		if (element.shape)
+		float nextFrameFloats[4][4];
+		FireMaya::GetMatrixForTheNextFrame(meshFn, nextFrameFloats, Instance());
+
+		for (auto& element : m.elements)
 		{
-			element.shape.SetTransform(&mfloats[0][0]);
-			element.shape.SetLinearMotion(float(linearMotion.x), float(linearMotion.y), float(linearMotion.z));
-			element.shape.SetAngularMotion(float(rotationAxis.x), float(rotationAxis.y), float(rotationAxis.z), float(rotationAngle));
+			if (element.shape)
+			{
+				element.shape.SetMotionTransform(&nextFrameFloats[0][0], false);
+			}
 		}
 	}
-}
-
-void FireRenderMeshCommon::AssignShadingEngines(const MObjectArray& shadingEngines)
-{
-	for (unsigned int i = 0; i < m.elements.size(); i++)
+	else
 	{
-		m.elements[i].shadingEngine = shadingEngines[i < shadingEngines.length() ? i : 0];
+		MVector linearMotion(0, 0, 0);
+		MVector rotationAxis(1, 0, 0);
+		double rotationAngle = 0.0;
+
+		FireMaya::CalculateMotionBlurParams(meshFn, GetSelfTransform(), linearMotion, rotationAxis, rotationAngle, Instance());
+
+		for (auto& element : m.elements)
+		{
+			if (element.shape)
+			{
+				element.shape.SetLinearMotion(float(linearMotion.x), float(linearMotion.y), float(linearMotion.z));
+				element.shape.SetAngularMotion(float(rotationAxis.x), float(rotationAxis.y), float(rotationAxis.z), float(rotationAngle));
+			}
+		}
 	}
 }
 
@@ -2593,6 +2639,9 @@ void FireRenderCustomEmitter::Freshen()
 	{
 		m_light.light = Context().CreateSpotLight();
 		Scene().Attach(m_light.light);
+
+		const char* lightName = MFnDependencyNode(DagPath().transform()).name().asChar();
+		m_light.light.SetName(lightName);
 		
 		m_light.light.AddGLTFExtraIntAttribute("isEmitter", 1);
 	}

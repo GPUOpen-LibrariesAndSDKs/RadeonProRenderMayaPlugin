@@ -2,6 +2,7 @@
 #include "FireRenderGPUCache.h"
 #include "Context/FireRenderContext.h"
 #include "FireRenderUtils.h"
+#include "Context/TahoeContext.h"
 
 #include <array>
 #include <algorithm>
@@ -87,7 +88,7 @@ void FireRenderGPUCache::Freshen()
 void FireRenderGPUCache::ReadAlembicFile()
 {
 	MStatus res;
-
+	
 	// get name of alembic file from Maya node
 	const MObject& node = Object();
 	MFnDependencyNode nodeFn(node);
@@ -102,10 +103,20 @@ void FireRenderGPUCache::ReadAlembicFile()
 	if (!abcFile.good())
 		return;
 
+	m_file = abcCache.find(cacheFilePath);
+	if (m_file != abcCache.end())
+	{
+		return;
+	}
+	
 	// proceed reading file
+	abcCache[cacheFilePath] = RPRAlembicWrapperCacheEntry();
+	m_file = abcCache.find(cacheFilePath);
+	assert(m_file != abcCache.end());
+	
 	try
 	{
-		m_archive = IArchive(Alembic::AbcCoreOgawa::ReadArchive(), cacheFilePath);
+		m_file->second.m_archive = IArchive(Alembic::AbcCoreOgawa::ReadArchive(), cacheFilePath);
 	}
 	catch (std::exception &e)
 	{
@@ -114,14 +125,14 @@ void FireRenderGPUCache::ReadAlembicFile()
 		MGlobal::displayError(error);
 		return;
 	}
-
-	if (!m_archive.valid())
+	
+	if (!m_file->second.m_archive.valid())
 		return;
 
-	uint32_t getNumTimeSamplings = m_archive.getNumTimeSamplings();
+	uint32_t getNumTimeSamplings = m_file->second.m_archive.getNumTimeSamplings();
 
 	std::string errorMessage;
-	if (m_storage.open(cacheFilePath, errorMessage) == false)
+	if (m_file->second.m_storage.open(cacheFilePath, errorMessage) == false)
 	{
 		errorMessage = "AlembicStorage::open error: " + errorMessage;
 		MGlobal::displayError(errorMessage.c_str());
@@ -129,8 +140,8 @@ void FireRenderGPUCache::ReadAlembicFile()
 	}
 
 	static int sampleIdx = 0;
-	m_scene = m_storage.read(sampleIdx, errorMessage);
-	if (!m_scene)
+	m_file->second.m_scene = m_file->second.m_storage.read(sampleIdx, errorMessage);
+	if (!m_file->second.m_scene)
 	{
 		errorMessage = "sample error: " + errorMessage;
 		MGlobal::displayError(errorMessage.c_str());
@@ -157,7 +168,8 @@ frw::Shader FireRenderGPUCache::GetAlembicShadingEngines(MObject gpucacheNode)
 void FireRenderGPUCache::RebuildTransforms()
 {
 	MObject node = Object();
-	MMatrix matrix = GetSelfTransform();
+	MMatrix matrix = GetSelfTransform(); 
+	MFnDagNode meshFn(node);
 
 	MMatrix scaleM;
 	scaleM.setToIdentity();
@@ -166,22 +178,27 @@ void FireRenderGPUCache::RebuildTransforms()
 
 	for (auto& element : m.elements)
 	{
-		if (element.shape)
-		{
-			float(*f)[4][4] = reinterpret_cast<float(*)[4][4]>(element.TM.data());
-			MMatrix elementTransform(*f);
+		if (!element.shape)
+			continue;
+		
+		// transform
+		float(*f)[4][4] = reinterpret_cast<float(*)[4][4]>(element.TM.data());
+		MMatrix elementTransform(*f);
 
-			MMatrix mayaObjMatr = GetSelfTransform();
+		MMatrix mayaObjMatr = GetSelfTransform();
 
-			elementTransform *= mayaObjMatr;
-			elementTransform *= scaleM;
+		elementTransform *= mayaObjMatr;
+		elementTransform *= scaleM;
 
-			float mfloats[4][4];
-			elementTransform.get(mfloats);
+		float mfloats[4][4];
+		elementTransform.get(mfloats);
 
-			element.shape.SetTransform(&mfloats[0][0]);
-		}
+		element.shape.SetTransform(&mfloats[0][0]);
+
 	}
+
+	// motion blur
+	ProcessMotionBlur(meshFn);
 }
 
 void FireRenderGPUCache::ProcessShaders()
@@ -191,7 +208,7 @@ void FireRenderGPUCache::ProcessShaders()
 	for (int i = 0; i < m.elements.size(); i++)
 	{
 		auto& element = m.elements[i];
-		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), this);
+		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), element.shadingEngine, this);
 
 		if (element.shape)
 		{
@@ -431,28 +448,61 @@ frw::Shape TranslateAlembicMesh(const RPRAlembicWrapper::PolygonMeshObject* mesh
 
 void FireRenderGPUCache::GetShapes(std::vector<frw::Shape>& outShapes, std::vector<std::array<float, 16>>& tmMatrs)
 {
+	assert(m_file != abcCache.end());
+
 	outShapes.clear();
 	frw::Context ctx = context()->GetContext();
 	assert(ctx.IsValid());
 
-	// ensure correct input
-	if (!m_scene)
-		return;
+	const FireRenderMeshCommon* mainMesh = this->context()->GetMainMesh(uuid());
 
-	// translate alembic data into RPR shapes (to be decomposed...)
-	for (auto alembicObj : m_scene->objects)
+	if (mainMesh != nullptr)
 	{
-		if (alembicObj->visible == false) 
-			continue;
+		const std::vector<FrElement>& elements = mainMesh->Elements();
 
-		if (RPRAlembicWrapper::PolygonMeshObject* mesh = alembicObj.as_polygonMesh())
+		outShapes.reserve(elements.size());
+
+		for (const FrElement& element : elements)
 		{
-			outShapes.emplace_back();
-			outShapes.back() = TranslateAlembicMesh(mesh, ctx);
-
-			// - transformation matrix
-			tmMatrs.emplace_back(mesh->combinedXforms.m_value);
+			outShapes.push_back(element.shape.CreateInstance(Context()));
+			tmMatrs.push_back(element.TM);
 		}
+
+		m.isMainInstance = false;
+	}
+
+	if (mainMesh == nullptr)
+	{
+		// ensure correct input
+		if (!m_file->second.m_scene)
+			return;
+
+		// translate alembic data into RPR shapes (to be decomposed...)
+		for (auto alembicObj : m_file->second.m_scene->objects)
+		{
+			if (alembicObj->visible == false)
+				continue;
+
+			if (RPRAlembicWrapper::PolygonMeshObject* mesh = alembicObj.as_polygonMesh())
+			{
+				outShapes.emplace_back();
+				outShapes.back() = TranslateAlembicMesh(mesh, ctx);
+
+				// - transformation matrix
+				tmMatrs.emplace_back(mesh->combinedXforms.m_value);
+			}
+		}
+
+		m.isMainInstance = true;
+		context()->AddMainMesh(this);
+	}
+
+	MDagPath dagPath = DagPath();
+	for (int i = 0; i < outShapes.size(); i++)
+	{
+		MString fullPathName = dagPath.fullPathName();
+		std::string shapeName = std::string(fullPathName.asChar()) + "_" + std::to_string(i);
+		outShapes[i].SetName(shapeName.c_str());
 	}
 }
 

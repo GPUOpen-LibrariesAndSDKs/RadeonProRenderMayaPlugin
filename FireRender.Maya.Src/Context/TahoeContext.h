@@ -22,9 +22,10 @@ public:
 	TahoeContext();
 
 	static rpr_int GetPluginID(TahoePluginVersion version);
-	static bool IsGivenContextRPR2(FireRenderContext* pContext);
+	static bool IsGivenContextRPR2(const FireRenderContext* pContext);
 
-	void setupContext(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) override;
+	void setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance) override;
+	void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) override;
 
 	bool IsRenderQualitySupported(RenderQuality quality) const override;
 
@@ -34,6 +35,9 @@ public:
 	virtual bool IsDisplacementSupported() const override;
 	virtual bool IsHairSupported() const override;
 	virtual bool IsVolumeSupported() const override;
+	virtual bool ShouldForceRAMDenoiser() const override;
+
+	virtual bool IsAOVSupported(int aov) const;
 
 	virtual bool IsAOVSupported(int aov) const;
 
@@ -44,6 +48,8 @@ public:
 	virtual void SetRenderUpdateCallback(RenderUpdateCallback callback, void* data) override;
 	virtual void AbortRender() override;
 
+	virtual void SetupPreviewMode() override;
+
 protected:
 	rpr_int CreateContextInternal(rpr_creation_flags createFlags, rpr_context* pContext) override;
 
@@ -53,11 +59,17 @@ protected:
 
 	bool IsGLInteropEnabled() const;
 
+	virtual void OnPreRender() override;
+
+	virtual int GetAOVMaxValue() override;
+
 private:
 	TahoePluginVersion m_PluginVersion;
 
 	typedef std::map< TahoePluginVersion, rpr_int> LoadedPluginMap;
 	static LoadedPluginMap m_gLoadedPluginsIDsMap;
+
+	bool m_PreviewMode;
 };
 
 typedef std::shared_ptr<TahoeContext> TahoeContextPtr;

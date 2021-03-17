@@ -350,7 +350,7 @@ void RprExportsGLTF(bool enable)
 		if (enable)
 		{
 			CHECK_MSTATUS(plugin.registerFileTranslator(translatorTitle,
-				nullptr, FireMaya::GLTFTranslator::creator));
+				nullptr, FireMaya::GLTFTranslator::creator, "rprGltfExport"));
 		}
 		else
 		{
@@ -459,13 +459,21 @@ void SetVersionsForMel()
 
 }
 
-void AddExtensionAttributes()
+void AddExtensionAttributesCommon()
 {
 	// Add RPR UI to Maya native nodes
 	MFnNumericAttribute nAttr;
-	MObject hairMaterialAttr = nAttr.createColor("rprHairMaterial", "rhm");
+	MStatus status;
+
+	// nhair
 	MNodeClass hairSystemClass("hairSystem");
-	hairSystemClass.addExtensionAttribute(hairMaterialAttr);
+
+	MObject hairMaterialAttr = nAttr.createColor("rprHairMaterial", "rhm");
+	status = hairSystemClass.addExtensionAttribute(hairMaterialAttr);
+
+	MObject hairCastShadows = nAttr.create("castsShadows", "csss", MFnNumericData::kBoolean, true, &status);
+	nAttr.setNiceNameOverride("Hair Casts Shadows");
+	status = hairSystemClass.addExtensionAttribute(hairCastShadows);
 
 	// Adding RPRObjectId to all transforms
 	MObject objectIdAttr = nAttr.create("RPRObjectId", "roi", MFnNumericData::kLong, 0);
@@ -474,6 +482,13 @@ void AddExtensionAttributes()
 	nAttr.setMin(0);
 	MNodeClass transformNodeClass("transform");
 	transformNodeClass.addExtensionAttribute(objectIdAttr);
+
+	// Material Idx
+
+	// Adding visibility in contour render mode
+	MObject contourVisibilityAttr = nAttr.create("RPRContourVisibility", "covs", MFnNumericData::kBoolean, true, &status);
+	nAttr.setNiceNameOverride("RPR Visible in Contour mode");
+	transformNodeClass.addExtensionAttribute(contourVisibilityAttr);
 
 	////// light group attributes for Light Group AOVs
 
@@ -498,6 +513,21 @@ void AddExtensionAttributes()
 	MObject emitterAttr = nAttr.create("RPRIsEmitter", "iem", MFnNumericData::kBoolean, false);
 	nAttr.setNiceNameOverride("RPR Is Emitter");
 	locatorClass.addExtensionAttribute(emitterAttr);
+}
+
+void AddExtensionAttributesForMaterials()
+{
+	MFnNumericAttribute nAttr;
+
+	MNodeClass materialClass("shadingEngine");
+
+	MObject materialIdAttribute = nAttr.create("RPRMaterialId", "rmi", MFnNumericData::kLong, 0);
+
+	nAttr.setNiceNameOverride("RPR Material Id");
+	nAttr.setMin(0);
+
+	MStatus status = materialClass.addExtensionAttribute(materialIdAttribute);
+	assert(status == MStatus::kSuccess);
 }
 
 
@@ -722,7 +752,7 @@ MStatus initializePlugin(MObject obj)
 
 	MGlobal::executeCommand("setupFireRenderNodeClassification()");
 
-	AddExtensionAttributes();
+	AddExtensionAttributesCommon();
 	MGlobal::executeCommand("setupFireRenderExtraUI()");
 
 	// GLTF
@@ -919,6 +949,8 @@ MStatus initializePlugin(MObject obj)
 	}
 #endif
 
+	AddExtensionAttributesForMaterials();
+
 	return status;
 }
 
@@ -995,9 +1027,7 @@ MStatus uninitializePlugin(MObject obj)
 	if (MGlobal::mayaState() != MGlobal::kBatch)
 	{
 		CHECK_MSTATUS(MSwatchRenderRegister::unregisterSwatchRender("swatchFireRenderMaterial"));
-#ifndef MAYA2015
 		CHECK_MSTATUS(plugin.deregisterRenderer(FIRE_RENDER_NAME));
-#endif
 	}
 
 	MMessage::removeCallback(newSceneCallback);

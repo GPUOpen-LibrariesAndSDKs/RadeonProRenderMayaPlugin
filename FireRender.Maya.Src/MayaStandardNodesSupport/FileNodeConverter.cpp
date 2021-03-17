@@ -12,6 +12,7 @@ limitations under the License.
 ********************************************************************/
 #include "FileNodeConverter.h"
 #include "FireMaya.h"
+#include "../Context/TahoeContext.h"
 
 #include <sstream>
 
@@ -27,7 +28,13 @@ void GetResolvedPatternStringArray(const MString& nodeName, MStringArray& resolv
 	MStatus status = MGlobal::executeCommand(ostream.str().c_str(), resolvedNames);
 }
 
-void LoadAndAssignUdimImages(const MString& nodeName,  frw::Context context, frw::Image masterImage, const MString& udimPathPattern)
+void LoadAndAssignUdimImages(
+	const MString& nodeName,  
+	frw::Context context, 
+	frw::Image masterImage, 
+	const MString& udimPathPattern, 
+	const MString& colorspace, 
+	const FireMaya::Scope& scope)
 {
 	size_t index = std::string(udimPathPattern.asChar()).find("<UDIM>");
 	const size_t tagLength = std::string("UDIM").length();
@@ -46,9 +53,19 @@ void LoadAndAssignUdimImages(const MString& nodeName,  frw::Context context, frw
 		std::string fileName = fileNames[(unsigned int) i].asChar();
 
 		rpr_uint tileIndex = std::stoi(fileName.substr(index, tagLength));
+
+		frw::Image image = scope.GetImage(MString(fileName.c_str()), colorspace, MString());
 		
-		frw::Image tile(context, fileName.c_str());
-		masterImage.SetUDIM(tileIndex, tile);
+		if (!image.IsValid())
+		{
+			frw::Image tile(context, fileName.c_str());
+			tile.SetName(fileName.c_str());
+			masterImage.SetUDIM(tileIndex, tile);
+
+			continue;
+		}
+
+		masterImage.SetUDIM(tileIndex, image);
 	}
 }
 
@@ -67,6 +84,12 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 	frw::Image image;
 	MString colorSpace;
 
+	MPlug colorSpacePlug = m_params.shaderNode.findPlug("colorSpace");
+	if (!colorSpacePlug.isNull())
+	{
+		colorSpace = colorSpacePlug.asString();
+	}
+
 	if (fileNodeUdimMode != uvMode)
 	{	
 		bool useFrameExt = m_params.shaderNode.findPlug("useFrameExtension").asBool();
@@ -80,13 +103,7 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 			{
 				texturePath = fileNames[0];
 			}
-		}		
-
-		MPlug colorSpacePlug = m_params.shaderNode.findPlug("colorSpace");
-		if (!colorSpacePlug.isNull())
-		{
-			colorSpace = colorSpacePlug.asString();
-		}
+		}	
 
 		image = m_params.scope.GetImage(texturePath, colorSpace, m_params.shaderNode.name());
 		if (!image.IsValid())
@@ -101,11 +118,13 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 		rpr_image_format imageFormat = { 0, RPR_COMPONENT_TYPE_UINT8 };
 		image = frw::Image(context, imageFormat);
 
-		LoadAndAssignUdimImages(m_params.shaderNode.name(), context, image, texturePath);
+		LoadAndAssignUdimImages(m_params.shaderNode.name(), context, image, texturePath, colorSpace, m_params.scope);
 	}
 
 	frw::ImageNode imageNode(m_params.scope.MaterialSystem());
+
 	image.SetGamma(ColorSpace2Gamma(colorSpace));
+	image.SetColorSpace(colorSpace.asChar()); // if RPR_CONTEXT_OCIO_CONFIG_PATH is invalid, this colorspace is automatically ignored and the gamma will be used.
 	imageNode.SetMap(image);
 
 	frw::Value uvVal = m_params.scope.GetConnectedValue(m_params.shaderNode.findPlug("uvCoord"));
@@ -126,7 +145,24 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 			MPlug alphaIsLuminancePlug = m_params.shaderNode.findPlug("alphaIsLuminance");
 			bool alphaIsLuminance = alphaIsLuminancePlug.asBool();
 
-			bool shouldUseAlphaIsLuminance = alphaIsLuminance || !image.HasAlphaChannel();
+			bool imageHasAlpha = false;
+			
+			if (TahoeContext::IsGivenContextRPR2(dynamic_cast<const FireRenderContext*>(m_params.scope.GetIContextInfo())))
+			{
+				MPlug fileHasAlphaPlug = m_params.shaderNode.findPlug("fileHasAlpha");
+
+				if (!fileHasAlphaPlug.isNull())
+				{
+					imageHasAlpha = fileHasAlphaPlug.asBool();
+				}
+			}
+			else
+			{
+				// RPR1 case
+				imageHasAlpha = image.HasAlphaChannel();
+			}
+
+			bool shouldUseAlphaIsLuminance = alphaIsLuminance || !imageHasAlpha;
 			if (shouldUseAlphaIsLuminance)
 			{
 				// Calculate alpha is luminance value

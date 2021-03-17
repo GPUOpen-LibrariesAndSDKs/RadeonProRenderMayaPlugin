@@ -94,6 +94,8 @@ namespace FireMaya
 
 		static MObject GetTesselatedObjectIfNecessary(const MObject& originalObject, MStatus& mstatus);
 
+		static MObject GetSmoothedObjectIfNecessary(const MObject& originalObject, MStatus& mstatus);
+
 		static void GetUVCoords(
 			const MFnMesh& fnMesh,
 			MStringArray& uvSetNames,
@@ -105,6 +107,7 @@ namespace FireMaya
 		static MObject Smoothed2ndUV(const MObject& object, MStatus& status);
 
 		static void RemoveTesselatedTemporaryMesh(const MFnDagNode& node, MObject tessellated);
+		static void RemoveSmoothedTemporaryMesh(const MFnDagNode& node, MObject smoothed);
 
 	};
 }

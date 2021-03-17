@@ -20,6 +20,8 @@ limitations under the License.
 #include <maya/MViewport2Renderer.h>
 #include <maya/MGlobal.h>
 
+#include <ostream>
+
 
 void PixelBuffer::resize(size_t newCount)
 {
@@ -83,10 +85,9 @@ void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, u
 void generateBitmapImage(unsigned char *image, int height, int width, int pitch, const char* imageFileName);
 #endif
 
-void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, std::string& fbName)
+void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, const std::string& fbName, const std::string& pathToFile)
 {
 #ifdef _DEBUG
-#ifdef DUMP_PIXELS_PIXELBUFF
 	assert(sizeof(RV_PIXEL) * totalHeight * totalWidth == m_size);
 
 	std::vector<RV_PIXEL> sourcePixels;
@@ -121,10 +122,9 @@ void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, s
 	}
 
 	static int debugDumpIdx = 0;
-	std::string dumpAddr = "C:\\temp\\dbg\\" + fbName +std::to_string(debugDumpIdx++) + ".bmp";
+	std::string dumpAddr = pathToFile + fbName +std::to_string(debugDumpIdx++) + ".bmp";
 	unsigned char* dst2 = buffer2.data();
 	generateBitmapImage(dst2, totalHeight, totalWidth, totalWidth * 4, dumpAddr.c_str());
-#endif
 #endif
 }
 
@@ -285,6 +285,19 @@ void FireRenderAOV::setRenderStamp(const MString& inRenderStamp)
 }
 
 // -----------------------------------------------------------------------------
+bool FireRenderAOV::IsCryptomateiralAOV(void) const
+{
+	if		(id == RPR_AOV_CRYPTOMATTE_MAT0)		{ return true; } 
+	else if (id == RPR_AOV_CRYPTOMATTE_MAT1)		{ return true; }
+	else if	(id == RPR_AOV_CRYPTOMATTE_MAT2)		{ return true; }
+	else if (id == RPR_AOV_CRYPTOMATTE_OBJ0)		{ return true; }
+	else if (id == RPR_AOV_CRYPTOMATTE_OBJ1)		{ return true; }
+	else if (id == RPR_AOV_CRYPTOMATTE_OBJ2)		{ return true; }
+
+	return false;
+}
+
+// -----------------------------------------------------------------------------
 bool FireRenderAOV::writeToFile(const MString& filePath, bool colorOnly, unsigned int imageFormat, FileWrittenCallback fileWrittenCallback) const
 {
 	// Check that the AOV is active and in a valid state.
@@ -354,6 +367,7 @@ const std::string& FireRenderAOV::GetAOVName(int aov_id)
 		,{RPR_AOV_VARIANCE, "RPR_AOV_VARIANCE" }
 		,{RPR_AOV_VIEW_SHADING_NORMAL, "RPR_AOV_VIEW_SHADING_NORMAL" }
 		,{RPR_AOV_REFLECTION_CATCHER, "RPR_AOV_REFLECTION_CATCHER" }
+		,{RPR_AOV_CAMERA_NORMAL, "RPR_AOV_CAMERA_NORMAL"}
 	};
 
 	auto it = id2name.find(aov_id);
