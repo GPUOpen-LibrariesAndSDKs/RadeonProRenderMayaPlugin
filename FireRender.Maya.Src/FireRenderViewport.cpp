@@ -789,7 +789,6 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 	params.aov = m_currentAOV;
 	params.width = m_contextPtr->width();
 	params.height = m_contextPtr->height();
-	params.flip = false;
 	params.mergeOpacity = false;
 	params.shadowColor = m_contextPtr->m_shadowColor;
 	params.shadowTransp = m_contextPtr->m_shadowTransparency;

@@ -361,10 +361,10 @@ void FireRenderAOVs::setRenderStamp(const MString& renderStamp)
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderAOVs::readFrameBuffers(FireRenderContext& context, bool flip)
+void FireRenderAOVs::readFrameBuffers(FireRenderContext& context)
 {
 	for (auto& aov : m_aovs)
-		aov.second->readFrameBuffer(context, flip);
+		aov.second->readFrameBuffer(context);
 }
 
 // -----------------------------------------------------------------------------
