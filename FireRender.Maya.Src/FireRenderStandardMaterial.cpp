@@ -874,9 +874,22 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		params.mapPlug = Attribute::reflectNormal;
 		params.param = RPR_MATERIAL_INPUT_UBER_REFLECTION_NORMAL;
 		ApplyNormalMap(params);
+
+		// check for the external attribute. Its needed for Demo preparation for Hybrid DX12 engine
+		MPlug plug = shaderNode.findPlug("dx12_R0", false);
+
+		if (!plug.isNull())
+		{
+			material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE, scope.GetValue(plug));
+		}
+		else
+		{
+			material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE, frw::Value(0.5f));
+		}
 	}
 	else
 	{
+		material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE, frw::Value(0.0f));
 		material.xSetParameterF(RPR_MATERIAL_INPUT_UBER_REFLECTION_WEIGHT, 0, 0, 0, 0);
 	}
 

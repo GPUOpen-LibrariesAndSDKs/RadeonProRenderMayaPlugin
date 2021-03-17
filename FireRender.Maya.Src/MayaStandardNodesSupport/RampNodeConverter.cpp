@@ -204,10 +204,11 @@ frw::Value GetConnectedArithmetic(MObject rampObject, const FireMaya::Scope& sco
 frw::ArithmeticNode GetLookupForVRamp(const FireMaya::Scope& scope)
 {
 	// create lookup node
-	frw::LookupNode lookupNode(scope.MaterialSystem(), frw::LookupTypeUV1);
+	frw::LookupNode lookupNode(scope.MaterialSystem(), frw::LookupTypeUV0);
 
 	// to have proper return type
-	frw::ArithmeticNode bufferLookupMulNode(scope.MaterialSystem(), frw::OperatorMultiply, lookupNode, frw::Value(1.0f, 1.0f, 1.0f));
+	frw::ArithmeticNode bufferLookupV(scope.MaterialSystem(), frw::OperatorSelectY, lookupNode, frw::Value(1.0f, 1.0f, 1.0f));
+	frw::ArithmeticNode bufferLookupMulNode(scope.MaterialSystem(), frw::OperatorMultiply, bufferLookupV, frw::Value(1.0f, 1.0f, 1.0f));
 	return bufferLookupMulNode;
 }
 
@@ -217,7 +218,8 @@ frw::ArithmeticNode GetLookupForURamp(const FireMaya::Scope& scope)
 	frw::LookupNode lookupNode(scope.MaterialSystem(), frw::LookupTypeUV0);
 
 	// to have proper return type
-	frw::ArithmeticNode bufferLookupMulNode(scope.MaterialSystem(), frw::OperatorMultiply, lookupNode, frw::Value(1.0f, 1.0f, 1.0f));
+	frw::ArithmeticNode bufferLookupU(scope.MaterialSystem(), frw::OperatorSelectX, lookupNode, frw::Value(1.0f, 1.0f, 1.0f));
+	frw::ArithmeticNode bufferLookupMulNode(scope.MaterialSystem(), frw::OperatorMultiply, bufferLookupU, frw::Value(1.0f, 1.0f, 1.0f));
 	return bufferLookupMulNode;
 }
 
@@ -344,7 +346,7 @@ void ArrangeBufferViaRampCtrlPoints(MObject& shaderNodeObject, const FireMaya::S
 			return (std::get<MString>(tmp) == el.ctrlPointData.second);
 		});
 		assert(it != rampCtrlPoints.end());
-		unsigned int position = std::distance(rampCtrlPoints.begin(), it);
+		unsigned int position = (unsigned int) std::distance(rampCtrlPoints.begin(), it);
 		positions.push_back(position);
 	}
 
@@ -372,21 +374,8 @@ frw::Value GetBufferSamplerConvertor(
 	if (!res)
 		return frw::Value();
 
-	std::vector<MColor> remapedRampValue(bufferSize, MColor(0.0f, 0.0f, 0.0f, 1.0f));
-	RemapRampControlPoints(remapedRampValue.size(), remapedRampValue, rampCtrlPoints);
-
-	// create buffer desc
-	rpr_buffer_desc bufferDesc;
-	bufferDesc.nb_element = bufferSize;
-	bufferDesc.element_type = RPR_BUFFER_ELEMENT_TYPE_FLOAT32;
-	bufferDesc.element_channel_size = 4;
-
-	// create buffer
-	frw::DataBuffer dataBuffer(scope.Context(), bufferDesc, &remapedRampValue[0][0]);
-
 	// create buffer node
-	frw::BufferNode bufferNode(scope.MaterialSystem());
-	bufferNode.SetBuffer(dataBuffer);
+	frw::BufferNode bufferNode = CreateRPRRampNode(rampCtrlPoints, scope, bufferSize);
 
 	// get arithmetic mul node tree for lookup
 	const auto& nodeTreeGeneratorImpl = m_rampGenerators.find(rampType);

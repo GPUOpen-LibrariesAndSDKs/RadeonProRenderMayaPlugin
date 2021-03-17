@@ -52,6 +52,10 @@ global proc createSystemTab()
     createViewportRenderPart();
     setParent ..;
 
+	columnLayout textureCacheSettings;
+    createTextureCachePart();
+    setParent ..;
+
     setParent ..;
     setParent ..;
 
@@ -110,7 +114,7 @@ global proc createAboutFrame(string $parent)
 
 			canvas -width 20 -height 1 -enableBackground false;
 			button -label "Main Site" -height 19 -command "showRPRUrl(\"http://pro.radeon.com/en-us/software/prorender/\")";
-			button -label "Documentation" -height 19 -command "showRPRUrl(\"https://radeon-pro.github.io/RadeonProRenderDocs/plugins/maya/about.html\")";
+			button -label "Documentation" -height 19 -command "showRPRUrl(\"https://radeon-pro.github.io/RadeonProRenderDocs/en/index.html\")";
 			button -label "Downloads" -height 19 -command "showRPRUrl(\"https://www.amd.com/en/technologies/radeon-prorender-downloads/\")";
 			button -label "Community" -height 19 -command "showRPRUrl(\"https://community.amd.com/community/prorender/\")";
 			canvas -width 20 -height 1 -enableBackground false;
@@ -201,3 +205,53 @@ global proc createViewportRenderPart()
     setParent ..;
     setParent ..;
 }
+
+global proc saveTextureCacheFolder()
+{
+	string $mayaFolder;
+	$mayaFolder = `workspace -q -dir`;
+	$mayaFolder = $mayaFolder + "cache";
+
+	string $result[] = `fileDialog2 -dialogStyle 2 -dir ($mayaFolder) -fileMode 3`;
+	$resSize = size($result[0]);
+
+	if ($resSize != 0)
+	{
+		setAttr RadeonProRenderGlobals.textureCachePath -type "string" ($result[0]);
+	}
+}
+
+global proc dropTextureCacheFolder()
+{
+	string $cacheFolder = `getAttr RadeonProRenderGlobals.textureCachePath`;
+	string $result[] = `getFileList -folder $cacheFolder -filespec "*.ns.bin"`;
+
+	for ($oldCacheFile in $result)
+	{
+		$oldCacheFile = $cacheFolder + "/" + $oldCacheFile;
+		$success = `sysFile -delete $oldCacheFile`;
+	}
+}
+
+// texture cache
+global proc createTextureCachePart()
+{
+	frameLayout -label "Texture Cache Setup" -cll false -cl 0 TextureCacheSetup;
+
+	rowColumnLayout 
+			-numberOfColumns 4
+			-columnWidth 1 40
+			-columnWidth 2 210
+			-columnWidth 3 40
+			-cat 4 right 20
+			-cal 4 right;
+			text -label "Path: " cacheFolderText;
+			textField cacheFolderField;
+			symbolButton -image "navButtonBrowse.png" -command "saveTextureCacheFolder" browser;
+			button -label "Clear" -command "dropTextureCacheFolder";
+
+		setParent ..;
+
+	connectControl cacheFolderField RadeonProRenderGlobals.textureCachePath;
+}
+

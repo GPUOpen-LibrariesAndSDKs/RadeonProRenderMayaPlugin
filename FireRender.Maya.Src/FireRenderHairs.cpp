@@ -194,12 +194,22 @@ bool FireRenderHair::ApplyMaterial(void)
 	if (m_Curves.empty())
 		return false;
 
-	auto node = Object();
+	MObject node = Object();
 	MDagPath path = MDagPath::getAPathTo(node);
 
+	// try getting uber
 	MObject uberMObj = GetUberMObject(path);	
 
-	frw::Shader shader = m.context->GetShader(uberMObj);
+	frw::Shader shader;
+	if (!uberMObj.isNull())
+		shader = m.context->GetShader(uberMObj);
+
+	if (!shader.IsValid())
+	{
+		// no uber => try creating uber from node attributes
+		shader = ParseNodeAttributes(node, Scope());
+	}
+
 	if (!shader.IsValid())
 		return false;
 
@@ -479,7 +489,7 @@ void FireRenderHair::Freshen()
 
 	auto node = Object();
 	MFnDagNode fnDagNode(node);
-	MString name = fnDagNode.name();
+	MString name = fnDagNode.fullPathName();
 
 	bool haveCurves = CreateCurves();
 
@@ -487,7 +497,17 @@ void FireRenderHair::Freshen()
 	{
 		MDagPath path = MDagPath::getAPathTo(node);
 		if (path.isVisible())
+		{
+			for (int i = 0; i < m_Curves.size(); i++)
+			{
+				std::string shapeName = std::string(name.asChar()) + "_" + std::to_string(i);
+				m_Curves[i].SetName(shapeName.c_str());
+			}
+
 			attachToScene();
+		}
+
+		setRenderStats(path);
 	}
 
 	FireRenderNode::Freshen();
@@ -526,6 +546,72 @@ void FireRenderHair::detachFromScene()
 	}
 
 	m_isVisible = false;
+}
+
+void FireRenderHair::setPrimaryVisibility(bool primaryVisibility)
+{
+	for (frw::Curve& curve : m_Curves)
+	{
+		curve.SetPrimaryVisibility(primaryVisibility);
+	}
+}
+
+void FireRenderHair::setReflectionVisibility(bool reflectionVisibility)
+{
+	for (frw::Curve& curve : m_Curves)
+	{
+		curve.SetReflectionVisibility(reflectionVisibility);
+	}
+}
+
+void FireRenderHair::setRefractionVisibility(bool refractionVisibility)
+{
+	for (frw::Curve& curve : m_Curves)
+	{
+		curve.setRefractionVisibility(refractionVisibility);
+	}
+}
+
+void FireRenderHair::setCastShadows(bool castShadow)
+{
+	for (frw::Curve& curve : m_Curves)
+	{
+		curve.SetShadowFlag(castShadow);
+	}
+}
+
+void FireRenderHair::setRenderStats(MDagPath dagPath)
+{
+	if (!dagPath.isValid())
+		return;
+
+	MFnDependencyNode depNode(dagPath.node());
+
+	MPlug visibleInReflectionsPlug = depNode.findPlug("visibleInReflections");
+	if (!visibleInReflectionsPlug.isNull())
+	{
+		MString dbgName = visibleInReflectionsPlug.name();
+
+		bool visibleInReflections = false;
+		visibleInReflectionsPlug.getValue(visibleInReflections);
+		setReflectionVisibility(visibleInReflections);
+	}
+
+	MPlug visibleInRefractionsPlug = depNode.findPlug("visibleInRefractions");
+	if (!visibleInRefractionsPlug.isNull())
+	{
+		bool visibleInRefractions = false;
+		visibleInRefractionsPlug.getValue(visibleInRefractions);
+		setRefractionVisibility(visibleInRefractions);
+	}
+
+	MPlug castsShadowsPlug = depNode.findPlug("castsShadows");
+	if (!castsShadowsPlug.isNull())
+	{
+		bool castsShadows = false;
+		castsShadowsPlug.getValue(castsShadows);
+		setCastShadows(castsShadows);
+	}
 }
 
 FireRenderHairXGenGrooming::FireRenderHairXGenGrooming(FireRenderContext* context, const MDagPath& dagPath)
@@ -809,13 +895,13 @@ bool FireRenderHairNHair::CreateCurves()
 	MRenderLineArray flowerLines;
 	status = hHairs.getLineData(mainLines, leafLines, flowerLines,
 		true, //doLines
-		true, //doTwist
+		false, //doTwist
 		true, //doWidth
-		true, //doFlatness
+		false, //doFlatness
 		true, //doParameter
-		true, //doColor
-		true, //doIncandescence
-		true, //doTransparency
+		false, //doColor
+		false, //doIncandescence
+		false, //doTransparency
 		false //worldSpace
 		);
 	assert(status == MStatus::kSuccess);
@@ -893,3 +979,171 @@ void FireRenderHairNHair::RegisterCallbacks()
 
 	AddCallback(MNodeMessage::addNodeDirtyCallback(shader, HairShaderDirtyCallback, this));
 }
+
+MObject GetHairSystemFromHairShape(MObject hairObject)
+{
+	// ensure correct input
+	if (hairObject.isNull())
+	{
+		return MObject::kNullObj;
+	}
+
+	// traverse graph to hairSystemShape node
+	// - get connection attribute
+	MFnDagNode mfn_hairObject(hairObject);
+	MObject attr = mfn_hairObject.attribute("renderHairs");
+	if (attr.isNull())
+		return MObject::kNullObj; // attribute not found
+
+	MPlug renderHairsPlug = mfn_hairObject.findPlug(attr);
+	// - get connected object
+	MPlugArray connections;
+	renderHairsPlug.connectedTo(connections, true, false);
+	for (auto connection : connections)
+	{
+		// assuming that first found connection is node that we need
+		MObject connNode = connection.node();
+		return connNode;
+	}
+
+	// failed to find hairSystemShape node
+	return MObject::kNullObj;
+}
+
+frw::Shader FireRenderHairNHair::ParseNodeAttributes(MObject hairObject, const FireMaya::Scope& scope)
+{
+	// get hairSystemShape object from pfxHairShape object
+	MObject hairSystemShapeObj = GetHairSystemFromHairShape(hairObject);
+	if (hairSystemShapeObj.isNull())
+		return frw::Shader(); // failed to find hairSystemShape node
+
+	// get attribute values from the node
+	MFnDagNode dagHairSystemShapeObj(hairSystemShapeObj);
+
+	// - get opacity
+	MObject opacityAttr = dagHairSystemShapeObj.attribute("opacity");
+	if (opacityAttr.isNull())
+		return frw::Shader();
+
+	float opacity = findPlugTryGetValue(dagHairSystemShapeObj, opacityAttr, 1.0f);
+
+	// - get hair color
+	MObject hairColorAttr = dagHairSystemShapeObj.attribute("hairColor");
+	if (hairColorAttr.isNull())
+		return frw::Shader();
+
+	MColor hairColor = getColorAttribute(dagHairSystemShapeObj, hairColorAttr);
+
+	// - get specularColor
+	MObject specularColorAttr = dagHairSystemShapeObj.attribute("specularColor");
+	if (specularColorAttr.isNull())
+		return frw::Shader();
+
+	MColor specularColor = getColorAttribute(dagHairSystemShapeObj, specularColorAttr);
+
+	// - get specularPower
+	MObject specularPowerAttr = dagHairSystemShapeObj.attribute("specularPower");
+	if (specularPowerAttr.isNull())
+		return frw::Shader();
+
+	float specularPower = findPlugTryGetValue(dagHairSystemShapeObj, specularPowerAttr, 1.0f);
+
+	// - get castShadows
+	MObject castShadowsAttr = dagHairSystemShapeObj.attribute("castShadows");
+	if (castShadowsAttr.isNull())
+		return frw::Shader();
+
+	bool castShadows = findPlugTryGetValue(dagHairSystemShapeObj, castShadowsAttr, 1) > 0;
+
+	// - get hairColorScale (this is ramp)
+	MObject hairColorScaleAttr = dagHairSystemShapeObj.attribute("hairColorScale");
+	MPlug hairColorScalePlug = dagHairSystemShapeObj.findPlug(hairColorScaleAttr);
+	if (hairColorScalePlug.isNull())
+		return frw::Shader();
+
+	std::vector<RampCtrlPoint<MColor>> outRampCtrlPoints;
+	bool isRampParced = GetRampValues<MColorArray>(hairColorScalePlug, outRampCtrlPoints);
+	if (!isRampParced)
+		return frw::Shader();
+
+	const unsigned int bufferSize = 256; // same as in Blender
+	frw::BufferNode rampNode = CreateRPRRampNode(outRampCtrlPoints, scope, bufferSize);
+	frw::LookupNode lookupNode(scope.MaterialSystem(), frw::LookupTypeUV0);
+	frw::ArithmeticNode bufferLookupMulNode(scope.MaterialSystem(), frw::OperatorMultiply, lookupNode, frw::Value(bufferSize, bufferSize, bufferSize));
+	frw::ArithmeticNode selectZ(scope.MaterialSystem(), frw::OperatorSelectZ, bufferLookupMulNode);
+	rampNode.SetUV(selectZ);
+	frw::ArithmeticNode coloredRamp(scope.MaterialSystem(), frw::OperatorMultiply, rampNode, frw::Value(hairColor.r, hairColor.g, hairColor.b));
+
+	// create uber from read values
+	frw::Shader translatedHairShader = frw::Shader(context()->GetMaterialSystem(), frw::ShaderType::ShaderTypeStandard);
+	translatedHairShader.xSetValue(RPR_MATERIAL_INPUT_UBER_DIFFUSE_COLOR, coloredRamp);
+	translatedHairShader.xSetValue(RPR_MATERIAL_INPUT_UBER_DIFFUSE_WEIGHT, { 1.0f });
+	translatedHairShader.xSetValue(RPR_MATERIAL_INPUT_UBER_TRANSPARENCY, { 1 - opacity });
+	translatedHairShader.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_COLOR, { specularColor.r, specularColor.g, specularColor.b });
+	translatedHairShader.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_WEIGHT, { 0.5f });
+	translatedHairShader.xSetValue(RPR_MATERIAL_INPUT_UBER_REFRACTION_WEIGHT, { 0.05*specularPower });
+
+	return translatedHairShader;
+}
+
+void SetHairPrimaryVisibility(FireRenderHair* pHair, MDagPath& dagPath)
+{
+	assert(pHair != nullptr);
+	assert(dagPath.isValid());
+
+	MFnDependencyNode depNode(dagPath.node());
+
+	MPlug primaryVisibilityPlug = depNode.findPlug("primaryVisibility");
+	if (!primaryVisibilityPlug.isNull())
+	{
+		bool primaryVisibility = true;
+		primaryVisibilityPlug.getValue(primaryVisibility);
+		pHair->setPrimaryVisibility(primaryVisibility);
+	}
+}
+
+void FireRenderHairXGenGrooming::setRenderStats(MDagPath dagPath)
+{
+	if (!dagPath.isValid())
+		return;
+
+	SetHairPrimaryVisibility(this, dagPath);
+
+	FireRenderHair::setRenderStats(dagPath);
+}
+
+void FireRenderHairOrnatrix::setRenderStats(MDagPath dagPath)
+{
+	if (!dagPath.isValid())
+		return;
+
+	SetHairPrimaryVisibility(this, dagPath);
+
+	FireRenderHair::setRenderStats(dagPath);
+}
+
+void FireRenderHairNHair::setRenderStats(MDagPath dagPath)
+{
+	if (!dagPath.isValid())
+		return;
+
+	// in nhair we have to check different nodes for plug value
+	SetHairPrimaryVisibility(this, dagPath);
+
+	// for the rest of the flags we check pfxHairShape object
+	MObject hairObject = dagPath.node();
+
+	// get hairSystemShape object from pfxHairShape object
+	MObject hairSystemShapeObj = GetHairSystemFromHairShape(hairObject);
+	if (hairSystemShapeObj.isNull())
+		return;
+
+	MFnDagNode dagHairSystemShapeObj(hairSystemShapeObj);
+	MDagPath hairSystemShapePath;
+	MStatus status = dagHairSystemShapeObj.getPath(hairSystemShapePath);
+	assert(status == MStatus::kSuccess);
+
+	FireRenderHair::setRenderStats(hairSystemShapePath);
+}
+
+

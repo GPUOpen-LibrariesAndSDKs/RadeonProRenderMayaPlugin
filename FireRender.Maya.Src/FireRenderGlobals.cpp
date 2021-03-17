@@ -16,6 +16,7 @@ limitations under the License.
 #include <maya/MFnMessageAttribute.h>
 #include <maya/MFnTypedAttribute.h>
 #include <maya/MFnStringData.h>
+
 #include "FireMaya.h"
 #include "FireRenderUtils.h"
 #include "FireRenderAOVs.h"
@@ -25,6 +26,7 @@ limitations under the License.
 #include <thread>
 #include <string>
 #include <thread>
+#include <experimental/filesystem>
 #include "StartupContextChecker.h"
 
 #define DEFAULT_RENDER_STAMP "Radeon ProRender for Maya %b | %h | Time: %pt | Passes: %pp | Objects: %so | Lights: %sl"
@@ -92,6 +94,7 @@ namespace
 		MObject motionBlur;
 		MObject cameraMotionBlur;
 		MObject motionBlurCameraExposure;
+		MObject velocityAOVMotionBlur;
 		MObject cameraType;
 
 		// for MacOS only: "Use Metal Performance Shaders"
@@ -120,6 +123,7 @@ namespace
 
 			// Denoiser type: ML
 		MObject denoiserColorOnly;
+		MObject enable16bitCompute;
 
 		// image saving
 		MObject renderaGlobalsExrMultilayerEnabled;
@@ -127,6 +131,20 @@ namespace
 		MObject renderQuality;
 
 		MObject tahoeVersion;
+
+		MObject textureCachePath;
+
+		// contour
+		MObject contourIsEnabled;
+		MObject contourUseObjectID;
+		MObject contourUseMaterialID;
+		MObject contourUseShadingNormal;
+		MObject contourLineWidthObjectID;
+		MObject contourLineWidthMaterialID;
+		MObject contourLineWidthShadingNormal;
+		MObject contourNormalThreshold;
+		MObject contourAntialiasing;
+		MObject contourIsDebugEnabled;
 	}
 
     struct RenderingDeviceAttributes
@@ -235,6 +253,17 @@ void FireRenderGlobals::postConstructor()
 	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(obj, FireRenderGlobals::onAttributeChanged, nullptr, &status);
 
 	CHECK_MSTATUS(status);
+
+	// try creating folder for texture cache
+	MString workspace;
+	status = MGlobal::executeCommand(MString("workspace -q -dir;"),	workspace);
+	workspace += "/cache";
+
+	namespace fs = std::experimental::filesystem;
+	if (!fs::is_directory(workspace.asChar()) || !fs::exists(workspace.asChar()))
+	{ // Check if src folder exists
+		fs::create_directory(workspace.asChar());
+	}
 }
 
 MStatus FireRenderGlobals::compute(const MPlug & plug, MDataBlock & data)
@@ -260,6 +289,7 @@ MStatus FireRenderGlobals::initialize()
 	createViewportAttributes();
 	createCompletionCriteriaAttributes();
 	createTileRenderAttributes();
+	createContourEffectAttributes();
 
 	Attribute::textureCompression = nAttr.create("textureCompression", "texC", MFnNumericData::kBoolean, false, &status);
 	MAKE_INPUT(nAttr);
@@ -402,10 +432,13 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::cameraMotionBlur = nAttr.create("cameraMotionBlur", "cmb", MFnNumericData::kBoolean, 0, &status);
 	MAKE_INPUT(nAttr);
 
-	Attribute::motionBlurCameraExposure = nAttr.create("motionBlurCameraExposure", "mbce", MFnNumericData::kFloat, 0.1f, &status);
+	Attribute::motionBlurCameraExposure = nAttr.create("motionBlurCameraExposure", "mbce", MFnNumericData::kFloat, 0.5f, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0.0);
-	nAttr.setSoftMax(10.0);
+	nAttr.setMax(1.0);
+
+	Attribute::velocityAOVMotionBlur = nAttr.create("velocityAOVMotionBlur", "vavb", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
 
 	Attribute::cameraType = eAttr.create("cameraType", "camt", kCameraDefault, &status);
 	eAttr.addField("Default", kCameraDefault);
@@ -434,12 +467,20 @@ MStatus FireRenderGlobals::initialize()
 	addRenderQualityModes(eAttr);
 	MAKE_INPUT_CONST(eAttr);
 
-	Attribute::tahoeVersion = eAttr.create("tahoeVersion", "tahv", TahoePluginVersion::RPR1, &status);
-	eAttr.addField("RPR 1", TahoePluginVersion::RPR1);
-	eAttr.addField("RPR 2 (Experimental)", TahoePluginVersion::RPR2);
-
+	Attribute::tahoeVersion = eAttr.create("tahoeVersion", "tahv", TahoePluginVersion::RPR2, &status);
+	eAttr.addField("RPR 1 (Legacy)", TahoePluginVersion::RPR1);
+	eAttr.addField("RPR 2", TahoePluginVersion::RPR2);
 	MAKE_INPUT_CONST(eAttr);
 	CHECK_MSTATUS(addAttribute(Attribute::tahoeVersion));
+
+	MString workspace;
+	status = MGlobal::executeCommand(MString("workspace -q -dir;"), workspace);
+	workspace += "cache\"";
+	MGlobal::executeCommand(MString("optionVar -sv RPR_textureCachePath \"") + workspace);
+	MObject defaultTextureCachePath = sData.create(workspace);
+	Attribute::textureCachePath = tAttr.create("textureCachePath", "tcp", MFnData::kString, defaultTextureCachePath);
+	tAttr.setUsedAsFilename(true);
+	addAsGlobalAttribute(tAttr);
 
 	MObject switchDetailedLogAttribute = nAttr.create("detailedLog", "rdl", MFnNumericData::kBoolean, 0, &status);
 	MAKE_INPUT(nAttr);
@@ -464,6 +505,7 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::motionBlur));
 	CHECK_MSTATUS(addAttribute(Attribute::cameraMotionBlur));
 	CHECK_MSTATUS(addAttribute(Attribute::motionBlurCameraExposure));
+	CHECK_MSTATUS(addAttribute(Attribute::velocityAOVMotionBlur));
 
 	CHECK_MSTATUS(addAttribute(Attribute::applyGammaToMayaViews));
 	CHECK_MSTATUS(addAttribute(Attribute::displayGamma));
@@ -542,6 +584,63 @@ void FireRenderGlobals::createTileRenderAttributes()
 	nAttr.setSoftMax(tileDefaultSizeMax);
 
 	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::tileRenderY));
+}
+
+void FireRenderGlobals::createContourEffectAttributes()
+{
+	MFnNumericAttribute nAttr;
+	MStatus status;
+
+	Attribute::contourIsEnabled = nAttr.create("contourIsEnabled", "coen", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+
+	Attribute::contourUseObjectID = nAttr.create("contourUseObjectID", "coob", MFnNumericData::kBoolean, 1, &status);
+	MAKE_INPUT(nAttr);
+
+	Attribute::contourUseMaterialID = nAttr.create("contourUseMaterialID", "comt", MFnNumericData::kBoolean, 1, &status);
+	MAKE_INPUT(nAttr);
+
+	Attribute::contourUseShadingNormal = nAttr.create("contourUseShadingNormal", "cosn", MFnNumericData::kBoolean, 1, &status);
+	MAKE_INPUT(nAttr);
+
+	Attribute::contourLineWidthObjectID = nAttr.create("contourLineWidthObjectID", "cowb", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(1.0f);
+	nAttr.setMax(10.0f);
+
+	Attribute::contourLineWidthMaterialID = nAttr.create("contourLineWidthMaterialID", "cowm", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(1.0f);
+	nAttr.setMax(10.0f);
+
+	Attribute::contourLineWidthShadingNormal = nAttr.create("contourLineWidthShadingNormal", "cows", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(1.0f);
+	nAttr.setMax(10.0f);
+
+	Attribute::contourNormalThreshold = nAttr.create("contourNormalThreshold", "cont", MFnNumericData::kFloat, 45.0f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0f);
+	nAttr.setMax(180.0f);
+
+	Attribute::contourAntialiasing = nAttr.create("contourAntialiasing", "coaa", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0f);
+	nAttr.setMax(1.0f);
+
+	Attribute::contourIsDebugEnabled = nAttr.create("contourIsDebugEnabled", "code", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+
+	CHECK_MSTATUS(addAttribute(Attribute::contourIsEnabled));
+	CHECK_MSTATUS(addAttribute(Attribute::contourUseObjectID));
+	CHECK_MSTATUS(addAttribute(Attribute::contourUseMaterialID));
+	CHECK_MSTATUS(addAttribute(Attribute::contourUseShadingNormal));
+	CHECK_MSTATUS(addAttribute(Attribute::contourLineWidthObjectID));
+	CHECK_MSTATUS(addAttribute(Attribute::contourLineWidthMaterialID));
+	CHECK_MSTATUS(addAttribute(Attribute::contourLineWidthShadingNormal));
+	CHECK_MSTATUS(addAttribute(Attribute::contourNormalThreshold));
+	CHECK_MSTATUS(addAttribute(Attribute::contourAntialiasing));
+	CHECK_MSTATUS(addAttribute(Attribute::contourIsDebugEnabled));
 }
 
 void FireRenderGlobals::createCompletionCriteriaAttributes()
@@ -859,12 +958,17 @@ void FireRenderGlobals::createDenoiserAttributes()
 	nAttr.setMax(1.0f);
 
 	//ML
-	Attribute::denoiserColorOnly = eAttr.create("denoiserColorOnly", "do", 0, &status);
+	Attribute::denoiserColorOnly = eAttr.create("denoiserColorOnly", "do", 1, &status);
 	eAttr.addField("Color Only", 0);
 	eAttr.addField("Color + AOVs", 1);
 	MAKE_INPUT_CONST(eAttr);
 	eAttr.setReadable(true);
 	CHECK_MSTATUS(addAttribute(Attribute::denoiserColorOnly));
+
+	Attribute::enable16bitCompute = nAttr.create("enable16bitCompute", "bc", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setReadable(false);
+	CHECK_MSTATUS(addAttribute(Attribute::enable16bitCompute));
 }
 
 void FireRenderGlobals::addAsGlobalAttribute(MFnAttribute& attr)
@@ -872,7 +976,6 @@ void FireRenderGlobals::addAsGlobalAttribute(MFnAttribute& attr)
 	MObject attrObj = attr.object();
 	
 	attr.setStorable(false);
-	attr.setConnectable(false);
 	CHECK_MSTATUS(addAttribute(attrObj));
 
 	m_globalAttributesList.push_back(attrObj);

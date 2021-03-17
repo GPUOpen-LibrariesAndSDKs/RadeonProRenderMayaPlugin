@@ -44,6 +44,7 @@ limitations under the License.
 #include "RenderProgressBars.h"
 #include "RenderRegion.h"
 #include "FireRenderThread.h"
+#include "RenderStampUtils.h"
 
 #include "Context/ContextCreator.h"
 
@@ -227,7 +228,15 @@ MStatus FireRenderCmd::renderFrame(const MArgDatabase& argData)
 
 	s_rendering = true;
 
-	s_production->start();
+	s_production->UpdateGlobals();
+	if (!s_production->isTileRender())
+	{
+		s_production->startFullFrameRender();
+	}
+	else
+	{
+		s_production->startTileRender();
+	}
 
 	if (s_waitForIt || argData.isFlagSet(kWaitForIt))
 		s_production->waitForIt();
@@ -384,7 +393,7 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		context.buildScene();
 		context.updateLimitsFromGlobalData(globals, false, true);
 		context.setResolution(settings.width, settings.height, true);
-		context.ConsiderSetupDenoiser();
+		context.TryCreateDenoiserImageFilters();
 
 		// Initialize the command port so the
 		// batch process can communicate with Maya.
@@ -401,6 +410,28 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 			MString renderStamp = globals.renderStampText;
 			aovs.setRenderStamp(renderStamp);
 		}
+
+		// Get selected devices
+		int renderDevice = RenderStampUtils::GetRenderDevice();
+		std::string devicesStr("\ndevice selected: ");
+		if (renderDevice == RenderStampUtils::RPR_RENDERDEVICE_CPUONLY)
+		{
+			devicesStr += RenderStampUtils::GetCPUNameString();
+		}
+		else if (renderDevice == RenderStampUtils::RPR_RENDERDEVICE_GPUONLY)
+		{
+			devicesStr += RenderStampUtils::GetFriendlyUsedGPUName();
+		}
+		else
+		{
+			devicesStr += std::string(RenderStampUtils::GetCPUNameString()) + " / " + RenderStampUtils::GetFriendlyUsedGPUName();
+		}
+		devicesStr += "\n";
+
+		// Get RPR version
+		TahoePluginVersion version = GetTahoeVersionToUse();
+		std::string versionStr = "RPR version : ";
+		versionStr += (version == RPR1) ? "RPR1\n" : "RPR2\n";
 
 		// Get the list of cameras to render frames for.
 		MDagPathArray renderableCameras = GetSceneCameras(true);
@@ -475,6 +506,9 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 				MGlobal::executeCommand(settings.postRenderMel);
 			}
 		}
+
+		MGlobal::displayInfo(MString(devicesStr.c_str()));
+		MGlobal::displayInfo(MString(versionStr.c_str()));
 
 		// Perform clean up operations.
 		context.cleanScene();

@@ -275,7 +275,36 @@ namespace FireMaya
 		return true;
 	}
 
-	void CalculateMotionBlurParams(const MFnDependencyNode& nodeFn, const MMatrix& inMatrix, MVector& outLinearMotion, MVector& outAngularMotion, double& outRotationAngle)
+	void GetMatrixForTheNextFrame(const MFnDependencyNode& nodeFn, float matrixFloats[4][4], unsigned int dagPathIndex)
+	{
+		MTime nextTime = MAnimControl::currentTime();
+		MTime maxTime = MAnimControl::maxTime();
+
+		if (MAnimControl::currentTime() != maxTime)
+		{
+			nextTime++;
+		}
+
+		MDGContext dgcontext(nextTime);
+		MObject val;
+		MPlug matrixPlug = nodeFn.findPlug("worldMatrix");
+
+		if (matrixPlug.isNull())
+			return;
+
+		matrixPlug = matrixPlug.elementByLogicalIndex(dagPathIndex);
+		matrixPlug.getValue(val, dgcontext);
+		MMatrix nextFrameMatrix = MFnMatrixData(val).matrix();
+
+		ScaleMatrixFromCmToMFloats(nextFrameMatrix, matrixFloats);
+	}
+
+	void CalculateMotionBlurParams(const MFnDependencyNode& nodeFn, 
+									const MMatrix& inMatrix, 
+									MVector& outLinearMotion, 
+									MVector& outAngularMotion, 
+									double& outRotationAngle, 
+									unsigned int dagPathIndex)
 	{
 		// convert Maya mesh in cm to m
 		MMatrix scaleM;
@@ -285,29 +314,24 @@ namespace FireMaya
 		matrix *= scaleM;
 
 		MTime nextTime = MAnimControl::currentTime();
-		MTime minTime = MAnimControl::minTime();
+		MTime maxTime = MAnimControl::maxTime();
 
-		if ((nextTime != minTime))
+		if (MAnimControl::currentTime() != maxTime)
 		{
-			nextTime--;
+			nextTime++;
 			MDGContext dgcontext(nextTime);
 			MObject val;
 			MPlug matrixPlug = nodeFn.findPlug("worldMatrix");
-			matrixPlug = matrixPlug.elementByLogicalIndex(0);
+			matrixPlug = matrixPlug.elementByLogicalIndex(dagPathIndex);
 			matrixPlug.getValue(val, dgcontext);
 			MMatrix nextFrameMatrix = MFnMatrixData(val).matrix();
 			if (nextFrameMatrix != matrix)
 			{
-				MTime time = MAnimControl::currentTime();
-				MTime t2 = MTime(1.0, time.unit());
-				float timeMultiplier = (float)(1.0f / t2.asUnits(MTime::kSeconds));
-
 				MMatrix nextMatrix = nextFrameMatrix;
 				nextMatrix *= scaleM;
 
 				// get linear motion
 				outLinearMotion = MVector(nextMatrix[3][0] - matrix[3][0], nextMatrix[3][1] - matrix[3][1], nextMatrix[3][2] - matrix[3][2]);
-				outLinearMotion *= timeMultiplier;
 
 				MTransformationMatrix transformationMatrix(matrix);
 				MQuaternion currentRotation = transformationMatrix.rotation();
@@ -315,7 +339,7 @@ namespace FireMaya
 				MTransformationMatrix transformationMatrixNext(nextMatrix);
 				MQuaternion nextRotation = transformationMatrixNext.rotation();
 
-				MQuaternion dispRotation = nextRotation * currentRotation.inverse();
+				MQuaternion dispRotation = currentRotation.inverse() * nextRotation;
 
 				dispRotation.getAxisAngle(outAngularMotion, outRotationAngle);
 
@@ -323,7 +347,6 @@ namespace FireMaya
 				{
 					outRotationAngle -= 2 * PI;
 				}
-				outRotationAngle *= timeMultiplier;
 			}
 		}
 

@@ -57,8 +57,16 @@ public:
 	/** True if render is cancelled*/
 	bool isCancelled() const;
 
+	/** True if tile render is enabled*/
+	bool isTileRender() const;
+
+	/** Update globals from render settings */
+	void UpdateGlobals(void);
+
 	/** Start a threaded IPR render. */
-	bool start();
+	bool startFullFrameRender();
+
+	bool startTileRender();
 
 	/** Pause the threaded IPR render. */
 	bool pause(bool value);
@@ -105,11 +113,13 @@ private:
 
 	// Private Methods
 	// -----------------------------------------------------------------------------
+	bool Init(int contextWidth, int contextHeight, RenderRegion& region);
 
 	void SetupWorkProgressCallback();
 
-	void RenderFullFrame();
-	void RenderTiles();
+	void RenderFullFrame(void);
+	void RenderTiles(void);
+	void DenoiseFromAOVs(void);
 
 	/** Schedule a render view update. */
 	void scheduleRenderViewUpdate();
@@ -133,7 +143,7 @@ private:
 
 	std::tuple<size_t, long long> GeSceneTexturesCountAndSize() const;
 
-	void OnBufferAvailableCallback();
+	void OnBufferAvailableCallback(float progress);
 
 private:
 
@@ -179,13 +189,13 @@ private:
 	tbb::atomic<bool> m_renderViewUpdateScheduled;
 
 	/** A lock to control access to the system memory frame buffer pixels. */
-	MMutexLock m_pixelsLock;
+	std::mutex m_pixelsLock;
 
 	/** A lock to control access to the RPR context. */
-	MMutexLock m_contextLock;
+	std::mutex m_contextLock;
 
 	/** A lock to control access to the RPR context creation and destruction. */
-	MMutexLock m_contextCreationLock;
+	std::mutex m_contextCreationLock;
 
 	/** Error handler. */
 	FireRenderError m_error;

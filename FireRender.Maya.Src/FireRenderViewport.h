@@ -104,7 +104,7 @@ public:
 
 	bool ShouldBeRecreated() const { return m_contextPtr && !m_contextPtr->DoesContextSupportCurrentSettings(); }
 
-	void OnBufferAvailableCallback();
+	void OnBufferAvailableCallback(float progress);
 private:
 
 	// Members
@@ -146,10 +146,10 @@ private:
 	bool m_pixelsUpdated;
 
 	/** A lock to control access to the system memory frame buffer pixels. */
-	MMutexLock m_pixelsLock;
+	std::mutex m_pixelsLock;
 
 	/** A lock to control access to the RPR context. */
-	MMutexLock m_contextLock;
+	std::mutex m_contextLock;
 
 	/** Error handler. */
 	FireRenderError m_error;

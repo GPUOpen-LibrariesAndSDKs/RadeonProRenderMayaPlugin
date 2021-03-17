@@ -15,7 +15,6 @@ limitations under the License.
 #include <maya/M3dView.h>
 #include <maya/MMessage.h>
 #include <maya/MDGMessage.h>
-#include <maya/MMutexLock.h>
 #include <maya/MBoundingBox.h>
 #include <maya/MFnTransform.h>
 #include <maya/MCallbackIdArray.h>
@@ -203,8 +202,9 @@ public:
 
 	// Sets the resolution and perform an initial render and frame buffer resolve.
 	void resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
-	// - Setup denoiser if necessary (this function was used to be called from resize and setResolution)
-	bool ConsiderSetupDenoiser(bool useRAMBufer = false);
+
+	// Setup denoiser if necessary
+	bool TryCreateDenoiserImageFilters(bool useRAMBufer = false);
 
 	// Set the frame buffer resolution
 	void setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
@@ -232,7 +232,7 @@ public:
 
 	bool isRenderView() const;
 
-	bool createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete = true, bool glViewport = false, int* pOutRes = nullptr);
+	bool createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete = true, bool glViewport = false, int* pOutRes = nullptr, bool createScene = true);
 
 	// Return the context
 	rpr_context context();
@@ -296,7 +296,7 @@ public:
 	bool ConsiderShadowReflectionCatcherOverride(const ReadFrameBufferRequestParams& params);
 
 	// writes input aov frame bufer on disk (both resolved and not resolved)
-	void DebugDumpAOV(int aov) const;
+	void DebugDumpAOV(int aov, char* pathToFile = nullptr) const;
 
 	// runs denoiser, returns pixel array as float vector if denoiser runs succesfully
 	std::vector<float> GetDenoisedData(bool& result);
@@ -304,7 +304,7 @@ public:
 	// reads aov directly into internal storage
 	RV_PIXEL* GetAOVData(const ReadFrameBufferRequestParams& params);
 
-	void MergeOpacity(const ReadFrameBufferRequestParams& params, size_t dataSize);
+	void MergeOpacity(const ReadFrameBufferRequestParams& params);
 
 	void CombineOpacity(ReadFrameBufferRequestParams& params);
 
@@ -329,6 +329,11 @@ public:
 	// Combine pixels (set alpha) with Opacity pixels
 	void combineWithOpacity(RV_PIXEL* pixels, unsigned int size, RV_PIXEL *opacityPixels = NULL) const;
 
+	// do action for each framebuffer matching filter
+	void ForEachFramebuffer(std::function<void(int aovId)> actionFunc, std::function<bool(int aovId)> filter);
+
+	// try running denoiser; result is svaed into RAM buffer in context
+	std::vector<float> DenoiseIntoRAM(void);
 
 	// Resolve the framebuffer using the current tone mapping
 
@@ -512,14 +517,17 @@ public:
 
 	void setRenderMode(RenderMode renderMode);
 
-	void setPreview();
+	virtual void SetupPreviewMode() {}
+	void SetPreviewMode(int preview);
 
 	bool hasTonemappingChanged() const { return m_tonemappingChanged; }
 
 	// Returns true if context was recently Freshen and needs redraw
 	bool needsRedraw(bool setNotUpdatedOnExit = true);
 
-	bool IsDenoiserEnabled(void) { return m_denoiserFilter != nullptr; }
+	bool IsDenoiserCreated(void) const { return m_denoiserFilter != nullptr; }
+
+	bool IsDenoiserEnabled(void) const { return (IsDenoiserSupported() && m_globals.denoiserSettings.enabled);	}
 
 	frw::PostEffect white_balance;
 	frw::PostEffect simple_tonemap;
@@ -527,7 +535,7 @@ public:
 	frw::PostEffect normalization;
 	frw::PostEffect gamma_correction;
 
-	const FireRenderMesh* GetMainMesh(const std::string& uuid) const
+	const FireRenderMeshCommon* GetMainMesh(const std::string& uuid) const
 	{
 		assert(!uuid.empty());
 
@@ -541,11 +549,11 @@ public:
 		return nullptr;
 	}
 
-	void AddMainMesh(const FireRenderMesh* mainMesh)
+	void AddMainMesh(const FireRenderMeshCommon* mainMesh)
 	{
 		std::string uuid = mainMesh->uuidWithoutInstanceNumber();
 
-		const FireRenderMesh* alreadyHas = GetMainMesh(uuid);
+		const FireRenderMeshCommon* alreadyHas = GetMainMesh(uuid);
 		assert(!alreadyHas);
 
 		m_mainMeshesDictionary[uuid] = mainMesh;
@@ -601,7 +609,8 @@ public:
 
 	virtual rpr_int SetRenderQuality(RenderQuality quality) { return RPR_SUCCESS; }
 
-	virtual void setupContext(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) {}
+	virtual void setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance = false) {}
+	virtual void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) {}
 	virtual bool IsAOVSupported(int aov) const { return true; }
 
 	virtual bool IsRenderQualitySupported(RenderQuality quality) const override = 0;
@@ -610,6 +619,7 @@ public:
 	virtual bool IsDisplacementSupported() const override { return true; }
 	virtual bool IsHairSupported() const override { return true; }
 	virtual bool IsVolumeSupported() const override { return true; }
+	virtual bool ShouldForceRAMDenoiser() const override { return false; }
 
 	virtual bool IsPhysicalLightTypeSupported(PLType lightType) const { return true; }
 
@@ -646,6 +656,12 @@ protected:
 
 	void TriggerProgressCallback(const ContextWorkProgressData& syncProgressData);
 
+	virtual void OnPreRender() {}
+
+	virtual int GetAOVMaxValue();
+
+	void ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestParams& params);
+
 private:
 	struct CallbacksAttachmentHelper
 	{
@@ -666,13 +682,16 @@ private:
 
 	void initBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture = nullptr);
 
+	void forceTurnOnAOVs(const std::vector<int>& aovsToAdd, bool allocBuffer = false);
 	void turnOnAOVsForDenoiser(bool allocBuffer = false);
+	void turnOnAOVsForContour(bool allocBuffer = false);
 	bool CanCreateAiDenoiser() const;
 	void setupDenoiserFB(void);
 	void setupDenoiserRAM(void);
 	void BuildLateinitObjects();
 
 private:
+	std::mutex m_rifLock;
 	std::shared_ptr<ImageFilter> m_denoiserFilter;
 
 	frw::DirectionalLight m_defaultLight;
@@ -686,7 +705,7 @@ private:
 	FireRenderObjectMap m_sceneObjects;
 
 	// Main mutex
-	MMutexLock m_mutex;
+	std::mutex m_mutex;
 
 	// these are all automatically destructing handles
 	struct Handles
@@ -721,6 +740,9 @@ private:
 
 	bool m_viewportMotionBlur;
 
+	// motion blur only in velocity aov
+	bool m_velocityAOVMotionBlur;
+
 	// Motion blur camera exposure
 	float m_motionBlurCameraExposure;
 
@@ -740,7 +762,7 @@ private:
 	std::map<FireRenderObject*, std::weak_ptr<FireRenderObject> > m_dirtyObjects;
 
 	/** Mutex used for disabling simultaneous access to dirty objects list. */
-	MMutexLock m_dirtyMutex;
+	std::mutex m_dirtyMutex;
 
 	/** Holds current globals state obtained in previous refresh call. */
 	FireRenderGlobalsData m_globals;
@@ -775,7 +797,7 @@ private:
 	}
 
 	/** map corresponds shape in Maya with main FireRenderMesh (used for instancing) **/
-	std::map<std::string, const FireRenderMesh*> m_mainMeshesDictionary;
+	std::map<std::string, const FireRenderMeshCommon*> m_mainMeshesDictionary;
 
 	/** map corresponding dag path of the node with the mode **/
 	std::map<std::string, MDagPath> m_nodePathCache;
@@ -809,7 +831,7 @@ public:
 	frw::Scene GetScene() { return scope.Scene(); }
 	frw::Context GetContext() { return scope.Context(); }
 	frw::MaterialSystem GetMaterialSystem() { return scope.MaterialSystem(); }
-	frw::Shader GetShader(MObject ob, const FireRenderMeshCommon* pMesh = nullptr, bool forceUpdate = false); // { return scope.GetShader(ob, forceUpdate); }
+	frw::Shader GetShader(MObject ob, MObject shadingEngine = MObject(), const FireRenderMeshCommon* pMesh = nullptr, bool forceUpdate = false); // { return scope.GetShader(ob, forceUpdate); }
 	frw::Shader GetVolumeShader(MObject ob, bool forceUpdate = false) { return scope.GetVolumeShader(ob, forceUpdate); }
 
 	// Width of the framebuffer

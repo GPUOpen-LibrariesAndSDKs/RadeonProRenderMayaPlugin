@@ -52,6 +52,13 @@ global proc createRenderEffectsTab()
 	createFireRenderToneMappingFrame fireRenderTonemappingFrame;
 	setParent ..;
 
+	// Contour Render Mode
+	//
+	frameLayout -label "Contour Render Mode" -cll true -cl 0 fireRenderContourFrame;
+
+	createFireRenderContourFrame ("fireRenderContourFrame");
+	setParent ..;
+
 	setParent ..;
 
 	formLayout
@@ -61,6 +68,96 @@ global proc createRenderEffectsTab()
 		-af fireRenderEffectsScrollLayout "left" 0
 		-af fireRenderEffectsScrollLayout "right" 0
 		$parentForm;
+}
+
+global proc createFireRenderContourFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	setParent $parent;
+
+	columnLayout -adjustableColumn true -cat "left" 10;
+
+	attrControlGrp
+		-label "Enable"
+		-attribute "RadeonProRenderGlobals.contourIsEnabled"
+		-changeCommand "onUpdateContour";
+	
+	attrControlGrp
+		-label "Use Object ID"
+		-attribute "RadeonProRenderGlobals.contourUseObjectID"
+		contourUseObjectID;
+	
+	attrControlGrp
+		-label "Use Material Index"
+		-attribute "RadeonProRenderGlobals.contourUseMaterialID"
+		contourUseMaterialID;
+	
+	attrControlGrp
+		-label "Use Shading Normal"
+		-attribute "RadeonProRenderGlobals.contourUseShadingNormal"
+		contourUseShadingNormal;
+	
+	attrControlGrp
+		-label "Line Width Object"
+		-attribute "RadeonProRenderGlobals.contourLineWidthObjectID" contourLineWidthObjectID;
+	
+	attrControlGrp
+		-label "Line Width Material"
+		-attribute "RadeonProRenderGlobals.contourLineWidthMaterialID" contourLineWidthMaterialID;
+	
+	attrControlGrp
+		-label "Line Width Normal"
+		-attribute "RadeonProRenderGlobals.contourLineWidthShadingNormal" contourLineWidthShadingNormal;
+	
+	attrControlGrp
+		-label "Normal Threshold"
+		-attribute "RadeonProRenderGlobals.contourNormalThreshold" contourNormalThreshold;
+	
+	attrControlGrp
+		-label "Antialiasing"
+		-attribute "RadeonProRenderGlobals.contourAntialiasing" contourAntialiasing;
+
+	attrControlGrp
+		-label "Debug"
+		-attribute "RadeonProRenderGlobals.contourIsDebugEnabled" contourIsDebugEnabled;
+
+	setParent ..;
+	setUITemplate -popTemplate;
+
+	onUpdateContour();
+}
+
+global proc onUpdateContour()
+{
+	$enabled = `getAttr RadeonProRenderGlobals.contourIsEnabled`;
+
+	if($enabled)
+	{
+		$settable = `getAttr -se RadeonProRenderGlobals.aovShadingNormal`;
+		if($settable)
+		{
+			setAttr RadeonProRenderGlobals.aovShadingNormal -lock $enabled $enabled;
+			setAttr RadeonProRenderGlobals.aovMaterialIndex -lock $enabled $enabled;
+			setAttr RadeonProRenderGlobals.aovObjectId -lock $enabled $enabled;
+		}
+	}
+	else
+	{
+		setAttr RadeonProRenderGlobals.aovShadingNormal -lock $enabled;
+		setAttr RadeonProRenderGlobals.aovMaterialIndex -lock $enabled;
+		setAttr RadeonProRenderGlobals.aovObjectId -lock $enabled;
+	}
+
+	attrControlGrp -edit -enable $enabled contourUseObjectID;
+	attrControlGrp -edit -enable $enabled contourUseMaterialID;
+	attrControlGrp -edit -enable $enabled contourUseShadingNormal;
+	attrControlGrp -edit -enable $enabled contourLineWidthObjectID;
+	attrControlGrp -edit -enable $enabled contourLineWidthMaterialID;
+	attrControlGrp -edit -enable $enabled contourLineWidthShadingNormal;
+	attrControlGrp -edit -enable $enabled contourNormalThreshold;
+	attrControlGrp -edit -enable $enabled contourAntialiasing;
+	attrControlGrp -edit -enable $enabled contourIsDebugEnabled;
 }
 
 global proc createFireRenderMotionBlurFrame(string $parent)
@@ -85,17 +182,37 @@ global proc createFireRenderMotionBlurFrame(string $parent)
 			 -attribute "RadeonProRenderGlobals.cameraMotionBlur" cameraMotionBlur;
 	setParent ..;
 
+	frameLayout -label "Motion Blur only in Velocity AOV" -cll false -cl 0 fireRenderVelocityAOVMotionBlur;
+	attrControlGrp
+		-label "Enable"
+		-attribute "RadeonProRenderGlobals.velocityAOVMotionBlur" velocityAOVMotionBlur;
+	setParent ..;
+
 	frameLayout -label "Viewport Render" -cll false -cl 0 fireRenderViewportMotionBlurFrame;
 	attrControlGrp
 		-label "Enable"
 		-attribute "RadeonProRenderGlobals.motionBlurViewport";
 	setParent ..;
 
-
 	setParent ..;
 	setUITemplate -popTemplate;
 
 	onUpdateMotionBlur();
+}
+
+global proc enableDisable16BitOption()
+{
+	$isAOVAndColor = `getAttr RadeonProRenderGlobals.denoiserColorOnly`;
+
+	if($isAOVAndColor == 1)
+	{
+		setAttr RadeonProRenderGlobals.enable16bitCompute 0;
+		attrControlGrp -edit -enable 0 enable16bitComputeCtr;
+	}
+	else
+	{
+		attrControlGrp -edit -enable 1 enable16bitComputeCtr;
+	}
 }
 
 global proc createFireRenderDenoiserFrame(string $parent)
@@ -173,7 +290,13 @@ global proc createFireRenderDenoiserFrame(string $parent)
 	frameLayout -label "Machine Learning" -cll 0 -li 30 denoiserMLFrame;
 		attrControlGrp
 			 -label ""
+			 -changeCommand "enableDisable16BitOption"
 			 -attribute "RadeonProRenderGlobals.denoiserColorOnly";
+		attrControlGrp
+			 -label "Enable 16 bit denoiser"
+			 -enable 0
+			 -attribute "RadeonProRenderGlobals.enable16bitCompute"
+			 enable16bitComputeCtr;
 	setParent ..;
 
 	setParent ..;	// columnLayout ends

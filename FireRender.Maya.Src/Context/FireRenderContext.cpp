@@ -153,6 +153,11 @@ void FireRenderContext::resize(unsigned int w, unsigned int h, bool renderView, 
 	setResolution(w, h, renderView, glTexture);
 }
 
+int FireRenderContext::GetAOVMaxValue()
+{
+	return 0x20;
+}
+
 void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture)
 {
 	RPR_THREAD_ONLY;
@@ -166,13 +171,14 @@ void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool rende
 	if (!context)
 		return;
 
-	for (int i = 0; i != RPR_AOV_MAX; ++i)
+	int MaxAOV = GetAOVMaxValue();
+	for (int i = 0; i != MaxAOV; ++i)
 	{
 		initBuffersForAOV(context, i, glTexture);
 	}
 }
 
-bool FireRenderContext::ConsiderSetupDenoiser(bool useRAMBufer /* = false*/)
+bool FireRenderContext::TryCreateDenoiserImageFilters(bool useRAMBufer /* = false*/)
 {
 	bool shouldDenoise = IsDenoiserSupported() &&
 						(m_globals.denoiserSettings.enabled && 
@@ -210,6 +216,20 @@ void FireRenderContext::enableAOVAndReset(int index, bool flag, rpr_GLuint* glTe
 	resetAOV(index, flag ? glTexture : nullptr);
 }
 
+bool aovExists(int index)
+{
+	if (index <= RPR_AOV_CAMERA_NORMAL)
+		return true;
+
+	if ((index >= RPR_AOV_CRYPTOMATTE_MAT0) && (index <= RPR_AOV_CRYPTOMATTE_MAT2))
+		return true;
+
+	if ((index >= RPR_AOV_CRYPTOMATTE_OBJ0) && (index <= RPR_AOV_CRYPTOMATTE_OBJ2))
+		return true;
+
+	return false;
+}
+
 void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_GLuint* glTexture)
 {
 	rpr_framebuffer_format fmt = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
@@ -217,11 +237,12 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 	m.framebufferAOV[index].Reset();
 	m.framebufferAOV_resolved[index].Reset();
 
-	//auto it = aovsExcluded.find(index); // not all AOVs listed in RadeonProRender.h are supported by Tahoe
-	//if (it != aovsExcluded.end())
-		//return;
-
 	if (!IsAOVSupported(index))
+	{
+		return;
+	}
+
+	if (!aovExists(index))
 	{
 		return;
 	}
@@ -305,6 +326,11 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 	{
 		turnOnAOVsForDenoiser();
 	}
+	
+	if (m_interactive && m_globals.contourIsEnabled)
+	{
+		turnOnAOVsForContour();
+	}
 
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags(m_RenderType);
 
@@ -326,7 +352,7 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 		bool avoidMaterialSystemDeletion_workaround = isViewport && (createFlags & RPR_CREATION_FLAGS_ENABLE_CPU);
 
 		rpr_int res;
-		if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, glViewport, &res))
+		if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, glViewport, &res, false))
 		{
 			// Failed to create context
 			if (glViewport)
@@ -354,8 +380,10 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 			}
 		}
 
+		GetScope().CreateScene();
 		updateLimitsFromGlobalData(m_globals);
-		setupContext(m_globals);
+		setupContextContourMode(m_globals, createFlags);
+		setupContextPostSceneCreation(m_globals);
 
 		setMotionBlurParameters(m_globals);
 
@@ -396,11 +424,34 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 	return true;
 }
 
+static const std::vector<int> g_denoiserAovs = { 
+	RPR_AOV_SHADING_NORMAL, 
+	RPR_AOV_WORLD_COORDINATE,
+	RPR_AOV_OBJECT_ID, 
+	RPR_AOV_DEPTH, 
+	RPR_AOV_DIFFUSE_ALBEDO 
+};
+
 void FireRenderContext::turnOnAOVsForDenoiser(bool allocBuffer)
 {
-	static const std::vector<int> aovsToAdd = { RPR_AOV_SHADING_NORMAL, RPR_AOV_WORLD_COORDINATE,
-		RPR_AOV_OBJECT_ID, RPR_AOV_DEPTH, RPR_AOV_DIFFUSE_ALBEDO };
+	// Turn on necessary AOVs
+	forceTurnOnAOVs(g_denoiserAovs, allocBuffer);
+}
 
+static const std::vector<int> g_contourAovs = {
+	RPR_AOV_OBJECT_ID, 
+	RPR_AOV_SHADING_NORMAL,
+	RPR_AOV_MATERIAL_ID 
+};
+
+void FireRenderContext::turnOnAOVsForContour(bool allocBuffer /*= false*/)
+{
+	// Turn on necessary AOVs
+	forceTurnOnAOVs(g_contourAovs, allocBuffer);
+}
+
+void FireRenderContext::forceTurnOnAOVs(const std::vector<int>& aovsToAdd, bool allocBuffer /*= false*/)
+{
 	// Turn on necessary AOVs
 	for (const int aov : aovsToAdd)
 	{
@@ -410,7 +461,7 @@ void FireRenderContext::turnOnAOVsForDenoiser(bool allocBuffer)
 
 			if (allocBuffer)
 			{
-                auto ctx = scope.Context();
+				auto ctx = scope.Context();
 				initBuffersForAOV(ctx, aov);
 			}
 		}
@@ -621,6 +672,14 @@ void FireRenderContext::setupDenoiserFB()
 				m_denoiserFilter->AddInput(RifNormal, fbShadingNormal, 0.0f);
 				m_denoiserFilter->AddInput(RifDepth, fbDepth, 0.0f);
 				m_denoiserFilter->AddInput(RifAlbedo, fbDiffuseAlbedo, 0.0f);
+
+				p = { RifParamType::RifOther, false };
+				m_denoiserFilter->AddParam("enable16bitCompute", p);
+			}
+			else
+			{
+				p = { RifParamType::RifOther, m_globals.denoiserSettings.enable16bitCompute };
+				m_denoiserFilter->AddParam("enable16bitCompute", p);
 			}
 
 			break;
@@ -724,9 +783,8 @@ void FireRenderContext::setRenderMode(RenderMode renderMode)
 	setDirty();
 }
 
-void FireRenderContext::setPreview()
+void FireRenderContext::SetPreviewMode(int preview)
 {
-	int preview = m_interactive || (m_RenderType == RenderType::Thumbnail); 
 	GetContext().SetParameter(RPR_CONTEXT_PREVIEW, preview);
 }
 
@@ -846,11 +904,11 @@ void FireRenderContext::initSwatchScene()
 	m_sceneObjects["light"] = std::shared_ptr<FireRenderObject>(light);
 
 	m_globals.readFromCurrentScene();
-	setupContext(m_globals);
+	setupContextPostSceneCreation(m_globals);
 
 	UpdateCompletionCriteriaForSwatch();
 
-	setPreview();
+	SetupPreviewMode();
 }
 
 void FireRenderContext::UpdateCompletionCriteriaForSwatch()
@@ -885,9 +943,12 @@ void FireRenderContext::render(bool lock)
 	if (!context)
 		return;
 
+	OnPreRender();
+
 	if (m_restartRender)
 	{
-		for (int i = 0; i != RPR_AOV_MAX; ++i) 
+		int MaxAOV = GetAOVMaxValue();
+		for (int i = 0; i != MaxAOV; ++i) 
 		{
 			if (aovEnabled[i])
 			{
@@ -947,7 +1008,7 @@ void FireRenderContext::render(bool lock)
 	else
 		context.Render();
 
-	if (m_IterationsPowerOf2Mode)
+	if (m_IterationsPowerOf2Mode && !m_globals.contourIsEnabled)
 	{
 		const int maxIterations = 32;
 		if (m_samplesPerUpdate < maxIterations)
@@ -1145,9 +1206,9 @@ void FireRenderContext::BuildLateinitObjects()
 	m_LateinitMASHInstancers.clear();
 }
 
-bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete, bool glViewport, int* pOutRes)
+bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete, bool glViewport, int* pOutRes, bool createScene /*= true*/)
 {
-	return FireRenderThread::RunOnceAndWait<bool>([this, &creation_flags, destroyMaterialSystemOnDelete, glViewport, pOutRes]()
+	return FireRenderThread::RunOnceAndWait<bool>([this, &creation_flags, destroyMaterialSystemOnDelete, glViewport, pOutRes, createScene]()
 	{
 		RPR_THREAD_ONLY;
 
@@ -1174,7 +1235,7 @@ bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool
 			return false;
 		}
 
-		scope.Init(handle, destroyMaterialSystemOnDelete);
+		scope.Init(handle, destroyMaterialSystemOnDelete, createScene);
 
 #ifdef _DEBUG
 		static int dumpDebug;
@@ -1268,6 +1329,11 @@ bool FireRenderContext::ConsiderShadowReflectionCatcherOverride(const ReadFrameB
 		m.framebufferAOV[RPR_AOV_OPACITY] &&
 		scope.GetReflectionCatcherShader();
 
+	if ((!isReflectionCatcher) && (!isShadowCather))
+		return false; // SC or RC not used
+
+	std::lock_guard<std::mutex> lock(m_rifLock);
+
 	TahoePluginVersion version = GetTahoeVersionToUse();
 	bool isRPR20 = version == TahoePluginVersion::RPR2;
 
@@ -1314,7 +1380,7 @@ bool FireRenderContext::ConsiderShadowReflectionCatcherOverride(const ReadFrameB
 	return false;
 }
 
-void FireRenderContext::DebugDumpAOV(int aov) const
+void FireRenderContext::DebugDumpAOV(int aov, char* pathToFile /*= nullptr*/) const
 {
 #ifdef _DEBUG
 	std::map<unsigned int, std::string> aovNames =
@@ -1350,14 +1416,32 @@ void FireRenderContext::DebugDumpAOV(int aov) const
 		,{RPR_AOV_VARIANCE, "RPR_AOV_VARIANCE" }
 		,{RPR_AOV_VIEW_SHADING_NORMAL, "RPR_AOV_VIEW_SHADING_NORMAL" }
 		,{RPR_AOV_REFLECTION_CATCHER, "RPR_AOV_REFLECTION_CATCHER" }
+		,{RPR_AOV_CRYPTOMATTE_MAT0, "RPR_AOV_CRYPTOMATTE_MAT0" }
+		,{RPR_AOV_CRYPTOMATTE_MAT1, "RPR_AOV_CRYPTOMATTE_MAT1" }
+		,{RPR_AOV_CRYPTOMATTE_MAT2, "RPR_AOV_CRYPTOMATTE_MAT2" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ0, "RPR_AOV_CRYPTOMATTE_OBJ0" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ1, "RPR_AOV_CRYPTOMATTE_OBJ1" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ2, "RPR_AOV_CRYPTOMATTE_OBJ2" }
 		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
 	};
 
 	std::stringstream ssFileNameResolved;
+
+	if (pathToFile != nullptr)
+	{
+		ssFileNameResolved << pathToFile;
+	}
+
 	ssFileNameResolved << aovNames[aov] << "_resolved.png";
 	rprFrameBufferSaveToFile(m.framebufferAOV_resolved[aov].Handle(), ssFileNameResolved.str().c_str());
 
 	std::stringstream ssFileNameNOTResolved;
+
+	if (pathToFile != nullptr)
+	{
+		ssFileNameNOTResolved << pathToFile;
+	}
+
 	ssFileNameNOTResolved << aovNames[aov] << "_NOTresolved.png";
 	rprFrameBufferSaveToFile(m.framebufferAOV[aov].Handle(), ssFileNameNOTResolved.str().c_str());
 #endif
@@ -1446,7 +1530,7 @@ RV_PIXEL* FireRenderContext::GetAOVData(const ReadFrameBufferRequestParams& para
 	return data;
 }
 
-void FireRenderContext::MergeOpacity(const ReadFrameBufferRequestParams& params, size_t dataSize)
+void FireRenderContext::MergeOpacity(const ReadFrameBufferRequestParams& params)
 {
 	// No need to merge opacity for any FB other then color
 	if (!params.mergeOpacity || params.aov != RPR_AOV_COLOR)
@@ -1455,6 +1539,8 @@ void FireRenderContext::MergeOpacity(const ReadFrameBufferRequestParams& params,
 	rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
 	if (opacityFrameBuffer == nullptr)
 		return;
+
+	size_t dataSize = (sizeof(RV_PIXEL) * params.PixelCount());
 
 	m_opacityData.resize(params.PixelCount());
 
@@ -1499,37 +1585,18 @@ void FireRenderContext::readFrameBuffer(ReadFrameBufferRequestParams& params)
 	// process shadow and/or reflection catcher logic
 	bool isShadowReflectionCatcherUsed = ConsiderShadowReflectionCatcherOverride(params);
 	if (isShadowReflectionCatcherUsed)
-		return; // fo now; should run denoiser if enabled instead
+		return;
 
-	// load data normally either from RIF or from AOV
-	bool shouldRunDenoiser = (params.aov == RPR_AOV_COLOR && IsDenoiserEnabled() && (!params.isDenoiserDisabled));
-
+	// load data from AOV
 	RV_PIXEL* data = nullptr;
-	std::vector<float> vecData;
-	if (shouldRunDenoiser && (params.aov == RPR_AOV_COLOR))
-	{
-		// - run RIF and load data
-		bool denoiseResult = false;
-		vecData = GetDenoisedData(denoiseResult);
-		if (!denoiseResult)
-			return;
-
-		assert(vecData.size() == params.PixelCount() * 4);
-
-		data = (RV_PIXEL*)&vecData[0];
-	}
-	else
-	{
-		// load data from AOV
-		data = GetAOVData(params);
-	}
+	data = GetAOVData(params);
 
 	// No need to merge opacity for any FB other then color
-	MergeOpacity(params, (sizeof(RV_PIXEL) * params.PixelCount()));
+	MergeOpacity(params);
 
 	// Copy the region from the temporary
 	// buffer into supplied pixel memory.
-	if (params.UseTempData() || IsDenoiserEnabled())
+	if (params.UseTempData() || IsDenoiserCreated())
 	{
 		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
 	}
@@ -1884,8 +1951,11 @@ void FireRenderContext::updateFromGlobals(bool applyLock)
         LOCKFORUPDATE(this);
     }
     
+	auto createFlags = FireMaya::Options::GetContextDeviceFlags(m_RenderType);
+
 	m_globals.readFromCurrentScene();
-	setupContext(m_globals);
+	setupContextContourMode(m_globals, createFlags);
+	setupContextPostSceneCreation(m_globals);
 
 	updateLimitsFromGlobalData(m_globals);
 	updateMotionBlurParameters(m_globals);
@@ -2042,6 +2112,7 @@ void FireRenderContext::setMotionBlurParameters(const FireRenderGlobalsData& glo
 	m_cameraMotionBlur = m_globals.cameraMotionBlur;
 	m_motionBlurCameraExposure = m_globals.motionBlurCameraExposure;
 	m_viewportMotionBlur = globalData.viewportMotionBlur;
+	m_velocityAOVMotionBlur = globalData.velocityAOVMotionBlur;
 }
 
 bool FireRenderContext::isInteractive() const
@@ -2135,6 +2206,8 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		MFnDagNode dagNode(node);
 		MDagPath dagPathTmp;
 
+		bool isGPUCacheNode = false;
+
 		if (isGeometry(node))
 		{
 			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::AddPath>(dagPath);
@@ -2204,9 +2277,18 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			ob = CreateSceneObject<FireRenderHairOrnatrix, NodeCachingOptions::AddPath>(dagPath);
 		}
-		else if (isTransformWithInstancedShape(node, dagPathTmp))
+		else if (isTransformWithInstancedShape(node, dagPathTmp, isGPUCacheNode))
 		{
-			ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::DontAddPath>(dagPathTmp);
+			if (isGPUCacheNode)
+			{
+				#ifdef WIN32
+				ob = CreateSceneObject<FireRenderGPUCache, NodeCachingOptions::DontAddPath>(dagPathTmp);
+				#endif
+			}
+			else
+			{
+				ob = CreateSceneObject<FireRenderMesh, NodeCachingOptions::DontAddPath>(dagPathTmp);
+			}
 		}
 		else if (dagNode.typeName() == "pfxHair" && hairSupported)
 		{
@@ -2352,6 +2434,20 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 {
 	MAIN_THREAD_ONLY;
 
+	// update camera world coordinate plug. it needs to have callbacks works in command line mode.
+	// In UI it works better because viewport uses camera position in order to render the image thus it is cleaning and updating this plug.
+	if (!m_callbackCreationDisabled)
+	{
+		MDagPath cameraTransformDagPath = m_camera.DagPath();
+
+		// getting dagpath for camera transform here
+		cameraTransformDagPath.pop();
+
+		// Requesting value for World Matrix plug. It will recompute value, set plug as "clean" 
+		// and call callback if camera postion was changed before.
+		cameraTransformDagPath.inclusiveMatrix();
+	}
+
 	if (!isDirty() || cancelled())
 		return false;
 
@@ -2396,40 +2492,43 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncStarted);
 
-	for (auto it = m_dirtyObjects.begin(); it != m_dirtyObjects.end(); )
+	while (!m_dirtyObjects.empty())
 	{
-		if ((m_state != FireRenderContext::StateRendering) && (m_state != FireRenderContext::StateUpdating))
-			break;
-
-		// Request the object with removal it from the dirty list. Use mutex to prevent list's modifications.
-		m_dirtyMutex.lock();
-		
-		std::shared_ptr<FireRenderObject> ptr = it->second.lock();
-
-		it = m_dirtyObjects.erase(it);
-
-		m_dirtyMutex.unlock();
-
-		// Now perform update
-		if (ptr)
+		for (auto it = m_dirtyObjects.begin(); it != m_dirtyObjects.end(); )
 		{
-			changed = true;
-			DebugPrint("Freshing object");
+			if ((m_state != FireRenderContext::StateRendering) && (m_state != FireRenderContext::StateUpdating))
+				break;
 
-			UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectPreSync);
-			ptr->Freshen();
+			// Request the object with removal it from the dirty list. Use mutex to prevent list's modifications.
+			m_dirtyMutex.lock();
 
-			syncProgressData.currentIndex++;
-			UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectSyncComplete);
+			std::shared_ptr<FireRenderObject> ptr = it->second.lock();
 
-			if (cancelled())
+			it = m_dirtyObjects.erase(it);
+
+			m_dirtyMutex.unlock();
+
+			// Now perform update
+			if (ptr)
 			{
-				return false;
+				changed = true;
+				DebugPrint("Freshing object");
+
+				UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectPreSync);
+				ptr->Freshen();
+
+				syncProgressData.currentIndex++;
+				UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectSyncComplete);
+
+				if (cancelled())
+				{
+					return false;
+				}
 			}
-		}
-		else
-		{
-			DebugPrint("Cancelled freshing null object");
+			else
+			{
+				DebugPrint("Cancelled freshing null object");
+			}
 		}
 	}
 
@@ -2442,7 +2541,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		setCameraAttributeChanged(true);
 	}
 
-	setPreview();
+	SetupPreviewMode();
 
 	if (cancelled())
 		return false;
@@ -3024,7 +3123,7 @@ bool FireRenderContext::ShouldResizeTexture(unsigned int& max_width, unsigned in
 	return false;
 }
 
-frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMeshCommon* pMesh, bool forceUpdate)
+frw::Shader FireRenderContext::GetShader(MObject ob, MObject shadingEngine, const FireRenderMeshCommon* pMesh, bool forceUpdate)
 { 
 	scope.SetContextInfo(this);
 
@@ -3033,6 +3132,18 @@ frw::Shader FireRenderContext::GetShader(MObject ob, const FireRenderMeshCommon*
 	frw::Shader shader = scope.GetShader(ob, pMesh, forceUpdate);
 
 	shader.SetName(node.name().asChar());
+
+	if (!shadingEngine.isNull())
+	{
+		MFnDependencyNode sgDependecyNode(shadingEngine);
+
+		MPlug materialIdPlug = sgDependecyNode.findPlug("rmi", false);
+
+		if (!materialIdPlug.isNull())
+		{
+			shader.SetMaterialId(materialIdPlug.asInt());
+		}
+	}
 
 	return shader;
 }
@@ -3057,3 +3168,122 @@ frw::Shader FireRenderContext::GetDefaultColorShader(frw::Value color)
 
 	return shader;
 }
+
+void FireRenderContext::ForEachFramebuffer(
+	std::function<void(int aovId)> actionFunc,
+	std::function<bool(int aovId)> filter
+)
+{
+	for (int id = RPR_AOV_COLOR; id < RPR_AOV_MAX; ++id)
+	{
+		if (!aovEnabled[id])
+			continue;
+
+		if (!filter(id))
+			continue;
+
+		actionFunc(id);
+	}
+}
+
+std::vector<float> FireRenderContext::DenoiseIntoRAM()
+{
+	bool shouldDenoise = IsDenoiserEnabled() &&
+		((m_RenderType == RenderType::ProductionRender) || (m_RenderType == RenderType::IPR));
+
+	if (!shouldDenoise)
+		return std::vector<float>();
+
+	bool useRAMBuffer = ShouldForceRAMDenoiser();
+
+	// setup params
+	RenderRegion tempRegion;
+	if (useRegion())
+	{
+		tempRegion = m_region;
+	}
+	else
+	{
+		tempRegion = RenderRegion(m_width, m_height);
+	}
+
+	ReadFrameBufferRequestParams params(tempRegion);
+	params.width = m_width;
+	params.height = m_height;
+	params.flip = false;
+	params.mergeOpacity = false;
+	params.mergeShadowCatcher = true;
+	params.shadowColor = m_shadowColor;
+	params.bgColor = m_bgColor;
+	params.bgWeight = m_bgWeight;
+	params.shadowTransp = m_shadowTransparency;
+	params.bgTransparency = m_backgroundTransparency;
+	params.shadowWeight = m_shadowWeight;
+	
+	// read frame buffers
+	if (useRAMBuffer)
+	{
+		ReadDenoiserFrameBuffersIntoRAM(params);
+	}
+
+	std::lock_guard<std::mutex> lock(m_rifLock);
+	bool isDenoiserInitialized = TryCreateDenoiserImageFilters(useRAMBuffer); // will read data from outBuffers if useRAMBuffer == true
+	assert(isDenoiserInitialized);
+	if (!isDenoiserInitialized || !IsDenoiserCreated())
+		return std::vector<float>();
+
+	// run denoiser on cached data
+	std::vector<float> vecData;
+	bool denoiseResult = false;
+	vecData = GetDenoisedData(denoiseResult);
+	assert(denoiseResult);
+
+	// save denoiser result in RAM buffer
+	RV_PIXEL* data = (RV_PIXEL*)vecData.data();
+	if (useRAMBuffer)
+	{
+		m_pixelBuffers[RPR_AOV_COLOR].overwrite(data, tempRegion, params.height, params.width, RPR_AOV_COLOR);
+		params.pixels = m_pixelBuffers[RPR_AOV_COLOR].get();
+		// run merge opacity
+		params.aov = RPR_AOV_COLOR;
+		params.mergeOpacity = camera().GetAlphaMask() && isAOVEnabled(RPR_AOV_OPACITY);
+		MergeOpacity(params);
+		// combine (Opacity to Alpha)
+		CombineOpacity(params);
+	}
+
+	return vecData;
+}
+
+void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestParams& params)
+{
+	m_pixelBuffers.clear();
+
+	ForEachFramebuffer([&](int aovId)
+	{
+		auto ret = m_pixelBuffers.insert(std::pair<unsigned int, PixelBuffer>(aovId, PixelBuffer()));
+		ret.first->second.resize(m_width, m_height);
+
+		// setup params
+		params.pixels = m_pixelBuffers[aovId].get();
+		params.aov = aovId;
+
+		// process frame buffer
+		readFrameBuffer(params);
+
+		// debug
+#ifdef DENOISE_RAM_DBG
+		m_pixelBuffers[aovId].debugDump(m_height, m_width, FireRenderAOV::GetAOVName(aovId), "C:\\temp\\dbg\\");
+#endif
+	},
+
+	[](int aovId)->bool
+	{
+		if (aovId == RPR_AOV_COLOR)
+			return true;
+
+		// is denoiser AOV
+		return (std::find(g_denoiserAovs.begin(), g_denoiserAovs.end(), aovId) != g_denoiserAovs.end());
+	});
+}
+

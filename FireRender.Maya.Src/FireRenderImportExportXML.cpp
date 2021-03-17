@@ -209,13 +209,17 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 		if (node.isNull())
 			continue;
 
+		MObject shadingEngine;
 		if (node.hasFn(MFn::kShadingEngine))
+		{
+			shadingEngine = node;
 			node = getSurfaceShader(node);
+		}
 
 		MFnDependencyNode depNode(node);
 		std::string material_name ( depNode.name().asChar() );
 
-		frw::Shader shader = context.GetShader(node);
+		frw::Shader shader = context.GetShader(node, shadingEngine);
 
 		if (!shader)
 		{

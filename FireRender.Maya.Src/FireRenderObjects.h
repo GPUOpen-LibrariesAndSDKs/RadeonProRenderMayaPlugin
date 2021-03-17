@@ -274,6 +274,13 @@ public:
 	void AddForceShaderDirtyDependOnOtherObjectCallback(MObject dependency);
 	static void ForceShaderDirtyCallback(MObject& node, void* clientData);
 
+	// Mesh bits (each one may have separate shading engine)
+	std::vector<FrElement>& Elements() { return m.elements; }
+	const std::vector<FrElement>& Elements() const { return m.elements; }
+	FrElement& Element(int i) { return m.elements[i]; }
+
+	bool IsMainInstance() const { return m.isMainInstance; }
+
 	// utility functions
 	void setRenderStats(MDagPath dagPath);
 	void setVisibility(bool visibility);
@@ -281,6 +288,7 @@ public:
 	void setRefractionVisibility(bool refractionVisibility);
 	void setCastShadows(bool castShadow);
 	void setPrimaryVisibility(bool primaryVisibility);
+	void setContourVisibility(bool contourVisibility);
 
 protected:
 	// Detach from the scene
@@ -291,7 +299,7 @@ protected:
 
 	// utility functions
 	void AssignShadingEngines(const MObjectArray& shadingEngines);
-
+	void ProcessMotionBlur(MFnDagNode& meshFn);
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const = 0;
 
 protected:
@@ -363,13 +371,6 @@ public:
 	void ProcessIBLLight(void);
 	void ProcessSkyLight(void);
 	void RebuildTransforms(void);
-
-	// Mesh bits (each one may have separate shading engine)
-	std::vector<FrElement>& Elements() { return m.elements; }
-	const std::vector<FrElement>& Elements() const { return m.elements; }
-	FrElement& Element(int i) { return m.elements[i]; }
-
-	bool IsMainInstance() const { return m.isMainInstance; }
 
 protected:
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;
@@ -790,6 +791,13 @@ public:
 	// node dirty
 	virtual void OnShaderDirty(void);
 
+	// visibility flags
+	virtual void setRenderStats(MDagPath dagPath);
+	void setPrimaryVisibility(bool primaryVisibility);
+	void setReflectionVisibility(bool reflectionVisibility);
+	void setRefractionVisibility(bool refractionVisibility);
+	void setCastShadows(bool castShadow);
+
 protected:
 	// applies transform to node
 	void ApplyTransform(void);
@@ -797,6 +805,8 @@ protected:
 	// applies material connected to hair shader to Curves
 	// returns false if no such material was found
 	bool ApplyMaterial(void);
+
+	virtual frw::Shader ParseNodeAttributes(MObject hairObject, const FireMaya::Scope& scope) { return frw::Shader(); }
 
 	// set albedo
 	// NIY
@@ -826,6 +836,9 @@ public:
 	// Destructor
 	virtual ~FireRenderHairXGenGrooming();
 
+	// visibility flags
+	virtual void setRenderStats(MDagPath dagPath);
+
 protected:
 	virtual bool CreateCurves(void);
 };
@@ -838,6 +851,9 @@ public:
 
 	// Destructor
 	virtual ~FireRenderHairOrnatrix();
+
+	// visibility flags
+	virtual void setRenderStats(MDagPath dagPath);
 
 protected:
 	virtual bool CreateCurves(void);
@@ -855,8 +871,13 @@ public:
 	// Register the callback
 	virtual void RegisterCallbacks(void) override;
 
+	// visibility flags
+	virtual void setRenderStats(MDagPath dagPath);
+
 protected:
 	virtual bool CreateCurves(void);
+
+	virtual frw::Shader ParseNodeAttributes(MObject hairObject, const FireMaya::Scope& scope);
 };
 
 class FireRenderCustomEmitter : public FireRenderLight

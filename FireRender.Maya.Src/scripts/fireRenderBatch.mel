@@ -30,6 +30,11 @@ global proc fireRenderCmdlineRender(string $option)
 
 global proc string fireRenderBatchRenderOptionsString()
 {
+	// This is batch related function which gets executed in main Maya's process.
+	// This is the only place I found where we can save prefs (optionvars) before batch render starts in a separate child process.
+	// Without doing this batch render might take incorrect hardware setup if such hardware setup was changed during the current Maya's session
+	savePrefs -general;
+
 	int $frCommandPort = 0;
 	int $i = 0;
 	for ($i = 9000; $i<9200; $i++)

@@ -115,7 +115,7 @@ global proc setupFireRenderLayeredMaterial(string $node)
 	string $fresnel = `shadingNode -asUtility $fresnelName`;
 	string $blend = `shadingNode -asShader $blendMaterialName`;
 
-	connectAttr ($fresnel + ".out0") ($blend + ".weight") -f;
+	connectAttr ($fresnel + ".out") ($blend + ".weight") -f;
 	connectAttr ($microfacet + ".outColor") ($blend + ".color1") -f;
 	connectAttr ($diffuse + ".outColor") ($blend + ".color0") -f;
 
@@ -123,7 +123,7 @@ global proc setupFireRenderLayeredMaterial(string $node)
 	setAttr ($refract + ".type") 4;
 	string $fresnel2 = `shadingNode -asUtility $fresnelName`;
 
-	connectAttr ($fresnel2 + ".out0") ($node + ".weight") -f;
+	connectAttr ($fresnel2 + ".out") ($node + ".weight") -f;
 	connectAttr ($refract + ".outColor") ($node + ".color0") -f;
 	connectAttr ($blend + ".outColor") ($node + ".color1") -f;
 
