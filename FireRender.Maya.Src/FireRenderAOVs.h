@@ -76,7 +76,7 @@ public:
 	void freePixels();
 
 	/** Read the frame buffer pixels for all active AOVs. */
-	void readFrameBuffers(FireRenderContext& context, bool flip);
+	void readFrameBuffers(FireRenderContext& context);
 
 	/** Write the active AOVs to file. */
 	void writeToFile(const MString& filePath, unsigned int imageFormat, FireRenderAOV::FileWrittenCallback fileWrittenCallback = nullptr);
