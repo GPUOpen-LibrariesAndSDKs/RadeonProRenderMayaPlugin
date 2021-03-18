@@ -497,7 +497,7 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 				}
 
 				// Resolve the frame buffer and read pixels into AOVs.
-				aovs.readFrameBuffers(context, false);
+				aovs.readFrameBuffers(context);
 
 				// Save the frame to file.
 				aovs.writeToFile(filePath, settings.imageFormat);
