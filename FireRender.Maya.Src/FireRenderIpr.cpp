@@ -11,20 +11,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ********************************************************************/
 #include "FireRenderIpr.h"
+
+#include "FireRenderThread.h"
+#include "AutoLock.h"
+
+#include "RenderViewUpdater.h"
+
+#include "FireRenderUtils.h"
+#include "RenderStampUtils.h"
+
+#include "Context/ContextCreator.h"
+
 #include <tbb/atomic.h>
 #include <maya/MRenderView.h>
 #include <maya/MViewport2Renderer.h>
 #include <maya/MGlobal.h>
-#include "FireRenderThread.h"
-#include "AutoLock.h"
-#include <thread>
-#include <mutex>
-
-#include "FireRenderUtils.h"
-#include "RenderStampUtils.h"
 #include "maya/MItSelectionList.h"
 
-#include "Context/ContextCreator.h"
+#include <thread>
+#include <mutex>
 
 using namespace std;
 using namespace std::chrono;
@@ -399,9 +404,6 @@ bool FireRenderIpr::RunOnViewportThread()
 
 					RV_PIXEL* data = (RV_PIXEL*)vecData.data();
 
-					// Need to flip by Y because Maya render view is mirrored by Y compared to frame buffer in RPR 
-					ImageMirrorByY(data, m_width, m_height);
-
 					// put denoised image to ipr buffer
 					memcpy(m_pixels.data(), data, sizeof(RV_PIXEL) * m_pixels.size());
 
@@ -521,16 +523,7 @@ void FireRenderIpr::updateRenderView()
 		// Acquire the pixels lock.
 		AutoMutexLock pixelsLock(m_pixelsLock);
 
-		// Update the render view pixels.
-		MRenderView::updatePixels(
-			m_region.left, m_region.right,
-			m_region.bottom, m_region.top,
-			m_pixels.data(), true);
-
-		// Refresh the render view.
-		MRenderView::refresh(
-			m_region.left, m_region.right,
-			m_region.bottom, m_region.top);
+		RenderViewUpdater::UpdateAndRefreshRegion(m_pixels.data(), m_region.left, m_region.bottom, m_region.right, m_region.top);
 
 		updateMayaRenderInfo();
 
@@ -608,7 +601,6 @@ void FireRenderIpr::readFrameBuffer()
 	params.aov = m_currentAOVToDisplay;
 	params.width = m_contextPtr->width();
 	params.height = m_contextPtr->height();
-	params.flip = true;
 	params.mergeOpacity = false;
 	params.mergeShadowCatcher = true;
 	params.shadowColor = m_contextPtr->m_shadowColor;
