@@ -940,7 +940,7 @@ void FireRenderProduction::DenoiseFromAOVs()
 		data = (RV_PIXEL*)vecData.data();
 	}
 
-	m_renderViewAOV->pixels.overwrite(data, m_region, m_height, m_width, RPR_AOV_COLOR);
+ 	m_renderViewAOV->pixels.overwrite(data, RenderRegion(0, m_region.right - m_region.left, m_region.top - m_region.bottom, 0), m_region.getHeight(), m_region.getWidth(), RPR_AOV_COLOR);
 
 	// apply render stamp
 	FireMaya::RenderStamp renderStamp;
@@ -957,7 +957,7 @@ void FireRenderProduction::DenoiseFromAOVs()
 	// Update the Maya render view.
 	FireRenderThread::RunProcOnMainThread([this, data]()
 	{
-		RenderViewUpdater::UpdateAndRefreshRegion(data, 0, 0, m_width - 1, m_height - 1);
+		RenderViewUpdater::UpdateAndRefreshRegion(data, m_region.left, m_region.bottom, m_region.right, m_region.top);
 	});
 }
 
