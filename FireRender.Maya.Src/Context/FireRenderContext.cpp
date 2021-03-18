@@ -17,7 +17,6 @@ limitations under the License.
 #include <float.h>
 #include <maya/MDagPathArray.h>
 #include <maya/MMatrix.h>
-#include <maya/MRenderView.h>
 #include <maya/MFnNurbsSurface.h>
 #include <maya/MFnMeshData.h>
 #include <maya/MFnMesh.h>
@@ -1551,7 +1550,7 @@ void FireRenderContext::MergeOpacity(const ReadFrameBufferRequestParams& params)
 		rpr_int frstatus = rprFrameBufferGetInfo(opacityFrameBuffer, RPR_FRAMEBUFFER_DATA, dataSize, m_opacityTempData.get(), nullptr);
 		checkStatus(frstatus);
 
-		copyPixels(m_opacityData.get(), m_opacityTempData.get(), params.width, params.height, params.region, params.flip);
+		copyPixels(m_opacityData.get(), m_opacityTempData.get(), params.width, params.height, params.region);
 	}
 	else
 	{
@@ -1598,7 +1597,7 @@ void FireRenderContext::readFrameBuffer(ReadFrameBufferRequestParams& params)
 	// buffer into supplied pixel memory.
 	if (params.UseTempData() || IsDenoiserCreated())
 	{
-		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
+		copyPixels(params.pixels, data, params.width, params.height, params.region);
 	}
 
 	//combine (Opacity to Alpha)
@@ -1613,7 +1612,7 @@ void generateBitmapImage(unsigned char *image, int height, int width, int pitch,
 // -----------------------------------------------------------------------------
 void FireRenderContext::copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 	unsigned int sourceWidth, unsigned int sourceHeight,
-	const RenderRegion& region, bool flip) const
+	const RenderRegion& region) const
 {
 	RPR_THREAD_ONLY;
 	// Get region dimensions.
@@ -1624,8 +1623,7 @@ void FireRenderContext::copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 	{
 		unsigned int destIndex = y * regionWidth;
 				
-		unsigned int sourceIndex = flip ?
-			(sourceHeight - (region.bottom + y) - 1) * sourceWidth + region.left :
+		unsigned int sourceIndex = 
 			(sourceHeight - (region.top - y) - 1) * sourceWidth + region.left;
 
 		memcpy(&dest[destIndex], &source[sourceIndex], sizeof(RV_PIXEL) * regionWidth);
@@ -2757,7 +2755,7 @@ void FireRenderContext::doOutputFromComposites(const ReadFrameBufferRequestParam
 
 	if (useTempData)
 	{
-		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
+		copyPixels(params.pixels, data, params.width, params.height, params.region);
 	}
 }
 
@@ -2864,7 +2862,7 @@ void FireRenderContext::rifShadowCatcherOutput(const ReadFrameBufferRequestParam
 		shadowCatcherFilter->Run();
 		std::vector<float> vecData = shadowCatcherFilter->GetData();
 		RV_PIXEL* data = (RV_PIXEL*)&vecData[0];
-		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
+		copyPixels(params.pixels, data, params.width, params.height, params.region);
 	}
 	catch (std::exception& e)
 	{
@@ -2915,7 +2913,7 @@ void FireRenderContext::rifReflectionCatcherOutput(const ReadFrameBufferRequestP
 		catcherFilter->Run();
 		std::vector<float> vecData = catcherFilter->GetData();
 		RV_PIXEL* data = (RV_PIXEL*)&vecData[0];
-		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
+		copyPixels(params.pixels, data, params.width, params.height, params.region);
 	}
 	catch (std::exception& e)
 	{
@@ -2983,7 +2981,7 @@ void FireRenderContext::rifReflectionShadowCatcherOutput(const ReadFrameBufferRe
 		catcherFilter->Run();
 		std::vector<float> vecData = catcherFilter->GetData();
 		RV_PIXEL* data = (RV_PIXEL*)&vecData[0];
-		copyPixels(params.pixels, data, params.width, params.height, params.region, params.flip);
+		copyPixels(params.pixels, data, params.width, params.height, params.region);
 	}
 	catch (std::exception& e)
 	{
@@ -3210,7 +3208,6 @@ std::vector<float> FireRenderContext::DenoiseIntoRAM()
 	ReadFrameBufferRequestParams params(tempRegion);
 	params.width = m_width;
 	params.height = m_height;
-	params.flip = false;
 	params.mergeOpacity = false;
 	params.mergeShadowCatcher = true;
 	params.shadowColor = m_shadowColor;
