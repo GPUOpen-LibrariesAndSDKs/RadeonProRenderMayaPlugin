@@ -957,11 +957,7 @@ void FireRenderProduction::DenoiseFromAOVs()
 	// Update the Maya render view.
 	FireRenderThread::RunProcOnMainThread([this, data]()
 	{
-<<<<<<< HEAD
 		RenderViewUpdater::UpdateAndRefreshRegion(data, m_region.left, m_region.bottom, m_region.right, m_region.top);
-=======
-		RenderViewUpdater::UpdateAndRefreshRegion(data, 0, 0, m_width - 1, m_height - 1);
->>>>>>> origin/develop
 	});
 }
 
