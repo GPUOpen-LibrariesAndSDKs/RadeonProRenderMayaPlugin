@@ -262,10 +262,8 @@ public:
 		float bgTransparency;
 		float bgWeight;
 		const RenderRegion& region;
-		bool flip;
 		bool mergeOpacity;
 		bool mergeShadowCatcher;
-		bool isDenoiserDisabled;
 
 		ReadFrameBufferRequestParams(const RenderRegion& _region)
 			: pixels(nullptr)
@@ -279,14 +277,12 @@ public:
 			, bgTransparency(0.0f)
 			, bgWeight(1.0f)
 			, region(_region)
-			, flip(false)
 			, mergeOpacity(false)
 			, mergeShadowCatcher(false)
-			, isDenoiserDisabled(false)
 		{};
 
 		unsigned int PixelCount(void) const { return (width*height); }
-		bool UseTempData(void) const { return (flip || region.getWidth() < width || region.getHeight() < height); }
+		bool UseTempData(void) const { return (region.getWidth() < width || region.getHeight() < height); }
 	};
 
 	// Read frame buffer pixels and optionally normalize and flip the image.
@@ -324,7 +320,7 @@ public:
 	// Copy pixels from the source buffer to the destination buffer.
 	void copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 		unsigned int sourceWidth, unsigned int sourceHeight,
-		const RenderRegion& region, bool flip) const;
+		const RenderRegion& region) const;
 
 	// Combine pixels (set alpha) with Opacity pixels
 	void combineWithOpacity(RV_PIXEL* pixels, unsigned int size, RV_PIXEL *opacityPixels = NULL) const;

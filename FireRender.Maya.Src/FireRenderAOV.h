@@ -154,7 +154,7 @@ public:
 	void freePixels();
 
 	/** Read the frame buffer pixels for this AOV. */
-	void readFrameBuffer(FireRenderContext& context, bool flip, bool isDenoiserDisabled = false);
+	void readFrameBuffer(FireRenderContext& context);
 
 	/** Send the AOV pixels to the Maya render view. */
 	void sendToRenderView();

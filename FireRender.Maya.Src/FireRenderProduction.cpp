@@ -25,6 +25,7 @@ limitations under the License.
 #include "FireRenderGlobals.h"
 #include "FireRenderUtils.h"
 #include "RenderStampUtils.h"
+#include "RenderViewUpdater.h"
 
 #include "TileRenderer.h"
 #include "Athena/athenaWrap.h"
@@ -424,7 +425,7 @@ void FireRenderProduction::OnBufferAvailableCallback(float progress)
 	bool frameFinished = fabs(1.0f - progress) <= FLT_EPSILON;
 	bool shouldUpdateRenderView = !m_contextPtr->IsDenoiserCreated() || (m_contextPtr->IsDenoiserCreated() && frameFinished);
 
-	m_renderViewAOV->readFrameBuffer(*m_contextPtr, true, !frameFinished);
+	m_renderViewAOV->readFrameBuffer(*m_contextPtr);
 	
 	if (!shouldUpdateRenderView)
 		return;
@@ -951,18 +952,12 @@ void FireRenderProduction::DenoiseFromAOVs()
 
 		stampStr = aov.renderStamp;
 	});
-	renderStamp.AddRenderStamp(*m_contextPtr, data, m_width, m_height, false, stampStr.asChar());
-
-	// Need to flip by Y because Maya render view is mirrored by Y compared to frame buffer in RPR 
-	ImageMirrorByY(data, m_width, m_height);
+	renderStamp.AddRenderStamp(*m_contextPtr, data, m_width, m_height, stampStr.asChar());
 
 	// Update the Maya render view.
 	FireRenderThread::RunProcOnMainThread([this, data]()
 	{
-		MRenderView::updatePixels(0, (m_width - 1),
-			0, (m_height - 1), data, true);
-
-		MRenderView::refresh(0, m_width - 1, 0, m_height - 1);
+		RenderViewUpdater::UpdateAndRefreshRegion(data, 0, 0, m_width - 1, m_height - 1);
 	});
 }
 
@@ -1005,17 +1000,11 @@ void FireRenderProduction::RenderTiles()
 
 		m_contextPtr->render(false);
 
-		// Read pixel data for the AOV displayed in the render
-		// view. Flip the image so it's the right way up in the view.
-		// - readFrameBuffer function also can do denoiser setup
-		m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov)
-		{
-			aov.readFrameBuffer(*m_contextPtr, true, true);
-		});
-
 		// copy data to buffer
 		m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov)
 		{
+			aov.readFrameBuffer(*m_contextPtr);
+
 			auto it = out.find(aov.id);
 
 			if (it == out.end())
@@ -1028,11 +1017,7 @@ void FireRenderProduction::RenderTiles()
 		FireRenderThread::RunProcOnMainThread([this, region]()
 		{
 			// Update the Maya render view.
-			MRenderView::updatePixels(region.left, region.right,
-			region.bottom, region.top, m_renderViewAOV->pixels.get(), true);
-
-			// Refresh the render view.
-			MRenderView::refresh(region.left, region.right, region.bottom, region.top);
+			RenderViewUpdater::UpdateAndRefreshRegion(m_renderViewAOV->pixels.get(), region.left, region.bottom, region.right, region.top);
 
 			if (rcWarningDialog.shown)
 				rcWarningDialog.close();
@@ -1080,9 +1065,11 @@ void FireRenderProduction::RenderTiles()
 		data = it->second.get();
 	}
 
-	// Update the Maya render view.
-	MRenderView::updatePixels(0, (m_width - 1),
-		0, (m_height - 1), data, true);
+	FireRenderThread::RunProcOnMainThread([this, data]()
+	{
+		// Update the Maya render view.
+		RenderViewUpdater::UpdateAndRefreshRegion(data, 0, 0, m_width - 1, m_height - 1);
+	});
 
 	outBuffers.clear();
 
@@ -1097,11 +1084,10 @@ void FireRenderProduction::RenderFullFrame()
 
 	m_contextPtr->updateProgress();
 
-	// Read pixel data for the AOV displayed in the render
-	// view. Flip the image so it's the right way up in the view.
+	// Read pixel data for the AOV displayed in the render view.
 	{
 		AutoMutexLock pixelsLock(m_pixelsLock);
-		m_renderViewAOV->readFrameBuffer(*m_contextPtr, true);
+		m_aovs->readFrameBuffers(*m_contextPtr);
 
 		FireRenderThread::RunProcOnMainThread([this]()
 		{
@@ -1111,8 +1097,6 @@ void FireRenderProduction::RenderFullFrame()
 			if (rcWarningDialog.shown)
 				rcWarningDialog.close();
 		});
-
-		m_aovs->readFrameBuffers(*m_contextPtr, false);
 	}
 
 	if (GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->IsSavingIntermediateEnabled())

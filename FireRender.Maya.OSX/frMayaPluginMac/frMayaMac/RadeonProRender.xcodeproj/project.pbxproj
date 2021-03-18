@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5003A2AA26021C8700805EAD /* RenderViewUpdater.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5003A2A726021C8700805EAD /* RenderViewUpdater.cpp */; };
+		5003A2AB26021C8700805EAD /* RenderViewUpdater.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5003A2A726021C8700805EAD /* RenderViewUpdater.cpp */; };
+		5003A2AC26021C8700805EAD /* RenderViewUpdater.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5003A2A726021C8700805EAD /* RenderViewUpdater.cpp */; };
+		5003A2AD26021C8700805EAD /* RenderViewUpdater.h in Headers */ = {isa = PBXBuildFile; fileRef = 5003A2A926021C8700805EAD /* RenderViewUpdater.h */; };
+		5003A2AE26021C8700805EAD /* RenderViewUpdater.h in Headers */ = {isa = PBXBuildFile; fileRef = 5003A2A926021C8700805EAD /* RenderViewUpdater.h */; };
+		5003A2AF26021C8700805EAD /* RenderViewUpdater.h in Headers */ = {isa = PBXBuildFile; fileRef = 5003A2A926021C8700805EAD /* RenderViewUpdater.h */; };
 		50AC4CEC2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 50AC4CEB2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib */; };
 		50AC4CED2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 50AC4CEB2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib */; };
 		50AC4CEE2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 50AC4CEB2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib */; };
@@ -1031,6 +1037,8 @@
 		4DE6450A1DA2774A0076E6A7 /* RenderProgressBars.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RenderProgressBars.cpp; path = ../../../FireRender.Maya.Src/RenderProgressBars.cpp; sourceTree = "<group>"; };
 		4DE6450D1DA277BC0076E6A7 /* RenderProgressBars.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RenderProgressBars.h; path = ../../../FireRender.Maya.Src/RenderProgressBars.h; sourceTree = "<group>"; };
 		4DE645101DA339A60076E6A7 /* Readme.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Readme.txt; path = ../../Readme.txt; sourceTree = "<group>"; };
+		5003A2A726021C8700805EAD /* RenderViewUpdater.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RenderViewUpdater.cpp; path = ../../../FireRender.Maya.Src/RenderViewUpdater.cpp; sourceTree = "<group>"; };
+		5003A2A926021C8700805EAD /* RenderViewUpdater.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RenderViewUpdater.h; path = ../../../FireRender.Maya.Src/RenderViewUpdater.h; sourceTree = "<group>"; };
 		50AC4CEB2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonImageFilters.1.6.1.dylib; path = ../../../RadeonProImageProcessingSDK/OSX/Dynamic/libRadeonImageFilters.1.6.1.dylib; sourceTree = "<group>"; };
 		50C1EDB9247EC23700E53230 /* SetRangeConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SetRangeConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/SetRangeConverter.h; sourceTree = "<group>"; };
 		50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SetRangeConverter.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/SetRangeConverter.cpp; sourceTree = "<group>"; };
@@ -1437,6 +1445,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				5003A2A726021C8700805EAD /* RenderViewUpdater.cpp */,
+				5003A2A926021C8700805EAD /* RenderViewUpdater.h */,
 				50FCE4F12530985900BF404F /* AnimationExporter.cpp */,
 				50FCE4F32530985900BF404F /* AnimationExporter.h */,
 				F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */,
@@ -1966,6 +1976,7 @@
 				8D595DC320372FE20031988A /* FireRenderNormal.h in Headers */,
 				8D595DC420372FE20031988A /* RenderStampFont.h in Headers */,
 				B72F81EF239F813F00C2BFB3 /* NodeCheckerConverter.h in Headers */,
+				5003A2AD26021C8700805EAD /* RenderViewUpdater.h in Headers */,
 				B7D1F0112367616000BB07CE /* FireRenderMeshMASH.h in Headers */,
 				B7190C422449C7DF0071D47F /* SPA.h in Headers */,
 				B773D2AA23A36DB8009FC79C /* RampNodeConverter.h in Headers */,
@@ -2120,6 +2131,7 @@
 				8DBCC2D922304666003EE361 /* FireRenderNormal.h in Headers */,
 				8DBCC2DA22304666003EE361 /* RenderStampFont.h in Headers */,
 				B72F81F0239F813F00C2BFB3 /* NodeCheckerConverter.h in Headers */,
+				5003A2AE26021C8700805EAD /* RenderViewUpdater.h in Headers */,
 				B7D1F0122367616000BB07CE /* FireRenderMeshMASH.h in Headers */,
 				B7190C432449C7DF0071D47F /* SPA.h in Headers */,
 				B773D2AB23A36DB8009FC79C /* RampNodeConverter.h in Headers */,
@@ -2274,6 +2286,7 @@
 				B753202923D9ED5600246738 /* FireRenderNormal.h in Headers */,
 				B753202A23D9ED5600246738 /* RenderStampFont.h in Headers */,
 				B753202B23D9ED5600246738 /* NodeCheckerConverter.h in Headers */,
+				5003A2AF26021C8700805EAD /* RenderViewUpdater.h in Headers */,
 				B753202C23D9ED5600246738 /* FireRenderMeshMASH.h in Headers */,
 				B7190C442449C7DF0071D47F /* SPA.h in Headers */,
 				B753202D23D9ED5600246738 /* RampNodeConverter.h in Headers */,
@@ -2518,6 +2531,7 @@
 				8D595E0C20372FE20031988A /* FireRenderTexture.cpp in Sources */,
 				8D595E0D20372FE20031988A /* FileSystemUtils.cpp in Sources */,
 				8D595E0E20372FE20031988A /* FireRenderOverride.cpp in Sources */,
+				5003A2AA26021C8700805EAD /* RenderViewUpdater.cpp in Sources */,
 				8D595E0F20372FE20031988A /* FireRenderEnvironmentLight.cpp in Sources */,
 				8D595E1020372FE20031988A /* FireRenderThread.cpp in Sources */,
 				B773D2B023A36DB8009FC79C /* RemapHSVConverter.cpp in Sources */,
@@ -2671,6 +2685,7 @@
 				8DBCC32F22304666003EE361 /* FireRenderTexture.cpp in Sources */,
 				8DBCC33022304666003EE361 /* FileSystemUtils.cpp in Sources */,
 				8DBCC33122304666003EE361 /* FireRenderOverride.cpp in Sources */,
+				5003A2AB26021C8700805EAD /* RenderViewUpdater.cpp in Sources */,
 				8DBCC33222304666003EE361 /* FireRenderEnvironmentLight.cpp in Sources */,
 				8DBCC33322304666003EE361 /* FireRenderThread.cpp in Sources */,
 				B773D2B123A36DB8009FC79C /* RemapHSVConverter.cpp in Sources */,
@@ -2824,6 +2839,7 @@
 				B75320A823D9ED5600246738 /* FireRenderBlendOverride.cpp in Sources */,
 				B75320A923D9ED5600246738 /* FireRenderTexture.cpp in Sources */,
 				B75320AA23D9ED5600246738 /* FileSystemUtils.cpp in Sources */,
+				5003A2AC26021C8700805EAD /* RenderViewUpdater.cpp in Sources */,
 				B75320AB23D9ED5600246738 /* FireRenderOverride.cpp in Sources */,
 				B75320AC23D9ED5600246738 /* FireRenderEnvironmentLight.cpp in Sources */,
 				B75320AD23D9ED5600246738 /* FireRenderThread.cpp in Sources */,
