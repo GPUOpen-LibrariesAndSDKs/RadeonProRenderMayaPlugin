@@ -924,40 +924,13 @@ void FireRenderProduction::DenoiseFromAOVs()
 	if (!m_contextPtr->IsDenoiserEnabled())
 		return;
 
-	// run denoiser
-	std::vector<float> vecData = m_contextPtr->DenoiseIntoRAM();
-
-	// output denoiser result
-	RV_PIXEL* data = nullptr;
-	auto it = m_contextPtr->PixelBuffers().find(RPR_AOV_COLOR);
-	bool hasAov = it != m_contextPtr->PixelBuffers().end();
-	if (hasAov)
+	m_contextPtr->ProcessDenoise(*m_renderViewAOV, m_width, m_height, m_region, [this](RV_PIXEL* data)
 	{
-		data = (RV_PIXEL*)it->second.data();
-	}
-	else
-	{
-		data = (RV_PIXEL*)vecData.data();
-	}
-
-	m_renderViewAOV->pixels.overwrite(data, m_region, m_height, m_width, RPR_AOV_COLOR);
-
-	// apply render stamp
-	FireMaya::RenderStamp renderStamp;
-	MString stampStr;
-	m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov) 
-	{
-		if (aov.id != RPR_AOV_COLOR)
-			return;
-
-		stampStr = aov.renderStamp;
-	});
-	renderStamp.AddRenderStamp(*m_contextPtr, data, m_width, m_height, stampStr.asChar());
-
-	// Update the Maya render view.
-	FireRenderThread::RunProcOnMainThread([this, data]()
-	{
-		RenderViewUpdater::UpdateAndRefreshRegion(data, 0, 0, m_width - 1, m_height - 1);
+		// Update the Maya render view.
+		FireRenderThread::RunProcOnMainThread([this, data]()
+		{
+			RenderViewUpdater::UpdateAndRefreshRegion(data, 0, 0, m_width - 1, m_height - 1);
+		});
 	});
 }
 
