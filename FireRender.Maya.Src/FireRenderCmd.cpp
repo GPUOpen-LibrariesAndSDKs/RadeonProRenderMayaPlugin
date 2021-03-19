@@ -513,7 +513,6 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		}
 
 		MGlobal::displayInfo(MString(devicesStr.c_str()));
-		MGlobal::displayInfo(MString(versionStr.c_str()));
 
 		// Perform clean up operations.
 		context.cleanScene();

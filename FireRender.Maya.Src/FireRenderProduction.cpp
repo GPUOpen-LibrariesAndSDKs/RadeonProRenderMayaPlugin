@@ -926,7 +926,6 @@ void FireRenderProduction::DenoiseFromAOVs()
 
 	m_contextPtr->ProcessDenoise(*m_renderViewAOV, m_width, m_height, m_region, [this](RV_PIXEL* data)
 	{
-	}
 		// Update the Maya render view.
 		FireRenderThread::RunProcOnMainThread([this, data]()
 		{
@@ -1045,19 +1044,12 @@ void FireRenderProduction::RenderTiles()
 
 	// apply render stamp
 	FireMaya::RenderStamp renderStamp;
-	MString stampStr;
-	m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov)
-	{
-		if (aov.id != RPR_AOV_COLOR)
-			return;
-
-		stampStr = aov.renderStamp;
-	});
+	MString stampStr(m_renderViewAOV->renderStamp);
 	renderStamp.AddRenderStamp(*m_contextPtr, data, m_width, m_height, stampStr.asChar());
 
+	// update the Maya render view
 	FireRenderThread::RunProcOnMainThread([this, data]()
 	{
-		// Update the Maya render view.
 		RenderViewUpdater::UpdateAndRefreshRegion(data, 0, 0, m_width - 1, m_height - 1);
 	});
 
