@@ -328,8 +328,11 @@ public:
 	// do action for each framebuffer matching filter
 	void ForEachFramebuffer(std::function<void(int aovId)> actionFunc, std::function<bool(int aovId)> filter);
 
-	// try running denoiser; result is svaed into RAM buffer in context
+	// try running denoiser; result is saved into RAM buffer in context
 	std::vector<float> DenoiseIntoRAM(void);
+
+	// runs denoiser, puts result in aov and applies render stamp
+	void ProcessDenoise(FireRenderAOV& renderViewAOV, unsigned int width, unsigned int height, const RenderRegion& region, std::function<void(RV_PIXEL* pData)> callbackFunc);
 
 	// Resolve the framebuffer using the current tone mapping
 
