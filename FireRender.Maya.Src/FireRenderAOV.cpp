@@ -236,7 +236,8 @@ void FireRenderAOV::readFrameBuffer(FireRenderContext& context)
 	if (!active || !pixels || m_region.isZeroArea() || !context.IsAOVSupported(id))
 		return;
 
-	bool opacityMerge = context.camera().GetAlphaMask() && context.isAOVEnabled(RPR_AOV_OPACITY);
+	bool hasAlphaMask = context.camera().GetAlphaMask();
+	bool opacityMerge = hasAlphaMask && context.isAOVEnabled(RPR_AOV_OPACITY) && !context.IsTileRender();
 
 	// setup params
 	FireRenderContext::ReadFrameBufferRequestParams params(m_region);
@@ -244,7 +245,7 @@ void FireRenderAOV::readFrameBuffer(FireRenderContext& context)
 	params.aov = id;
 	params.width = m_frameWidth;
 	params.height = m_frameHeight;
-	params.mergeOpacity = context.camera().GetAlphaMask() && context.isAOVEnabled(RPR_AOV_OPACITY);
+	params.mergeOpacity = opacityMerge;
 	params.mergeShadowCatcher = true;
 	params.shadowColor = context.m_shadowColor;
 	params.bgColor = context.m_bgColor;
@@ -259,7 +260,7 @@ void FireRenderAOV::readFrameBuffer(FireRenderContext& context)
 	PostProcess();
 
 	// Render stamp, but only when region matches the whole frame buffer
-	if (m_region.getHeight() == m_frameHeight && m_region.getWidth() == m_frameWidth && renderStamp.numChars() > 0)
+	if (m_region.getHeight() == m_frameHeight && m_region.getWidth() == m_frameWidth && renderStamp.numChars() > 0 && !context.IsTileRender())
 	{
 		m_renderStamp->AddRenderStamp(context, pixels.get(), m_frameWidth, m_frameHeight, renderStamp.asChar());
 	}
