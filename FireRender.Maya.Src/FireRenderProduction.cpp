@@ -944,15 +944,12 @@ void FireRenderProduction::DenoiseFromAOVs()
 
 	// apply render stamp
 	FireMaya::RenderStamp renderStamp;
-	MString stampStr;
-	m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov) 
+	FireRenderAOV* pAov = m_aovs->getAOV(RPR_AOV_COLOR);
+	if (pAov != nullptr)
 	{
-		if (aov.id != RPR_AOV_COLOR)
-			return;
-
-		stampStr = aov.renderStamp;
-	});
-	renderStamp.AddRenderStamp(*m_contextPtr, data, m_width, m_height, stampStr.asChar());
+		MString stampStr(pAov->renderStamp);
+		renderStamp.AddRenderStamp(*m_contextPtr, data, m_width, m_height, stampStr.asChar());
+	}
 
 	// Update the Maya render view.
 	FireRenderThread::RunProcOnMainThread([this, data]()
@@ -999,6 +996,7 @@ void FireRenderProduction::RenderTiles()
 		m_aovs->allocatePixels();
 
 		m_contextPtr->render(false);
+
 
 		// copy data to buffer
 		m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov)
@@ -1064,6 +1062,21 @@ void FireRenderProduction::RenderTiles()
 		assert(it != outBuffers.end());
 		data = it->second.get();
 	}
+
+	// run merge opacity
+	m_contextPtr->ProcessMergeOpactityFromRAM(data, info.totalWidth, info.totalHeight);
+
+	// apply render stamp
+	FireMaya::RenderStamp renderStamp;
+	MString stampStr;
+	m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov)
+	{
+		if (aov.id != RPR_AOV_COLOR)
+			return;
+
+		stampStr = aov.renderStamp;
+	});
+	renderStamp.AddRenderStamp(*m_contextPtr, data, m_width, m_height, stampStr.asChar());
 
 	FireRenderThread::RunProcOnMainThread([this, data]()
 	{
