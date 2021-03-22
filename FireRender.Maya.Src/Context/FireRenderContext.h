@@ -302,7 +302,7 @@ public:
 
 	void MergeOpacity(const ReadFrameBufferRequestParams& params);
 
-	void CombineOpacity(ReadFrameBufferRequestParams& params);
+	void CombineOpacity(int aov, RV_PIXEL* pixels, unsigned int area);
 
 	// Composite image for Shadow Catcher, Reflection Catcher and Shadow+Reflection Catcher
 	virtual void compositeShadowCatcherOutput(const ReadFrameBufferRequestParams& params);
@@ -330,6 +330,9 @@ public:
 
 	// try running denoiser; result is svaed into RAM buffer in context
 	std::vector<float> DenoiseIntoRAM(void);
+
+	// try merge opacity from context to supplied buffer
+	void ProcessMergeOpactityFromRAM(RV_PIXEL* data, int bufferWidth, int bufferHeight);
 
 	// Resolve the framebuffer using the current tone mapping
 
@@ -524,6 +527,8 @@ public:
 	bool IsDenoiserCreated(void) const { return m_denoiserFilter != nullptr; }
 
 	bool IsDenoiserEnabled(void) const { return (IsDenoiserSupported() && m_globals.denoiserSettings.enabled);	}
+
+	bool IsTileRender(void) const { return (m_globals.tileRenderingEnabled && !isInteractive()); }
 
 	frw::PostEffect white_balance;
 	frw::PostEffect simple_tonemap;
@@ -826,6 +831,7 @@ public:
 	FireMaya::Scope& GetScope() { return scope; }
 	frw::Scene GetScene() { return scope.Scene(); }
 	frw::Context GetContext() { return scope.Context(); }
+	const frw::Context GetContext() const { return scope.Context(); }
 	frw::MaterialSystem GetMaterialSystem() { return scope.MaterialSystem(); }
 	frw::Shader GetShader(MObject ob, MObject shadingEngine = MObject(), const FireRenderMeshCommon* pMesh = nullptr, bool forceUpdate = false); // { return scope.GetShader(ob, forceUpdate); }
 	frw::Shader GetVolumeShader(MObject ob, bool forceUpdate = false) { return scope.GetVolumeShader(ob, forceUpdate); }
