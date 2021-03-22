@@ -10,36 +10,52 @@ void RenderViewUpdater::EnsureBufferIsAllocated(unsigned int width, unsigned int
 	}
 }
 
-void RenderViewUpdater::FlipAndCopyData(RV_PIXEL* inputPixelData, unsigned int width, unsigned int height)
+void RenderViewUpdater::FlipAndCopyData(
+	RV_PIXEL* inputPixelData, 
+	unsigned int srcWidth,
+	unsigned int srcHeight,
+	const RenderRegion& region)
 {
-	int yOffset = 0;
-	for (unsigned int y = 0; y < height; ++y)
-	{
-		yOffset = y * width;
+	//unsigned int dstOffset = 0;
+	unsigned int srcOffset = 0;
 
-		std::copy(&inputPixelData[yOffset], &inputPixelData[yOffset + width], &m_pixelData[(height - y - 1) * width]);
+	unsigned int dstWidth = region.getWidth();
+	unsigned int dstHeight = region.getHeight();
+
+	for (unsigned int y = 0; y < dstHeight; ++y)
+	{
+		//dstOffset = y * dstWidth;
+		// Case: region is subarea of bigger buffer
+		if (srcHeight > dstHeight)
+		{
+			srcOffset = (y + srcHeight - region.top - 1) * srcWidth + region.left;
+		}
+		// Case: region is the whole buffer
+		else
+		{
+			srcOffset = y * srcWidth;
+		}
+
+		std::copy(&inputPixelData[srcOffset], &inputPixelData[srcOffset + dstWidth], &m_pixelData[(dstHeight - y - 1) * dstWidth]);
 	}
 }
 
-void RenderViewUpdater::UpdateAndRefreshRegion(RV_PIXEL* pixelData, 
-												unsigned int regionLeft, 
-												unsigned int regionTop, 
-												unsigned int regionRight, 
-												unsigned int regionBottom)
+void RenderViewUpdater::UpdateAndRefreshRegion(
+	RV_PIXEL* pixelData,
+	unsigned int srcWidth,
+	unsigned int srcHeight,
+	const RenderRegion& region)
 {
-	unsigned int width = regionRight - regionLeft + 1;
-	unsigned int height = regionBottom - regionTop + 1;
-
 	// as a first solution - just keep a buffer with necessary size
-	EnsureBufferIsAllocated(width, height);
-	FlipAndCopyData(pixelData, width, height);
+	EnsureBufferIsAllocated(srcWidth, srcHeight);
+	FlipAndCopyData(pixelData, srcWidth, srcHeight, region);
 
 	// Update the render view pixels.
 	MRenderView::updatePixels(
-		regionLeft, regionRight,
-		regionTop, regionBottom,
+		region.left, region.right,
+		region.bottom, region.top,
 		m_pixelData.data(), true);
 
 	// Refresh the render view.
-	MRenderView::refresh(regionLeft, regionRight, regionTop, regionBottom);
+	MRenderView::refresh(region.left, region.right, region.bottom, region.top);
 }
