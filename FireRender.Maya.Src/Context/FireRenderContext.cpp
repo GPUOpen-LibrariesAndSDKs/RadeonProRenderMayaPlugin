@@ -3283,6 +3283,7 @@ void FireRenderContext::ProcessMergeOpactityFromRAM(RV_PIXEL* data, int bufferWi
 
 void FireRenderContext::ProcessDenoise(
 	FireRenderAOV& renderViewAOV, 
+	FireRenderAOV& colorAOV,
 	unsigned int width, 
 	unsigned int height, 
 	const RenderRegion& region, 
@@ -3310,10 +3311,15 @@ void FireRenderContext::ProcessDenoise(
 	renderStamp.AddRenderStamp(*this, data, width, height, stampStr.asChar());
 
 	// save result
-	renderViewAOV.pixels.overwrite(data, region, height, width, RPR_AOV_COLOR);
+	bool isOutputAOVColor = renderViewAOV.id == RPR_AOV_COLOR;
+	FireRenderAOV& outAOV = isOutputAOVColor ? renderViewAOV : colorAOV;
+	outAOV.pixels.overwrite(data, region, height, width, RPR_AOV_COLOR);
 
 	// callback
-	callbackFunc(data);
+	if (isOutputAOVColor)
+	{
+		callbackFunc(data);
+	}
 }
 
 void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestParams& params)

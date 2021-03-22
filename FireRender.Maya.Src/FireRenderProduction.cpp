@@ -924,7 +924,10 @@ void FireRenderProduction::DenoiseFromAOVs()
 	if (!m_contextPtr->IsDenoiserEnabled())
 		return;
 
-	m_contextPtr->ProcessDenoise(*m_renderViewAOV, m_width, m_height, m_region, [this](RV_PIXEL* data)
+	FireRenderAOV* pColorAOV = m_aovs->getAOV(RPR_AOV_COLOR);
+	assert(pColorAOV != nullptr);
+
+	m_contextPtr->ProcessDenoise(*m_renderViewAOV, *pColorAOV, m_width, m_height, m_region, [this](RV_PIXEL* data)
 	{
 		// Update the Maya render view.
 		FireRenderThread::RunProcOnMainThread([this, data]()
@@ -1050,6 +1053,7 @@ void FireRenderProduction::RenderTiles()
 	// update the Maya render view
 	FireRenderThread::RunProcOnMainThread([this, data]()
 	{
+		//if (m_renderViewAOV->id == RPR_AOV_COLOR)
 		RenderViewUpdater::UpdateAndRefreshRegion(data, 0, 0, m_width - 1, m_height - 1);
 	});
 
