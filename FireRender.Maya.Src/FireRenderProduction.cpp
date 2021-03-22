@@ -924,37 +924,16 @@ void FireRenderProduction::DenoiseFromAOVs()
 	if (!m_contextPtr->IsDenoiserEnabled())
 		return;
 
-	// run denoiser
-	std::vector<float> vecData = m_contextPtr->DenoiseIntoRAM();
+	FireRenderAOV* pColorAOV = m_aovs->getAOV(RPR_AOV_COLOR);
+	assert(pColorAOV != nullptr);
 
-	// output denoiser result
-	RV_PIXEL* data = nullptr;
-	auto it = m_contextPtr->PixelBuffers().find(RPR_AOV_COLOR);
-	bool hasAov = it != m_contextPtr->PixelBuffers().end();
-	if (hasAov)
+	m_contextPtr->ProcessDenoise(*m_renderViewAOV, *pColorAOV, m_width, m_height, m_region, [this](RV_PIXEL* data)
 	{
-		data = (RV_PIXEL*)it->second.data();
-	}
-	else
-	{
-		data = (RV_PIXEL*)vecData.data();
-	}
-
- 	m_renderViewAOV->pixels.overwrite(data, RenderRegion(0, m_region.right - m_region.left, m_region.top - m_region.bottom, 0), m_region.getHeight(), m_region.getWidth(), RPR_AOV_COLOR);
-
-	// apply render stamp
-	FireMaya::RenderStamp renderStamp;
-	FireRenderAOV* pAov = m_aovs->getAOV(RPR_AOV_COLOR);
-	if (pAov != nullptr)
-	{
-		MString stampStr(pAov->renderStamp);
-		renderStamp.AddRenderStamp(*m_contextPtr, data, m_width, m_height, stampStr.asChar());
-	}
-
-	// Update the Maya render view.
-	FireRenderThread::RunProcOnMainThread([this, data]()
-	{
-		RenderViewUpdater::UpdateAndRefreshRegion(data, m_width, m_height, m_region);
+		// Update the Maya render view.
+		FireRenderThread::RunProcOnMainThread([this, data]()
+		{
+				RenderViewUpdater::UpdateAndRefreshRegion(data, m_width, m_height, m_region);
+		});
 	});
 }
 
@@ -1068,16 +1047,10 @@ void FireRenderProduction::RenderTiles()
 
 	// apply render stamp
 	FireMaya::RenderStamp renderStamp;
-	MString stampStr;
-	m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov)
-	{
-		if (aov.id != RPR_AOV_COLOR)
-			return;
-
-		stampStr = aov.renderStamp;
-	});
+	MString stampStr(m_renderViewAOV->renderStamp);
 	renderStamp.AddRenderStamp(*m_contextPtr, data, m_width, m_height, stampStr.asChar());
 
+	// update the Maya render view
 	FireRenderThread::RunProcOnMainThread([this, data]()
 	{
 		// Update the Maya render view.
