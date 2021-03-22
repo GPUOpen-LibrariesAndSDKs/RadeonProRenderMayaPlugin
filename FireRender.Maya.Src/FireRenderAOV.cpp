@@ -271,8 +271,9 @@ void FireRenderAOV::sendToRenderView()
 {
 	RenderViewUpdater::UpdateAndRefreshRegion(
 		pixels.get(),
-		m_region.left, m_region.bottom,
-		m_region.right, m_region.top);
+		m_region.getWidth(),
+		m_region.getHeight(),
+		m_region);
 }
 
 // -----------------------------------------------------------------------------

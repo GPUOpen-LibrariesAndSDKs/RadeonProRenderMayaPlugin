@@ -932,7 +932,7 @@ void FireRenderProduction::DenoiseFromAOVs()
 		// Update the Maya render view.
 		FireRenderThread::RunProcOnMainThread([this, data]()
 		{
-			RenderViewUpdater::UpdateAndRefreshRegion(data, 0, 0, m_width - 1, m_height - 1);
+				RenderViewUpdater::UpdateAndRefreshRegion(data, m_width, m_height, m_region);
 		});
 	});
 }
@@ -994,7 +994,7 @@ void FireRenderProduction::RenderTiles()
 		FireRenderThread::RunProcOnMainThread([this, region]()
 		{
 			// Update the Maya render view.
-			RenderViewUpdater::UpdateAndRefreshRegion(m_renderViewAOV->pixels.get(), region.left, region.bottom, region.right, region.top);
+			RenderViewUpdater::UpdateAndRefreshRegion(m_renderViewAOV->pixels.get(), region.getWidth(), region.getHeight(), region);
 
 			if (rcWarningDialog.shown)
 				rcWarningDialog.close();
@@ -1053,8 +1053,8 @@ void FireRenderProduction::RenderTiles()
 	// update the Maya render view
 	FireRenderThread::RunProcOnMainThread([this, data]()
 	{
-		//if (m_renderViewAOV->id == RPR_AOV_COLOR)
-		RenderViewUpdater::UpdateAndRefreshRegion(data, 0, 0, m_width - 1, m_height - 1);
+		// Update the Maya render view.
+		RenderViewUpdater::UpdateAndRefreshRegion(data, m_width, m_height, RenderRegion(0, m_width - 1, m_height - 1, 0));
 	});
 
 	outBuffers.clear();
