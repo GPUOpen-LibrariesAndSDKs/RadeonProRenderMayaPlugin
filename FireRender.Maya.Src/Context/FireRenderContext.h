@@ -332,7 +332,7 @@ public:
 	std::vector<float> DenoiseIntoRAM(void);
 
 	// runs denoiser, puts result in aov and applies render stamp
-	void ProcessDenoise(FireRenderAOV& renderViewAOV, unsigned int width, unsigned int height, const RenderRegion& region, std::function<void(RV_PIXEL* pData)> callbackFunc);
+	void ProcessDenoise(FireRenderAOV& renderViewAOV, FireRenderAOV& colorAOV, unsigned int width, unsigned int height, const RenderRegion& region, std::function<void(RV_PIXEL* pData)> callbackFunc);
 
 	// try merge opacity from context to supplied buffer
 	void ProcessMergeOpactityFromRAM(RV_PIXEL* data, int bufferWidth, int bufferHeight);

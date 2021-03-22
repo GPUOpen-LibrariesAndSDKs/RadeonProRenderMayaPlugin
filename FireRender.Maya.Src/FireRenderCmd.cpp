@@ -501,7 +501,10 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 				// Run denoiser
 				if (context.IsDenoiserEnabled())
 				{
-					context.ProcessDenoise(aovs.getRenderViewAOV(), context.m_width, context.m_height, region, [this](RV_PIXEL* data) {});
+					FireRenderAOV* pColorAOV = aovs.getAOV(RPR_AOV_COLOR);
+					assert(pColorAOV != nullptr);
+
+					context.ProcessDenoise(aovs.getRenderViewAOV(), *pColorAOV, context.m_width, context.m_height, region, [this](RV_PIXEL* data) {});
 				}
 
 				// Save the frame to file.
