@@ -954,7 +954,7 @@ void FireRenderProduction::DenoiseFromAOVs()
 	// Update the Maya render view.
 	FireRenderThread::RunProcOnMainThread([this, data]()
 	{
-		RenderViewUpdater::UpdateAndRefreshRegion(data, m_region.left, m_region.bottom, m_region.right, m_region.top);
+		RenderViewUpdater::UpdateAndRefreshRegion(data, m_width, m_height, m_region);
 	});
 }
 
@@ -1015,7 +1015,7 @@ void FireRenderProduction::RenderTiles()
 		FireRenderThread::RunProcOnMainThread([this, region]()
 		{
 			// Update the Maya render view.
-			RenderViewUpdater::UpdateAndRefreshRegion(m_renderViewAOV->pixels.get(), region.left, region.bottom, region.right, region.top);
+			RenderViewUpdater::UpdateAndRefreshRegion(m_renderViewAOV->pixels.get(), region.getWidth(), region.getHeight(), region);
 
 			if (rcWarningDialog.shown)
 				rcWarningDialog.close();
@@ -1081,7 +1081,7 @@ void FireRenderProduction::RenderTiles()
 	FireRenderThread::RunProcOnMainThread([this, data]()
 	{
 		// Update the Maya render view.
-		RenderViewUpdater::UpdateAndRefreshRegion(data, 0, 0, m_width - 1, m_height - 1);
+		RenderViewUpdater::UpdateAndRefreshRegion(data, m_width, m_height, RenderRegion(0, m_width - 1, m_height - 1, 0));
 	});
 
 	outBuffers.clear();
