@@ -3281,6 +3281,47 @@ void FireRenderContext::ProcessMergeOpactityFromRAM(RV_PIXEL* data, int bufferWi
 	CombineOpacity(RPR_AOV_COLOR, data, tempRegion.getArea());
 }
 
+void FireRenderContext::ProcessDenoise(
+	FireRenderAOV& renderViewAOV, 
+	FireRenderAOV& colorAOV,
+	unsigned int width, 
+	unsigned int height, 
+	const RenderRegion& region, 
+	std::function<void(RV_PIXEL* pData)> callbackFunc)
+{
+	// run denoiser
+	std::vector<float> vecData = DenoiseIntoRAM();
+
+	// output denoiser result
+	RV_PIXEL* data = nullptr;
+	auto it = PixelBuffers().find(RPR_AOV_COLOR);
+	bool hasAov = it != PixelBuffers().end();
+	if (hasAov) // different flow for rpr2 and rpr1
+	{
+		data = (RV_PIXEL*)it->second.data();
+	}
+	else
+	{
+		data = (RV_PIXEL*)vecData.data();
+	}
+
+	// apply render stamp
+	FireMaya::RenderStamp renderStamp;
+	MString stampStr(renderViewAOV.renderStamp);
+	renderStamp.AddRenderStamp(*this, data, width, height, stampStr.asChar());
+
+	// save result
+	bool isOutputAOVColor = renderViewAOV.id == RPR_AOV_COLOR;
+	FireRenderAOV& outAOV = isOutputAOVColor ? renderViewAOV : colorAOV;
+	outAOV.pixels.overwrite(data, region, height, width, RPR_AOV_COLOR);
+
+	// callback
+	if (isOutputAOVColor)
+	{
+		callbackFunc(data);
+	}
+}
+
 void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestParams& params)
 {
 	m_pixelBuffers.clear();
