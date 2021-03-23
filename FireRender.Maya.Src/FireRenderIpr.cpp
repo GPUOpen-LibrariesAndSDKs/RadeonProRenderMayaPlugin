@@ -523,7 +523,7 @@ void FireRenderIpr::updateRenderView()
 		// Acquire the pixels lock.
 		AutoMutexLock pixelsLock(m_pixelsLock);
 
-		RenderViewUpdater::UpdateAndRefreshRegion(m_pixels.data(), m_region.left, m_region.bottom, m_region.right, m_region.top);
+		RenderViewUpdater::UpdateAndRefreshRegion(m_pixels.data(), m_region.getWidth(), m_region.getHeight(), m_region);
 
 		updateMayaRenderInfo();
 
