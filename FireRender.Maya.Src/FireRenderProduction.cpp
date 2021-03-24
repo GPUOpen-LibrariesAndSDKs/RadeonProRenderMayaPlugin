@@ -927,7 +927,7 @@ void FireRenderProduction::DenoiseFromAOVs()
 	FireRenderAOV* pColorAOV = m_aovs->getAOV(RPR_AOV_COLOR);
 	assert(pColorAOV != nullptr);
 
-	m_contextPtr->ProcessDenoise(*m_renderViewAOV, *pColorAOV, m_region.getHeight(), m_region.getWidth(), RenderRegion(0, m_region.right - m_region.left, m_region.top - m_region.bottom, 0), [this](RV_PIXEL* data)
+	m_contextPtr->ProcessDenoise(*m_renderViewAOV, *pColorAOV, m_region.getWidth(), m_region.getHeight(), RenderRegion(0, m_region.right - m_region.left, m_region.top - m_region.bottom, 0), [this](RV_PIXEL* data)
 	{
 		// Update the Maya render view.
 		FireRenderThread::RunProcOnMainThread([this, data]()
