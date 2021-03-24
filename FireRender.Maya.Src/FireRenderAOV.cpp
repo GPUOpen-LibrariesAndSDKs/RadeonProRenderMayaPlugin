@@ -85,31 +85,31 @@ void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, u
 void generateBitmapImage(unsigned char *image, int height, int width, int pitch, const char* imageFileName);
 #endif
 
-void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, const std::string& fbName, const std::string& pathToFile)
+void PixelBuffer::debugDump(unsigned int height, unsigned int width, const std::string& fbName, const std::string& pathToFile)
 {
 #ifdef _DEBUG
-	assert(sizeof(RV_PIXEL) * totalHeight * totalWidth == m_size);
+	assert(sizeof(RV_PIXEL) * height * width <= m_size);
 
 	std::vector<RV_PIXEL> sourcePixels;
-	sourcePixels.reserve(totalHeight * totalWidth);
+	sourcePixels.reserve(height * width);
 
-	for (unsigned int y = 0; y < totalHeight; y++)
+	for (unsigned int y = 0; y < height; y++)
 	{
-		for (unsigned int x = 0; x < totalWidth; x++)
+		for (unsigned int x = 0; x < width; x++)
 		{
-			RV_PIXEL pixel = m_pBuffer[x + y * totalWidth];
+			RV_PIXEL pixel = m_pBuffer[x + y * width];
 			sourcePixels.push_back(pixel);
 		}
 	}
 
 	std::vector<unsigned char> buffer2;
-	buffer2.reserve(totalHeight * totalWidth);
+	buffer2.reserve(height * width);
 
-	for (unsigned int y = 0; y < totalHeight; y++)
+	for (unsigned int y = 0; y < height; y++)
 	{
-		for (unsigned int x = 0; x < totalWidth; x++)
+		for (unsigned int x = 0; x < width; x++)
 		{
-			RV_PIXEL& pixel = sourcePixels[x + y * totalWidth];
+			RV_PIXEL& pixel = sourcePixels[x + y * width];
 			char r = (char) (255 * pixel.r);
 			char g = (char) (255 * pixel.g);
 			char b = (char) (255 * pixel.b);
@@ -124,7 +124,7 @@ void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, c
 	static int debugDumpIdx = 0;
 	std::string dumpAddr = pathToFile + fbName +std::to_string(debugDumpIdx++) + ".bmp";
 	unsigned char* dst2 = buffer2.data();
-	generateBitmapImage(dst2, totalHeight, totalWidth, totalWidth * 4, dumpAddr.c_str());
+	generateBitmapImage(dst2, height, width, width * 4, dumpAddr.c_str());
 #endif
 }
 

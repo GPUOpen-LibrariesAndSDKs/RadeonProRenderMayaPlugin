@@ -116,7 +116,7 @@ public:
 
 	void overwrite(const RV_PIXEL* input, const RenderRegion& region, unsigned int totalHeight, unsigned int totalWidth, int aov_id = 0);
 
-	void debugDump(unsigned int totalHeight, unsigned int totalWidth, const std::string& fbName, const std::string& pathToFile);
+	void debugDump(unsigned int height, unsigned int width, const std::string& fbName, const std::string& pathToFile);
 };
 
 typedef std::map<unsigned int, PixelBuffer> AOVPixelBuffers;
