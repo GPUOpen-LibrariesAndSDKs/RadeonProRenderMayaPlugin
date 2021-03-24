@@ -88,7 +88,7 @@ void generateBitmapImage(unsigned char *image, int height, int width, int pitch,
 void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, const std::string& fbName, const std::string& pathToFile)
 {
 #ifdef _DEBUG
-	assert(sizeof(RV_PIXEL) * totalHeight * totalWidth == m_size);
+	assert(sizeof(RV_PIXEL) * totalHeight * totalWidth <= m_size);
 
 	std::vector<RV_PIXEL> sourcePixels;
 	sourcePixels.reserve(totalHeight * totalWidth);
