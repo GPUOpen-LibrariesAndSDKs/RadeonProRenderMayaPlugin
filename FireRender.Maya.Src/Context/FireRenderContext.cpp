@@ -507,6 +507,10 @@ void FireRenderContext::setupDenoiserRAM()
 	bool canCreateAiDenoiser = CanCreateAiDenoiser();
 	bool useOpenImageDenoise = !canCreateAiDenoiser;
 
+	std::uint32_t width = m_useRegion ? (uint32_t)m_region.getWidth() : (uint32_t)m_pixelBuffers[RPR_AOV_COLOR].width();
+	std::uint32_t height = m_useRegion ? (uint32_t)m_region.getHeight() : (uint32_t)m_pixelBuffers[RPR_AOV_COLOR].height();
+	size_t rifImageSize = sizeof(RV_PIXEL) * width * height;
+
 	try
 	{
 		MString path;
@@ -515,8 +519,8 @@ void FireRenderContext::setupDenoiserRAM()
 
 		m_denoiserFilter = std::shared_ptr<ImageFilter>(new ImageFilter(
 			context(), 
-			(uint32_t)m_pixelBuffers[RPR_AOV_COLOR].width(),
-			(uint32_t)m_pixelBuffers[RPR_AOV_COLOR].height(),
+			width,
+			height,
 			mlModelsFolder.asChar()
 		));
 
@@ -526,9 +530,9 @@ void FireRenderContext::setupDenoiserRAM()
 		{
 		case FireRenderGlobals::kBilateral:
 			m_denoiserFilter->CreateFilter(RifFilterType::BilateralDenoise);
-			m_denoiserFilter->AddInput(RifColor, m_pixelBuffers[RPR_AOV_COLOR].data(), m_pixelBuffers[RPR_AOV_COLOR].size(), 0.3f);
-			m_denoiserFilter->AddInput(RifNormal, m_pixelBuffers[RPR_AOV_SHADING_NORMAL].data(), m_pixelBuffers[RPR_AOV_SHADING_NORMAL].size(), 0.01f);
-			m_denoiserFilter->AddInput(RifWorldCoordinate, m_pixelBuffers[RPR_AOV_WORLD_COORDINATE].data(), m_pixelBuffers[RPR_AOV_WORLD_COORDINATE].size(), 0.01f);
+			m_denoiserFilter->AddInput(RifColor, m_pixelBuffers[RPR_AOV_COLOR].data(), rifImageSize, 0.3f);
+			m_denoiserFilter->AddInput(RifNormal, m_pixelBuffers[RPR_AOV_SHADING_NORMAL].data(), rifImageSize, 0.01f);
+			m_denoiserFilter->AddInput(RifWorldCoordinate, m_pixelBuffers[RPR_AOV_WORLD_COORDINATE].data(), rifImageSize, 0.01f);
 
 			p = { RifParamType::RifInt, m_globals.denoiserSettings.radius };
 			m_denoiserFilter->AddParam("radius", p);
@@ -536,12 +540,12 @@ void FireRenderContext::setupDenoiserRAM()
 
 		case FireRenderGlobals::kLWR:
 			m_denoiserFilter->CreateFilter(RifFilterType::LwrDenoise);
-			m_denoiserFilter->AddInput(RifColor, m_pixelBuffers[RPR_AOV_COLOR].data(), m_pixelBuffers[RPR_AOV_COLOR].size(), 0.1f);
-			m_denoiserFilter->AddInput(RifNormal, m_pixelBuffers[RPR_AOV_SHADING_NORMAL].data(), m_pixelBuffers[RPR_AOV_SHADING_NORMAL].size(), 0.1f);
-			m_denoiserFilter->AddInput(RifDepth, m_pixelBuffers[RPR_AOV_DEPTH].data(), m_pixelBuffers[RPR_AOV_DEPTH].size(), 0.1f);
-			m_denoiserFilter->AddInput(RifWorldCoordinate, m_pixelBuffers[RPR_AOV_WORLD_COORDINATE].data(), m_pixelBuffers[RPR_AOV_WORLD_COORDINATE].size(), 0.1f);
-			m_denoiserFilter->AddInput(RifObjectId, m_pixelBuffers[RPR_AOV_OBJECT_ID].data(), m_pixelBuffers[RPR_AOV_OBJECT_ID].size(), 0.1f);
-			m_denoiserFilter->AddInput(RifTrans, m_pixelBuffers[RPR_AOV_OBJECT_ID].data(), m_pixelBuffers[RPR_AOV_OBJECT_ID].size(), 0.1f);
+			m_denoiserFilter->AddInput(RifColor, m_pixelBuffers[RPR_AOV_COLOR].data(), rifImageSize, 0.1f);
+			m_denoiserFilter->AddInput(RifNormal, m_pixelBuffers[RPR_AOV_SHADING_NORMAL].data(), rifImageSize, 0.1f);
+			m_denoiserFilter->AddInput(RifDepth, m_pixelBuffers[RPR_AOV_DEPTH].data(), rifImageSize, 0.1f);
+			m_denoiserFilter->AddInput(RifWorldCoordinate, m_pixelBuffers[RPR_AOV_WORLD_COORDINATE].data(), rifImageSize, 0.1f);
+			m_denoiserFilter->AddInput(RifObjectId, m_pixelBuffers[RPR_AOV_OBJECT_ID].data(), rifImageSize, 0.1f);
+			m_denoiserFilter->AddInput(RifTrans, m_pixelBuffers[RPR_AOV_OBJECT_ID].data(), rifImageSize, 0.1f);
 
 			p = { RifParamType::RifInt, m_globals.denoiserSettings.samples };
 			m_denoiserFilter->AddParam("samples", p);
@@ -556,12 +560,12 @@ void FireRenderContext::setupDenoiserRAM()
 
 		case FireRenderGlobals::kEAW:
 			m_denoiserFilter->CreateFilter(RifFilterType::EawDenoise);
-			m_denoiserFilter->AddInput(RifColor, m_pixelBuffers[RPR_AOV_COLOR].data(), m_pixelBuffers[RPR_AOV_COLOR].size(), m_globals.denoiserSettings.color);
-			m_denoiserFilter->AddInput(RifNormal, m_pixelBuffers[RPR_AOV_SHADING_NORMAL].data(), m_pixelBuffers[RPR_AOV_SHADING_NORMAL].size(), m_globals.denoiserSettings.normal);
-			m_denoiserFilter->AddInput(RifDepth, m_pixelBuffers[RPR_AOV_DEPTH].data(), m_pixelBuffers[RPR_AOV_DEPTH].size(), m_globals.denoiserSettings.depth);
-			m_denoiserFilter->AddInput(RifTrans, m_pixelBuffers[RPR_AOV_OBJECT_ID].data(), m_pixelBuffers[RPR_AOV_OBJECT_ID].size(), m_globals.denoiserSettings.trans);
-			m_denoiserFilter->AddInput(RifWorldCoordinate, m_pixelBuffers[RPR_AOV_WORLD_COORDINATE].data(), m_pixelBuffers[RPR_AOV_WORLD_COORDINATE].size(), 0.1f);
-			m_denoiserFilter->AddInput(RifObjectId, m_pixelBuffers[RPR_AOV_OBJECT_ID].data(), m_pixelBuffers[RPR_AOV_OBJECT_ID].size(), 0.1f);
+			m_denoiserFilter->AddInput(RifColor, m_pixelBuffers[RPR_AOV_COLOR].data(), rifImageSize, m_globals.denoiserSettings.color);
+			m_denoiserFilter->AddInput(RifNormal, m_pixelBuffers[RPR_AOV_SHADING_NORMAL].data(), rifImageSize, m_globals.denoiserSettings.normal);
+			m_denoiserFilter->AddInput(RifDepth, m_pixelBuffers[RPR_AOV_DEPTH].data(), rifImageSize, m_globals.denoiserSettings.depth);
+			m_denoiserFilter->AddInput(RifTrans, m_pixelBuffers[RPR_AOV_OBJECT_ID].data(), rifImageSize, m_globals.denoiserSettings.trans);
+			m_denoiserFilter->AddInput(RifWorldCoordinate, m_pixelBuffers[RPR_AOV_WORLD_COORDINATE].data(), rifImageSize, 0.1f);
+			m_denoiserFilter->AddInput(RifObjectId, m_pixelBuffers[RPR_AOV_OBJECT_ID].data(), rifImageSize, 0.1f);
 			break;
 
 		case FireRenderGlobals::kML:
@@ -569,13 +573,13 @@ void FireRenderContext::setupDenoiserRAM()
 			RifFilterType ft = m_globals.denoiserSettings.colorOnly ? RifFilterType::MlDenoiseColorOnly : RifFilterType::MlDenoise;
 			m_denoiserFilter->CreateFilter(ft, useOpenImageDenoise);
 		}
-		m_denoiserFilter->AddInput(RifColor, m_pixelBuffers[RPR_AOV_COLOR].data(), m_pixelBuffers[RPR_AOV_COLOR].size(), 0.0f);
+		m_denoiserFilter->AddInput(RifColor, m_pixelBuffers[RPR_AOV_COLOR].data(), rifImageSize, 0.0f);
 
 		if (!m_globals.denoiserSettings.colorOnly)
 		{
-			m_denoiserFilter->AddInput(RifNormal, m_pixelBuffers[RPR_AOV_SHADING_NORMAL].data(), m_pixelBuffers[RPR_AOV_SHADING_NORMAL].size(), 0.0f);
-			m_denoiserFilter->AddInput(RifDepth, m_pixelBuffers[RPR_AOV_DEPTH].data(), m_pixelBuffers[RPR_AOV_DEPTH].size(), 0.0f);
-			m_denoiserFilter->AddInput(RifAlbedo, m_pixelBuffers[RPR_AOV_DIFFUSE_ALBEDO].data(), m_pixelBuffers[RPR_AOV_DIFFUSE_ALBEDO].size(), 0.0f);
+			m_denoiserFilter->AddInput(RifNormal, m_pixelBuffers[RPR_AOV_SHADING_NORMAL].data(), rifImageSize, 0.0f);
+			m_denoiserFilter->AddInput(RifDepth, m_pixelBuffers[RPR_AOV_DEPTH].data(), rifImageSize, 0.0f);
+			m_denoiserFilter->AddInput(RifAlbedo, m_pixelBuffers[RPR_AOV_DIFFUSE_ALBEDO].data(), rifImageSize, 0.0f);
 		}
 
 		break;
@@ -3306,9 +3310,12 @@ void FireRenderContext::ProcessDenoise(
 	}
 
 	// apply render stamp
-	FireMaya::RenderStamp renderStamp;
-	MString stampStr(renderViewAOV.renderStamp);
-	renderStamp.AddRenderStamp(*this, data, width, height, stampStr.asChar());
+	if (!useRegion())
+	{
+		FireMaya::RenderStamp renderStamp;
+		MString stampStr(renderViewAOV.renderStamp);
+		renderStamp.AddRenderStamp(*this, data, width, height, stampStr.asChar());
+	}
 
 	// save result
 	bool isOutputAOVColor = renderViewAOV.id == RPR_AOV_COLOR;
@@ -3340,7 +3347,11 @@ void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestPa
 
 		// debug
 #ifdef DENOISE_RAM_DBG
-		m_pixelBuffers[aovId].debugDump(m_height, m_width, FireRenderAOV::GetAOVName(aovId), "C:\\temp\\dbg\\");
+		m_pixelBuffers[aovId].debugDump(
+			params.region.getHeight(), 
+			params.region.getWidth(), 
+			FireRenderAOV::GetAOVName(aovId), 
+			"C:\\temp\\dbg\\");
 #endif
 	},
 
