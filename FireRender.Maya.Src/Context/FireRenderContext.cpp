@@ -3310,9 +3310,12 @@ void FireRenderContext::ProcessDenoise(
 	}
 
 	// apply render stamp
-	FireMaya::RenderStamp renderStamp;
-	MString stampStr(renderViewAOV.renderStamp);
-	renderStamp.AddRenderStamp(*this, data, width, height, stampStr.asChar());
+	if (!useRegion())
+	{
+		FireMaya::RenderStamp renderStamp;
+		MString stampStr(renderViewAOV.renderStamp);
+		renderStamp.AddRenderStamp(*this, data, width, height, stampStr.asChar());
+	}
 
 	// save result
 	bool isOutputAOVColor = renderViewAOV.id == RPR_AOV_COLOR;
