@@ -1,3 +1,59 @@
+# Version 3.1
+
+## New Features:
+ - Support for AMD Radeon™ RX 6700 XT graphics cards has been added.
+ - Significant new features have been implemented in the AOV and compositing workflow for the plug-in:
+ - Cryptomatte AOVs make it easy to filter objects by name or material when using compositors that support Cryptomatte.
+ - Users can set a Material ID on shader nodes to use it with the MaterialID AOV.
+ - The Camera Normal AOV is now available.
+ - A 16-bit Machine Learning Denoiser option is now available to provide for less memory usage and greater speed.
+
+## Issues Fixed:
+ - Various fixes have been made to MASH instances:
+ - Groups of objects can now be used for instancing;
+ - Instance motion blur could be incorrect in certain cases — fixed;  
+ - Mash Dynamic Nodes are now supported.
+ - Denoisers are now supported for RPR 2.0 for the Production Render and IPR. Earlier, denoisers were only supported for RPR 1.0 (now the legacy engine).
+ - Contour rendering not updating during IPR rendering — fixed.
+ - Fixes and enhancements in .rpr file exporting:
+ - Texture cache can now be used to provide for faster export of scenes;
+ - GLTF file export includes an option to bake PBR images;
+ - The current selected render layer is restored after exporting.
+ - Undoing” deletion of an RPR Light would not work — fixed.
+ - Motion blur for alembic GPU caches was not supported — fixed.
+ - Hardware preference changes were not saved before starting a batch render — fixed.
+ - Smoothed meshes could have the wrong geometry or missing textures — fixed.
+ - If you animated using MotionPath and batch render with a specified frame range, the first frame from within that range could 
+be incorrectly rendered — fixed.
+
+ - UDIM textures are now cached, like any other image textures, for performance enhancement.
+ - Ray visibility flags for hair geometry are now respected.
+ - Converter scripts were not installed correctly on macOS — fixed.
+ - Camera callback changes from command line rendering were not respected — fixed.
+ - An error which was occurring in some cases when Rectangular Area Lights were changed in size has been fixed.
+ - Crashing occurred if swatch rendering was enabled and disabled while the IPR was running — fixed.
+ - Gamma correction on single layer EXR files is now correct.
+ - An issue when a shader node is connected to multiple blend materials has been fixed.
+ - The IPR could randomly stop refreshing an image in certain cases — fixed.
+ - Issues when framebuffers could be flipped in some cases have been fixed.
+ - Shadow Catchers now work on macOS both in final and IPR renders also with the denoiser enabled.
+ - Crashing occurred if denoisers were used with the Render Region option — fixed.
+ - When using an IBL Environment Light with tiled rendering and the denoiser, the background would be black — fixed.
+ - Area lights were shadowing too aggressively — fixed.
+ - Switching to contour rendering could fail on an NVidia GPU — fixed.
+ - Possible crashing when rendering AOVs in the IPR view has been fixed.
+ - Textures could be too blurry due to incorrect MIP mapping, particularly textures in a plane parallel to the camera direction.
+ - Adaptive sampling now works with RPR 2.
+ - Spiral artifacts when rendering with both the CPU and GPU have been fixed.
+ - The Opacity AOV was not taking the maximum ray depth into account — fixed.
+ - Artifacts in the Depth AOV have been fixed.
+ - Compiling the BVH geometry has been improved in large scenes.
+
+## Known Issues:
+ - RPR 2.0 has some upcoming features. If these are needed, please use the Legacy render mode:
+	Heterogenous volumes;
+	Adaptive subdivision. 
+
 # Version 3.0
 
 ## New Features:
