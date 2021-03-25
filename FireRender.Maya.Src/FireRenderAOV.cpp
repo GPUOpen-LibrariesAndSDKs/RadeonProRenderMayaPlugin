@@ -16,9 +16,14 @@ limitations under the License.
 #include "Context/FireRenderContext.h"
 #include "FireRenderImageUtil.h"
 #include "RenderStamp.h"
+
+#include "RenderViewUpdater.h"
+
 #include <maya/MCommonSystemUtils.h>
 #include <maya/MViewport2Renderer.h>
 #include <maya/MGlobal.h>
+
+#include <ostream>
 
 
 void PixelBuffer::resize(size_t newCount)
@@ -61,12 +66,9 @@ void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, u
 	// copy line by line
 	for (unsigned int y = 0; y < regionHeight; y++)
 	{
-		unsigned int inputIndex = (regionHeight - 1 - y) * regionWidth; // writing to self
+		unsigned int inputIndex = y * regionWidth;
 
-		// - keep in mind that y is inverted
-		//unsigned int destShiftY = (totalHeight - 1) - region.top;
-		//unsigned int destIndex = region.left + (destShiftY + y) * totalWidth;
-		unsigned int destShiftY = region.top - y;
+		unsigned int destShiftY = y + totalHeight - region.top - 1;
 		unsigned int destIndex = region.left + (destShiftY) * totalWidth;
 
 		memcpy(&m_pBuffer[destIndex], &input[inputIndex], sizeof(RV_PIXEL) * regionWidth);
@@ -83,35 +85,34 @@ void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, u
 void generateBitmapImage(unsigned char *image, int height, int width, int pitch, const char* imageFileName);
 #endif
 
-void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, std::string& fbName)
+void PixelBuffer::debugDump(unsigned int height, unsigned int width, const std::string& fbName, const std::string& pathToFile)
 {
 #ifdef _DEBUG
-#ifdef DUMP_PIXELS_PIXELBUFF
-	assert(sizeof(RV_PIXEL) * totalHeight * totalWidth == m_size);
+	assert(sizeof(RV_PIXEL) * height * width <= m_size);
 
 	std::vector<RV_PIXEL> sourcePixels;
-	sourcePixels.reserve(totalHeight * totalWidth);
+	sourcePixels.reserve(height * width);
 
-	for (unsigned int y = 0; y < totalHeight; y++)
+	for (unsigned int y = 0; y < height; y++)
 	{
-		for (unsigned int x = 0; x < totalWidth; x++)
+		for (unsigned int x = 0; x < width; x++)
 		{
-			RV_PIXEL pixel = m_pBuffer[x + y * totalWidth];
+			RV_PIXEL pixel = m_pBuffer[x + y * width];
 			sourcePixels.push_back(pixel);
 		}
 	}
 
 	std::vector<unsigned char> buffer2;
-	buffer2.reserve(totalHeight * totalWidth);
+	buffer2.reserve(height * width);
 
-	for (unsigned int y = 0; y < totalHeight; y++)
+	for (unsigned int y = 0; y < height; y++)
 	{
-		for (unsigned int x = 0; x < totalWidth; x++)
+		for (unsigned int x = 0; x < width; x++)
 		{
-			RV_PIXEL& pixel = sourcePixels[x + y * totalWidth];
-			char r = 255 * pixel.r;
-			char g = 255 * pixel.g;
-			char b = 255 * pixel.b;
+			RV_PIXEL& pixel = sourcePixels[x + y * width];
+			char r = (char) (255 * pixel.r);
+			char g = (char) (255 * pixel.g);
+			char b = (char) (255 * pixel.b);
 
 			buffer2.push_back(b);
 			buffer2.push_back(g);
@@ -121,10 +122,9 @@ void PixelBuffer::debugDump(unsigned int totalHeight, unsigned int totalWidth, s
 	}
 
 	static int debugDumpIdx = 0;
-	std::string dumpAddr = "C:\\temp\\dbg\\" + fbName +std::to_string(debugDumpIdx++) + ".bmp";
+	std::string dumpAddr = pathToFile + fbName +std::to_string(debugDumpIdx++) + ".bmp";
 	unsigned char* dst2 = buffer2.data();
-	generateBitmapImage(dst2, totalHeight, totalWidth, totalWidth * 4, dumpAddr.c_str());
-#endif
+	generateBitmapImage(dst2, height, width, width * 4, dumpAddr.c_str());
 #endif
 }
 
@@ -230,13 +230,14 @@ bool FireRenderAOV::IsValid(const FireRenderContext& context) const
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip, bool isDenoiserDisabled /*= false*/)
+void FireRenderAOV::readFrameBuffer(FireRenderContext& context)
 {
 	// Check that the AOV is active and in a valid state.
 	if (!active || !pixels || m_region.isZeroArea() || !context.IsAOVSupported(id))
 		return;
 
-	bool opacityMerge = context.camera().GetAlphaMask() && context.isAOVEnabled(RPR_AOV_OPACITY);
+	bool hasAlphaMask = context.camera().GetAlphaMask();
+	bool opacityMerge = hasAlphaMask && context.isAOVEnabled(RPR_AOV_OPACITY) && !context.IsTileRender();
 
 	// setup params
 	FireRenderContext::ReadFrameBufferRequestParams params(m_region);
@@ -244,10 +245,8 @@ void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip, bool 
 	params.aov = id;
 	params.width = m_frameWidth;
 	params.height = m_frameHeight;
-	params.flip = flip;
-	params.mergeOpacity = context.camera().GetAlphaMask() && context.isAOVEnabled(RPR_AOV_OPACITY);
+	params.mergeOpacity = opacityMerge;
 	params.mergeShadowCatcher = true;
-	params.isDenoiserDisabled = isDenoiserDisabled;
 	params.shadowColor = context.m_shadowColor;
 	params.bgColor = context.m_bgColor;
 	params.bgWeight = context.m_bgWeight;
@@ -261,27 +260,39 @@ void FireRenderAOV::readFrameBuffer(FireRenderContext& context, bool flip, bool 
 	PostProcess();
 
 	// Render stamp, but only when region matches the whole frame buffer
-	if (m_region.getHeight() == m_frameHeight && m_region.getWidth() == m_frameWidth && renderStamp.numChars() > 0)
+	if (m_region.getHeight() == m_frameHeight && m_region.getWidth() == m_frameWidth && renderStamp.numChars() > 0 && !context.IsTileRender())
 	{
-		m_renderStamp->AddRenderStamp(context, pixels.get(), m_frameWidth, m_frameHeight, flip, renderStamp.asChar());
+		m_renderStamp->AddRenderStamp(context, pixels.get(), m_frameWidth, m_frameHeight, renderStamp.asChar());
 	}
 }
 
 // -----------------------------------------------------------------------------
 void FireRenderAOV::sendToRenderView()
 {
-	// Send pixels to the render view.
-	MRenderView::updatePixels(m_region.left, m_region.right,
-		m_region.bottom, m_region.top, pixels.get(), true);
-
-	// Refresh the render view.
-	MRenderView::refresh(0, m_frameWidth - 1, 0, m_frameHeight - 1);
+	RenderViewUpdater::UpdateAndRefreshRegion(
+		pixels.get(),
+		m_region.getWidth(),
+		m_region.getHeight(),
+		m_region);
 }
 
 // -----------------------------------------------------------------------------
 void FireRenderAOV::setRenderStamp(const MString& inRenderStamp)
 {
 	renderStamp = inRenderStamp;
+}
+
+// -----------------------------------------------------------------------------
+bool FireRenderAOV::IsCryptomateiralAOV(void) const
+{
+	if		(id == RPR_AOV_CRYPTOMATTE_MAT0)		{ return true; } 
+	else if (id == RPR_AOV_CRYPTOMATTE_MAT1)		{ return true; }
+	else if	(id == RPR_AOV_CRYPTOMATTE_MAT2)		{ return true; }
+	else if (id == RPR_AOV_CRYPTOMATTE_OBJ0)		{ return true; }
+	else if (id == RPR_AOV_CRYPTOMATTE_OBJ1)		{ return true; }
+	else if (id == RPR_AOV_CRYPTOMATTE_OBJ2)		{ return true; }
+
+	return false;
 }
 
 // -----------------------------------------------------------------------------
@@ -354,6 +365,7 @@ const std::string& FireRenderAOV::GetAOVName(int aov_id)
 		,{RPR_AOV_VARIANCE, "RPR_AOV_VARIANCE" }
 		,{RPR_AOV_VIEW_SHADING_NORMAL, "RPR_AOV_VIEW_SHADING_NORMAL" }
 		,{RPR_AOV_REFLECTION_CATCHER, "RPR_AOV_REFLECTION_CATCHER" }
+		,{RPR_AOV_CAMERA_NORMAL, "RPR_AOV_CAMERA_NORMAL"}
 	};
 
 	auto it = id2name.find(aov_id);

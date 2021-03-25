@@ -15,7 +15,6 @@ limitations under the License.
 #include <RadeonProRender.h>
 #include <exception>
 #include <chrono>
-#include <maya/MMutexLock.h>
 #include <maya/MString.h>
 #include <tbb/tbb_thread.h>
 #include <tbb/atomic.h>

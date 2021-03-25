@@ -299,7 +299,7 @@ protected:
 
 	// utility functions
 	void AssignShadingEngines(const MObjectArray& shadingEngines);
-
+	void ProcessMotionBlur(MFnDagNode& meshFn);
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const = 0;
 
 protected:
@@ -791,6 +791,13 @@ public:
 	// node dirty
 	virtual void OnShaderDirty(void);
 
+	// visibility flags
+	virtual void setRenderStats(MDagPath dagPath);
+	void setPrimaryVisibility(bool primaryVisibility);
+	void setReflectionVisibility(bool reflectionVisibility);
+	void setRefractionVisibility(bool refractionVisibility);
+	void setCastShadows(bool castShadow);
+
 protected:
 	// applies transform to node
 	void ApplyTransform(void);
@@ -829,6 +836,9 @@ public:
 	// Destructor
 	virtual ~FireRenderHairXGenGrooming();
 
+	// visibility flags
+	virtual void setRenderStats(MDagPath dagPath);
+
 protected:
 	virtual bool CreateCurves(void);
 };
@@ -841,6 +851,9 @@ public:
 
 	// Destructor
 	virtual ~FireRenderHairOrnatrix();
+
+	// visibility flags
+	virtual void setRenderStats(MDagPath dagPath);
 
 protected:
 	virtual bool CreateCurves(void);
@@ -857,6 +870,9 @@ public:
 
 	// Register the callback
 	virtual void RegisterCallbacks(void) override;
+
+	// visibility flags
+	virtual void setRenderStats(MDagPath dagPath);
 
 protected:
 	virtual bool CreateCurves(void);

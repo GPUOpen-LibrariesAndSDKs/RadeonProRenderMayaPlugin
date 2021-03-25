@@ -57,7 +57,6 @@ namespace FireMaya
 		RV_PIXEL*	dstBitmap;
 		int			dstWidth;
 		int			dstHeight;
-		bool		flip;
 		const unsigned char* srcBitmap;
 		int			srcWidth;
 		int			srcHeight;
@@ -75,16 +74,9 @@ namespace FireMaya
 
 		// compute loop parameters
 		int stride, pos;
-		if (!data.flip)
-		{
-			stride = data.dstWidth - w;
-			pos = dstY * data.dstWidth + dstX;
-		}
-		else
-		{
-			stride = -(data.dstWidth + w);
-			pos = (data.dstHeight - dstY - 1) * data.dstWidth + dstX;
-		}
+
+		stride = data.dstWidth - w;
+		pos = dstY * data.dstWidth + dstX;
 
 		// blend source bitmap to destination bitmap
 		const unsigned char* srcPic = &data.srcBitmap[data.srcWidth * srcY + srcX];
@@ -137,7 +129,7 @@ namespace FireMaya
 		h = DlgFont::CHAR_HEIGHT;
 	}
 
-	void RenderStamp::AddRenderStamp(FireRenderContext& context, RV_PIXEL* pixels, int width, int height, bool flip, const char* format)
+	void RenderStamp::AddRenderStamp(FireRenderContext& context, RV_PIXEL* pixels, int width, int height, const char* format) const
 	{
 		if (!format || !format[0])
 			return;
@@ -149,7 +141,6 @@ namespace FireMaya
 		data.dstBitmap = pixels;
 		data.dstWidth = width;
 		data.dstHeight = height;
-		data.flip = flip;
 		data.srcBitmap = DlgFont::TEX_DATA;
 		data.srcWidth = DlgFont::TEX_WIDTH;
 		data.srcHeight = DlgFont::TEX_HEIGHT;

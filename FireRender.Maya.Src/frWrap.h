@@ -42,7 +42,7 @@ limitations under the License.
 
 //#define FRW_LOGGING 1
 
-#define RPR_AOV_MAX 0x20
+#define RPR_AOV_MAX 0x3b
 
 #if FRW_LOGGING
 
@@ -1468,9 +1468,96 @@ namespace frw
 
 		void SetShader(Shader shader);
 		Shader GetShader() const;
+
 		void SetTransform(rpr_bool transpose, rpr_float const * transform)
 		{
 			rpr_int res = rprCurveSetTransform(Handle(), transpose, transform);
+			checkStatus(res);
+		}
+
+		void SetShadowFlag(bool castsShadows)
+		{
+			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_SHADOW, castsShadows);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
+		void SetPrimaryVisibility(bool visible)
+		{
+			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_PRIMARY_ONLY_FLAG, visible);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
+		void SetReflectionVisibility(bool visible)
+		{
+			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_REFLECTION, visible);
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+
+			res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_GLOSSY_REFLECTION, visible);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
+		void setRefractionVisibility(bool visible)
+		{
+			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_REFRACTION, visible);
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+
+			res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_GLOSSY_REFRACTION, visible);
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
+		void SetLightShapeVisibilityEx(bool visible)
+		{
+			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_LIGHT, visible);
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+
 			checkStatus(res);
 		}
 	};
@@ -2272,6 +2359,9 @@ namespace frw
 		{
 			auto status = rprContextRender(Handle());
 
+			if (RPR_ERROR_ABORTED == status)
+				return;
+
 #define SHOW_EXTENDED_ERROR_MSG
 #ifndef SHOW_EXTENDED_ERROR_MSG
 			checkStatusThrow(status, "Unable to render");
@@ -2299,6 +2389,10 @@ namespace frw
 		void RenderTile(int rxmin, int rxmax, int rymin, int rymax)
 		{
 			auto status = rprContextRenderTile(Handle(), rxmin, rxmax, rymin, rymax);
+
+			if (RPR_ERROR_ABORTED == status)
+				return;
+
 			checkStatusThrow(status, "Unable to render tile");
 		}
 
@@ -3193,30 +3287,11 @@ namespace frw
 				return Handle() != nullptr;
 			}
 
-			void ClearDependencies(void)
-			{
-				if (Handle() == nullptr)
-				{
-					return;
-				}
-
-				for (const auto& input : inputs)
-				{
-					// rprxMaterialDetachMaterial
-					rpr_int res = rprMaterialNodeSetInputNByKey(input.second, input.first, (rpr_material_node)NULL);
-					checkStatus(res);
-				}
-
-				inputs.clear();
-			}
-
 			bool bDirty = true;
 
-			// Useful in case of BlendMaterial shader. 
-			std::vector<frw::Shader> dependentShaders;
 			int numAttachedShapes = 0;
 			ShaderType shaderType = ShaderTypeInvalid;
-			std::map<rpr_material_node_input, rpr_material_node> inputs;
+
 			bool isShadowCatcher = false;
 			ShadowCatcherParams mShadowCatcherParams;
 			bool isReflectionCatcher = false;
@@ -3270,11 +3345,6 @@ namespace frw
 			return data().mShadowCatcherParams.mBgIsEnv;
 		}
 
-		void ClearDependencies(void)
-		{
-			data().ClearDependencies();
-		}
-
 		void SetReflectionCatcher(bool isReflectionCatcher)
 		{
 			data().isReflectionCatcher = isReflectionCatcher;
@@ -3298,21 +3368,6 @@ namespace frw
 		Shader(const MaterialSystem& ms, const Context& context, bool destroyOnDelete = true) : Node(ms, ShaderType::ShaderTypeStandard, destroyOnDelete, new Data())
 		{
 			data().shaderType = ShaderType::ShaderTypeStandard;
-		}
-
-		void _SetInputNode(rpr_material_node_input key, const Shader& shader)
-		{
-			Node::_SetInputNode(key, shader);
-
-			if (shader)
-			{
-				AddDependentShader(shader);
-			}
-		}
-
-		void AddDependentShader(frw::Shader shader)
-		{
-			data().dependentShaders.push_back(shader);
 		}
 
 		frw::ShaderType GetShaderType() const
@@ -3417,41 +3472,10 @@ namespace frw
 			FRW_PRINT_DEBUG("\tShape.AttachToMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, Handle(), inputKey);
 			if (Handle())
 			{
-				// Attach rpr shader output to some material's input
-				auto it = d.inputs.find(inputKey);
-				if (it != d.inputs.end())
-					DetachFromMaterialInput(it->second, it->first);
-
 				res = rprMaterialNodeSetInputNByKey(node, inputKey, Handle());
 				checkStatus(res);
-				d.inputs.emplace(inputKey, node);
 			}
-			checkStatus(res);
-		}
 
-		void DetachFromAllMaterialInputs()
-		{
-			auto& d = data();
-			rpr_int res = RPR_ERROR_INVALID_PARAMETER;
-			for (const auto& input : d.inputs)
-			{
-				res = rprMaterialNodeSetInputNByKey(input.second, input.first, nullptr);
-				checkStatus(res);
-			}
-			d.inputs.clear();
-		}
-
-		void DetachFromMaterialInput(rpr_material_node node, rpr_material_node_input inputKey) const
-		{
-			auto& d = data();
-			rpr_int res = RPR_ERROR_INVALID_PARAMETER;
-			FRW_PRINT_DEBUG("\tShape.DetachFromMaterialInput: node=0x%016llX, material=0x%016llX on %s", node, Handle(), inputKey);
-			if (Handle())
-			{
-				// Detach rpr shader output from some material's input
-				res = rprMaterialNodeSetInputNByKey(node, inputKey, nullptr);
-				d.inputs.erase(inputKey);
-			}
 			checkStatus(res);
 		}
 
@@ -3520,6 +3544,13 @@ namespace frw
 			}
 			assert(!"bad type");
 			return false;
+		}
+
+		void SetMaterialId(rpr_uint id)
+		{
+			rpr_int res = rprMaterialNodeSetID(Handle(), id);
+
+			assert(res == MStatus::kSuccess);
 		}
 
 	};
@@ -3658,15 +3689,6 @@ namespace frw
 		data().type = type;
 	}
 
-	inline void Node::_SetInputNode(rpr_material_node_input key, const Shader& shader)
-	{
-		if (shader)
-		{
-			AddReference(shader);
-			shader.AttachToMaterialInput(Handle(), key);
-		}
-	}
-
 	inline bool Node::SetValue(rpr_material_node_input key, const Value& v)
 	{
 		switch (v.type)
@@ -3716,6 +3738,7 @@ namespace frw
 		}
 
 		Shader node(*this, ShaderTypeBlend);
+
 		node._SetInputNode(RPR_MATERIAL_INPUT_COLOR0, a);
 		node._SetInputNode(RPR_MATERIAL_INPUT_COLOR1, b);
 		node.SetValue(RPR_MATERIAL_INPUT_WEIGHT, t);

@@ -76,7 +76,7 @@ public:
 	void freePixels();
 
 	/** Read the frame buffer pixels for all active AOVs. */
-	void readFrameBuffers(FireRenderContext& context, bool flip);
+	void readFrameBuffers(FireRenderContext& context);
 
 	/** Write the active AOVs to file. */
 	void writeToFile(const MString& filePath, unsigned int imageFormat, FireRenderAOV::FileWrittenCallback fileWrittenCallback = nullptr);
@@ -92,11 +92,19 @@ public:
 	MString GetEXRCompressionType() const;
 	TypeDesc::BASETYPE GetChannelFormat() const;
 
+	/* Retruns true if any one of the cryptomaterial material AOV is enabled */
+	bool IsCryptomatteMaterial(void) const;
+
+	/* Returns true if any of the cryptomaterial object AOV is enabled */
+	bool IsCryptomatteObject(void) const;
+
 private:
 	void AddAOV(unsigned int id, const MString& attribute, const MString& name,
 									const MString& folder, AOVDescription description);
 
 	void InitEXRCompressionMap();
+
+	bool IsAOVActive(std::vector<int>& ids) const;
 
 private:
 	// Members
