@@ -889,7 +889,7 @@ frw::Image FireMaya::Scope::GetImage(MString texturePath, MString colorSpace, co
 		return NULL;
 	}
 
-	std::string key = texturePath.asUTF8();
+	std::string key = (texturePath + ":" + colorSpace).asUTF8();
 
 	auto it = m->imageCache.find(key);
 	if (it != m->imageCache.end())
@@ -1799,7 +1799,6 @@ void FireMaya::Scope::RegisterCallback(MObject node)
 	if (m->m_nodeDirtyCallbacks.find(uuid) == m->m_nodeDirtyCallbacks.end())
 	{
 		m->m_nodeDirtyCallbacks[uuid] = MNodeMessage::addNodeDirtyCallback(node, NodeDirtyCallback, this);
-		m->m_AttributeChangedCallbacks[uuid] = MNodeMessage::addAttributeChangedCallback(node, AttributeChangedCallback, this);
 	}
 }
 
@@ -1834,25 +1833,6 @@ void FireMaya::Scope::NodeDirtyCallback(MObject& node, void* clientData)
 {
 	Scope* self = static_cast<Scope*>(clientData);
 	self->NodeDirtyCallback(node);
-}
-
-void FireMaya::Scope::AttributeChangedCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug, void* clientData)
-{
-	Scope* self = static_cast<Scope*>(clientData);
-	self->AttributeChangedCallback(msg, plug, otherPlug);
-}
-
-void FireMaya::Scope::AttributeChangedCallback(MNodeMessage::AttributeMessage msg, MPlug& plug, MPlug& otherPlug)
-{
-	bool connectionWasBroken = (MNodeMessage::AttributeMessage::kConnectionBroken & msg) > 0;
-	bool newIncomingDirection = (MNodeMessage::AttributeMessage::kIncomingDirection & msg) > 0;
-
-	if (connectionWasBroken & !newIncomingDirection)
-	{
-		std::string uuid = getNodeUUid(plug.node());
-		frw::Shader shader = GetCachedShader(uuid);
-		shader.DetachFromAllMaterialInputs();
-	}
 }
 
 void FireMaya::Scope::NodeDirtyPlugCallback(MObject& ob, MPlug& plug)
@@ -2185,10 +2165,6 @@ FireMaya::Scope::Data::~Data()
 	scene.Reset();
 	materialSystem.Reset();
 	context.Reset();
-
-	// before deleting shader that have dependent shaders, we need to delete these dependencies first
-	for (auto it = shaderMap.begin(); it != shaderMap.end(); ++it)
-		it->second.ClearDependencies();
 
 	// delete shaders
 	shaderMap.clear();

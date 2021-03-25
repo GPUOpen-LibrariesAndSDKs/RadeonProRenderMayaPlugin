@@ -65,7 +65,10 @@ bool FireRenderMaterialSwatchRender::doIteration()
 
 		if (IsFRNode())
 		{
-			setupFRNode();	
+			if (!setupFRNode())
+			{
+				return true;
+			}
 			getSwatchInstance().enqueSwatch(this);
 		}
 		else
@@ -98,7 +101,10 @@ bool FireRenderMaterialSwatchRender::setupFRNode()
 
 	auto disableSwatchPlug = nodeFn.findPlug("disableSwatch");
 
-	if (disableSwatchPlug.isNull() || !disableSwatchPlug.asBool())
+	bool enableSwatches = false;
+	FireRenderGlobalsData::getThumbnailIterCount(&enableSwatches);
+	 
+	if (enableSwatches && (disableSwatchPlug.isNull() || !disableSwatchPlug.asBool()))
 	{
 		FireRenderSwatchInstance& swatchInstance = getSwatchInstance();
 
@@ -106,6 +112,8 @@ bool FireRenderMaterialSwatchRender::setupFRNode()
 		m_volumeShader = swatchInstance.getContext().GetVolumeShader(mnode);
 
 		m_resolution = resolution();
+
+		return true;
 	}
 
 	return false;
@@ -138,7 +146,6 @@ void FireRenderMaterialSwatchRender::processFromBackgroundThread()
 			(swatchInstance.getContext().height() != (unsigned int) m_resolution))
 		{
 			swatchInstance.getContext().setResolution(m_resolution, m_resolution, false);
-			swatchInstance.getContext().ConsiderSetupDenoiser();
 		}
 
 		swatchInstance.getContext().setDirty();

@@ -230,7 +230,15 @@ MStatus FireRenderCmd::renderFrame(const MArgDatabase& argData)
 
 	s_rendering = true;
 
-	s_production->start();
+	s_production->UpdateGlobals();
+	if (!s_production->isTileRender())
+	{
+		s_production->startFullFrameRender();
+	}
+	else
+	{
+		s_production->startTileRender();
+	}
 
 	if (s_waitForIt || argData.isFlagSet(kWaitForIt))
 		s_production->waitForIt();
@@ -387,7 +395,6 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		context.buildScene();
 		context.updateLimitsFromGlobalData(globals, false, true);
 		context.setResolution(settings.width, settings.height, true);
-		context.ConsiderSetupDenoiser();
 
 		// Initialize the command port so the
 		// batch process can communicate with Maya.
@@ -491,7 +498,16 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 				}
 
 				// Resolve the frame buffer and read pixels into AOVs.
-				aovs.readFrameBuffers(context, false);
+				aovs.readFrameBuffers(context);
+
+				// Run denoiser
+				if (context.IsDenoiserEnabled())
+				{
+					FireRenderAOV* pColorAOV = aovs.getAOV(RPR_AOV_COLOR);
+					assert(pColorAOV != nullptr);
+
+					context.ProcessDenoise(aovs.getRenderViewAOV(), *pColorAOV, context.m_width, context.m_height, region, [this](RV_PIXEL* data) {});
+				}
 
 				// Save the frame to file.
 				aovs.writeToFile(filePath, settings.imageFormat);
@@ -502,7 +518,6 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		}
 
 		MGlobal::displayInfo(MString(devicesStr.c_str()));
-		MGlobal::displayInfo(MString(versionStr.c_str()));
 
 		// Perform clean up operations.
 		context.cleanScene();

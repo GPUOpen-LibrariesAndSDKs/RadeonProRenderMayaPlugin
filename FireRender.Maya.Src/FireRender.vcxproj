@@ -275,6 +275,7 @@
     <ClCompile Include="RenderProgressBars.cpp" />
     <ClCompile Include="RenderStamp.cpp" />
     <ClCompile Include="RenderStampUtils.cpp" />
+    <ClCompile Include="RenderViewUpdater.cpp" />
     <ClCompile Include="RprComposite.cpp" />
     <ClCompile Include="ShadersManager.cpp" />
     <ClCompile Include="SkyAttributes.cpp" />
@@ -436,6 +437,7 @@
     <ClInclude Include="RenderRegion.h" />
     <ClInclude Include="RenderStamp.h" />
     <ClInclude Include="RenderStampUtils.h" />
+    <ClInclude Include="RenderViewUpdater.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="RprComposite.h" />
     <ClInclude Include="ShadersManager.h" />

@@ -43,5 +43,5 @@ namespace RPR
 	/** Auto MSpinLock. */
 	typedef AutoLock<MSpinLock> AutoSpinLock;
 	/** Auto MMutexLock. */
-	typedef AutoLock<MMutexLock> AutoMutexLock;
+	typedef AutoLock<std::mutex> AutoMutexLock;
 }

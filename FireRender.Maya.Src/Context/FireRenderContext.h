@@ -15,7 +15,6 @@ limitations under the License.
 #include <maya/M3dView.h>
 #include <maya/MMessage.h>
 #include <maya/MDGMessage.h>
-#include <maya/MMutexLock.h>
 #include <maya/MBoundingBox.h>
 #include <maya/MFnTransform.h>
 #include <maya/MCallbackIdArray.h>
@@ -203,8 +202,9 @@ public:
 
 	// Sets the resolution and perform an initial render and frame buffer resolve.
 	void resize(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
-	// - Setup denoiser if necessary (this function was used to be called from resize and setResolution)
-	bool ConsiderSetupDenoiser(bool useRAMBufer = false);
+
+	// Setup denoiser if necessary
+	bool TryCreateDenoiserImageFilters(bool useRAMBufer = false);
 
 	// Set the frame buffer resolution
 	void setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
@@ -262,10 +262,8 @@ public:
 		float bgTransparency;
 		float bgWeight;
 		const RenderRegion& region;
-		bool flip;
 		bool mergeOpacity;
 		bool mergeShadowCatcher;
-		bool isDenoiserDisabled;
 
 		ReadFrameBufferRequestParams(const RenderRegion& _region)
 			: pixels(nullptr)
@@ -279,14 +277,12 @@ public:
 			, bgTransparency(0.0f)
 			, bgWeight(1.0f)
 			, region(_region)
-			, flip(false)
 			, mergeOpacity(false)
 			, mergeShadowCatcher(false)
-			, isDenoiserDisabled(false)
 		{};
 
 		unsigned int PixelCount(void) const { return (width*height); }
-		bool UseTempData(void) const { return (flip || region.getWidth() < width || region.getHeight() < height); }
+		bool UseTempData(void) const { return (region.getWidth() < width || region.getHeight() < height); }
 	};
 
 	// Read frame buffer pixels and optionally normalize and flip the image.
@@ -296,7 +292,7 @@ public:
 	bool ConsiderShadowReflectionCatcherOverride(const ReadFrameBufferRequestParams& params);
 
 	// writes input aov frame bufer on disk (both resolved and not resolved)
-	void DebugDumpAOV(int aov) const;
+	void DebugDumpAOV(int aov, char* pathToFile = nullptr) const;
 
 	// runs denoiser, returns pixel array as float vector if denoiser runs succesfully
 	std::vector<float> GetDenoisedData(bool& result);
@@ -304,9 +300,9 @@ public:
 	// reads aov directly into internal storage
 	RV_PIXEL* GetAOVData(const ReadFrameBufferRequestParams& params);
 
-	void MergeOpacity(const ReadFrameBufferRequestParams& params, size_t dataSize);
+	void MergeOpacity(const ReadFrameBufferRequestParams& params);
 
-	void CombineOpacity(ReadFrameBufferRequestParams& params);
+	void CombineOpacity(int aov, RV_PIXEL* pixels, unsigned int area);
 
 	// Composite image for Shadow Catcher, Reflection Catcher and Shadow+Reflection Catcher
 	virtual void compositeShadowCatcherOutput(const ReadFrameBufferRequestParams& params);
@@ -324,11 +320,22 @@ public:
 	// Copy pixels from the source buffer to the destination buffer.
 	void copyPixels(RV_PIXEL* dest, RV_PIXEL* source,
 		unsigned int sourceWidth, unsigned int sourceHeight,
-		const RenderRegion& region, bool flip) const;
+		const RenderRegion& region) const;
 
 	// Combine pixels (set alpha) with Opacity pixels
 	void combineWithOpacity(RV_PIXEL* pixels, unsigned int size, RV_PIXEL *opacityPixels = NULL) const;
 
+	// do action for each framebuffer matching filter
+	void ForEachFramebuffer(std::function<void(int aovId)> actionFunc, std::function<bool(int aovId)> filter);
+
+	// try running denoiser; result is saved into RAM buffer in context
+	std::vector<float> DenoiseIntoRAM(void);
+
+	// runs denoiser, puts result in aov and applies render stamp
+	void ProcessDenoise(FireRenderAOV& renderViewAOV, FireRenderAOV& colorAOV, unsigned int width, unsigned int height, const RenderRegion& region, std::function<void(RV_PIXEL* pData)> callbackFunc);
+
+	// try merge opacity from context to supplied buffer
+	void ProcessMergeOpactityFromRAM(RV_PIXEL* data, int bufferWidth, int bufferHeight);
 
 	// Resolve the framebuffer using the current tone mapping
 
@@ -520,7 +527,11 @@ public:
 	// Returns true if context was recently Freshen and needs redraw
 	bool needsRedraw(bool setNotUpdatedOnExit = true);
 
-	bool IsDenoiserEnabled(void) { return m_denoiserFilter != nullptr; }
+	bool IsDenoiserCreated(void) const { return m_denoiserFilter != nullptr; }
+
+	bool IsDenoiserEnabled(void) const { return (IsDenoiserSupported() && m_globals.denoiserSettings.enabled);	}
+
+	bool IsTileRender(void) const { return (m_globals.tileRenderingEnabled && !isInteractive()); }
 
 	frw::PostEffect white_balance;
 	frw::PostEffect simple_tonemap;
@@ -602,7 +613,7 @@ public:
 
 	virtual rpr_int SetRenderQuality(RenderQuality quality) { return RPR_SUCCESS; }
 
-	virtual void setupContextPreSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance = false) {}
+	virtual void setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance = false) {}
 	virtual void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) {}
 	virtual bool IsAOVSupported(int aov) const { return true; }
 
@@ -612,6 +623,7 @@ public:
 	virtual bool IsDisplacementSupported() const override { return true; }
 	virtual bool IsHairSupported() const override { return true; }
 	virtual bool IsVolumeSupported() const override { return true; }
+	virtual bool ShouldForceRAMDenoiser() const override { return false; }
 
 	virtual bool IsPhysicalLightTypeSupported(PLType lightType) const { return true; }
 
@@ -650,6 +662,10 @@ protected:
 
 	virtual void OnPreRender() {}
 
+	virtual int GetAOVMaxValue();
+
+	void ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestParams& params);
+
 private:
 	struct CallbacksAttachmentHelper
 	{
@@ -679,6 +695,7 @@ private:
 	void BuildLateinitObjects();
 
 private:
+	std::mutex m_rifLock;
 	std::shared_ptr<ImageFilter> m_denoiserFilter;
 
 	frw::DirectionalLight m_defaultLight;
@@ -692,7 +709,7 @@ private:
 	FireRenderObjectMap m_sceneObjects;
 
 	// Main mutex
-	MMutexLock m_mutex;
+	std::mutex m_mutex;
 
 	// these are all automatically destructing handles
 	struct Handles
@@ -749,7 +766,7 @@ private:
 	std::map<FireRenderObject*, std::weak_ptr<FireRenderObject> > m_dirtyObjects;
 
 	/** Mutex used for disabling simultaneous access to dirty objects list. */
-	MMutexLock m_dirtyMutex;
+	std::mutex m_dirtyMutex;
 
 	/** Holds current globals state obtained in previous refresh call. */
 	FireRenderGlobalsData m_globals;
@@ -817,8 +834,9 @@ public:
 	FireMaya::Scope& GetScope() { return scope; }
 	frw::Scene GetScene() { return scope.Scene(); }
 	frw::Context GetContext() { return scope.Context(); }
+	const frw::Context GetContext() const { return scope.Context(); }
 	frw::MaterialSystem GetMaterialSystem() { return scope.MaterialSystem(); }
-	frw::Shader GetShader(MObject ob, const FireRenderMeshCommon* pMesh = nullptr, bool forceUpdate = false); // { return scope.GetShader(ob, forceUpdate); }
+	frw::Shader GetShader(MObject ob, MObject shadingEngine = MObject(), const FireRenderMeshCommon* pMesh = nullptr, bool forceUpdate = false); // { return scope.GetShader(ob, forceUpdate); }
 	frw::Shader GetVolumeShader(MObject ob, bool forceUpdate = false) { return scope.GetVolumeShader(ob, forceUpdate); }
 
 	// Width of the framebuffer

@@ -13,7 +13,6 @@ limitations under the License.
 #include "FireRenderViewportCmd.h"
 #include "FireRenderViewport.h"
 #include "FireRenderViewportManager.h"
-#include <maya/MRenderView.h>
 
 #include <vector>
 #include <functional>
@@ -154,9 +153,6 @@ MStatus FireRenderViewportCmd::doIt(const MArgList & args)
 	}
 	catch (...)
 	{
-		// Perform clean up operations.
-		MRenderView::endRender();
-
 		// Process the error.
 		FireRenderError error(std::current_exception());
 		return MStatus::kFailure;

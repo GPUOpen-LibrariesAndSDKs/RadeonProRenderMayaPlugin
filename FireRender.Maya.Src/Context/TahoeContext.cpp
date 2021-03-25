@@ -107,7 +107,7 @@ rpr_int TahoeContext::CreateContextInternal(rpr_creation_flags createFlags, rpr_
 	return res;
 }
 
-void TahoeContext::setupContextPreSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance /*= false*/)
+void TahoeContext::setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance /*= false*/)
 {
 	frw::Context context = GetContext();
 	rpr_context frcontext = context.Handle();
@@ -303,8 +303,7 @@ void TahoeContext::setupContextPostSceneCreation(const FireRenderGlobalsData& fi
 
 	updateTonemapping(fireRenderGlobalsData, disableWhiteBalance);
 
-
-	if (GetTahoeVersionToUse() == TahoePluginVersion::RPR2)
+	if (m_PluginVersion == TahoePluginVersion::RPR2)
 	{
 		frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_TEXTURE_CACHE_PATH, fireRenderGlobalsData.textureCachePath.asChar());
 		checkStatus(frstatus);
@@ -514,7 +513,12 @@ bool TahoeContext::IsRenderQualitySupported(RenderQuality quality) const
 
 bool TahoeContext::IsDenoiserSupported() const
 {
-	return m_PluginVersion == TahoePluginVersion::RPR1;
+	return true;
+}
+
+bool TahoeContext::ShouldForceRAMDenoiser() const
+{
+	return m_PluginVersion == TahoePluginVersion::RPR2;
 }
 
 bool TahoeContext::IsDisplacementSupported() const
@@ -632,3 +636,14 @@ void TahoeContext::OnPreRender()
 		SetPreviewMode(previewModeLevel);
 	}
 }
+
+int TahoeContext::GetAOVMaxValue()
+{
+	bool isRPR20 = TahoeContext::IsGivenContextRPR2(this);
+
+	if (isRPR20)
+		return RPR_AOV_MAX;
+
+	return 0x20;
+}
+

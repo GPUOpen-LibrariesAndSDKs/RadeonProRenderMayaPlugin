@@ -64,6 +64,7 @@ struct DenoiserSettings
 		normal = 0.0f;
 		trans = 0.0f;
 		colorOnly = false;
+		enable16bitCompute = false;
 	}
 
 	bool enabled;
@@ -77,6 +78,7 @@ struct DenoiserSettings
 	float normal;
 	float trans;
 	bool colorOnly;
+	bool enable16bitCompute;
 };
 
 struct CompletionCriteriaParams
@@ -1204,4 +1206,5 @@ long TimeDiffChrono(TimePoint currTime, TimePoint startTime)
 {
 	return (long)std::chrono::duration_cast<T>(currTime - startTime).count();
 }
+
 
