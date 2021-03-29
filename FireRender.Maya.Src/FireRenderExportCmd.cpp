@@ -152,6 +152,7 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 		,{RPR_AOV_VARIANCE, L"variance" }
 		,{RPR_AOV_VIEW_SHADING_NORMAL, L"normal.view" }
 		,{RPR_AOV_REFLECTION_CATCHER, L"reflection.catcher" }
+		,{RPR_AOV_CAMERA_NORMAL, L"camera.normal" }
 		,{RPR_AOV_MAX, L"RPR_AOV_MAX" }
 	};
 
