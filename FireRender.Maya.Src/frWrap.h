@@ -1501,6 +1501,17 @@ namespace frw
 			{
 				checkStatus(res);
 			}
+
+			res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_DIFFUSE, visible);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 
 		void SetReflectionVisibility(bool visible)
