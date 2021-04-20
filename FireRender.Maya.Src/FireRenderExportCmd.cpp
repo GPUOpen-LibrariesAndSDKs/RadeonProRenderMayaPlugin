@@ -76,9 +76,27 @@ MSyntax FireRenderExportCmd::newSyntax()
 	return syntax;
 }
 
+std::string GetPluginLibrary(bool isRPR2)
+{
+	std::string pluginExtension;
+	std::string pluginPrefix;
+
+	std::string pluginDll = isRPR2 ? "Northstar64" : "Tahoe64";
+
+#ifdef WIN32
+	pluginDll += ".dll";
+#else
+	pluginDll = "lib" + pluginDll + ".dylib";
+#endif
+
+	return pluginDll;
+}
+
 bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std::wstring& fileName)
 {
 	std::wstring configName = std::regex_replace(filePath, std::wregex(L"rpr$"), L"json");
+
+	bool isRPR2 = TahoeContext::IsGivenContextRPR2(&ctx);
 
 #ifdef WIN32
 	// MSVS added an overload to accommodate using open with wide strings where xcode did not.
@@ -92,11 +110,14 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 	if (!json)
 		return false;
 
-	const std::locale utf8_locale
-		= std::locale(std::locale(), new std::codecvt_utf8<wchar_t>());
+	std::string pluginDll = GetPluginLibrary(isRPR2);
+
+	const std::locale utf8_locale = std::locale(std::locale(), new std::codecvt_utf8<wchar_t>());
 	json.imbue(utf8_locale);
 
 	json << "{" << std::endl;
+
+	json << "\"plugin\" : \"" << pluginDll.c_str() << "\",\n";
 
 	json << "\"output\" : " << "\"" << fileName.c_str() << ".png\",\n";
 
@@ -169,6 +190,10 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 			continue;
 
 		if (!ctx.isAOVEnabled(aov))
+			continue;
+
+		// shin request
+		if (aov == RPR_AOV_CAMERA_NORMAL && !isRPR2)
 			continue;
 
 		aovs.push_back(it->second);
