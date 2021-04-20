@@ -64,6 +64,10 @@ bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(const MFnMesh& fnMesh
 
 	countVertices = fnMesh.numVertices(&mstatus);
 	assert(MStatus::kSuccess == mstatus);
+	if (countVertices == 0)
+	{
+		return false;
+	}
 
 	// pointer to array of normal coordinates in Maya
 	pNormals = fnMesh.getRawNormals(&mstatus);
