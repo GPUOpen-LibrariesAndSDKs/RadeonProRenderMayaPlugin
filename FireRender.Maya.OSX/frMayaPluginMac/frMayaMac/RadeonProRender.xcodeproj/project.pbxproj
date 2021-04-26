@@ -13,9 +13,9 @@
 		5003A2AD26021C8700805EAD /* RenderViewUpdater.h in Headers */ = {isa = PBXBuildFile; fileRef = 5003A2A926021C8700805EAD /* RenderViewUpdater.h */; };
 		5003A2AE26021C8700805EAD /* RenderViewUpdater.h in Headers */ = {isa = PBXBuildFile; fileRef = 5003A2A926021C8700805EAD /* RenderViewUpdater.h */; };
 		5003A2AF26021C8700805EAD /* RenderViewUpdater.h in Headers */ = {isa = PBXBuildFile; fileRef = 5003A2A926021C8700805EAD /* RenderViewUpdater.h */; };
-		50AC4CEC2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 50AC4CEB2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib */; };
-		50AC4CED2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 50AC4CEB2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib */; };
-		50AC4CEE2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 50AC4CEB2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib */; };
+		505C0BB2262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 505C0BB1262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib */; };
+		505C0BB3262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 505C0BB1262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib */; };
+		505C0BB4262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 505C0BB1262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib */; };
 		50C1EDBC247EC23700E53230 /* SetRangeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50C1EDB9247EC23700E53230 /* SetRangeConverter.h */; };
 		50C1EDBD247EC23700E53230 /* SetRangeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50C1EDB9247EC23700E53230 /* SetRangeConverter.h */; };
 		50C1EDBE247EC23700E53230 /* SetRangeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50C1EDB9247EC23700E53230 /* SetRangeConverter.h */; };
@@ -1039,7 +1039,7 @@
 		4DE645101DA339A60076E6A7 /* Readme.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = Readme.txt; path = ../../Readme.txt; sourceTree = "<group>"; };
 		5003A2A726021C8700805EAD /* RenderViewUpdater.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RenderViewUpdater.cpp; path = ../../../FireRender.Maya.Src/RenderViewUpdater.cpp; sourceTree = "<group>"; };
 		5003A2A926021C8700805EAD /* RenderViewUpdater.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RenderViewUpdater.h; path = ../../../FireRender.Maya.Src/RenderViewUpdater.h; sourceTree = "<group>"; };
-		50AC4CEB2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonImageFilters.1.6.1.dylib; path = ../../../RadeonProImageProcessingSDK/OSX/Dynamic/libRadeonImageFilters.1.6.1.dylib; sourceTree = "<group>"; };
+		505C0BB1262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonImageFilters.1.7.0.dylib; path = ../../../RadeonProImageProcessingSDK/OSX/Dynamic/libRadeonImageFilters.1.7.0.dylib; sourceTree = "<group>"; };
 		50C1EDB9247EC23700E53230 /* SetRangeConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SetRangeConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/SetRangeConverter.h; sourceTree = "<group>"; };
 		50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SetRangeConverter.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/SetRangeConverter.cpp; sourceTree = "<group>"; };
 		50ED2496251B8889006A318A /* NorthStarRenderingHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NorthStarRenderingHelper.cpp; path = ../../../FireRender.Maya.Src/NorthStarRenderingHelper.cpp; sourceTree = "<group>"; };
@@ -1370,7 +1370,7 @@
 				B7190BC62448AD3C0071D47F /* libopenvdb.a in Frameworks */,
 				B7190BCF2448AD3C0071D47F /* libz.a in Frameworks */,
 				8D595E3E20372FE20031988A /* libRadeonProRender64.dylib in Frameworks */,
-				50AC4CEC2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */,
+				505C0BB2262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib in Frameworks */,
 				B7D5515A23EB152A00F9E160 /* libProRenderGLTF.dylib in Frameworks */,
 				B7190BCC2448AD3C0071D47F /* libsnappy.a in Frameworks */,
 				8D595E3F20372FE20031988A /* libTahoe64.dylib in Frameworks */,
@@ -1389,7 +1389,7 @@
 				B7190BC72448AD3C0071D47F /* libopenvdb.a in Frameworks */,
 				B7190BD02448AD3C0071D47F /* libz.a in Frameworks */,
 				8DBCC36122304666003EE361 /* libRadeonProRender64.dylib in Frameworks */,
-				50AC4CED2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */,
+				505C0BB3262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib in Frameworks */,
 				B7D5515B23EB152E00F9E160 /* libProRenderGLTF.dylib in Frameworks */,
 				B7190BCD2448AD3C0071D47F /* libsnappy.a in Frameworks */,
 				8DBCC36222304666003EE361 /* libTahoe64.dylib in Frameworks */,
@@ -1408,7 +1408,7 @@
 				B7190BC82448AD3C0071D47F /* libopenvdb.a in Frameworks */,
 				B7190BD12448AD3C0071D47F /* libz.a in Frameworks */,
 				B75320E623D9ED5600246738 /* libRadeonProRender64.dylib in Frameworks */,
-				50AC4CEE2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib in Frameworks */,
+				505C0BB4262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib in Frameworks */,
 				B7D5515C23EB152F00F9E160 /* libProRenderGLTF.dylib in Frameworks */,
 				B7190BCE2448AD3C0071D47F /* libsnappy.a in Frameworks */,
 				B75320E723D9ED5600246738 /* libTahoe64.dylib in Frameworks */,
@@ -1733,7 +1733,7 @@
 		4DE645121DA349C10076E6A7 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				50AC4CEB2538D40000ED3593 /* libRadeonImageFilters.1.6.1.dylib */,
+				505C0BB1262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib */,
 				B7190C802452F6D70071D47F /* libOpenImageIO.1.6.dylib */,
 				B7190BBE2448AD3C0071D47F /* libblosc.a */,
 				B7190BC02448AD3C0071D47F /* libboost_iostreams.a */,

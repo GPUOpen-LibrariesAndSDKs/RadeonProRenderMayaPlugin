@@ -395,7 +395,8 @@ bool FireRenderIpr::RunOnViewportThread()
 				m_finishedFrame = true;
 
 				// run denoiser
-				if (m_contextPtr->IsDenoiserEnabled())
+				bool isOutputAOVColor = m_currentAOVToDisplay == RPR_AOV_COLOR;
+				if (m_contextPtr->IsDenoiserEnabled() && isOutputAOVColor)
 				{
 					std::vector<float> vecData = m_contextPtr->DenoiseIntoRAM();
 					assert(vecData.size() != 0);
