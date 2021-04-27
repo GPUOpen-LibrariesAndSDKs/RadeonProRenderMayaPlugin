@@ -299,8 +299,10 @@ protected:
 
 	// utility functions
 	void AssignShadingEngines(const MObjectArray& shadingEngines);
-	void ProcessMotionBlur(MFnDagNode& meshFn);
+	void ProcessMotionBlur(const MFnDagNode& meshFn);
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const = 0;
+
+	bool IsMotionBlurEnabled(const MFnDagNode& meshFn);
 
 protected:
 

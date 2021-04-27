@@ -2032,7 +2032,7 @@ namespace frw
 			rpr_int numberOfTexCoordLayers, const rpr_float** texcoords, const size_t* num_texcoords, const rpr_int* texcoord_stride,
 			const rpr_int* vertex_indices, rpr_int vidx_stride,
 			const rpr_int* normal_indices, rpr_int nidx_stride, const rpr_int** texcoord_indices,
-			const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces, std::string optionalMeshName = "") const;
+			const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces, rpr_mesh_info* meshAttrArray = nullptr, const std::string& optionalMeshName = "") const;
 
 		PointLight CreatePointLight()
 		{
@@ -4155,7 +4155,7 @@ namespace frw
 		rpr_int numberOfTexCoordLayers, const rpr_float** texcoords, const size_t* num_texcoords, const rpr_int* texcoord_stride,
 		const rpr_int* vertex_indices, rpr_int vidx_stride,
 		const rpr_int* normal_indices, rpr_int nidx_stride, const rpr_int** texcoord_indices,
-		const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces, std::string optionalMeshName) const
+		const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces, rpr_mesh_info* meshAttrArray, const std::string& optionalMeshName) const
 	{
 		FRW_PRINT_DEBUG("CreateMesh() - %d faces\n", num_faces);
 		assert(num_vertices != 0);
@@ -4166,14 +4166,14 @@ namespace frw
 
 		rpr_shape shape = nullptr;
 
-		auto status = rprContextCreateMeshEx(Handle(),
+		auto status = rprContextCreateMeshEx2(Handle(),
 			vertices, num_vertices, vertex_stride,
 			normals, num_normals, normal_stride,
 			perVertexFlag, num_perVertexFlags, perVertexFlag_stride,
 			numberOfTexCoordLayers, texcoords, num_texcoords, texcoord_stride,
 			vertex_indices, vidx_stride,
 			normal_indices, nidx_stride, texcoord_indices,
-			tidx_stride, num_face_vertices, num_faces,
+			tidx_stride, num_face_vertices, num_faces, meshAttrArray,
 			&shape);
 
 		checkStatusThrow(status, ("Unable to create mesh: " + optionalMeshName).c_str());
