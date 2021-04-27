@@ -91,19 +91,28 @@ void FireMaya::SingleShaderMeshTranslator::TranslateMesh(
 	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 #endif
 
+	rpr_mesh_info mesh_properties[16] = { 0 };
+
+	if (meshData.motionSamplesCount > 0)
+	{
+		mesh_properties[0] = (rpr_mesh_info)RPR_MESH_MOTION_DIMENSION;
+		mesh_properties[1] = (rpr_mesh_info)meshData.motionSamplesCount;
+		mesh_properties[2] = (rpr_mesh_info)0;
+	}
+
 	elements[0] = context.CreateMeshEx(
-		meshData.pVertices, meshData.countVertices, sizeof(Float3),
-		meshData.pNormals, meshData.countNormals, sizeof(Float3),
+		meshData.GetVertices(), meshData.GetTotalVertexCount(), sizeof(Float3),
+		meshData.GetNormals(), meshData.GetTotalNormalCount(), sizeof(Float3),
 		nullptr, 0, 0,
 		uvSetCount, meshData.puvCoords.data(), meshData.sizeCoords.data(), multiUV_texcoord_strides.data(),
 		triangleVertexIndices.data(), sizeof(rpr_int),
 		triangleNormalIndices.data(), sizeof(rpr_int),
 		puvIndices.data(), texIndexStride.data(),
-		std::vector<int>(triangleVertexIndices.size() / 3, 3).data(), triangleVertexIndices.size() / 3, fnMesh.name().asChar());
+		std::vector<int>(triangleVertexIndices.size() / 3, 3).data(), triangleVertexIndices.size() / 3, mesh_properties, fnMesh.name().asChar());
 
 	if (!vertexColors.empty())
 	{
-		elements[0].SetVertexColors(vertexIndices, vertexColors, meshData.countVertices);
+		elements[0].SetVertexColors(vertexIndices, vertexColors, (rpr_int) meshData.countVertices);
 	}
 
 #ifdef OPTIMIZATION_CLOCK

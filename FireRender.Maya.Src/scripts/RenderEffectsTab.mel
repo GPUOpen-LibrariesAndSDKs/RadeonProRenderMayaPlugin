@@ -172,6 +172,10 @@ global proc createFireRenderMotionBlurFrame(string $parent)
 		 -label "Camera Exposure"
 		 -attribute "RadeonProRenderGlobals.motionBlurCameraExposure" cameraExposure;
 
+	attrControlGrp
+		 -label "Motion Samples"
+		 -attribute "RadeonProRenderGlobals.motionSamples" motionSamples;
+
 	frameLayout -label "Final Render" -cll false -cl 0 fireRenderFinalMotionBlurFrame;
 		attrControlGrp
 			 -label "Enable"

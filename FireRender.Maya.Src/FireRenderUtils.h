@@ -285,6 +285,7 @@ public:
 	bool viewportMotionBlur;
 	bool velocityAOVMotionBlur;
 	float motionBlurCameraExposure;
+	unsigned int motionSamples;
 
 	// Contour
 	bool contourIsEnabled;
