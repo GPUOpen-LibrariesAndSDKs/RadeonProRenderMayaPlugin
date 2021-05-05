@@ -103,6 +103,7 @@ void FireMaya::MultipleShaderMeshTranslator::FillDictionaryWithVertexCoords(
 {
 	// Save polygon triangles coordinates into dictionary with corresponging indices
 	// if coords of vertex not in vertex coord array => write them there
+	const float* vertices = meshPolygonData.GetVertices();
 	for (unsigned int localVertexIndexFromPolygonTriangle = 0; localVertexIndexFromPolygonTriangle < globalVertexIndicesFromTrianglesList.length(); ++localVertexIndexFromPolygonTriangle)
 	{
 		int globalVertexIndex = globalVertexIndicesFromTrianglesList[localVertexIndexFromPolygonTriangle];
@@ -114,9 +115,9 @@ void FireMaya::MultipleShaderMeshTranslator::FillDictionaryWithVertexCoords(
 
 			unsigned int rawVertexDataOffset = globalVertexIndex * 3;
 			Float3 vertex;
-			vertex.x = meshPolygonData.pVertices[rawVertexDataOffset];
-			vertex.y = meshPolygonData.pVertices[rawVertexDataOffset + 1];
-			vertex.z = meshPolygonData.pVertices[rawVertexDataOffset + 2];
+			vertex.x = vertices[rawVertexDataOffset];
+			vertex.y = vertices[rawVertexDataOffset + 1];
+			vertex.z = vertices[rawVertexDataOffset + 2];
 			outMeshDictionary.vertexCoordsIndicesGlobalToDictionary[globalVertexIndex] = currentDictionaryVertexIndex;
 			outMeshDictionary.vertexCoordsIndices.push_back(currentDictionaryVertexIndex); // <= write indices of triangles in mesh into output triangle indices array
 			outMeshDictionary.vertexCoords.push_back(vertex);
@@ -137,6 +138,8 @@ void FireMaya::MultipleShaderMeshTranslator::FillDictionaryWithNormals(
 	MeshTranslator::MeshIdxDictionary& outMeshDictionary)
 {
 	// write indices of normals of vertices (parallel to triangle vertices) into output array
+
+	const float* normals = meshPolygonData.GetNormals();
 	for (unsigned int idx = 0; idx < globalVertexIndicesFromTrianglesList.length(); ++idx)
 	{
 		auto localNormalIdxIt = vertexIdxGlobalToLocal.find(globalVertexIndicesFromTrianglesList[idx]);
@@ -148,9 +151,9 @@ void FireMaya::MultipleShaderMeshTranslator::FillDictionaryWithNormals(
 		if (normal_it == outMeshDictionary.normalCoordIdxGlobal2Local.end())
 		{
 			Float3 normal;
-			normal.x = meshPolygonData.pNormals[globalNormalIdx * 3];
-			normal.y = meshPolygonData.pNormals[globalNormalIdx * 3 + 1];
-			normal.z = meshPolygonData.pNormals[globalNormalIdx * 3 + 2];
+			normal.x = normals[globalNormalIdx * 3];
+			normal.y = normals[globalNormalIdx * 3 + 1];
+			normal.z = normals[globalNormalIdx * 3 + 2];
 			outMeshDictionary.normalCoordIdxGlobal2Local[globalNormalIdx] = (int)(outMeshDictionary.normalCoords.size());
 			outMeshDictionary.normalCoords.push_back(normal);
 		}
@@ -371,7 +374,7 @@ void FireMaya::MultipleShaderMeshTranslator::CreateRPRMeshes(
 			currShaderData.vertexCoordsIndices.data(), sizeof(rpr_int),
 			currShaderData.normalIndices.data(), sizeof(rpr_int),
 			puvIndices.data(), texIndexStride.data(),
-			num_face_vertices.data(), num_faces, fnMesh.name().asChar()
+			num_face_vertices.data(), num_faces, nullptr, fnMesh.name().asChar()
 		);
 
 		if (!currShaderData.vertexColors.empty())

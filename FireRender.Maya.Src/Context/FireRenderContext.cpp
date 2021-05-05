@@ -86,6 +86,7 @@ FireRenderContext::FireRenderContext() :
 	m_cameraMotionBlur(false),
 	m_viewportMotionBlur(false),
 	m_motionBlurCameraExposure(0.0f),
+	m_motionSamples(0),
 	m_cameraAttributeChanged(false),
 	m_samplesPerUpdate(1),
 	m_secondsSpentOnLastRender(0.0),
@@ -2120,6 +2121,8 @@ void FireRenderContext::setMotionBlurParameters(const FireRenderGlobalsData& glo
 	m_motionBlurCameraExposure = m_globals.motionBlurCameraExposure;
 	m_viewportMotionBlur = globalData.viewportMotionBlur;
 	m_velocityAOVMotionBlur = globalData.velocityAOVMotionBlur;
+
+	m_motionSamples = globalData.motionSamples;
 }
 
 bool FireRenderContext::isInteractive() const
@@ -2635,6 +2638,11 @@ bool FireRenderContext::cameraMotionBlur() const
 float FireRenderContext::motionBlurCameraExposure() const
 {
 	return m_motionBlurCameraExposure;
+}
+
+unsigned int FireRenderContext::motionSamples() const
+{
+	return m_motionSamples;
 }
 
 void FireRenderContext::setCameraAttributeChanged(bool value)

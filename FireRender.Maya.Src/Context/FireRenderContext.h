@@ -503,6 +503,8 @@ public:
 	// Getting camera exposure for motion blur
 	float motionBlurCameraExposure() const;
 
+	unsigned int motionSamples() const;
+
 	// State flag of the renderer
 	StateEnum GetState() const { return m_state; }
 	void SetState(StateEnum newState);
@@ -749,6 +751,9 @@ private:
 
 	// Motion blur camera exposure
 	float m_motionBlurCameraExposure;
+
+	// used for Deformation motion blur only for now
+	unsigned int m_motionSamples;
 
 	/** True if the render should be interactive. */
 	bool m_interactive;

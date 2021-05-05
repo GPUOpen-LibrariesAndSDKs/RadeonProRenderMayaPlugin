@@ -1302,6 +1302,10 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 	}
 
 	RebuildTransforms();
+
+	// motion blur
+	ProcessMotionBlur(MFnDagNode(Object()));
+
 	setRenderStats(meshPath);
 }
 
@@ -1506,14 +1510,16 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 		m.isMainInstance = false;
 	}
 
+	MDagPath dagPath = DagPath();
 	if (mainMesh == nullptr)
 	{
-		outShapes = FireMaya::MeshTranslator::TranslateMesh(context->GetContext(), Object());
+		bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && TahoeContext::IsGivenContextRPR2(context) && !context->isInteractive();
+		unsigned int motionSamplesCount = deformationMotionBlurEnabled ? context->motionSamples() : 0;
+		outShapes = FireMaya::MeshTranslator::TranslateMesh(context->GetContext(), Object(), motionSamplesCount, dagPath.fullPathName());
 		m.isMainInstance = true;
 		context->AddMainMesh(this);
 	}
 
-	MDagPath dagPath = DagPath();
 	for (int i = 0; i < outShapes.size(); i++)
 	{
 		MString fullPathName = dagPath.fullPathName();
@@ -1589,9 +1595,6 @@ void FireRenderMesh::RebuildTransforms()
 			element.shape.SetTransform(&mfloats[0][0]);
 		}
 	}
-
-	// motion blur
-	ProcessMotionBlur(meshFn);
 }
 
 void FireRenderMeshCommon::AssignShadingEngines(const MObjectArray& shadingEngines)
@@ -1602,7 +1605,7 @@ void FireRenderMeshCommon::AssignShadingEngines(const MObjectArray& shadingEngin
 	}
 }
 
-void FireRenderMeshCommon::ProcessMotionBlur(MFnDagNode& meshFn)
+bool FireRenderMeshCommon::IsMotionBlurEnabled(const MFnDagNode& meshFn)
 {
 	// Checking of MotionBlur parameter in RenderStats group of mesh
 	bool objectMotionBlur = true;
@@ -1613,8 +1616,15 @@ void FireRenderMeshCommon::ProcessMotionBlur(MFnDagNode& meshFn)
 		objectMotionBlur = objectMBPlug.asBool();
 	}
 
-	if (!context()->motionBlur() || !objectMotionBlur)
+	return (context()->motionBlur() && objectMotionBlur);
+}
+
+void FireRenderMeshCommon::ProcessMotionBlur(const MFnDagNode& meshFn)
+{
+	if (!IsMotionBlurEnabled(meshFn))
+	{
 		return;
+	}
 
 	// We use different schemes for MotionBlur for Tahoe and NorthStar
 	if (TahoeContext::IsGivenContextRPR2(context()))
