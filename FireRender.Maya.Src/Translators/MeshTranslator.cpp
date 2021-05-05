@@ -25,6 +25,7 @@ limitations under the License.
 #include <maya/MPointArray.h>
 #include <maya/MItMeshPolygon.h>
 #include <maya/MSelectionList.h>
+#include <maya/MAnimControl.h>
 
 #include <unordered_map>
 
@@ -42,10 +43,92 @@ FireMaya::MeshTranslator::MeshPolygonData::MeshPolygonData()
 	, pNormals(nullptr)
 	, countNormals(0)
 	, triangleVertexIndicesCount(0)
+	, motionSamplesCount(0)
 {
 }
 
-bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(const MFnMesh& fnMesh)
+void ChangeCurrentTimeAndUpdateMesh(MFnMesh& fnMesh, const MTime& time, MString fullDagPath)
+{
+	MGlobal::viewFrame(time);
+
+	// We need to update fnMesh function set in order to apply time change
+
+	MDagPath dagPath;
+
+	MSelectionList sl;
+	sl.add(fullDagPath);
+	if (!sl.isEmpty())
+	{
+		sl.getDagPath(0, dagPath);
+		fnMesh.setObject(dagPath);
+	}
+	else
+	{
+		assert(false);
+	}
+}
+
+bool FireMaya::MeshTranslator::MeshPolygonData::ProcessDeformationFrameCount(MFnMesh& fnMesh, MString fullDagPath)
+{
+	if (motionSamplesCount < 2 || fullDagPath.length() == 0)
+	{
+		return false;
+	}
+
+	// Check if mesh has deformers or rigs inside construction history
+
+	MString name = fullDagPath;
+	MString command;
+	command.format("source common.mel; hasGivenMeshDeformerOrRigAttached(\"^1s\");", name);
+	
+	MStatus status;
+	MString result = MGlobal::executeCommandStringResult(command, false, false, &status);
+
+	if (result.asInt() == 0)
+	{
+		return false;
+	}
+
+	MTime initialTime = MAnimControl::currentTime();
+	MTime currentTime = initialTime;
+
+	if (initialTime == MAnimControl::maxTime())
+	{
+		return false;
+	}
+
+	size_t floatsVertexOneFrame = 3 * countVertices;
+	size_t floatsNormalOneFrame = 3 * countNormals;
+
+	arrVertices.resize(floatsVertexOneFrame * motionSamplesCount);
+	arrNormals.resize(floatsNormalOneFrame * motionSamplesCount);
+
+	unsigned int currentTimeIndex = 0;
+
+	MDagPath dagPath;
+
+	for (unsigned int currentTimeIndex = 0; currentTimeIndex < motionSamplesCount; ++currentTimeIndex)
+	{
+		// positioning on next point of time (starting from currentTime)
+		currentTime += (float)currentTimeIndex / (motionSamplesCount - 1);
+
+		ChangeCurrentTimeAndUpdateMesh(fnMesh, currentTime, fullDagPath);
+
+		const float* pData = fnMesh.getRawPoints(&status);
+		assert(MStatus::kSuccess == status);
+		std::copy(pData, pData + floatsVertexOneFrame, arrVertices.data() + floatsVertexOneFrame * currentTimeIndex);
+
+		pData = fnMesh.getRawNormals(&status);
+		assert(MStatus::kSuccess == status);
+		std::copy(pData, pData + floatsNormalOneFrame, arrNormals.data() + floatsNormalOneFrame * currentTimeIndex);
+	}
+
+	ChangeCurrentTimeAndUpdateMesh(fnMesh, initialTime, fullDagPath);
+
+	return true;
+}
+
+bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(MFnMesh& fnMesh, unsigned int deformationFrameCount, MString fullDagPath)
 {
 	GetUVCoords(fnMesh, uvSetNames, uvCoords, puvCoords, sizeCoords);
 	unsigned int uvSetCount = uvSetNames.length();
@@ -72,8 +155,15 @@ bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(const MFnMesh& fnMesh
 	// pointer to array of normal coordinates in Maya
 	pNormals = fnMesh.getRawNormals(&mstatus);
 	assert(MStatus::kSuccess == mstatus);
+
 	countNormals = fnMesh.numNormals(&mstatus);
 	assert(MStatus::kSuccess == mstatus);
+
+	motionSamplesCount = deformationFrameCount;
+	if (!ProcessDeformationFrameCount(fnMesh, fullDagPath))
+	{
+		motionSamplesCount = 0;
+	}
 
 	// get triangle count (max possible count; this number is used for reserve only)
 	MIntArray triangleCounts; // basically number of triangles in polygons; size of array equal to number of polygons in mesh
@@ -84,7 +174,7 @@ bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(const MFnMesh& fnMesh
 	return true;
 }
 
-std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Context& context, const MObject& originalObject)
+std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Context& context, const MObject& originalObject, unsigned int deformationFrameCount, MString fullDagPath)
 {
 	MAIN_THREAD_ONLY;
 
@@ -134,6 +224,7 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 	}
 
 	MFnMesh fnMesh(object, &mayaStatus);
+
 	if (MStatus::kSuccess != mayaStatus)
 	{
 		mayaStatus.perror("MFnMesh constructor");
@@ -148,7 +239,9 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 
 	// get common data from mesh
 	MeshPolygonData meshPolygonData;
-	bool successfullyInitialized = meshPolygonData.Initialize(fnMesh);
+
+	/// for tesselated or smoothed mesh disable deformation MB for now
+	bool successfullyInitialized = meshPolygonData.Initialize(fnMesh, object != originalObject ? 0 : deformationFrameCount, fullDagPath);
 	if (!successfullyInitialized)
 	{
 		std::string nodeName = fnMesh.name().asChar();

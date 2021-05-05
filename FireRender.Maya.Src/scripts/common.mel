@@ -92,3 +92,28 @@ global proc int getMlDenoiserSupportedCPU()
 	global int $mlDenoiserSupportedCPU;
 	return $mlDenoiserSupportedCPU;
 }
+
+global proc string hasGivenMeshDeformerOrRigAttached(string $mesh)
+{
+	string $historyNodes[] = `listHistory $mesh`;
+
+	string $result[] = `ls -type geometryFilter $historyNodes`;
+
+	if (size($result) > 0)
+	{
+		return string(size($result));
+	}
+
+	string $supportedNodes[] = `ls -nodeTypes`;
+	if (stringArrayContains("AlembicNode", $supportedNodes))
+	{
+		string $resultAlembic[] = `ls -type AlembicNode $historyNodes`;
+
+		if (size($resultAlembic) > 0)
+		{
+			return string(size($resultAlembic));
+		}	
+	}
+
+	return "0";
+}
