@@ -1045,7 +1045,7 @@ std::string getNodeUUid(const MDagPath& node)
 		{
 			// Referenced node name guaranteed to be unique by Maya. User can't change it's name because node is locked.
 			std::stringstream sstrm;
-			sstrm << id.c_str() << ":" << dagNode.name();
+			sstrm << id.c_str() << ":" << dagNode.fullPathName();
 			id = sstrm.str();
 		}
 	}
