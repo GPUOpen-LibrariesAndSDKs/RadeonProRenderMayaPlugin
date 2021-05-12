@@ -54,7 +54,7 @@ public:
 
 	// node dirty
 	virtual void attributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug) override;
-	virtual void Freshen() override;
+	virtual void Freshen(bool shouldCalculateHash) override;
 	static void ShaderDirtyCallback(MObject& node, void* clientData);
 
 	void Rebuild(void);

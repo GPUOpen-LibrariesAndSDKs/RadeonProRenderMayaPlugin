@@ -2444,6 +2444,8 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 {
 	MAIN_THREAD_ONLY;
 
+	bool shouldCalculateHash = GetRenderType() == RenderType::ViewportRender;
+
 	// update camera world coordinate plug. it needs to have callbacks works in command line mode.
 	// In UI it works better because viewport uses camera position in order to render the image thus it is cleaning and updating this plug.
 	if (!m_callbackCreationDisabled)
@@ -2490,7 +2492,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 	if (m_cameraDirty)
 	{
 		m_cameraDirty = false;
-		m_camera.Freshen();
+		m_camera.Freshen(shouldCalculateHash);
 		changed = true;
 	}
 
@@ -2525,7 +2527,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 				DebugPrint("Freshing object");
 
 				UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectPreSync);
-				ptr->Freshen();
+				ptr->Freshen(shouldCalculateHash);
 
 				syncProgressData.currentIndex++;
 				UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectSyncComplete);

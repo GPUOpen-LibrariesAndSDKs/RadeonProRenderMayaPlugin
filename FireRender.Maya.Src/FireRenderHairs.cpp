@@ -482,7 +482,7 @@ bool GetCurvesData(XGenSplineAPI::XgFnSpline& out, MFnDagNode& curvesNode)
 	return true;
 }
 
-void FireRenderHair::Freshen()
+void FireRenderHair::Freshen(bool shouldCalculateHash)
 {
 	detachFromScene();
 	clear();
@@ -510,7 +510,7 @@ void FireRenderHair::Freshen()
 		setRenderStats(path);
 	}
 
-	FireRenderNode::Freshen();
+	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
 void FireRenderHair::clear()

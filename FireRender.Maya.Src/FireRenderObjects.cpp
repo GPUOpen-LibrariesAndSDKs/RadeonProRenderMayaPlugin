@@ -152,6 +152,7 @@ HashValue FireRenderNode::CalculateHash()
 {
 	HashValue hash = FireRenderObject::CalculateHash();
 	auto dagPath = DagPath();
+
 	if (dagPath.isValid())
 	{
 		hash << dagPath.isVisible();
@@ -350,11 +351,15 @@ HashValue GetHashValue(const MPlug& plug)
 	return hash;
 }
 
-void FireRenderObject::Freshen()
+void FireRenderObject::Freshen(bool shouldCalculateHash)
 {
 	if (m.callbackId.empty())
 		RegisterCallbacks();
-	m.hash = CalculateHash();
+
+	if (shouldCalculateHash)
+	{
+		m.hash = CalculateHash();
+	}
 }
 
 void FireRenderObject::clear()
@@ -538,7 +543,7 @@ std::vector<frw::Shape> FireRenderNode::GetVisiblePortals()
 				RecordPortalState(connection.node());
 				if (auto ob = context()->getRenderObject<FireRenderMesh>(connection.node()))
 				{
-					ob->Freshen();	// make sure we have shapes to attach
+					ob->Freshen(ob->context()->GetRenderType() == RenderType::ViewportRender);	// make sure we have shapes to attach
 					if (ob->IsVisible())
 					{
 						for (auto& element : ob->Elements())
@@ -1691,10 +1696,10 @@ unsigned int FireRenderMeshCommon::GetAssignedUVMapIdx(const MString& textureFil
 	return it->second;
 }
 
-void FireRenderMesh::Freshen()
+void FireRenderMesh::Freshen(bool shouldCalculateHash)
 {
 	Rebuild();
-	FireRenderNode::Freshen();
+	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
 HashValue FireRenderMesh::CalculateHash()
@@ -1812,7 +1817,7 @@ PLType FireRenderPhysLight::GetPhysLightType(MObject node)
 	return (PLType) plug.asInt();
 }
 
-void FireRenderLight::Freshen()
+void FireRenderLight::Freshen(bool shouldCalculateHash)
 {
 	if (ShouldUpdateTransformOnly())
 	{
@@ -1851,7 +1856,7 @@ void FireRenderLight::Freshen()
 		}
 	}
 
-	FireRenderNode::Freshen();
+	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
 void FireRenderLight::buildSwatchLight()
@@ -1996,7 +2001,7 @@ void setPortal_IBL(MObject transformObject, FireRenderEnvLight *light) {
 
 				light->RecordPortalState(portal, true);
 
-				ob->Freshen();	// make sure we have shapes to attach
+				ob->Freshen(ob->context()->GetRenderType() == RenderType::ViewportRender);	// make sure we have shapes to attach
 
 				if (ob->IsVisible())
 				{
@@ -2018,7 +2023,7 @@ void setPortal_IBL(MObject transformObject, FireRenderEnvLight *light) {
 	}
 }
 
-void FireRenderEnvLight::Freshen()
+void FireRenderEnvLight::Freshen(bool shouldCalculateHash)
 {
 	RestorePortalStates(true);
 
@@ -2080,7 +2085,7 @@ void FireRenderEnvLight::Freshen()
 		}
 	}
 
-	FireRenderNode::Freshen();
+	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
 //===================
@@ -2121,7 +2126,7 @@ void FireRenderCamera::TranslateCameraExplicit(int viewWidth, int viewHeight)
 		float(viewWidth) / float(viewHeight), true, m_type);
 }
 
-void FireRenderCamera::Freshen()
+void FireRenderCamera::Freshen(bool shouldCalculateHash)
 {
 	auto node = Object();
 	auto dagPath = DagPath();
@@ -2293,7 +2298,7 @@ void FireRenderCamera::Freshen()
 	}
 
 	RegisterCallbacks();
-	FireRenderNode::Freshen();
+	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
 void FireRenderCamera::RegisterCallbacks()
@@ -2505,7 +2510,7 @@ void setPortal_Sky(MObject transformObject, FireRenderSky *light) {
 
 				light->RecordPortalState(portal, false);
 
-				ob->Freshen();	// make sure we have shapes to attach
+				ob->Freshen(ob->context()->GetRenderType() == RenderType::ViewportRender);	// make sure we have shapes to attach
 
 				if (ob->IsVisible())
 				{
@@ -2527,7 +2532,7 @@ void setPortal_Sky(MObject transformObject, FireRenderSky *light) {
 	}
 }
 
-void FireRenderSky::Freshen()
+void FireRenderSky::Freshen(bool shouldCalculateHash)
 {
 	RestorePortalStates(false);
 
@@ -2557,7 +2562,7 @@ void FireRenderSky::Freshen()
 		}
 	}
 
-	FireRenderNode::Freshen();
+	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
 void FireRenderSky::attachPortals()
@@ -2646,7 +2651,7 @@ FireRenderCustomEmitter::FireRenderCustomEmitter(FireRenderContext* context, con
 
 }
 
-void FireRenderCustomEmitter::Freshen()
+void FireRenderCustomEmitter::Freshen(bool shouldCalculateHash)
 {
 	if (!m_light.light)
 	{
