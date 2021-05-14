@@ -26,6 +26,15 @@ global proc fireRenderNodeTemplateCallback(string $nodeName)
 		editorTemplate -beginLayout "RPR" -collapse true;
 			editorTemplate -addControl "rprHairMaterial";
 			editorTemplate -addControl "castsShadows";
+			editorTemplate -addControl "visibleInReflections";
+			editorTemplate -addControl "visibleInRefractions";
+		editorTemplate -endLayout;
+	}
+
+	if ($nodeType == "pfxHair")
+	{
+		editorTemplate -beginLayout "RPR" -collapse true;
+			editorTemplate -addControl "primaryVisibility";
 		editorTemplate -endLayout;
 	}
 }

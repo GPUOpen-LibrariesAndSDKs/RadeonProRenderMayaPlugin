@@ -105,6 +105,7 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	motionBlur(false),
 	cameraMotionBlur(false),
 	motionBlurCameraExposure(0.0f),
+	motionSamples(0),
 	tileRenderingEnabled(false),
 	tileSizeX(0),
 	tileSizeY(0),
@@ -405,6 +406,10 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("motionBlurCameraExposure");
 		if (!plug.isNull())
 			motionBlurCameraExposure = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("motionSamples");
+		if (!plug.isNull())
+			motionSamples = plug.asInt();	
 
 		plug = frGlobalsNode.findPlug("cameraType");
 		if (!plug.isNull())
@@ -1040,7 +1045,7 @@ std::string getNodeUUid(const MDagPath& node)
 		{
 			// Referenced node name guaranteed to be unique by Maya. User can't change it's name because node is locked.
 			std::stringstream sstrm;
-			sstrm << id.c_str() << ":" << dagNode.name();
+			sstrm << id.c_str() << ":" << dagNode.fullPathName();
 			id = sstrm.str();
 		}
 	}
