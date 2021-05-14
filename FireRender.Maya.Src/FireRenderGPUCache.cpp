@@ -79,10 +79,10 @@ void FireRenderGPUCache::clear()
 
 // this function is identical to one in FireRenderMesh! 
 // TODO: move it to common parent class!
-void FireRenderGPUCache::Freshen()
+void FireRenderGPUCache::Freshen(bool shouldCalculateHash)
 {
 	Rebuild();
-	FireRenderNode::Freshen();
+	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
 void FireRenderGPUCache::ReadAlembicFile()

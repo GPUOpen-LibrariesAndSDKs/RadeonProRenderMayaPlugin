@@ -27,20 +27,36 @@ namespace FireMaya
 	public:
 		struct MeshPolygonData
 		{
+		public:
 			MStringArray uvSetNames;
 			std::vector<std::vector<Float2> > uvCoords;
 			std::vector<const float*> puvCoords;
 			std::vector<size_t> sizeCoords;
-			const float* pVertices;
-			int countVertices;
-			const float* pNormals;
-			int countNormals;
-			int triangleVertexIndicesCount;
+
+			std::vector<float> arrVertices; // Used in case of deformation motion blur
+			std::vector<float> arrNormals;
+
+			size_t countVertices;
+			size_t countNormals;
+			size_t triangleVertexIndicesCount;
+
+			unsigned int motionSamplesCount;
 
 			MeshPolygonData();
 
 			// Initializes mesh and returns error status
-			bool Initialize(const MFnMesh& fnMesh);
+			bool Initialize(MFnMesh& fnMesh, unsigned int deformationFrameCount, MString fullDagPath);
+			bool ProcessDeformationFrameCount(MFnMesh& fnMesh, MString fullDagPath);
+
+			size_t GetTotalVertexCount() { return std::max(arrVertices.size() / 3, countVertices); }
+			size_t GetTotalNormalCount() { return std::max(arrNormals.size() / 3, countNormals); }
+
+			const float* GetVertices() const { return arrVertices.size() > 0 ? arrVertices.data() : pVertices; }
+			const float* GetNormals() const { return arrNormals.size() > 0 ? arrNormals.data() : pNormals; }
+
+		private:
+			const float* pVertices;
+			const float* pNormals;
 		};
 
 		struct MeshIdxDictionary
@@ -83,7 +99,7 @@ namespace FireMaya
 			std::vector<MColor> vertexColors;
 		};
 
-		static std::vector<frw::Shape> TranslateMesh(const frw::Context& context, const MObject& originalObject);
+		static std::vector<frw::Shape> TranslateMesh(const frw::Context& context, const MObject& originalObject, unsigned int deformationFrameCount = 0, MString fullDagPath="");
 
 	private:
 

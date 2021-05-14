@@ -214,27 +214,36 @@ void FireRenderViewport::removed(bool panelDestroyed)
 
 void FireRenderViewport::OnBufferAvailableCallback(float progress)
 {
-	readFrameBuffer();
+	// Get the frame hash.
+	auto hash = m_contextPtr->GetStateHash();
+	stringstream ss;
+	ss << m_panelName.asChar() << ";" << size_t(hash);
+
+	// Try find the frame for the hash.
+	// if not found => creates new frame in cache
+	auto& frame = m_renderedFramesCache[ss.str().c_str()];
+
+	readFrameBuffer(&frame);
 
 	FireRenderThread::RunProcOnMainThread([&]()
+	{
+		// Schedule a Maya viewport refresh or set exit flag
+		MStatus status;
+		M3dView activeView;
+		status = M3dView::getM3dViewFromModelPanel(m_panelName, activeView);
+		if (status == MStatus::kSuccess) // Regular render view
 		{
-			// Schedule a Maya viewport refresh or set exit flag
-			MStatus status;
-			M3dView activeView;
-			status = M3dView::getM3dViewFromModelPanel(m_panelName, activeView);
-			if (status == MStatus::kSuccess) // Regular render view
-			{
+			m_view.scheduleRefresh();
+		}
+		else //Standalone render view (hypershade only?)
+		{
+			activeView = M3dView::active3dView(&status);
+			if (activeView.widget() == m_widget)
 				m_view.scheduleRefresh();
-			}
-			else //Standalone render view (hypershade only?)
-			{
-				activeView = M3dView::active3dView(&status);
-				if (activeView.widget() == m_widget)
-					m_view.scheduleRefresh();
-				else
-					m_contextPtr->SetState(FireRenderContext::StateExiting);
-			}
-		});
+			else
+				m_contextPtr->SetState(FireRenderContext::StateExiting);
+		}
+	});
 }
 
 // -----------------------------------------------------------------------------
@@ -428,7 +437,7 @@ bool FireRenderViewport::useAnimationCache()
 // -----------------------------------------------------------------------------
 void FireRenderViewport::clearTextureCache()
 {
-	m_textureCache.Clear();
+	m_renderedFramesCache.Clear();
 	m_view.scheduleRefresh();
 }
 
@@ -607,7 +616,7 @@ MStatus FireRenderViewport::resize(unsigned int width, unsigned int height)
 	{
 		// Clear the texture cache - all frames
 		// need to be re-rendered at the new size.
-		m_textureCache.Clear();
+		m_renderedFramesCache.Clear();
 
 		// Delete the existing hardware backed texture.
 		if (m_texture.texture)
@@ -725,11 +734,13 @@ MStatus FireRenderViewport::renderCached(unsigned int width, unsigned int height
 		stringstream ss;
 		ss << m_panelName.asChar() << ";" << size_t(hash);
 
-		// Get the frame for the hash.
-		auto& frame = m_textureCache[ss.str().c_str()];
+		// Try find the frame for the hash.
+		// if not found => creates new frame in cache
+		auto& frame = m_renderedFramesCache[ss.str().c_str()];
 
 		// Render the frame if required.
-		if (frame.Resize(width, height))
+		bool shouldRender = frame.Resize(width, height); // returns false if frame is not empty
+		if (shouldRender)
 		{
 			AutoMutexLock contextLock(m_contextLock);
 
