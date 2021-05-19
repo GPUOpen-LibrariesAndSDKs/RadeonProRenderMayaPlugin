@@ -24,17 +24,11 @@ global proc fireRenderNodeTemplateCallback(string $nodeName)
 	if ($nodeType == "hairSystem")
 	{
 		editorTemplate -beginLayout "RPR" -collapse true;
+			editorTemplate -addControl "nhairIsVisible";
 			editorTemplate -addControl "rprHairMaterial";
 			editorTemplate -addControl "castsShadows";
-			editorTemplate -addControl "visibleInReflections";
-			editorTemplate -addControl "visibleInRefractions";
-		editorTemplate -endLayout;
-	}
-
-	if ($nodeType == "pfxHair")
-	{
-		editorTemplate -beginLayout "RPR" -collapse true;
-			editorTemplate -addControl "primaryVisibility";
+			editorTemplate -addControl "nhairVisibleInReflections";
+			editorTemplate -addControl "nhairVisibleInRefractions";
 		editorTemplate -endLayout;
 	}
 }
