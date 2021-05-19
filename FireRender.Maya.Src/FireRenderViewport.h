@@ -137,7 +137,7 @@ private:
 	bool m_useAnimationCache;
 
 	/** Cached frame buffer textures to use for animation playback. */
-	FireMaya::TextureCache m_textureCache;
+	FireMaya::TextureCache m_renderedFramesCache;
 
 	/** Used for copying the RPR frame buffer to the hardware texture. */
 	std::vector<RV_PIXEL> m_pixels;
