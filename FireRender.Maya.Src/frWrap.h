@@ -160,7 +160,8 @@ namespace frw
 		ValueTypeUVTriplanar = RPR_MATERIAL_NODE_UV_TRIPLANAR,
 		ValueTypeBufferSampler = RPR_MATERIAL_NODE_BUFFER_SAMPLER, // buffer node
 		ValueTypeHSVToRGB = RPR_MATERIAL_NODE_HSV_TO_RGB,
-		ValueTypeRRGToHSV = RPR_MATERIAL_NODE_RGB_TO_HSV
+		ValueTypeRRGToHSV = RPR_MATERIAL_NODE_RGB_TO_HSV,
+		ValueTypeToonRamp = RPR_MATERIAL_NODE_TOON_RAMP
 	};
 
 	enum ShaderType
@@ -182,7 +183,8 @@ namespace frw
 		ShaderTypeDiffuseRefraction = RPR_MATERIAL_NODE_DIFFUSE_REFRACTION,
 		ShaderTypeAdd = RPR_MATERIAL_NODE_ADD,
 		ShaderTypeVolume = RPR_MATERIAL_NODE_VOLUME,
-		ShaderTypeFlatColor = RPR_MATERIAL_NODE_PASSTHROUGH
+		ShaderTypeFlatColor = RPR_MATERIAL_NODE_PASSTHROUGH,
+		ShaderTypeToon = RPR_MATERIAL_NODE_TOON_CLOSURE
 	};
 
 	enum ContextParameterType
@@ -2620,6 +2622,12 @@ namespace frw
 		{
 			SetValue(RPR_MATERIAL_INPUT_COLOR, inputHSV);
 		}
+	};
+
+	class ToonRampNode : public ValueNode
+	{
+	public:
+		explicit ToonRampNode(const MaterialSystem& h) : ValueNode(h, ValueTypeToonRamp) {}
 	};
 
 	class BumpMapNode : public ValueNode
