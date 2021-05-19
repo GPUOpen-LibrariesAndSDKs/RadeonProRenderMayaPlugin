@@ -16,6 +16,12 @@
 		505C0BB2262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 505C0BB1262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib */; };
 		505C0BB3262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 505C0BB1262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib */; };
 		505C0BB4262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 505C0BB1262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib */; };
+		505C0BB9263BEF90000E11A9 /* FireRenderToonMaterial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 505C0BB6263BEF90000E11A9 /* FireRenderToonMaterial.cpp */; };
+		505C0BBA263BEF90000E11A9 /* FireRenderToonMaterial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 505C0BB6263BEF90000E11A9 /* FireRenderToonMaterial.cpp */; };
+		505C0BBB263BEF90000E11A9 /* FireRenderToonMaterial.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 505C0BB6263BEF90000E11A9 /* FireRenderToonMaterial.cpp */; };
+		505C0BBC263BEF90000E11A9 /* FireRenderToonMaterial.h in Headers */ = {isa = PBXBuildFile; fileRef = 505C0BB8263BEF90000E11A9 /* FireRenderToonMaterial.h */; };
+		505C0BBD263BEF90000E11A9 /* FireRenderToonMaterial.h in Headers */ = {isa = PBXBuildFile; fileRef = 505C0BB8263BEF90000E11A9 /* FireRenderToonMaterial.h */; };
+		505C0BBE263BEF90000E11A9 /* FireRenderToonMaterial.h in Headers */ = {isa = PBXBuildFile; fileRef = 505C0BB8263BEF90000E11A9 /* FireRenderToonMaterial.h */; };
 		50C1EDBC247EC23700E53230 /* SetRangeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50C1EDB9247EC23700E53230 /* SetRangeConverter.h */; };
 		50C1EDBD247EC23700E53230 /* SetRangeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50C1EDB9247EC23700E53230 /* SetRangeConverter.h */; };
 		50C1EDBE247EC23700E53230 /* SetRangeConverter.h in Headers */ = {isa = PBXBuildFile; fileRef = 50C1EDB9247EC23700E53230 /* SetRangeConverter.h */; };
@@ -1040,6 +1046,8 @@
 		5003A2A726021C8700805EAD /* RenderViewUpdater.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RenderViewUpdater.cpp; path = ../../../FireRender.Maya.Src/RenderViewUpdater.cpp; sourceTree = "<group>"; };
 		5003A2A926021C8700805EAD /* RenderViewUpdater.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = RenderViewUpdater.h; path = ../../../FireRender.Maya.Src/RenderViewUpdater.h; sourceTree = "<group>"; };
 		505C0BB1262F1853000E11A9 /* libRadeonImageFilters.1.7.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonImageFilters.1.7.0.dylib; path = ../../../RadeonProImageProcessingSDK/OSX/Dynamic/libRadeonImageFilters.1.7.0.dylib; sourceTree = "<group>"; };
+		505C0BB6263BEF90000E11A9 /* FireRenderToonMaterial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderToonMaterial.cpp; path = ../../../FireRender.Maya.Src/FireRenderToonMaterial.cpp; sourceTree = "<group>"; };
+		505C0BB8263BEF90000E11A9 /* FireRenderToonMaterial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderToonMaterial.h; path = ../../../FireRender.Maya.Src/FireRenderToonMaterial.h; sourceTree = "<group>"; };
 		50C1EDB9247EC23700E53230 /* SetRangeConverter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SetRangeConverter.h; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/SetRangeConverter.h; sourceTree = "<group>"; };
 		50C1EDBB247EC23700E53230 /* SetRangeConverter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SetRangeConverter.cpp; path = ../../../FireRender.Maya.Src/MayaStandardNodesSupport/SetRangeConverter.cpp; sourceTree = "<group>"; };
 		50ED2496251B8889006A318A /* NorthStarRenderingHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NorthStarRenderingHelper.cpp; path = ../../../FireRender.Maya.Src/NorthStarRenderingHelper.cpp; sourceTree = "<group>"; };
@@ -1445,6 +1453,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				505C0BB6263BEF90000E11A9 /* FireRenderToonMaterial.cpp */,
+				505C0BB8263BEF90000E11A9 /* FireRenderToonMaterial.h */,
 				5003A2A726021C8700805EAD /* RenderViewUpdater.cpp */,
 				5003A2A926021C8700805EAD /* RenderViewUpdater.h */,
 				50FCE4F12530985900BF404F /* AnimationExporter.cpp */,
@@ -1965,6 +1975,7 @@
 				8D595DBC20372FE20031988A /* RenderStamp.h in Headers */,
 				8D595DBD20372FE20031988A /* SkyAttributes.h in Headers */,
 				B7542DF5238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h in Headers */,
+				505C0BBC263BEF90000E11A9 /* FireRenderToonMaterial.h in Headers */,
 				B7EC453423743C97001E49F7 /* HybridContext.h in Headers */,
 				B72F81E3239F813F00C2BFB3 /* ContrastConverter.h in Headers */,
 				8D595DBE20372FE20031988A /* FireRenderTransparentMaterial.h in Headers */,
@@ -2120,6 +2131,7 @@
 				8DBCC2D222304666003EE361 /* RenderStamp.h in Headers */,
 				8DBCC2D322304666003EE361 /* SkyAttributes.h in Headers */,
 				B7542DF6238FE61B00ACBE7C /* MultipleShaderMeshTranslator.h in Headers */,
+				505C0BBD263BEF90000E11A9 /* FireRenderToonMaterial.h in Headers */,
 				B7EC453523743C97001E49F7 /* HybridContext.h in Headers */,
 				B72F81E4239F813F00C2BFB3 /* ContrastConverter.h in Headers */,
 				8DBCC2D422304666003EE361 /* FireRenderTransparentMaterial.h in Headers */,
@@ -2275,6 +2287,7 @@
 				B753201E23D9ED5600246738 /* SkyAttributes.h in Headers */,
 				B753201F23D9ED5600246738 /* MultipleShaderMeshTranslator.h in Headers */,
 				B753202023D9ED5600246738 /* HybridContext.h in Headers */,
+				505C0BBE263BEF90000E11A9 /* FireRenderToonMaterial.h in Headers */,
 				B753202123D9ED5600246738 /* ContrastConverter.h in Headers */,
 				B753202223D9ED5600246738 /* FireRenderTransparentMaterial.h in Headers */,
 				B753202323D9ED5600246738 /* FireRenderGlobals.h in Headers */,
@@ -2460,6 +2473,7 @@
 				8D8F2C1C210B535F000DEBE6 /* FireRenderAO.cpp in Sources */,
 				8D5590A220C874E600567EEC /* MeshTranslator.cpp in Sources */,
 				8D5590A320C874E600567EEC /* Translators.cpp in Sources */,
+				505C0BB9263BEF90000E11A9 /* FireRenderToonMaterial.cpp in Sources */,
 				8D8CA4B820BC72AA00A90237 /* PhysicalLightData.cpp in Sources */,
 				B7EC453A23743C9C001E49F7 /* HybridContext.cpp in Sources */,
 				8DB6234820755B4400841D10 /* FireRenderIESLight.cpp in Sources */,
@@ -2614,6 +2628,7 @@
 				8DBCC30222304666003EE361 /* FireRenderAO.cpp in Sources */,
 				8DBCC30322304666003EE361 /* MeshTranslator.cpp in Sources */,
 				8DBCC30422304666003EE361 /* Translators.cpp in Sources */,
+				505C0BBA263BEF90000E11A9 /* FireRenderToonMaterial.cpp in Sources */,
 				8DBCC30522304666003EE361 /* PhysicalLightData.cpp in Sources */,
 				B7EC453F23743C9D001E49F7 /* HybridContext.cpp in Sources */,
 				8DBCC30622304666003EE361 /* FireRenderIESLight.cpp in Sources */,
@@ -2768,6 +2783,7 @@
 				B753206623D9ED5600246738 /* AddDoubleLinearConverter.cpp in Sources */,
 				B753206723D9ED5600246738 /* FireRenderAO.cpp in Sources */,
 				B753206823D9ED5600246738 /* MeshTranslator.cpp in Sources */,
+				505C0BBB263BEF90000E11A9 /* FireRenderToonMaterial.cpp in Sources */,
 				B753206923D9ED5600246738 /* Translators.cpp in Sources */,
 				B753206A23D9ED5600246738 /* PhysicalLightData.cpp in Sources */,
 				B753206B23D9ED5600246738 /* HybridContext.cpp in Sources */,
