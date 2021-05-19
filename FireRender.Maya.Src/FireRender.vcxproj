@@ -215,6 +215,7 @@
     <ClCompile Include="FireRenderSwatchInstance.cpp" />
     <ClCompile Include="FireRenderTexture.cpp" />
     <ClCompile Include="FireRenderTextureCache.cpp" />
+    <ClCompile Include="FireRenderToonMaterial.cpp" />
     <ClCompile Include="FireRenderTransparentMaterial.cpp" />
     <ClCompile Include="FireRenderViewportOperation.cpp" />
     <ClCompile Include="FireRenderViewportUI.cpp" />
@@ -373,6 +374,7 @@
     <ClInclude Include="FireRenderSwatchInstance.h" />
     <ClInclude Include="FireRenderTexture.h" />
     <ClInclude Include="FireRenderTextureCache.h" />
+    <ClInclude Include="FireRenderToonMaterial.h" />
     <ClInclude Include="FireRenderTransparentMaterial.h" />
     <ClInclude Include="FireRenderUtils.h" />
     <ClInclude Include="FireRenderViewport.h" />
