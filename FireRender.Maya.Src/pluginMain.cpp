@@ -475,6 +475,18 @@ void AddExtensionAttributesCommon()
 	nAttr.setNiceNameOverride("Hair Casts Shadows");
 	status = hairSystemClass.addExtensionAttribute(hairCastShadows);
 
+	MObject nhairVisible = nAttr.create("nhairIsVisible", "nhvi", MFnNumericData::kBoolean, true, &status);
+	nAttr.setNiceNameOverride("Is Visible");
+	status = hairSystemClass.addExtensionAttribute(nhairVisible);
+
+	MObject nhairVisibleInReflections = nAttr.create("nhairVisibleInReflections", "nhrf", MFnNumericData::kBoolean, true, &status);
+	nAttr.setNiceNameOverride("Visible In Reflections");
+	status = hairSystemClass.addExtensionAttribute(nhairVisibleInReflections);
+
+	MObject nhairVisibleInRefractions = nAttr.create("nhairVisibleInRefractions", "nhrr", MFnNumericData::kBoolean, true, &status);
+	nAttr.setNiceNameOverride("Visible In Refractions");
+	status = hairSystemClass.addExtensionAttribute(nhairVisibleInRefractions);
+
 	// Adding RPRObjectId to all transforms
 	MObject objectIdAttr = nAttr.create("RPRObjectId", "roi", MFnNumericData::kLong, 0);
 
