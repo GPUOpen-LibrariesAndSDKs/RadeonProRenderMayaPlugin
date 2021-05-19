@@ -39,7 +39,7 @@ class InstancerMASH: public FireRenderNode
 public:
     InstancerMASH(FireRenderContext* context, const MDagPath& dagPath);
 	virtual void RegisterCallbacks(void) override final;
-	virtual void Freshen(void) override final;
+	virtual void Freshen(bool shouldCalculateHash) override final;
 	virtual void OnPlugDirty(MObject& node, MPlug& plug) override final;
 
 private:

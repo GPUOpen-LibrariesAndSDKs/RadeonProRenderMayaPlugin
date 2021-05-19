@@ -95,7 +95,7 @@ void FireRenderCommonVolume::ApplyTransform(void)
 	m_boundingBoxMesh.SetTransform(*mfloats, false);
 }
 
-void FireRenderCommonVolume::Freshen()
+void FireRenderCommonVolume::Freshen(bool shouldCalculateHash)
 {
 	detachFromScene();
 
@@ -116,7 +116,7 @@ void FireRenderCommonVolume::Freshen()
 			attachToScene();
 	}
 
-	FireRenderNode::Freshen();
+	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
 void FireRenderCommonVolume::clear()

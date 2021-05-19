@@ -345,34 +345,57 @@ MString GenerateSmoothOptions(const MFnDagNode& dagMesh)
 
 	MPlug smoothLevelPlug = dagMesh.findPlug(smoothLevelPlugName.c_str());
 	assert(!smoothLevelPlug.isNull());
-	std::string smmothLevel = std::to_string(smoothLevelPlug.asInt());
+	std::string smoothLevel = std::to_string(smoothLevelPlug.asInt());
 
-	optionMap["dv"] = smmothLevel;
-
+	optionMap["dv"] = smoothLevel;
 
 	MPlug useGlobalSmoothDrawTypePlug = dagMesh.findPlug("useGlobalSmoothDrawType");
 	assert(!useGlobalSmoothDrawTypePlug.isNull());
 
-	MPlug smoothDrawTypePlug = dagMesh.findPlug("smoothDrawType");
-	assert(!smoothDrawTypePlug.isNull());
+	int smoothingType = 0;
 
-	MString addOptions;
-
-	// opensubdiv catmull-clark
-	if (useGlobalSmoothDrawTypePlug.asInt() > 0 || smoothDrawTypePlug.asInt() > 0)
+	// read from globals
+	if (useGlobalSmoothDrawTypePlug.asInt() > 0 )
 	{
-		optionMap["sdt"] = "1"; // 1 - constant according documentation
+		MGlobal::executeCommand("optionVar -q proxySubdivisionType", smoothingType);
+		optionMap["sdt"] = std::to_string(smoothingType);
 	}
-	// maya catmull-clark
+	// read from node
 	else 
 	{
-		optionMap["sdt"] = "0"; // 0 - constant according documentation
+		MPlug smoothDrawTypePlug = dagMesh.findPlug("smoothDrawType");
+		smoothingType = smoothDrawTypePlug.asInt();
 
+		assert(!smoothDrawTypePlug.isNull());
+		optionMap["sdt"] = std::to_string(smoothingType);
+	}	
+
+	if (smoothingType == 0) // maya catmull-clark
+	{
 		MPlug keepBordersPlug = dagMesh.findPlug("keepBorder");
 		assert(!keepBordersPlug.isNull());
 
 		optionMap["kb"] = std::to_string(keepBordersPlug.asInt());
-	}	
+
+		MPlug shouldSmoothUVs = dagMesh.findPlug("smoothUVs");
+		assert(!shouldSmoothUVs.isNull());
+		optionMap["suv"] = std::to_string(shouldSmoothUVs.asInt());
+	}
+	else // OpenSubdiv catmull-clark
+	{
+		int uvBoundarySmoothType = 0;
+		if (useGlobalSmoothDrawTypePlug.asInt() > 0)
+		{
+			MGlobal::executeCommand("optionVar -q proxySmoothOsdFvarBoundary", uvBoundarySmoothType);
+			optionMap["ofb"] = std::to_string(uvBoundarySmoothType);
+		}
+		else
+		{
+			MPlug plug_uvSmooth = dagMesh.findPlug("osdFvarBoundary");
+			assert(!plug_uvSmooth.isNull());
+			optionMap["ofb"] = std::to_string(plug_uvSmooth.asInt());
+		}
+	}
 
 	MString result;
 

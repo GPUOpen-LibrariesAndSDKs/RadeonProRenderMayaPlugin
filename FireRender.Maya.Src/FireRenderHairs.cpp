@@ -482,7 +482,7 @@ bool GetCurvesData(XGenSplineAPI::XgFnSpline& out, MFnDagNode& curvesNode)
 	return true;
 }
 
-void FireRenderHair::Freshen()
+void FireRenderHair::Freshen(bool shouldCalculateHash)
 {
 	detachFromScene();
 	clear();
@@ -510,7 +510,7 @@ void FireRenderHair::Freshen()
 		setRenderStats(path);
 	}
 
-	FireRenderNode::Freshen();
+	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
 void FireRenderHair::clear()
@@ -1127,10 +1127,7 @@ void FireRenderHairNHair::setRenderStats(MDagPath dagPath)
 	if (!dagPath.isValid())
 		return;
 
-	// in nhair we have to check different nodes for plug value
-	SetHairPrimaryVisibility(this, dagPath);
-
-	// for the rest of the flags we check pfxHairShape object
+	// in nhair we have to check pfxHairShape object
 	MObject hairObject = dagPath.node();
 
 	// get hairSystemShape object from pfxHairShape object
@@ -1143,7 +1140,39 @@ void FireRenderHairNHair::setRenderStats(MDagPath dagPath)
 	MStatus status = dagHairSystemShapeObj.getPath(hairSystemShapePath);
 	assert(status == MStatus::kSuccess);
 
-	FireRenderHair::setRenderStats(hairSystemShapePath);
+	MFnDependencyNode depNode(hairSystemShapePath.node());
+
+	MPlug primaryVisibilityPlug = depNode.findPlug("nhairIsVisible");
+	if (!primaryVisibilityPlug.isNull())
+	{
+		bool primaryVisibility = true;
+		primaryVisibilityPlug.getValue(primaryVisibility);
+		setPrimaryVisibility(primaryVisibility);
+	}
+
+	MPlug visibleInReflectionsPlug = depNode.findPlug("nhairVisibleInReflections");
+	if (!visibleInReflectionsPlug.isNull())
+	{
+		bool visibleInReflections = false;
+		visibleInReflectionsPlug.getValue(visibleInReflections);
+		setReflectionVisibility(visibleInReflections);
+	}
+
+	MPlug visibleInRefractionsPlug = depNode.findPlug("nhairVisibleInRefractions");
+	if (!visibleInRefractionsPlug.isNull())
+	{
+		bool visibleInRefractions = false;
+		visibleInRefractionsPlug.getValue(visibleInRefractions);
+		setRefractionVisibility(visibleInRefractions);
+	}
+
+	MPlug castsShadowsPlug = depNode.findPlug("castsShadows");
+	if (!castsShadowsPlug.isNull())
+	{
+		bool castsShadows = false;
+		castsShadowsPlug.getValue(castsShadows);
+		setCastShadows(castsShadows);
+	}
 }
 
 
