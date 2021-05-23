@@ -450,6 +450,7 @@ public:
 	// It forces to clear the framebuffer and the iterations ant the next render call
 	void setDirty();
 
+	void disableSetDirtyObjects(bool disable);
 	void setDirtyObject(FireRenderObject* obj);
 
 	// Check if the context is dirty
@@ -829,6 +830,9 @@ private:
 	// Increasing iterations - 1, 2, 4, 8, etc up to 32 for now
 	bool m_IterationsPowerOf2Mode;
 
+	// Used for deformation motion blur feature. We need to disable dirtying object when perform deformation motion blur operations (switcihng current time which leads to dirty all objects)
+	bool m_DisableSetDirtyObjects;
+
 public:
 	FireRenderEnvLight *iblLight = nullptr;
 	MObject iblTransformObject = MObject();
@@ -983,6 +987,23 @@ public:
 
 	friend class Lock;
 };
+
+class ContextSetDirtyObjectAutoLocker
+{
+public:
+	ContextSetDirtyObjectAutoLocker(FireRenderContext& context) :
+		m_context(context)
+	{
+		m_context.disableSetDirtyObjects(true);
+	}
+	~ContextSetDirtyObjectAutoLocker()
+	{
+		m_context.disableSetDirtyObjects(false);
+	}
+private:
+	FireRenderContext& m_context;
+};
+
 
 typedef std::shared_ptr<FireRenderContext> FireRenderContextPtr;
 
