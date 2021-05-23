@@ -1520,7 +1520,13 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 	{
 		bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && TahoeContext::IsGivenContextRPR2(context) && !context->isInteractive();
 		unsigned int motionSamplesCount = deformationMotionBlurEnabled ? context->motionSamples() : 0;
-		outShapes = FireMaya::MeshTranslator::TranslateMesh(context->GetContext(), Object(), motionSamplesCount, dagPath.fullPathName());
+
+		//Ignore set objects dirty calls while creating a mesh, because it moght lead to infinite lookps in case if deformtion motion blur is used
+		{
+			ContextSetDirtyObjectAutoLocker locker(*context);
+			outShapes = FireMaya::MeshTranslator::TranslateMesh(context->GetContext(), Object(), motionSamplesCount, dagPath.fullPathName());
+		}
+
 		m.isMainInstance = true;
 		context->AddMainMesh(this);
 	}
