@@ -2520,7 +2520,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		for (auto it = m_dirtyObjects.begin(); it != m_dirtyObjects.end(); )
 		{
 			if ((m_state != FireRenderContext::StateRendering) && (m_state != FireRenderContext::StateUpdating))
-				break;
+				return false;
 
 			// Request the object with removal it from the dirty list. Use mutex to prevent list's modifications.
 			m_dirtyMutex.lock();
