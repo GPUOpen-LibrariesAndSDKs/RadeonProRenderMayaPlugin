@@ -28,18 +28,38 @@ namespace FireMaya
 		);
 
 	private:
+		struct MeshIndicesData
+		{
+			std::vector<int>& triangleVertexIndices;
+			std::vector<int>& normalIndices;
+			std::vector<std::vector<int>>& uvIndices;
+			std::vector<MColor>& vertexColors;
+			std::vector<int>& colorVertexIndices;
+			std::vector<int>& numFaceVertices;
+
+			MeshIndicesData(
+				std::vector<int>& _triangleVertexIndices,
+				std::vector<int>& _normalIndices,
+				std::vector<std::vector<int>>& _uvIndices,
+				std::vector<MColor>& _vertexColors,
+				std::vector<int>& _colorVertexIndices,
+				std::vector<int>& _numFaceVertices)
+				: triangleVertexIndices(_triangleVertexIndices)
+				, normalIndices(_normalIndices)
+				, uvIndices(_uvIndices)
+				, vertexColors(_vertexColors)
+				, colorVertexIndices(_colorVertexIndices)
+				, numFaceVertices(_numFaceVertices)
+			{};
+		};
+
 		static void AddPolygonSingleShader(
-			MItMeshPolygon& it,
+			MItMeshPolygon& meshPolygonIterator,
 			const MStringArray& uvSetNames,
-			std::vector<int>& triangleVertexIndices,
-			std::vector<int>& normalIndices,
-			std::vector<std::vector<int>>& uvIndices,
-			std::vector<MColor>& vertexColors,
-			std::vector<int>& vertexIndices
+			MeshIndicesData& idxData
 		);
 
 		static void FillIndicesUV(
-			const unsigned uvSetCount,
 			const MIntArray& vertexList,
 			const std::map<int, int>& vertexIdxGlobalToLocal,
 			const MStringArray& uvSetNames,
@@ -52,6 +72,15 @@ namespace FireMaya
 			const std::map<int, int>& vertexIdxGlobalToLocal,
 			MItMeshPolygon& meshPolygonIterator,
 			std::vector<int>& normalIndices
+		);
+
+		static void ProcessIndexesSimplified(
+			MItMeshPolygon& meshPolygonIterator,
+			const MStringArray& uvSetNames,
+			MeshIndicesData& idxData,
+			unsigned int localIdx,
+			MIntArray& vertices,
+			MColorArray& polygonColors
 		);
 
 	};

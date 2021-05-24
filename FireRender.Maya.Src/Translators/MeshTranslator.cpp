@@ -29,7 +29,6 @@ limitations under the License.
 
 #include <unordered_map>
 
-#include "../Context/FireRenderContext.h"
 #include "SingleShaderMeshTranslator.h"
 #include "MultipleShaderMeshTranslator.h"
 
