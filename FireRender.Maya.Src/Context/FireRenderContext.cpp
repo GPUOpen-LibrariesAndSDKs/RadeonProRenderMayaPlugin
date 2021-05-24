@@ -111,7 +111,8 @@ FireRenderContext::FireRenderContext() :
 	m_bgWeight(1),
 	m_RenderType(RenderType::Undefined),
 	m_bIsGLTFExport(false),
-	m_IterationsPowerOf2Mode(false)
+	m_IterationsPowerOf2Mode(false),
+	m_DisableSetDirtyObjects(false)
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
 
@@ -2374,8 +2375,18 @@ bool FireRenderContext::needsRedraw(bool setToFalseOnExit)
 	return value;
 }
 
+void FireRenderContext::disableSetDirtyObjects(bool disable)
+{
+	m_DisableSetDirtyObjects = disable;
+}
+
 void FireRenderContext::setDirtyObject(FireRenderObject* obj)
 {
+	if (m_DisableSetDirtyObjects)
+	{
+		return;
+	}
+
 	if (obj == &m_camera)
 	{
 		m_cameraDirty = true;
@@ -2509,7 +2520,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		for (auto it = m_dirtyObjects.begin(); it != m_dirtyObjects.end(); )
 		{
 			if ((m_state != FireRenderContext::StateRendering) && (m_state != FireRenderContext::StateUpdating))
-				break;
+				return false;
 
 			// Request the object with removal it from the dirty list. Use mutex to prevent list's modifications.
 			m_dirtyMutex.lock();
