@@ -71,8 +71,6 @@ private:
 
 typedef std::set<TimeKeyStruct> TimeKeySet;
 
-//class FireRenderContext;
-
 class AnimationExporter
 {
 public:
