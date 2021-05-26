@@ -26,8 +26,11 @@ global proc createRenderEffectsTab()
 	// Denoiser
 	//
 	frameLayout -label "Denoiser (IPR and Production Renderer)" -cll true -cl true fireRenderDenoiserFrame;
-
 	createFireRenderDenoiserFrame ("fireRenderDenoiserFrame");
+	setParent ..;
+
+	frameLayout -label "Denoiser (Viewport)" -cll true -cl true fireRenderDenoiserViewportFrame;
+	createFireRenderDenoiserViewportFrame ("fireRenderDenoiserViewportFrame");
 	setParent ..;
 
 	// Cameras
@@ -307,6 +310,22 @@ global proc createFireRenderDenoiserFrame(string $parent)
 	setUITemplate -popTemplate;
 
 	updateDenoiserUI();
+}
+
+global proc createFireRenderDenoiserViewportFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	setParent $parent;
+
+	columnLayout -adjustableColumn true;
+
+	attrControlGrp
+		 -label "Denoising and Upscaling (RPR 2.0)"
+		 -attribute "RadeonProRenderGlobals.viewportDenoiseUpscaleEnabled" ;
+
+	setParent ..;	// columnLayout ends
+	setUITemplate -popTemplate;
 }
 
 global proc updateDenoiserUI()

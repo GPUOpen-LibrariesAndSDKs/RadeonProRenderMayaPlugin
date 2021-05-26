@@ -291,6 +291,7 @@
     <ClCompile Include="Translators\MultipleShaderMeshTranslator.cpp" />
     <ClCompile Include="Translators\SingleShaderMeshTranslator.cpp" />
     <ClCompile Include="Translators\Translators.cpp" />
+    <ClCompile Include="ViewportTexture.cpp" />
     <ClCompile Include="Volumes\FireRenderVolumeLocator.cpp" />
     <ClCompile Include="Volumes\FireRenderVolumeOverride.cpp" />
     <ClCompile Include="Volumes\VolumeAttributes.cpp" />
@@ -454,6 +455,7 @@
     <ClInclude Include="Translators\MultipleShaderMeshTranslator.h" />
     <ClInclude Include="Translators\SingleShaderMeshTranslator.h" />
     <ClInclude Include="Translators\Translators.h" />
+    <ClInclude Include="ViewportTexture.h" />
     <ClInclude Include="Volumes\FireRenderVolumeLocator.h" />
     <ClInclude Include="Volumes\FireRenderVolumeOverride.h" />
     <ClInclude Include="Volumes\VolumeAttributes.h" />
