@@ -686,6 +686,9 @@
     <ClCompile Include="FireRenderToonMaterial.cpp">
       <Filter>Materials</Filter>
     </ClCompile>
+    <ClCompile Include="ViewportTexture.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -1179,6 +1182,9 @@
     </ClInclude>
     <ClInclude Include="FireRenderToonMaterial.h">
       <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="ViewportTexture.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
