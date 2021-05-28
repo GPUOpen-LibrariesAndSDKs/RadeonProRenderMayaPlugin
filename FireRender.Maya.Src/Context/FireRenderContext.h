@@ -285,6 +285,9 @@ public:
 		bool UseTempData(void) const { return (region.getWidth() < width || region.getHeight() < height); }
 	};
 
+	// this is part of readFrameBuffer call and is only thing nneded for viewport
+	RV_PIXEL* readFrameBufferSimple(ReadFrameBufferRequestParams& params);
+
 	// Read frame buffer pixels and optionally normalize and flip the image.
 	void readFrameBuffer(ReadFrameBufferRequestParams& params);
 
@@ -300,7 +303,7 @@ public:
 	// reads aov directly into internal storage
 	RV_PIXEL* GetAOVData(const ReadFrameBufferRequestParams& params);
 
-	void MergeOpacity(const ReadFrameBufferRequestParams& params);
+	void ReadOpacityAOV(const ReadFrameBufferRequestParams& params);
 
 	void CombineOpacity(int aov, RV_PIXEL* pixels, unsigned int area);
 
@@ -327,6 +330,8 @@ public:
 
 	// do action for each framebuffer matching filter
 	void ForEachFramebuffer(std::function<void(int aovId)> actionFunc, std::function<bool(int aovId)> filter);
+
+	std::vector<float> DenoiseAndUpscaleForViewport();
 
 	// try running denoiser; result is saved into RAM buffer in context
 	std::vector<float> DenoiseIntoRAM(void);
@@ -532,7 +537,7 @@ public:
 
 	bool IsDenoiserCreated(void) const { return m_denoiserFilter != nullptr; }
 
-	bool IsDenoiserEnabled(void) const { return (IsDenoiserSupported() && m_globals.denoiserSettings.enabled);	}
+	bool IsDenoiserEnabled(void) const;
 
 	bool IsTileRender(void) const { return (m_globals.tileRenderingEnabled && !isInteractive()); }
 
@@ -645,6 +650,9 @@ public:
 
 	int GetSamplesPerUpdate() const { return m_samplesPerUpdate; }
 
+	bool setupUpscalerForViewport(RV_PIXEL* data);
+	bool setupDenoiserForViewport();
+
 protected:
 	static int INCORRECT_PLUGIN_ID;
 
@@ -693,6 +701,7 @@ private:
 	void turnOnAOVsForDenoiser(bool allocBuffer = false);
 	void turnOnAOVsForContour(bool allocBuffer = false);
 	bool CanCreateAiDenoiser() const;
+
 	void setupDenoiserFB(void);
 	void setupDenoiserRAM(void);
 	void BuildLateinitObjects();
@@ -700,6 +709,7 @@ private:
 private:
 	std::mutex m_rifLock;
 	std::shared_ptr<ImageFilter> m_denoiserFilter;
+	std::shared_ptr<ImageFilter> m_upscalerFilter;
 
 	frw::DirectionalLight m_defaultLight;
 

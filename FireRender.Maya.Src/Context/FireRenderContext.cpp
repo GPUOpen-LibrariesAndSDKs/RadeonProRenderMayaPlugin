@@ -103,6 +103,7 @@ FireRenderContext::FireRenderContext() :
 	m_cameraDirty(true),
 	m_denoiserChanged(false),
 	m_denoiserFilter(nullptr),
+	m_upscalerFilter(nullptr),
 	m_shadowColor{ 0.0f, 0.0f, 0.0f },
 	m_bgColor{ 1.0f, 1.0f, 1.0f },
 	m_shadowTransparency(0),
@@ -128,6 +129,7 @@ FireRenderContext::~FireRenderContext()
 	removeCallbacks();
 
 	m_denoiserFilter.reset();
+	m_upscalerFilter.reset();
 }
 
 int FireRenderContext::initializeContext()
@@ -323,7 +325,7 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 		EnableAOVsFromRSIfEnvVarSet(*this, m_globals.aovs);
 	}
 
-	if (m_globals.denoiserSettings.enabled)
+	if (IsDenoiserEnabled())
 	{
 		turnOnAOVsForDenoiser();
 	}
@@ -504,6 +506,89 @@ bool FireRenderContext::CanCreateAiDenoiser() const
 }
 #endif
 
+MString GetModelPath()
+{
+	MString path;
+	MStatus s = MGlobal::executeCommand("getModulePath -moduleName RadeonProRender", path);
+	MString modelsFolder = path + "/data/models";
+
+	return modelsFolder;
+}
+
+bool FireRenderContext::setupUpscalerForViewport(RV_PIXEL* data)
+{
+	std::uint32_t width = (std::uint32_t) m_pixelBuffers[RPR_AOV_COLOR].width();
+	std::uint32_t height = (std::uint32_t) m_pixelBuffers[RPR_AOV_COLOR].height();
+
+	size_t rifImageSize = sizeof(RV_PIXEL) * width * height;
+
+	// setup upscaler
+	m_upscalerFilter = std::shared_ptr<ImageFilter>(new ImageFilter(
+		context(),
+		2 * width,
+		2 * height,
+		GetModelPath().asChar()
+	));
+
+	m_upscalerFilter->CreateFilter(RifFilterType::Upscaler, /*parameter is ignored for upscaler creation*/ false);
+
+	m_upscalerFilter->SetInputOverrideSize(width, height);
+	m_upscalerFilter->AddInput(RifColor, (float*) data, rifImageSize, 0.0f);
+
+	m_upscalerFilter->AttachFilter();
+
+	return true;
+}
+
+
+bool FireRenderContext::setupDenoiserForViewport()
+{
+	bool canCreateAiDenoiser = CanCreateAiDenoiser();
+	bool useOpenImageDenoise = !canCreateAiDenoiser;
+
+	std::uint32_t width = (std::uint32_t) m_pixelBuffers[RPR_AOV_COLOR].width();
+	std::uint32_t height = (std::uint32_t) m_pixelBuffers[RPR_AOV_COLOR].height();
+	size_t rifImageSize = sizeof(RV_PIXEL) * width * height;
+
+	try
+	{
+		MString mlModelsFolder = GetModelPath();
+
+		m_denoiserFilter = std::shared_ptr<ImageFilter>(new ImageFilter(
+			context(),
+			width,
+			height,
+			mlModelsFolder.asChar()
+		));
+
+		RifFilterType ft = RifFilterType::MlDenoise;
+		m_denoiserFilter->CreateFilter(ft, useOpenImageDenoise);
+	
+		m_denoiserFilter->AddInput(RifColor, m_pixelBuffers[RPR_AOV_COLOR].data(), rifImageSize, 0.0f);
+
+		m_denoiserFilter->AddInput(RifNormal, m_pixelBuffers[RPR_AOV_SHADING_NORMAL].data(), rifImageSize, 0.0f);
+		m_denoiserFilter->AddInput(RifDepth, m_pixelBuffers[RPR_AOV_DEPTH].data(), rifImageSize, 0.0f);
+		m_denoiserFilter->AddInput(RifAlbedo, m_pixelBuffers[RPR_AOV_DIFFUSE_ALBEDO].data(), rifImageSize, 0.0f);
+
+		RifParam p = { RifParamType::RifOther, true };
+		m_denoiserFilter->AddParam("enable16bitCompute", p);
+
+		m_denoiserFilter->AttachFilter();
+
+	}
+	catch (std::exception& e)
+	{
+		m_denoiserFilter.reset();
+		ErrorPrint(e.what());
+		MGlobal::displayError("RPR failed to setup denoiser, turning it off.");
+
+		return false;
+	}
+
+	return true;
+}
+
+
 void FireRenderContext::setupDenoiserRAM()
 {
 	bool canCreateAiDenoiser = CanCreateAiDenoiser();
@@ -515,9 +600,7 @@ void FireRenderContext::setupDenoiserRAM()
 
 	try
 	{
-		MString path;
-		MStatus s = MGlobal::executeCommand("getModulePath -moduleName RadeonProRender", path);
-		MString mlModelsFolder = path + "/data/models";
+		MString mlModelsFolder = GetModelPath();
 
 		m_denoiserFilter = std::shared_ptr<ImageFilter>(new ImageFilter(
 			context(), 
@@ -615,9 +698,7 @@ void FireRenderContext::setupDenoiserFB()
 
 	try
 	{
-		MString path;
-		MStatus s = MGlobal::executeCommand("getModulePath -moduleName RadeonProRender", path);
-		MString mlModelsFolder = path + "/data/models";
+		MString mlModelsFolder = GetModelPath();
 
 		m_denoiserFilter = std::shared_ptr<ImageFilter>(new ImageFilter(context(), m_width, m_height, mlModelsFolder.asChar()));
 
@@ -966,10 +1047,13 @@ void FireRenderContext::render(bool lock)
 			}
 		}
 
-		if (m_interactive && m_denoiserChanged && m_globals.denoiserSettings.enabled && IsDenoiserSupported())
+		if (m_interactive && m_denoiserChanged && IsDenoiserEnabled())
 		{
 			turnOnAOVsForDenoiser(true);
-			setupDenoiserFB();
+			if (GetRenderType() != RenderType::ViewportRender)
+			{
+				setupDenoiserFB();
+			}
 			m_denoiserChanged = false;
 		}
 
@@ -1535,7 +1619,7 @@ RV_PIXEL* FireRenderContext::GetAOVData(const ReadFrameBufferRequestParams& para
 	return data;
 }
 
-void FireRenderContext::MergeOpacity(const ReadFrameBufferRequestParams& params)
+void FireRenderContext::ReadOpacityAOV(const ReadFrameBufferRequestParams& params)
 {
 	// No need to merge opacity for any FB other then color
 	if (!params.mergeOpacity || params.aov != RPR_AOV_COLOR)
@@ -1577,12 +1661,9 @@ void FireRenderContext::CombineOpacity(int aov, RV_PIXEL* pixels, unsigned int a
 	combineWithOpacity(pixels, area, m_opacityData.get());
 }
 
-void FireRenderContext::readFrameBuffer(ReadFrameBufferRequestParams& params)
+RV_PIXEL* FireRenderContext::readFrameBufferSimple(ReadFrameBufferRequestParams& params)
 {
 	RPR_THREAD_ONLY;
-
-	// resolve frame buffer
-	rpr_framebuffer frameBuffer = frameBufferAOV_Resolved(params.aov);
 
 	// debug output (if enabled)
 #ifdef DUMP_AOV_SOURCE
@@ -1592,18 +1673,30 @@ void FireRenderContext::readFrameBuffer(ReadFrameBufferRequestParams& params)
 	// process shadow and/or reflection catcher logic
 	bool isShadowReflectionCatcherUsed = ConsiderShadowReflectionCatcherOverride(params);
 	if (isShadowReflectionCatcherUsed)
-		return;
+		return nullptr;
 
 	// load data from AOV
-	RV_PIXEL* data = nullptr;
-	data = GetAOVData(params);
+	return GetAOVData(params);
+}
 
-	// No need to merge opacity for any FB other then color
-	MergeOpacity(params);
+void FireRenderContext::readFrameBuffer(ReadFrameBufferRequestParams& params)
+{
+	RPR_THREAD_ONLY;
+
+	RV_PIXEL* data = readFrameBufferSimple(params);
+
+	if (data == nullptr)
+	{
+		return;
+	}
+
+	// Read opacity AOV if needed
+	ReadOpacityAOV(params);
 
 	// Copy the region from the temporary
 	// buffer into supplied pixel memory.
-	if (params.UseTempData() || IsDenoiserCreated())
+	// _TODO Investigate if "|| IsDenoiserCreated()" is really necessary?  
+	if (params.UseTempData() || (IsDenoiserCreated()))
 	{
 		copyPixels(params.pixels, data, params.width, params.height, params.region);
 	}
@@ -3139,6 +3232,17 @@ void FireRenderContext::SetRenderType(RenderType renderType)
 	}
 }
 
+bool FireRenderContext::IsDenoiserEnabled(void) const 
+{
+	if (!IsDenoiserSupported())
+	{
+		return false;
+	}
+
+	bool viewportRendering = GetRenderType() == RenderType::ViewportRender;
+	return m_globals.denoiserSettings.enabled && !viewportRendering || m_globals.denoiserSettings.viewportDenoiseUpscaleEnabled && viewportRendering;
+}
+
 bool FireRenderContext::ShouldResizeTexture(unsigned int& max_width, unsigned int& max_height) const
 {
 	if (GetRenderType() == RenderType::Thumbnail)
@@ -3214,6 +3318,53 @@ void FireRenderContext::ForEachFramebuffer(
 	}
 }
 
+std::vector<float> FireRenderContext::DenoiseAndUpscaleForViewport()
+{
+	bool useRAMBuffer = true;
+	RenderRegion region = RenderRegion(m_width, m_height);
+
+	ReadFrameBufferRequestParams params(region);
+	params.width = m_width;
+	params.height = m_height;
+	params.mergeOpacity = false;
+	params.mergeShadowCatcher = true;
+	params.shadowColor = m_shadowColor;
+	params.bgColor = m_bgColor;
+	params.bgWeight = m_bgWeight;
+	params.shadowTransp = m_shadowTransparency;
+	params.bgTransparency = m_backgroundTransparency;
+	params.shadowWeight = m_shadowWeight;
+
+	// read frame buffers
+	if (useRAMBuffer)
+	{
+		ReadDenoiserFrameBuffersIntoRAM(params);
+	}
+
+	std::lock_guard<std::mutex> lock(m_rifLock);
+	bool isDenoiserInitialized = setupDenoiserForViewport(); // will read data from outBuffers if useRAMBuffer == true
+	assert(isDenoiserInitialized);
+	if (!isDenoiserInitialized || !IsDenoiserCreated())
+		return std::vector<float>();
+
+	std::vector<float> vecData;
+	bool denoiseResult = false;
+	vecData = GetDenoisedData(denoiseResult);
+	assert(denoiseResult);
+
+	// save denoiser result in RAM buffer
+	RV_PIXEL* data = (RV_PIXEL*)vecData.data();
+	if (useRAMBuffer)
+	{
+		setupUpscalerForViewport(data);
+
+		m_upscalerFilter->Run();
+		vecData = m_upscalerFilter->GetData();
+	}
+
+	return vecData;
+}
+
 std::vector<float> FireRenderContext::DenoiseIntoRAM()
 {
 	bool shouldDenoise = IsDenoiserEnabled() &&
@@ -3274,7 +3425,7 @@ std::vector<float> FireRenderContext::DenoiseIntoRAM()
 		// run merge opacity
 		params.aov = RPR_AOV_COLOR;
 		params.mergeOpacity = camera().GetAlphaMask() && isAOVEnabled(RPR_AOV_OPACITY);
-		MergeOpacity(params);
+		ReadOpacityAOV(params);
 
 		// combine (Opacity to Alpha)
 		if (params.mergeOpacity)
