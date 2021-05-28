@@ -64,8 +64,10 @@ FireRenderViewport::FireRenderViewport(const MString& panelName) :
 	m_textureChanged(false),
 	m_showDialogNeeded(false),
 	m_closeDialogNeeded(false),
+	m_showUpscaledFrame(false),
 	m_createFailed(false),
-	m_currentAOV(RPR_AOV_COLOR)
+	m_currentAOV(RPR_AOV_COLOR),
+	m_pCurrentTexture(nullptr)
 {
 	m_alwaysEnabledAOVs.push_back(RPR_AOV_COLOR);
 	m_alwaysEnabledAOVs.push_back(RPR_AOV_VARIANCE);
@@ -124,11 +126,26 @@ MStatus FireRenderViewport::setup()
 		// Acquire the pixels lock.
 		AutoMutexLock pixelsLock(m_pixelsLock);
 
-		// Update the Maya texture from the pixel data.
-		updateTexture(m_pixels.data(), m_contextPtr->width(), m_contextPtr->height());
+		// Update the Maya texture from the internal pixel data.
+		m_pCurrentTexture->UpdateTexture();
 	}
 
 	return doSetup();
+}
+
+bool FireRenderViewport::IsDenoiserUpscalerEnabled() const
+{
+	if (m_contextPtr == nullptr || m_currentAOV != RPR_AOV_COLOR)
+	{
+		return false;
+	}
+
+	if (!TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
+	{
+		return false;
+	}
+
+	return m_contextPtr->IsDenoiserEnabled();
 }
 
 MStatus FireRenderViewport::doSetup()
@@ -158,6 +175,11 @@ MStatus FireRenderViewport::doSetup()
 	if (m_isRunning && useAnimationCache)
 		stop();
 
+	if (IsDenoiserUpscalerEnabled())
+	{
+		width /= 2;
+		height /= 2;
+	}
 	// Check if the viewport size has changed.
 	if (width != m_contextPtr->width() || height != m_contextPtr->height())
 	{
@@ -212,19 +234,8 @@ void FireRenderViewport::removed(bool panelDestroyed)
 	removeMenu();
 }
 
-void FireRenderViewport::OnBufferAvailableCallback(float progress)
+void FireRenderViewport::ScheduleViewportUpdate()
 {
-	// Get the frame hash.
-	auto hash = m_contextPtr->GetStateHash();
-	stringstream ss;
-	ss << m_panelName.asChar() << ";" << size_t(hash);
-
-	// Try find the frame for the hash.
-	// if not found => creates new frame in cache
-	auto& frame = m_renderedFramesCache[ss.str().c_str()];
-
-	readFrameBuffer(&frame);
-
 	FireRenderThread::RunProcOnMainThread([&]()
 	{
 		// Schedule a Maya viewport refresh or set exit flag
@@ -244,6 +255,23 @@ void FireRenderViewport::OnBufferAvailableCallback(float progress)
 				m_contextPtr->SetState(FireRenderContext::StateExiting);
 		}
 	});
+}
+
+
+void FireRenderViewport::OnBufferAvailableCallback(float progress)
+{
+	// Get the frame hash.
+	auto hash = m_contextPtr->GetStateHash();
+	stringstream ss;
+	ss << m_panelName.asChar() << ";" << size_t(hash);
+
+	// Try find the frame for the hash.
+	// if not found => creates new frame in cache
+	auto& frame = m_renderedFramesCache[ss.str().c_str()];
+
+	readFrameBuffer(&frame);
+
+	ScheduleViewportUpdate();
 }
 
 // -----------------------------------------------------------------------------
@@ -267,6 +295,9 @@ bool FireRenderViewport::RunOnViewportThread()
 		{
 			try
 			{
+				m_showUpscaledFrame = false;
+				m_pCurrentTexture = &m_texture;
+
 				FireRenderContext::Lock lock(m_contextPtr.get(), "FireRenderContext::StateRendering"); // lock with constructor which will not change state
 
 				// Perform a render iteration.
@@ -303,30 +334,30 @@ bool FireRenderViewport::RunOnViewportThread()
 					throw;
 			}
 
-            FireRenderThread::RunProcOnMainThread([&]()
-            {
-                // Schedule a Maya viewport refresh or set exit flag
-                MStatus status;
-                M3dView activeView;
-                status = M3dView::getM3dViewFromModelPanel(m_panelName, activeView);
-                if (status == MStatus::kSuccess) // Regular render view
-                {
-                    m_view.scheduleRefresh();
-                }
-                else //Standalone render view (hypershade only?)
-                {
-                    activeView = M3dView::active3dView(&status);
-                    if (activeView.widget() == m_widget)
-                        m_view.scheduleRefresh();
-                    else
-                        m_contextPtr->SetState(FireRenderContext::StateExiting);
-                }
-            });
+			ScheduleViewportUpdate();
 		}
 		else
 		{
-			// Don't waste CPU time too much when not rendering
-			this_thread::sleep_for(2ms);
+			if (IsDenoiserUpscalerEnabled() && !m_showUpscaledFrame)
+			{
+				{
+					AutoMutexLock contextLock(m_contextLock);
+					AutoMutexLock pixelsLock(m_pixelsLock);
+
+					m_showUpscaledFrame = true;
+
+					readFrameBuffer(nullptr, true);
+
+					m_pCurrentTexture = &m_textureUpscaled;
+				}
+
+				ScheduleViewportUpdate();
+			}
+			else
+			{
+				// Don't waste CPU time too much when not rendering
+				this_thread::sleep_for(2ms);
+			}
 		}
 
 		return true;
@@ -514,50 +545,45 @@ void FireRenderViewport::postBlit()
 // -----------------------------------------------------------------------------
 bool FireRenderViewport::initialize()
 {
-	return FireRenderThread::RunOnceAndWait<bool>([this]()
+	try
 	{
-		try
+		m_contextPtr = ContextCreator::CreateAppropriateContextForRenderType(RenderType::ViewportRender);
+		m_contextPtr->SetRenderType(RenderType::ViewportRender);
+
+		m_pCurrentTexture = &m_texture;
+
+		// Initialize the RPR context.
+		bool animating = MAnimControl::isPlaying() || MAnimControl::isScrubbing();
+		bool glViewport = MRenderer::theRenderer()->drawAPIIsOpenGL();
+
+		// enable all mandatory aovs so that it can be resolved and used properly
+		for (int aov : m_alwaysEnabledAOVs)
 		{
-			m_contextPtr = ContextCreator::CreateAppropriateContextForRenderType(RenderType::ViewportRender);
-			m_contextPtr->SetRenderType(RenderType::ViewportRender);
-
-			// Initialize the hardware texture.
-			m_texture.texture = nullptr;
-			m_textureDesc.setToDefault2DTexture();
-			m_textureDesc.fFormat = MRasterFormat::kR32G32B32A32_FLOAT;
-
-			// Initialize the RPR context.
-			bool animating = MAnimControl::isPlaying() || MAnimControl::isScrubbing();
-			bool glViewport = MRenderer::theRenderer()->drawAPIIsOpenGL();
-
-			// enable all mandatory aovs so that it can be resolved and used properly
-			for (int aov : m_alwaysEnabledAOVs)
-			{
-				m_contextPtr->enableAOV(aov);
-			}
-
-			if (!isAOVShouldBeAlwaysEnabled(m_currentAOV))
-			{
-				m_contextPtr->enableAOV(m_currentAOV);
-			}
-
-			if (!m_contextPtr->buildScene(true, glViewport))
-			{
-				return false;
-			}
-
-			if (TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
-			{
-				m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderViewport::OnBufferAvailableCallback, this, std::placeholders::_1));
-			}
+			m_contextPtr->enableAOV(aov);
 		}
-		catch (...)
+
+		if (!isAOVShouldBeAlwaysEnabled(m_currentAOV))
 		{
-			m_error.set(current_exception());
+			m_contextPtr->enableAOV(m_currentAOV);
+		}
+
+		if (!m_contextPtr->buildScene(true, glViewport))
+		{
 			return false;
 		}
-		return true;
-	});
+
+		if (TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
+		{
+			m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderViewport::OnBufferAvailableCallback, this, std::placeholders::_1));
+		}
+	}
+	catch (...)
+	{
+		m_error.set(current_exception());
+		return false;
+	}
+
+	return true;
 }
 
 // -----------------------------------------------------------------------------
@@ -569,13 +595,14 @@ void FireRenderViewport::cleanUp()
 	// Delete the hardware backed texture.
 	// Do not delete when exiting Maya - this will cause access violation
 	// in texture manager.
-	if (m_texture.texture && !gExitingMaya)
+
+	if (!gExitingMaya)
 	{
 		MRenderer* renderer = MRenderer::theRenderer();
 		MTextureManager* textureManager = renderer->getTextureManager();
 
-		textureManager->releaseTexture(m_texture.texture);
-		m_texture.texture = nullptr;
+		m_texture.Release();
+		m_textureUpscaled.Release();
 	}
 }
 
@@ -617,15 +644,6 @@ MStatus FireRenderViewport::resize(unsigned int width, unsigned int height)
 		// Clear the texture cache - all frames
 		// need to be re-rendered at the new size.
 		m_renderedFramesCache.Clear();
-
-		// Delete the existing hardware backed texture.
-		if (m_texture.texture)
-		{
-			MRenderer* renderer = MRenderer::theRenderer();
-			MTextureManager* textureManager = renderer->getTextureManager();
-			textureManager->releaseTexture(m_texture.texture);
-			m_texture.texture = nullptr;
-		}
 
 		if (m_contextPtr->isFirstIterationAndShadersNOTCached()) {
 			//first iteration and shaders are _NOT_ cached
@@ -672,15 +690,19 @@ void FireRenderViewport::resizeFrameBufferStandard(unsigned int width, unsigned 
 {
 	// Update the RPR context dimensions.
 	m_contextPtr->resize(width, height, false);
-	m_contextPtr->TryCreateDenoiserImageFilters();
 
 	// Resize the pixel buffer that
 	// will receive frame buffer data.
-	m_pixels.resize(width * height);
+	m_texture.Resize(width, height);
 
-	// Perform an initial frame buffer read and update the texture.
-	readFrameBuffer();
-	updateTexture(m_pixels.data(), width, height);
+	if (IsDenoiserUpscalerEnabled())
+	{
+		m_textureUpscaled.Resize(width * 2, height * 2);
+	}
+	else
+	{
+		m_textureUpscaled.Release();
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -688,36 +710,19 @@ void FireRenderViewport::resizeFrameBufferGLInterop(unsigned int width, unsigned
 {
 	// Resize the pixel buffer that
 	// will receive frame buffer data.
-	m_pixels.resize(width * height);
-	clearPixels();
-
-	// Perform an initial frame buffer read and update the texture.
-	updateTexture(m_pixels.data(), width, height);
+	m_texture.Resize(width, height);
 
 	// Get the GL texture.
-	if (m_texture.texture != nullptr)
+	if (m_texture.GetTexture() != nullptr)
 	{
 		// Update the RPR context.
 		m_contextPtr->resize(width, height, false, GetGlTexture());
-		m_contextPtr->TryCreateDenoiserImageFilters();
 	}
 }
 
 rpr_GLuint* FireRenderViewport::GetGlTexture() const
 {
-	return static_cast<rpr_GLuint*>(m_texture.texture->resourceHandle());
-}
-
-// -----------------------------------------------------------------------------
-void FireRenderViewport::clearPixels()
-{
-	RV_PIXEL zero;
-	zero.r = 0;
-	zero.g = 0;
-	zero.b = 0;
-	zero.a = 1;
-
-	std::fill(m_pixels.begin(), m_pixels.end(), zero);
+	return static_cast<rpr_GLuint*>(m_texture.GetTexture()->resourceHandle());
 }
 
 // -----------------------------------------------------------------------------
@@ -747,11 +752,11 @@ MStatus FireRenderViewport::renderCached(unsigned int width, unsigned int height
 			m_contextPtr->render();
 			readFrameBuffer(&frame);
 
-			return updateTexture(frame.data(), width, height);
+			return m_texture.UpdateTexture(frame.data());
 		}
 		else // Otherwise, update the texture from the frame data.
 		{
-			return updateTexture(frame.data(), width, height);
+			return m_texture.UpdateTexture(frame.data());
 		}
 	}
 	catch (...)
@@ -783,7 +788,7 @@ MStatus FireRenderViewport::refreshContext()
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
+void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame, bool runDenoiserAndUpscaler/* = false*/)
 {
 	// The resolved frame buffer is shared with the Maya viewport
 	// when GL interop is active, so only the resolve step is required.
@@ -794,7 +799,7 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 	}
 
 	// Read the frame buffer.
-	RenderRegion region(0, m_contextPtr->width() - 1, 0, m_contextPtr->height() - 1);
+	RenderRegion region(0, m_contextPtr->width() - 1, m_contextPtr->height() - 1, 0);
 
 	FireRenderContext::ReadFrameBufferRequestParams params(region);
 	params.aov = m_currentAOV;
@@ -812,18 +817,24 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 		params.mergeShadowCatcher = false;
 
 		// process frame buffer	
-		m_contextPtr->readFrameBuffer(params);
+		m_contextPtr->readFrameBufferSimple(params);
 	}
 
 	// Otherwise, read to a temporary buffer.
 	else
 	{
 		// setup params
-		params.pixels = m_pixels.data();
+		params.pixels = (RV_PIXEL*) m_texture.GetPixelData();
 		params.mergeShadowCatcher = true;
 
 		// process frame buffer
-		m_contextPtr->readFrameBuffer(params);
+		m_contextPtr->readFrameBufferSimple(params);
+
+		if (runDenoiserAndUpscaler)
+		{
+			m_textureUpscaled.SetPixelData(m_contextPtr->DenoiseAndUpscaleForViewport());
+			m_textureChanged = true;
+		}
 
 		// Flag as updated so the pixels will
 		// be copied to the viewport texture.
@@ -852,44 +863,9 @@ void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame)
 }
 
 // -----------------------------------------------------------------------------
-MStatus FireRenderViewport::updateTexture(void* data, unsigned int width, unsigned int height)
+ViewportTexture* FireRenderViewport::getTexture() const
 {
-	// Create the hardware backed texture if required.
-	if (!m_texture.texture)
-	{
-		// Update the texture description.
-		m_textureDesc.setToDefault2DTexture();
-		m_textureDesc.fWidth = width;
-		m_textureDesc.fHeight = height;
-		m_textureDesc.fDepth = 1;
-		m_textureDesc.fBytesPerRow = 4 * sizeof(float) * width;
-		m_textureDesc.fBytesPerSlice = m_textureDesc.fBytesPerRow * height;
-		m_textureDesc.fFormat = MRasterFormat::kR32G32B32A32_FLOAT;
-
-		// Create a new texture with the supplied data.
-		MRenderer* renderer = MRenderer::theRenderer();
-		MTextureManager* textureManager = renderer->getTextureManager();
-
-		m_texture.texture = textureManager->acquireTexture("", m_textureDesc, data, false);
-		if (m_texture.texture)
-			m_texture.texture->textureDescription(m_textureDesc);
-
-		// Flag as changed.
-		m_textureChanged = true;
-
-		return MStatus::kSuccess;
-	}
-	// Otherwise, update the existing texture.
-	else
-	{
-		return m_texture.texture->update(data, false);
-	}
-}
-
-// -----------------------------------------------------------------------------
-const MTextureAssignment& FireRenderViewport::getTexture() const
-{
-	return m_texture;
+	return m_pCurrentTexture;
 }
 
 // -----------------------------------------------------------------------------

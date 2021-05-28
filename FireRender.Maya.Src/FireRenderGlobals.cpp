@@ -126,6 +126,8 @@ namespace
 		MObject denoiserColorOnly;
 		MObject enable16bitCompute;
 
+		MObject viewportDenoiseUpscaleEnabled;
+
 		// image saving
 		MObject renderaGlobalsExrMultilayerEnabled;
 
@@ -977,6 +979,11 @@ void FireRenderGlobals::createDenoiserAttributes()
 	MAKE_INPUT(nAttr);
 	nAttr.setReadable(false);
 	CHECK_MSTATUS(addAttribute(Attribute::enable16bitCompute));
+
+	Attribute::viewportDenoiseUpscaleEnabled = nAttr.create("viewportDenoiseUpscaleEnabled", "vdue", MFnNumericData::kBoolean, true, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setConnectable(false);
+	CHECK_MSTATUS(addAttribute(Attribute::viewportDenoiseUpscaleEnabled));
 }
 
 void FireRenderGlobals::addAsGlobalAttribute(MFnAttribute& attr)
