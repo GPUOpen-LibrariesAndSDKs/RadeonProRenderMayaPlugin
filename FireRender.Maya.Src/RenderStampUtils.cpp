@@ -20,6 +20,9 @@ limitations under the License.
 
 #include <Maya/MAnimControl.h>
 
+#if defined(OSMac_)
+#include <sys/sysctl.h>
+#endif
 
 namespace RenderStampUtils
 {

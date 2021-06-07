@@ -16,9 +16,8 @@ limitations under the License.
 #include <exception>
 #include <chrono>
 #include <maya/MString.h>
-#include <tbb/tbb_thread.h>
-#include <tbb/atomic.h>
 
+#include <atomic>
 #include <mutex>
 
 
@@ -111,7 +110,7 @@ private:
 	// -----------------------------------------------------------------------------
 
 	/** True if currently in an error state. */
-	tbb::atomic<bool> m_error;
+	std::atomic<bool> m_error;
 
 
 	// Static Members

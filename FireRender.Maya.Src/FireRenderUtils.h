@@ -12,9 +12,8 @@ limitations under the License.
 ********************************************************************/
 #pragma once
 
-#if MAYA_API_VERSION >= 20180000
 #include <maya/MApiNamespace.h>
-#endif
+
 #include <maya/MFnDagNode.h>
 #include <maya/MObjectArray.h>
 #include <maya/MIntArray.h>

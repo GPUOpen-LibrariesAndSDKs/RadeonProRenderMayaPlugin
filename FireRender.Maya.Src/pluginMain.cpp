@@ -559,7 +559,8 @@ MStatus initializePlugin(MObject obj)
 	pTopLevelExceptionFilter = ::SetUnhandledExceptionFilter(FrUnhandledExceptionFilter);
 #endif
 
-	PluginUpdater();
+	// We have legacy updater here which does not work. Comment this code for now becaue it breaks Maya 2022 startup.
+	//PluginUpdater();
 
 	// Added for Linux:
 	Logger::AddCallback(InfoCallback, Logger::LevelInfo);
@@ -596,7 +597,7 @@ MStatus initializePlugin(MObject obj)
 
 	Logger::AddCallback(InfoCallback, Logger::LevelInfo);
 
-	LogPrint("Initing plugin");
+	LogPrint("RPR plugin initialization");
 
 	// Check if OpenCL.dll is available on the system.
 	HMODULE openCL = LoadLibrary("OpenCL.dll");

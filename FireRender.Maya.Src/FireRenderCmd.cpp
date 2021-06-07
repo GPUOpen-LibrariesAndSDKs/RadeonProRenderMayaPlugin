@@ -766,6 +766,7 @@ void FireRenderCmd::initializeCommandPort(int port)
 
 	MString commandPortFunction =
 		"import socket\n"
+		"import sys\n"
 		"HOST = '127.0.0.1'\n"
 		"PORT = " + portString + "\n"
 		"ADDR = (HOST, PORT)\n"
@@ -774,7 +775,10 @@ void FireRenderCmd::initializeCommandPort(int port)
 		"\t\treturn\n"
 		"\tclient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n"
 		"\tclient.connect(ADDR)\n"
-		"\tclient.send(message)\n"
+		"\tif sys.version_info[0] < 3:\n"
+		"\t\tclient.send(message)\n"
+		"\telse:\n"
+		"\t\tclient.send(str.encode(message))\n"
 		"\tclient.close()\n";
 
 	MGlobal::executePythonCommand(commandPortFunction);
