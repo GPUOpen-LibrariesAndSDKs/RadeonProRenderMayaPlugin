@@ -36,9 +36,9 @@ limitations under the License.
 std::vector<std::wstring> getMayaVersionWithInstalledPlugin(MSIHANDLE hInstall)
 {
 	std::vector<std::wstring> versions = {
-		L"2018",
 		L"2019",
-		L"2020"
+		L"2020",
+		L"2022"
 	};
 
 	std::vector<std::wstring> res;
@@ -113,10 +113,9 @@ void installBoto3()
 {
 	LogSystem("installBoto3\n");
 
+	// We install boto3 only on Maya versions with Python 3 inside
 	const static std::vector<std::string> versions = {
-		{"2018"},
-		{"2019"},
-		{"2020"}
+		{"2022"}
 	};
 
 	for (const std::string& version : versions)
@@ -129,11 +128,7 @@ void installBoto3()
 
 		SetCurrentDirectoryA(fullPath.c_str());
 
-		std::string cmdScript =
-			"curl \"https://bootstrap.pypa.io/2.7/get-pip.py\" -o \"get-pip.py\" && "
-			"mayapy get-pip.py &&"
-			"mayapy -m pip install boto3\n"
-			;
+		std::string cmdScript = "mayapy -m pip install boto3\n";
 
 		try
 		{

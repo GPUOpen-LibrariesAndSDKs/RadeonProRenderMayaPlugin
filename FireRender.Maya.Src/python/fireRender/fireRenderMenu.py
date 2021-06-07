@@ -13,7 +13,7 @@
 import maya.cmds
 import maya.mel
 import os
-import common
+from . import common
 import maya.mel as mel
 
 def exportFireRenderScene(data):
@@ -36,7 +36,7 @@ def exportFireRenderMaterial(data):
         maya.cmds.fireRenderExport(material=selection[0],file=filePath[0])
 
 def importFireRenderMaterial(data):
-    print "import material"
+    print ("import material")
     basicFilter = "*.frMat;;All Files (*.*)"
     filePath = maya.cmds.fileDialog2(fileFilter=basicFilter, dialogStyle=0, fileMode=1)
     if filePath:

@@ -14,9 +14,8 @@ limitations under the License.
 
 #include "frWrap.h"
 
-#if MAYA_API_VERSION >= 20180000
 #include <maya/MApiNamespace.h>
-#endif
+
 #include <maya/MTypeId.h>
 #include <maya/MPxNode.h>
 #include <maya/MFnNumericAttribute.h>

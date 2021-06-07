@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "0830"
+   LastUpgradeVersion = "1030"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,9 +14,9 @@
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
-                     BlueprintIdentifier = "8D595D8B20372FE20031988A"
-                     BuildableName = "RadeonProRender.bundle"
-                     BlueprintName = "Maya2018"
+                     BlueprintIdentifier = "505C0BCA2660C2BA000E11A9"
+                     BuildableName = "Maya2022.bundle"
+                     BlueprintName = "Maya2022"
                      ReferencedContainer = "container:RadeonProRender.xcodeproj">
                   </BuildableReference>
                </EnvironmentBuildable>
@@ -28,13 +28,13 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Script"
-               scriptText = "&quot;$PROJECT_DIR/../postbuild_release.sh&quot;&#10;">
+               scriptText = "&quot;$PROJECT_DIR/../postbuild_debug.sh&quot;&#10;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
-                     BlueprintIdentifier = "8D595D8B20372FE20031988A"
-                     BuildableName = "RadeonProRender.bundle"
-                     BlueprintName = "Maya2018"
+                     BlueprintIdentifier = "505C0BCA2660C2BA000E11A9"
+                     BuildableName = "Maya2022.bundle"
+                     BlueprintName = "Maya2022"
                      ReferencedContainer = "container:RadeonProRender.xcodeproj">
                   </BuildableReference>
                </EnvironmentBuildable>
@@ -50,9 +50,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "8D595D8B20372FE20031988A"
-               BuildableName = "RadeonProRender.bundle"
-               BlueprintName = "Maya2018"
+               BlueprintIdentifier = "505C0BCA2660C2BA000E11A9"
+               BuildableName = "Maya2022.bundle"
+               BlueprintName = "Maya2022"
                ReferencedContainer = "container:RadeonProRender.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -65,55 +65,17 @@
       shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
       </Testables>
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "4DE508631D9950A1009B2BD6"
-            BuildableName = "RadeonProRender.bundle"
-            BlueprintName = "Maya2017"
-            ReferencedContainer = "container:RadeonProRender.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
-      <AdditionalOptions>
-      </AdditionalOptions>
    </TestAction>
    <LaunchAction
-      buildConfiguration = "Release"
-      selectedDebuggerIdentifier = ""
-      selectedLauncherIdentifier = "Xcode.IDEFoundation.Launcher.PosixSpawn"
+      buildConfiguration = "Debug"
+      selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
+      selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <PathRunnable
-         runnableDebuggingMode = "0"
-         FilePath = "/Applications/Autodesk/maya2018/Maya.app/Contents/MacOS/Maya">
-      </PathRunnable>
-      <MacroExpansion>
-         <BuildableReference
-            BuildableIdentifier = "primary"
-            BlueprintIdentifier = "8D595D8B20372FE20031988A"
-            BuildableName = "RadeonProRender.bundle"
-            BlueprintName = "Maya2018"
-            ReferencedContainer = "container:RadeonProRender.xcodeproj">
-         </BuildableReference>
-      </MacroExpansion>
-      <EnvironmentVariables>
-         <EnvironmentVariable
-            key = "DYLD_LIBRARY_PATH"
-            value = "/Users/Shared/RadeonProRender/lib:$DYLD_LIBRARY_PATH"
-            isEnabled = "NO">
-         </EnvironmentVariable>
-         <EnvironmentVariable
-            key = "RPR_MATERIAL_LIBRARY_PATH"
-            value = "ProRenderMaxMaterialLibrary/exported"
-            isEnabled = "NO">
-         </EnvironmentVariable>
-      </EnvironmentVariables>
-      <AdditionalOptions>
-      </AdditionalOptions>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"
@@ -121,6 +83,15 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "505C0BCA2660C2BA000E11A9"
+            BuildableName = "Maya2022.bundle"
+            BlueprintName = "Maya2022"
+            ReferencedContainer = "container:RadeonProRender.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

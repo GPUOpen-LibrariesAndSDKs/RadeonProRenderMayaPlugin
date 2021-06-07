@@ -814,11 +814,9 @@ frw::Image FireMaya::Scope::GetTiledImage(MString texturePath,
 		// get texture file information
 		MHWRender::MTextureDescription desc = {};
 		texture->textureDescription(desc);
-#if MAYA_API_VERSION >= 20180000
+
 		size_t slicePitch = 0;
-#else
-		int slicePitch = 0;
-#endif
+
 		int rowPitch = 0;
 		void* rawData = texture->rawData(rowPitch, slicePitch);
 		if (!rawData)

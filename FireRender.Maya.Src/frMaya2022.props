@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros">
+    <FR_MAYA_VERSION>2022</FR_MAYA_VERSION>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <PreprocessorDefinitions>MAYA2022;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(MAYA_SDK_2022)\include;$(MAYA_X64_2022)\plug-ins\xgen\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+	  <AdditionalDependencies>AdskXGen.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(MAYA_X64_2022)\lib;$(MAYA_X64_2022)\plug-ins\xgen\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <BuildMacro Include="FR_MAYA_VERSION">
+      <Value>$(FR_MAYA_VERSION)</Value>
+    </BuildMacro>
+  </ItemGroup>
+</Project>
