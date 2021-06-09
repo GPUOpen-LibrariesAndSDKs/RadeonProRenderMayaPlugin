@@ -120,7 +120,7 @@ public:
 	static std::string uuidWithoutInstanceNumberForString(const std::string& uuid);
 
 	// update fire render objects using Maya objects, then marks as clean
-	virtual void Freshen();
+	virtual void Freshen(bool shouldCalculateHash);
 
 	// hash is generated during Freshen call
 	HashValue GetStateHash() { return m.hash; }
@@ -299,8 +299,10 @@ protected:
 
 	// utility functions
 	void AssignShadingEngines(const MObjectArray& shadingEngines);
-	void ProcessMotionBlur(MFnDagNode& meshFn);
+	void ProcessMotionBlur(const MFnDagNode& meshFn);
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const = 0;
+
+	bool IsMotionBlurEnabled(const MFnDagNode& meshFn);
 
 protected:
 
@@ -357,7 +359,7 @@ public:
 	static void ShaderDirtyCallback(MObject& node, void* clientData);
 
 
-	virtual void Freshen() override;
+	virtual void Freshen(bool shouldCalculateHash) override;
 
 	// build a sphere
 	void buildSphere();
@@ -417,7 +419,7 @@ public:
 
 	virtual bool IsEmissive() override { return true; }
 
-	virtual void Freshen() override;
+	virtual void Freshen(bool shouldCalculateHash) override;
 
 	// build light for swatch renderer
 	void buildSwatchLight();
@@ -481,7 +483,7 @@ public:
 	// attach to the scene
 	virtual void attachToScene() override;
 
-	virtual void Freshen() override;
+	virtual void Freshen(bool shouldCalculateHash) override;
 
 	virtual bool IsEmissive() override { return true; }
 
@@ -534,7 +536,7 @@ public:
 
 	// clear
 	virtual void clear() override;
-	virtual void Freshen() override;
+	virtual void Freshen(bool shouldCalculateHash) override;
 
 	void TranslateCameraExplicit(int viewWidth, int viewHeight);
 
@@ -603,7 +605,7 @@ public:
 	virtual ~FireRenderSky();
 
 	// Refresh the sky.
-	virtual void Freshen() override;
+	virtual void Freshen(bool shouldCalculateHash) override;
 
 	// clear
 	virtual void clear() override;
@@ -674,7 +676,7 @@ public:
 	virtual ~FireRenderCommonVolume();
 
 	// Refresh the curves
-	virtual void Freshen() override;
+	virtual void Freshen(bool shouldCalculateHash) override;
 
 	// clear
 	virtual void clear() override;
@@ -774,7 +776,7 @@ public:
 	virtual ~FireRenderHair();
 
 	// Refresh the curves
-	virtual void Freshen(void) override;
+	virtual void Freshen(bool shouldCalculateHash) override;
 
 	// clear
 	virtual void clear(void) override;
@@ -885,7 +887,7 @@ class FireRenderCustomEmitter : public FireRenderLight
 public:
 	FireRenderCustomEmitter(FireRenderContext* context, const MDagPath& dagPath);
 
-	void Freshen() override;
+	void Freshen(bool shouldCalculateHash) override;
 };
 
 bool IsUberEmissive(frw::Shader shader);

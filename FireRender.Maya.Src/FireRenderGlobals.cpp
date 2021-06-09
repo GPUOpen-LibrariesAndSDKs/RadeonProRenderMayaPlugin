@@ -93,6 +93,7 @@ namespace
 
 		MObject motionBlur;
 		MObject cameraMotionBlur;
+		MObject motionSamples;
 		MObject motionBlurCameraExposure;
 		MObject velocityAOVMotionBlur;
 		MObject cameraType;
@@ -124,6 +125,8 @@ namespace
 			// Denoiser type: ML
 		MObject denoiserColorOnly;
 		MObject enable16bitCompute;
+
+		MObject viewportDenoiseUpscaleEnabled;
 
 		// image saving
 		MObject renderaGlobalsExrMultilayerEnabled;
@@ -429,6 +432,12 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::motionBlur = nAttr.create("motionBlur", "mblr", MFnNumericData::kBoolean, 0, &status);
 	MAKE_INPUT(nAttr);
 
+	Attribute::motionSamples = nAttr.create("motionSamples", "msc", MFnNumericData::kInt, 2, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(2);
+	nAttr.setSoftMax(4);
+	nAttr.setMax(8);
+
 	Attribute::cameraMotionBlur = nAttr.create("cameraMotionBlur", "cmb", MFnNumericData::kBoolean, 0, &status);
 	MAKE_INPUT(nAttr);
 
@@ -503,6 +512,7 @@ MStatus FireRenderGlobals::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::sky));
 	CHECK_MSTATUS(addAttribute(Attribute::commandPort));
 	CHECK_MSTATUS(addAttribute(Attribute::motionBlur));
+	CHECK_MSTATUS(addAttribute(Attribute::motionSamples));
 	CHECK_MSTATUS(addAttribute(Attribute::cameraMotionBlur));
 	CHECK_MSTATUS(addAttribute(Attribute::motionBlurCameraExposure));
 	CHECK_MSTATUS(addAttribute(Attribute::velocityAOVMotionBlur));
@@ -969,6 +979,11 @@ void FireRenderGlobals::createDenoiserAttributes()
 	MAKE_INPUT(nAttr);
 	nAttr.setReadable(false);
 	CHECK_MSTATUS(addAttribute(Attribute::enable16bitCompute));
+
+	Attribute::viewportDenoiseUpscaleEnabled = nAttr.create("viewportDenoiseUpscaleEnabled", "vdue", MFnNumericData::kBoolean, true, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setConnectable(false);
+	CHECK_MSTATUS(addAttribute(Attribute::viewportDenoiseUpscaleEnabled));
 }
 
 void FireRenderGlobals::addAsGlobalAttribute(MFnAttribute& attr)

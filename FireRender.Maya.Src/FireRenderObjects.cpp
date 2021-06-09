@@ -49,11 +49,7 @@ limitations under the License.
 #include <ostream>
 #include <sstream>
 
-#if defined(MAYA2019) || defined(MAYA2020)
-	#include <Xgen/src/xgsculptcore/api/XgSplineAPI.h>
-#else
-	#include <XGen/XgSplineAPI.h>
-#endif
+#include <Xgen/src/xgsculptcore/api/XgSplineAPI.h>
 
 #include <maya/MUuid.h>
 #include "Lights/PhysicalLight/PhysicalLightAttributes.h"
@@ -152,6 +148,7 @@ HashValue FireRenderNode::CalculateHash()
 {
 	HashValue hash = FireRenderObject::CalculateHash();
 	auto dagPath = DagPath();
+
 	if (dagPath.isValid())
 	{
 		hash << dagPath.isVisible();
@@ -350,11 +347,15 @@ HashValue GetHashValue(const MPlug& plug)
 	return hash;
 }
 
-void FireRenderObject::Freshen()
+void FireRenderObject::Freshen(bool shouldCalculateHash)
 {
 	if (m.callbackId.empty())
 		RegisterCallbacks();
-	m.hash = CalculateHash();
+
+	if (shouldCalculateHash)
+	{
+		m.hash = CalculateHash();
+	}
 }
 
 void FireRenderObject::clear()
@@ -538,7 +539,7 @@ std::vector<frw::Shape> FireRenderNode::GetVisiblePortals()
 				RecordPortalState(connection.node());
 				if (auto ob = context()->getRenderObject<FireRenderMesh>(connection.node()))
 				{
-					ob->Freshen();	// make sure we have shapes to attach
+					ob->Freshen(ob->context()->GetRenderType() == RenderType::ViewportRender);	// make sure we have shapes to attach
 					if (ob->IsVisible())
 					{
 						for (auto& element : ob->Elements())
@@ -1302,6 +1303,10 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 	}
 
 	RebuildTransforms();
+
+	// motion blur
+	ProcessMotionBlur(MFnDagNode(Object()));
+
 	setRenderStats(meshPath);
 }
 
@@ -1436,7 +1441,10 @@ void FireRenderMesh::SetupObjectId(MObject parentTransformObject)
 
 	for (FrElement element : m.elements)
 	{
-		element.shape.SetObjectId(objectId);
+		if (element.shape.Handle() != nullptr)
+		{
+			element.shape.SetObjectId(objectId);
+		}
 	}
 }
 
@@ -1503,14 +1511,22 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 		m.isMainInstance = false;
 	}
 
+	MDagPath dagPath = DagPath();
 	if (mainMesh == nullptr)
 	{
-		outShapes = FireMaya::MeshTranslator::TranslateMesh(context->GetContext(), Object());
+		bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && TahoeContext::IsGivenContextRPR2(context) && !context->isInteractive();
+		unsigned int motionSamplesCount = deformationMotionBlurEnabled ? context->motionSamples() : 0;
+
+		//Ignore set objects dirty calls while creating a mesh, because it moght lead to infinite lookps in case if deformtion motion blur is used
+		{
+			ContextSetDirtyObjectAutoLocker locker(*context);
+			outShapes = FireMaya::MeshTranslator::TranslateMesh(context->GetContext(), Object(), motionSamplesCount, dagPath.fullPathName());
+		}
+
 		m.isMainInstance = true;
 		context->AddMainMesh(this);
 	}
 
-	MDagPath dagPath = DagPath();
 	for (int i = 0; i < outShapes.size(); i++)
 	{
 		MString fullPathName = dagPath.fullPathName();
@@ -1586,9 +1602,6 @@ void FireRenderMesh::RebuildTransforms()
 			element.shape.SetTransform(&mfloats[0][0]);
 		}
 	}
-
-	// motion blur
-	ProcessMotionBlur(meshFn);
 }
 
 void FireRenderMeshCommon::AssignShadingEngines(const MObjectArray& shadingEngines)
@@ -1599,7 +1612,7 @@ void FireRenderMeshCommon::AssignShadingEngines(const MObjectArray& shadingEngin
 	}
 }
 
-void FireRenderMeshCommon::ProcessMotionBlur(MFnDagNode& meshFn)
+bool FireRenderMeshCommon::IsMotionBlurEnabled(const MFnDagNode& meshFn)
 {
 	// Checking of MotionBlur parameter in RenderStats group of mesh
 	bool objectMotionBlur = true;
@@ -1610,8 +1623,15 @@ void FireRenderMeshCommon::ProcessMotionBlur(MFnDagNode& meshFn)
 		objectMotionBlur = objectMBPlug.asBool();
 	}
 
-	if (!context()->motionBlur() || !objectMotionBlur)
+	return (context()->motionBlur() && objectMotionBlur);
+}
+
+void FireRenderMeshCommon::ProcessMotionBlur(const MFnDagNode& meshFn)
+{
+	if (!IsMotionBlurEnabled(meshFn))
+	{
 		return;
+	}
 
 	// We use different schemes for MotionBlur for Tahoe and NorthStar
 	if (TahoeContext::IsGivenContextRPR2(context()))
@@ -1678,10 +1698,10 @@ unsigned int FireRenderMeshCommon::GetAssignedUVMapIdx(const MString& textureFil
 	return it->second;
 }
 
-void FireRenderMesh::Freshen()
+void FireRenderMesh::Freshen(bool shouldCalculateHash)
 {
 	Rebuild();
-	FireRenderNode::Freshen();
+	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
 HashValue FireRenderMesh::CalculateHash()
@@ -1799,7 +1819,7 @@ PLType FireRenderPhysLight::GetPhysLightType(MObject node)
 	return (PLType) plug.asInt();
 }
 
-void FireRenderLight::Freshen()
+void FireRenderLight::Freshen(bool shouldCalculateHash)
 {
 	if (ShouldUpdateTransformOnly())
 	{
@@ -1838,7 +1858,7 @@ void FireRenderLight::Freshen()
 		}
 	}
 
-	FireRenderNode::Freshen();
+	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
 void FireRenderLight::buildSwatchLight()
@@ -1983,7 +2003,7 @@ void setPortal_IBL(MObject transformObject, FireRenderEnvLight *light) {
 
 				light->RecordPortalState(portal, true);
 
-				ob->Freshen();	// make sure we have shapes to attach
+				ob->Freshen(ob->context()->GetRenderType() == RenderType::ViewportRender);	// make sure we have shapes to attach
 
 				if (ob->IsVisible())
 				{
@@ -2005,7 +2025,7 @@ void setPortal_IBL(MObject transformObject, FireRenderEnvLight *light) {
 	}
 }
 
-void FireRenderEnvLight::Freshen()
+void FireRenderEnvLight::Freshen(bool shouldCalculateHash)
 {
 	RestorePortalStates(true);
 
@@ -2067,7 +2087,7 @@ void FireRenderEnvLight::Freshen()
 		}
 	}
 
-	FireRenderNode::Freshen();
+	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
 //===================
@@ -2108,7 +2128,7 @@ void FireRenderCamera::TranslateCameraExplicit(int viewWidth, int viewHeight)
 		float(viewWidth) / float(viewHeight), true, m_type);
 }
 
-void FireRenderCamera::Freshen()
+void FireRenderCamera::Freshen(bool shouldCalculateHash)
 {
 	auto node = Object();
 	auto dagPath = DagPath();
@@ -2280,7 +2300,7 @@ void FireRenderCamera::Freshen()
 	}
 
 	RegisterCallbacks();
-	FireRenderNode::Freshen();
+	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
 void FireRenderCamera::RegisterCallbacks()
@@ -2492,7 +2512,7 @@ void setPortal_Sky(MObject transformObject, FireRenderSky *light) {
 
 				light->RecordPortalState(portal, false);
 
-				ob->Freshen();	// make sure we have shapes to attach
+				ob->Freshen(ob->context()->GetRenderType() == RenderType::ViewportRender);	// make sure we have shapes to attach
 
 				if (ob->IsVisible())
 				{
@@ -2514,7 +2534,7 @@ void setPortal_Sky(MObject transformObject, FireRenderSky *light) {
 	}
 }
 
-void FireRenderSky::Freshen()
+void FireRenderSky::Freshen(bool shouldCalculateHash)
 {
 	RestorePortalStates(false);
 
@@ -2544,7 +2564,7 @@ void FireRenderSky::Freshen()
 		}
 	}
 
-	FireRenderNode::Freshen();
+	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
 void FireRenderSky::attachPortals()
@@ -2633,7 +2653,7 @@ FireRenderCustomEmitter::FireRenderCustomEmitter(FireRenderContext* context, con
 
 }
 
-void FireRenderCustomEmitter::Freshen()
+void FireRenderCustomEmitter::Freshen(bool shouldCalculateHash)
 {
 	if (!m_light.light)
 	{

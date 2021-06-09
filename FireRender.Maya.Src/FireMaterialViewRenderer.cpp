@@ -14,7 +14,7 @@ limitations under the License.
 #include <maya/MFnDependencyNode.h>
 #include <maya/MDistance.h>
 #include <maya/MFileObject.h>
-#include <maya/MAtomic.h>
+
 #include "FireRenderIpr.h"
 #include "FireRenderUtils.h"
 #include "FireRenderError.h"
@@ -120,7 +120,7 @@ MStatus FireMaterialViewRenderer::startAsync(const JobParams& params)
 
 MStatus FireMaterialViewRenderer::stopAsync()
 {
-	MAtomic::set(&m_threadCmd, ThreadCommand::STOP_THREAD);
+	m_threadCmd = ThreadCommand::STOP_THREAD;
 
 	RPR::AutoMutexLock lock(m_renderData.m_mutex);
 
@@ -141,7 +141,8 @@ MStatus FireMaterialViewRenderer::beginSceneUpdate()
 		JobParams params;
 		startAsync(params);
 	}
-	MAtomic::set(&m_threadCmd, ThreadCommand::BEGIN_UPDATE);
+
+	m_threadCmd = ThreadCommand::BEGIN_UPDATE;
 	m_renderData.m_mutex.lock();
 	return MS::kSuccess;
 }
@@ -536,7 +537,7 @@ MStatus FireMaterialViewRenderer::endSceneUpdate()
 		checkStatus(frstatus);
 
 		m_numIteration = 1;
-		MAtomic::set(&m_threadCmd, ThreadCommand::RENDER_IMAGE);
+		m_threadCmd = ThreadCommand::RENDER_IMAGE;
 
 		m_renderData.m_mutex.unlock();
 
@@ -580,7 +581,7 @@ void FireMaterialViewRenderer::render()
 		auto& nodeId = std::get<FireMaya::NodeId>(m_renderData.m_surfaceShader);
 		m_renderData.m_context.GetScope().SetCachedShader(nodeId, nullptr);
 
-		MAtomic::set(&m_threadCmd, ThreadCommand::BEGIN_UPDATE);
+		m_threadCmd = ThreadCommand::BEGIN_UPDATE;
 		return;
 	}
 
@@ -632,7 +633,8 @@ void FireMaterialViewRenderer::render()
 		ProgressParams params;
 		params.progress = 1.0;
 		progress(params);
-		MAtomic::set(&m_threadCmd, ThreadCommand::BEGIN_UPDATE);
+
+		m_threadCmd = ThreadCommand::BEGIN_UPDATE;
 	}
 }
 
