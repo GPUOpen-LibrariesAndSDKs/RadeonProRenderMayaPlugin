@@ -47,11 +47,7 @@ limitations under the License.
 #include <maya/MRenderLineArray.h>
 #include <maya/MRenderLine.h>
 
-#if defined(MAYA2018)
-#include <XGen/XgSplineAPI.h>
-#else
 #include <Xgen/src/xgsculptcore/api/XgSplineAPI.h>
-#endif
 
 // Ornatrix interfaces use host-specific types, so we need to specify the host
 #define AUTODESK_MAYA

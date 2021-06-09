@@ -22,7 +22,7 @@ amIRoot() {
 
 copyModuleFiles() {
     echo "Copying module files ..."
-    for version in 2018 2019 2020
+    for version in 2019 2020 2022
     do
         modulesDir=`printf "/Users/Shared/Autodesk/modules/maya/%s" ${version}`
         if [ -d ${modulesDir} ];
@@ -39,30 +39,30 @@ copyModuleFiles() {
 }
 
 installBoto3ForMaya () {
-    echo "Trying to installBoto3ForMaya: " $1
-    cd $1
-    if amIRoot; then
-        curl "https://bootstrap.pypa.io/get-pip.py" -o "get-pip.py"
-        sh mayapy get-pip.py
-        sh mayapy -m pip install boto3
-        echo "Boto3 for Maya installation finished"
-    else
-        echo "root rights are required to execute this operation"
-        echo "skipping installation"
-    fi
+    for version in 2022
+    do
+        targetDir=`printf "/Applications/Autodesk/maya%s/Maya.app/Contents/bin" ${version}`
+
+        echo "Trying to installBoto3ForMaya: " ${targetDir}
+        cd $1
+        if amIRoot; then
+            sh mayapy -m pip install boto3
+            echo "Boto3 for Maya installation finished"
+       else
+           echo "root rights are required to execute this operation"
+           echo "skipping installation"
+       fi
+    done
 }
 
 copyShelfForUser() {
     echo "User: " $1
-    for version in 2018 2019 2020
+    for version in 2019 2020 2022
     do
         shelfDir=`printf "/Users/%s/Library/Preferences/Autodesk/maya/%s/prefs/shelves/" ${1} ${version}`
         if [ -d ${shelfDir} ];
         then
             cp -R "/Users/Shared/RadeonProRender/Maya/plugin/shelves/" ${shelfDir}
-
-            targetDir=`printf "/Applications/Autodesk/maya%s/Maya.app/Contents/bin" ${version}`
-            installBoto3ForMaya ${targetDir}
         else
             echo "Shelf directory " ${shelfDir} " was not found"
         fi
@@ -90,6 +90,7 @@ main() {
         echo "running with root rights"
         copyModuleFiles
         copyShelves
+        installBoto3ForMaya
         showInstalledDialog
     else
         echo "running without admin rights"

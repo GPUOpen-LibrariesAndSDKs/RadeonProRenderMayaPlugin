@@ -13,23 +13,16 @@
 import os
 import glob
 import maya.cmds
+import sys
 
 def setShaderCachePathEnvironment(version):
     projectPath = maya.cmds.workspace(q = True, rd = True) + "cache/"
     frCacheVersionPath = "fr_render/" + version + "/"
     frcachepath = projectPath + frCacheVersionPath
-    if not os.path.exists(projectPath + frCacheVersionPath):
-        os.makedirs(projectPath + frCacheVersionPath)
-        frcachepath = projectPath + frCacheVersionPath
-
     if not os.path.exists(frcachepath):
-        if "Temp" in os.environ:
-            os.makedirs(os.environ["Temp"].decode("utf8") + "/" + frCacheVersionPath)
-            frcachepath = os.environ["Temp"].decode("utf8") + "/" + frCacheVersionPath
+        os.makedirs(frcachepath)
 
-    if not os.path.exists(frcachepath):
-        if "TEMP" in os.environ:
-            os.makedirs(os.environ["TEMP"].decode("utf8") + "/" + frCacheVersionPath)
-            frcachepath = os.environ["TEMP"].decode("utf8") + "/" + frCacheVersionPath
-
-    os.environ["FR_SHADER_CACHE_PATH"] = frcachepath.encode("utf8")
+    if sys.version_info[0] < 3:
+        os.environ["FR_SHADER_CACHE_PATH"] = frcachepath.encode("utf8")
+    else:
+        os.environ["FR_SHADER_CACHE_PATH"] = frcachepath

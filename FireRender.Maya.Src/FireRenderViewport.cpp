@@ -25,7 +25,6 @@ limitations under the License.
 #include <maya/MFileIO.h>
 #include <maya/MGlobal.h>
 #include <maya/MRenderView.h>
-#include <maya/MAtomic.h>
 #include <maya/MAnimControl.h>
 #include <maya/MTextureManager.h>
 #include "AutoLock.h"
@@ -953,6 +952,7 @@ void FireRenderViewport::addMenu()
 			R"(from PySide2 import QtCore, QtWidgets, QtGui
 import shiboken2
 import maya.OpenMayaUI as omu
+import sys
 def setFireRenderAnimCache(checked=True):
 	maya.cmds.fireRenderViewport(panel=maya.cmds.getPanel(wf=1),cache=checked)
 def clearFireRenderCache():
@@ -1009,8 +1009,13 @@ def createAOVsMenu(frMenu):
 			action.setChecked(True)
 		count = count + 1
 
-ptr = omu.MQtUtil.findControl("m_panelName", long(omu.MQtUtil.mainWindow()))
-w = shiboken2.wrapInstance(long(ptr), QtWidgets.QWidget)
+if sys.version_info[0] < 3:
+	ptr = omu.MQtUtil.findControl("m_panelName", long(omu.MQtUtil.mainWindow()))
+	w = shiboken2.wrapInstance(long(ptr), QtWidgets.QWidget)
+else:
+	ptr = omu.MQtUtil.findControl("m_panelName", int(omu.MQtUtil.mainWindow()))
+	w = shiboken2.wrapInstance(int(ptr), QtWidgets.QWidget)
+
 menuBar = w.findChildren(QtWidgets.QMenuBar)[0]
 frExist = False
 for act in menuBar.actions():

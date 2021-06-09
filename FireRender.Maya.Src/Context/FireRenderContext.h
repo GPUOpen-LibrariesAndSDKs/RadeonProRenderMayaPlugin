@@ -713,7 +713,7 @@ private:
 
 	frw::DirectionalLight m_defaultLight;
 
-	tbb::atomic<StateEnum> m_state;
+	std::atomic<StateEnum> m_state;
 
 	// Render camera
 	FireRenderCamera m_camera;

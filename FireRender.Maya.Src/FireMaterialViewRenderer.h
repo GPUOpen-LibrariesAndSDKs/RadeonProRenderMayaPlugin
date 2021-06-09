@@ -155,7 +155,7 @@ public:
 	};
 
 	// Render commands used by the render thread
-	volatile int m_threadCmd;
+	std::atomic<int> m_threadCmd;
 
 private:
 
