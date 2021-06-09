@@ -1219,7 +1219,9 @@ global proc buildFireRenderImageFormatsMenu(
 	menuItem -label (uiRes("m_buildImageFormatsMenu.kSoftImage")) 			          -data 1;
 	menuItem -label (uiRes("m_buildImageFormatsMenu.kTarga")) 			 	              -data 19;
 	menuItem -label (uiRes("m_buildImageFormatsMenu.kTiff"))  				              -data 3;
-	if ($wantSixteen) {
+
+	if (($mayaVersion < 20220000) && $wantSixteen)
+	{
 		menuItem -label (uiRes("m_buildImageFormatsMenu.kTiff16"))  				      -data 4;
 	}
 	menuItem -label (uiRes("m_buildImageFormatsMenu.kWindowsBitmap"))  		  -data 20;
@@ -1231,6 +1233,21 @@ global proc buildFireRenderImageFormatsMenu(
 		menuItem -label (uiRes("m_buildImageFormatsMenu.kEXR"))  		  			  -data 40;
 	}
 
+	if ($mayaVersion >= 20220000)
+	{
+	optionMenuGrp
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kTIFFCompression"))
+		TIFFCompressionMenu;
+
+	optionMenuGrp -e -visible 0 TIFFCompressionMenu;
+
+	optionMenuGrp
+		-label (uiRes("m_createMayaSoftwareCommonGlobalsTab.kBitDepth"))
+		BitDepthMenu;
+
+	optionMenuGrp -e -visible 0 BitDepthMenu;
+	}
+
 	// ADSK_CLR_MGT_END
 
 	// Add the IMF plug-in items
@@ -1238,7 +1255,8 @@ global proc buildFireRenderImageFormatsMenu(
 	global string $imfPlugInExt[];  // File extension
 	int $size = size($imfPlugInKey);
 
-	if ($size == 0) return;
+	if ($size == 0) 
+		return;
 
 	int $i;
 	$val = 1000;

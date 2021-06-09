@@ -97,12 +97,12 @@ MClearOperation & FireRenderViewportBlit::clearOperation()
 void FireRenderViewportBlit::updateTexture(FireRenderViewport& viewport)
 {
 	// Get the viewport texture.
-	const MTextureAssignment& texture = viewport.getTexture();
+	ViewportTexture* viewportTexture = viewport.getTexture();
 
 	// Check if the viewport texture has changed.
-	if (viewport.hasTextureChanged() || m_texture.texture != texture.texture)
+	if (viewport.hasTextureChanged() || m_texture.texture != viewportTexture->GetTexture())
 	{
-		m_texture.texture = texture.texture;
+		m_texture.texture = viewportTexture->GetTexture();
 		m_textureChanged = true;
 	}
 }

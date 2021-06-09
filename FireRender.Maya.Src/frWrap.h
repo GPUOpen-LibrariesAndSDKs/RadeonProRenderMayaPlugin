@@ -160,7 +160,8 @@ namespace frw
 		ValueTypeUVTriplanar = RPR_MATERIAL_NODE_UV_TRIPLANAR,
 		ValueTypeBufferSampler = RPR_MATERIAL_NODE_BUFFER_SAMPLER, // buffer node
 		ValueTypeHSVToRGB = RPR_MATERIAL_NODE_HSV_TO_RGB,
-		ValueTypeRRGToHSV = RPR_MATERIAL_NODE_RGB_TO_HSV
+		ValueTypeRRGToHSV = RPR_MATERIAL_NODE_RGB_TO_HSV,
+		ValueTypeToonRamp = RPR_MATERIAL_NODE_TOON_RAMP
 	};
 
 	enum ShaderType
@@ -182,7 +183,8 @@ namespace frw
 		ShaderTypeDiffuseRefraction = RPR_MATERIAL_NODE_DIFFUSE_REFRACTION,
 		ShaderTypeAdd = RPR_MATERIAL_NODE_ADD,
 		ShaderTypeVolume = RPR_MATERIAL_NODE_VOLUME,
-		ShaderTypeFlatColor = RPR_MATERIAL_NODE_PASSTHROUGH
+		ShaderTypeFlatColor = RPR_MATERIAL_NODE_PASSTHROUGH,
+		ShaderTypeToon = RPR_MATERIAL_NODE_TOON_CLOSURE
 	};
 
 	enum ContextParameterType
@@ -1501,6 +1503,17 @@ namespace frw
 			{
 				checkStatus(res);
 			}
+
+			res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_DIFFUSE, visible);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 
 		void SetReflectionVisibility(bool visible)
@@ -2021,7 +2034,7 @@ namespace frw
 			rpr_int numberOfTexCoordLayers, const rpr_float** texcoords, const size_t* num_texcoords, const rpr_int* texcoord_stride,
 			const rpr_int* vertex_indices, rpr_int vidx_stride,
 			const rpr_int* normal_indices, rpr_int nidx_stride, const rpr_int** texcoord_indices,
-			const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces, std::string optionalMeshName = "") const;
+			const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces, rpr_mesh_info* meshAttrArray = nullptr, const std::string& optionalMeshName = "") const;
 
 		PointLight CreatePointLight()
 		{
@@ -2609,6 +2622,12 @@ namespace frw
 		{
 			SetValue(RPR_MATERIAL_INPUT_COLOR, inputHSV);
 		}
+	};
+
+	class ToonRampNode : public ValueNode
+	{
+	public:
+		explicit ToonRampNode(const MaterialSystem& h) : ValueNode(h, ValueTypeToonRamp) {}
 	};
 
 	class BumpMapNode : public ValueNode
@@ -4144,19 +4163,25 @@ namespace frw
 		rpr_int numberOfTexCoordLayers, const rpr_float** texcoords, const size_t* num_texcoords, const rpr_int* texcoord_stride,
 		const rpr_int* vertex_indices, rpr_int vidx_stride,
 		const rpr_int* normal_indices, rpr_int nidx_stride, const rpr_int** texcoord_indices,
-		const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces, std::string optionalMeshName) const
+		const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces, rpr_mesh_info* meshAttrArray, const std::string& optionalMeshName) const
 	{
 		FRW_PRINT_DEBUG("CreateMesh() - %d faces\n", num_faces);
+		assert(num_vertices != 0);
+		assert(num_faces != 0);
+
+		if (num_vertices == 0 || num_faces == 0)
+			return Shape();
+
 		rpr_shape shape = nullptr;
 
-		auto status = rprContextCreateMeshEx(Handle(),
+		auto status = rprContextCreateMeshEx2(Handle(),
 			vertices, num_vertices, vertex_stride,
 			normals, num_normals, normal_stride,
 			perVertexFlag, num_perVertexFlags, perVertexFlag_stride,
 			numberOfTexCoordLayers, texcoords, num_texcoords, texcoord_stride,
 			vertex_indices, vidx_stride,
 			normal_indices, nidx_stride, texcoord_indices,
-			tidx_stride, num_face_vertices, num_faces,
+			tidx_stride, num_face_vertices, num_faces, meshAttrArray,
 			&shape);
 
 		checkStatusThrow(status, ("Unable to create mesh: " + optionalMeshName).c_str());

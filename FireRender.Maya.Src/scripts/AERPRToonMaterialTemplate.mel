@@ -1,0 +1,73 @@
+//
+// Copyright 2020 Advanced Micro Devices, Inc
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//    http://www.apache.org/licenses/LICENSE-2.0
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+global proc AERPRToonMaterialTemplate( string $nodeName )
+{
+	AEswatchDisplay $nodeName;
+	editorTemplate -beginScrollLayout;
+
+	editorTemplate -beginLayout "ToonShader" -collapse 0;
+		editorTemplate -l "Show Advanced" -addControl "showAdvanced" "ShowAdvancedChanges";
+
+		editorTemplate -l "Color" -addControl "color";
+		editorTemplate -l "Roughness" -addControl "roughness";
+		editorTemplate -l "Normal Map" -addControl "normal";
+
+		editorTemplate -beginLayout "Advanced" -collapse 0;
+			editorTemplate -l "Show Mix Levels" -addControl "showMixLevels" "ShowMixLevelsChanged";
+
+			editorTemplate -l "Highlight Color" -addControl "highlightColor";
+			editorTemplate -l "Mid Color" -addControl "midColor";
+			editorTemplate -l "Shadow Color" -addControl "shadowColor";
+
+			editorTemplate -l "Mid Level" -addControl "rampPosition1";
+			editorTemplate -l "Highlight Level" -addControl "rampPosition2";
+
+			editorTemplate -l "Mid Level Mix" -addControl "rampRange1";
+			editorTemplate -l "Highlight Level Mix" -addControl "rampRange2";
+		editorTemplate -endLayout;
+	editorTemplate -endLayout;
+
+	AEdependNodeTemplate $nodeName;
+	
+	editorTemplate -addExtraControls;
+
+	editorTemplate -endScrollLayout;
+}
+
+global proc ShowAdvancedChanges(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".showAdvanced";
+	$dim = !`getAttr $nodeAttr`;
+
+	editorTemplate -dimControl $nodeName showMixLevels $dim;
+
+	editorTemplate -dimControl $nodeName highlightColor $dim;
+	editorTemplate -dimControl $nodeName midColor $dim;
+	editorTemplate -dimControl $nodeName shadowColor $dim;	
+
+	editorTemplate -dimControl $nodeName rampPosition1 $dim;
+	editorTemplate -dimControl $nodeName rampPosition2 $dim;
+
+	ShowMixLevelsChanged($nodeName);
+}
+
+global proc ShowMixLevelsChanged(string $nodeName)
+{	
+	string $nodeAttr1 = $nodeName + ".showAdvanced";
+	string $nodeAttr2 = $nodeName + ".showMixLevels";
+
+	$dim = !`getAttr $nodeAttr1` || !`getAttr $nodeAttr2`;
+
+	editorTemplate -dimControl $nodeName rampRange1 $dim;
+	editorTemplate -dimControl $nodeName rampRange2 $dim;
+}

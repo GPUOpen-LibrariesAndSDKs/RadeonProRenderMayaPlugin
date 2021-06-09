@@ -48,6 +48,8 @@ limitations under the License.
 
 #include "Context/ContextCreator.h"
 
+#include "Context/ContextCreator.h"
+
 #include <imageio.h>
 
 using namespace std;
@@ -393,7 +395,6 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		context.buildScene();
 		context.updateLimitsFromGlobalData(globals, false, true);
 		context.setResolution(settings.width, settings.height, true);
-		context.TryCreateDenoiserImageFilters();
 
 		// Initialize the command port so the
 		// batch process can communicate with Maya.
@@ -499,6 +500,15 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 				// Resolve the frame buffer and read pixels into AOVs.
 				aovs.readFrameBuffers(context);
 
+				// Run denoiser
+				if (context.IsDenoiserEnabled())
+				{
+					FireRenderAOV* pColorAOV = aovs.getAOV(RPR_AOV_COLOR);
+					assert(pColorAOV != nullptr);
+
+					context.ProcessDenoise(aovs.getRenderViewAOV(), *pColorAOV, context.m_width, context.m_height, region, [this](RV_PIXEL* data) {});
+				}
+
 				// Save the frame to file.
 				aovs.writeToFile(filePath, settings.imageFormat);
 
@@ -508,7 +518,6 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		}
 
 		MGlobal::displayInfo(MString(devicesStr.c_str()));
-		MGlobal::displayInfo(MString(versionStr.c_str()));
 
 		// Perform clean up operations.
 		context.cleanScene();
@@ -757,6 +766,7 @@ void FireRenderCmd::initializeCommandPort(int port)
 
 	MString commandPortFunction =
 		"import socket\n"
+		"import sys\n"
 		"HOST = '127.0.0.1'\n"
 		"PORT = " + portString + "\n"
 		"ADDR = (HOST, PORT)\n"
@@ -765,7 +775,10 @@ void FireRenderCmd::initializeCommandPort(int port)
 		"\t\treturn\n"
 		"\tclient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)\n"
 		"\tclient.connect(ADDR)\n"
-		"\tclient.send(message)\n"
+		"\tif sys.version_info[0] < 3:\n"
+		"\t\tclient.send(message)\n"
+		"\telse:\n"
+		"\t\tclient.send(str.encode(message))\n"
 		"\tclient.close()\n";
 
 	MGlobal::executePythonCommand(commandPortFunction);

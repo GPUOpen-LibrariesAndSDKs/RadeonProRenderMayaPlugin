@@ -19,27 +19,27 @@ The following environment variables are assumed defined, you will probably need 
 If you are not building the installer you do not need all versions.
 
 ```
-	MAYA_SDK_2018
-	MAYA_x64_2018
 	MAYA_SDK_2019
 	MAYA_x64_2019
 	MAYA_SDK_2020
 	MAYA_x64_2020
+	MAYA_SDK_2022
+	MAYA_x64_2022
 
-eg. (assume Maya 2018 SDK is installed to C:\Program Files\Autodesk\Maya2018\devkitBase folder and so on):
-	set MAYA_SDK_2018=C:\Program Files\Autodesk\Maya2018
-	set MAYA_x64_2018=C:\Program Files\Autodesk\Maya2018
+eg. (assume Maya 2019 SDK is installed to C:\Program Files\Autodesk\Maya2019\devkitBase folder and so on):
 	set MAYA_SDK_2019=C:\Program Files\Autodesk\Maya2019
 	set MAYA_x64_2019=C:\Program Files\Autodesk\Maya2019
 	set MAYA_SDK_2020=C:\Program Files\Autodesk\Maya2020
 	set MAYA_x64_2020=C:\Program Files\Autodesk\Maya2020
+	set MAYA_SDK_2022=C:\Program Files\Autodesk\Maya2022
+	set MAYA_x64_2022=C:\Program Files\Autodesk\Maya2022
 ```
 
 You need to restart Developer Studio to .
 
 Submodules
 =====================
-Plugin includes 4 submodules:
+Plugin includes 3 submodules:
 RadeonProRender SDK:
 git@github.com:Radeon-Pro/RadeonProRenderSDK.git
 
@@ -48,9 +48,6 @@ git@github.com:Radeon-Pro/RadeonProImageProcessingSDK.git
 
 Shared Components:
 git@github.com:Radeon-Pro/RadeonProRenderSharedComponents.git
-
-ThirdParty components and miscellaneous tools
-git@github.com:Radeon-Pro/RadeonProRenderThirdPartyComponents.git
 
 All of them are included via SSH protocol. You will need to create and install SSH keys
 to access submodules. OpenSSH can be installed along with Git.
@@ -99,9 +96,9 @@ eg:
 Copy the frMaya.module file to:
 
 ```
-	%COMMONPROGRAMFILES%\Autodesk Shared\Modules\maya\2018
 	%COMMONPROGRAMFILES%\Autodesk Shared\Modules\maya\2019
 	%COMMONPROGRAMFILES%\Autodesk Shared\Modules\maya\2020
+	%COMMONPROGRAMFILES%\Autodesk Shared\Modules\maya\2022
 ```
 	etc
 
@@ -124,50 +121,6 @@ In order to setup a UI with attribute (for example into render settings):
 -write initialization code
 -write attribute data in FireRender.xml (not sure if this is actually needed)
 -Read attribute's value in FireRenderUtils->readFromCurrentScene(bool)
-
-Shelfs
-======
-Copy the shelf_Radeon-ProRender.mel file into "...\Documents\maya\2018\prefs\shelves"
-
-Linux
-=====
-
-Setup for RPR Maya: https://docs.google.com/document/d/1OZvYWZ5IZn2o4uUcKNBsGC9KxBMPHYdys_exYM-vieg/edit
-
-Setup for developer environment:
-
-First follow setup for Maya and RPR plugin above.
-
-Install following packages (sudo yum install):
-
-```
-cmake
-devtoolset-6
-ncurses-devl
-libX11, libX11-devel, qt-x11, libXt, libXt-devel
-mesa-libGL-devel
-mesa-libGLU-devel
-OpenImageIO-devel
-glew-devel
-pciutils-devel
-libdrm-devel
-makeself
-
-```
-
-Please install Maya 2018, 2019.
-After that download the developer kits and setup them up according to Autodesk instructions.
-
-After installing these, open the shell and go to:
-
-```
-cd FireRender.Maya.Linux
-./cmake_clean.sh
-(check there are no errors in the output)
-And after that use:
-./make_dist_debug.sh or ./make_dist.sh or ./make_installer.sh
-
-```
 
 Versioning
 ==========

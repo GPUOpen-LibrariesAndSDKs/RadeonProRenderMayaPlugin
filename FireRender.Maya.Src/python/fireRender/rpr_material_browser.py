@@ -73,29 +73,34 @@ class RPRMaterialBrowser(object) :
         # Read the path from the registry if running in Windows.
         if platform == "win32":
 
-            import _winreg
+            import sys
+
+            if sys.version_info[0] < 3:
+                import _winreg as winreg
+            else:
+                import winreg
 
             # Open the key.
             try:
-                key = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\AMD\\RadeonProRender\\MaterialLibrary\\Maya")
+                key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, "SOFTWARE\\AMD\\RadeonProRender\\MaterialLibrary\\Maya")
 
                 # Read the value.
-                result = _winreg.QueryValueEx(key, "MaterialLibraryPath")
+                result = winreg.QueryValueEx(key, "MaterialLibraryPath")
 
                 # Close the key.
-                _winreg.CloseKey(key)
+                winreg.CloseKey(key)
 
                 # Return value from the resulting tuple.
                 return result[0]
 
             except Exception:
                 try:
-                    key = _winreg.OpenKey(_winreg.HKEY_CURRENT_USER, "SOFTWARE\\AMD\\RadeonProRender\\Maya")
+                    key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "SOFTWARE\\AMD\\RadeonProRender\\Maya")
 
                     # Read the value.
-                    result = _winreg.QueryValueEx(key, "MaterialLibraryPath")
+                    result = winreg.QueryValueEx(key, "MaterialLibraryPath")
                     # Close the key.
-                    _winreg.CloseKey(key)
+                    winreg.CloseKey(key)
                     # Return value from the resulting tuple.		
                     return result[0]
 
@@ -449,27 +454,37 @@ class RPRMaterialBrowser(object) :
         # Clear the search field.
         cmds.textField(self.searchField, edit=True, text="")
 
-
-    # Select a material and update the info an preview panels.
-    # -----------------------------------------------------------------------------
-    def selectMaterial(self, material) :
+    def updateSelectedMaterialPanel(self, fileName, categoryName, materialName) :
 
         print("ML Log: selectMaterial")
 	
-        fileName = material["fileName"]
         imageFileName = self.libraryPath + "/" + fileName + "/" + fileName + ".jpg"
 		
         print("ML Log: fileName = " + fileName)
         print("ML Log: imageFileName = " + imageFileName)		
 
         cmds.iconTextStaticLabel("RPRPreviewImage", edit=True, image=imageFileName)
-        cmds.text("RPRCategoryText", edit=True, label=material["category"]["name"])
-        cmds.text("RPRNameText", edit=True, label=material["name"])
-        cmds.text("RPRFileNameText", edit=True, label=material["fileName"] + ".xml")
+        cmds.text("RPRCategoryText", edit=True, label=categoryName)
+        cmds.text("RPRNameText", edit=True, label=materialName)
+        cmds.text("RPRFileNameText", edit=True, label=fileName + ".xml")
+
+    # Second function is introduced in order to avoid big lags on Maya 2022 on Windows which may occur on iconTextButton call with passing click callback with material parameter
+    # -----------------------------------------------------------------------------
+    def selectMaterial2(self, fileName, categoryName, materialName, materialIndex) :
+
+        self.updateSelectedMaterialPanel(fileName, categoryName, materialName)
+
+        self.selectedMaterial = self.materials[materialIndex]
+        self.updatePreviewLayout()
+
+    # Select a material and update the info an preview panels.
+    # -----------------------------------------------------------------------------
+    def selectMaterial(self, material) :
+
+        self.updateSelectedMaterialPanel(material["fileName"], material["category"]["name"], material["name"])
 
         self.selectedMaterial = material
         self.updatePreviewLayout()
-
 
     # Update the height of the materials flow layout
     # based on the width of its container and the
@@ -618,7 +633,6 @@ class RPRMaterialBrowser(object) :
     # Populate the materials view with a list of materials.
     # -----------------------------------------------------------------------------
     def populateMaterials(self) :
-
         print("ML Log: populateMaterials")	
         # Remove any existing materials.
         if (cmds.layout("RPRMaterialsFlow", exists=True)) :
@@ -630,9 +644,11 @@ class RPRMaterialBrowser(object) :
         # Create the new flow layout.
         cmds.flowLayout("RPRMaterialsFlow", columnSpacing=0, wrap=True)
 
+        materialIndex = 0
         # Add materials for the selected category.
         for material in self.materials :
             fileName = material["fileName"]
+            cmd = partial(self.selectMaterial2, fileName, material["category"]["name"], material["name"], materialIndex)
             imageFileName = self.libraryPath + "/" + fileName + "/" + fileName + ".jpg"
 
             materialName = material["name"]
@@ -644,7 +660,7 @@ class RPRMaterialBrowser(object) :
                                columnWidth2=(self.iconSize, self.cellWidth - iconWidth - 5))
 
                 cmds.iconTextButton(style='iconOnly', image=imageFileName, width=self.iconSize,
-                                    height=self.iconSize, command=partial(self.selectMaterial, material),
+                                    height=self.iconSize, command=cmd,
                                     doubleClickCommand=partial(self.importMaterial, material))
 
                 cmds.iconTextButton(style='textOnly', height=self.iconSize,
@@ -656,13 +672,12 @@ class RPRMaterialBrowser(object) :
             else :
                 cmds.columnLayout(width=self.cellWidth, height=self.cellHeight)
                 cmds.iconTextButton(style='iconOnly', image=imageFileName, width=self.iconSize,
-                                    height=self.iconSize, command=partial(self.selectMaterial, material),
-                                    doubleClickCommand=partial(self.importMaterial, material))
-
+                                    height=self.iconSize, command=cmd, doubleClickCommand=partial(self.importMaterial, material))
                 cmds.text(label=self.getTruncatedText(materialName, self.iconSize),
                           align="center", width=self.iconSize)
 
             cmds.setParent('..')
+            materialIndex = materialIndex + 1
 
         # Perform an initial layout update.
         self.updateMaterialsLayout()

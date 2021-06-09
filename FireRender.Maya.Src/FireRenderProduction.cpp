@@ -12,7 +12,6 @@ limitations under the License.
 ********************************************************************/
 #include "FireRenderProduction.h"
 #include "Context/TahoeContext.h"
-#include <tbb/atomic.h>
 #include <maya/MRenderView.h>
 #include <maya/MViewport2Renderer.h>
 #include <maya/MGlobal.h>
@@ -50,6 +49,7 @@ limitations under the License.
 
 #if defined(__APPLE__)
 #include "athenaSystemInfo_Mac.h"
+#include <sys/sysctl.h>
 #endif  // defined(__APPLE__)
 
 using namespace std;
@@ -566,6 +566,13 @@ int getNumCPUCores()
 
 void FireRenderProduction::UploadAthenaData()
 {
+	// We drop support for all Mayas older then 2022 since they have old Python 2.7
+#if MAYA_API_VERSION < 20220000
+	return;
+#endif
+
+	AthenaWrapper::GetAthenaWrapper()->StartNewFile();
+
 	// operating system
 #if defined(_WIN32)
 	std::string osName;
@@ -813,6 +820,8 @@ void FireRenderProduction::UploadAthenaData()
 		{RenderQuality::RenderQualityLow, "Low"},
 	};
 	WriteAthenaField("Quality", renderQualityName[quality]);
+
+	AthenaWrapper::GetAthenaWrapper()->AthenaSendFile(pythonCallWrap);
 }
 
 std::tuple<size_t, long long> FireRenderProduction::GeSceneTexturesCountAndSize() const
@@ -875,11 +884,8 @@ bool FireRenderProduction::RunOnViewportThread()
 			{
 				m_contextPtr->m_lastRenderResultState = (m_cancelled) ? FireRenderContext::CANCELED : FireRenderContext::COMPLETED;
 
-				AthenaWrapper::GetAthenaWrapper()->StartNewFile();
 				UploadAthenaData();
 				
-				AthenaWrapper::GetAthenaWrapper()->AthenaSendFile(pythonCallWrap);
-
 				m_contextPtr->m_polycountLastRender = 0;
 
 				DenoiseFromAOVs();
@@ -901,10 +907,7 @@ bool FireRenderProduction::RunOnViewportThread()
 			{
 				m_contextPtr->m_lastRenderResultState = FireRenderContext::CRASHED;
 
-				AthenaWrapper::GetAthenaWrapper()->StartNewFile();
 				UploadAthenaData();
-
-				AthenaWrapper::GetAthenaWrapper()->AthenaSendFile(pythonCallWrap);
 
 				throw;
 			}
@@ -924,40 +927,16 @@ void FireRenderProduction::DenoiseFromAOVs()
 	if (!m_contextPtr->IsDenoiserEnabled())
 		return;
 
-	// run denoiser
-	std::vector<float> vecData = m_contextPtr->DenoiseIntoRAM();
+	FireRenderAOV* pColorAOV = m_aovs->getAOV(RPR_AOV_COLOR);
+	assert(pColorAOV != nullptr);
 
-	// output denoiser result
-	RV_PIXEL* data = nullptr;
-	auto it = m_contextPtr->PixelBuffers().find(RPR_AOV_COLOR);
-	bool hasAov = it != m_contextPtr->PixelBuffers().end();
-	if (hasAov)
+	m_contextPtr->ProcessDenoise(*m_renderViewAOV, *pColorAOV, m_region.getWidth(), m_region.getHeight(), RenderRegion(0, m_region.right - m_region.left, m_region.top - m_region.bottom, 0), [this](RV_PIXEL* data)
 	{
-		data = (RV_PIXEL*)it->second.data();
-	}
-	else
-	{
-		data = (RV_PIXEL*)vecData.data();
-	}
-
-	m_renderViewAOV->pixels.overwrite(data, m_region, m_height, m_width, RPR_AOV_COLOR);
-
-	// apply render stamp
-	FireMaya::RenderStamp renderStamp;
-	MString stampStr;
-	m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov) 
-	{
-		if (aov.id != RPR_AOV_COLOR)
-			return;
-
-		stampStr = aov.renderStamp;
-	});
-	renderStamp.AddRenderStamp(*m_contextPtr, data, m_width, m_height, stampStr.asChar());
-
-	// Update the Maya render view.
-	FireRenderThread::RunProcOnMainThread([this, data]()
-	{
-		RenderViewUpdater::UpdateAndRefreshRegion(data, 0, 0, m_width - 1, m_height - 1);
+		// Update the Maya render view.
+		FireRenderThread::RunProcOnMainThread([this, data]()
+		{
+			RenderViewUpdater::UpdateAndRefreshRegion(data, m_width, m_height, m_region);
+		});
 	});
 }
 
@@ -1000,9 +979,8 @@ void FireRenderProduction::RenderTiles()
 
 		m_contextPtr->render(false);
 
-		// Read pixel data for the AOV displayed in the render
-		// view. 
-		// - readFrameBuffer function also can do denoiser setup
+
+		// copy data to buffer
 		m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov)
 		{
 			aov.readFrameBuffer(*m_contextPtr);
@@ -1015,22 +993,11 @@ void FireRenderProduction::RenderTiles()
 			it->second.overwrite(aov.pixels.get(), region, info.totalHeight, info.totalWidth, aov.id);
 		});
 
-		// copy data to buffer
-/*		m_aovs->ForEachActiveAOV([&](FireRenderAOV& aov)
-		{
-			auto it = out.find(aov.id);
-
-			if (it == out.end())
-				return;
-
-			it->second.overwrite(aov.pixels.get(), region, info.totalHeight, info.totalWidth, aov.id);
-		});*/
-
 		// send data to Maya render view
 		FireRenderThread::RunProcOnMainThread([this, region]()
 		{
 			// Update the Maya render view.
-			RenderViewUpdater::UpdateAndRefreshRegion(m_renderViewAOV->pixels.get(), region.left, region.bottom, region.right, region.top);
+			RenderViewUpdater::UpdateAndRefreshRegion(m_renderViewAOV->pixels.get(), region.getWidth(), region.getHeight(), region);
 
 			if (rcWarningDialog.shown)
 				rcWarningDialog.close();
@@ -1078,17 +1045,24 @@ void FireRenderProduction::RenderTiles()
 		data = it->second.get();
 	}
 
+	// run merge opacity
+	m_contextPtr->ProcessMergeOpactityFromRAM(data, info.totalWidth, info.totalHeight);
+
+	// apply render stamp
+	FireMaya::RenderStamp renderStamp;
+	MString stampStr(m_renderViewAOV->renderStamp);
+	renderStamp.AddRenderStamp(*m_contextPtr, data, m_width, m_height, stampStr.asChar());
+
+	// update the Maya render view
 	FireRenderThread::RunProcOnMainThread([this, data]()
 	{
 		// Update the Maya render view.
-		RenderViewUpdater::UpdateAndRefreshRegion(data, 0, 0, m_width - 1, m_height - 1);
+		RenderViewUpdater::UpdateAndRefreshRegion(data, m_width, m_height, RenderRegion(0, m_width - 1, m_height - 1, 0));
 	});
 
 	outBuffers.clear();
 
-	AthenaWrapper::GetAthenaWrapper()->StartNewFile();
 	UploadAthenaData();
-	AthenaWrapper::GetAthenaWrapper()->AthenaSendFile(pythonCallWrap);
 }
 
 void FireRenderProduction::RenderFullFrame()
