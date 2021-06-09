@@ -10,7 +10,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-source "createMayaSoftwareCommonGlobalsTab.mel";
 source "createFireRenderCommonGlobalsTab.mel";
 // This include needed to provide Maya access to all tab creation function
 // If we skip this only "Radeon ProRender" tab will work, since it's creation function has same name as the name of mel file with that function
@@ -32,12 +31,12 @@ proc overrideUnifiedRenderGlobalsWindow()
 {
 	int $mayaVersion=`about -apiVersion`;
 
-	if ($mayaVersion >= 202000)
+	if ($mayaVersion >= 202200)
+		eval("source \"rprUnifiedRenderGlobalsWindow202200.mel\"");
+	else if ($mayaVersion >= 202000)
 		eval("source \"rprUnifiedRenderGlobalsWindow202000.mel\"");
 	else if ($mayaVersion >= 201900)
 		eval("source \"rprUnifiedRenderGlobalsWindow201900.mel\"");
-	else if ($mayaVersion >= 201800)
-		eval("source \"rprUnifiedRenderGlobalsWindow201800.mel\"");
 }
 
 global proc registerFireRender(int $mlDenoiserSupportedCPU)

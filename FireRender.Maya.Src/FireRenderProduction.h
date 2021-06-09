@@ -186,7 +186,7 @@ private:
 	bool m_needsContextRefresh;
 
 	/** True if a render view update is scheduled. */
-	tbb::atomic<bool> m_renderViewUpdateScheduled;
+	std::atomic<bool> m_renderViewUpdateScheduled;
 
 	/** A lock to control access to the system memory frame buffer pixels. */
 	std::mutex m_pixelsLock;

@@ -49,11 +49,7 @@ limitations under the License.
 #include <ostream>
 #include <sstream>
 
-#if defined(MAYA2019) || defined(MAYA2020)
-	#include <Xgen/src/xgsculptcore/api/XgSplineAPI.h>
-#else
-	#include <XGen/XgSplineAPI.h>
-#endif
+#include <Xgen/src/xgsculptcore/api/XgSplineAPI.h>
 
 #include <maya/MUuid.h>
 #include "Lights/PhysicalLight/PhysicalLightAttributes.h"

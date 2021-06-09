@@ -51,9 +51,9 @@ limitations under the License.
 		<CustomAction Id='PostInstall' BinaryKey='InstallerDll' DllEntry='postInstall' Return="ignore" />
 		<CustomAction Id='BotoInstall' BinaryKey='InstallerDll' DllEntry='botoInstall' Execute="deferred" Impersonate="no" Return="ignore" />
 
-		<CustomAction Id='maya2018WasInstalled' Property='MAYA2018_INSTALLED'  Value='true'/>
 		<CustomAction Id='maya2019WasInstalled' Property='MAYA2019_INSTALLED'  Value='true'/>
 		<CustomAction Id='maya2020WasInstalled' Property='MAYA2020_INSTALLED'  Value='true'/>
+		<CustomAction Id='maya2022WasInstalled' Property='MAYA2022_INSTALLED'  Value='true'/>
 
                 <CustomAction Id='SetInstallCustomMode' Property="WixUI_InstallMode" Value="InstallCustom"/>
 
@@ -136,12 +136,6 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 -->
 				<Directory Id="DOCUMENTS_MAYA" Name="maya">
-					<Directory Id="DOCUMENTS_MAYA_2018" Name="2018">
-						<Directory Id="DOCUMENTS_MAYA_2018_PREFS" Name="prefs">
-							<Directory Id="DOCUMENTS_MAYA_2018_PREFS_SHELVES" Name="shelves">
-							</Directory>
-						</Directory>
-					</Directory>
 					<Directory Id="DOCUMENTS_MAYA_2019" Name="2019">
 						<Directory Id="DOCUMENTS_MAYA_2019_PREFS" Name="prefs">
 							<Directory Id="DOCUMENTS_MAYA_2019_PREFS_SHELVES" Name="shelves">
@@ -151,6 +145,12 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 					<Directory Id="DOCUMENTS_MAYA_2020" Name="2020">
 						<Directory Id="DOCUMENTS_MAYA_2020_PREFS" Name="prefs">
 							<Directory Id="DOCUMENTS_MAYA_2020_PREFS_SHELVES" Name="shelves">
+							</Directory>
+						</Directory>
+					</Directory>
+					<Directory Id="DOCUMENTS_MAYA_2022" Name="2022">
+						<Directory Id="DOCUMENTS_MAYA_2022_PREFS" Name="prefs">
+							<Directory Id="DOCUMENTS_MAYA_2022_PREFS_SHELVES" Name="shelves">
 							</Directory>
 						</Directory>
 					</Directory>
@@ -190,15 +190,6 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 			</Component>
 		</DirectoryRef>
 
-		<DirectoryRef Id="DOCUMENTS_MAYA_2018_PREFS_SHELVES">
-			<Component Id="shelf_Radeon_ProRender_2018.mel" Guid="27700FAD-0E12-460D-93B7-E5D65723ED39" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes">
-				<RegistryKey Root="HKCU" Key="Software\AMD\RadeonProRender\Maya">
-					<RegistryValue Name="shelf_Radeon_ProRender_2018" Value="1" Type="integer" KeyPath="yes" />
-				</RegistryKey>
-				<File Id="file_shelf_Radeon_ProRender_2018.mel" DiskId="1" Hidden="no" ReadOnly="no" TrueType="no" System="no" Vital="yes" Name="shelf_Radeon_ProRender.mel" Source="..\..\..\RadeonProRenderMayaPlugin\FireRender.Maya.Src\Shelfs\shelf_Radeon_ProRender.mel" />
-			</Component>
-		</DirectoryRef>
-
 		<DirectoryRef Id="DOCUMENTS_MAYA_2019_PREFS_SHELVES">
 			<Component Id="shelf_Radeon_ProRender_2019.mel" Guid="D66B15A9-A9AA-47D7-9DED-96E7F152AE11" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes">
 				<RegistryKey Root="HKCU" Key="Software\AMD\RadeonProRender\Maya">
@@ -216,6 +207,16 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 			<File Id="file_shelf_Radeon_ProRender_2020.mel" DiskId="1" Hidden="no" ReadOnly="no" TrueType="no" System="no" Vital="yes" Name="shelf_Radeon_ProRender.mel" Source="..\..\..\RadeonProRenderMayaPlugin\FireRender.Maya.Src\Shelfs\shelf_Radeon_ProRender.mel" />
 			</Component>
 		</DirectoryRef>
+
+		<DirectoryRef Id="DOCUMENTS_MAYA_2022_PREFS_SHELVES">
+			<Component Id="shelf_Radeon_ProRender_2022.mel" Guid="ED7E8F90-2B03-4FCE-A4F6-B3EC2AE151DD" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes">
+				<RegistryKey Root="HKCU" Key="Software\AMD\RadeonProRender\Maya">
+					<RegistryValue Name="shelf_Radeon_ProRender_2022" Value="1" Type="integer" KeyPath="yes" />
+				</RegistryKey>
+				<File Id="file_shelf_Radeon_ProRender_2022.mel" DiskId="1" Hidden="no" ReadOnly="no" TrueType="no" System="no" Vital="yes" Name="shelf_Radeon_ProRender.mel" Source="..\..\..\RadeonProRenderMayaPlugin\FireRender.Maya.Src\Shelfs\shelf_Radeon_ProRender.mel" />
+			</Component>
+		</DirectoryRef>
+
 
 <!--		
 EXCLUDE MATERIAL LIBRARY FROM INSTALLER
@@ -236,18 +237,6 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 				<ComponentRef Id="RprCore"/>
 				<ComponentRef Id="notices.txt"/>				
 			</Feature>
-
-			<Feature Id="Product2018" Title="Support Maya 2018" Description="$(var.ProductLongName) 2018" Level="1">
-				<ComponentGroupRef Id="CG_ARTEFACTS"/>
-				<ComponentGroupRef Id="CG_2018"/>
-				<ComponentGroupRef Id="CG_MODULES"/>
-<!--				
-				<MergeRef Id="Microsoft_VC140_CRT_x64"/>
-				<MergeRef Id="Microsoft_VC140_OpenMP_x64"/>
--->
-				<ComponentRef Id="shelf_Radeon_ProRender_2018.mel" />
-
-			</Feature>	
 
 			<Feature Id="Product2019" Title="Support Maya 2019" Description="$(var.ProductLongName) 2019" Level="1">
 				<ComponentGroupRef Id="CG_ARTEFACTS"/>
@@ -272,6 +261,14 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 				<ComponentRef Id="shelf_Radeon_ProRender_2020.mel" />
 
 			</Feature>
+
+			<Feature Id="Product2022" Title="Support Maya 2022" Description="$(var.ProductLongName) 2022" Level="1">
+				<ComponentGroupRef Id="CG_ARTEFACTS"/>
+				<ComponentGroupRef Id="CG_2022"/>
+				<ComponentGroupRef Id="CG_MODULES"/>
+				<ComponentRef Id="shelf_Radeon_ProRender_2022.mel" />
+			</Feature>	
+
 
 <!--
 EXCLUDE MATERIAL LIBRARY FROM INSTALLER			

@@ -19,9 +19,9 @@ limitations under the License.
 
         <Control Id="RegisterButton" Type="PushButton" X="45" Y="70" Width="100" Height="17" Text="&amp;Register...">
           <!-- change it for two places -->
-          <Publish Event="DoAction" Value="maya2018WasInstalled"><![CDATA[(&Product2018=3)]]></Publish>
           <Publish Event="DoAction" Value="maya2019WasInstalled"><![CDATA[(&Product2019=3)]]></Publish>
           <Publish Event="DoAction" Value="maya2020WasInstalled"><![CDATA[(&Product2020=3)]]></Publish>
+          <Publish Event="DoAction" Value="maya2022WasInstalled"><![CDATA[(&Product2022=3)]]></Publish>
 
           <Publish Event="DoAction" Value="UserRegister">1</Publish>
         </Control>
@@ -31,9 +31,9 @@ limitations under the License.
 
         <Control Id="Next" Type="PushButton" X="236" Y="243" Width="56" Height="17" Default="yes" Text="&amp;Next">
           <!-- change it for two places -->
-          <Publish Event="DoAction" Value="maya2018WasInstalled"><![CDATA[(&Product2018=3)]]></Publish>
           <Publish Event="DoAction" Value="maya2019WasInstalled"><![CDATA[(&Product2019=3)]]></Publish>
           <Publish Event="DoAction" Value="maya2020WasInstalled"><![CDATA[(&Product2020=3)]]></Publish>
+          <Publish Event="DoAction" Value="maya2022WasInstalled"><![CDATA[(&Product2022=3)]]></Publish>
 
           <Publish Event="DoAction" Value="CheckActivationKey">1</Publish>
           <Publish Event="SpawnDialog" Value="InvalidActivationKey">ACTIVATION_KEY_ACCEPTED = "0"</Publish>

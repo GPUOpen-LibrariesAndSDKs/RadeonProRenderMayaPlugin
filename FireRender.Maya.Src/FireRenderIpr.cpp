@@ -22,7 +22,6 @@ limitations under the License.
 
 #include "Context/ContextCreator.h"
 
-#include <tbb/atomic.h>
 #include <maya/MRenderView.h>
 #include <maya/MViewport2Renderer.h>
 #include <maya/MGlobal.h>
