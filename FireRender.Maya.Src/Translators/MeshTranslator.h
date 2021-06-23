@@ -93,13 +93,13 @@ namespace FireMaya
 			std::vector<int> uvIndices[2];
 
 			// Indices of colored vertices
-			std::vector<int> colorVertexIndices;
+			std::map<int, int> colorVertexIndices;
 
 			// Colors corresponding to vertices
-			std::vector<MColor> vertexColors;
+			std::map<int, MColor> vertexColors;
 		};
 
-		static std::vector<frw::Shape> TranslateMesh(const frw::Context& context, const MObject& originalObject, unsigned int deformationFrameCount = 0, MString fullDagPath="");
+		static std::vector<frw::Shape> TranslateMesh(const frw::Context& context, const MObject& originalObject, std::vector<int>& outFaceMaterialIndices, unsigned int deformationFrameCount = 0, MString fullDagPath="");
 
 	private:
 

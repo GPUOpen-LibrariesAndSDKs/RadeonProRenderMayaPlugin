@@ -127,6 +127,7 @@ public:
 
 	// Return the render context
 	FireRenderContext* context() { return m.context; }
+	const FireRenderContext* context() const { return m.context; }
 
 	frw::Scene		Scene();
 	frw::Context	Context();
@@ -297,6 +298,9 @@ protected:
 	// Attach to the scene
 	virtual void attachToScene() override;
 
+	// materials
+	const std::vector<int>& GetFaceMaterialIndices(void) const;
+
 	// utility functions
 	void AssignShadingEngines(const MObjectArray& shadingEngines);
 	void ProcessMotionBlur(const MFnDagNode& meshFn);
@@ -308,7 +312,8 @@ protected:
 
 	struct
 	{
-		std::vector<FrElement> elements;
+		std::vector<FrElement> elements; // should be always only 1, but keeping array for now for backward compatibility
+		std::vector<int> faceMaterialIndices;
 		bool isEmissive = false;
 		bool isMainInstance = false;
 		struct
@@ -323,7 +328,6 @@ protected:
 	// this is the limitation of Maya's relationship editor
 	// thus, it is correct to match filename with UV map index
 	std::unordered_map<std::string /*texture file name*/, unsigned int /*UV map index*/ > m_uvSetCachedMappingData;
-
 };
 
 // Fire render mesh
@@ -366,7 +370,7 @@ public:
 
 	virtual bool IsEmissive() override { return m.isEmissive; }
 
-	void setupDisplacement(MObject shadingEngine, frw::Shape shape);
+	bool setupDisplacement(std::vector<MObject>& shadingEngines, frw::Shape shape);
 	void Rebuild(void);
 	void ReloadMesh(const MDagPath& meshPath);
 	void ProcessMesh(const MDagPath& meshPath);

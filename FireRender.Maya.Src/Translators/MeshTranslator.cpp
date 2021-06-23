@@ -173,7 +173,11 @@ bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(MFnMesh& fnMesh, unsi
 	return true;
 }
 
-std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Context& context, const MObject& originalObject, unsigned int deformationFrameCount, MString fullDagPath)
+std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(
+	const frw::Context& context, 
+	const MObject& originalObject, 
+	std::vector<int>& outFaceMaterialIndices,
+	unsigned int deformationFrameCount, MString fullDagPath)
 {
 	MAIN_THREAD_ONLY;
 
@@ -230,11 +234,9 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 		return resultShapes;
 	}
 
-	// get number of submeshes in mesh (number of materials used in this mesh)
+	// get number of materials used in this mesh
 	MIntArray faceMaterialIndices;
-	int elementCount = GetFaceMaterials(fnMesh, faceMaterialIndices);
-	resultShapes.resize(elementCount);
-	assert(faceMaterialIndices.length() == fnMesh.numPolygons());
+	int materialCount = GetFaceMaterials(fnMesh, faceMaterialIndices);
 
 	// get common data from mesh
 	MeshPolygonData meshPolygonData;
@@ -249,10 +251,17 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 		return resultShapes;
 	}
 
-	// use special case TranslateMesh that is optimized for 1 shader
-	if (elementCount == 1)
+	outFaceMaterialIndices.clear();
+
+	TahoePluginVersion version = GetTahoeVersionToUse();
+	bool isRPR20 = version == TahoePluginVersion::RPR2;
+
+	if (isRPR20)
 	{
-		SingleShaderMeshTranslator::TranslateMesh(context, fnMesh, resultShapes, meshPolygonData);
+		resultShapes.resize(1);
+		SingleShaderMeshTranslator::TranslateMesh(
+			context, fnMesh, resultShapes, meshPolygonData, faceMaterialIndices, outFaceMaterialIndices
+		);
 #ifdef OPTIMIZATION_CLOCK
 		std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
 		std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
@@ -260,6 +269,7 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 	}
 	else
 	{
+		resultShapes.resize(materialCount);
 		MultipleShaderMeshTranslator::TranslateMesh(context, fnMesh, resultShapes, meshPolygonData, faceMaterialIndices);
 	}
 

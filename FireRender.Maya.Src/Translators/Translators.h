@@ -36,9 +36,9 @@ struct PhysicalLightData;
 struct FrElement
 {
 	frw::Shape	shape;
-	frw::Shader shader;
+	std::vector<frw::Shader> shaders;
 	frw::Shader volumeShader;
-	MObject		shadingEngine;
+	std::vector<MObject> shadingEngines;
 
 	std::array<float, 16> TM; // extra transformation matrix
 };
