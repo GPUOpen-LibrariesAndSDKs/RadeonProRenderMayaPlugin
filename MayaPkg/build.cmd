@@ -23,37 +23,24 @@ if %vs_ver%=="" goto :vs_error
 :: check VS version
 set vs_major=%vs_ver:~0,2%
 
-if %vs_major%==14 (
-	echo Visual Studio 2015 is installed.
-	
-	pushd "%VS140COMNTOOLS%..\..\VC"
-	call vcvarsall.bat amd64
-	popd
+if %vs_major%==16 (
+ 	echo Visual Studio 2019 is installed.
+ 	echo "%vs_dir%"
 
-	goto :build_installer
-)
+ 	echo Trying to setup toolset 142 of Visual Studio 2019.
 
-set vs17=""
+ 	set vs19="%vs_dir%\VC\Auxiliary\Build\vcvarsall.bat"
 
-if %vs_major%==15 (
-	echo Visual Studio 2017 is installed.
-	echo "%vs_dir%"
+ 	pushd .	
+ 	call !vs19! amd64 -vcvars_ver=14.2
+ 	popd
 
-	echo Trying to setup toolset 14 [Visual Studio 2015] of Visual Studio 2017.
-
-	set vs17="%vs_dir%\VC\Auxiliary\Build\vcvarsall.bat"
-
-	pushd .	
-	call !vs17! amd64 -vcvars_ver=14.0
-	popd
-
-	goto :build_installer
+ 	goto :build_installer
 )
 
 :vs_error
-	echo Visual Studio 2015 or newer has to be installed.
-	echo Newer version of Visual Studio will be used if it's present (v140 toolset has to be installed).
-	goto :eof
+ 	echo Visual Studio 2019 with platform toolset 142 has to be installed.
+ 	goto :eof
 
 :build_installer
 
