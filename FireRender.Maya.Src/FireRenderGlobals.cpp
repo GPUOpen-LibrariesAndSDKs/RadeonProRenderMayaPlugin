@@ -26,7 +26,7 @@ limitations under the License.
 #include <thread>
 #include <string>
 #include <thread>
-#include <experimental/filesystem>
+#include <filesystem>
 #include "StartupContextChecker.h"
 
 #define DEFAULT_RENDER_STAMP "Radeon ProRender for Maya %b | %h | Time: %pt | Passes: %pp | Objects: %so | Lights: %sl"
@@ -262,7 +262,7 @@ void FireRenderGlobals::postConstructor()
 	status = MGlobal::executeCommand(MString("workspace -q -dir;"),	workspace);
 	workspace += "/cache";
 
-	namespace fs = std::experimental::filesystem;
+	namespace fs = std::filesystem;
 	if (!fs::is_directory(workspace.asChar()) || !fs::exists(workspace.asChar()))
 	{ // Check if src folder exists
 		fs::create_directory(workspace.asChar());
