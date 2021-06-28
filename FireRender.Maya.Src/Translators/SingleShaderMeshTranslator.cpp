@@ -16,7 +16,9 @@ void FireMaya::SingleShaderMeshTranslator::TranslateMesh(
 	const frw::Context& context,
 	const MFnMesh& fnMesh,
 	std::vector<frw::Shape>& elements,
-	MeshTranslator::MeshPolygonData& meshData)
+	MeshTranslator::MeshPolygonData& meshData,
+	const MIntArray& faceMaterialIndices,
+	std::vector<int>& outFaceMaterialIndices)
 {
 	// output indices of vertexes (3 indices for each triangle, 4 for quads)
 	std::vector<int> faceVertexIndices;
@@ -37,10 +39,14 @@ void FireMaya::SingleShaderMeshTranslator::TranslateMesh(
 		uvIndices[currentChannelUV].reserve(meshData.triangleVertexIndicesCount);
 	}
 
+	MColorArray vtxColors;
+	const_cast<MFnMesh&>(fnMesh).getVertexColors(vtxColors);
+	unsigned int countVtxColors = vtxColors.length();
+
 	std::vector<MColor> vertexColors;
-	vertexColors.resize(meshData.countVertices);
+	vertexColors.resize(countVtxColors);
 	std::vector<int> colorVertexIndices;
-	colorVertexIndices.resize(meshData.countVertices);
+	colorVertexIndices.resize(countVtxColors);
 
 	std::vector<int> numFaceVertices;
 	numFaceVertices.reserve(faceVertexIndices.size() / 3); // in case all faces are triangles
@@ -56,7 +62,13 @@ void FireMaya::SingleShaderMeshTranslator::TranslateMesh(
 #ifdef OPTIMIZATION_CLOCK
 		std::chrono::steady_clock::time_point start_inner_AddPolygon = std::chrono::steady_clock::now();
 #endif
-		AddPolygonSingleShader(it, meshData.uvSetNames, data);
+		AddPolygonSingleShader(
+			it, 
+			meshData.uvSetNames, 
+			data, 
+			faceMaterialIndices,
+			outFaceMaterialIndices
+		);
 
 #ifdef OPTIMIZATION_CLOCK
 		std::chrono::steady_clock::time_point fin_inner_AddPolygon = std::chrono::steady_clock::now();
@@ -170,7 +182,9 @@ void FireMaya::SingleShaderMeshTranslator::ProcessIndexesSimplified(
 void FireMaya::SingleShaderMeshTranslator::AddPolygonSingleShader(
 	MItMeshPolygon& meshPolygonIterator,
 	const MStringArray& uvSetNames,
-	MeshIndicesData& idxData)
+	MeshIndicesData& idxData,
+	const MIntArray& faceMaterialIndices,
+	std::vector<int>& outFaceMaterialIndices)
 {
 	MStatus mayaStatus;
 
@@ -188,6 +202,9 @@ void FireMaya::SingleShaderMeshTranslator::AddPolygonSingleShader(
 	MColorArray polygonColors;
 	meshPolygonIterator.getColors(polygonColors);
 
+	// material ids
+	int shaderId = faceMaterialIndices[meshPolygonIterator.index()];
+
 	if (vertices.length() == 4) // this is quad
 	{
 		idxData.numFaceVertices.push_back(4);
@@ -196,6 +213,8 @@ void FireMaya::SingleShaderMeshTranslator::AddPolygonSingleShader(
 		{
 			ProcessIndexesSimplified(meshPolygonIterator, uvSetNames, idxData, vtxIdx, vertices, polygonColors);
 		}
+
+		outFaceMaterialIndices.push_back(shaderId);
 
 		return;
 	}
@@ -223,6 +242,12 @@ void FireMaya::SingleShaderMeshTranslator::AddPolygonSingleShader(
 		for (unsigned int globalVertexIndex = 0; globalVertexIndex < trianglesVertexList.length(); ++globalVertexIndex)
 		{
 			idxData.triangleVertexIndices.push_back(trianglesVertexList[globalVertexIndex]);
+		}
+
+		// save material data
+		for (unsigned int globalVertexIndex = 0; globalVertexIndex < (trianglesVertexList.length()/3); ++globalVertexIndex)
+		{
+			outFaceMaterialIndices.push_back(shaderId);
 		}
 	
 		// create table to convert global index in vertex indices array to local one [0...number of vertex in polygon]
@@ -258,6 +283,8 @@ void FireMaya::SingleShaderMeshTranslator::AddPolygonSingleShader(
 			{
 				ProcessIndexesSimplified(meshPolygonIterator, uvSetNames, idxData, localIdx, vertices, polygonColors);
 			}
+
+			outFaceMaterialIndices.push_back(shaderId);
 		}
 	}
 

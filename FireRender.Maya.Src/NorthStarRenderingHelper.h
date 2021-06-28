@@ -4,6 +4,7 @@
 #include <thread>
 #include <memory>
 #include <condition_variable>
+#include <functional>
 
 class FireRenderContext;
 

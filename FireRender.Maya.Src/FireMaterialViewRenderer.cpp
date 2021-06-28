@@ -158,7 +158,8 @@ MStatus FireMaterialViewRenderer::translateMesh(const MUuid& id, const MObject& 
 
 		m_renderData.m_shape.Reset();
 
-		const std::vector<frw::Shape> shapes = FireMaya::MeshTranslator::TranslateMesh(m_renderData.m_context.GetContext(), node);
+		std::vector<int> faceMaterialIndices;
+		const std::vector<frw::Shape> shapes = FireMaya::MeshTranslator::TranslateMesh(m_renderData.m_context.GetContext(), node, faceMaterialIndices);
 		if (!shapes.empty())
 		{
 			m_renderData.m_shape = shapes[0];

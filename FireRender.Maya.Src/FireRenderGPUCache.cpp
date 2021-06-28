@@ -208,18 +208,39 @@ void FireRenderGPUCache::ProcessShaders()
 	for (int i = 0; i < m.elements.size(); i++)
 	{
 		auto& element = m.elements[i];
-		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), element.shadingEngine, this);
 
-		if (element.shape)
+		if (!element.shape)
+			continue;
+
+		element.shape.SetShader(nullptr);
+
+		for (unsigned int shaderIdx = 0; shaderIdx < element.shadingEngines.size(); ++shaderIdx)
 		{
-			element.shape.SetShader(element.shader);
+			MObject& shadingEngine = element.shadingEngines[shaderIdx];
+			element.shaders.push_back(context->GetShader(getSurfaceShader(shadingEngine), shadingEngine, this));
 
-			frw::ShaderType shType = element.shader.GetShaderType();
+			std::vector<int>& faceMaterialIndices = m.faceMaterialIndices;
+			std::vector<int> face_ids;
+			face_ids.reserve(faceMaterialIndices.size());
+			for (int faceIdx = 0; faceIdx < faceMaterialIndices.size(); ++faceIdx)
+			{
+				if (faceMaterialIndices[faceIdx] == shaderIdx)
+					face_ids.push_back(faceIdx);
+			}
+
+			element.shape.SetPerFaceShader(element.shaders.back(), face_ids);
+
+			frw::ShaderType shType = element.shaders.back().GetShaderType();
 			if (shType == frw::ShaderTypeEmissive)
 				m.isEmissive = true;
 
-			if ((shType == frw::ShaderTypeRprx) && (IsUberEmissive(element.shader)))
+			if (element.shaders.back().IsShadowCatcher() || element.shaders.back().IsReflectionCatcher())
+				continue;
+
+			if ((shType == frw::ShaderTypeRprx) && (IsUberEmissive(element.shaders.back())))
+			{
 				m.isEmissive = true;
+			}
 		}
 	}
 }
@@ -538,13 +559,17 @@ void FireRenderGPUCache::RegisterCallbacks()
 
 	for (auto& it : m.elements)
 	{
-		if (!it.shadingEngine.isNull())
+		for (auto& shadingEngine : it.shadingEngines)
 		{
-			MObject shaderOb = getSurfaceShader(it.shadingEngine);
-			if (!shaderOb.isNull())
-			{
-				AddCallback(MNodeMessage::addNodeDirtyCallback(shaderOb, ShaderDirtyCallback, this));
-			}
+			if (shadingEngine.isNull())
+				continue;
+
+			MObject shaderOb = getSurfaceShader(shadingEngine);
+
+			if (shaderOb.isNull())
+				continue;
+
+			AddCallback(MNodeMessage::addNodeDirtyCallback(shaderOb, ShaderDirtyCallback, this));
 		}
 	}
 }

@@ -908,7 +908,8 @@ namespace frw
 		{
 			DECLARE_OBJECT_DATA
 		public:
-			Object shader;
+			Object shader; // optimization for shape with only one shader
+			std::vector<Object> shaders;
 			Object volumeShader;
 			Object displacementShader;
 			virtual ~Data();
@@ -924,6 +925,7 @@ namespace frw
 
 		void SetShader(Shader shader);
 		Shader GetShader() const;
+		void SetPerFaceShader(Shader shader, std::vector<int>& face_ids);
 
 		void SetVolumeShader( const Shader& shader );
 		Shader GetVolumeShader() const;
@@ -3456,6 +3458,35 @@ namespace frw
 			}
 		}
 
+		void AttachToShape(Shape::Data& shape, std::vector<int>& face_ids)
+		{
+			Data& d = data();
+			d.numAttachedShapes++;
+			rpr_int res;
+
+			if (!Handle())
+				return;
+
+			FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX x_material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), Handle());
+			res = rprShapeSetMaterialFaces(shape.Handle(), Handle(), face_ids.data(), face_ids.size());
+			checkStatus(res);
+
+			if (d.isShadowCatcher)
+			{
+				res = rprShapeSetShadowCatcher(shape.Handle(), true);
+				if (res != RPR_ERROR_UNSUPPORTED)
+				{
+					checkStatus(res);
+				}
+			}
+
+			if (d.isReflectionCatcher)
+			{
+				res = rprShapeSetReflectionCatcher(shape.Handle(), true);
+				checkStatus(res);
+			}
+		}
+
 		void AttachToCurve(frw::Curve::Data& crv)
 		{
 			Data& d = data();
@@ -3828,6 +3859,14 @@ namespace frw
 			old.DetachFromShape(data());
 		}
 
+		for (auto it = data().shaders.begin(); it != data().shaders.end(); ++it)
+		{
+			Shader oldShader = it->As<Shader>();
+			RemoveReference(oldShader);
+			oldShader.DetachFromShape(data());
+		}
+		data().shaders.clear();
+
 		AddReference(shader);
 		data().shader = shader;
 		shader.AttachToShape(data());
@@ -3836,6 +3875,14 @@ namespace frw
 	inline Shader Shape::GetShader() const
 	{
 		return data().shader.As<Shader>();
+	}
+
+	// note that old shaders must be removed before this function is called!
+	inline void Shape::SetPerFaceShader(Shader shader, std::vector<int>& face_ids)
+	{
+		AddReference(shader);
+		data().shaders.push_back(shader);
+		shader.AttachToShape(data(), face_ids);
 	}
 
 	inline void Shape::SetVolumeShader(const frw::Shader& shader)
