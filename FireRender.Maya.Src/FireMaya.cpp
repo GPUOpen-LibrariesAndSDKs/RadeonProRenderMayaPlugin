@@ -12,7 +12,6 @@ limitations under the License.
 ********************************************************************/
 #include "FireMaya.h"
 #include "common.h"
-#include "Math/half.h"
 #include "FireRenderThread.h"
 #include "VRay.h"
 #include "Context/FireRenderContext.h"
@@ -1012,7 +1011,7 @@ frw::Image FireMaya::Scope::CreateImageInternal(MString colorSpace,
 		tempBuffer.resize(width * height * channels);
 		for (auto y = 0u; y < height; y++)
 		{
-			auto src = static_cast<const half *>(srcData) + y * rowPitch / sizeof(half);
+			auto src = static_cast<const unsigned short*>(srcData) + y * rowPitch / sizeof(unsigned short);
 			auto dst = tempBuffer.data() + y * (width * channels);
 			for (auto x = 0u; x < width * channels; x++)
 			{

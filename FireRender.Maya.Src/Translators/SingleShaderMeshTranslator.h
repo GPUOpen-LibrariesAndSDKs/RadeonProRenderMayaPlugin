@@ -24,7 +24,9 @@ namespace FireMaya
 			const frw::Context& context,
 			const MFnMesh& fnMesh,
 			std::vector<frw::Shape>& elements,
-			MeshTranslator::MeshPolygonData& meshPolygonData
+			MeshTranslator::MeshPolygonData& meshPolygonData,
+			const MIntArray& faceMaterialIndices,
+			std::vector<int>& outFaceMaterialIndices
 		);
 
 	private:
@@ -56,7 +58,9 @@ namespace FireMaya
 		static void AddPolygonSingleShader(
 			MItMeshPolygon& meshPolygonIterator,
 			const MStringArray& uvSetNames,
-			MeshIndicesData& idxData
+			MeshIndicesData& idxData,
+			const MIntArray& faceMaterialIndices,
+			std::vector<int>& outFaceMaterialIndices
 		);
 
 		static void FillIndicesUV(
