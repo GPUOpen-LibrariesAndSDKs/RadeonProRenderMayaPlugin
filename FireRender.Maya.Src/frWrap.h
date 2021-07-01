@@ -2472,14 +2472,6 @@ namespace frw
 			checkStatus(res);
 
 			info.name = "";
-#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
-			// get name
-			res = rprContextGetParameterInfo(Handle(), i, ParameterInfoName, 0, nullptr, &size);
-			checkStatus(res);
-			info.name.resize(size);
-			res = rprContextGetParameterInfo(Handle(), i, ParameterInfoName, size, const_cast<char*>(info.name.data()), nullptr);
-			checkStatus(res);
-#endif
 
 			// get description
 			res = rprContextGetParameterInfo(Handle(), i, ParameterInfoDescription, 0, nullptr, &size);
@@ -2498,26 +2490,17 @@ namespace frw
 
 		static void TraceOutput(const char * tracingfolder)
 		{
-#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
-			rprContextSetParameter1u(nullptr, "tracing", 0);
-#else
 			rprContextSetParameterByKey1u(nullptr, RPR_CONTEXT_TRACING_ENABLED, 0);
-#endif
+
 			if (tracingfolder)
 			{
-#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
-				auto res = rprContextSetParameterString(nullptr, "tracingfolder", tracingfolder);
-#else
 				auto res = rprContextSetParameterByKeyString(nullptr, RPR_CONTEXT_TRACING_PATH, tracingfolder);
-#endif
+
 				if (RPR_SUCCESS == res)
-#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
-					rprContextSetParameter1u(nullptr, "tracing", 1);
-#else
 					rprContextSetParameterByKey1u(nullptr, RPR_CONTEXT_TRACING_ENABLED, 1);
-#endif
 			}
 		}
+
 		void DumpParameterInfo();
 	};
 
