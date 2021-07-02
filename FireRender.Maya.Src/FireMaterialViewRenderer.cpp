@@ -40,14 +40,17 @@ const unsigned int defaultMaterialViewRayDepth = 5;
 
 FireRenderRenderData::FireRenderRenderData() :
 	m_context(),
-	m_framebuffer(NULL),
 	m_width(128),
-	m_height(128),
-	m_pixels(NULL)
+	m_height(128)
 {
 	m_context.setCallbackCreationDisabled(true);
 
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags(RenderType::ViewportRender);
+
+#ifdef _WIN32
+	// force using NorthStar for material viewer on Windows
+	m_context.SetPluginEngine(TahoePluginVersion::RPR2);
+#endif
 
 	rpr_int res;
 	if (!m_context.createContextEtc(createFlags, true, false, &res))
@@ -55,19 +58,17 @@ FireRenderRenderData::FireRenderRenderData() :
 		MString msg;
 		FireRenderError errorToShow(res, msg, true);
 	}
+
+// MacOS only for now for tahoe resolve
+#ifndef _WIN32
+	m_context.normalization = frw::PostEffect(m_context.GetContext(), frw::PostEffectTypeNormalization);
+	m_context.GetContext().Attach(m_context.normalization);
+#endif
 }
 
 FireRenderRenderData::~FireRenderRenderData()
 {
-	if (m_framebuffer != nullptr)
-	{
-		rprObjectDelete(m_framebuffer);
-	}
-
 	m_context.cleanScene();
-
-	if (m_pixels)
-		delete[] m_pixels;
 }
 
 // ================================
@@ -97,13 +98,16 @@ bool FireMaterialViewRenderer::RunOnFireRenderThread()
 FireMaterialViewRenderer::FireMaterialViewRenderer() :
 	MPxRenderer(),
 	m_isThreadRunning(false),
-	m_numIteration(1),
+	m_numIteration(0),
 	m_threadCmd(ThreadCommand::BEGIN_UPDATE)
 {
 	FireRenderContext& inContext = m_renderData.m_context;
 	frw::Context context = inContext.GetContext();
 	rpr_context frcontext = context.Handle();
+
 	rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_RECURSION, defaultMaterialViewRayDepth);
+	rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_PDF_THRESHOLD, 0.0000f);
+	rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_Y_FLIP, 0);
 }
 
 MStatus FireMaterialViewRenderer::startAsync(const JobParams& params)
@@ -501,10 +505,8 @@ MStatus FireMaterialViewRenderer::setResolution(unsigned int width, unsigned int
 {
 	m_renderData.m_width = width;
 	m_renderData.m_height = height;
-	if (m_renderData.m_pixels)
-		delete[] m_renderData.m_pixels;
 
-	m_renderData.m_pixels = new float[size_t(m_renderData.m_width * m_renderData.m_height) << 2];
+	m_renderData.m_pixels.resize(m_renderData.m_width * m_renderData.m_height);
 
 	return MS::kSuccess;
 }
@@ -513,31 +515,17 @@ MStatus FireMaterialViewRenderer::endSceneUpdate()
 {
 	return FireRenderThread::RunOnceAndWait<MStatus>([this]() -> MStatus
 	{
-		rpr_int frstatus;
-		rpr_context frcontext = m_renderData.m_context.context();
-
-		rpr_framebuffer_desc desc;
-		desc.fb_width = m_renderData.m_width;
-		desc.fb_height = m_renderData.m_height;
 		rpr_framebuffer_format fmt = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
 
-		if (m_renderData.m_framebuffer)
-		{
-			frstatus = rprObjectDelete(m_renderData.m_framebuffer);
-			checkStatus(frstatus);
-		}
+		m_renderData.m_framebufferColor = frw::FrameBuffer(m_renderData.m_context.GetContext(), m_renderData.m_width, m_renderData.m_height, fmt);
+		m_renderData.m_framebufferColor.Clear();
 
-		m_renderData.m_framebuffer = NULL;
-		frstatus = rprContextCreateFrameBuffer(frcontext, fmt, &desc, &m_renderData.m_framebuffer);
-		checkStatus(frstatus);
+		m_renderData.m_framebufferResolved = frw::FrameBuffer(m_renderData.m_context.GetContext(), m_renderData.m_width, m_renderData.m_height, fmt);
+		m_renderData.m_framebufferResolved.Clear();
 
-		rprFrameBufferClear(m_renderData.m_framebuffer);
-		checkStatus(frstatus);
+		m_renderData.m_context.GetContext().SetAOV(m_renderData.m_framebufferColor, RPR_AOV_COLOR);
 
-		frstatus = rprContextSetAOV(frcontext, RPR_AOV_COLOR, m_renderData.m_framebuffer);
-		checkStatus(frstatus);
-
-		m_numIteration = 1;
+		m_numIteration = 0;
 		m_threadCmd = ThreadCommand::RENDER_IMAGE;
 
 		m_renderData.m_mutex.unlock();
@@ -568,6 +556,11 @@ void FireMaterialViewRenderer::render()
 
 	rpr_int frstatus;
 	auto context = m_renderData.m_context.GetContext();
+
+	context.SetParameter(RPR_CONTEXT_ITERATIONS, 1);
+	context.SetParameter(RPR_CONTEXT_FRAMECOUNT, m_numIteration);
+
+
 	try 
 	{
 		context.Render();
@@ -586,34 +579,19 @@ void FireMaterialViewRenderer::render()
 		return;
 	}
 
+	m_renderData.m_framebufferColor.Resolve(m_renderData.m_framebufferResolved, false);
+
 	size_t dataSize = 0;
-	frstatus = rprFrameBufferGetInfo(m_renderData.m_framebuffer, RPR_FRAMEBUFFER_DATA, 0, NULL, &dataSize);
+	frstatus = rprFrameBufferGetInfo(m_renderData.m_framebufferResolved.Handle(), RPR_FRAMEBUFFER_DATA, 0, NULL, &dataSize);
 	checkStatus(frstatus);
 
 	size_t WidthHeight = m_renderData.m_width * m_renderData.m_height;
 
-	std::vector<float> tmpBuffer(WidthHeight << 2);
-	if (!m_renderData.m_pixels)
-		m_renderData.m_pixels = new float[WidthHeight << 2];
+	if (m_renderData.m_pixels.empty())
+		m_renderData.m_pixels.resize(WidthHeight);
 
-	frstatus = rprFrameBufferGetInfo(m_renderData.m_framebuffer, RPR_FRAMEBUFFER_DATA, dataSize, tmpBuffer.data(), nullptr);
+	frstatus = rprFrameBufferGetInfo(m_renderData.m_framebufferResolved.Handle(), RPR_FRAMEBUFFER_DATA, dataSize, m_renderData.m_pixels.data(), nullptr);
 	checkStatus(frstatus);
-
-	for (size_t y = 0; y < m_renderData.m_height; y++)
-	{
-		const float* src = tmpBuffer.data() + (y * m_renderData.m_width << 2);
-		auto dst = m_renderData.m_pixels + ((m_renderData.m_height - y - 1) * m_renderData.m_width << 2);
-		for (size_t x = 0; x < (int)m_renderData.m_width; x++)
-		{
-			auto s = src + (x << 2);
-			auto d = dst + (x << 2);
-			float k = (s[3] > 0) ? 1.0f / s[3] : 0;
-			d[0] = s[0] * k;
-			d[1] = s[1] * k;
-			d[2] = s[2] * k;
-			d[3] = 1;
-		}
-	}
 
 	m_numIteration++;
 
@@ -626,10 +604,10 @@ void FireMaterialViewRenderer::render()
 	parameters.right = m_renderData.m_width - 1;
 	parameters.channels = 4;
 	parameters.bytesPerChannel = sizeof(float);
-	parameters.data = m_renderData.m_pixels;
+	parameters.data = m_renderData.m_pixels.data();
 	refresh(parameters);
 
-	if (m_numIteration > FireRenderGlobalsData::getThumbnailIterCount())
+	if (m_numIteration >= FireRenderGlobalsData::getThumbnailIterCount())
 	{
 		ProgressParams params;
 		params.progress = 1.0;
