@@ -362,7 +362,7 @@ global proc openMaterialLibraryRPR()
 	if (!checkPluginLoadedRPR())
 		return;
 
-	python("import fireRender.rpr_material_browser\nreload(fireRender.rpr_material_browser)\nfireRender.rpr_material_browser.show()");
+	python("import fireRender.rpr_material_browser\nfireRender.rpr_material_browser.show()");
 }
 
 global proc createSkyRPR()

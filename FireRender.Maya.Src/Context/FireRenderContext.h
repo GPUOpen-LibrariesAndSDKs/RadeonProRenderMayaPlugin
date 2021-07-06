@@ -285,6 +285,9 @@ public:
 		bool UseTempData(void) const { return (region.getWidth() < width || region.getHeight() < height); }
 	};
 
+	// this is part of readFrameBuffer call and is only thing nneded for viewport
+	RV_PIXEL* readFrameBufferSimple(ReadFrameBufferRequestParams& params);
+
 	// Read frame buffer pixels and optionally normalize and flip the image.
 	void readFrameBuffer(ReadFrameBufferRequestParams& params);
 
@@ -300,7 +303,7 @@ public:
 	// reads aov directly into internal storage
 	RV_PIXEL* GetAOVData(const ReadFrameBufferRequestParams& params);
 
-	void MergeOpacity(const ReadFrameBufferRequestParams& params);
+	void ReadOpacityAOV(const ReadFrameBufferRequestParams& params);
 
 	void CombineOpacity(int aov, RV_PIXEL* pixels, unsigned int area);
 
@@ -327,6 +330,8 @@ public:
 
 	// do action for each framebuffer matching filter
 	void ForEachFramebuffer(std::function<void(int aovId)> actionFunc, std::function<bool(int aovId)> filter);
+
+	std::vector<float> DenoiseAndUpscaleForViewport();
 
 	// try running denoiser; result is saved into RAM buffer in context
 	std::vector<float> DenoiseIntoRAM(void);
@@ -450,6 +455,7 @@ public:
 	// It forces to clear the framebuffer and the iterations ant the next render call
 	void setDirty();
 
+	void disableSetDirtyObjects(bool disable);
 	void setDirtyObject(FireRenderObject* obj);
 
 	// Check if the context is dirty
@@ -503,6 +509,8 @@ public:
 	// Getting camera exposure for motion blur
 	float motionBlurCameraExposure() const;
 
+	unsigned int motionSamples() const;
+
 	// State flag of the renderer
 	StateEnum GetState() const { return m_state; }
 	void SetState(StateEnum newState);
@@ -529,7 +537,7 @@ public:
 
 	bool IsDenoiserCreated(void) const { return m_denoiserFilter != nullptr; }
 
-	bool IsDenoiserEnabled(void) const { return (IsDenoiserSupported() && m_globals.denoiserSettings.enabled);	}
+	bool IsDenoiserEnabled(void) const;
 
 	bool IsTileRender(void) const { return (m_globals.tileRenderingEnabled && !isInteractive()); }
 
@@ -642,6 +650,9 @@ public:
 
 	int GetSamplesPerUpdate() const { return m_samplesPerUpdate; }
 
+	bool setupUpscalerForViewport(RV_PIXEL* data);
+	bool setupDenoiserForViewport();
+
 protected:
 	static int INCORRECT_PLUGIN_ID;
 
@@ -690,6 +701,7 @@ private:
 	void turnOnAOVsForDenoiser(bool allocBuffer = false);
 	void turnOnAOVsForContour(bool allocBuffer = false);
 	bool CanCreateAiDenoiser() const;
+
 	void setupDenoiserFB(void);
 	void setupDenoiserRAM(void);
 	void BuildLateinitObjects();
@@ -697,10 +709,11 @@ private:
 private:
 	std::mutex m_rifLock;
 	std::shared_ptr<ImageFilter> m_denoiserFilter;
+	std::shared_ptr<ImageFilter> m_upscalerFilter;
 
 	frw::DirectionalLight m_defaultLight;
 
-	tbb::atomic<StateEnum> m_state;
+	std::atomic<StateEnum> m_state;
 
 	// Render camera
 	FireRenderCamera m_camera;
@@ -749,6 +762,9 @@ private:
 
 	// Motion blur camera exposure
 	float m_motionBlurCameraExposure;
+
+	// used for Deformation motion blur only for now
+	unsigned int m_motionSamples;
 
 	/** True if the render should be interactive. */
 	bool m_interactive;
@@ -823,6 +839,9 @@ private:
 
 	// Increasing iterations - 1, 2, 4, 8, etc up to 32 for now
 	bool m_IterationsPowerOf2Mode;
+
+	// Used for deformation motion blur feature. We need to disable dirtying object when perform deformation motion blur operations (switcihng current time which leads to dirty all objects)
+	bool m_DisableSetDirtyObjects;
 
 public:
 	FireRenderEnvLight *iblLight = nullptr;
@@ -978,6 +997,23 @@ public:
 
 	friend class Lock;
 };
+
+class ContextSetDirtyObjectAutoLocker
+{
+public:
+	ContextSetDirtyObjectAutoLocker(FireRenderContext& context) :
+		m_context(context)
+	{
+		m_context.disableSetDirtyObjects(true);
+	}
+	~ContextSetDirtyObjectAutoLocker()
+	{
+		m_context.disableSetDirtyObjects(false);
+	}
+private:
+	FireRenderContext& m_context;
+};
+
 
 typedef std::shared_ptr<FireRenderContext> FireRenderContextPtr;
 

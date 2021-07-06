@@ -25,10 +25,10 @@ limitations under the License.
 #include <maya/MPointArray.h>
 #include <maya/MItMeshPolygon.h>
 #include <maya/MSelectionList.h>
+#include <maya/MAnimControl.h>
 
 #include <unordered_map>
 
-#include "../Context/FireRenderContext.h"
 #include "SingleShaderMeshTranslator.h"
 #include "MultipleShaderMeshTranslator.h"
 
@@ -42,10 +42,92 @@ FireMaya::MeshTranslator::MeshPolygonData::MeshPolygonData()
 	, pNormals(nullptr)
 	, countNormals(0)
 	, triangleVertexIndicesCount(0)
+	, motionSamplesCount(0)
 {
 }
 
-bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(const MFnMesh& fnMesh)
+void ChangeCurrentTimeAndUpdateMesh(MFnMesh& fnMesh, const MTime& time, MString fullDagPath)
+{
+	MGlobal::viewFrame(time);
+
+	// We need to update fnMesh function set in order to apply time change
+
+	MDagPath dagPath;
+
+	MSelectionList sl;
+	sl.add(fullDagPath);
+	if (!sl.isEmpty())
+	{
+		sl.getDagPath(0, dagPath);
+		fnMesh.setObject(dagPath);
+	}
+	else
+	{
+		assert(false);
+	}
+}
+
+bool FireMaya::MeshTranslator::MeshPolygonData::ProcessDeformationFrameCount(MFnMesh& fnMesh, MString fullDagPath)
+{
+	if (motionSamplesCount < 2 || fullDagPath.length() == 0)
+	{
+		return false;
+	}
+
+	// Check if mesh has deformers or rigs inside construction history
+
+	MString name = fullDagPath;
+	MString command;
+	command.format("source common.mel; hasGivenMeshDeformerOrRigAttached(\"^1s\");", name);
+	
+	MStatus status;
+	MString result = MGlobal::executeCommandStringResult(command, false, false, &status);
+
+	if (result.asInt() == 0)
+	{
+		return false;
+	}
+
+	MTime initialTime = MAnimControl::currentTime();
+	MTime currentTime = initialTime;
+
+	if (initialTime == MAnimControl::maxTime())
+	{
+		return false;
+	}
+
+	size_t floatsVertexOneFrame = 3 * countVertices;
+	size_t floatsNormalOneFrame = 3 * countNormals;
+
+	arrVertices.resize(floatsVertexOneFrame * motionSamplesCount);
+	arrNormals.resize(floatsNormalOneFrame * motionSamplesCount);
+
+	unsigned int currentTimeIndex = 0;
+
+	MDagPath dagPath;
+
+	for (unsigned int currentTimeIndex = 0; currentTimeIndex < motionSamplesCount; ++currentTimeIndex)
+	{
+		// positioning on next point of time (starting from currentTime)
+		currentTime += (float)currentTimeIndex / (motionSamplesCount - 1);
+
+		ChangeCurrentTimeAndUpdateMesh(fnMesh, currentTime, fullDagPath);
+
+		const float* pData = fnMesh.getRawPoints(&status);
+		assert(MStatus::kSuccess == status);
+		std::copy(pData, pData + floatsVertexOneFrame, arrVertices.data() + floatsVertexOneFrame * currentTimeIndex);
+
+		pData = fnMesh.getRawNormals(&status);
+		assert(MStatus::kSuccess == status);
+		std::copy(pData, pData + floatsNormalOneFrame, arrNormals.data() + floatsNormalOneFrame * currentTimeIndex);
+	}
+
+	ChangeCurrentTimeAndUpdateMesh(fnMesh, initialTime, fullDagPath);
+
+	return true;
+}
+
+bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(MFnMesh& fnMesh, unsigned int deformationFrameCount, MString fullDagPath)
 {
 	GetUVCoords(fnMesh, uvSetNames, uvCoords, puvCoords, sizeCoords);
 	unsigned int uvSetCount = uvSetNames.length();
@@ -64,12 +146,23 @@ bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(const MFnMesh& fnMesh
 
 	countVertices = fnMesh.numVertices(&mstatus);
 	assert(MStatus::kSuccess == mstatus);
+	if (countVertices == 0)
+	{
+		return false;
+	}
 
 	// pointer to array of normal coordinates in Maya
 	pNormals = fnMesh.getRawNormals(&mstatus);
 	assert(MStatus::kSuccess == mstatus);
+
 	countNormals = fnMesh.numNormals(&mstatus);
 	assert(MStatus::kSuccess == mstatus);
+
+	motionSamplesCount = deformationFrameCount;
+	if (!ProcessDeformationFrameCount(fnMesh, fullDagPath))
+	{
+		motionSamplesCount = 0;
+	}
 
 	// get triangle count (max possible count; this number is used for reserve only)
 	MIntArray triangleCounts; // basically number of triangles in polygons; size of array equal to number of polygons in mesh
@@ -80,7 +173,11 @@ bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(const MFnMesh& fnMesh
 	return true;
 }
 
-std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Context& context, const MObject& originalObject)
+std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(
+	const frw::Context& context, 
+	const MObject& originalObject, 
+	std::vector<int>& outFaceMaterialIndices,
+	unsigned int deformationFrameCount, MString fullDagPath)
 {
 	MAIN_THREAD_ONLY;
 
@@ -130,21 +227,22 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 	}
 
 	MFnMesh fnMesh(object, &mayaStatus);
+
 	if (MStatus::kSuccess != mayaStatus)
 	{
 		mayaStatus.perror("MFnMesh constructor");
 		return resultShapes;
 	}
 
-	// get number of submeshes in mesh (number of materials used in this mesh)
+	// get number of materials used in this mesh
 	MIntArray faceMaterialIndices;
-	int elementCount = GetFaceMaterials(fnMesh, faceMaterialIndices);
-	resultShapes.resize(elementCount);
-	assert(faceMaterialIndices.length() == fnMesh.numPolygons());
+	int materialCount = GetFaceMaterials(fnMesh, faceMaterialIndices);
 
 	// get common data from mesh
 	MeshPolygonData meshPolygonData;
-	bool successfullyInitialized = meshPolygonData.Initialize(fnMesh);
+
+	/// for tesselated or smoothed mesh disable deformation MB for now
+	bool successfullyInitialized = meshPolygonData.Initialize(fnMesh, object != originalObject ? 0 : deformationFrameCount, fullDagPath);
 	if (!successfullyInitialized)
 	{
 		std::string nodeName = fnMesh.name().asChar();
@@ -153,10 +251,17 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 		return resultShapes;
 	}
 
-	// use special case TranslateMesh that is optimized for 1 shader
-	if (elementCount == 1)
+	outFaceMaterialIndices.clear();
+
+	TahoePluginVersion version = GetTahoeVersionToUse();
+	bool isRPR20 = version == TahoePluginVersion::RPR2;
+
+	if (isRPR20)
 	{
-		SingleShaderMeshTranslator::TranslateMesh(context, fnMesh, resultShapes, meshPolygonData);
+		resultShapes.resize(1);
+		SingleShaderMeshTranslator::TranslateMesh(
+			context, fnMesh, resultShapes, meshPolygonData, faceMaterialIndices, outFaceMaterialIndices
+		);
 #ifdef OPTIMIZATION_CLOCK
 		std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
 		std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
@@ -164,6 +269,7 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 	}
 	else
 	{
+		resultShapes.resize(materialCount);
 		MultipleShaderMeshTranslator::TranslateMesh(context, fnMesh, resultShapes, meshPolygonData, faceMaterialIndices);
 	}
 
@@ -248,34 +354,57 @@ MString GenerateSmoothOptions(const MFnDagNode& dagMesh)
 
 	MPlug smoothLevelPlug = dagMesh.findPlug(smoothLevelPlugName.c_str());
 	assert(!smoothLevelPlug.isNull());
-	std::string smmothLevel = std::to_string(smoothLevelPlug.asInt());
+	std::string smoothLevel = std::to_string(smoothLevelPlug.asInt());
 
-	optionMap["dv"] = smmothLevel;
-
+	optionMap["dv"] = smoothLevel;
 
 	MPlug useGlobalSmoothDrawTypePlug = dagMesh.findPlug("useGlobalSmoothDrawType");
 	assert(!useGlobalSmoothDrawTypePlug.isNull());
 
-	MPlug smoothDrawTypePlug = dagMesh.findPlug("smoothDrawType");
-	assert(!smoothDrawTypePlug.isNull());
+	int smoothingType = 0;
 
-	MString addOptions;
-
-	// opensubdiv catmull-clark
-	if (useGlobalSmoothDrawTypePlug.asInt() > 0 || smoothDrawTypePlug.asInt() > 0)
+	// read from globals
+	if (useGlobalSmoothDrawTypePlug.asInt() > 0 )
 	{
-		optionMap["sdt"] = "1"; // 1 - constant according documentation
+		MGlobal::executeCommand("optionVar -q proxySubdivisionType", smoothingType);
+		optionMap["sdt"] = std::to_string(smoothingType);
 	}
-	// maya catmull-clark
+	// read from node
 	else 
 	{
-		optionMap["sdt"] = "0"; // 0 - constant according documentation
+		MPlug smoothDrawTypePlug = dagMesh.findPlug("smoothDrawType");
+		smoothingType = smoothDrawTypePlug.asInt();
 
+		assert(!smoothDrawTypePlug.isNull());
+		optionMap["sdt"] = std::to_string(smoothingType);
+	}	
+
+	if (smoothingType == 0) // maya catmull-clark
+	{
 		MPlug keepBordersPlug = dagMesh.findPlug("keepBorder");
 		assert(!keepBordersPlug.isNull());
 
 		optionMap["kb"] = std::to_string(keepBordersPlug.asInt());
-	}	
+
+		MPlug shouldSmoothUVs = dagMesh.findPlug("smoothUVs");
+		assert(!shouldSmoothUVs.isNull());
+		optionMap["suv"] = std::to_string(shouldSmoothUVs.asInt());
+	}
+	else // OpenSubdiv catmull-clark
+	{
+		int uvBoundarySmoothType = 0;
+		if (useGlobalSmoothDrawTypePlug.asInt() > 0)
+		{
+			MGlobal::executeCommand("optionVar -q proxySmoothOsdFvarBoundary", uvBoundarySmoothType);
+			optionMap["ofb"] = std::to_string(uvBoundarySmoothType);
+		}
+		else
+		{
+			MPlug plug_uvSmooth = dagMesh.findPlug("osdFvarBoundary");
+			assert(!plug_uvSmooth.isNull());
+			optionMap["ofb"] = std::to_string(plug_uvSmooth.asInt());
+		}
+	}
 
 	MString result;
 

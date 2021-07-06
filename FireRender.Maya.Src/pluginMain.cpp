@@ -28,6 +28,7 @@ limitations under the License.
 #include "FireRenderPBRMaterial.h"
 #include "FireRenderTransparentMaterial.h"
 #include "FireRenderMaterialSwatchRender.h"
+#include "FireRenderToonMaterial.h"
 #include "FireRenderSwatchInstance.h"
 
 #include "FireRenderFresnel.h"
@@ -475,6 +476,18 @@ void AddExtensionAttributesCommon()
 	nAttr.setNiceNameOverride("Hair Casts Shadows");
 	status = hairSystemClass.addExtensionAttribute(hairCastShadows);
 
+	MObject nhairVisible = nAttr.create("nhairIsVisible", "nhvi", MFnNumericData::kBoolean, true, &status);
+	nAttr.setNiceNameOverride("Is Visible");
+	status = hairSystemClass.addExtensionAttribute(nhairVisible);
+
+	MObject nhairVisibleInReflections = nAttr.create("nhairVisibleInReflections", "nhrf", MFnNumericData::kBoolean, true, &status);
+	nAttr.setNiceNameOverride("Visible In Reflections");
+	status = hairSystemClass.addExtensionAttribute(nhairVisibleInReflections);
+
+	MObject nhairVisibleInRefractions = nAttr.create("nhairVisibleInRefractions", "nhrr", MFnNumericData::kBoolean, true, &status);
+	nAttr.setNiceNameOverride("Visible In Refractions");
+	status = hairSystemClass.addExtensionAttribute(nhairVisibleInRefractions);
+
 	// Adding RPRObjectId to all transforms
 	MObject objectIdAttr = nAttr.create("RPRObjectId", "roi", MFnNumericData::kLong, 0);
 
@@ -546,7 +559,8 @@ MStatus initializePlugin(MObject obj)
 	pTopLevelExceptionFilter = ::SetUnhandledExceptionFilter(FrUnhandledExceptionFilter);
 #endif
 
-	PluginUpdater();
+	// We have legacy updater here which does not work. Comment this code for now becaue it breaks Maya 2022 startup.
+	//PluginUpdater();
 
 	// Added for Linux:
 	Logger::AddCallback(InfoCallback, Logger::LevelInfo);
@@ -583,7 +597,7 @@ MStatus initializePlugin(MObject obj)
 
 	Logger::AddCallback(InfoCallback, Logger::LevelInfo);
 
-	LogPrint("Initing plugin");
+	LogPrint("RPR plugin initialization");
 
 	// Check if OpenCL.dll is available on the system.
 	HMODULE openCL = LoadLibrary("OpenCL.dll");
@@ -650,9 +664,7 @@ MStatus initializePlugin(MObject obj)
 		iesClassification += ":swatch/"_ms + swatchName;
 		envLightClassification += ":swatch/"_ms + swatchName;
 
-#ifndef MAYA2015
 		CHECK_MSTATUS(plugin.registerRenderer(FIRE_RENDER_NAME, FireMaterialViewRenderer::creator));
-#endif
 	}
 
 	CHECK_MSTATUS(plugin.registerCommand("fireRender", FireRenderCmd::creator, FireRenderCmd::newSyntax));
@@ -819,6 +831,12 @@ MStatus initializePlugin(MObject obj)
 		FireMaya::ShadowCatcherMaterial::creator,
 		FireMaya::ShadowCatcherMaterial::initialize,
 		MPxNode::kDependNode, &UserClassify));
+
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "ToonMaterial", FireMaya::ToonMaterial::FRTypeID(),
+		FireMaya::ToonMaterial::creator,
+		FireMaya::ToonMaterial::initialize,
+		MPxNode::kDependNode, &UserClassify));
+
 
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "Displacement", FireMaya::Displacement::FRTypeID(),
 		FireMaya::Displacement::creator,

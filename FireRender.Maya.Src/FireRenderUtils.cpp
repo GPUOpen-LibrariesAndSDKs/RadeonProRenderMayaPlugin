@@ -105,6 +105,7 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	motionBlur(false),
 	cameraMotionBlur(false),
 	motionBlurCameraExposure(0.0f),
+	motionSamples(0),
 	tileRenderingEnabled(false),
 	tileSizeX(0),
 	tileSizeY(0),
@@ -406,6 +407,10 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			motionBlurCameraExposure = plug.asFloat();
 
+		plug = frGlobalsNode.findPlug("motionSamples");
+		if (!plug.isNull())
+			motionSamples = plug.asInt();	
+
 		plug = frGlobalsNode.findPlug("cameraType");
 		if (!plug.isNull())
 			cameraType = plug.asShort();
@@ -557,6 +562,10 @@ void FireRenderGlobalsData::readDenoiserParameters(const MFnDependencyNode& frGl
 	plug = frGlobalsNode.findPlug("enable16bitCompute");
 	if (!plug.isNull())
 		denoiserSettings.enable16bitCompute = plug.asInt() == 1;
+
+	plug = frGlobalsNode.findPlug("viewportDenoiseUpscaleEnabled");
+	if (!plug.isNull())
+		denoiserSettings.viewportDenoiseUpscaleEnabled = plug.asInt() == 1;	
 }
 
 bool FireRenderGlobalsData::isTonemapping(MString name)
@@ -601,7 +610,7 @@ bool FireRenderGlobalsData::isDenoiser(MString name)
 {
 	name = GetPropertyNameFromPlugName(name);
 
-	static const std::vector<MString> propNames = { "denoiserEnabled", "denoiserType", "denoiserRadius", "denoiserSamples",
+	static const std::vector<MString> propNames = { "denoiserEnabled", "viewportDenoiseUpscaleEnabled", "denoiserType", "denoiserRadius", "denoiserSamples",
 		"denoiserFilterRadius", "denoiserBandwidth", "denoiserColor", "denoiserDepth", "denoiserNormal", "denoiserTrans" };
 
 	for (const MString& propName : propNames)
@@ -1040,7 +1049,7 @@ std::string getNodeUUid(const MDagPath& node)
 		{
 			// Referenced node name guaranteed to be unique by Maya. User can't change it's name because node is locked.
 			std::stringstream sstrm;
-			sstrm << id.c_str() << ":" << dagNode.name();
+			sstrm << id.c_str() << ":" << dagNode.fullPathName();
 			id = sstrm.str();
 		}
 	}

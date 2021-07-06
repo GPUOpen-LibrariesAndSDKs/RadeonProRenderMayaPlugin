@@ -28,7 +28,7 @@ void InstancerMASH::RegisterCallbacks()
 	AddCallback(MNodeMessage::addNodeDirtyPlugCallback(m.object, plugDirty_callback, this));
 }
 
-void InstancerMASH::Freshen()
+void InstancerMASH::Freshen(bool shouldCalculateHash)
 {
 	if (GetTargetObjects().empty())
 	{

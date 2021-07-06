@@ -54,13 +54,14 @@ public:
 
 	frw::Image m_envImage;
 
-	rpr_framebuffer m_framebuffer;
+	frw::FrameBuffer m_framebufferColor;
+	frw::FrameBuffer m_framebufferResolved;
 
 	unsigned int m_width;
 
 	unsigned int m_height;
 
-	float *m_pixels;
+	std::vector<RV_PIXEL> m_pixels;
 };
 
 class MaterialViewThreadWorder;
@@ -155,7 +156,7 @@ public:
 	};
 
 	// Render commands used by the render thread
-	volatile int m_threadCmd;
+	std::atomic<int> m_threadCmd;
 
 private:
 
