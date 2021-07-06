@@ -12,7 +12,6 @@ limitations under the License.
 ********************************************************************/
 #include "FireRenderProduction.h"
 #include "Context/TahoeContext.h"
-#include <tbb/atomic.h>
 #include <maya/MRenderView.h>
 #include <maya/MViewport2Renderer.h>
 #include <maya/MGlobal.h>
@@ -50,6 +49,7 @@ limitations under the License.
 
 #if defined(__APPLE__)
 #include "athenaSystemInfo_Mac.h"
+#include <sys/sysctl.h>
 #endif  // defined(__APPLE__)
 
 using namespace std;
@@ -566,6 +566,13 @@ int getNumCPUCores()
 
 void FireRenderProduction::UploadAthenaData()
 {
+	// We drop support for all Mayas older then 2022 since they have old Python 2.7
+#if MAYA_API_VERSION < 20220000
+	return;
+#endif
+
+	AthenaWrapper::GetAthenaWrapper()->StartNewFile();
+
 	// operating system
 #if defined(_WIN32)
 	std::string osName;
@@ -813,6 +820,8 @@ void FireRenderProduction::UploadAthenaData()
 		{RenderQuality::RenderQualityLow, "Low"},
 	};
 	WriteAthenaField("Quality", renderQualityName[quality]);
+
+	AthenaWrapper::GetAthenaWrapper()->AthenaSendFile(pythonCallWrap);
 }
 
 std::tuple<size_t, long long> FireRenderProduction::GeSceneTexturesCountAndSize() const
@@ -875,11 +884,8 @@ bool FireRenderProduction::RunOnViewportThread()
 			{
 				m_contextPtr->m_lastRenderResultState = (m_cancelled) ? FireRenderContext::CANCELED : FireRenderContext::COMPLETED;
 
-				AthenaWrapper::GetAthenaWrapper()->StartNewFile();
 				UploadAthenaData();
 				
-				AthenaWrapper::GetAthenaWrapper()->AthenaSendFile(pythonCallWrap);
-
 				m_contextPtr->m_polycountLastRender = 0;
 
 				DenoiseFromAOVs();
@@ -901,10 +907,7 @@ bool FireRenderProduction::RunOnViewportThread()
 			{
 				m_contextPtr->m_lastRenderResultState = FireRenderContext::CRASHED;
 
-				AthenaWrapper::GetAthenaWrapper()->StartNewFile();
 				UploadAthenaData();
-
-				AthenaWrapper::GetAthenaWrapper()->AthenaSendFile(pythonCallWrap);
 
 				throw;
 			}
@@ -1059,9 +1062,7 @@ void FireRenderProduction::RenderTiles()
 
 	outBuffers.clear();
 
-	AthenaWrapper::GetAthenaWrapper()->StartNewFile();
 	UploadAthenaData();
-	AthenaWrapper::GetAthenaWrapper()->AthenaSendFile(pythonCallWrap);
 }
 
 void FireRenderProduction::RenderFullFrame()

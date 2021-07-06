@@ -23,7 +23,6 @@ limitations under the License.
 #include "Context/FireRenderContext.h"
 #include "FireRenderViewport.h"
 #include "FireRenderViewportManager.h"
-#include <maya/MAtomic.h>
 #include <maya/MAnimControl.h>
 #include <thread>
 

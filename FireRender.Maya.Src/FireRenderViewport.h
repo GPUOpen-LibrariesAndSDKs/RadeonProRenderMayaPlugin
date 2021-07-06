@@ -31,6 +31,7 @@ limitations under the License.
 #include "RenderCacheWarningDialog.h"
 
 #include "NorthStarRenderingHelper.h"
+#include "ViewportTexture.h"
 
 /**
  * A viewport is responsible for rendering to a texture
@@ -79,7 +80,7 @@ public:
 	void clearTextureCache();
 
 	/** Return the hardware texture. */
-	const MHWRender::MTextureAssignment& getTexture() const;
+	ViewportTexture* getTexture() const;
 
 	/** True if the texture has changed since the last call to getTexture. */
 	bool hasTextureChanged();
@@ -118,11 +119,11 @@ private:
 	/** Viewport render context. */
 	FireRenderContextPtr m_contextPtr;
 
-	/** The description of the texture that will receive the RPR frame buffer. */
-	MHWRender::MTextureDescription m_textureDesc;
-
 	/** The texture that will receive the RPR frame buffer. */
-	MHWRender::MTextureAssignment m_texture;
+	ViewportTexture m_texture;
+
+	//
+	ViewportTexture m_textureUpscaled;
 
 	/** True if the texture has changed since the last call to getTexture. */
 	bool m_textureChanged;
@@ -137,10 +138,7 @@ private:
 	bool m_useAnimationCache;
 
 	/** Cached frame buffer textures to use for animation playback. */
-	FireMaya::TextureCache m_textureCache;
-
-	/** Used for copying the RPR frame buffer to the hardware texture. */
-	std::vector<RV_PIXEL> m_pixels;
+	FireMaya::TextureCache m_renderedFramesCache;
 
 	/** True if pixels have been updated. */
 	bool m_pixelsUpdated;
@@ -169,6 +167,10 @@ private:
 
 	NorthStarRenderingHelper m_NorthStarRenderingHelper;
 
+	bool m_showUpscaledFrame;
+
+	ViewportTexture* m_pCurrentTexture;
+
 	// Private Methods
 	// -----------------------------------------------------------------------------
 private:
@@ -178,6 +180,8 @@ private:
 
 	/** Clean up resources. */
 	void cleanUp();
+
+	bool IsDenoiserUpscalerEnabled() const;
 
 	friend void RenderUpdateCallback(float progress, void* pData);
 	void OnRenderUpdateCallback(float progress);
@@ -194,9 +198,6 @@ private:
 	/** Resize using GL interop. */
 	void resizeFrameBufferGLInterop(unsigned int width, unsigned int height);
 
-	/** Clear the pixel buffer. */
-	void clearPixels();
-
 	/** Render a cached frame. */
 	MStatus renderCached(unsigned int width, unsigned int height);
 
@@ -204,10 +205,7 @@ private:
 	MStatus refreshContext();
 
 	/** Read data from the RPR frame buffer into the texture. */
-	void readFrameBuffer(FireMaya::StoredFrame* storedFrame = nullptr);
-
-	/** Update the texture with the supplied frame data. */
-	MStatus updateTexture(void* data, unsigned int width, unsigned int height);
+	void readFrameBuffer(FireMaya::StoredFrame* storedFrame = nullptr, bool runUpscaler = false);
 
 	/** Start the render thread. */
 	bool start();
@@ -226,4 +224,6 @@ private:
 	bool isAOVShouldBeAlwaysEnabled(int aov);
 
 	rpr_GLuint* GetGlTexture() const;
+
+	void ScheduleViewportUpdate();
 };

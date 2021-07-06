@@ -76,9 +76,27 @@ MSyntax FireRenderExportCmd::newSyntax()
 	return syntax;
 }
 
+std::string GetPluginLibrary(bool isRPR2)
+{
+	std::string pluginExtension;
+	std::string pluginPrefix;
+
+	std::string pluginDll = isRPR2 ? "Northstar64" : "Tahoe64";
+
+#ifdef WIN32
+	pluginDll += ".dll";
+#else
+	pluginDll = "lib" + pluginDll + ".dylib";
+#endif
+
+	return pluginDll;
+}
+
 bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std::wstring& fileName)
 {
 	std::wstring configName = std::regex_replace(filePath, std::wregex(L"rpr$"), L"json");
+
+	bool isRPR2 = TahoeContext::IsGivenContextRPR2(&ctx);
 
 #ifdef WIN32
 	// MSVS added an overload to accommodate using open with wide strings where xcode did not.
@@ -92,11 +110,14 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 	if (!json)
 		return false;
 
-	const std::locale utf8_locale
-		= std::locale(std::locale(), new std::codecvt_utf8<wchar_t>());
+	std::string pluginDll = GetPluginLibrary(isRPR2);
+
+	const std::locale utf8_locale = std::locale(std::locale(), new std::codecvt_utf8<wchar_t>());
 	json.imbue(utf8_locale);
 
 	json << "{" << std::endl;
+
+	json << "\"plugin\" : \"" << pluginDll.c_str() << "\",\n";
 
 	json << "\"output\" : " << "\"" << fileName.c_str() << ".png\",\n";
 
@@ -152,6 +173,7 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 		,{RPR_AOV_VARIANCE, L"variance" }
 		,{RPR_AOV_VIEW_SHADING_NORMAL, L"normal.view" }
 		,{RPR_AOV_REFLECTION_CATCHER, L"reflection.catcher" }
+		,{RPR_AOV_CAMERA_NORMAL, L"camera.normal" }
 		,{RPR_AOV_MAX, L"RPR_AOV_MAX" }
 	};
 
@@ -168,6 +190,10 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 			continue;
 
 		if (!ctx.isAOVEnabled(aov))
+			continue;
+
+		// shin request
+		if (aov == RPR_AOV_CAMERA_NORMAL && !isRPR2)
 			continue;
 
 		aovs.push_back(it->second);
@@ -431,7 +457,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		// setup frame ranges
 		if (!isSequenceExportEnabled)
 		{
-			firstFrame = lastFrame = 1;
+			lastFrame = firstFrame;
 		}
 
 		// process file path
@@ -468,10 +494,13 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		for (int frame = firstFrame; frame <= lastFrame; ++frame)
 		{
 			// Move the animation to the next frame.
-			MTime time;
-			time.setValue(static_cast<double>(frame));
-			MStatus isTimeSet = MGlobal::viewFrame(time);
-			CHECK_MSTATUS(isTimeSet);
+			if (isSequenceExportEnabled)
+			{
+				MTime time;
+				time.setValue(static_cast<double>(frame));
+				MStatus isTimeSet = MGlobal::viewFrame(time);
+				CHECK_MSTATUS(isTimeSet);
+			}
 
 			// Refresh the context so it matches the
 			// current animation state and start the render.

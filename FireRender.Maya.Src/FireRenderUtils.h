@@ -12,9 +12,8 @@ limitations under the License.
 ********************************************************************/
 #pragma once
 
-#if MAYA_API_VERSION >= 20180000
 #include <maya/MApiNamespace.h>
-#endif
+
 #include <maya/MFnDagNode.h>
 #include <maya/MObjectArray.h>
 #include <maya/MIntArray.h>
@@ -65,6 +64,8 @@ struct DenoiserSettings
 		trans = 0.0f;
 		colorOnly = false;
 		enable16bitCompute = false;
+
+		viewportDenoiseUpscaleEnabled = false;
 	}
 
 	bool enabled;
@@ -79,6 +80,8 @@ struct DenoiserSettings
 	float trans;
 	bool colorOnly;
 	bool enable16bitCompute;
+
+	bool viewportDenoiseUpscaleEnabled;
 };
 
 struct CompletionCriteriaParams
@@ -285,6 +288,7 @@ public:
 	bool viewportMotionBlur;
 	bool velocityAOVMotionBlur;
 	float motionBlurCameraExposure;
+	unsigned int motionSamples;
 
 	// Contour
 	bool contourIsEnabled;
