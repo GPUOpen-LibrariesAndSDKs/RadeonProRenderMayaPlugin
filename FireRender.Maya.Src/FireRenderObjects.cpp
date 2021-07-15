@@ -49,6 +49,8 @@ limitations under the License.
 #include <ostream>
 #include <sstream>
 
+#include <fstream>
+
 #include <Xgen/src/xgsculptcore/api/XgSplineAPI.h>
 
 #include <maya/MUuid.h>
@@ -1482,7 +1484,19 @@ void FireRenderMesh::Rebuild()
 #endif
 
 	// If there is just one shader and the number of shader is not changed then just update the shader
-	if (m.changed.mesh || (shadingEngines.length() != m.elements.size()))
+	unsigned int shadingEnginesLength = shadingEngines.length();
+	bool shadersChanged = false;
+	bool isRPR2 = TahoeContext::IsGivenContextRPR2(context);
+	if (isRPR2)
+	{
+		shadersChanged = (m.elements.size() > 0) && (shadingEngines.length() != m.elements[0].shaders.size());
+	}
+	else
+	{
+		shadersChanged = shadingEngines.length() != m.elements.size();
+	}
+
+	if (m.changed.mesh || shadersChanged || (m.elements.size() == 0))
 	{
 		// the number of shader has changed so reload the mesh
 		ReloadMesh(meshPath);
@@ -1609,6 +1623,7 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 		//Ignore set objects dirty calls while creating a mesh, because it moght lead to infinite lookps in case if deformtion motion blur is used
 		{
 			ContextSetDirtyObjectAutoLocker locker(*context);
+
 			outShapes = FireMaya::MeshTranslator::TranslateMesh(context->GetContext(), Object(), m.faceMaterialIndices, motionSamplesCount, dagPath.fullPathName());
 		}
 
