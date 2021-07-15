@@ -482,12 +482,18 @@ MStatus FireRenderGlobals::initialize()
 	MAKE_INPUT_CONST(eAttr);
 	CHECK_MSTATUS(addAttribute(Attribute::tahoeVersion));
 
-	MString workspace;
-	status = MGlobal::executeCommand(MString("workspace -q -dir;"), workspace);
-	workspace += "cache\"";
-	MGlobal::executeCommand(MString("optionVar -sv RPR_textureCachePath \"") + workspace);
-	MObject defaultTextureCachePath = sData.create(workspace);
-	Attribute::textureCachePath = tAttr.create("textureCachePath", "tcp", MFnData::kString, defaultTextureCachePath);
+	int isCachePathExists = 0;
+	MGlobal::executeCommand(MString("optionVar -ex \"RPR_textureCachePath\""), isCachePathExists);
+	if (!isCachePathExists) {
+		MString workspace;
+		status = MGlobal::executeCommand(MString("workspace -q -dir;"), workspace);
+		workspace += "cache\"";
+		MGlobal::executeCommand(MString("optionVar -sv RPR_textureCachePath \"") + workspace);
+	}
+	MString savedCachePath;
+	MGlobal::executeCommand(MString("optionVar -q \"RPR_textureCachePath\""), savedCachePath);
+	MObject textureCachePath = sData.create(savedCachePath);
+	Attribute::textureCachePath = tAttr.create("textureCachePath", "tcp", MFnData::kString, textureCachePath);
 	tAttr.setUsedAsFilename(true);
 	addAsGlobalAttribute(tAttr);
 
