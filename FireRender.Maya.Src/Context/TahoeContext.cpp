@@ -533,7 +533,12 @@ bool TahoeContext::IsHairSupported() const
 
 bool TahoeContext::IsVolumeSupported() const
 {
-	return m_PluginVersion == TahoePluginVersion::RPR1;
+	return true;
+}
+
+bool TahoeContext::IsNorthstarVolumeSupported() const
+{
+	return m_PluginVersion == TahoePluginVersion::RPR2;
 }
 
 bool TahoeContext::IsAOVSupported(int aov) const 

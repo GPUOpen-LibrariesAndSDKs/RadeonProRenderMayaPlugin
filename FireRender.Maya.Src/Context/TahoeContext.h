@@ -35,6 +35,7 @@ public:
 	virtual bool IsDisplacementSupported() const override;
 	virtual bool IsHairSupported() const override;
 	virtual bool IsVolumeSupported() const override;
+	virtual bool IsNorthstarVolumeSupported() const override;
 	virtual bool ShouldForceRAMDenoiser() const override;
 
 	virtual bool IsAOVSupported(int aov) const;

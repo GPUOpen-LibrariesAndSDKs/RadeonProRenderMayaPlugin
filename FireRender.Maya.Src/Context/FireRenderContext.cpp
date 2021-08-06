@@ -2348,15 +2348,27 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			ob = CreateSky(dagPath);
 		}
-		else if (dagNode.typeName() == "fluidShape" && volumeSupported)
+		else if (dagNode.typeName() == "fluidShape" && volumeSupported) // Maya native volume
 		{
-			// Maya native volume
-			ob = CreateSceneObject<FireRenderFluidVolume, NodeCachingOptions::AddPath>(dagPath);
+			if (IsNorthstarVolumeSupported())
+			{
+				ob = CreateSceneObject<NorthstarFluidVolume, NodeCachingOptions::AddPath>(dagPath);
+			}
+			else
+			{
+				ob = CreateSceneObject<FireRenderFluidVolume, NodeCachingOptions::AddPath>(dagPath);
+			}
 		}
-		else if (dagNode.typeName() == "RPRVolume" && volumeSupported)
+		else if (dagNode.typeName() == "RPRVolume" && volumeSupported) // can read .vdb files
 		{
-			// can read .vdb files
-			ob = CreateSceneObject<FireRenderRPRVolume, NodeCachingOptions::AddPath>(dagPath);
+			if (IsNorthstarVolumeSupported()) 
+			{
+				ob = CreateSceneObject<NorthstarRPRVolume, NodeCachingOptions::AddPath>(dagPath);
+			}
+			else
+			{
+				ob = CreateSceneObject<FireRenderRPRVolume, NodeCachingOptions::AddPath>(dagPath);
+			}
 		}
 		else if (dagNode.typeName() == "instancer")
 		{
