@@ -161,7 +161,8 @@ namespace frw
 		ValueTypeBufferSampler = RPR_MATERIAL_NODE_BUFFER_SAMPLER, // buffer node
 		ValueTypeHSVToRGB = RPR_MATERIAL_NODE_HSV_TO_RGB,
 		ValueTypeRRGToHSV = RPR_MATERIAL_NODE_RGB_TO_HSV,
-		ValueTypeToonRamp = RPR_MATERIAL_NODE_TOON_RAMP
+		ValueTypeToonRamp = RPR_MATERIAL_NODE_TOON_RAMP,
+		ValueTypeGridSampler = RPR_MATERIAL_NODE_GRID_SAMPLER
 	};
 
 	enum ShaderType
@@ -2038,6 +2039,8 @@ namespace frw
 			const rpr_int* normal_indices, rpr_int nidx_stride, const rpr_int** texcoord_indices,
 			const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces, rpr_mesh_info* meshAttrArray = nullptr, const std::string& optionalMeshName = "") const;
 
+		Shape CreateVoidMesh();
+
 		PointLight CreatePointLight()
 		{
 			FRW_PRINT_DEBUG("CreatePointLight()");
@@ -2163,6 +2166,16 @@ namespace frw
 			return Volume(h, *this);
 		}
 
+		struct VolumeData
+		{
+			rpr_grid m_densityGrid;
+			rpr_grid m_albedoGrid;
+			rpr_grid m_emissionGrid;
+			std::vector<float> m_densityLookup;
+			std::vector<float> m_albedoLookup;
+			std::vector<float> m_emissionLookup;
+		};
+
 		Volume CreateVolume(size_t gridSizeX,
 			size_t gridSizeY,
 			size_t gridSizeZ,
@@ -2180,6 +2193,57 @@ namespace frw
 		{
 			FRW_PRINT_DEBUG("CreateVolume()");
 
+			// create rpr volume node
+			rpr_hetero_volume h = 0;
+			rpr_int status = rprContextCreateHeteroVolume(Handle(), &h);
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR create volume failed!");
+
+			// create volume data
+			auto volumeData = CreateVolumeData(gridSizeX, gridSizeY, gridSizeZ, voxelData, numberOfVoxels, albedoCtrPoints,
+				countOfAlbedoCtrlPoints, albedoVal, emissionCtrPoints, countOfEmissionCtrlPoints, emissionVal,
+				densityCtrPoints, countOfDensityCtrlPoints, densityVal);
+
+			// - attach albedo grid and lookup to volume
+			status = rprHeteroVolumeSetAlbedoGrid(h, volumeData.m_albedoGrid);
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach albedo grid!");
+			status = rprHeteroVolumeSetAlbedoLookup(h, volumeData.m_albedoLookup.data(), (rpr_uint) (volumeData.m_albedoLookup.size() / 3));
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach albedo lookup table!");
+
+			// - attach emission grid and lookup to volume
+			status = rprHeteroVolumeSetEmissionGrid(h, volumeData.m_emissionGrid);
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach emission grid!");
+			status = rprHeteroVolumeSetEmissionLookup(h, volumeData.m_emissionLookup.data(), (rpr_uint) (volumeData.m_emissionLookup.size() / 3));
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach emission lookup table!");
+
+			// - attach density grid and lookup to volume
+			status = rprHeteroVolumeSetDensityGrid(h, volumeData.m_densityGrid);
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach grid!");
+			status = rprHeteroVolumeSetDensityLookup(h, volumeData.m_densityLookup.data(), (rpr_uint) (volumeData.m_densityLookup.size() / 3) );
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach lookup table!");
+			
+			return Volume(h, *this);
+		}
+
+		VolumeData CreateVolumeData(size_t gridSizeX,
+			size_t gridSizeY,
+			size_t gridSizeZ,
+			float const* voxelData, // float3 albedo RGB, float3 emision, float density (currently not used because we set ramps instead of passing volume color and density values directly
+			size_t numberOfVoxels,
+			float const* albedoCtrPoints = nullptr,
+			size_t countOfAlbedoCtrlPoints = 0,
+			float const* albedoVal = nullptr,
+			float const* emissionCtrPoints = nullptr,
+			size_t countOfEmissionCtrlPoints = 0,
+			float const* emissionVal = nullptr,
+			float const* densityCtrPoints = nullptr,
+			size_t countOfDensityCtrlPoints = 0,
+			float const* densityVal = nullptr)
+		{
+			FRW_PRINT_DEBUG("CreateVolumeData()");
+
+			// create data object
+			VolumeData volumeData;
+
 			// ensure correct volume grid data size
 			bool isGridDataValid = numberOfVoxels == gridSizeX * gridSizeY * gridSizeZ;
 			if (!isGridDataValid)
@@ -2195,11 +2259,6 @@ namespace frw
 			{
 				indicesList[idx] = idx;
 			}
-
-			// create rpr volume node
-			rpr_hetero_volume h = 0;
-			rpr_int status = rprContextCreateHeteroVolume(Handle(), &h);
-			checkStatusThrow(status, "Unable to create Hetero Volume - RPR create volume failed!");
 
 			// albedo
 			// - atm only ctrl points are supported
@@ -2219,24 +2278,22 @@ namespace frw
 			}
 
 			rpr_grid albedoGrid;
-			status = rprContextCreateGrid(Handle(), &albedoGrid,
+			rpr_int status = rprContextCreateGrid(Handle(), &albedoGrid,
 				gridSizeX, gridSizeY, gridSizeZ,
 				&indicesList[0], indicesList.size(), RPR_GRID_INDICES_TOPOLOGY_I_U64,
 				&albedo[0], albedo.size() * sizeof(albedo[0]), 0
 			);
 			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to create albedo grid!");
-			
-			// - attach grid and lookup to volume
-			status = rprHeteroVolumeSetAlbedoGrid(h, albedoGrid);
-			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach albedo grid!");
-			status = rprHeteroVolumeSetAlbedoLookup(h, albedo_look_up.data(), (rpr_uint) (albedo_look_up.size() / 3));
-			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach albedo lookup table!");
+
+			// store grid and lookup into data object
+			volumeData.m_albedoGrid = albedoGrid;
+			volumeData.m_albedoLookup = albedo_look_up;
 
 			// emission
 			// - atm only ctrl points are supported
 			// - create look up table
 			assert(countOfEmissionCtrlPoints);
-			std::vector<float> emission_look_up; emission_look_up.reserve(countOfEmissionCtrlPoints*3);
+			std::vector<float> emission_look_up; emission_look_up.reserve(countOfEmissionCtrlPoints * 3);
 			for (size_t idx = 0; idx < countOfEmissionCtrlPoints; ++idx)
 			{
 				emission_look_up.push_back(emissionCtrPoints[idx] * 10.f);
@@ -2257,11 +2314,9 @@ namespace frw
 			);
 			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to create emission grid!");
 
-			// - attach grid and lookup to volume
-			status = rprHeteroVolumeSetEmissionGrid(h, emissionGrid);
-			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach emission grid!");
-			status = rprHeteroVolumeSetEmissionLookup(h, emission_look_up.data(), (rpr_uint) (emission_look_up.size() / 3));
-			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach emission lookup table!");
+			// store grid and lookup into data object
+			volumeData.m_emissionGrid = emissionGrid;
+			volumeData.m_emissionLookup = emission_look_up;
 
 			// density
 			// - atm only ctrl points are supported
@@ -2270,9 +2325,9 @@ namespace frw
 			std::vector<float> density_look_up; density_look_up.reserve(countOfDensityCtrlPoints);
 			for (size_t idx = 0; idx < countOfDensityCtrlPoints; ++idx)
 			{
-				density_look_up.push_back(densityCtrPoints[idx]* 1000.0f);
-				density_look_up.push_back(densityCtrPoints[idx]* 1000.0f);
-				density_look_up.push_back(densityCtrPoints[idx]* 1000.0f);
+				density_look_up.push_back(densityCtrPoints[idx] * 1000.0f);
+				density_look_up.push_back(densityCtrPoints[idx] * 1000.0f);
+				density_look_up.push_back(densityCtrPoints[idx] * 1000.0f);
 			}
 
 			// - create density grid
@@ -2290,13 +2345,11 @@ namespace frw
 			);
 			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to create densitty grid!");
 
-			// - attach grid and lookup to volume
-			status = rprHeteroVolumeSetDensityGrid(h, densityGrid);
-			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach grid!");
-			status = rprHeteroVolumeSetDensityLookup(h, density_look_up.data(), (rpr_uint) (density_look_up.size() / 3) );
-			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach lookup table!");
-			
-			return Volume(h, *this);
+			// store grid and lookup into data object
+			volumeData.m_densityGrid = densityGrid;
+			volumeData.m_densityLookup = density_look_up;
+
+			return volumeData;
 		}
 
 		Curve CreateCurve(size_t num_controlPoints, rpr_float const * controlPointsData, 
@@ -2514,6 +2567,17 @@ namespace frw
 		{
 			AddReference(v);
 			return rprMaterialNodeSetInputImageDataByKey(Handle(), RPR_MATERIAL_INPUT_DATA, v.Handle());
+		}
+	};
+
+	class GridNode : public ValueNode
+	{
+	public:
+		explicit GridNode(const MaterialSystem& h) : ValueNode(h, ValueTypeGridSampler) {}
+		rpr_int SetGrid(VolumeGrid v)
+		{
+			AddReference(v);
+			return rprMaterialNodeSetInputGridDataByKey(Handle(), RPR_MATERIAL_INPUT_DATA, v.Handle());
 		}
 	};
 
@@ -4218,6 +4282,27 @@ namespace frw
 
 		Shape shapeObj (shape, *this);
 		shapeObj.SetUVCoordinatesSetFlag(numberOfTexCoordLayers > 0);
+
+		return shapeObj;
+	}
+
+	// This method is being used by Northstar volumes
+	inline Shape Context::CreateVoidMesh()
+	{
+		rpr_shape shape = nullptr;
+
+		rpr_mesh_info mesh_properties[16];
+		mesh_properties[0] = (rpr_mesh_info)RPR_MESH_VOLUME_FLAG;
+		mesh_properties[1] = (rpr_mesh_info)1; // enable the Volume flag for the Mesh
+		mesh_properties[2] = (rpr_mesh_info)0;
+
+
+		auto status = rprContextCreateMeshEx2(Handle(), nullptr, 0, 0, nullptr, 0, 0, nullptr, 0, 0, 0, nullptr, nullptr,
+			nullptr, nullptr, 0, nullptr, 0, nullptr, nullptr, nullptr, 0, mesh_properties, &shape);
+
+		checkStatusThrow(status, ("Unable to create mesh"));
+
+		Shape shapeObj(shape, *this);
 
 		return shapeObj;
 	}

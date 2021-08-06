@@ -768,6 +768,49 @@ protected:
 	virtual bool TranslateVolume(void) override;
 };
 
+// Implementation of RPR volumes in RPR 2
+class NorthstarRPRVolume : public FireRenderRPRVolume
+{
+public:
+	// Constructor
+	NorthstarRPRVolume(FireRenderContext* context, const MDagPath& dagPath);
+
+	// Destructor
+	virtual ~NorthstarRPRVolume();
+
+	// detach from the scene
+	virtual void detachFromScene() override;
+
+	// attach to the scene
+	virtual void attachToScene() override;
+
+
+protected:
+	virtual bool TranslateVolume(void) override;
+	virtual void ApplyTransform(void) override;
+};
+
+// Implementation of Fluid volumes in RPR 2
+class NorthstarFluidVolume : public FireRenderFluidVolume
+{
+public:
+	// Constructor
+	NorthstarFluidVolume(FireRenderContext* context, const MDagPath& dagPath);
+
+	// Destructor
+	virtual ~NorthstarFluidVolume();
+
+	// detach from the scene
+	virtual void detachFromScene() override;
+
+	// attach to the scene
+	virtual void attachToScene() override;
+
+protected:
+	virtual bool TranslateVolume(void) override;
+	virtual void ApplyTransform(void) override;
+};
+
 // Fire render hair
 // Bridge class between a Maya hair physical shader node and a frw::Curve
 class FireRenderHair : public FireRenderNode
