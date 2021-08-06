@@ -22,7 +22,7 @@ limitations under the License.
 <?define Version="$(env.MAYA_PLUGIN_VERSION)" ?>
 <?define UpgradeCode="2BB8FDDA-CF52-4FFB-A27C-7537281B463E" ?>
 
-<?define WebPageMainSite="http://pro.radeon.com/en-us/software/prorender/" ?>
-<?define WebPageDocumentation="http://pro.radeon.com/en-us/software/prorender/" ?>
+<?define WebPageMainSite="https://www.amd.com/en/technologies/radeon-prorender-autodeskmaya" ?>
+<?define WebPageDocumentation="https://radeon-pro.github.io/RadeonProRenderDocs/en/index.html" ?>
 
 </Include>
