@@ -183,7 +183,7 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 	aovsGlobal.applyToContext(ctx);
 
 	std::vector<std::wstring> aovs;
-	for (auto aov = RPR_AOV_OPACITY; aov != RPR_AOV_MAX; aov++)
+	for (auto aov = RPR_AOV_OPACITY; aov < RPR_AOV_MAX; aov++)
 	{
 		auto it = aov2name.find(aov);
 		if (it == aov2name.end())

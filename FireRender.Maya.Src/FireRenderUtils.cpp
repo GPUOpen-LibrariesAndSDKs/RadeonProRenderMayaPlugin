@@ -111,7 +111,8 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	tileSizeY(0),
 	cameraType(0),
 	useMPS(false),
-	useDetailedContextWorkLog(false)
+	useDetailedContextWorkLog(false),
+	deepEXRMergeZThreshold(0.1f)
 {
 
 }
@@ -463,6 +464,11 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("contourIsDebugEnabled");
 		if (!plug.isNull())
 			contourIsDebugEnabled = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("deepEXRMergeZThreshold");
+		if (!plug.isNull())
+			deepEXRMergeZThreshold = plug.asFloat();
+
 
 		aovs.readFromGlobals(frGlobalsNode);
 
