@@ -42,7 +42,7 @@ limitations under the License.
 
 //#define FRW_LOGGING 1
 
-#define RPR_AOV_MAX 0x3b
+#define RPR_AOV_MAX 0x41
 
 #if FRW_LOGGING
 

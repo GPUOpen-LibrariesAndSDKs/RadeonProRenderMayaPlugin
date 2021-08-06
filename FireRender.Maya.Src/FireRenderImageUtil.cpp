@@ -194,6 +194,11 @@ bool FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 
 		int aov_component_count = 0;
 
+		if (aov.id == RPR_AOV_DEEP_COLOR)
+		{
+			return;
+		}
+
 		for (const char* c : aov.description.components)
 		{
 			if (!c)
@@ -227,6 +232,11 @@ bool FireRenderImageUtil::saveMultichannelAOVs(MString filePath,
 
 			aovs.ForEachActiveAOV([&](FireRenderAOV& aov)
 			{
+				if (aov.id == RPR_AOV_DEEP_COLOR)
+				{
+					return;
+				}
+
 				int aov_component_count = aovs_component_count[aov.id];
 				if (aov_component_count)
 				{

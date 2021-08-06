@@ -337,6 +337,7 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 		attrControlGrp -label "Light Group 3" -attribute "RadeonProRenderGlobals.aovLightGroup3";
 		attrControlGrp -label "Subsurface / Volume" -attribute "RadeonProRenderGlobals.aovVolume";
 		attrControlGrp -label "Albedo" -attribute "RadeonProRenderGlobals.aovAlbedo";
+		attrControlGrp -label "Deep Color" -attribute "RadeonProRenderGlobals.aovDeepColor";
 		attrControlGrp -label "Crypto Material Mat0" -attribute "RadeonProRenderGlobals.aovCryptoMaterialMat0";
 		attrControlGrp -label "Crypto Material Mat1" -attribute "RadeonProRenderGlobals.aovCryptoMaterialMat1";
 		attrControlGrp -label "Crypto Material Mat2" -attribute "RadeonProRenderGlobals.aovCryptoMaterialMat2";
@@ -427,6 +428,21 @@ global proc OnAutoMaterialIdAssign()
     }                 
 }
 
+global proc createFireRenderDeepEXR(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+	setParent $parent;
+
+	columnLayout -adjustableColumn true -cat "left" 10;
+
+	attrControlGrp
+		-label "Merge Z Threshold"
+		-attribute "RadeonProRenderGlobals.deepEXRMergeZThreshold";
+
+	setParent ..;
+	setUITemplate -popTemplate;
+}
 
 global proc createFireRenderAOVsTab()
 {
@@ -444,6 +460,9 @@ global proc createFireRenderAOVsTab()
 	createObjectMaterialIDFrame ("fireRenderObjectMaterialIDFrame");
 	setParent ..;
 
+	frameLayout -label "Deep EXR" -cll true -cl 0 fireRenderDeepEXRFrame;
+	createFireRenderDeepEXR ("fireRenderDeepEXRFrame");
+	setParent ..;	
 
 	// Parameters are moved to Common Tab. We may remove these comments later
 	// Depth settings
@@ -462,22 +481,6 @@ global proc createFireRenderAOVsTab()
 		-af fireRenderGlobalsScrollLayout "left" 0
 		-af fireRenderGlobalsScrollLayout "right" 0
 		$parentForm;
-}
-
-global proc aovDepthAutoNormaliseChanged()
-{
-	if (`getAttr RadeonProRenderGlobals.aovDepthAutoNormalise`)
-	{
-		// Lock controls and
-		setAttr RadeonProRenderGlobals.aovDepthNormaliseMin -lock 1;
-		setAttr RadeonProRenderGlobals.aovDepthNormaliseMax -lock 1;
-	}
-	else
-	{
-		// Unlock controls
-		setAttr RadeonProRenderGlobals.aovDepthNormaliseMin -lock 0;
-		setAttr RadeonProRenderGlobals.aovDepthNormaliseMax -lock 0;
-	}
 }
 
 //global proc createEXRParameters(string $parent)

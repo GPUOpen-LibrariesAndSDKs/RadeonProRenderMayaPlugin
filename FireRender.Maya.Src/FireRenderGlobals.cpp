@@ -148,6 +148,9 @@ namespace
 		MObject contourNormalThreshold;
 		MObject contourAntialiasing;
 		MObject contourIsDebugEnabled;
+
+		// Deep EXR
+		MObject deepEXRMergeZThreshold;
 	}
 
     struct RenderingDeviceAttributes
@@ -490,6 +493,7 @@ MStatus FireRenderGlobals::initialize()
 		workspace += "cache\"";
 		MGlobal::executeCommand(MString("optionVar -sv RPR_textureCachePath \"") + workspace);
 	}
+
 	MString savedCachePath;
 	MGlobal::executeCommand(MString("optionVar -q \"RPR_textureCachePath\""), savedCachePath);
 	MObject textureCachePath = sData.create(savedCachePath);
@@ -501,6 +505,17 @@ MStatus FireRenderGlobals::initialize()
 	MAKE_INPUT(nAttr);
 	nAttr.setStorable(false);
 	CHECK_MSTATUS(addAttribute(switchDetailedLogAttribute));
+
+	Attribute::deepEXRMergeZThreshold = nAttr.create("deepEXRMergeZThreshold", "det", MFnNumericData::kFloat, 0.1f, &status);
+	MAKE_INPUT(nAttr);
+
+	nAttr.setMin(0);
+	nAttr.setSoftMin(0);
+	nAttr.setMax(100);
+	nAttr.setSoftMax(10);
+
+	CHECK_MSTATUS(addAttribute(Attribute::deepEXRMergeZThreshold));
+
 
 	// Needed for QA and CIS in order to switch on detailed sync and render logs
 

@@ -175,7 +175,7 @@ void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool rende
 		return;
 
 	int MaxAOV = GetAOVMaxValue();
-	for (int i = 0; i != MaxAOV; ++i)
+	for (int i = 0; i < MaxAOV; ++i)
 	{
 		initBuffersForAOV(context, i, glTexture);
 	}
@@ -230,6 +230,9 @@ bool aovExists(int index)
 	if ((index >= RPR_AOV_CRYPTOMATTE_OBJ0) && (index <= RPR_AOV_CRYPTOMATTE_OBJ2))
 		return true;
 
+	if (index == RPR_AOV_DEEP_COLOR)
+		return true;
+
 	return false;
 }
 
@@ -252,26 +255,40 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 
 	if (aovEnabled[index]) 
     {
-		m.framebufferAOV[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
+		bool createResolveFB = true;
+		if (index == RPR_AOV_DEEP_COLOR)
+		{
+			fmt.type = RPR_COMPONENT_TYPE_DEEP;
+
+			createResolveFB = false;
+		}
+		
+		m.framebufferAOV[index] = frw::FrameBuffer (context, m_width, m_height, fmt);
 		m.framebufferAOV[index].Clear();
 		context.SetAOV(m.framebufferAOV[index], index);
 
-		// Create an OpenGL interop resolved frame buffer if
-		// required, otherwise, create a standard frame buffer.
-		if (m_glInteropActive && glTexture)
-        { 
-			m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, glTexture);
-        }
-        else
-        {
-            m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
-        }
+		if (createResolveFB)
+		{
+			// Create an OpenGL interop resolved frame buffer if
+			// required, otherwise, create a standard frame buffer.
+			if (m_glInteropActive && glTexture)
+			{
+				m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, glTexture);
+			}
+			else
+			{
+				m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
+			}
 
-		m.framebufferAOV_resolved[index].Clear();
+			m.framebufferAOV_resolved[index].Clear();
+		}
 	}
 	else
 	{
-		context.SetAOV(nullptr, index);
+		if (aovExists(index))
+		{
+			context.SetAOV(nullptr, index);
+		}
 	}
 }
 
@@ -1034,7 +1051,7 @@ void FireRenderContext::render(bool lock)
 	if (m_restartRender)
 	{
 		int MaxAOV = GetAOVMaxValue();
-		for (int i = 0; i != MaxAOV; ++i) 
+		for (int i = 0; i < MaxAOV; ++i) 
 		{
 			if (aovEnabled[i])
 			{
@@ -1378,7 +1395,7 @@ rpr_framebuffer FireRenderContext::frameBufferAOV_Resolved(int aov) {
 		return nullptr;
 	}
 
-	if (needResolve())
+	if (needResolve() && aov != RPR_AOV_DEEP_COLOR)
 	{
 		//resolve tone mapping
 		m.framebufferAOV[aov].Resolve(m.framebufferAOV_resolved[aov], aov != RPR_AOV_COLOR);
