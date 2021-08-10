@@ -314,6 +314,190 @@ bool FireRenderRPRVolume::TranslateVolume()
 	return m_volume.IsValid();
 }
 
+//==================
+// Northstar RPR volume
+//==================
+
+NorthstarRPRVolume::NorthstarRPRVolume(FireRenderContext* context, const MDagPath& dagPath)
+	: FireRenderRPRVolume(context, dagPath)
+{}
+
+NorthstarRPRVolume::~NorthstarRPRVolume()
+{
+	clear();
+}
+
+void NorthstarRPRVolume::attachToScene()
+{
+	if (m_isVisible)
+		return;
+
+	frw::Scene scene = context()->GetScene();
+	if (!scene.IsValid())
+		return;
+
+	scene.Attach(m_boundingBoxMesh);
+
+	m_isVisible = true;
+}
+
+void NorthstarRPRVolume::detachFromScene()
+{
+	if (!m_isVisible)
+		return;
+
+	if (frw::Scene scene = context()->GetScene())
+	{
+		scene.Detach(m_boundingBoxMesh);
+
+		m_isVisible = false;
+	}
+}
+
+void NorthstarRPRVolume::ApplyTransform(void)
+{
+	if (!m_boundingBoxMesh.IsValid())
+		return;
+
+	auto node = Object();
+	MFnDagNode fnDagNode(node);
+	MDagPath path = MDagPath::getAPathTo(node);
+
+	// get transform
+	MMatrix matrix = path.inclusiveMatrix();
+	matrix = m_matrix * matrix;
+
+	// convert Maya mesh in cm to m
+	MMatrix scaleM;
+	scaleM.setToIdentity();
+	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+
+	// apply bbox grid size (by scale matrix)
+	matrix = m_bboxScale * matrix * scaleM;
+
+	float mfloats[4][4];
+	matrix.get(mfloats);
+
+	// apply transform to fake mesh
+	m_boundingBoxMesh.SetTransform(*mfloats, false);
+}
+
+// we use a texture as a lookup table
+frw::ImageNode CreateLookupTextureNode(FireRenderCommonVolume *object, std::vector<float> lookupValues, frw::GridNode grid)
+{
+	rpr_image_desc lookupImageDesc;
+	lookupImageDesc.image_width = lookupValues.size() / 3;
+	lookupImageDesc.image_height = 1;
+	lookupImageDesc.image_depth = 0;
+	lookupImageDesc.image_row_pitch = lookupImageDesc.image_width * sizeof(float) * 3;
+	lookupImageDesc.image_slice_pitch = 0;
+	auto lookupImage = frw::Image(object->Context(), { 3, RPR_COMPONENT_TYPE_FLOAT32 },
+		lookupImageDesc, lookupValues.data());
+
+	auto lookupNode = frw::ImageNode(object->context()->GetMaterialSystem());
+	lookupNode.SetMap(lookupImage);
+	lookupNode.SetValue(RPR_MATERIAL_INPUT_UV, grid);
+	lookupNode.SetValueInt(RPR_MATERIAL_INPUT_WRAP_U, RPR_IMAGE_WRAP_TYPE_CLAMP_TO_EDGE);
+	lookupNode.SetValueInt(RPR_MATERIAL_INPUT_WRAP_V, RPR_IMAGE_WRAP_TYPE_CLAMP_TO_EDGE);
+
+	return lookupNode;
+}
+
+bool NorthstarRPRVolume::TranslateVolume()
+{
+	// setup
+	const MObject& node = Object();
+
+	// get volume data
+	VDBVolumeData vdata;
+	RPRVolumeAttributes::FillVolumeData(vdata, node);
+
+	if (!vdata.IsValid())
+		return false;
+
+	//create void mesh for volume
+	m_boundingBoxMesh = Context().CreateVoidMesh();
+	if (!m_boundingBoxMesh.IsValid()) {
+		return false;
+	}
+
+	//create main volume shader
+	auto volumeShader = frw::Shader(context()->GetMaterialSystem(), frw::ShaderType::ShaderTypeVolume);	
+
+	// create grids
+	m_densityGrid.Reset();
+	m_albedoGrid.Reset();
+	m_emissionGrid.Reset();
+
+
+	if (vdata.densityGrid.IsValid()) // grid exists
+	{
+		m_densityGrid = Context().CreateVolumeGrid(
+			vdata.densityGrid.gridSizeX,
+			vdata.densityGrid.gridSizeY,
+			vdata.densityGrid.gridSizeZ,
+			vdata.densityGrid.gridOnIndices,
+			vdata.densityGrid.gridOnValueIndices,
+			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
+		);
+
+		auto densityGridNode = frw::GridNode(context()->GetMaterialSystem());
+		densityGridNode.SetGrid(m_densityGrid);
+
+		auto densityLookupNode = CreateLookupTextureNode(this, vdata.densityGrid.valuesLookUpTable, densityGridNode);
+
+		volumeShader.xSetValue(RPR_MATERIAL_INPUT_DENSITYGRID, densityGridNode);
+
+		//now density is a constant value because density lookup is temporary unavailable in Northstar
+		//volumeShader.xSetValue(RPR_MATERIAL_INPUT_DENSITY, densityLookupNode);
+		volumeShader.xSetParameterF(RPR_MATERIAL_INPUT_DENSITY, 1000.0f, 1.0f, 1.0f, 1.0f); 
+	}
+	
+	if (vdata.albedoGrid.IsValid()) // grid exists
+	{
+		m_albedoGrid = Context().CreateVolumeGrid(
+			vdata.albedoGrid.gridSizeX,
+			vdata.albedoGrid.gridSizeY,
+			vdata.albedoGrid.gridSizeZ,
+			vdata.albedoGrid.gridOnIndices,
+			vdata.albedoGrid.gridOnValueIndices,
+			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
+		);
+
+		auto albedoGridNode = frw::GridNode(context()->GetMaterialSystem());
+		albedoGridNode.SetGrid(m_albedoGrid);
+
+		auto albedoLookupNode = CreateLookupTextureNode(this, vdata.albedoGrid.valuesLookUpTable, albedoGridNode);
+		volumeShader.xSetValue(RPR_MATERIAL_INPUT_COLOR, albedoLookupNode);
+	}
+
+	if (vdata.emissionGrid.IsValid()) // grid exists
+	{	
+		m_emissionGrid = Context().CreateVolumeGrid(
+			vdata.emissionGrid.gridSizeX,
+			vdata.emissionGrid.gridSizeY,
+			vdata.emissionGrid.gridSizeZ,
+			vdata.emissionGrid.gridOnIndices,
+			vdata.emissionGrid.gridOnValueIndices,
+			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
+		);
+
+		auto emissionGridNode = frw::GridNode(context()->GetMaterialSystem());
+		emissionGridNode.SetGrid(m_emissionGrid);
+
+		auto emissionLookupNode = CreateLookupTextureNode(this, vdata.emissionGrid.valuesLookUpTable, emissionGridNode);
+		volumeShader.xSetValue(RPR_MATERIAL_INPUT_EMISSION, emissionLookupNode);
+
+		if (!vdata.albedoGrid.IsValid()) // albedo doesn't set
+		{
+			volumeShader.xSetParameterF(RPR_MATERIAL_INPUT_COLOR, 0.0f, 0.0f, 0.0f, 1.0f); // we need to set zero albedo
+		}
+	}
+	m_boundingBoxMesh.SetVolumeShader(volumeShader);
+
+	return m_boundingBoxMesh.IsValid();
+}
+
 //===================
 // Volume
 //===================
@@ -1252,6 +1436,20 @@ bool FireRenderFluidVolume::TranslateVolume(void)
 	MTypeId mayaId = shaderNode.typeId();
 #endif
 
+	// get initial dimensions from volume
+	m_bboxScale.setToIdentity();
+	MPlug dimensionWPlug = shaderNode.findPlug("dimensionsW");
+	MPlug dimensionHPlug = shaderNode.findPlug("dimensionsH");
+	MPlug dimensionDPlug = shaderNode.findPlug("dimensionsD");
+	if (dimensionWPlug.isNull() || dimensionHPlug.isNull() || dimensionDPlug.isNull())
+	{
+		error.set("Volumes:", "MFnFluid failed to get dimentions plugs", false, false);
+		return false;
+	}
+	m_bboxScale[0][0] = dimensionWPlug.asFloat();
+	m_bboxScale[1][1] = dimensionHPlug.asFloat();
+	m_bboxScale[2][2] = dimensionDPlug.asFloat();
+
 	// get extra transform from volume shader
 	// - it is applied only when "Auto Resize" is checked
 	MPlug isGridAutoResizePlug = shaderNode.findPlug("autoResize");
@@ -1276,6 +1474,23 @@ bool FireRenderFluidVolume::TranslateVolume(void)
 		m_matrix[3][0] = dynamicOffsetXPlug.asFloat();
 		m_matrix[3][1] = dynamicOffsetYPlug.asFloat();
 		m_matrix[3][2] = dynamicOffsetZPlug.asFloat();
+
+		// apply auto resize scale
+		MPlug baseResolutionPlug = shaderNode.findPlug("baseResolution");
+		MPlug resolutionWPlug = shaderNode.findPlug("resolutionW");
+		MPlug resolutionHPlug = shaderNode.findPlug("resolutionH");
+		MPlug resolutionDPlug = shaderNode.findPlug("resolutionD");
+
+		if (baseResolutionPlug.isNull() || resolutionWPlug.isNull() || resolutionHPlug.isNull() || resolutionDPlug.isNull())
+		{
+			error.set("Volumes:", "MFnFluid failed to get dynamic scale plugs", false, false);
+			return false;
+		}
+
+		m_bboxScale[0][0] *= resolutionWPlug.asFloat() / baseResolutionPlug.asFloat();
+		m_bboxScale[1][1] *= resolutionHPlug.asFloat() / baseResolutionPlug.asFloat();
+		m_bboxScale[2][2] *= resolutionDPlug.asFloat() / baseResolutionPlug.asFloat();
+
 	}
 
 	// read fluid data fields to volume data container
@@ -1310,3 +1525,222 @@ bool FireRenderFluidVolume::TranslateVolume(void)
 	return m_volume.IsValid();
 }
 
+//===================
+// Northstar fluid volume
+//===================
+NorthstarFluidVolume::NorthstarFluidVolume(FireRenderContext* context, const MDagPath& dagPath)
+	: FireRenderFluidVolume(context, dagPath)
+{}
+
+NorthstarFluidVolume::~NorthstarFluidVolume()
+{
+	clear();
+}
+
+void NorthstarFluidVolume::attachToScene()
+{
+	if (m_isVisible)
+		return;
+
+	frw::Scene scene = context()->GetScene();
+	if (!scene.IsValid())
+		return;
+
+	scene.Attach(m_boundingBoxMesh);
+
+	m_isVisible = true;
+}
+
+void NorthstarFluidVolume::detachFromScene()
+{
+	if (!m_isVisible)
+		return;
+
+	if (frw::Scene scene = context()->GetScene())
+	{
+		scene.Detach(m_boundingBoxMesh);
+
+		m_isVisible = false;
+	}
+}
+
+void NorthstarFluidVolume::ApplyTransform(void)
+{
+	if (!m_boundingBoxMesh.IsValid())
+		return;
+
+	auto node = Object();
+	MFnDagNode fnDagNode(node);
+	MDagPath path = MDagPath::getAPathTo(node);
+
+	// get transform
+	MMatrix matrix = path.inclusiveMatrix();
+	matrix = m_matrix * matrix;
+
+	// convert Maya mesh in cm to m
+	MMatrix scaleM;
+	scaleM.setToIdentity();
+	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+
+	// apply bbox grid size (by scale matrix)
+	matrix = m_bboxScale * matrix * scaleM;
+
+	float mfloats[4][4];
+	matrix.get(mfloats);
+
+	// apply transform to fake mesh
+	m_boundingBoxMesh.SetTransform(*mfloats, false);
+}
+
+bool NorthstarFluidVolume::TranslateVolume(void)
+{
+	VolumeData vdata;
+	FireRenderError error;
+
+	// setup
+	const MObject& node = Object();
+
+	// get fluid object
+	MStatus mstatus;
+	MFnFluid fnFluid(node, &mstatus);
+	if (MStatus::kSuccess != mstatus)
+	{
+		error.set("Volumes:", "MFnFluid constructor", false, false);
+		return false;
+	}
+
+	// extract data from fluid object
+	bool success;
+	success = TranslateGeneralVolumeData(&vdata, fnFluid);
+	if (!success)
+	{
+		return false;
+	}
+
+	// get volume shader
+	MDagPath path = MDagPath::getAPathTo(node);
+	MObjectArray shdrs = getConnectedShaders(path);
+	size_t count_shdrs = shdrs.length();
+	MFnDependencyNode shaderNode(shdrs[0 /*idx*/]); // assuming first volume shder is the one we need
+#ifdef _DEBUG
+	MString shaderName = shaderNode.name();
+	MString shaderType = shaderNode.typeName();
+	MTypeId mayaId = shaderNode.typeId();
+#endif
+
+	// get initial dimensions from volume
+	m_bboxScale.setToIdentity();
+	MPlug dimensionWPlug = shaderNode.findPlug("dimensionsW");
+	MPlug dimensionHPlug = shaderNode.findPlug("dimensionsH");
+	MPlug dimensionDPlug = shaderNode.findPlug("dimensionsD");
+	if (dimensionWPlug.isNull() || dimensionHPlug.isNull() || dimensionDPlug.isNull())
+	{
+		error.set("Volumes:", "MFnFluid failed to get dimentions plugs", false, false);
+		return false;
+	}
+	m_bboxScale[0][0] = dimensionWPlug.asFloat();
+	m_bboxScale[1][1] = dimensionHPlug.asFloat();
+	m_bboxScale[2][2] = dimensionDPlug.asFloat();
+
+	// get extra transform from volume shader
+	// - it is applied only when "Auto Resize" is checked
+	MPlug isGridAutoResizePlug = shaderNode.findPlug("autoResize");
+	if (isGridAutoResizePlug.isNull())
+	{
+		error.set("Volumes:", "MFnFluid failed to get auto resize plug", false, false);
+		return false;
+	}
+	bool isGridAutoResize = isGridAutoResizePlug.asBool();
+
+	if (isGridAutoResize)
+	{
+		MPlug dynamicOffsetXPlug = shaderNode.findPlug("dynamicOffsetX");
+		MPlug dynamicOffsetYPlug = shaderNode.findPlug("dynamicOffsetY");
+		MPlug dynamicOffsetZPlug = shaderNode.findPlug("dynamicOffsetZ");
+		if (dynamicOffsetXPlug.isNull() || dynamicOffsetYPlug.isNull() || dynamicOffsetZPlug.isNull())
+		{
+			error.set("Volumes:", "MFnFluid failed to get dynamic offsets plugs", false, false);
+			return false;
+		}
+		m_matrix.setToIdentity();
+		m_matrix[3][0] = dynamicOffsetXPlug.asFloat();
+		m_matrix[3][1] = dynamicOffsetYPlug.asFloat();
+		m_matrix[3][2] = dynamicOffsetZPlug.asFloat();
+
+		// apply auto resize scale
+		MPlug baseResolutionPlug = shaderNode.findPlug("baseResolution");
+		MPlug resolutionWPlug = shaderNode.findPlug("resolutionW");
+		MPlug resolutionHPlug = shaderNode.findPlug("resolutionH");
+		MPlug resolutionDPlug = shaderNode.findPlug("resolutionD");
+
+		if (baseResolutionPlug.isNull() || resolutionWPlug.isNull() || resolutionHPlug.isNull() || resolutionDPlug.isNull())
+		{
+			error.set("Volumes:", "MFnFluid failed to get dynamic scale plugs", false, false);
+			return false;
+		}
+
+		m_bboxScale[0][0] *= resolutionWPlug.asFloat() / baseResolutionPlug.asFloat();
+		m_bboxScale[1][1] *= resolutionHPlug.asFloat() / baseResolutionPlug.asFloat();
+		m_bboxScale[2][2] *= resolutionDPlug.asFloat() / baseResolutionPlug.asFloat();
+
+	}
+
+	// read fluid data fields to volume data container
+	success = TranslateAlbedo(&vdata, fnFluid, shaderNode);
+	if (!success)
+	{
+		return false;
+	}
+	success = TranslateDensity(&vdata, fnFluid, shaderNode);
+	if (!success)
+	{
+		return false;
+	}
+	success = TranslateEmission(&vdata, fnFluid, shaderNode);
+	if (!success)
+	{
+		return false;
+	}
+
+	// create base mesh
+	m_boundingBoxMesh = Context().CreateVoidMesh();
+
+	// create volume shader
+	auto volumeShader = frw::Shader(context()->GetMaterialSystem(), frw::ShaderType::ShaderTypeVolume);
+
+	// create grids and lookups
+	auto volumeData = Context().CreateVolumeData(
+		vdata.gridSizeX, vdata.gridSizeY, vdata.gridSizeZ,
+		(float*)vdata.voxels.data(), vdata.voxels.size(),
+		(float*)vdata.albedoLookupCtrlPoints.data(), vdata.albedoLookupCtrlPoints.size(),
+		(float*)vdata.albedoVal.data(),
+		(float*)vdata.emissionLookupCtrlPoints.data(), vdata.emissionLookupCtrlPoints.size(),
+		(float*)vdata.emissionVal.data(),
+		(float*)vdata.denstiyLookupCtrlPoints.data(), vdata.denstiyLookupCtrlPoints.size(),
+		(float*)vdata.densityVal.data()
+	);
+
+	// create density nodes
+	auto densityGridNode = frw::GridNode(context()->GetMaterialSystem());
+	densityGridNode.SetGrid(frw::VolumeGrid(volumeData.m_densityGrid, Context()));
+	auto densityLookupNode = CreateLookupTextureNode(this, volumeData.m_densityLookup, densityGridNode);
+
+	auto emissionGridNode = frw::GridNode(context()->GetMaterialSystem());
+	emissionGridNode.SetGrid(frw::VolumeGrid(volumeData.m_emissionGrid, Context()));
+	auto emissionLookupNode = CreateLookupTextureNode(this, volumeData.m_emissionLookup, emissionGridNode);
+
+	auto albedoGridNode = frw::GridNode(context()->GetMaterialSystem());
+	albedoGridNode.SetGrid(frw::VolumeGrid(volumeData.m_albedoGrid, Context()));
+	auto albedoLookupNode = CreateLookupTextureNode(this, volumeData.m_albedoLookup, albedoGridNode);
+	
+	// apply nodes to main shader
+	volumeShader.xSetValue(RPR_MATERIAL_INPUT_DENSITYGRID, densityGridNode);
+	//volumeShader.xSetValue(RPR_MATERIAL_INPUT_DENSITY, densityLookupNode); // not implemented in northstar
+	volumeShader.xSetParameterF(RPR_MATERIAL_INPUT_DENSITY, 10000.f, 1.f, 1.f, 1.f); // constant mock
+	volumeShader.xSetValue(RPR_MATERIAL_INPUT_COLOR, albedoLookupNode);
+	volumeShader.xSetValue(RPR_MATERIAL_INPUT_EMISSION, emissionLookupNode);
+
+	m_boundingBoxMesh.SetVolumeShader(volumeShader);
+
+	return m_boundingBoxMesh.IsValid();
+}

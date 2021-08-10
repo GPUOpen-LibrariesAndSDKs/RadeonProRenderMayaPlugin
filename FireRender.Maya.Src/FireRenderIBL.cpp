@@ -576,12 +576,21 @@ void FireRenderIBLOverride::updateRenderItems(const MDagPath& path, MHWRender::M
 				{
 					if (mFilePathChanged)
 					{
-						auto renderer = MHWRender::MRenderer::theRenderer();
-						auto textureManager = renderer->getTextureManager();
-						MHWRender::MTextureAssignment texResource;
-						texResource.texture = textureManager->acquireTexture(mFilePath, path.partialPathName());
-						shader->setParameter("map", texResource);
-						textureManager->releaseTexture(texResource.texture);
+						try
+						{
+							auto renderer = MHWRender::MRenderer::theRenderer();
+							auto textureManager = renderer->getTextureManager();
+							MHWRender::MTextureAssignment texResource;
+							texResource.texture = textureManager->acquireTexture(mFilePath, path.partialPathName());
+							shader->setParameter("map", texResource);
+							textureManager->releaseTexture(texResource.texture);
+						}
+						catch (...)
+						{
+							MString errorMsg;
+							errorMsg.format("Failed to acquire texture: \"^1s\"", mFilePath);
+							MGlobal::displayError(errorMsg);
+						}
 						mFilePathChanged = false;
 					}
 					float colorGain[3] = { mIntensity, mIntensity, mIntensity };

@@ -40,6 +40,8 @@ MStatus FireMaya::Lookup::initialize()
 	eAttr.addField("Object XYZ", frw::LookupTypePositionLocal);
 	eAttr.addField("Vertex Color", frw::LookupTypeVertexColor);
 	eAttr.addField("Random Color", frw::LookupTypeShapeRandomColor);
+	eAttr.addField("Random Primitive Color", frw::LookupTypePrimitiveRandomColor);
+	eAttr.addField("Object ID", frw::LookupTypeObjectID);
 	MAKE_INPUT_CONST(eAttr);
 
 	Attribute::output = nAttr.createPoint("out", "o");

@@ -326,6 +326,9 @@ public:
 
 	bool useDetailedContextWorkLog;
 
+	//Deep EXR
+	float deepEXRMergeZThreshold;
+
 private:
 	short getMaxRayDepth(const FireRenderContext& context) const;
 	short getSamples(const FireRenderContext& context) const;
