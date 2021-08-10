@@ -113,7 +113,7 @@ global proc createAboutFrame(string $parent)
 		flowLayout -columnSpacing 8 -wrap true -height 60;
 
 			canvas -width 20 -height 1 -enableBackground false;
-			button -label "Main Site" -height 19 -command "showRPRUrl(\"http://pro.radeon.com/en-us/software/prorender/\")";
+			button -label "Main Site" -height 19 -command "showRPRUrl(\"https://www.amd.com/en/technologies/radeon-prorender-autodeskmaya\")";
 			button -label "Documentation" -height 19 -command "showRPRUrl(\"https://radeon-pro.github.io/RadeonProRenderDocs/en/index.html\")";
 			button -label "Downloads" -height 19 -command "showRPRUrl(\"https://www.amd.com/en/technologies/radeon-prorender-downloads/\")";
 			button -label "Community" -height 19 -command "showRPRUrl(\"https://community.amd.com/t5/maya-discussions/bd-p/maya-discussions\")";

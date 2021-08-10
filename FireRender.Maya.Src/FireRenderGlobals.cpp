@@ -148,6 +148,9 @@ namespace
 		MObject contourNormalThreshold;
 		MObject contourAntialiasing;
 		MObject contourIsDebugEnabled;
+
+		// Deep EXR
+		MObject deepEXRMergeZThreshold;
 	}
 
     struct RenderingDeviceAttributes
@@ -482,12 +485,19 @@ MStatus FireRenderGlobals::initialize()
 	MAKE_INPUT_CONST(eAttr);
 	CHECK_MSTATUS(addAttribute(Attribute::tahoeVersion));
 
-	MString workspace;
-	status = MGlobal::executeCommand(MString("workspace -q -dir;"), workspace);
-	workspace += "cache\"";
-	MGlobal::executeCommand(MString("optionVar -sv RPR_textureCachePath \"") + workspace);
-	MObject defaultTextureCachePath = sData.create(workspace);
-	Attribute::textureCachePath = tAttr.create("textureCachePath", "tcp", MFnData::kString, defaultTextureCachePath);
+	int isCachePathExists = 0;
+	MGlobal::executeCommand(MString("optionVar -ex \"RPR_textureCachePath\""), isCachePathExists);
+	if (!isCachePathExists) {
+		MString workspace;
+		status = MGlobal::executeCommand(MString("workspace -q -dir;"), workspace);
+		workspace += "cache\"";
+		MGlobal::executeCommand(MString("optionVar -sv RPR_textureCachePath \"") + workspace);
+	}
+
+	MString savedCachePath;
+	MGlobal::executeCommand(MString("optionVar -q \"RPR_textureCachePath\""), savedCachePath);
+	MObject textureCachePath = sData.create(savedCachePath);
+	Attribute::textureCachePath = tAttr.create("textureCachePath", "tcp", MFnData::kString, textureCachePath);
 	tAttr.setUsedAsFilename(true);
 	addAsGlobalAttribute(tAttr);
 
@@ -495,6 +505,17 @@ MStatus FireRenderGlobals::initialize()
 	MAKE_INPUT(nAttr);
 	nAttr.setStorable(false);
 	CHECK_MSTATUS(addAttribute(switchDetailedLogAttribute));
+
+	Attribute::deepEXRMergeZThreshold = nAttr.create("deepEXRMergeZThreshold", "det", MFnNumericData::kFloat, 0.1f, &status);
+	MAKE_INPUT(nAttr);
+
+	nAttr.setMin(0);
+	nAttr.setSoftMin(0);
+	nAttr.setMax(100);
+	nAttr.setSoftMax(10);
+
+	CHECK_MSTATUS(addAttribute(Attribute::deepEXRMergeZThreshold));
+
 
 	// Needed for QA and CIS in order to switch on detailed sync and render logs
 
