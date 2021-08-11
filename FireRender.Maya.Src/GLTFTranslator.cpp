@@ -158,7 +158,7 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 			materialSystem.Handle(),
 			scenes.data(),
 			scenes.size(),
-			gltfFlags);
+			gltfFlags, nullptr);
 
 		if (err != GLTF_SUCCESS)
 		{
