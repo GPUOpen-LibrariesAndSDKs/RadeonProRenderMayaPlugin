@@ -97,7 +97,7 @@ void FillArrayWithMMatrixData(std::array<float, 16>& arr, const MMatrix& matrix)
 		}
 }
 
-void FillArrayWithScaledMMatrixData(std::array<float, 16>& arr, float coeff = 0.01f)
+void FillArrayWithScaledMMatrixData(std::array<float, 16>& arr, float coeff = GetSceneUnitsConversionCoefficient())
 {
 	MMatrix matrix;
 
@@ -289,8 +289,7 @@ void AnimationExporter::SetTransformationForNode(MObject transform, const char* 
 	transformMatrix.getScale(scale, MSpace::kTransform);
 
 	//cm to m
-	float coeff = 0.01f;
-	vecTranslation *= coeff;
+	vecTranslation *= GetSceneUnitsConversionCoefficient();
 
 	int index = 0;
 	for (int i = 0; i < 3; i++)
@@ -625,11 +624,9 @@ void AnimationExporter::ApplyAnimationForTransform(const MDagPath& dagPath, Anim
 			{
 				MVector vec1 = transformMatrix.getTranslation(MSpace::kTransform);
 				//cm to m
-				float coeff = 0.01f;
-
-				dataHolderStruct.m_values.push_back((float)vec1.x * coeff);
-				dataHolderStruct.m_values.push_back((float)vec1.y * coeff);
-				dataHolderStruct.m_values.push_back((float)vec1.z * coeff);
+				dataHolderStruct.m_values.push_back((float)vec1.x * GetSceneUnitsConversionCoefficient());
+				dataHolderStruct.m_values.push_back((float)vec1.y * GetSceneUnitsConversionCoefficient());
+				dataHolderStruct.m_values.push_back((float)vec1.z * GetSceneUnitsConversionCoefficient());
 			}
 			else if (attributeId == m_runtimeMoveTypeRotation)
 			{
