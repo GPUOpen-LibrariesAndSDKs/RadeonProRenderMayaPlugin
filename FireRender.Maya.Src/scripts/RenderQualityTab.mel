@@ -62,7 +62,7 @@ proc createFinalRenderQualityPart()
 	frameLayout -label "Final Render Advanced Settings" -cll true -cl 0 fireRenderQualityAdvancedFrame;
 
 	attrControlGrp
-		-label "Ray Epsilon(mm)"
+		-label "Ray Epsilon(0.1 scene units)"
 		-attribute "RadeonProRenderGlobals.raycastEpsilon";
 
         attrControlGrp

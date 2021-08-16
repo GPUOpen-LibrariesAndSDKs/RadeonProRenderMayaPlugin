@@ -823,6 +823,13 @@ MObject findDependNode(MString name);
 //
 bool isMetalOn();
 
+// Maya always returns all lengths in centimeters despite the settings in Preferences (detected experimentally)
+inline float GetSceneUnitsConversionCoefficient(void)
+{
+	const static float cmToMCoefficient = 0.01f;
+	return cmToMCoefficient;
+}
+
 /**
 * Disconnect everything connected to Plug
 * Returns true if successfull
