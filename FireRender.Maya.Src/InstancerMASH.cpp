@@ -228,14 +228,25 @@ bool InstancerMASH::MASHContext::Init(MFnArrayAttrsData& arrayAttrsData, const I
 	if (!ojectIndexArrayExists)
 		return false;
 
-	m_objectIndexArray = arrayAttrsData.getDoubleData("objectIndex", &res);
+	// Get list of objects that are instanced by mash
+	std::vector<MObject> targetObjects = pInstancer->GetTargetObjects();
+
+	MDoubleArray dblArray = arrayAttrsData.getDoubleData("objectIndex", &res);
 	assert(res == MStatus::kSuccess);
+
+	for (unsigned int idx = 0; idx < dblArray.length(); ++idx)
+	{
+		// MASH "Id Count" property might be bigger then real count of objects. We need to fix indices accordingly
+		if (dblArray[idx] >= targetObjects.size())
+		{
+			dblArray[idx] = (double) (targetObjects.size() - 1);
+		}
+	}
+
+	m_objectIndexArray = dblArray;
 
 	// Generate unique uuid, because we can't use instancer uuid - it initiates infinite Freshen() on whole hierarchy
 	m_uuidVectors.resize(m_objectIndexArray.length());
-
-	// Get list of objects that are instanced by mash
-	std::vector<MObject> targetObjects = pInstancer->GetTargetObjects();
 
 	for (unsigned int idx = 0; idx < m_objectIndexArray.length(); ++idx)
 	{
