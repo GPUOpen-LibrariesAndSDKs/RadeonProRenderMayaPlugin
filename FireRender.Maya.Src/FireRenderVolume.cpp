@@ -80,7 +80,7 @@ void FireRenderCommonVolume::ApplyTransform(void)
 	// convert Maya mesh in cm to m
 	MMatrix scaleM;
 	scaleM.setToIdentity();
-	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
 
 	// apply bbox grid size (by scale matrix)
 	matrix = m_bboxScale * matrix * scaleM;
@@ -370,7 +370,7 @@ void NorthstarRPRVolume::ApplyTransform(void)
 	// convert Maya mesh in cm to m
 	MMatrix scaleM;
 	scaleM.setToIdentity();
-	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
 
 	// apply bbox grid size (by scale matrix)
 	matrix = m_bboxScale * matrix * scaleM;
@@ -1580,7 +1580,7 @@ void NorthstarFluidVolume::ApplyTransform(void)
 	// convert Maya mesh in cm to m
 	MMatrix scaleM;
 	scaleM.setToIdentity();
-	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
 
 	// apply bbox grid size (by scale matrix)
 	matrix = m_bboxScale * matrix * scaleM;
