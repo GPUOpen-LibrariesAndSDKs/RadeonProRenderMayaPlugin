@@ -538,7 +538,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 
 			// launch export
 			rpr_int statusExport = rprsExport(MString(newFilePath.c_str()).asUTF8(), tahoeContextPtr->context(), tahoeContextPtr->scene(),
-				0, 0, 0, 0, 0, 0, SetupExportFlags(isExportAsSingleFileEnabled, isIncludeTextureCacheEnabled, compressionOption));
+				0, 0, 0, 0, 0, 0, SetupExportFlags(isExportAsSingleFileEnabled, isIncludeTextureCacheEnabled, compressionOption), nullptr);
 			
 			// save config
 			bool res = SaveExportConfig(newFilePath, *tahoeContextPtr, fileName);

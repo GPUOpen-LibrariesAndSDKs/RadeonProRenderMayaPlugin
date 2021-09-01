@@ -173,7 +173,7 @@ void FireRenderGPUCache::RebuildTransforms()
 
 	MMatrix scaleM;
 	scaleM.setToIdentity();
-	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
 	matrix *= scaleM;
 
 	for (auto& element : m.elements)
