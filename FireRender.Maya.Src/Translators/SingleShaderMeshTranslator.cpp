@@ -200,10 +200,15 @@ void FireMaya::SingleShaderMeshTranslator::AddPolygonSingleShader(
 
 	// vertex colors
 	MColorArray polygonColors;
-	meshPolygonIterator.getColors(polygonColors);
+	mayaStatus = meshPolygonIterator.getColors(polygonColors);
+	assert(MStatus::kSuccess == mayaStatus);
 
 	// material ids
-	int shaderId = faceMaterialIndices[meshPolygonIterator.index()];
+	unsigned int iteratorIdx = meshPolygonIterator.index(&mayaStatus);
+	assert(MStatus::kSuccess == mayaStatus);
+	unsigned int faceMaterialsSize = faceMaterialIndices.length();
+	assert(faceMaterialsSize > iteratorIdx);
+	const int shaderId = faceMaterialIndices[iteratorIdx];
 
 	if (vertices.length() == 4) // this is quad
 	{
