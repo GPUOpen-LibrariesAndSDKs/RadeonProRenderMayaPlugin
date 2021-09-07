@@ -778,6 +778,14 @@ void FireRenderMesh::buildSphere()
 	}
 }
 
+void FireRenderMesh::SetPreProcessedSafe() 
+{
+	if (IsMainInstance() && IsInitialized())
+	{
+		m.isPreProcessed = true;
+	}
+}
+
 void FireRenderMeshCommon::setRenderStats(MDagPath dagPath)
 {
 	MFnDependencyNode depNode(dagPath.node());
@@ -1114,13 +1122,8 @@ bool FireRenderMesh::setupDisplacement(std::vector<MObject>& shadingEngines, frw
 void FireRenderMesh::ReloadMesh(const MDagPath& meshPath)
 {
 	MMatrix mMtx = meshPath.inclusiveMatrix();
+
 	setVisibility(false);
-
-	if (IsMainInstance() && m.elements.size() > 0)
-	{
-		this->context()->RemoveMainMesh(this);
-	}
-
 	m.elements.clear();
 
 	std::vector<frw::Shape> shapes;
@@ -1469,11 +1472,13 @@ void FireRenderMesh::ProcessSkyLight(void)
 
 void FireRenderMesh::Rebuild()
 {
+//************************************************************************************************************************
+// TODO: this segment should be moved into separate function as we have a bit of copy-past with mesh pre-processing (for reasons)
 	auto node = Object();
 	MFnDagNode meshFn(node);
 	MDagPath meshPath = DagPath();
 
-	FireRenderContext *context = this->context();
+	const FireRenderContext* context = this->context();
 
 	MObjectArray shadingEngines = GetShadingEngines(meshFn, Instance());
 
@@ -1498,9 +1503,25 @@ void FireRenderMesh::Rebuild()
 
 	if (m.changed.mesh || shadersChanged || (m.elements.size() == 0))
 	{
+#ifdef MESH_RELOAD_REFERENCE_DEBUG
+		std::ofstream loggingFile;
+		loggingFile.open("C:\\temp\\dbg\\meshes_full_log.txt", std::ofstream::out | std::ofstream::app);
+		loggingFile << "ReloadMesh " << name << "\n";
+		loggingFile.close();
+#endif
 		// the number of shader has changed so reload the mesh
 		ReloadMesh(meshPath);
 	}
+	else
+	{
+#ifdef MESH_RELOAD_REFERENCE_DEBUG
+		std::ofstream loggingFile;
+		loggingFile.open("C:\\temp\\dbg\\meshes_full_log.txt", std::ofstream::out | std::ofstream::app);
+		loggingFile << "SKIP ReloadMesh " << name << "\n";
+		loggingFile.close();
+#endif
+	}
+//****************************************************************************************************************
 
 	// Assignment should be before callbacks registering, because RegisterCallbacks() use them
 	AssignShadingEngines(shadingEngines);
@@ -1599,9 +1620,9 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 {
 	FireRenderContext* context = this->context();
 
-	const FireRenderMeshCommon* mainMesh = context->GetMainMesh(uuid());
+	FireRenderMeshCommon* mainMesh = context->GetMainMesh(uuid());
 
-	if (mainMesh != nullptr)
+	if ((mainMesh != nullptr) && !mainMesh->IsPreProcessed())
 	{
 		const std::vector<FrElement>& elements = mainMesh->Elements();
 
@@ -1616,19 +1637,30 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 	}
 
 	MDagPath dagPath = DagPath();
+
+	if ((mainMesh != nullptr) && (mainMesh->IsPreProcessed()))
+	{
+		bool success = mainMesh->TranslateMeshWrapped(dagPath, outShapes);
+		assert(success);
+	}
+
 	if (mainMesh == nullptr)
 	{
-		bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && TahoeContext::IsGivenContextRPR2(context) && !context->isInteractive();
-		unsigned int motionSamplesCount = deformationMotionBlurEnabled ? context->motionSamples() : 0;
-		//Ignore set objects dirty calls while creating a mesh, because it moght lead to infinite lookps in case if deformtion motion blur is used
+		if (!IsPreProcessed())
 		{
-			ContextSetDirtyObjectAutoLocker locker(*context);
-
-			outShapes = FireMaya::MeshTranslator::TranslateMesh(context->GetContext(), Object(), m.faceMaterialIndices, motionSamplesCount, dagPath.fullPathName());
+			MFnDagNode node(Object());
+			{
+				std::string preprocessedMesh(node.fullPathName().asChar());
+				std::ofstream loggingFile;
+				loggingFile.open("C:\\temp\\dbg\\meshes_full_log.txt", std::ofstream::out | std::ofstream::app);
+				loggingFile << "trying to create not pre processed mesh: " << preprocessedMesh;
+				loggingFile.close();
+			}
 		}
+		assert(IsPreProcessed());
 
-		m.isMainInstance = true;
-		context->AddMainMesh(this);
+		bool success = TranslateMeshWrapped(dagPath, outShapes);
+		assert(success);
 	}
 
 	for (int i = 0; i < outShapes.size(); i++)
@@ -1639,6 +1671,42 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 	}
 
 	SaveUsedUV(Object());
+}
+
+bool FireRenderMesh::TranslateMeshWrapped(const MDagPath& dagPath, std::vector<frw::Shape>& outShapes)
+{
+	if (!m_meshData.IsInitialized())
+	{
+		MFnDagNode node(Object());
+		{
+			std::string preprocessedMesh(node.fullPathName().asChar());
+			std::ofstream loggingFile;
+			loggingFile.open("C:\\temp\\dbg\\meshes_full_log.txt", std::ofstream::out | std::ofstream::app);
+			loggingFile << "trying to translate empty mesh: " << preprocessedMesh;
+			loggingFile.close();
+		}
+	}
+	assert(IsMainInstance()); // should already be main instance at this point
+
+	if (!m_meshData.IsInitialized())
+		return false;
+
+	FireRenderContext* context = this->context();
+	bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && TahoeContext::IsGivenContextRPR2(context) && !context->isInteractive();
+	unsigned int motionSamplesCount = deformationMotionBlurEnabled ? context->motionSamples() : 0;
+
+	//Ignore set objects dirty calls while creating a mesh, because it might lead to infinite lookps in case if deformtion motion blur is used
+	{
+		ContextSetDirtyObjectAutoLocker locker(*context);
+		MFnDagNode dagNode(Object());
+		MString name = dagNode.fullPathName();
+		assert(m_meshData.IsInitialized());
+		outShapes = FireMaya::MeshTranslator::TranslateMesh(m_meshData, context->GetContext(), Object(), m.faceMaterialIndices, motionSamplesCount, dagPath.fullPathName());
+	}
+
+	m.isPreProcessed = false;
+
+	return true;
 }
 
 void FireRenderMesh::SaveUsedUV(const MObject& meshNode)
@@ -1829,6 +1897,63 @@ HashValue FireRenderMesh::CalculateHash()
 		hash << e.shadingEngines;
 	}
 	return hash;
+}
+
+bool FireRenderMesh::InitializeMaterials()
+{
+	auto node = Object();
+	MFnDagNode meshFn(node);
+
+	MObjectArray shadingEngines = GetShadingEngines(meshFn, Instance());
+
+	// If there is just one shader and the number of shader is not changed then just update the shader
+	bool onlyShaderChanged = (!m.changed.mesh && (shadingEngines.length() == m.elements.size()));
+
+	return !onlyShaderChanged;
+}
+
+bool FireRenderMesh::PreProcessMesh(unsigned int sampleIdx /*= 0*/)
+{
+	FireRenderContext* context = this->context();
+
+	const FireRenderMeshCommon* mainMesh = context->GetMainMesh(uuid());
+
+	if ((mainMesh != nullptr) && mainMesh->IsPreProcessed())
+	{
+		return true;
+	}
+
+	if ((mainMesh != nullptr) && (this != mainMesh))
+	{
+		return true;
+	}
+
+	bool success = false;
+	MDagPath dagPath = DagPath();
+	bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && TahoeContext::IsGivenContextRPR2(context) && !context->isInteractive();
+	unsigned int motionSamplesCount = deformationMotionBlurEnabled ? context->motionSamples() : 0;
+	//Ignore set objects dirty calls while creating a mesh, because it might lead to infinite lookps in case if deformtion motion blur is used
+	{
+		ContextSetDirtyObjectAutoLocker locker(*context);
+		success = FireMaya::MeshTranslator::PreProcessMesh(m_meshData, context->GetContext(), Object(), motionSamplesCount, sampleIdx, dagPath.fullPathName());
+	}
+
+	if (!success)
+		return false;
+
+	if (mainMesh == nullptr)
+	{
+		m.isMainInstance = true;
+		context->AddMainMesh(this);
+	}
+
+	bool finishedPreProcessing = deformationMotionBlurEnabled ? (motionSamplesCount == sampleIdx + 1) : true;
+	if (!finishedPreProcessing)
+		return success;
+
+	m.isPreProcessed = true;
+
+	return success;
 }
 
 //===================
@@ -2629,6 +2754,8 @@ void setPortal_Sky(MObject transformObject, FireRenderSky *light) {
 
 				light->RecordPortalState(portal, false);
 
+				const bool isSkyMeshProcessed = ob->PreProcessMesh(0);
+				assert(isSkyMeshProcessed);
 				ob->Freshen(ob->context()->GetRenderType() == RenderType::ViewportRender);	// make sure we have shapes to attach
 
 				if (ob->IsVisible())
