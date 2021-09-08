@@ -30,6 +30,7 @@ limitations under the License.
 #include <maya/MItDependencyNodes.h>
 #include <maya/MUserEventMessage.h>
 #include <maya/MItDependencyGraph.h>
+#include <maya/MAnimControl.h>
 
 #include "AutoLock.h"
 #include "VRay.h"
@@ -42,6 +43,8 @@ limitations under the License.
 #include "FireRenderThread.h"
 #include "FireRenderMaterialSwatchRender.h"
 #include "CompositeWrapper.h"
+
+#include <deque>
 
 #ifdef WIN32 // alembic support is disabled on MAC until alembic build issue on MAC is resolved
 #include "FireRenderGPUCache.h"
@@ -2630,12 +2633,14 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 	}
 
 	size_t dirtyObjectsSize = m_dirtyObjects.size();
-
 	ContextWorkProgressData syncProgressData;
 	syncProgressData.totalCount = dirtyObjectsSize;
 	TimePoint syncStartTime = GetCurrentChronoTime();
 
 	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncStarted);
+
+	std::deque<std::shared_ptr<FireRenderObject> > meshesToInitialize; // meshes which would be pre-processed
+	std::deque<std::shared_ptr<FireRenderObject> > meshesToFreshen; // meshes which would be freshened
 
 	while (!m_dirtyObjects.empty())
 	{
@@ -2654,28 +2659,174 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 			m_dirtyMutex.unlock();
 
 			// Now perform update
-			if (ptr)
-			{
-				changed = true;
-				DebugPrint("Freshing object");
-
-				UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectPreSync);
-				ptr->Freshen(shouldCalculateHash);
-
-				syncProgressData.currentIndex++;
-				UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectSyncComplete);
-
-				if (cancelled())
-				{
-					return false;
-				}
-			}
-			else
+			if (!ptr)
 			{
 				DebugPrint("Cancelled freshing null object");
+				continue;
+			}
+
+			changed = true;
+
+			if (ptr->IsMesh())
+			{
+				FireRenderMesh* pMesh = dynamic_cast<FireRenderMesh*>(ptr.get());
+				assert(pMesh != nullptr);
+
+				bool meshChanged = pMesh->InitializeMaterials();
+				if (meshChanged)
+				{
+					meshesToInitialize.emplace_back() = ptr;
+				}
+				else
+				{
+					pMesh->SetPreProcessedSafe();
+					meshesToFreshen.emplace_back() = ptr;
+				}
+
+				continue;
+			}
+
+			if (ptr->IsMashInstancer())
+			{
+				meshesToInitialize.emplace_back() = ptr;
+
+				continue;
+			}
+
+			DebugPrint("Freshing object");
+
+			UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectPreSync);
+			ptr->Freshen(shouldCalculateHash);
+
+			syncProgressData.currentIndex++;
+			UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectSyncComplete);
+
+			if (cancelled())
+			{
+				return false;
 			}
 		}
 	}
+
+#ifdef MESH_RELOAD_REFERENCE_DEBUG
+	for (auto it = meshesToInitialize.begin(); it != meshesToInitialize.end(); ++it)
+	{
+		if (!it->get())
+		{
+			continue;
+		}
+
+		MFnDagNode node(it->get()->Object());
+		{
+			std::string preprocessedMesh(node.fullPathName().asChar());
+			std::ofstream loggingFile;
+			loggingFile.open("C:\\temp\\dbg\\meshes_full_log.txt", std::ofstream::out | std::ofstream::app);
+			loggingFile << "meshToInitialize: " << preprocessedMesh << " , " <<
+				(dynamic_cast<FireRenderMesh*>(it->get())->IsMainInstance() ? "is main mesh; " : "is instance; ");
+			if (!dynamic_cast<FireRenderMesh*>(it->get())->IsMainInstance())
+			{
+				FireRenderMeshCommon* mainMesh = GetMainMesh(it->get()->uuid());
+				if (!mainMesh)
+				{
+					loggingFile << "no main mesh; ";
+				}
+				else
+				{
+					loggingFile << ((dynamic_cast<FireRenderMesh*>(mainMesh)->IsInitialized()) ? "main mesh is initialized" : "main mesh NOT initialized");
+				}
+			}
+			loggingFile << "\n";
+			loggingFile.close();
+		}
+	}
+#endif
+
+	const bool isDeformationMotionBlurEnabled = motionBlur() && IsDeformationMotionBlurEnabled() && !isInteractive();
+	const unsigned int motionSamplesCount = isDeformationMotionBlurEnabled ? motionSamples() : 1;
+
+	// read data from meshes
+	MTime initialTime = MAnimControl::currentTime();
+	MTime currentTime = initialTime;
+	unsigned int currentSampeIdx = 0;
+
+	do
+	{
+		// iterate through meshes
+		for (auto it = meshesToInitialize.begin(); it != meshesToInitialize.end(); ++it)
+		{
+			if (!it->get())
+			{
+				continue;
+			}
+
+			const bool success = it->get()->PreProcessMesh(currentSampeIdx);
+			if (success && (currentSampeIdx == 0))
+			{
+				meshesToFreshen.emplace_back() = *it;
+			}
+		}
+
+		if (++currentSampeIdx >= motionSamplesCount)
+			break;
+
+		// positioning on next point of time (starting from currentTime)
+		currentTime += (float)currentSampeIdx / (motionSamplesCount - 1);
+		MGlobal::viewFrame(currentTime);
+		
+	} while (currentTime != MAnimControl::maxTime());
+
+	MGlobal::viewFrame(initialTime);
+
+#ifdef MESH_RELOAD_REFERENCE_DEBUG
+	for (auto it = meshesToFreshen.begin(); it != meshesToFreshen.end(); ++it)
+	{
+		if (!it->get())
+		{
+			continue;
+		}
+
+		MFnDagNode node(it->get()->Object());
+		{
+			std::string preprocessedMesh(node.fullPathName().asChar());
+			std::ofstream loggingFile;
+			loggingFile.open("C:\\temp\\dbg\\meshes_full_log.txt", std::ofstream::out | std::ofstream::app);
+			loggingFile << "meshesToFreshen: " << preprocessedMesh << " , " <<
+				(dynamic_cast<FireRenderMesh*>(it->get())->IsMainInstance() ? "is main mesh; " : "is instance; ");
+			if (!dynamic_cast<FireRenderMesh*>(it->get())->IsMainInstance())
+			{
+				FireRenderMeshCommon* mainMesh = GetMainMesh(it->get()->uuid());
+				if (!mainMesh)
+				{
+					loggingFile << "no main mesh; ";
+				}
+				else
+				{
+					loggingFile << ((dynamic_cast<FireRenderMesh*>(mainMesh)->IsInitialized()) ? "main mesh is initialized" : "main mesh NOT initialized");
+				}
+			}
+			loggingFile << "\n";
+			loggingFile.close();
+		}
+	}
+#endif
+
+	// process read data (would be done in multiple threads in the future)
+	for (auto it = meshesToFreshen.begin(); it != meshesToFreshen.end(); ++it)
+	{
+		FireRenderObject* pMesh = it->get();
+		if (pMesh == nullptr)
+			continue;
+
+		pMesh->Freshen(shouldCalculateHash);
+	}
+
+#ifdef MESH_RELOAD_REFERENCE_DEBUG
+	{
+		std::ofstream loggingFile;
+		loggingFile.open("C:\\temp\\dbg\\meshes_full_log.txt", std::ofstream::out | std::ofstream::app);
+		loggingFile << "finished freshen " << "\n";
+	}
+#endif
 
 	syncProgressData.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), syncStartTime);
 	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncComplete);

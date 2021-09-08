@@ -581,6 +581,11 @@ bool TahoeContext::MetalContextAvailable() const
     return true;
 }
 
+bool TahoeContext::IsDeformationMotionBlurEnabled() const
+{
+	return TahoeContext::IsGivenContextRPR2(this);
+}
+
 void TahoeContext::SetRenderUpdateCallback(RenderUpdateCallback callback, void* data)
 {
 	if (m_PluginVersion == TahoePluginVersion::RPR2)

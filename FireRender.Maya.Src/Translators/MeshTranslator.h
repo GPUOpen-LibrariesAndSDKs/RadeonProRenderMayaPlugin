@@ -42,21 +42,35 @@ namespace FireMaya
 
 			unsigned int motionSamplesCount;
 
+			MIntArray faceMaterialIndices;
+			int materialCount;
+
+			MString fullName;
+			bool haveDeformation;
+
+			// temporary store MObject here as well before we store indexes here
+			MObject object;
+
 			MeshPolygonData();
 
 			// Initializes mesh and returns error status
 			bool Initialize(MFnMesh& fnMesh, unsigned int deformationFrameCount, MString fullDagPath);
+			bool ReadDeformationFrame(MFnMesh& fnMesh, unsigned int currentDeformationFrame);
 			bool ProcessDeformationFrameCount(MFnMesh& fnMesh, MString fullDagPath);
 
-			size_t GetTotalVertexCount() { return std::max(arrVertices.size() / 3, countVertices); }
-			size_t GetTotalNormalCount() { return std::max(arrNormals.size() / 3, countNormals); }
+			size_t GetTotalVertexCount() const { return std::max(arrVertices.size() / 3, countVertices); }
+			size_t GetTotalNormalCount() const { return std::max(arrNormals.size() / 3, countNormals); }
 
 			const float* GetVertices() const { return arrVertices.size() > 0 ? arrVertices.data() : pVertices; }
 			const float* GetNormals() const { return arrNormals.size() > 0 ? arrNormals.data() : pNormals; }
 
+			bool IsInitialized(void) const { return m_isInitialized; }
+
 		private:
 			const float* pVertices;
 			const float* pNormals;
+
+			bool m_isInitialized;
 		};
 
 		struct MeshIdxDictionary
@@ -98,6 +112,9 @@ namespace FireMaya
 			// Colors corresponding to vertices
 			std::map<int, MColor> vertexColors;
 		};
+
+		static bool PreProcessMesh(MeshPolygonData& outMeshPolygonData, const frw::Context& context, const MObject& originalObject, unsigned int deformationFrameCount = 0, unsigned int currentDeformationFrame = 0, MString fullDagPath = "");
+		static std::vector<frw::Shape> TranslateMesh(MeshPolygonData& meshPolygonData, const frw::Context& context, const MObject& originalObject, std::vector<int>& outFaceMaterialIndices, unsigned int deformationFrameCount = 0, MString fullDagPath = "");
 
 		static std::vector<frw::Shape> TranslateMesh(const frw::Context& context, const MObject& originalObject, std::vector<int>& outFaceMaterialIndices, unsigned int deformationFrameCount = 0, MString fullDagPath="");
 
