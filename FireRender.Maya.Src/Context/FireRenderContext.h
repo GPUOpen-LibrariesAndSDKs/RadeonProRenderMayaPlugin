@@ -547,7 +547,7 @@ public:
 	frw::PostEffect normalization;
 	frw::PostEffect gamma_correction;
 
-	const FireRenderMeshCommon* GetMainMesh(const std::string& uuid) const
+	FireRenderMeshCommon* GetMainMesh(const std::string& uuid) const
 	{
 		assert(!uuid.empty());
 
@@ -561,7 +561,7 @@ public:
 		return nullptr;
 	}
 
-	void AddMainMesh(const FireRenderMeshCommon* mainMesh)
+	void AddMainMesh(FireRenderMeshCommon* mainMesh)
 	{
 		std::string uuid = mainMesh->uuidWithoutInstanceNumber();
 
@@ -642,6 +642,8 @@ public:
 	virtual frw::Shader GetDefaultColorShader(frw::Value color) override;
 
 	virtual bool MetalContextAvailable() const { return false; }
+
+	virtual bool IsDeformationMotionBlurEnabled() const { return false; }
 
 	bool IsGLTFExport() const override { return m_bIsGLTFExport; }
 	void SetGLTFExport(bool isGLTFExport) { m_bIsGLTFExport = isGLTFExport; }
@@ -818,7 +820,7 @@ private:
 	}
 
 	/** map corresponds shape in Maya with main FireRenderMesh (used for instancing) **/
-	std::map<std::string, const FireRenderMeshCommon*> m_mainMeshesDictionary;
+	std::map<std::string, FireRenderMeshCommon*> m_mainMeshesDictionary;
 
 	/** map corresponding dag path of the node with the mode **/
 	std::map<std::string, MDagPath> m_nodePathCache;

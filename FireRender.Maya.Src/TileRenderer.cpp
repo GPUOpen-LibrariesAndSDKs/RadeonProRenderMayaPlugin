@@ -57,7 +57,6 @@ void TileRenderer::Render(FireRenderContext& renderContext, const TileRenderInfo
 	{
 		MFnDependencyNode imNode(imagePlane);
 		MString name2 = imNode.name();
-		int debugi = 0;
 	}
 
 	MString name = fireRenderCamera.GetPlugValue(imagePlane, "imageName", MString());

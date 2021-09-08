@@ -38,11 +38,13 @@ public:
 	virtual bool IsNorthstarVolumeSupported() const override;
 	virtual bool ShouldForceRAMDenoiser() const override;
 
-	virtual bool IsAOVSupported(int aov) const;
+	virtual bool IsAOVSupported(int aov) const override;
 
 	virtual bool IsPhysicalLightTypeSupported(PLType lightType) const override;
 
 	virtual bool MetalContextAvailable() const override;
+
+	virtual bool IsDeformationMotionBlurEnabled() const override;
 
 	virtual void SetRenderUpdateCallback(RenderUpdateCallback callback, void* data) override;
 	virtual void AbortRender() override;
@@ -56,7 +58,7 @@ protected:
 
 	bool needResolve() const override;
 
-	bool IsGLInteropEnabled() const;
+	bool IsGLInteropEnabled() const override;
 
 	virtual void OnPreRender() override;
 
