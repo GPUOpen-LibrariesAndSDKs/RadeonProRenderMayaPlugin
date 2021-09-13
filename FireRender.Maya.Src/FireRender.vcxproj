@@ -295,6 +295,7 @@
     <ClCompile Include="Volumes\FireRenderVolumeLocator.cpp" />
     <ClCompile Include="Volumes\FireRenderVolumeOverride.cpp" />
     <ClCompile Include="Volumes\VolumeAttributes.cpp" />
+    <ClCompile Include="FireRenderVoronoi.cpp" />
     <ClCompile Include="VRay.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -387,6 +388,7 @@
     <ClInclude Include="FireRenderThread.h" />
     <ClInclude Include="FireRenderExportCmd.h" />
     <ClInclude Include="FireRenderVolumeMaterial.h" />
+    <ClInclude Include="FireRenderVoronoi.h" />
     <ClInclude Include="frWrap.h" />
     <ClInclude Include="FireRenderViewportManager.h" />
     <ClInclude Include="GlobalRenderUtilsDataHolder.h" />
