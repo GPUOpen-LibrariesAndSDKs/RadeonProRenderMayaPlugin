@@ -152,6 +152,7 @@ namespace frw
 		ValueTypeGradientMap = RPR_MATERIAL_NODE_GRADIENT_TEXTURE,
 		ValueTypeCheckerMap = RPR_MATERIAL_NODE_CHECKER_TEXTURE, //did not get color input
 		ValueTypeDotMap = RPR_MATERIAL_NODE_DOT_TEXTURE, //did not get color input
+		ValueTypeVoronoiMap = RPR_MATERIAL_NODE_VORONOI_TEXTURE, //did not get color input
 		ValueTypeConstant = RPR_MATERIAL_NODE_CONSTANT_TEXTURE,
 		ValueTypeLookup = RPR_MATERIAL_NODE_INPUT_LOOKUP,
 		ValueTypeBlend = RPR_MATERIAL_NODE_BLEND_VALUE,

@@ -93,6 +93,7 @@ namespace FireMaya
 			FireRenderAONode,
 			FireRenderVolumeLocator,
 			FireRenderToonMaterial,
+			FireRenderVoronoi,
 
 			// ^ always add new ids to end of list (max 128 entries here)
 			FireRenderNodeIdEndCurrent, // <- this value is allowed to change, it marks the end of current list
