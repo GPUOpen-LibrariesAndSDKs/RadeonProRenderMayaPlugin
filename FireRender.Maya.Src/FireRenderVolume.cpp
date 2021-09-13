@@ -441,16 +441,13 @@ bool NorthstarRPRVolume::TranslateVolume()
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
 		);
 
+		MFnDependencyNode depNode(node);
+		float const maxDensityValue = RPRVolumeAttributes::GetDensityMultiplier(depNode);
+
 		auto densityGridNode = frw::GridNode(context()->GetMaterialSystem());
 		densityGridNode.SetGrid(m_densityGrid);
-
-		auto densityLookupNode = CreateLookupTextureNode(this, vdata.densityGrid.valuesLookUpTable, densityGridNode);
-
 		volumeShader.xSetValue(RPR_MATERIAL_INPUT_DENSITYGRID, densityGridNode);
-
-		//now density is a constant value because density lookup is temporary unavailable in Northstar
-		//volumeShader.xSetValue(RPR_MATERIAL_INPUT_DENSITY, densityLookupNode);
-		volumeShader.xSetParameterF(RPR_MATERIAL_INPUT_DENSITY, 1000.0f, 1.0f, 1.0f, 1.0f); 
+		volumeShader.xSetParameterF(RPR_MATERIAL_INPUT_DENSITY, maxDensityValue, 1.0f, 1.0f, 1.0f);
 	}
 	
 	if (vdata.albedoGrid.IsValid()) // grid exists
@@ -1708,6 +1705,30 @@ bool NorthstarFluidVolume::TranslateVolume(void)
 	// create volume shader
 	auto volumeShader = frw::Shader(context()->GetMaterialSystem(), frw::ShaderType::ShaderTypeVolume);
 
+	// compute grid values because density lookup is not implemented in Northstar
+	std::vector<float> densityValues;
+	densityValues.resize(vdata.densityVal.size());
+
+	for (size_t idx = 0; idx < vdata.densityVal.size(); idx++) 
+	{
+		if (vdata.densityVal[idx] < 0)
+		{
+			densityValues[idx] = 0;  // process incorrect lookup index
+			continue;
+		}
+		if (vdata.densityVal[idx] >= 1)
+		{
+			densityValues[idx] = vdata.denstiyLookupCtrlPoints.back(); // process incorrect lookup index
+			continue;
+		}
+		size_t lookupIdx = floor(vdata.densityVal[idx] * (vdata.denstiyLookupCtrlPoints.size() - 1));
+
+		// linear interpolation
+		float firstValue = vdata.denstiyLookupCtrlPoints[lookupIdx];
+		float secondValue = vdata.denstiyLookupCtrlPoints[lookupIdx + 1];
+		densityValues[idx] = firstValue + (secondValue - firstValue) * (vdata.densityVal[idx] * vdata.denstiyLookupCtrlPoints.size() - lookupIdx);
+	}
+
 	// create grids and lookups
 	auto volumeData = Context().CreateVolumeData(
 		vdata.gridSizeX, vdata.gridSizeY, vdata.gridSizeZ,
@@ -1717,13 +1738,12 @@ bool NorthstarFluidVolume::TranslateVolume(void)
 		(float*)vdata.emissionLookupCtrlPoints.data(), vdata.emissionLookupCtrlPoints.size(),
 		(float*)vdata.emissionVal.data(),
 		(float*)vdata.denstiyLookupCtrlPoints.data(), vdata.denstiyLookupCtrlPoints.size(),
-		(float*)vdata.densityVal.data()
+		(float*)densityValues.data()
 	);
 
 	// create density nodes
 	auto densityGridNode = frw::GridNode(context()->GetMaterialSystem());
 	densityGridNode.SetGrid(frw::VolumeGrid(volumeData.m_densityGrid, Context()));
-	auto densityLookupNode = CreateLookupTextureNode(this, volumeData.m_densityLookup, densityGridNode);
 
 	auto emissionGridNode = frw::GridNode(context()->GetMaterialSystem());
 	emissionGridNode.SetGrid(frw::VolumeGrid(volumeData.m_emissionGrid, Context()));
@@ -1735,8 +1755,7 @@ bool NorthstarFluidVolume::TranslateVolume(void)
 	
 	// apply nodes to main shader
 	volumeShader.xSetValue(RPR_MATERIAL_INPUT_DENSITYGRID, densityGridNode);
-	//volumeShader.xSetValue(RPR_MATERIAL_INPUT_DENSITY, densityLookupNode); // not implemented in northstar
-	volumeShader.xSetParameterF(RPR_MATERIAL_INPUT_DENSITY, 10000.f, 1.f, 1.f, 1.f); // constant mock
+	volumeShader.xSetParameterF(RPR_MATERIAL_INPUT_DENSITY, 1000.f, 1.f, 1.f, 1.f); // multiplication coefficient
 	volumeShader.xSetValue(RPR_MATERIAL_INPUT_COLOR, albedoLookupNode);
 	volumeShader.xSetValue(RPR_MATERIAL_INPUT_EMISSION, emissionLookupNode);
 
