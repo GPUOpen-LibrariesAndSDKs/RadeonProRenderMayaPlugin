@@ -219,7 +219,7 @@ namespace FireMaya
 
 		DataPtr m;
 
-		void RegisterCallback(MObject node);
+		void RegisterCallback(MObject node, std::string* pOverridenUUID = nullptr);
 
 		IFireRenderContextInfo* m_pContextInfo; // Scope can not exist without a context, thus using raw pointer here is safe
 
