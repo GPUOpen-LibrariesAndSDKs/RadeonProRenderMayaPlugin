@@ -2708,39 +2708,6 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		}
 	}
 
-#ifdef MESH_RELOAD_REFERENCE_DEBUG
-	for (auto it = meshesToInitialize.begin(); it != meshesToInitialize.end(); ++it)
-	{
-		if (!it->get())
-		{
-			continue;
-		}
-
-		MFnDagNode node(it->get()->Object());
-		{
-			std::string preprocessedMesh(node.fullPathName().asChar());
-			std::ofstream loggingFile;
-			loggingFile.open("C:\\temp\\dbg\\meshes_full_log.txt", std::ofstream::out | std::ofstream::app);
-			loggingFile << "meshToInitialize: " << preprocessedMesh << " , " <<
-				(dynamic_cast<FireRenderMesh*>(it->get())->IsMainInstance() ? "is main mesh; " : "is instance; ");
-			if (!dynamic_cast<FireRenderMesh*>(it->get())->IsMainInstance())
-			{
-				FireRenderMeshCommon* mainMesh = GetMainMesh(it->get()->uuid());
-				if (!mainMesh)
-				{
-					loggingFile << "no main mesh; ";
-				}
-				else
-				{
-					loggingFile << ((dynamic_cast<FireRenderMesh*>(mainMesh)->IsInitialized()) ? "main mesh is initialized" : "main mesh NOT initialized");
-				}
-			}
-			loggingFile << "\n";
-			loggingFile.close();
-		}
-	}
-#endif
-
 	const bool isDeformationMotionBlurEnabled = motionBlur() && IsDeformationMotionBlurEnabled() && !isInteractive();
 	const unsigned int motionSamplesCount = isDeformationMotionBlurEnabled ? motionSamples() : 1;
 
@@ -2777,39 +2744,6 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 	MGlobal::viewFrame(initialTime);
 
-#ifdef MESH_RELOAD_REFERENCE_DEBUG
-	for (auto it = meshesToFreshen.begin(); it != meshesToFreshen.end(); ++it)
-	{
-		if (!it->get())
-		{
-			continue;
-		}
-
-		MFnDagNode node(it->get()->Object());
-		{
-			std::string preprocessedMesh(node.fullPathName().asChar());
-			std::ofstream loggingFile;
-			loggingFile.open("C:\\temp\\dbg\\meshes_full_log.txt", std::ofstream::out | std::ofstream::app);
-			loggingFile << "meshesToFreshen: " << preprocessedMesh << " , " <<
-				(dynamic_cast<FireRenderMesh*>(it->get())->IsMainInstance() ? "is main mesh; " : "is instance; ");
-			if (!dynamic_cast<FireRenderMesh*>(it->get())->IsMainInstance())
-			{
-				FireRenderMeshCommon* mainMesh = GetMainMesh(it->get()->uuid());
-				if (!mainMesh)
-				{
-					loggingFile << "no main mesh; ";
-				}
-				else
-				{
-					loggingFile << ((dynamic_cast<FireRenderMesh*>(mainMesh)->IsInitialized()) ? "main mesh is initialized" : "main mesh NOT initialized");
-				}
-			}
-			loggingFile << "\n";
-			loggingFile.close();
-		}
-	}
-#endif
-
 	// process read data (would be done in multiple threads in the future)
 	for (auto it = meshesToFreshen.begin(); it != meshesToFreshen.end(); ++it)
 	{
@@ -2819,14 +2753,6 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 		pMesh->Freshen(shouldCalculateHash);
 	}
-
-#ifdef MESH_RELOAD_REFERENCE_DEBUG
-	{
-		std::ofstream loggingFile;
-		loggingFile.open("C:\\temp\\dbg\\meshes_full_log.txt", std::ofstream::out | std::ofstream::app);
-		loggingFile << "finished freshen " << "\n";
-	}
-#endif
 
 	syncProgressData.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), syncStartTime);
 	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncComplete);

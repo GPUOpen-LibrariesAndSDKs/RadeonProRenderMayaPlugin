@@ -926,6 +926,7 @@ void FireMaya::MeshTranslator::GetUVCoords(
 	std::vector<const float*>& puvCoords,
 	std::vector<size_t>& sizeCoords)
 {
+	uvSetNames.clear();
 	fnMesh.getUVSetNames(uvSetNames);
 	unsigned int uvSetCount = uvSetNames.length();
 

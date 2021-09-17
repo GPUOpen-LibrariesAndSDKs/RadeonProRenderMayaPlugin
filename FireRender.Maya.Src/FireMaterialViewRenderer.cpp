@@ -341,7 +341,12 @@ MStatus FireMaterialViewRenderer::translateShader(const MUuid& id, const MObject
 	return FireRenderThread::RunOnceAndWait<MStatus>([this, id, node]()
 	{
 		std::get<frw::Shader>(m_renderData.m_surfaceShader) = m_renderData.m_context.GetShader(node);
-		std::get<FireMaya::NodeId>(m_renderData.m_surfaceShader) = getNodeUUid(node);
+
+		MFnDependencyNode fnShdr(node);
+		std::string shdrName = fnShdr.name().asChar(); 
+		std::string shaderId = getNodeUUid(node);
+		shaderId += shdrName;
+		std::get<FireMaya::NodeId>(m_renderData.m_surfaceShader) = shaderId;
 
 		m_renderData.m_volumeShader = m_renderData.m_context.GetVolumeShader(node);
 
