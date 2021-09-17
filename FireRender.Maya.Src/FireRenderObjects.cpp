@@ -730,9 +730,18 @@ void FireRenderMesh::RegisterCallbacks()
 				continue;
 
 			MObject shaderOb = getSurfaceShader(shadingEngine);
+
+			MFnDependencyNode fnShdr(shaderOb);
+			std::string shdrName = fnShdr.name().asChar();
+
+			MFnDagNode dagMesh(Object());
+			MString thisName = dagMesh.fullPathName();
+
 			if (!shaderOb.isNull())
 			{
-				AddCallback(MNodeMessage::addNodeDirtyCallback(shaderOb, ShaderDirtyCallback, this));
+				MStatus returnStatus;
+				AddCallback(MNodeMessage::addNodeDirtyCallback(shaderOb, ShaderDirtyCallback, this, &returnStatus));
+				assert(returnStatus == MStatus::kSuccess);
 			}
 
 			MObject shaderDi = getDisplacementShader(shadingEngine);
@@ -1489,7 +1498,6 @@ void FireRenderMesh::Rebuild()
 #endif
 
 	// If there is just one shader and the number of shader is not changed then just update the shader
-	unsigned int shadingEnginesLength = shadingEngines.length();
 	bool shadersChanged = false;
 	bool isRPR2 = TahoeContext::IsGivenContextRPR2(context);
 	if (isRPR2)
@@ -1503,24 +1511,10 @@ void FireRenderMesh::Rebuild()
 
 	if (m.changed.mesh || shadersChanged || (m.elements.size() == 0))
 	{
-#ifdef MESH_RELOAD_REFERENCE_DEBUG
-		std::ofstream loggingFile;
-		loggingFile.open("C:\\temp\\dbg\\meshes_full_log.txt", std::ofstream::out | std::ofstream::app);
-		loggingFile << "ReloadMesh " << name << "\n";
-		loggingFile.close();
-#endif
 		// the number of shader has changed so reload the mesh
 		ReloadMesh(meshPath);
 	}
-	else
-	{
-#ifdef MESH_RELOAD_REFERENCE_DEBUG
-		std::ofstream loggingFile;
-		loggingFile.open("C:\\temp\\dbg\\meshes_full_log.txt", std::ofstream::out | std::ofstream::app);
-		loggingFile << "SKIP ReloadMesh " << name << "\n";
-		loggingFile.close();
-#endif
-	}
+
 //****************************************************************************************************************
 
 	// Assignment should be before callbacks registering, because RegisterCallbacks() use them
@@ -1646,17 +1640,6 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 
 	if (mainMesh == nullptr)
 	{
-		if (!IsPreProcessed())
-		{
-			MFnDagNode node(Object());
-			{
-				std::string preprocessedMesh(node.fullPathName().asChar());
-				std::ofstream loggingFile;
-				loggingFile.open("C:\\temp\\dbg\\meshes_full_log.txt", std::ofstream::out | std::ofstream::app);
-				loggingFile << "trying to create not pre processed mesh: " << preprocessedMesh;
-				loggingFile.close();
-			}
-		}
 		assert(IsPreProcessed());
 
 		bool success = TranslateMeshWrapped(dagPath, outShapes);
@@ -1675,17 +1658,6 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 
 bool FireRenderMesh::TranslateMeshWrapped(const MDagPath& dagPath, std::vector<frw::Shape>& outShapes)
 {
-	if (!m_meshData.IsInitialized())
-	{
-		MFnDagNode node(Object());
-		{
-			std::string preprocessedMesh(node.fullPathName().asChar());
-			std::ofstream loggingFile;
-			loggingFile.open("C:\\temp\\dbg\\meshes_full_log.txt", std::ofstream::out | std::ofstream::app);
-			loggingFile << "trying to translate empty mesh: " << preprocessedMesh;
-			loggingFile.close();
-		}
-	}
 	assert(IsMainInstance()); // should already be main instance at this point
 
 	if (!m_meshData.IsInitialized())
@@ -1866,6 +1838,10 @@ void FireRenderMesh::OnShaderDirty()
 void FireRenderMesh::ShaderDirtyCallback(MObject& node, void* clientData)
 {
 	DebugPrint("CALLBACK > ShaderDirtyCallback(%s)", node.apiTypeStr());
+
+	MFnDependencyNode fnShdr(node);
+	std::string shdrName = fnShdr.name().asChar();
+
 	if (auto self = static_cast<FireRenderMesh*>(clientData))
 	{
 		assert(node != self->Object());

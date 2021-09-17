@@ -345,6 +345,12 @@
 		50FF372E2672159E00C5065B /* libRadeonImageFilters.1.7.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 50FF372D2672159E00C5065B /* libRadeonImageFilters.1.7.1.dylib */; };
 		50FF372F2672159E00C5065B /* libRadeonImageFilters.1.7.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 50FF372D2672159E00C5065B /* libRadeonImageFilters.1.7.1.dylib */; };
 		50FF37302672159E00C5065B /* libRadeonImageFilters.1.7.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 50FF372D2672159E00C5065B /* libRadeonImageFilters.1.7.1.dylib */; };
+		80AA24FF26E0F294000CEDA8 /* FireRenderVoronoi.h in Headers */ = {isa = PBXBuildFile; fileRef = 80AA24FC26E0F294000CEDA8 /* FireRenderVoronoi.h */; };
+		80AA250026E0F294000CEDA8 /* FireRenderVoronoi.h in Headers */ = {isa = PBXBuildFile; fileRef = 80AA24FC26E0F294000CEDA8 /* FireRenderVoronoi.h */; };
+		80AA250126E0F294000CEDA8 /* FireRenderVoronoi.h in Headers */ = {isa = PBXBuildFile; fileRef = 80AA24FC26E0F294000CEDA8 /* FireRenderVoronoi.h */; };
+		80AA250226E0F294000CEDA8 /* FireRenderVoronoi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 80AA24FE26E0F294000CEDA8 /* FireRenderVoronoi.cpp */; };
+		80AA250326E0F294000CEDA8 /* FireRenderVoronoi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 80AA24FE26E0F294000CEDA8 /* FireRenderVoronoi.cpp */; };
+		80AA250426E0F294000CEDA8 /* FireRenderVoronoi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 80AA24FE26E0F294000CEDA8 /* FireRenderVoronoi.cpp */; };
 		8DB9AEA52256527A00543147 /* FastNoise.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE922255519000543147 /* FastNoise.h */; };
 		8DB9AEA62256528900543147 /* VolumeAttributes.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE9C225551B400543147 /* VolumeAttributes.h */; };
 		8DB9AEA9225652C200543147 /* FireRenderVolumeOverride.h in Headers */ = {isa = PBXBuildFile; fileRef = 8DB9AE9B225551B400543147 /* FireRenderVolumeOverride.h */; };
@@ -1064,6 +1070,8 @@
 		50FCE4F32530985900BF404F /* AnimationExporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AnimationExporter.h; path = ../../../FireRender.Maya.Src/AnimationExporter.h; sourceTree = "<group>"; };
 		50FF372D2672159E00C5065B /* libRadeonImageFilters.1.7.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRadeonImageFilters.1.7.1.dylib; path = ../../../RadeonProImageProcessingSDK/OSX/Dynamic/libRadeonImageFilters.1.7.1.dylib; sourceTree = "<group>"; };
 		50FF3735268B65DB00C5065B /* rpr2022.mod */ = {isa = PBXFileReference; lastKnownFileType = text; name = rpr2022.mod; path = ../rpr2022.mod; sourceTree = "<group>"; };
+		80AA24FC26E0F294000CEDA8 /* FireRenderVoronoi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderVoronoi.h; path = ../../../FireRender.Maya.Src/FireRenderVoronoi.h; sourceTree = "<group>"; };
+		80AA24FE26E0F294000CEDA8 /* FireRenderVoronoi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderVoronoi.cpp; path = ../../../FireRender.Maya.Src/FireRenderVoronoi.cpp; sourceTree = "<group>"; };
 		8D1135881F45D6B300E58A52 /* libRprLoadStore64.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libRprLoadStore64.dylib; path = ../../../RadeonProRenderSDK/RadeonProRender/binMacOS/libRprLoadStore64.dylib; sourceTree = "<group>"; };
 		8D1E289B2034A0550060BB11 /* FireRenderPBRMaterial.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderPBRMaterial.h; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.h; sourceTree = "<group>"; };
 		8D1E289D2034A0550060BB11 /* FireRenderPBRMaterial.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderPBRMaterial.cpp; path = ../../../FireRender.Maya.Src/FireRenderPBRMaterial.cpp; sourceTree = "<group>"; };
@@ -1461,6 +1469,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				80AA24FE26E0F294000CEDA8 /* FireRenderVoronoi.cpp */,
+				80AA24FC26E0F294000CEDA8 /* FireRenderVoronoi.h */,
 				505C0D1626611618000E11A9 /* ViewportTexture.cpp */,
 				505C0D1426611618000E11A9 /* ViewportTexture.h */,
 				505C0BB6263BEF90000E11A9 /* FireRenderToonMaterial.cpp */,
@@ -1925,6 +1935,7 @@
 				505C0BE72660C2BA000E11A9 /* ClampConverter.h in Headers */,
 				505C0BE82660C2BA000E11A9 /* FireRenderBump.h in Headers */,
 				505C0BE92660C2BA000E11A9 /* FireRenderChecker.h in Headers */,
+				80AA250126E0F294000CEDA8 /* FireRenderVoronoi.h in Headers */,
 				505C0BEA2660C2BA000E11A9 /* MaterialLoader.h in Headers */,
 				505C0BEB2660C2BA000E11A9 /* FireRenderMaterialSwatchRender.h in Headers */,
 				505C0BEC2660C2BA000E11A9 /* FireRenderBlendOverride.h in Headers */,
@@ -2082,6 +2093,7 @@
 				B7230A6D23ACD82A00E51BD1 /* ClampConverter.h in Headers */,
 				8DBCC2AD22304666003EE361 /* FireRenderBump.h in Headers */,
 				8DBCC2AE22304666003EE361 /* FireRenderChecker.h in Headers */,
+				80AA24FF26E0F294000CEDA8 /* FireRenderVoronoi.h in Headers */,
 				8DBCC2AF22304666003EE361 /* MaterialLoader.h in Headers */,
 				8DBCC2B022304666003EE361 /* FireRenderMaterialSwatchRender.h in Headers */,
 				8DBCC2B122304666003EE361 /* FireRenderBlendOverride.h in Headers */,
@@ -2239,6 +2251,7 @@
 				B7531FE723D9ED5600246738 /* ClampConverter.h in Headers */,
 				B7531FE823D9ED5600246738 /* FireRenderBump.h in Headers */,
 				B7531FE923D9ED5600246738 /* FireRenderChecker.h in Headers */,
+				80AA250026E0F294000CEDA8 /* FireRenderVoronoi.h in Headers */,
 				B7531FEA23D9ED5600246738 /* MaterialLoader.h in Headers */,
 				B7531FEB23D9ED5600246738 /* FireRenderMaterialSwatchRender.h in Headers */,
 				B7531FEC23D9ED5600246738 /* FireRenderBlendOverride.h in Headers */,
@@ -2618,6 +2631,7 @@
 				505C0CF22660C2BA000E11A9 /* GlobalRenderUtilsDataHolder.cpp in Sources */,
 				505C0CF32660C2BA000E11A9 /* FireRenderTransparentMaterial.cpp in Sources */,
 				505C0CF42660C2BA000E11A9 /* RenderStamp.cpp in Sources */,
+				80AA250426E0F294000CEDA8 /* FireRenderVoronoi.cpp in Sources */,
 				505C0CF52660C2BA000E11A9 /* XMLMaterialExportCommon.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2774,6 +2788,7 @@
 				CE1ECBC622EB8F7F0074C7E7 /* GlobalRenderUtilsDataHolder.cpp in Sources */,
 				8DBCC35922304666003EE361 /* FireRenderTransparentMaterial.cpp in Sources */,
 				8DBCC35A22304666003EE361 /* RenderStamp.cpp in Sources */,
+				80AA250226E0F294000CEDA8 /* FireRenderVoronoi.cpp in Sources */,
 				B7190C4B2449C7FB0071D47F /* XMLMaterialExportCommon.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -2930,6 +2945,7 @@
 				B75320DE23D9ED5600246738 /* GlobalRenderUtilsDataHolder.cpp in Sources */,
 				B75320DF23D9ED5600246738 /* FireRenderTransparentMaterial.cpp in Sources */,
 				B75320E023D9ED5600246738 /* RenderStamp.cpp in Sources */,
+				80AA250326E0F294000CEDA8 /* FireRenderVoronoi.cpp in Sources */,
 				B7190C4C2449C7FB0071D47F /* XMLMaterialExportCommon.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
