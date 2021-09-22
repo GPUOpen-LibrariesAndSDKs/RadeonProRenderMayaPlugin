@@ -1300,6 +1300,7 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 	for (int i = 0; i < m.elements.size(); i++) // should be always only 1 for RPR2, but keeping array for now for backward compatibility with RPR1
 	{
 		auto& element = m.elements[i];
+		element.shaders.clear();
 
 		if (!element.shape)
 			continue;
