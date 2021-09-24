@@ -128,11 +128,14 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	if (!scene || !context || !materialSystem)
 		return MS::kFailure;
 
+	// create rprs context
+	frw::RPRSContext rprsContext;
+
 	try
 	{
 		m_progressBars->SetTextAboveProgress("Preparing Animation...", true);
 
-		animationExporter.Export(*fireRenderContext, &renderableCameras);
+		animationExporter.Export(*fireRenderContext, &renderableCameras, rprsContext);
 
 		std::vector<rpr_scene> scenes;
 		scenes.push_back(scene.Handle());
@@ -158,7 +161,7 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 			materialSystem.Handle(),
 			scenes.data(),
 			scenes.size(),
-			gltfFlags, nullptr);
+			gltfFlags, rprsContext.Handle());
 
 		if (err != GLTF_SUCCESS)
 		{

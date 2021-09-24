@@ -39,6 +39,7 @@ limitations under the License.
 #include <maya/MColor.h>
 #include "FireRenderMath.h"
 #include "ProRenderGLTF.h"
+#include "RprLoadStore.h"
 
 //#define FRW_LOGGING 1
 
@@ -4409,4 +4410,63 @@ namespace frw
 		}
 	}
 
+	class RPRSContext
+	{
+		class Data
+		{
+			friend RPRSContext;
+
+			RPRS_context m_handle;
+
+			bool operator==(void* h) const = delete;
+
+		public:
+			Data(void)
+				: m_handle(nullptr)
+			{
+				rpr_int statusContext = rprsCreateContext(&m_handle);
+				assert(statusContext == RPR_SUCCESS);
+			}
+
+			~Data(void)
+			{
+				if (!IsValid())
+					return;
+
+				rprsDeleteContext(m_handle);
+			}
+
+			bool IsValid() const { return m_handle != nullptr; }
+
+			RPRS_context Handle() const { return m_handle; }
+		};
+		typedef std::shared_ptr<Data> DataPtr;
+
+		DataPtr m; // never null
+
+	protected:
+		RPRSContext(DataPtr p) : m(p) {}
+
+	public:
+		RPRSContext(Data* data = nullptr)
+		{
+			if (!data) data = new Data();
+
+			m.reset(data);
+		}
+
+		void Reset()
+		{
+			m = std::make_shared<Data>();
+		}
+
+		bool operator==(const RPRSContext& rhs) const { return m.get() == rhs.m.get(); }
+
+		long UseCount() const { return m.use_count(); }
+		RPRS_context Handle() const { return m->Handle(); }
+
+		// for easier scope and creation flow
+		explicit operator bool() const { return m->IsValid(); }
+		bool IsValid() const { return m->IsValid(); }
+	};
 }
