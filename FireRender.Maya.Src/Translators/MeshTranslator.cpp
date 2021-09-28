@@ -148,6 +148,18 @@ bool FireMaya::MeshTranslator::MeshPolygonData::ProcessDeformationFrameCount(MFn
 	return true;
 }
 
+void FireMaya::MeshTranslator::MeshPolygonData::clear()
+{
+	m_isInitialized = false;
+
+	arrVertices.clear();
+	arrNormals.clear();
+
+	uvCoords.clear();
+	sizeCoords.clear();
+	puvCoords.clear();
+}
+
 bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(MFnMesh& fnMesh, unsigned int deformationFrameCount, MString fullDagPath)
 {
 	GetUVCoords(fnMesh, uvSetNames, uvCoords, puvCoords, sizeCoords);

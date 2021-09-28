@@ -490,6 +490,9 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		unsigned int framePadding = 0;
 		argData.getFlagArgument(kPadding, 1, framePadding);
 
+		// create rprs context
+		frw::RPRSContext rprsContext;
+
 		// process each frame
 		for (int frame = firstFrame; frame <= lastFrame; ++frame)
 		{
@@ -533,12 +536,13 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			{
 				newFilePath = fileName + L"." + fileExtension;
 
-				animationExporter.Export(*tahoeContextPtr, &cameras);
+				animationExporter.Export(*tahoeContextPtr, &cameras, rprsContext);
 			}
 
 			// launch export
 			rpr_int statusExport = rprsExport(MString(newFilePath.c_str()).asUTF8(), tahoeContextPtr->context(), tahoeContextPtr->scene(),
-				0, 0, 0, 0, 0, 0, SetupExportFlags(isExportAsSingleFileEnabled, isIncludeTextureCacheEnabled, compressionOption), nullptr);
+				0, 0, 0, 0, 0, 0, SetupExportFlags(isExportAsSingleFileEnabled, isIncludeTextureCacheEnabled, compressionOption), 
+				rprsContext.Handle());
 			
 			// save config
 			bool res = SaveExportConfig(newFilePath, *tahoeContextPtr, fileName);
