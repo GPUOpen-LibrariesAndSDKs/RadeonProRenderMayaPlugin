@@ -1865,10 +1865,6 @@ void FireRenderContext::RemoveRenderObject(const MObject& ob)
 					Dynamic cast is needed to type check
 				*/
 				FireRenderMesh* mesh = dynamic_cast<FireRenderMesh*>(frNode);
-				if (mesh != nullptr)
-				{
-					RemoveMainMesh(mesh);
-				}
 
 				// remove object from scene
 				frNode->detachFromScene();

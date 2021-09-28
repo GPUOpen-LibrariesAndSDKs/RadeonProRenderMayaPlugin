@@ -81,7 +81,7 @@ public:
 	void SetProgressBars(RenderProgressBars* progressBars) { m_progressBars = progressBars; }
 	RenderProgressBars* GetProgressBars() { return m_progressBars; }
 
-	void Export(FireRenderContext& context, MDagPathArray* renderableCamera);
+	void Export(FireRenderContext& context, MDagPathArray* renderableCamera, frw::RPRSContext exportContext);
 
 private:
 	struct AnimationDataHolderStruct

@@ -21,6 +21,8 @@ const int COMPONENT_COUNT_SCALE = 3;
 
 const int INPUT_PLUG_COUNT = 3;
 
+frw::RPRSContext g_exportContext;
+
 AnimationExporter::AnimationExporter(bool gltfExport) :
 	m_IsGLTFExport(gltfExport),
 	m_progressBars(nullptr)
@@ -47,26 +49,30 @@ AnimationExporter::AnimationExporter(bool gltfExport) :
 		m_runtimeMoveTypeRotation = RPRS_ANIMATION_MOVEMENTTYPE_ROTATION;
 		m_runtimeMoveTypeScale = RPRS_ANIMATION_MOVEMENTTYPE_SCALE;
 
-		m_pFunc_AddExtraCamera = rprsAddExtraCamera;
-		m_pFunc_AddExtraShapeParameter = rprsAddExtraShapeParameter;
-		m_pFunc_AssignLightToGroup = rprsAssignLightToGroup;
+		m_pFunc_AddExtraCamera = [](rpr_camera extraCam) { return rprsAddExtraCameraEx(g_exportContext.Handle(), extraCam); };
+		m_pFunc_AddExtraShapeParameter = [](rpr_shape shape, const rpr_char* parameterName, rpr_int value) { return rprsAddExtraShapeParameterEx(g_exportContext.Handle(), shape, parameterName, value); };
+		m_pFunc_AssignLightToGroup = [](rpr_light light, const rpr_char* groupName) { return rprsAssignLightToGroupEx(g_exportContext.Handle(), light, groupName); };
 
-		m_pFunc_AssignCameraToGroup = rprsAssignCameraToGroup;
-		m_pFunc_AssignShapeToGroup = rprsAssignShapeToGroup;
-		m_pFunc_SetTransformGroup = rprsSetTransformGroup;
-		m_pFunc_AssignParentGroupToGroup = rprsAssignParentGroupToGroup;
+		m_pFunc_AssignCameraToGroup = [](rpr_camera camera, const rpr_char* groupName) { return rprsAssignCameraToGroupEx(g_exportContext.Handle(), camera, groupName); };
+		m_pFunc_AssignShapeToGroup = [](rpr_shape shape, const rpr_char* groupName) { return rprsAssignShapeToGroupEx(g_exportContext.Handle(), shape, groupName); };
+		m_pFunc_SetTransformGroup = [](const rpr_char* groupChild, const float* matrixComponents) { return rprsSetTransformGroupEx(g_exportContext.Handle(), groupChild, matrixComponents); };
+		m_pFunc_AssignParentGroupToGroup = [](const rpr_char* groupChild, const rpr_char* groupParent) { return rprsAssignParentGroupToGroupEx(g_exportContext.Handle(), groupChild, groupParent); };
 
 		m_pFunc_AddAnimationTrackToRPR = &AnimationExporter::AddAnimationToRPRS;
 	}
 }
 
-void AnimationExporter::Export(FireRenderContext& context, MDagPathArray* renderableCamera)
+void AnimationExporter::Export(FireRenderContext& context, MDagPathArray* renderableCamera, frw::RPRSContext exportContext)
 {
+	g_exportContext = exportContext;
+
 	m_dataHolder.animationDataVector.clear();
 	m_dataHolder.cameraVector.clear();
 	m_dataHolder.inputRenderableCameras = renderableCamera;
 
 	AddAnimations(m_dataHolder, context);
+
+	g_exportContext.Reset();
 }
 
 MString AnimationExporter::GetGroupNameForDagPath(MDagPath dagPath, int pop)
@@ -527,7 +533,7 @@ void AnimationExporter::AddAnimationToRPRS(AnimationDataHolderStruct& dataHolder
 	rprsAnimData.timeKeys = dataHolderStruct.m_timePoints.data();
 	rprsAnimData.transformValues = dataHolderStruct.m_values.data();
 
-	int res = rprsAddAnimation(&rprsAnimData);
+	int res = rprsAddAnimationEx(g_exportContext.Handle(), &rprsAnimData);
 	if (res != RPR_SUCCESS)
 	{
 		MGlobal::displayError("rprGLTF_AddAnimation returned error: ");

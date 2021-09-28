@@ -33,7 +33,7 @@ namespace FireMaya
 			std::vector<const float*> puvCoords;
 			std::vector<size_t> sizeCoords;
 
-			std::vector<float> arrVertices; // Used in case of deformation motion blur
+			std::vector<float> arrVertices;
 			std::vector<float> arrNormals;
 
 			size_t countVertices;
@@ -65,6 +65,9 @@ namespace FireMaya
 			const float* GetNormals() const { return arrNormals.size() > 0 ? arrNormals.data() : pNormals; }
 
 			bool IsInitialized(void) const { return m_isInitialized; }
+
+			// free memory
+			void clear(void);
 
 		private:
 			const float* pVertices;

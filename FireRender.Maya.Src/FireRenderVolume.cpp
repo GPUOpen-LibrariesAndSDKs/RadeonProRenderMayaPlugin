@@ -464,8 +464,25 @@ bool NorthstarRPRVolume::TranslateVolume()
 		auto albedoGridNode = frw::GridNode(context()->GetMaterialSystem());
 		albedoGridNode.SetGrid(m_albedoGrid);
 
-		auto albedoLookupNode = CreateLookupTextureNode(this, vdata.albedoGrid.valuesLookUpTable, albedoGridNode);
-		volumeShader.xSetValue(RPR_MATERIAL_INPUT_COLOR, albedoLookupNode);
+		float maxAlbedoValue = *std::max_element(vdata.albedoGrid.valuesLookUpTable.begin(), vdata.albedoGrid.valuesLookUpTable.end());
+
+		if (vdata.emissionGrid.IsValid() && maxAlbedoValue > 1)  //we need to normalize albedo with enabled emission
+		{
+			std::vector<float> albedoValues;
+			albedoValues.resize(vdata.albedoGrid.valuesLookUpTable.size());
+
+			for (size_t idx = 0; idx < vdata.albedoGrid.valuesLookUpTable.size(); idx++)
+			{
+				albedoValues[idx] = vdata.albedoGrid.valuesLookUpTable[idx] / maxAlbedoValue;
+			}
+			auto albedoLookupNode = CreateLookupTextureNode(this, albedoValues, albedoGridNode);
+			volumeShader.xSetValue(RPR_MATERIAL_INPUT_COLOR, albedoLookupNode);
+		}
+		else
+		{
+			auto albedoLookupNode = CreateLookupTextureNode(this, vdata.albedoGrid.valuesLookUpTable, albedoGridNode);
+			volumeShader.xSetValue(RPR_MATERIAL_INPUT_COLOR, albedoLookupNode);
+		}
 	}
 
 	if (vdata.emissionGrid.IsValid()) // grid exists

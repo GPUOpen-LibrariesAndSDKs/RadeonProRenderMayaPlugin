@@ -130,6 +130,8 @@ void FireMaya::SingleShaderMeshTranslator::TranslateMesh(
 		elements[0].SetVertexColors(colorVertexIndices, vertexColors, (rpr_int) meshData.countVertices);
 	}
 
+	meshData.clear();
+
 #ifdef OPTIMIZATION_CLOCK
 	std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
 	std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
