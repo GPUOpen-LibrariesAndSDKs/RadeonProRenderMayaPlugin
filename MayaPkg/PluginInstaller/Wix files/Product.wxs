@@ -43,13 +43,11 @@ limitations under the License.
 
 		<Binary Id='InstallerDll' SourceFile='$(var.InstallerDll)' />
     
-<!--
-		<CustomAction Id='CheckActivationKey' BinaryKey='InstallerDll' DllEntry='checkActivationKey' />
--->
-    
+   
 		<CustomAction Id='UserRegister' BinaryKey='InstallerDll' DllEntry='userRegister' Return="ignore" />
 		<CustomAction Id='PostInstall' BinaryKey='InstallerDll' DllEntry='postInstall' Return="ignore" />
 		<CustomAction Id='BotoInstall' BinaryKey='InstallerDll' DllEntry='botoInstall' Execute="deferred" Impersonate="no" Return="ignore" />
+		<CustomAction Id='CheckRPRSDKInTheSystem' BinaryKey='InstallerDll' DllEntry='checkRPRSDKInTheSystem' Execute="deferred" Impersonate="no" Return="ignore" />
 
 		<CustomAction Id='maya2019WasInstalled' Property='MAYA2019_INSTALLED'  Value='true'/>
 		<CustomAction Id='maya2020WasInstalled' Property='MAYA2020_INSTALLED'  Value='true'/>
@@ -57,11 +55,6 @@ limitations under the License.
 
                 <CustomAction Id='SetInstallCustomMode' Property="WixUI_InstallMode" Value="InstallCustom"/>
 
-<!--	
-		<Property Id='ACTIVATION_KEY_ACCEPTED'>
-			<RegistrySearch Id='regSearchForActivationKey' Root='HKCU' Key='Software\AMD\RadeonProRender\Maya' Name='ACTIVATION_KEY_ACCEPTED' Type='raw'/>
-		</Property>
--->
 
 		<Property Id="CACHE_PATH">
 			<RegistrySearch Id="RegSearchForCache" Root="HKCU" Key="Software\AMD\RadeonProRender\Maya" Type="raw" Name="CachePath" />
@@ -70,19 +63,6 @@ limitations under the License.
 		<UI Id="MyWixUI_Mondo">
 			<UIRef Id="WixUI_Wizard" />
 			<UIRef Id="WixUI_ErrorProgressText" />
-<!--		
-			<Dialog Id="InvalidActivationKey" Width="260" Height="85" Title="[ProductName] [Setup]" NoMinimize="yes">
-				<Control Id="Return" Type="PushButton" X="100" Y="57" Width="56" Height="17" Default="yes" Cancel="yes" Text="&amp;Return">
-					<Publish Event="EndDialog" Value="Return">1</Publish>
-				</Control>
-				<Control Id="Text" Type="Text" X="48" Y="15" Width="194" Height="30" NoPrefix="yes">
-					<Text>Wrong activation key. Please, paste link from clipboard to web browser and register.</Text>
-				</Control>
-				<Control Id="Icon" Type="Icon" X="15" Y="15" Width="24" Height="24" ToolTip="!(loc.CancelDlgIconTooltip)" FixedSize="yes" IconSize="32" Text="!(loc.CancelDlgIcon)" />
-			</Dialog>
-
-			<DialogRef Id="UserRegistrationDlg" />
--->
 		</UI>
 
 		<WixVariable Id="WixUILicenseRtf" Value=".\agreement.rtf" />
@@ -90,7 +70,8 @@ limitations under the License.
 		<WixVariable Id="WixUIDialogBmp" Value=".\rpr_dialog.png" />
 
 		<InstallExecuteSequence>
-      <Custom Action="BotoInstall" After="InstallInitialize">(NOT Installed) AND (NOT REMOVE)</Custom>
+			<Custom Action="BotoInstall" After="InstallInitialize">(NOT Installed) AND (NOT REMOVE)</Custom>
+			<Custom Action="CheckRPRSDKInTheSystem" After="BotoInstall">(NOT REMOVE) AND (UILevel>2)</Custom>
 			<CreateFolders/>
 			<InstallFiles/>
 			<WriteEnvironmentStrings/>

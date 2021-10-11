@@ -130,6 +130,8 @@ void FireMaya::SingleShaderMeshTranslator::TranslateMesh(
 		elements[0].SetVertexColors(colorVertexIndices, vertexColors, (rpr_int) meshData.countVertices);
 	}
 
+	meshData.clear();
+
 #ifdef OPTIMIZATION_CLOCK
 	std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
 	std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
@@ -200,10 +202,15 @@ void FireMaya::SingleShaderMeshTranslator::AddPolygonSingleShader(
 
 	// vertex colors
 	MColorArray polygonColors;
-	meshPolygonIterator.getColors(polygonColors);
+	mayaStatus = meshPolygonIterator.getColors(polygonColors);
+	assert(MStatus::kSuccess == mayaStatus);
 
 	// material ids
-	int shaderId = faceMaterialIndices[meshPolygonIterator.index()];
+	unsigned int iteratorIdx = meshPolygonIterator.index(&mayaStatus);
+	assert(MStatus::kSuccess == mayaStatus);
+	unsigned int faceMaterialsSize = faceMaterialIndices.length();
+	assert(faceMaterialsSize > iteratorIdx);
+	const int shaderId = faceMaterialIndices[iteratorIdx];
 
 	if (vertices.length() == 4) // this is quad
 	{

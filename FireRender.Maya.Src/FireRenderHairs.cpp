@@ -235,7 +235,7 @@ void FireRenderHair::ApplyTransform(void)
 	// convert Maya mesh in cm to m
 	MMatrix scaleM;
 	scaleM.setToIdentity();
-	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
 	matrix *= scaleM;
 	float mfloats[4][4];
 	matrix.get(mfloats);

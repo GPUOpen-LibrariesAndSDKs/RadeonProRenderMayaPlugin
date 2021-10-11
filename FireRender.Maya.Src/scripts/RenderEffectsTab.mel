@@ -58,7 +58,6 @@ global proc createRenderEffectsTab()
 	// Contour Render Mode
 	//
 	frameLayout -label "Contour Render Mode" -cll true -cl 0 fireRenderContourFrame;
-
 	createFireRenderContourFrame ("fireRenderContourFrame");
 	setParent ..;
 
@@ -130,6 +129,7 @@ global proc createFireRenderContourFrame(string $parent)
 
 	onUpdateContour();
 }
+
 
 global proc onUpdateContour()
 {

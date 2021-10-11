@@ -44,7 +44,7 @@ installBoto3ForMaya () {
         targetDir=`printf "/Applications/Autodesk/maya%s/Maya.app/Contents/bin" ${version}`
 
         echo "Trying to installBoto3ForMaya: " ${targetDir}
-        cd $1
+        cd ${targetDir}
         if amIRoot; then
             sh mayapy -m pip install boto3
             echo "Boto3 for Maya installation finished"

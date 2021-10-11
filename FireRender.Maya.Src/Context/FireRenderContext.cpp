@@ -30,6 +30,7 @@ limitations under the License.
 #include <maya/MItDependencyNodes.h>
 #include <maya/MUserEventMessage.h>
 #include <maya/MItDependencyGraph.h>
+#include <maya/MAnimControl.h>
 
 #include "AutoLock.h"
 #include "VRay.h"
@@ -42,6 +43,8 @@ limitations under the License.
 #include "FireRenderThread.h"
 #include "FireRenderMaterialSwatchRender.h"
 #include "CompositeWrapper.h"
+
+#include <deque>
 
 #ifdef WIN32 // alembic support is disabled on MAC until alembic build issue on MAC is resolved
 #include "FireRenderGPUCache.h"
@@ -175,7 +178,7 @@ void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool rende
 		return;
 
 	int MaxAOV = GetAOVMaxValue();
-	for (int i = 0; i != MaxAOV; ++i)
+	for (int i = 0; i < MaxAOV; ++i)
 	{
 		initBuffersForAOV(context, i, glTexture);
 	}
@@ -230,6 +233,9 @@ bool aovExists(int index)
 	if ((index >= RPR_AOV_CRYPTOMATTE_OBJ0) && (index <= RPR_AOV_CRYPTOMATTE_OBJ2))
 		return true;
 
+	if (index == RPR_AOV_DEEP_COLOR)
+		return true;
+
 	return false;
 }
 
@@ -252,26 +258,40 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 
 	if (aovEnabled[index]) 
     {
-		m.framebufferAOV[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
+		bool createResolveFB = true;
+		if (index == RPR_AOV_DEEP_COLOR)
+		{
+			fmt.type = RPR_COMPONENT_TYPE_DEEP;
+
+			createResolveFB = false;
+		}
+		
+		m.framebufferAOV[index] = frw::FrameBuffer (context, m_width, m_height, fmt);
 		m.framebufferAOV[index].Clear();
 		context.SetAOV(m.framebufferAOV[index], index);
 
-		// Create an OpenGL interop resolved frame buffer if
-		// required, otherwise, create a standard frame buffer.
-		if (m_glInteropActive && glTexture)
-        { 
-			m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, glTexture);
-        }
-        else
-        {
-            m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
-        }
+		if (createResolveFB)
+		{
+			// Create an OpenGL interop resolved frame buffer if
+			// required, otherwise, create a standard frame buffer.
+			if (m_glInteropActive && glTexture)
+			{
+				m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, glTexture);
+			}
+			else
+			{
+				m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
+			}
 
-		m.framebufferAOV_resolved[index].Clear();
+			m.framebufferAOV_resolved[index].Clear();
+		}
 	}
 	else
 	{
-		context.SetAOV(nullptr, index);
+		if (aovExists(index))
+		{
+			context.SetAOV(nullptr, index);
+		}
 	}
 }
 
@@ -1034,7 +1054,7 @@ void FireRenderContext::render(bool lock)
 	if (m_restartRender)
 	{
 		int MaxAOV = GetAOVMaxValue();
-		for (int i = 0; i != MaxAOV; ++i) 
+		for (int i = 0; i < MaxAOV; ++i) 
 		{
 			if (aovEnabled[i])
 			{
@@ -1378,7 +1398,7 @@ rpr_framebuffer FireRenderContext::frameBufferAOV_Resolved(int aov) {
 		return nullptr;
 	}
 
-	if (needResolve())
+	if (needResolve() && aov != RPR_AOV_DEEP_COLOR)
 	{
 		//resolve tone mapping
 		m.framebufferAOV[aov].Resolve(m.framebufferAOV_resolved[aov], aov != RPR_AOV_COLOR);
@@ -1845,10 +1865,6 @@ void FireRenderContext::RemoveRenderObject(const MObject& ob)
 					Dynamic cast is needed to type check
 				*/
 				FireRenderMesh* mesh = dynamic_cast<FireRenderMesh*>(frNode);
-				if (mesh != nullptr)
-				{
-					RemoveMainMesh(mesh);
-				}
 
 				// remove object from scene
 				frNode->detachFromScene();
@@ -2348,15 +2364,27 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			ob = CreateSky(dagPath);
 		}
-		else if (dagNode.typeName() == "fluidShape" && volumeSupported)
+		else if (dagNode.typeName() == "fluidShape" && volumeSupported) // Maya native volume
 		{
-			// Maya native volume
-			ob = CreateSceneObject<FireRenderFluidVolume, NodeCachingOptions::AddPath>(dagPath);
+			if (IsNorthstarVolumeSupported())
+			{
+				ob = CreateSceneObject<NorthstarFluidVolume, NodeCachingOptions::AddPath>(dagPath);
+			}
+			else
+			{
+				ob = CreateSceneObject<FireRenderFluidVolume, NodeCachingOptions::AddPath>(dagPath);
+			}
 		}
-		else if (dagNode.typeName() == "RPRVolume" && volumeSupported)
+		else if (dagNode.typeName() == "RPRVolume" && volumeSupported) // can read .vdb files
 		{
-			// can read .vdb files
-			ob = CreateSceneObject<FireRenderRPRVolume, NodeCachingOptions::AddPath>(dagPath);
+			if (IsNorthstarVolumeSupported()) 
+			{
+				ob = CreateSceneObject<NorthstarRPRVolume, NodeCachingOptions::AddPath>(dagPath);
+			}
+			else
+			{
+				ob = CreateSceneObject<FireRenderRPRVolume, NodeCachingOptions::AddPath>(dagPath);
+			}
 		}
 		else if (dagNode.typeName() == "instancer")
 		{
@@ -2601,12 +2629,14 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 	}
 
 	size_t dirtyObjectsSize = m_dirtyObjects.size();
-
 	ContextWorkProgressData syncProgressData;
 	syncProgressData.totalCount = dirtyObjectsSize;
 	TimePoint syncStartTime = GetCurrentChronoTime();
 
 	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncStarted);
+
+	std::deque<std::shared_ptr<FireRenderObject> > meshesToInitialize; // meshes which would be pre-processed
+	std::deque<std::shared_ptr<FireRenderObject> > meshesToFreshen; // meshes which would be freshened
 
 	while (!m_dirtyObjects.empty())
 	{
@@ -2625,27 +2655,99 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 			m_dirtyMutex.unlock();
 
 			// Now perform update
-			if (ptr)
-			{
-				changed = true;
-				DebugPrint("Freshing object");
-
-				UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectPreSync);
-				ptr->Freshen(shouldCalculateHash);
-
-				syncProgressData.currentIndex++;
-				UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectSyncComplete);
-
-				if (cancelled())
-				{
-					return false;
-				}
-			}
-			else
+			if (!ptr)
 			{
 				DebugPrint("Cancelled freshing null object");
+				continue;
+			}
+
+			changed = true;
+
+			if (ptr->IsMesh())
+			{
+				FireRenderMesh* pMesh = dynamic_cast<FireRenderMesh*>(ptr.get());
+				assert(pMesh != nullptr);
+
+				bool meshChanged = pMesh->InitializeMaterials();
+				if (meshChanged)
+				{
+					meshesToInitialize.emplace_back() = ptr;
+				}
+				else
+				{
+					pMesh->SetPreProcessedSafe();
+					meshesToFreshen.emplace_back() = ptr;
+				}
+
+				continue;
+			}
+
+			if (ptr->IsMashInstancer())
+			{
+				meshesToInitialize.emplace_back() = ptr;
+
+				continue;
+			}
+
+			DebugPrint("Freshing object");
+
+			UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectPreSync);
+			ptr->Freshen(shouldCalculateHash);
+
+			syncProgressData.currentIndex++;
+			UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectSyncComplete);
+
+			if (cancelled())
+			{
+				return false;
 			}
 		}
+	}
+
+	const bool isDeformationMotionBlurEnabled = motionBlur() && IsDeformationMotionBlurEnabled() && !isInteractive();
+	const unsigned int motionSamplesCount = isDeformationMotionBlurEnabled ? motionSamples() : 1;
+
+	// read data from meshes
+	MTime initialTime = MAnimControl::currentTime();
+	MTime currentTime = initialTime;
+	unsigned int currentSampeIdx = 0;
+
+	do
+	{
+		// iterate through meshes
+		for (auto it = meshesToInitialize.begin(); it != meshesToInitialize.end(); ++it)
+		{
+			if (!it->get())
+			{
+				continue;
+			}
+
+			const bool success = it->get()->PreProcessMesh(currentSampeIdx);
+			if (success && (currentSampeIdx == 0))
+			{
+				meshesToFreshen.emplace_back() = *it;
+			}
+		}
+
+		if (++currentSampeIdx >= motionSamplesCount)
+			break;
+
+		// positioning on next point of time (starting from currentTime)
+		currentTime += (float)currentSampeIdx / (motionSamplesCount - 1);
+		MGlobal::viewFrame(currentTime);
+		
+	} while (currentTime != MAnimControl::maxTime());
+
+	MGlobal::viewFrame(initialTime);
+
+	// process read data (would be done in multiple threads in the future)
+	for (auto it = meshesToFreshen.begin(); it != meshesToFreshen.end(); ++it)
+	{
+		FireRenderObject* pMesh = it->get();
+		if (pMesh == nullptr)
+			continue;
+
+		pMesh->Freshen(shouldCalculateHash);
 	}
 
 	syncProgressData.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), syncStartTime);

@@ -111,7 +111,8 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	tileSizeY(0),
 	cameraType(0),
 	useMPS(false),
-	useDetailedContextWorkLog(false)
+	useDetailedContextWorkLog(false),
+	deepEXRMergeZThreshold(0.1f)
 {
 
 }
@@ -292,11 +293,14 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			tileSizeY = plug.asInt();
 
-
-		// In UI raycast epsilon defined in millimeters, convert it to meters
+		// In UI raycast epsilon defined in 1/10 of scene units, convert it to meters
 		plug = frGlobalsNode.findPlug("raycastEpsilon");
 		if (!plug.isNull())
-			raycastEpsilon = plug.asFloat() / 1000.f;
+		{
+			const MDistance::Unit sceneUnits = MDistance::uiUnit();
+			double epsilonUIValue = plug.asFloat();
+			raycastEpsilon = MDistance((epsilonUIValue * 0.1f), sceneUnits).asMeters();
+		}
 
 		plug = frGlobalsNode.findPlug("enableOOC");
 		if (!plug.isNull())
@@ -463,6 +467,11 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("contourIsDebugEnabled");
 		if (!plug.isNull())
 			contourIsDebugEnabled = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("deepEXRMergeZThreshold");
+		if (!plug.isNull())
+			deepEXRMergeZThreshold = plug.asFloat();
+
 
 		aovs.readFromGlobals(frGlobalsNode);
 
@@ -2065,7 +2074,7 @@ void SetCameraLookatForMatrix(rpr_camera camera, const MMatrix& matrix)
 {
 	MPoint eye = MPoint(0, 0, 0, 1) * matrix;
 	// convert eye and lookat from cm to m
-	eye = eye * 0.01;
+	eye = eye * GetSceneUnitsConversionCoefficient();
 	MVector viewDir = MVector::zNegAxis * matrix;
 	MVector upDir = MVector::yAxis * matrix;
 	MPoint  lookat = eye + viewDir;
@@ -2340,4 +2349,5 @@ TimePoint GetCurrentChronoTime()
 {
 	return std::chrono::high_resolution_clock::now();
 }
+
 

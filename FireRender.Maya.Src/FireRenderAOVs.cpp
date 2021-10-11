@@ -139,6 +139,9 @@ FireRenderAOVs::FireRenderAOVs() :
 	AddAOV(RPR_AOV_CRYPTOMATTE_OBJ2, "aovCryptoMaterialObj2", "Crypto Material Obj2", "CryptoObject02",
 		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
 
+	AddAOV(RPR_AOV_DEEP_COLOR, "aovDeepColor", "Deep Color", "deep_color",
+		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
+
 	InitEXRCompressionMap();
 }
 
@@ -368,13 +371,20 @@ void FireRenderAOVs::readFrameBuffers(FireRenderContext& context)
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderAOVs::writeToFile(const MString& filePath, unsigned int imageFormat, FireRenderAOV::FileWrittenCallback fileWrittenCallback)
+void FireRenderAOVs::writeToFile(FireRenderContext& context, const MString& filePath, unsigned int imageFormat, FireRenderAOV::FileWrittenCallback fileWrittenCallback)
 {
 	// Check if only the color AOV is active.
-	bool colorOnly = getActiveAOVCount() == 1;
+	const bool colorOnly = getActiveAOVCount() == 1;
 
-	// For EXR, may want save all AOVs to a single multichannel file.
+	// For EXR, may want save all AOVs to a single multichannel file.ee
 	MString extension = FireRenderImageUtil::getImageFormatExtension(imageFormat);
+
+	std::shared_ptr<FireRenderAOV> deepEXRAov = m_aovs[RPR_AOV_DEEP_COLOR];
+	if (deepEXRAov != nullptr && deepEXRAov->active)
+	{
+		MString path = colorOnly ? filePath : deepEXRAov->getOutputFilePath(filePath);
+		deepEXRAov->SaveDeepExrFrameBuffer(context, path.asChar());
+	}
 
 	if ((extension == "exr") && (FireRenderGlobalsData::isExrMultichannelEnabled()) )
 	{
@@ -393,7 +403,7 @@ void FireRenderAOVs::writeToFile(const MString& filePath, unsigned int imageForm
 	{
 		for (auto& aov : m_aovs)
 		{
-			aov.second->writeToFile(filePath, colorOnly, imageFormat, fileWrittenCallback);
+			aov.second->writeToFile(context, filePath, colorOnly, imageFormat, fileWrittenCallback);
 		}
 	}
 }
