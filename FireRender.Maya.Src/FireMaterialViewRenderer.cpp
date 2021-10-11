@@ -268,7 +268,7 @@ MStatus FireMaterialViewRenderer::translateTransform(const MUuid& id, const MUui
 			{
 				MPoint eye = MPoint(0, 0, 0, 1) * matrix;
 				// convert eye and lookat from cm to m
-				eye = eye * 0.01;
+				eye = eye * GetSceneUnitsConversionCoefficient();
 				MVector viewDir = MVector::zNegAxis * matrix;
 				MVector upDir = MVector::yAxis * matrix;
 				MPoint  lookat = eye + viewDir;
@@ -286,7 +286,7 @@ MStatus FireMaterialViewRenderer::translateTransform(const MUuid& id, const MUui
 			MMatrix m = matrix;
 			MMatrix scaleM;
 			scaleM.setToIdentity();
-			scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+			scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
 			m *= scaleM;
 			float mfloats[4][4];
 			m.get(mfloats);
@@ -303,7 +303,7 @@ MStatus FireMaterialViewRenderer::translateTransform(const MUuid& id, const MUui
 			MMatrix m = matrix;
 			MMatrix scaleM;
 			scaleM.setToIdentity();
-			scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+			scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
 			if (m_renderData.m_lightsNames[childId.asString().asChar()].find("Fill") != std::string::npos)
 			{
 				float mf[4][4] = { {0.023902599999999993f, 0.0, 0.9997140000000001f, 0.0f},
@@ -341,7 +341,12 @@ MStatus FireMaterialViewRenderer::translateShader(const MUuid& id, const MObject
 	return FireRenderThread::RunOnceAndWait<MStatus>([this, id, node]()
 	{
 		std::get<frw::Shader>(m_renderData.m_surfaceShader) = m_renderData.m_context.GetShader(node);
-		std::get<FireMaya::NodeId>(m_renderData.m_surfaceShader) = getNodeUUid(node);
+
+		MFnDependencyNode fnShdr(node);
+		std::string shdrName = fnShdr.name().asChar(); 
+		std::string shaderId = getNodeUUid(node);
+		shaderId += shdrName;
+		std::get<FireMaya::NodeId>(m_renderData.m_surfaceShader) = shaderId;
 
 		m_renderData.m_volumeShader = m_renderData.m_context.GetVolumeShader(node);
 

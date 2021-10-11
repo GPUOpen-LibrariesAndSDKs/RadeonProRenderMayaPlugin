@@ -49,6 +49,8 @@ limitations under the License.
 #include <ostream>
 #include <sstream>
 
+#include <fstream>
+
 #include <Xgen/src/xgsculptcore/api/XgSplineAPI.h>
 
 #include <maya/MUuid.h>
@@ -728,9 +730,18 @@ void FireRenderMesh::RegisterCallbacks()
 				continue;
 
 			MObject shaderOb = getSurfaceShader(shadingEngine);
+
+			MFnDependencyNode fnShdr(shaderOb);
+			std::string shdrName = fnShdr.name().asChar();
+
+			MFnDagNode dagMesh(Object());
+			MString thisName = dagMesh.fullPathName();
+
 			if (!shaderOb.isNull())
 			{
-				AddCallback(MNodeMessage::addNodeDirtyCallback(shaderOb, ShaderDirtyCallback, this));
+				MStatus returnStatus;
+				AddCallback(MNodeMessage::addNodeDirtyCallback(shaderOb, ShaderDirtyCallback, this, &returnStatus));
+				assert(returnStatus == MStatus::kSuccess);
 			}
 
 			MObject shaderDi = getDisplacementShader(shadingEngine);
@@ -773,6 +784,14 @@ void FireRenderMesh::buildSphere()
 		polyCountArray, 400))
 	{
 		m.elements.push_back(FrElement{ sphere });
+	}
+}
+
+void FireRenderMesh::SetPreProcessedSafe() 
+{
+	if (IsMainInstance() && IsInitialized())
+	{
+		m.isPreProcessed = true;
 	}
 }
 
@@ -1112,13 +1131,8 @@ bool FireRenderMesh::setupDisplacement(std::vector<MObject>& shadingEngines, frw
 void FireRenderMesh::ReloadMesh(const MDagPath& meshPath)
 {
 	MMatrix mMtx = meshPath.inclusiveMatrix();
+
 	setVisibility(false);
-
-	if (IsMainInstance() && m.elements.size() > 0)
-	{
-		this->context()->RemoveMainMesh(this);
-	}
-
 	m.elements.clear();
 
 	std::vector<frw::Shape> shapes;
@@ -1286,6 +1300,7 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 	for (int i = 0; i < m.elements.size(); i++) // should be always only 1 for RPR2, but keeping array for now for backward compatibility with RPR1
 	{
 		auto& element = m.elements[i];
+		element.shaders.clear();
 
 		if (!element.shape)
 			continue;
@@ -1467,11 +1482,13 @@ void FireRenderMesh::ProcessSkyLight(void)
 
 void FireRenderMesh::Rebuild()
 {
+//************************************************************************************************************************
+// TODO: this segment should be moved into separate function as we have a bit of copy-past with mesh pre-processing (for reasons)
 	auto node = Object();
 	MFnDagNode meshFn(node);
 	MDagPath meshPath = DagPath();
 
-	FireRenderContext *context = this->context();
+	const FireRenderContext* context = this->context();
 
 	MObjectArray shadingEngines = GetShadingEngines(meshFn, Instance());
 
@@ -1482,11 +1499,24 @@ void FireRenderMesh::Rebuild()
 #endif
 
 	// If there is just one shader and the number of shader is not changed then just update the shader
-	if (m.changed.mesh || (shadingEngines.length() != m.elements.size()))
+	bool shadersChanged = false;
+	bool isRPR2 = TahoeContext::IsGivenContextRPR2(context);
+	if (isRPR2)
+	{
+		shadersChanged = (m.elements.size() > 0) && (shadingEngines.length() != m.elements[0].shaders.size());
+	}
+	else
+	{
+		shadersChanged = shadingEngines.length() != m.elements.size();
+	}
+
+	if (m.changed.mesh || shadersChanged || (m.elements.size() == 0))
 	{
 		// the number of shader has changed so reload the mesh
 		ReloadMesh(meshPath);
 	}
+
+//****************************************************************************************************************
 
 	// Assignment should be before callbacks registering, because RegisterCallbacks() use them
 	AssignShadingEngines(shadingEngines);
@@ -1585,9 +1615,9 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 {
 	FireRenderContext* context = this->context();
 
-	const FireRenderMeshCommon* mainMesh = context->GetMainMesh(uuid());
+	FireRenderMeshCommon* mainMesh = context->GetMainMesh(uuid());
 
-	if (mainMesh != nullptr)
+	if ((mainMesh != nullptr) && !mainMesh->IsPreProcessed())
 	{
 		const std::vector<FrElement>& elements = mainMesh->Elements();
 
@@ -1602,18 +1632,19 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 	}
 
 	MDagPath dagPath = DagPath();
+
+	if ((mainMesh != nullptr) && (mainMesh->IsPreProcessed()))
+	{
+		bool success = mainMesh->TranslateMeshWrapped(dagPath, outShapes);
+		assert(success);
+	}
+
 	if (mainMesh == nullptr)
 	{
-		bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && TahoeContext::IsGivenContextRPR2(context) && !context->isInteractive();
-		unsigned int motionSamplesCount = deformationMotionBlurEnabled ? context->motionSamples() : 0;
-		//Ignore set objects dirty calls while creating a mesh, because it moght lead to infinite lookps in case if deformtion motion blur is used
-		{
-			ContextSetDirtyObjectAutoLocker locker(*context);
-			outShapes = FireMaya::MeshTranslator::TranslateMesh(context->GetContext(), Object(), m.faceMaterialIndices, motionSamplesCount, dagPath.fullPathName());
-		}
+		assert(IsPreProcessed());
 
-		m.isMainInstance = true;
-		context->AddMainMesh(this);
+		bool success = TranslateMeshWrapped(dagPath, outShapes);
+		assert(success);
 	}
 
 	for (int i = 0; i < outShapes.size(); i++)
@@ -1624,6 +1655,31 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 	}
 
 	SaveUsedUV(Object());
+}
+
+bool FireRenderMesh::TranslateMeshWrapped(const MDagPath& dagPath, std::vector<frw::Shape>& outShapes)
+{
+	assert(IsMainInstance()); // should already be main instance at this point
+
+	if (!m_meshData.IsInitialized())
+		return false;
+
+	FireRenderContext* context = this->context();
+	bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && TahoeContext::IsGivenContextRPR2(context) && !context->isInteractive();
+	unsigned int motionSamplesCount = deformationMotionBlurEnabled ? context->motionSamples() : 0;
+
+	//Ignore set objects dirty calls while creating a mesh, because it might lead to infinite lookps in case if deformtion motion blur is used
+	{
+		ContextSetDirtyObjectAutoLocker locker(*context);
+		MFnDagNode dagNode(Object());
+		MString name = dagNode.fullPathName();
+		assert(m_meshData.IsInitialized());
+		outShapes = FireMaya::MeshTranslator::TranslateMesh(m_meshData, context->GetContext(), Object(), m.faceMaterialIndices, motionSamplesCount, dagPath.fullPathName());
+	}
+
+	m.isPreProcessed = false;
+
+	return true;
 }
 
 void FireRenderMesh::SaveUsedUV(const MObject& meshNode)
@@ -1783,6 +1839,10 @@ void FireRenderMesh::OnShaderDirty()
 void FireRenderMesh::ShaderDirtyCallback(MObject& node, void* clientData)
 {
 	DebugPrint("CALLBACK > ShaderDirtyCallback(%s)", node.apiTypeStr());
+
+	MFnDependencyNode fnShdr(node);
+	std::string shdrName = fnShdr.name().asChar();
+
 	if (auto self = static_cast<FireRenderMesh*>(clientData))
 	{
 		assert(node != self->Object());
@@ -1814,6 +1874,63 @@ HashValue FireRenderMesh::CalculateHash()
 		hash << e.shadingEngines;
 	}
 	return hash;
+}
+
+bool FireRenderMesh::InitializeMaterials()
+{
+	auto node = Object();
+	MFnDagNode meshFn(node);
+
+	MObjectArray shadingEngines = GetShadingEngines(meshFn, Instance());
+
+	// If there is just one shader and the number of shader is not changed then just update the shader
+	bool onlyShaderChanged = (!m.changed.mesh && (shadingEngines.length() == m.elements.size()));
+
+	return !onlyShaderChanged;
+}
+
+bool FireRenderMesh::PreProcessMesh(unsigned int sampleIdx /*= 0*/)
+{
+	FireRenderContext* context = this->context();
+
+	const FireRenderMeshCommon* mainMesh = context->GetMainMesh(uuid());
+
+	if ((mainMesh != nullptr) && mainMesh->IsPreProcessed())
+	{
+		return true;
+	}
+
+	if ((mainMesh != nullptr) && (this != mainMesh))
+	{
+		return true;
+	}
+
+	bool success = false;
+	MDagPath dagPath = DagPath();
+	bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && TahoeContext::IsGivenContextRPR2(context) && !context->isInteractive();
+	unsigned int motionSamplesCount = deformationMotionBlurEnabled ? context->motionSamples() : 0;
+	//Ignore set objects dirty calls while creating a mesh, because it might lead to infinite lookps in case if deformtion motion blur is used
+	{
+		ContextSetDirtyObjectAutoLocker locker(*context);
+		success = FireMaya::MeshTranslator::PreProcessMesh(m_meshData, context->GetContext(), Object(), motionSamplesCount, sampleIdx, dagPath.fullPathName());
+	}
+
+	if (!success)
+		return false;
+
+	if (mainMesh == nullptr)
+	{
+		m.isMainInstance = true;
+		context->AddMainMesh(this);
+	}
+
+	bool finishedPreProcessing = deformationMotionBlurEnabled ? (motionSamplesCount == sampleIdx + 1) : true;
+	if (!finishedPreProcessing)
+		return success;
+
+	m.isPreProcessed = true;
+
+	return success;
 }
 
 //===================
@@ -2614,6 +2731,8 @@ void setPortal_Sky(MObject transformObject, FireRenderSky *light) {
 
 				light->RecordPortalState(portal, false);
 
+				const bool isSkyMeshProcessed = ob->PreProcessMesh(0);
+				assert(isSkyMeshProcessed);
 				ob->Freshen(ob->context()->GetRenderType() == RenderType::ViewportRender);	// make sure we have shapes to attach
 
 				if (ob->IsVisible())

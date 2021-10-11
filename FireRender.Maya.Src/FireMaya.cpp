@@ -1790,8 +1790,18 @@ frw::Shader FireMaya::Scope::ParseVolumeShader(MObject node)
 }
 
 
-void FireMaya::Scope::RegisterCallback(MObject node)
+void FireMaya::Scope::RegisterCallback(MObject node, std::string* pOverridenUUID /*= nullptr*/)
 {
+	if (pOverridenUUID != nullptr)
+	{
+		if (m->m_nodeDirtyCallbacks.find(*pOverridenUUID) == m->m_nodeDirtyCallbacks.end())
+		{
+			m->m_nodeDirtyCallbacks[*pOverridenUUID] = MNodeMessage::addNodeDirtyCallback(node, NodeDirtyCallback, this);
+		}
+
+		return;
+	}
+
 	std::string uuid = getNodeUUid(node);
 	if (m->m_nodeDirtyCallbacks.find(uuid) == m->m_nodeDirtyCallbacks.end())
 	{
@@ -1806,7 +1816,10 @@ void FireMaya::Scope::NodeDirtyCallback(MObject& ob)
 		MFnDependencyNode node(ob);
 		DebugPrint("Callback: %s dirty", node.typeName().asUTF8());
 
+		std::string shdrName = node.name().asChar();
 		auto shaderId = getNodeUUid(ob);
+		shaderId += shdrName;
+
 		if (auto shader = GetCachedShader(shaderId)) {
 			shader.SetDirty(true);
 		}
@@ -1828,6 +1841,9 @@ void FireMaya::Scope::NodeDirtyCallback(MObject& ob)
 
 void FireMaya::Scope::NodeDirtyCallback(MObject& node, void* clientData)
 {
+	MFnDependencyNode fnShdr(node);
+	std::string shdrName = fnShdr.name().asChar();
+
 	Scope* self = static_cast<Scope*>(clientData);
 	self->NodeDirtyCallback(node);
 }
@@ -1928,9 +1944,14 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMeshCommon*
 		return frw::Shader();
 	}
 
+	MFnDependencyNode fnShdr(node);
+	std::string shdrName = fnShdr.name().asChar();
 	std::string shaderId = getNodeUUid(node);
+	shaderId += shdrName;
 	frw::Shader shader = GetCachedShader(shaderId);
 
+	bool shdrIsVaild = shader.IsValid();
+	bool shdrNotDirty = !shader.IsDirty();
 	if (!forceUpdate && shader.IsValid() && !shader.IsDirty())
 	{
 		return shader;
@@ -1939,7 +1960,7 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMeshCommon*
 	// register callbacks if one doesn't already exist
 	if (!shader.IsValid())
 	{
-		RegisterCallback(node);
+		RegisterCallback(node, &shaderId);
 	}
 
 	DebugPrint("Parsing shader: %s (forceUpdate=%d, shader.IsDirty()=%d)", shaderId.c_str(), forceUpdate, shader.IsDirty());

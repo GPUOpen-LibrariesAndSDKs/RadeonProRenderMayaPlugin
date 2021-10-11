@@ -122,6 +122,10 @@ public:
 	// update fire render objects using Maya objects, then marks as clean
 	virtual void Freshen(bool shouldCalculateHash);
 
+	virtual bool IsMesh(void) const { return false; }
+	virtual bool PreProcessMesh(unsigned int sampleIdx = 0) { return false; }
+	virtual bool IsMashInstancer(void) const { return false; }
+
 	// hash is generated during Freshen call
 	HashValue GetStateHash() { return m.hash; }
 
@@ -212,7 +216,7 @@ public:
 
 	virtual void RegisterCallbacks() override;
 
-	bool IsVisible() { return m_isVisible; }
+	bool IsVisible() const { return m_isVisible; }
 
 	std::vector<frw::Shape> GetVisiblePortals();
 
@@ -282,6 +286,8 @@ public:
 
 	bool IsMainInstance() const { return m.isMainInstance; }
 
+	bool IsPreProcessed() const { return m.isPreProcessed; }
+
 	// utility functions
 	void setRenderStats(MDagPath dagPath);
 	void setVisibility(bool visibility);
@@ -291,12 +297,21 @@ public:
 	void setPrimaryVisibility(bool primaryVisibility);
 	void setContourVisibility(bool contourVisibility);
 
+	virtual bool IsMesh(void) const { return false; }
+
+	virtual bool InitializeMaterials() { return false; }
+	virtual bool PreProcessMesh(unsigned int sampleIdx = 0) { return false; }
+
+	// translate mesh
+	virtual bool TranslateMeshWrapped(const MDagPath& dagPath, std::vector<frw::Shape>& outShapes) { return false; }
+
 protected:
 	// Detach from the scene
 	virtual void detachFromScene() override;
 
 	// Attach to the scene
 	virtual void attachToScene() override;
+
 
 	// materials
 	const std::vector<int>& GetFaceMaterialIndices(void) const;
@@ -308,6 +323,7 @@ protected:
 
 	bool IsMotionBlurEnabled(const MFnDagNode& meshFn);
 
+
 protected:
 
 	struct
@@ -316,6 +332,12 @@ protected:
 		std::vector<int> faceMaterialIndices;
 		bool isEmissive = false;
 		bool isMainInstance = false;
+
+		// pre-processed is a state when some mesh data is read from maya but rpr object is not created yet
+		// - is re-set to false after rpr object is created
+		// - TODO: replace bool with bit field
+		bool isPreProcessed = false; 
+
 		struct
 		{
 			bool mesh = false;
@@ -347,8 +369,6 @@ public:
 
 	// Clear
 	virtual void clear() override;
-
-public:
 	// Register the callback
 	virtual void RegisterCallbacks() override;
 
@@ -365,24 +385,39 @@ public:
 
 	virtual void Freshen(bool shouldCalculateHash) override;
 
+	virtual bool IsMesh(void) const override { return true; }
+
+	virtual bool InitializeMaterials() override;
+	virtual bool PreProcessMesh(unsigned int sampleIdx = 0) override;
+	virtual bool TranslateMeshWrapped(const MDagPath& dagPath, std::vector<frw::Shape>& outShapes) override;
+
 	// build a sphere
 	void buildSphere();
 
 	virtual bool IsEmissive() override { return m.isEmissive; }
 
 	bool setupDisplacement(std::vector<MObject>& shadingEngines, frw::Shape shape);
-	void Rebuild(void);
+	virtual void Rebuild(void);
 	void ReloadMesh(const MDagPath& meshPath);
 	void ProcessMesh(const MDagPath& meshPath);
 	void ProcessIBLLight(void);
 	void ProcessSkyLight(void);
 	void RebuildTransforms(void);
 
+	// used to safely skip pre-processing
+	void SetPreProcessedSafe();
+
+	bool IsInitialized(void) const { return m_meshData.IsInitialized(); }
+
 protected:
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;
 	void SaveUsedUV(const MObject& meshNode);
 
+
 	void SetupObjectId(MObject parentTransform);
+
+protected:
+	FireMaya::MeshTranslator::MeshPolygonData m_meshData;
 
 private:
 	void GetShapes(std::vector<frw::Shape>& outShapes);
@@ -766,6 +801,49 @@ public:
 protected:
 	// create volume from maya fluid node
 	virtual bool TranslateVolume(void) override;
+};
+
+// Implementation of RPR volumes in RPR 2
+class NorthstarRPRVolume : public FireRenderRPRVolume
+{
+public:
+	// Constructor
+	NorthstarRPRVolume(FireRenderContext* context, const MDagPath& dagPath);
+
+	// Destructor
+	virtual ~NorthstarRPRVolume();
+
+	// detach from the scene
+	virtual void detachFromScene() override;
+
+	// attach to the scene
+	virtual void attachToScene() override;
+
+
+protected:
+	virtual bool TranslateVolume(void) override;
+	virtual void ApplyTransform(void) override;
+};
+
+// Implementation of Fluid volumes in RPR 2
+class NorthstarFluidVolume : public FireRenderFluidVolume
+{
+public:
+	// Constructor
+	NorthstarFluidVolume(FireRenderContext* context, const MDagPath& dagPath);
+
+	// Destructor
+	virtual ~NorthstarFluidVolume();
+
+	// detach from the scene
+	virtual void detachFromScene() override;
+
+	// attach to the scene
+	virtual void attachToScene() override;
+
+protected:
+	virtual bool TranslateVolume(void) override;
+	virtual void ApplyTransform(void) override;
 };
 
 // Fire render hair

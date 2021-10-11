@@ -26,6 +26,9 @@ public:
 
 	const FireRenderMesh& GetOriginalFRMeshinstancedObject() const { return m_originalFRMesh; }
 
+	virtual void Rebuild(void) override;
+	virtual bool PreProcessMesh(unsigned int sampleIdx = 0) override;
+
 protected:
 	/** Logic should be changed to not pass DagPath into the function, because it's not used in MASH visibility check */
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const final override;

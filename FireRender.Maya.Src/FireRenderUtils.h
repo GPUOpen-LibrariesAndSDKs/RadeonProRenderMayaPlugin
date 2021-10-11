@@ -326,6 +326,9 @@ public:
 
 	bool useDetailedContextWorkLog;
 
+	//Deep EXR
+	float deepEXRMergeZThreshold;
+
 private:
 	short getMaxRayDepth(const FireRenderContext& context) const;
 	short getSamples(const FireRenderContext& context) const;
@@ -819,6 +822,13 @@ MObject findDependNode(MString name);
 // Same environment variable used in the Blender addon
 //
 bool isMetalOn();
+
+// Maya always returns all lengths in centimeters despite the settings in Preferences (detected experimentally)
+inline float GetSceneUnitsConversionCoefficient(void)
+{
+	const static float cmToMCoefficient = 0.01f;
+	return cmToMCoefficient;
+}
 
 /**
 * Disconnect everything connected to Plug

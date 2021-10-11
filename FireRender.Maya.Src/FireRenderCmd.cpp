@@ -127,15 +127,28 @@ MStatus FireRenderCmd::doIt(const MArgList & args)
 	}
 	else
 	{
-		// Start or update an IPR render.
-		if (argData.isFlagSet(kIprFlag))
-			return renderIpr(argData);
-		// Start or update a batch render.
-		else if (argData.isFlagSet(kBatchFlag))
-			return renderBatch(argData);
-		// Start a single frame render.
-		else
-			return renderFrame(argData);
+		try
+		{
+			// Start or update an IPR render.
+			if (argData.isFlagSet(kIprFlag))
+				return renderIpr(argData);
+			// Start or update a batch render.
+			else if (argData.isFlagSet(kBatchFlag))
+				return renderBatch(argData);
+			// Start a single frame render.
+			else
+				return renderFrame(argData);
+		}
+		catch (std::exception& err)
+		{
+			MGlobal::displayError(MString("std::exception: ") + err.what());
+			s_rendering = false;
+		}
+		catch (...)
+		{
+			MGlobal::displayError(MString("Exception in FireRenderCmd !!!"));
+			s_rendering = false;
+		}
 	}
 }
 
@@ -212,7 +225,7 @@ MStatus FireRenderCmd::renderFrame(const MArgDatabase& argData)
 		MString filePath = getOutputFilePath(settings, frame, cameraName, true);
 
 		// Write output files.
-		aovs->writeToFile(filePath, settings.imageFormat, [](const MString& path)
+		aovs->writeToFile(*s_production->GetContext(), filePath, settings.imageFormat, [](const MString& path)
 		{
 			MString cmd;
 
@@ -231,13 +244,13 @@ MStatus FireRenderCmd::renderFrame(const MArgDatabase& argData)
 	s_rendering = true;
 
 	s_production->UpdateGlobals();
-	if (!s_production->isTileRender())
+	if (s_production->isTileRender())
 	{
-		s_production->startFullFrameRender();
+		s_production->startTileRender();
 	}
 	else
 	{
-		s_production->startTileRender();
+		s_production->startFullFrameRender();
 	}
 
 	if (s_waitForIt || argData.isFlagSet(kWaitForIt))
@@ -386,8 +399,10 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		MString newLayerName;
 		switchRenderLayer(args, oldLayerName, newLayerName);
 
-		// Enable active AOVs.
 		FireRenderAOVs& aovs = globals.aovs;
+
+		// Enable active AOVs.
+
 		aovs.applyToContext(context);
 
 		// Initialize the scene.
@@ -510,7 +525,7 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 				}
 
 				// Save the frame to file.
-				aovs.writeToFile(filePath, settings.imageFormat);
+				aovs.writeToFile(context, filePath, settings.imageFormat);
 
 				// Execute the post frame command if there is one.
 				MGlobal::executeCommand(settings.postRenderMel);

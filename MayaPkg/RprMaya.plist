@@ -14,5 +14,5 @@
     <choice id="com.amd.rpr.inst-maya.app" visible="false">
         <pkg-ref id="com.amd.rpr.inst-maya.app"/>
     </choice>
-    <pkg-ref id="com.amd.rpr.inst-maya.app" version="0" onConclusion="none">RadeonProRenderPlugin-2.8.38.pkg</pkg-ref>
+    <pkg-ref id="com.amd.rpr.inst-maya.app" version="0" onConclusion="none">RadeonProRenderPlugin-3.1.19.pkg</pkg-ref>
 </installer-gui-script>

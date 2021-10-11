@@ -219,6 +219,16 @@ void TahoeContext::setupContextPostSceneCreation(const FireRenderGlobalsData& fi
 
 		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_MIN_SPP, fireRenderGlobalsData.completionCriteriaFinalRender.completionCriteriaMinIterations);
 		checkStatus(frstatus);
+
+		// if Deep Exr enabled
+		if (fireRenderGlobalsData.aovs.IsAOVActive(RPR_AOV_DEEP_COLOR))
+		{
+			MDistance distance(fireRenderGlobalsData.deepEXRMergeZThreshold, MDistance::uiUnit());
+
+			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_DEEP_SUBPIXEL_MERGE_Z_THRESHOLD, distance.asMeters());
+			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_DEEP_GPU_ALLOCATION_LEVEL, 4);
+			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_DEEP_COLOR_ENABLED, 1);
+		}
 	}
 	else if (isInteractive())
 	{
@@ -533,11 +543,21 @@ bool TahoeContext::IsHairSupported() const
 
 bool TahoeContext::IsVolumeSupported() const
 {
-	return m_PluginVersion == TahoePluginVersion::RPR1;
+	return true;
+}
+
+bool TahoeContext::IsNorthstarVolumeSupported() const
+{
+	return m_PluginVersion == TahoePluginVersion::RPR2;
 }
 
 bool TahoeContext::IsAOVSupported(int aov) const 
 {
+	if (aov >= RPR_AOV_MAX)
+	{
+		return false;
+	}
+
 	return (aov != RPR_AOV_VIEW_SHADING_NORMAL) && (aov != RPR_AOV_COLOR_RIGHT);
 }
 
@@ -559,6 +579,11 @@ bool TahoeContext::IsGLInteropEnabled() const
 bool TahoeContext::MetalContextAvailable() const
 {
     return true;
+}
+
+bool TahoeContext::IsDeformationMotionBlurEnabled() const
+{
+	return TahoeContext::IsGivenContextRPR2(this);
 }
 
 void TahoeContext::SetRenderUpdateCallback(RenderUpdateCallback callback, void* data)
