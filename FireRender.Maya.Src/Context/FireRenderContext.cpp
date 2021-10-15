@@ -464,7 +464,8 @@ void FireRenderContext::turnOnAOVsForDenoiser(bool allocBuffer)
 static const std::vector<int> g_contourAovs = {
 	RPR_AOV_OBJECT_ID, 
 	RPR_AOV_SHADING_NORMAL,
-	RPR_AOV_MATERIAL_ID 
+	RPR_AOV_MATERIAL_ID,
+	RPR_AOV_UV
 };
 
 void FireRenderContext::turnOnAOVsForContour(bool allocBuffer /*= false*/)

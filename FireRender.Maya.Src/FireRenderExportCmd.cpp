@@ -222,11 +222,16 @@ bool SaveExportConfig(const std::wstring& filePath, TahoeContext& ctx, const std
 		json << "\"object.id\" : " << (globals.contourUseObjectID ? 1 : 0) << ",\n";
 		json << "\"material.id\" : " << (globals.contourUseMaterialID ? 1 : 0) << ",\n";
 		json << "\"normal\" : " << (globals.contourUseShadingNormal ? 1 : 0) << ",\n";
+		json << "\"uv\" : " << (globals.contourUseUV ? 1 : 0) << ",\n";
 
 		json << "\"threshold.normal\" : " << globals.contourNormalThreshold << ",\n";
+		json << "\"threshold.uv\" : " << globals.contourUVThreshold << ",\n";
+
 		json << "\"linewidth.objid\" : " << globals.contourLineWidthObjectID << ",\n";
 		json << "\"linewidth.matid\" : " << globals.contourLineWidthMaterialID << ",\n";
 		json << "\"linewidth.normal\" : " << globals.contourLineWidthShadingNormal << ",\n";
+		json << "\"linewidth.uv\" : " << globals.contourLineWidthUV << ",\n";
+
 		json << "\"antialiasing\" : " << globals.contourAntialiasing << ",\n";
 
 		json << "\"debug\" : " << (globals.contourIsDebugEnabled ? 1 : 0);
