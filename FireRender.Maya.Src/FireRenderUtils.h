@@ -292,14 +292,21 @@ public:
 
 	// Contour
 	bool contourIsEnabled;
+
 	bool contourUseObjectID;
 	bool contourUseMaterialID;
 	bool contourUseShadingNormal;
+	bool contourUseUV;
+
 	float contourLineWidthObjectID;
 	float contourLineWidthMaterialID;
 	float contourLineWidthShadingNormal;
+	float contourLineWidthUV;
+
 	float contourNormalThreshold;
+	float contourUVThreshold;
 	float contourAntialiasing;
+
 	bool contourIsDebugEnabled;
 
 	// Camera type.
