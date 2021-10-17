@@ -112,7 +112,20 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	cameraType(0),
 	useMPS(false),
 	useDetailedContextWorkLog(false),
-	deepEXRMergeZThreshold(0.1f)
+	deepEXRMergeZThreshold(0.1f),
+	contourIsEnabled(false),
+	contourUseObjectID(true),
+	contourUseMaterialID(true),
+	contourUseShadingNormal(true),
+	contourUseUV(true),
+	contourLineWidthObjectID(1.0f),
+	contourLineWidthMaterialID(1.0f),
+	contourLineWidthShadingNormal(1.0f),
+	contourLineWidthUV(1.0f),
+	contourNormalThreshold(45.0f),
+	contourUVThreshold(45.0f),
+	contourAntialiasing(1.0f),
+	contourIsDebugEnabled(false)
 {
 
 }
@@ -299,7 +312,7 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		{
 			const MDistance::Unit sceneUnits = MDistance::uiUnit();
 			double epsilonUIValue = plug.asFloat();
-			raycastEpsilon = MDistance((epsilonUIValue * 0.1f), sceneUnits).asMeters();
+			raycastEpsilon = (float)( MDistance((epsilonUIValue * 0.1f), sceneUnits).asMeters());
 		}
 
 		plug = frGlobalsNode.findPlug("enableOOC");
@@ -444,6 +457,10 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			contourUseShadingNormal = plug.asBool();
 
+		plug = frGlobalsNode.findPlug("contourUseUV");
+		if (!plug.isNull())
+			contourUseUV = plug.asBool();
+
 		plug = frGlobalsNode.findPlug("contourLineWidthObjectID");
 		if (!plug.isNull())
 			contourLineWidthObjectID = plug.asFloat();
@@ -456,9 +473,17 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			contourLineWidthShadingNormal = plug.asFloat();
 
+		plug = frGlobalsNode.findPlug("contourLineWidthUV");
+		if (!plug.isNull())
+			contourLineWidthUV = plug.asFloat();
+
 		plug = frGlobalsNode.findPlug("contourNormalThreshold");
 		if (!plug.isNull())
 			contourNormalThreshold = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("contourUVThreshold");
+		if (!plug.isNull())
+			contourUVThreshold = plug.asFloat();
 
 		plug = frGlobalsNode.findPlug("contourAntialiasing");
 		if (!plug.isNull())

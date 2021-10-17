@@ -171,17 +171,23 @@ void FireRenderVolumeOverride::populateGeometry(
 		return;
 	}
 
+	const float maxSize = std::max<float>(m_currentTrackedValues.nx,
+		std::max<float>(m_currentTrackedValues.ny, m_currentTrackedValues.nz));
+	const float sizeX = m_currentTrackedValues.nx / maxSize;
+	const float sizeY = m_currentTrackedValues.ny / maxSize;
+	const float sizeZ = m_currentTrackedValues.nz / maxSize;
+
 	// create volume boundaries
 	std::vector<float> veritces = {
-		-0.5f, -0.5f, -0.5f,
-		0.5f, -0.5f, -0.5f,
-		0.5f, 0.5f, -0.5f,
-		-0.5f, 0.5f, -0.5f,
+		-sizeX / 2, -sizeY / 2, -sizeZ / 2,
+		 sizeX / 2, -sizeY / 2, -sizeZ / 2,
+		 sizeX / 2,  sizeY / 2, -sizeZ / 2,
+		-sizeX / 2,  sizeY / 2, -sizeZ / 2,
 
-		-0.5f, -0.5f, 0.5f,
-		0.5f, -0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f,
-		-0.5f, 0.5f, 0.5f,
+		-sizeX / 2, -sizeY / 2,  sizeZ / 2,
+		 sizeX / 2, -sizeY / 2,  sizeZ / 2,
+		 sizeX / 2,  sizeY / 2,  sizeZ / 2,
+		-sizeX / 2,  sizeY / 2,  sizeZ / 2,
 	};
 	std::vector<int> vertexIndices = {
 		0, 1, 1, 2, 2, 3, 3, 0,
@@ -191,32 +197,32 @@ void FireRenderVolumeOverride::populateGeometry(
 
 	// create grid
 	int last_boundary_vtx_idx = (int) ((veritces.size() / 3) - 1);
-	float step = 1.0f / (m_currentTrackedValues.nx);
+	float step = sizeX / (m_currentTrackedValues.nx);
 	for (short idx = 1; idx < (m_currentTrackedValues.nx); ++idx)
 	{
-		veritces.push_back(-0.5f + step*idx);
-		veritces.push_back(-0.5f);
-		veritces.push_back(-0.5f);
+		veritces.push_back(-sizeX / 2 + step*idx);
+		veritces.push_back(-sizeY / 2);
+		veritces.push_back(-sizeZ / 2);
 
-		veritces.push_back(-0.5f + step*idx);
-		veritces.push_back(-0.5f);
-		veritces.push_back(0.5f);
+		veritces.push_back(-sizeX / 2 + step*idx);
+		veritces.push_back(-sizeY / 2);
+		veritces.push_back( sizeZ / 2);
 
 		vertexIndices.push_back(last_boundary_vtx_idx + (idx-1)*2 + 1);
 		vertexIndices.push_back(last_boundary_vtx_idx + (idx-1)*2 + 2);
 	}
 
 	last_boundary_vtx_idx = (int) ((veritces.size()/3) - 1);
-	step = 1.0f / (m_currentTrackedValues.nz);
+	step = sizeZ / (m_currentTrackedValues.nz);
 	for (short idx = 1; idx < (m_currentTrackedValues.nz); ++idx)
 	{
-		veritces.push_back(-0.5f);
-		veritces.push_back(-0.5f);
-		veritces.push_back(-0.5f + step*idx);
+		veritces.push_back(-sizeX / 2);
+		veritces.push_back(-sizeY / 2);
+		veritces.push_back(-sizeZ / 2 + step*idx);
 
-		veritces.push_back(0.5f);
-		veritces.push_back(-0.5f);
-		veritces.push_back(-0.5f + step*idx);
+		veritces.push_back( sizeX / 2);
+		veritces.push_back(-sizeY / 2);
+		veritces.push_back(-sizeZ / 2 + step*idx);
 
 		vertexIndices.push_back(last_boundary_vtx_idx + (idx-1)*2 + 1);
 		vertexIndices.push_back(last_boundary_vtx_idx + (idx-1)*2 + 2);

@@ -448,6 +448,15 @@ bool NorthstarRPRVolume::TranslateVolume()
 		densityGridNode.SetGrid(m_densityGrid);
 		volumeShader.xSetValue(RPR_MATERIAL_INPUT_DENSITYGRID, densityGridNode);
 		volumeShader.xSetParameterF(RPR_MATERIAL_INPUT_DENSITY, maxDensityValue, 1.0f, 1.0f, 1.0f);
+
+		// scale
+		m_bboxScale.setToIdentity();
+		float max_size = std::max<float>(vdata.densityGrid.gridSizeX,
+			std::max<float>(vdata.densityGrid.gridSizeY, vdata.densityGrid.gridSizeZ));
+		m_bboxScale[0][0] = vdata.densityGrid.gridSizeX / max_size;
+		m_bboxScale[1][1] = vdata.densityGrid.gridSizeY / max_size;
+		m_bboxScale[2][2] = vdata.densityGrid.gridSizeZ / max_size;
+
 	}
 	
 	if (vdata.albedoGrid.IsValid()) // grid exists
