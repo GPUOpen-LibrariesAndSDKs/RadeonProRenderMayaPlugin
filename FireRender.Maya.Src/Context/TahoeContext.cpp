@@ -133,6 +133,9 @@ void TahoeContext::setupContextContourMode(const FireRenderGlobalsData& fireRend
 			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_USE_NORMAL, fireRenderGlobalsData.contourUseShadingNormal);
 			checkStatus(frstatus);
 
+			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_USE_UV, fireRenderGlobalsData.contourUseUV);
+			checkStatus(frstatus);
+
 			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_LINEWIDTH_OBJECTID, fireRenderGlobalsData.contourLineWidthObjectID);
 			checkStatus(frstatus);
 
@@ -142,7 +145,13 @@ void TahoeContext::setupContextContourMode(const FireRenderGlobalsData& fireRend
 			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_LINEWIDTH_NORMAL, fireRenderGlobalsData.contourLineWidthShadingNormal);
 			checkStatus(frstatus);
 
+			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_LINEWIDTH_UV, fireRenderGlobalsData.contourLineWidthUV);
+			checkStatus(frstatus);
+
 			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_NORMAL_THRESHOLD, fireRenderGlobalsData.contourNormalThreshold);
+			checkStatus(frstatus);
+
+			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_UV_THRESHOLD, fireRenderGlobalsData.contourUVThreshold);
 			checkStatus(frstatus);
 
 			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_ANTIALIASING, fireRenderGlobalsData.contourAntialiasing);
