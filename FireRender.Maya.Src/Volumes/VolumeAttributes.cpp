@@ -57,6 +57,7 @@ MObject RPRVolumeAttributes::emissionRamp;
 // - density
 MObject RPRVolumeAttributes::densityEnabled;
 MObject RPRVolumeAttributes::volumeDimensionsDensity;
+MObject RPRVolumeAttributes::volumeVoxelSizeDensity;
 MObject RPRVolumeAttributes::densitySelectedGrid;
 MObject RPRVolumeAttributes::densityGradType;
 MObject RPRVolumeAttributes::densityValue;
@@ -270,6 +271,10 @@ void RPRVolumeAttributes::Initialize()
 	nAttr.setMin(1, 1, 1);
 	nAttr.setMax(10000, 10000, 10000);
 
+	volumeVoxelSizeDensity = nAttr.create("volumeVoxelSizeDensity", "dvxs", MFnNumericData::k3Double);
+	setAttribProps(nAttr, volumeVoxelSizeDensity);
+	CHECK_MSTATUS(nAttr.setDefault(0.25, 0.25, 0.25));
+
 	densitySelectedGrid = tAttr.create("densitySelectedGrid", "dnsg", MFnData::kString, MFnStringData().create("Not used"), &status);
 	tAttr.setHidden(true);
 	
@@ -284,6 +289,19 @@ void RPRVolumeAttributes::Initialize()
 MDataHandle RPRVolumeAttributes::GetVolumeGridDimentions(const MFnDependencyNode& node)
 {
 	MPlug plug = node.findPlug(RPRVolumeAttributes::volumeDimensionsDensity);
+
+	assert(!plug.isNull());
+	if (!plug.isNull())
+	{
+		return plug.asMDataHandle();
+	}
+
+	return MDataHandle();
+}
+
+MDataHandle RPRVolumeAttributes::GetVolumeVoxelSize(const MFnDependencyNode& node)
+{
+	MPlug plug = node.findPlug(RPRVolumeAttributes::volumeVoxelSizeDensity);
 
 	assert(!plug.isNull());
 	if (!plug.isNull())
@@ -576,7 +594,7 @@ MString RPRVolumeAttributes::GetSelectedEmissionGridName(const MFnDependencyNode
 	return MString(value);
 }
 
-void SetVolumeUIDimensions(std::array<int, 3 >& dimValues, MPlug& plugToSet)
+void SetVolumeUIGridSize(VDBGridSize& dimValues, MPlug& plugToSet)
 {
 	assert(!plugToSet.isNull());
 	if (plugToSet.isNull())
@@ -587,15 +605,53 @@ void SetVolumeUIDimensions(std::array<int, 3 >& dimValues, MPlug& plugToSet)
 	if (!isCompund)
 		return;
 
-	unsigned int numChildren = plugToSet.numChildren(&status);
-	for (unsigned int child_idx = 0; child_idx < numChildren; ++child_idx)
-	{
-		MPlug childPlug = plugToSet.child(child_idx, &status);
-		if (status != MStatus::kSuccess)
-			return;
+	// set x dimension
+	MPlug childPlug = plugToSet.child(0, &status);
+	if (status != MStatus::kSuccess)
+		return;
+	status = childPlug.setShort(dimValues.gridSizeX);
 
-		status = childPlug.setShort(dimValues[child_idx]);
-	}
+	// set y dimension
+	childPlug = plugToSet.child(1, &status);
+	if (status != MStatus::kSuccess)
+		return;
+	status = childPlug.setShort(dimValues.gridSizeY);
+
+	// set z dimension
+	childPlug = plugToSet.child(2, &status);
+	if (status != MStatus::kSuccess)
+		return;
+	status = childPlug.setShort(dimValues.gridSizeZ);
+}
+
+void SetVolumeUIVoxelSize(VDBGridSize& dimValues, MPlug& plugToSet)
+{
+	assert(!plugToSet.isNull());
+	if (plugToSet.isNull())
+		return;
+
+	MStatus status;
+	bool isCompund = plugToSet.isCompound(&status);
+	if (!isCompund)
+		return;
+
+	// set x dimension
+	MPlug childPlug = plugToSet.child(0, &status);
+	if (status != MStatus::kSuccess)
+		return;
+	status = childPlug.setDouble(dimValues.voxelSizeX);
+
+	// set y dimension
+	childPlug = plugToSet.child(1, &status);
+	if (status != MStatus::kSuccess)
+		return;
+	status = childPlug.setDouble(dimValues.voxelSizeY);
+
+	// set z dimension
+	childPlug = plugToSet.child(2, &status);
+	if (status != MStatus::kSuccess)
+		return;
+	status = childPlug.setDouble(dimValues.voxelSizeZ);
 }
 
 // modify input grid to be used as density and calculate corresponing lookup table
@@ -649,7 +705,7 @@ void ProcessTemperatureGrid(
 	}
 }
 
-void RPRVolumeAttributes::SetupVolumeFromFile(MObject& node, FireRenderVolumeLocator::GridParams& gridParams)
+void RPRVolumeAttributes::SetupVolumeFromFile(MObject& node, VDBGridParams& gridParams)
 {
 	// get .vdb file from UI form
 	std::string filename = GetVDBFilePath(node);
@@ -698,29 +754,36 @@ void RPRVolumeAttributes::SetupVolumeFromFile(MObject& node, FireRenderVolumeLoc
 	MString command = "FillGridList(\"" + partialPathName + "\");\n";
 	MStatus res = MGlobal::executeCommandOnIdle(command);
 	CHECK_MSTATUS(res);
+
+	// setup new grid parameters
+	MFnDependencyNode depNode(node);
+	MPlug densityPlug = depNode.findPlug(RPRVolumeAttributes::densitySelectedGrid);
+	SetupGridSizeFromFile(node, densityPlug, gridParams);
 }
 
-void RPRVolumeAttributes::SetupGridSizeFromFile(MObject& node, MPlug& plug, FireRenderVolumeLocator::GridParams& gridParams)
+void RPRVolumeAttributes::SetupGridSizeFromFile(MObject& node, MPlug& plug, VDBGridParams& gridParams)
 {
 	MFnDependencyNode depNode(node);
 
 	if (plug == RPRVolumeAttributes::densitySelectedGrid)
 	{
 		std::string selectedGridName = GetSelectedDensityGridName(depNode).asChar();
-		MPlug plug = depNode.findPlug(RPRVolumeAttributes::volumeDimensionsDensity);
-		SetVolumeUIDimensions(gridParams[selectedGridName], plug);
+		MPlug dimensionsPlug = depNode.findPlug(RPRVolumeAttributes::volumeDimensionsDensity);
+		MPlug voxelSizePlug = depNode.findPlug(RPRVolumeAttributes::volumeVoxelSizeDensity);
+		SetVolumeUIGridSize(gridParams[selectedGridName], dimensionsPlug);
+		SetVolumeUIVoxelSize(gridParams[selectedGridName], voxelSizePlug);
 	}
 	else if (plug == RPRVolumeAttributes::albedoSelectedGrid)
 	{
 		std::string selectedGridName = GetSelectedAlbedoGridName(depNode).asChar();
 		MPlug plug = depNode.findPlug(RPRVolumeAttributes::volumeDimensionsAlbedo);
-		SetVolumeUIDimensions(gridParams[selectedGridName], plug);
+		SetVolumeUIGridSize(gridParams[selectedGridName], plug);
 	}
 	else if (plug == RPRVolumeAttributes::emissionSelectedGrid)
 	{
 		std::string selectedGridName = GetSelectedEmissionGridName(depNode).asChar();
 		MPlug plug = depNode.findPlug(RPRVolumeAttributes::volumeDimensionsEmission);
-		SetVolumeUIDimensions(gridParams[selectedGridName], plug);
+		SetVolumeUIGridSize(gridParams[selectedGridName], plug);
 	}
 }
 

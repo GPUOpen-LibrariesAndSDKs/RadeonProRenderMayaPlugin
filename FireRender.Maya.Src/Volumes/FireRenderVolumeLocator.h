@@ -24,6 +24,8 @@ limitations under the License.
 * system attributes.
 */
 
+class VDBGridSize;
+
 class FireRenderVolumeLocator : public MPxLocatorNode
 {
 public:
@@ -50,7 +52,7 @@ public:
 
 	static MStatus initialize();
 
-	using GridParams = std::map<std::string, std::array<int, 3>>;
+	using GridParams = std::map<std::string, VDBGridSize>;
 
 public:
 	static MTypeId id;
