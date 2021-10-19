@@ -191,6 +191,7 @@ public:
 	static void Initialize();
 
 	static MDataHandle GetVolumeGridDimentions(const MFnDependencyNode& node);
+	static MDataHandle GetVolumeVoxelSize(const MFnDependencyNode& node);
 	static std::string GetVDBFilePath(const MFnDependencyNode& node);
 
 	static bool GetAlbedoEnabled(const MFnDependencyNode& node);
@@ -213,8 +214,8 @@ public:
 
 	static void FillVolumeData(VolumeData& data, const MObject& node, FireMaya::Scope* scope);
 
-	static void SetupVolumeFromFile(MObject& node, FireRenderVolumeLocator::GridParams& gridParams);
-	static void SetupGridSizeFromFile(MObject& node, MPlug& plug, FireRenderVolumeLocator::GridParams& gridParams);
+	static void SetupVolumeFromFile(MObject& node, VDBGridParams& gridParams);
+	static void SetupGridSizeFromFile(MObject& node, MPlug& plug, VDBGridParams& gridParams);
 
 	static void FillVolumeData(VDBVolumeData& data, const MObject& node);
 
@@ -248,6 +249,7 @@ public:
 	// Density
 	static MObject densityEnabled;
 	static MObject volumeDimensionsDensity; // selected grid dimesions
+	static MObject volumeVoxelSizeDensity; // selected grid voxel size
 	static MObject densitySelectedGrid; // selected grid
 	static MObject densityGradType; // gradient type
 	static MObject densityValue;    // values ramp

@@ -269,21 +269,27 @@ bool FireRenderRPRVolume::TranslateVolume()
 	if (vdata.densityGrid.IsValid()) // grid exists
 	{
 		m_densityGrid = Context().CreateVolumeGrid(
-			vdata.densityGrid.gridSizeX,
-			vdata.densityGrid.gridSizeY,
-			vdata.densityGrid.gridSizeZ,
+			vdata.densityGrid.size.gridSizeX,
+			vdata.densityGrid.size.gridSizeY,
+			vdata.densityGrid.size.gridSizeZ,
 			vdata.densityGrid.gridOnIndices,
 			vdata.densityGrid.gridOnValueIndices,
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
 		);
+
+		// scale
+		m_bboxScale.setToIdentity();
+		m_bboxScale[0][0] = vdata.densityGrid.size.gridSizeX * vdata.densityGrid.size.voxelSizeX;
+		m_bboxScale[1][1] = vdata.densityGrid.size.gridSizeY * vdata.densityGrid.size.voxelSizeY;
+		m_bboxScale[2][2] = vdata.densityGrid.size.gridSizeZ * vdata.densityGrid.size.voxelSizeZ;
 	}
 
 	if (vdata.albedoGrid.IsValid()) // grid exists
 	{
 		m_albedoGrid = Context().CreateVolumeGrid(
-			vdata.albedoGrid.gridSizeX,
-			vdata.albedoGrid.gridSizeY,
-			vdata.albedoGrid.gridSizeZ,
+			vdata.albedoGrid.size.gridSizeX,
+			vdata.albedoGrid.size.gridSizeY,
+			vdata.albedoGrid.size.gridSizeZ,
 			vdata.albedoGrid.gridOnIndices,
 			vdata.albedoGrid.gridOnValueIndices,
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
@@ -293,9 +299,9 @@ bool FireRenderRPRVolume::TranslateVolume()
 	if (vdata.emissionGrid.IsValid()) // grid exists
 	{
 		m_emissionGrid = Context().CreateVolumeGrid(
-			vdata.emissionGrid.gridSizeX,
-			vdata.emissionGrid.gridSizeY,
-			vdata.emissionGrid.gridSizeZ,
+			vdata.emissionGrid.size.gridSizeX,
+			vdata.emissionGrid.size.gridSizeY,
+			vdata.emissionGrid.size.gridSizeZ,
 			vdata.emissionGrid.gridOnIndices,
 			vdata.emissionGrid.gridOnValueIndices,
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
@@ -433,9 +439,9 @@ bool NorthstarRPRVolume::TranslateVolume()
 	if (vdata.densityGrid.IsValid()) // grid exists
 	{
 		m_densityGrid = Context().CreateVolumeGrid(
-			vdata.densityGrid.gridSizeX,
-			vdata.densityGrid.gridSizeY,
-			vdata.densityGrid.gridSizeZ,
+			vdata.densityGrid.size.gridSizeX,
+			vdata.densityGrid.size.gridSizeY,
+			vdata.densityGrid.size.gridSizeZ,
 			vdata.densityGrid.gridOnIndices,
 			vdata.densityGrid.gridOnValueIndices,
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
@@ -451,20 +457,18 @@ bool NorthstarRPRVolume::TranslateVolume()
 
 		// scale
 		m_bboxScale.setToIdentity();
-		float max_size = std::max<float>(vdata.densityGrid.gridSizeX,
-			std::max<float>(vdata.densityGrid.gridSizeY, vdata.densityGrid.gridSizeZ));
-		m_bboxScale[0][0] = vdata.densityGrid.gridSizeX / max_size;
-		m_bboxScale[1][1] = vdata.densityGrid.gridSizeY / max_size;
-		m_bboxScale[2][2] = vdata.densityGrid.gridSizeZ / max_size;
+		m_bboxScale[0][0] = vdata.densityGrid.size.gridSizeX * vdata.densityGrid.size.voxelSizeX;
+		m_bboxScale[1][1] = vdata.densityGrid.size.gridSizeY * vdata.densityGrid.size.voxelSizeY;
+		m_bboxScale[2][2] = vdata.densityGrid.size.gridSizeZ * vdata.densityGrid.size.voxelSizeZ;
 
 	}
 	
 	if (vdata.albedoGrid.IsValid()) // grid exists
 	{
 		m_albedoGrid = Context().CreateVolumeGrid(
-			vdata.albedoGrid.gridSizeX,
-			vdata.albedoGrid.gridSizeY,
-			vdata.albedoGrid.gridSizeZ,
+			vdata.albedoGrid.size.gridSizeX,
+			vdata.albedoGrid.size.gridSizeY,
+			vdata.albedoGrid.size.gridSizeZ,
 			vdata.albedoGrid.gridOnIndices,
 			vdata.albedoGrid.gridOnValueIndices,
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
@@ -497,9 +501,9 @@ bool NorthstarRPRVolume::TranslateVolume()
 	if (vdata.emissionGrid.IsValid()) // grid exists
 	{	
 		m_emissionGrid = Context().CreateVolumeGrid(
-			vdata.emissionGrid.gridSizeX,
-			vdata.emissionGrid.gridSizeY,
-			vdata.emissionGrid.gridSizeZ,
+			vdata.emissionGrid.size.gridSizeX,
+			vdata.emissionGrid.size.gridSizeY,
+			vdata.emissionGrid.size.gridSizeZ,
 			vdata.emissionGrid.gridOnIndices,
 			vdata.emissionGrid.gridOnValueIndices,
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32

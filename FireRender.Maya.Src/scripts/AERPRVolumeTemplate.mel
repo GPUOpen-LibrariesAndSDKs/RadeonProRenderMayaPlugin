@@ -36,6 +36,7 @@ global proc AEVolumeCheckEnableDensity(string $nodeName)
 	
 	editorTemplate -dimControl $nodeName "densitySelectedGrid" ($enabled == 0);
 	editorTemplate -dimControl $nodeName "volumeDimensionsDensity" true;
+	editorTemplate -dimControl $nodeName "volumeVoxelSizeDensity" true;
 	editorTemplate -dimControl $nodeName "densityMultiplier" ($enabled == 0);
 }
 
@@ -329,6 +330,7 @@ global proc AERPRVolumeTemplate(string $nodeName)
 		editorTemplate -beginLayout "Density" -collapse 0 DensityLayout;
 			editorTemplate -label "Enable" -addControl "densityEnabled" "AEVolumeCheckEnableDensity";
 			editorTemplate -label "Grid Dimensions" -addControl "volumeDimensionsDensity";
+			editorTemplate -label "Voxel size" -addControl "volumeVoxelSizeDensity";
 			editorTemplate -callCustom "densityGridSelectNew" "densityGridSelectReplace" "densitySelectedGrid" "loadedGrids";
 			editorTemplate -label "Density Grid" -addControl "densityGradType";
 			editorTemplate -label "Multiplier" -addControl "densityMultiplier";
