@@ -219,6 +219,9 @@ public:
 
 	static void FillVolumeData(VDBVolumeData& data, const MObject& node);
 
+	template <typename T>
+	static bool GetSingleGridData(VDBGrid<T>& outGridData, const MObject& node, const std::string& gridName);
+
 public:
 	// General
 	// - VDB file
@@ -235,7 +238,7 @@ public:
 	static MObject volumeDimensionsAlbedo; // selected grid dimesions
 	static MObject albedoSelectedGrid; // selected grid
 	static MObject albedoGradType; // gradient type
-	static MObject albedoValue;    // values ramp
+	static MObject albedoRamp;    // values ramp
 
 	// Emission
 	static MObject emissionEnabled;
@@ -252,6 +255,6 @@ public:
 	static MObject volumeVoxelSizeDensity; // selected grid voxel size
 	static MObject densitySelectedGrid; // selected grid
 	static MObject densityGradType; // gradient type
-	static MObject densityValue;    // values ramp
+	static MObject densityRamp;    // values ramp
 	static MObject densityMultiplier; // density is multiplied by this value
 };

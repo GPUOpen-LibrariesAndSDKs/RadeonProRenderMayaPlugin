@@ -74,7 +74,30 @@ void FireRenderVolumeLocator::postConstructor()
 	SetDefaultStringArrayAttrValue(lgPlug, block);
 
 	// set default values for ramps
-	// - will be added when/if we will add ramps
+	// - if we don't then there will be no default control point and Maya will display a ui error
+	// - this happens despite api documentation saying that default control point is created automatically - it's not.
+	// - Since we need to set these values anyway, we set them to what user most likely wants
+	MPlug albedoRampPlug(thisMObject(), RPRVolumeAttributes::albedoRamp);
+	const float albedoSrc[][4] = { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+	MColorArray albedoValues(albedoSrc, 2);
+	SetRampValues(albedoRampPlug, albedoValues);
+
+	MPlug emissionRampPlug(thisMObject(), RPRVolumeAttributes::emissionRamp);
+	const float emissionSrc[][4] = {
+		 0.0f, 0.0f, 0.0f, 1.0f,
+		 0.0f, 0.0f, 0.0f, 1.0f,
+		 0.2f, 0.0f, 0.0f, 1.0f,
+		 0.6f, 0.2f, 0.0f, 1.0f,
+		 0.6f, 1.0f, 0.0f, 1.0f,
+		 1.0f, 1.0f, 1.0f, 1.0f
+	};
+	MColorArray emissionValues(emissionSrc, 6);
+	SetRampValues(emissionRampPlug, emissionValues);
+
+	MPlug densityRampPlug(thisMObject(), RPRVolumeAttributes::densityRamp);
+	const float densitySrc[] = { 0.5f, 0.7f, 0.8f, 1.0f };
+	MFloatArray densityValues(densitySrc, 4);
+	SetRampValues(densityRampPlug, densityValues);
 }
 
 MStatus FireRenderVolumeLocator::setDependentsDirty(const MPlug& plugBeingDirtied,	MPlugArray&	affectedPlugs)
@@ -126,8 +149,28 @@ bool FireRenderVolumeLocator::isBounded() const
 
 MBoundingBox FireRenderVolumeLocator::boundingBox() const
 {
-	MPoint corner1(-1.0, -1.0, -1.0);
-	MPoint corner2(1.0, 1.0, 1.0);
+	// get the size
+	MObject thisNode = thisMObject();
+	MFnDependencyNode fnNode(thisNode);
+
+	volatile std::string thisNodeName = fnNode.name().asChar();
+
+	MDataHandle volumeGirdSizes = RPRVolumeAttributes::GetVolumeGridDimentions(fnNode);
+	short nx = volumeGirdSizes.asShort3()[0];
+	short ny = volumeGirdSizes.asShort3()[1];
+	short nz = volumeGirdSizes.asShort3()[2];
+
+	MDataHandle volumeVoxelSizes = RPRVolumeAttributes::GetVolumeVoxelSize(fnNode);
+	double vx = volumeVoxelSizes.asDouble3()[0];
+	double vy = volumeVoxelSizes.asDouble3()[1];
+	double vz = volumeVoxelSizes.asDouble3()[2];
+
+	const float sizeX = nx * vx;
+	const float sizeY = ny * vy;
+	const float sizeZ = nz * vz;
+
+	MPoint corner1(-sizeX/2.0f, -sizeY/2.0f, -sizeZ/2.0f);
+	MPoint corner2(sizeX/2.0f, sizeY/2.0f, sizeZ/2.0f);
 
 	return MBoundingBox(corner1, corner2);
 }
