@@ -16,6 +16,7 @@ limitations under the License.
 #include <maya/MPxGeometryOverride.h>
 #include <maya/MMessage.h>
 #include <maya/MNodeMessage.h>
+#include <maya/MEventMessage.h>
 #include <memory>
 #include <map>
 
@@ -61,9 +62,11 @@ public:
 
 private:
 	MCallbackId m_attributeChangedCallback;
+	MCallbackId m_timeChangedCallback;
 
 	GridParams m_gridParams;
 
 private:
 	static void onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
+	static void onTimeChanged(void* clientData);
 };
