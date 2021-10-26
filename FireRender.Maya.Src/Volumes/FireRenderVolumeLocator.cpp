@@ -36,6 +36,10 @@ FireRenderVolumeLocator::~FireRenderVolumeLocator()
 	{
 		MNodeMessage::removeCallback(m_attributeChangedCallback);
 	}
+	if (m_timeChangedCallback != 0)
+	{
+		MEventMessage::removeCallback(m_timeChangedCallback);
+	}
 }
 
 void SetDefaultStringArrayAttrValue(MPlug& plug, MDataBlock& block)
@@ -61,6 +65,8 @@ void FireRenderVolumeLocator::postConstructor()
 	MStatus status;
 	MObject mobj = thisMObject();
 	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(mobj, FireRenderVolumeLocator::onAttributeChanged, this, &status);
+	assert(status == MStatus::kSuccess);
+	m_timeChangedCallback = MEventMessage::addEventCallback("timeChanged", FireRenderVolumeLocator::onTimeChanged, this, &status);
 	assert(status == MStatus::kSuccess);
 
 	setMPSafe(true);
@@ -199,5 +205,20 @@ void FireRenderVolumeLocator::onAttributeChanged(MNodeMessage::AttributeMessage 
 	{
 		RPRVolumeAttributes::SetupGridSizeFromFile(mobj, plug, rprVolumeLocatorNode->m_gridParams);
 	}
+}
+
+void FireRenderVolumeLocator::onTimeChanged(void* clientData)
+{
+	if (clientData == nullptr)
+	{
+		return;
+	}
+	FireRenderVolumeLocator* rprVolumeLocatorNode = static_cast<FireRenderVolumeLocator*> (clientData);
+	MObject mobj = rprVolumeLocatorNode->thisMObject();
+
+	MFnDependencyNode depNode(mobj);
+	MGlobal::executeCommand(MString("dgdirty " + depNode.name()));
+
+	RPRVolumeAttributes::SetupVolumeFromFile(mobj, rprVolumeLocatorNode->m_gridParams);
 }
 
