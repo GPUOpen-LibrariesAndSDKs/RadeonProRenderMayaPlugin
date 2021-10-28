@@ -22,18 +22,29 @@ global proc AERPRToonMaterialTemplate( string $nodeName )
 		editorTemplate -l "Roughness" -addControl "roughness";
 		editorTemplate -l "Normal Map" -addControl "normal";
 
-		editorTemplate -beginLayout "Advanced" -collapse 0;
-			editorTemplate -l "Show Mix Levels" -addControl "showMixLevels" "ShowMixLevelsChanged";
+		editorTemplate -l "Transparency Enable" -addControl "transparencyEnable" "TransparencyEnableChanged";
+		editorTemplate -l "Transparency Level" -addControl "transparencyLevel";
 
+		editorTemplate -beginLayout "Advanced" -collapse 0;
+			editorTemplate -l "Enable 5 Colors" -addControl "enable5Colors" "UpdateRampFieldsEnable";
+
+			editorTemplate -l "Show Mix Levels" -addControl "showMixLevels" "UpdateRampFieldsEnable";
+
+			editorTemplate -l "Highlight Color 2" -addControl "highlightColor2";
 			editorTemplate -l "Highlight Color" -addControl "highlightColor";
 			editorTemplate -l "Mid Color" -addControl "midColor";
 			editorTemplate -l "Shadow Color" -addControl "shadowColor";
+			editorTemplate -l "Shadow Color 2" -addControl "shadowColor2";
 
+			editorTemplate -l "Shadow Level" -addControl "rampPositionShadow";
 			editorTemplate -l "Mid Level" -addControl "rampPosition1";
 			editorTemplate -l "Highlight Level" -addControl "rampPosition2";
+			editorTemplate -l "Highlight Level 2" -addControl "rampPositionHighlight";
 
+			editorTemplate -l "Shadow Level Mix" -addControl "rampRangeShadow";
 			editorTemplate -l "Mid Level Mix" -addControl "rampRange1";
 			editorTemplate -l "Highlight Level Mix" -addControl "rampRange2";
+			editorTemplate -l "Highlight Level Mix 2" -addControl "rampRangeHighlight";
 		editorTemplate -endLayout;
 	editorTemplate -endLayout;
 
@@ -51,23 +62,46 @@ global proc ShowAdvancedChanges(string $nodeName)
 
 	editorTemplate -dimControl $nodeName showMixLevels $dim;
 
+	editorTemplate -dimControl $nodeName enable5Colors $dim;
+
 	editorTemplate -dimControl $nodeName highlightColor $dim;
 	editorTemplate -dimControl $nodeName midColor $dim;
-	editorTemplate -dimControl $nodeName shadowColor $dim;	
+	editorTemplate -dimControl $nodeName shadowColor $dim;
 
 	editorTemplate -dimControl $nodeName rampPosition1 $dim;
 	editorTemplate -dimControl $nodeName rampPosition2 $dim;
 
-	ShowMixLevelsChanged($nodeName);
+	UpdateRampFieldsEnable($nodeName);
 }
 
-global proc ShowMixLevelsChanged(string $nodeName)
+global proc UpdateRampFieldsEnable(string $nodeName)
 {	
 	string $nodeAttr1 = $nodeName + ".showAdvanced";
 	string $nodeAttr2 = $nodeName + ".showMixLevels";
+	string $nodeAttr3 = $nodeName + ".enable5Colors";
 
-	$dim = !`getAttr $nodeAttr1` || !`getAttr $nodeAttr2`;
+	$dimMixLevels = !`getAttr $nodeAttr1` || !`getAttr $nodeAttr2`;
+	$dim5Colors = !`getAttr $nodeAttr1` || !`getAttr $nodeAttr3`;
+	$dim5ColorsMixLevel = !`getAttr $nodeAttr1` || !`getAttr $nodeAttr2`|| !`getAttr $nodeAttr3`;
 
-	editorTemplate -dimControl $nodeName rampRange1 $dim;
-	editorTemplate -dimControl $nodeName rampRange2 $dim;
+	editorTemplate -dimControl $nodeName highlightColor2 $dim5Colors;
+	editorTemplate -dimControl $nodeName shadowColor2 $dim5Colors;
+
+	editorTemplate -dimControl $nodeName rampPositionShadow $dim5Colors;
+	editorTemplate -dimControl $nodeName rampPositionHighlight $dim5Colors;
+
+	editorTemplate -dimControl $nodeName rampRange1 $dimMixLevels;
+	editorTemplate -dimControl $nodeName rampRange2 $dimMixLevels;
+
+	editorTemplate -dimControl $nodeName rampRangeShadow $dim5ColorsMixLevel;
+	editorTemplate -dimControl $nodeName rampRangeHighlight $dim5ColorsMixLevel;
+}
+
+global proc TransparencyEnableChanged(string $nodeName)
+{
+	string $nodeAttr1 = $nodeName + ".transparencyEnable";
+
+	$dim = !`getAttr $nodeAttr1`;
+
+	editorTemplate -dimControl $nodeName transparencyLevel $dim;
 }
