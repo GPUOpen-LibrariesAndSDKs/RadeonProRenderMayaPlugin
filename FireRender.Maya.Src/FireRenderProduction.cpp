@@ -429,7 +429,9 @@ void FireRenderProduction::OnBufferAvailableCallback(float progress)
 	m_renderViewAOV->readFrameBuffer(*m_contextPtr);
 	
 	if (!shouldUpdateRenderView)
+	{
 		return;
+	}
 
 	FireRenderThread::RunProcOnMainThread([this]()
 		{
@@ -474,7 +476,7 @@ bool FireRenderProduction::stop()
 	}
 
 	stopMayaRender();
-
+	 
 	FireRenderThread::RunProcOnMainThread([&]()
 	{
 		m_stopCallback(m_aovs, m_settings);
@@ -490,6 +492,14 @@ bool FireRenderProduction::stop()
 		RenderStampUtils::ClearCache();
 	});
 
+	if (FireRenderThread::AreWeOnMainThread())
+	{
+		while (!m_NorthStarRenderingHelper.IsStopped())
+		{
+			FireRenderThread::RunItemsQueuedForTheMainThread();
+		}
+	}
+
 	m_NorthStarRenderingHelper.StopAndJoin();
 
 	if (m_contextPtr)
@@ -497,7 +507,7 @@ bool FireRenderProduction::stop()
 		if (FireRenderThread::AreWeOnMainThread())
 		{
 			// Try-lock context lock. If can't lock it then RPR thread is rendering - run item queue
-				while (!m_contextLock.try_lock())
+			while (!m_contextLock.try_lock())
 			{
 				FireRenderThread::RunItemsQueuedForTheMainThread();
 			}
