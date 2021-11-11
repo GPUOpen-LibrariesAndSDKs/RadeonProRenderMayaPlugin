@@ -69,7 +69,7 @@ MStatus FireRenderSkyLocator::initialize()
 	nAttr.setMax(50);
 	addAttribute(a);
 
-	a = nAttr.create("intensity", "i", MFnNumericData::kFloat, 0.1f);
+	a = nAttr.create("intensity", "i", MFnNumericData::kFloat, 1.0f);
 	makeAttribute(nAttr);
 	nAttr.setMin(0);
 	nAttr.setMax(1000);
