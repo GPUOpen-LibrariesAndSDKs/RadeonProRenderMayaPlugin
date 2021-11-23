@@ -428,7 +428,7 @@ bool InstancerMASH::ShouldBeRecreated() const
 		GetTargetObjects().empty();
 }
 
-bool InstancerMASH::PreProcessMesh(unsigned int sampleIdx /*= 0*/)
+bool InstancerMASH::ReloadMesh(unsigned int sampleIdx /*= 0*/)
 {
 	if (sampleIdx != 0)
 	{
@@ -436,7 +436,7 @@ bool InstancerMASH::PreProcessMesh(unsigned int sampleIdx /*= 0*/)
 		{
 			for (auto& instancedFRObject : it->second)
 			{
-				instancedFRObject->PreProcessMesh(sampleIdx);
+				instancedFRObject->ReloadMesh(sampleIdx);
 			}
 		}
 
@@ -489,7 +489,7 @@ bool InstancerMASH::PreProcessMesh(unsigned int sampleIdx /*= 0*/)
 			newTransform *= instancerMatrix.asMatrix();
 
 			instancedFRObject->SetSelfTransform(newTransform);
-			instancedFRObject->PreProcessMesh(sampleIdx);
+			instancedFRObject->ReloadMesh(sampleIdx);
 		}
 	}
 
