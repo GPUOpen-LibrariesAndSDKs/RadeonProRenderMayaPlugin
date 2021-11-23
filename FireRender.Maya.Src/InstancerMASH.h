@@ -42,7 +42,7 @@ public:
 	virtual void Freshen(bool shouldCalculateHash) override final;
 	virtual void OnPlugDirty(MObject& node, MPlug& plug) override final;
 	virtual bool IsMashInstancer(void) const override { return true; }
-	virtual bool PreProcessMesh(unsigned int sampleIdx = 0) override;
+	virtual bool ReloadMesh(unsigned int sampleIdx = 0) override;
 
 private:
 	struct MASHContext
