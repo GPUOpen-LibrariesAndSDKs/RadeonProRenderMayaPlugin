@@ -123,7 +123,7 @@ public:
 	virtual void Freshen(bool shouldCalculateHash);
 
 	virtual bool IsMesh(void) const { return false; }
-	virtual bool PreProcessMesh(unsigned int sampleIdx = 0) { return false; }
+	virtual bool ReloadMesh(unsigned int sampleIdx = 0) { return false; }
 	virtual bool IsMashInstancer(void) const { return false; }
 
 	// hash is generated during Freshen call
@@ -286,7 +286,7 @@ public:
 
 	bool IsMainInstance() const { return m.isMainInstance; }
 
-	bool IsPreProcessed() const { return m.isPreProcessed; }
+	bool IsNotInitialized() const { return m.isPreProcessed; }
 
 	// utility functions
 	void setRenderStats(MDagPath dagPath);
@@ -300,10 +300,12 @@ public:
 	virtual bool IsMesh(void) const { return false; }
 
 	virtual bool InitializeMaterials() { return false; }
-	virtual bool PreProcessMesh(unsigned int sampleIdx = 0) { return false; }
+	virtual bool ReloadMesh(unsigned int sampleIdx = 0) { return false; }
 
 	// translate mesh
 	virtual bool TranslateMeshWrapped(const MDagPath& dagPath, std::vector<frw::Shape>& outShapes) { return false; }
+
+	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const = 0;
 
 protected:
 	// Detach from the scene
@@ -319,7 +321,6 @@ protected:
 	// utility functions
 	void AssignShadingEngines(const MObjectArray& shadingEngines);
 	void ProcessMotionBlur(const MFnDagNode& meshFn);
-	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const = 0;
 
 	bool IsMotionBlurEnabled(const MFnDagNode& meshFn);
 
@@ -388,7 +389,7 @@ public:
 	virtual bool IsMesh(void) const override { return true; }
 
 	virtual bool InitializeMaterials() override;
-	virtual bool PreProcessMesh(unsigned int sampleIdx = 0) override;
+	virtual bool ReloadMesh(unsigned int sampleIdx = 0) override;
 	virtual bool TranslateMeshWrapped(const MDagPath& dagPath, std::vector<frw::Shape>& outShapes) override;
 
 	// build a sphere
@@ -398,19 +399,20 @@ public:
 
 	bool setupDisplacement(std::vector<MObject>& shadingEngines, frw::Shape shape);
 	virtual void Rebuild(void);
-	void ReloadMesh(const MDagPath& meshPath);
+	void ReinitializeMesh(const MDagPath& meshPath);
 	void ProcessMesh(const MDagPath& meshPath);
 	void ProcessIBLLight(void);
 	void ProcessSkyLight(void);
 	void RebuildTransforms(void);
 
 	// used to safely skip pre-processing
-	void SetPreProcessedSafe();
+	void SetReloadedSafe();
 
 	bool IsInitialized(void) const { return m_meshData.IsInitialized(); }
 
-protected:
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;
+
+protected:
 	void SaveUsedUV(const MObject& meshNode);
 
 
