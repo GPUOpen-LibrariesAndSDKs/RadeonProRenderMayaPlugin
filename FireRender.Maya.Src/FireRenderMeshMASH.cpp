@@ -39,9 +39,9 @@ MMatrix FireRenderMeshMASH::GetSelfTransform()
 	return m_SelfTransform;
 }
 
-bool FireRenderMeshMASH::PreProcessMesh(unsigned int sampleIdx /*= 0*/)
+bool FireRenderMeshMASH::ReloadMesh(unsigned int sampleIdx /*= 0*/)
 {
-	return (FireRenderMesh::PreProcessMesh(sampleIdx));
+	return (FireRenderMesh::ReloadMesh(sampleIdx));
 }
 
 void FireRenderMeshMASH::Rebuild(void)

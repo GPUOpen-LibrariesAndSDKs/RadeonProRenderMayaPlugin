@@ -48,7 +48,6 @@ limitations under the License.
 #include <istream>
 #include <ostream>
 #include <sstream>
-
 #include <fstream>
 
 #include <Xgen/src/xgsculptcore/api/XgSplineAPI.h>
@@ -787,7 +786,7 @@ void FireRenderMesh::buildSphere()
 	}
 }
 
-void FireRenderMesh::SetPreProcessedSafe() 
+void FireRenderMesh::SetReloadedSafe() 
 {
 	if (IsMainInstance() && IsInitialized())
 	{
@@ -816,6 +815,7 @@ void FireRenderMeshCommon::setRenderStats(MDagPath dagPath)
 	primaryVisibilityPlug.getValue(primaryVisibility);
 
 	bool isVisisble = IsMeshVisible(dagPath, context());
+
 	setVisibility(isVisisble);
 
 	MFnDagNode mdag(dagPath.node());
@@ -1128,11 +1128,12 @@ bool FireRenderMesh::setupDisplacement(std::vector<MObject>& shadingEngines, frw
 	return haveDisplacement;
 }
 
-void FireRenderMesh::ReloadMesh(const MDagPath& meshPath)
+void FireRenderMesh::ReinitializeMesh(const MDagPath& meshPath)
 {
 	MMatrix mMtx = meshPath.inclusiveMatrix();
 
 	setVisibility(false);
+
 	m.elements.clear();
 
 	std::vector<frw::Shape> shapes;
@@ -1513,7 +1514,7 @@ void FireRenderMesh::Rebuild()
 	if (m.changed.mesh || shadersChanged || (m.elements.size() == 0))
 	{
 		// the number of shader has changed so reload the mesh
-		ReloadMesh(meshPath);
+		ReinitializeMesh(meshPath);
 	}
 
 //****************************************************************************************************************
@@ -1617,7 +1618,7 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 
 	FireRenderMeshCommon* mainMesh = context->GetMainMesh(uuid());
 
-	if ((mainMesh != nullptr) && !mainMesh->IsPreProcessed())
+	if ((mainMesh != nullptr) && !mainMesh->IsNotInitialized())
 	{
 		const std::vector<FrElement>& elements = mainMesh->Elements();
 
@@ -1633,15 +1634,17 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 
 	MDagPath dagPath = DagPath();
 
-	if ((mainMesh != nullptr) && (mainMesh->IsPreProcessed()))
+	if ((mainMesh != nullptr) && (mainMesh != this) && (mainMesh->IsNotInitialized()))
 	{
-		bool success = mainMesh->TranslateMeshWrapped(dagPath, outShapes);
-		assert(success);
+		// should not be here!
+		assert(false);
+
+		outShapes.clear();
 	}
 
-	if (mainMesh == nullptr)
+	if ((mainMesh == nullptr) || (mainMesh == this))
 	{
-		assert(IsPreProcessed());
+		assert(IsNotInitialized());
 
 		bool success = TranslateMeshWrapped(dagPath, outShapes);
 		assert(success);
@@ -1889,13 +1892,13 @@ bool FireRenderMesh::InitializeMaterials()
 	return !onlyShaderChanged;
 }
 
-bool FireRenderMesh::PreProcessMesh(unsigned int sampleIdx /*= 0*/)
+bool FireRenderMesh::ReloadMesh(unsigned int sampleIdx /*= 0*/)
 {
 	FireRenderContext* context = this->context();
 
 	const FireRenderMeshCommon* mainMesh = context->GetMainMesh(uuid());
 
-	if ((mainMesh != nullptr) && mainMesh->IsPreProcessed())
+	if ((mainMesh != nullptr) && mainMesh->IsNotInitialized())
 	{
 		return true;
 	}
@@ -2731,7 +2734,7 @@ void setPortal_Sky(MObject transformObject, FireRenderSky *light) {
 
 				light->RecordPortalState(portal, false);
 
-				const bool isSkyMeshProcessed = ob->PreProcessMesh(0);
+				const bool isSkyMeshProcessed = ob->ReloadMesh(0);
 				assert(isSkyMeshProcessed);
 				ob->Freshen(ob->context()->GetRenderType() == RenderType::ViewportRender);	// make sure we have shapes to attach
 
