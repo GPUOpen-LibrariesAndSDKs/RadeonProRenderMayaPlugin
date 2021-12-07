@@ -109,15 +109,22 @@ void FireRenderGPUCache::ReadAlembicFile(uint32_t frame /*= 0*/)
 	if (!abcFile.good())
 		return;
 
-	m_file = abcCache.find(cacheFilePath + std::to_string(frame));
+	// get Maya frame rate
+	MTime::Unit timeUnit = MTime::uiUnit();
+	MTime frameRate;
+	frameRate.setUnit(timeUnit);
+	double fFrameRate = frameRate.as(MTime::kSeconds);
+
+	// file already read => load it from cache
+	m_file = abcCache.find(cacheFilePath + std::to_string(frame) + std::to_string(fFrameRate));
 	if (m_file != abcCache.end())
 	{
 		return;
 	}
 
 	// proceed reading file
-	abcCache[cacheFilePath + std::to_string(frame)] = RPRAlembicWrapperCacheEntry();
-	m_file = abcCache.find(cacheFilePath + std::to_string(frame));
+	abcCache[cacheFilePath + std::to_string(frame) + std::to_string(fFrameRate)] = RPRAlembicWrapperCacheEntry();
+	m_file = abcCache.find(cacheFilePath + std::to_string(frame) + std::to_string(fFrameRate));
 	assert(m_file != abcCache.end());
 
 	try
@@ -135,7 +142,24 @@ void FireRenderGPUCache::ReadAlembicFile(uint32_t frame /*= 0*/)
 	if (!m_file->second.m_archive.valid())
 		return;
 
+	// get alembic time entries
+	double oStartTime;
+	double oEndTime;
+	GetArchiveStartAndEndTime(m_file->second.m_archive, oStartTime, oEndTime);
+
 	uint32_t getNumTimeSamplings = m_file->second.m_archive.getNumTimeSamplings();
+
+	// get Alembic frame entry
+	uint32_t abcFirstFrame = oStartTime / fFrameRate; // <= frame in Maya playback that corresponds to zero index of alembic animation record
+	uint32_t abcLastFrame = oEndTime / fFrameRate; // <= frame in Maya playback that corresponds to last index of alembic animation record
+
+	uint32_t sampleIdx = frame - abcFirstFrame;
+
+	if (frame <= abcFirstFrame)
+		sampleIdx = 0;
+
+	if (frame > abcLastFrame)
+		sampleIdx = abcLastFrame - abcFirstFrame;
 
 	std::string errorMessage;
 	if (m_file->second.m_storage.open(cacheFilePath, errorMessage) == false)
@@ -144,11 +168,6 @@ void FireRenderGPUCache::ReadAlembicFile(uint32_t frame /*= 0*/)
 		MGlobal::displayError(errorMessage.c_str());
 		return;
 	}
-
-	uint32_t sampleIdx = frame;
-	uint32_t frameMaxIdx = m_file->second.m_storage.frameCount() - 1;
-	if (frame > frameMaxIdx)
-		sampleIdx = frameMaxIdx;
 
 	m_file->second.m_scene = m_file->second.m_storage.read(sampleIdx, errorMessage);
 	if (!m_file->second.m_scene)
@@ -267,7 +286,7 @@ void FireRenderGPUCache::Rebuild()
 	if (needReadFile)
 	{
 		MTime currTime = MAnimControl::currentTime();
-		uint32_t currFrame = (uint32_t)currTime.as(MTime::uiUnit()) - 1;
+		uint32_t currFrame = (uint32_t)currTime.as(MTime::uiUnit());
 		ReadAlembicFile(currFrame);
 		m_curr_frameNumber = currFrame;
 		ReloadMesh(meshPath);
