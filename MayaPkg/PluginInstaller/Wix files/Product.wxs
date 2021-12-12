@@ -47,6 +47,11 @@ limitations under the License.
 		<CustomAction Id='UserRegister' BinaryKey='InstallerDll' DllEntry='userRegister' Return="ignore" />
 		<CustomAction Id='PostInstall' BinaryKey='InstallerDll' DllEntry='postInstall' Return="ignore" />
 		<CustomAction Id='BotoInstall' BinaryKey='InstallerDll' DllEntry='botoInstall' Execute="deferred" Impersonate="no" Return="ignore" />
+
+		<CustomAction Id='patchMayaEnv2019' BinaryKey='InstallerDll' DllEntry='patchMayaEnv2019' Execute="deferred" Impersonate="yes" Return="ignore" />
+		<CustomAction Id='patchMayaEnv2020' BinaryKey='InstallerDll' DllEntry='patchMayaEnv2020' Execute="deferred" Impersonate="yes" Return="ignore" />
+		<CustomAction Id='patchMayaEnv2022' BinaryKey='InstallerDll' DllEntry='patchMayaEnv2022' Execute="deferred" Impersonate="yes" Return="ignore" />
+
 		<CustomAction Id='CheckRPRSDKInTheSystem' BinaryKey='InstallerDll' DllEntry='checkRPRSDKInTheSystem' Execute="deferred" Impersonate="no" Return="ignore" />
 
 		<CustomAction Id='maya2019WasInstalled' Property='MAYA2019_INSTALLED'  Value='true'/>
@@ -72,6 +77,9 @@ limitations under the License.
 		<InstallExecuteSequence>
 			<Custom Action="BotoInstall" After="InstallInitialize">(NOT Installed) AND (NOT REMOVE)</Custom>
 			<Custom Action="CheckRPRSDKInTheSystem" After="BotoInstall">(NOT REMOVE) AND (UILevel>2)</Custom>
+			<Custom Action="patchMayaEnv2019" After="InstallInitialize"><![CDATA[(&Product2019=3)]]></Custom>
+			<Custom Action="patchMayaEnv2020" After="InstallInitialize"><![CDATA[(&Product2020=3)]]></Custom>
+			<Custom Action="patchMayaEnv2022" After="InstallInitialize"><![CDATA[(&Product2022=3)]]></Custom>
 			<CreateFolders/>
 			<InstallFiles/>
 			<WriteEnvironmentStrings/>
