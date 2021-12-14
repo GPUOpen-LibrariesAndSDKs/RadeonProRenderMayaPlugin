@@ -420,7 +420,6 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		tahoeContextPtr->buildScene();
 
 		tahoeContextPtr->setResolution(settings.width, settings.height, true);
-		tahoeContextPtr->TryCreateDenoiserImageFilters();
 
 		MDagPathArray cameras = GetSceneCameras();
 		unsigned int countCameras = cameras.length();

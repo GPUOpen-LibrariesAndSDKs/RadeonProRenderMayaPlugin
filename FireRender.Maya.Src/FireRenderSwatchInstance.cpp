@@ -27,10 +27,8 @@ FireRenderSwatchInstance::FireRenderSwatchInstance()
 
 void FireRenderSwatchInstance::initScene()
 {
-#ifdef _WIN32
 	// force using NorthStar for swatches
 	context.SetPluginEngine(TahoePluginVersion::RPR2);
-#endif
 
 	backgroundRendererBusy = false;
 	m_warningDialogOpen = false;
