@@ -141,7 +141,7 @@ public:
 
 	// Render data
 	// Contain the context and other data information needed by the render function
-	FireRenderRenderData m_renderData;
+	std::unique_ptr<FireRenderRenderData> m_renderDataPtr;
 
 	// Flag used to synchronize the render thread and the main thread
 	volatile bool m_isThreadRunning;

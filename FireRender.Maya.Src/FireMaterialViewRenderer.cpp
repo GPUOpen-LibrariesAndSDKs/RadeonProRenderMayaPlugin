@@ -47,10 +47,8 @@ FireRenderRenderData::FireRenderRenderData() :
 
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags(RenderType::ViewportRender);
 
-#ifdef _WIN32
-	// force using NorthStar for material viewer on Windows
+	// force using NorthStar for material viewer
 	m_context.SetPluginEngine(TahoePluginVersion::RPR2);
-#endif
 
 	rpr_int res;
 	if (!m_context.createContextEtc(createFlags, true, false, &res))
@@ -58,12 +56,6 @@ FireRenderRenderData::FireRenderRenderData() :
 		MString msg;
 		FireRenderError errorToShow(res, msg, true);
 	}
-
-// MacOS only for now for tahoe resolve
-#ifndef _WIN32
-	m_context.normalization = frw::PostEffect(m_context.GetContext(), frw::PostEffectTypeNormalization);
-	m_context.GetContext().Attach(m_context.normalization);
-#endif
 }
 
 FireRenderRenderData::~FireRenderRenderData()
@@ -77,10 +69,12 @@ FireRenderRenderData::~FireRenderRenderData()
 
 bool FireMaterialViewRenderer::RunOnFireRenderThread()
 {
+	assert(m_renderDataPtr);
+
 	switch (m_threadCmd)
 	{
 		case ThreadCommand::RENDER_IMAGE: {
-			RPR::AutoMutexLock lock(m_renderData.m_mutex);
+			RPR::AutoMutexLock lock(m_renderDataPtr->m_mutex);
 			render();
 			return true;
 		}
@@ -101,17 +95,23 @@ FireMaterialViewRenderer::FireMaterialViewRenderer() :
 	m_numIteration(0),
 	m_threadCmd(ThreadCommand::BEGIN_UPDATE)
 {
-	FireRenderContext& inContext = m_renderData.m_context;
-	frw::Context context = inContext.GetContext();
-	rpr_context frcontext = context.Handle();
-
-	rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_RECURSION, defaultMaterialViewRayDepth);
-	rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_PDF_THRESHOLD, 0.0000f);
-	rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_Y_FLIP, 0);
 }
 
 MStatus FireMaterialViewRenderer::startAsync(const JobParams& params)
 {
+	if (!m_renderDataPtr)
+	{
+		m_renderDataPtr = std::make_unique<FireRenderRenderData>();
+
+		FireRenderContext& inContext = m_renderDataPtr->m_context;
+		frw::Context context = inContext.GetContext();
+		rpr_context frcontext = context.Handle();
+
+		rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_RECURSION, defaultMaterialViewRayDepth);
+		rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_PDF_THRESHOLD, 0.0000f);
+		rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_Y_FLIP, 0);
+	}
+
 	MStatus mstatus;
 	if (!m_isThreadRunning)
 	{
@@ -126,7 +126,7 @@ MStatus FireMaterialViewRenderer::stopAsync()
 {
 	m_threadCmd = ThreadCommand::STOP_THREAD;
 
-	RPR::AutoMutexLock lock(m_renderData.m_mutex);
+	RPR::AutoMutexLock lock(m_renderDataPtr->m_mutex);
 
 	m_isThreadRunning = false;
 
@@ -147,7 +147,7 @@ MStatus FireMaterialViewRenderer::beginSceneUpdate()
 	}
 
 	m_threadCmd = ThreadCommand::BEGIN_UPDATE;
-	m_renderData.m_mutex.lock();
+	m_renderDataPtr->m_mutex.lock();
 	return MS::kSuccess;
 }
 
@@ -155,26 +155,28 @@ MStatus FireMaterialViewRenderer::translateMesh(const MUuid& id, const MObject& 
 {
 	return FireRenderThread::RunOnceAndWait<MStatus>([this, id, node]()
 	{
+		assert(m_renderDataPtr);
+
 		MFnDependencyNode nodeFn(node);
 
-		if (m_renderData.m_shape)
-			m_renderData.m_context.GetScene().Detach(m_renderData.m_shape);
+		if (m_renderDataPtr->m_shape)
+			m_renderDataPtr->m_context.GetScene().Detach(m_renderDataPtr->m_shape);
 
-		m_renderData.m_shape.Reset();
+		m_renderDataPtr->m_shape.Reset();
 
 		std::vector<int> faceMaterialIndices;
-		const std::vector<frw::Shape> shapes = FireMaya::MeshTranslator::TranslateMesh(m_renderData.m_context.GetContext(), node, faceMaterialIndices);
+		const std::vector<frw::Shape> shapes = FireMaya::MeshTranslator::TranslateMesh(m_renderDataPtr->m_context.GetContext(), node, faceMaterialIndices);
 		if (!shapes.empty())
 		{
-			m_renderData.m_shape = shapes[0];
-			if (m_renderData.m_shape)
-				m_renderData.m_context.GetScene().Attach(m_renderData.m_shape);
+			m_renderDataPtr->m_shape = shapes[0];
+			if (m_renderDataPtr->m_shape)
+				m_renderDataPtr->m_context.GetScene().Attach(m_renderDataPtr->m_shape);
 		}
 
-		if (m_renderData.m_shape && std::get<frw::Shader>(m_renderData.m_surfaceShader))
+		if (m_renderDataPtr->m_shape && std::get<frw::Shader>(m_renderDataPtr->m_surfaceShader))
 		{
-			m_renderData.m_shape.SetShader(std::get<frw::Shader>(m_renderData.m_surfaceShader));
-			m_renderData.m_shape.SetVolumeShader(m_renderData.m_volumeShader);
+			m_renderDataPtr->m_shape.SetShader(std::get<frw::Shader>(m_renderDataPtr->m_surfaceShader));
+			m_renderDataPtr->m_shape.SetVolumeShader(m_renderDataPtr->m_volumeShader);
 		}
 
 		m_meshId = id;
@@ -187,15 +189,16 @@ MStatus FireMaterialViewRenderer::translateLightSource(const MUuid& id, const MO
 {
 	return FireRenderThread::RunOnceAndWait<MStatus>([this, id, node]()
 	{
+		assert(m_renderDataPtr);
 		MFnDependencyNode nodeFn(node);
 
-		FrLight& light = m_renderData.m_lights[id.asString().asChar()];
-		m_renderData.m_lightsNames[id.asString().asChar()] = nodeFn.name().asChar();
+		FrLight& light = m_renderDataPtr->m_lights[id.asString().asChar()];
+		m_renderDataPtr->m_lightsNames[id.asString().asChar()] = nodeFn.name().asChar();
 		if (light.isAreaLight)
 		{
 			if (light.areaLight)
 			{
-				m_renderData.m_context.GetScene().Detach(light.areaLight);
+				m_renderDataPtr->m_context.GetScene().Detach(light.areaLight);
 				light.areaLight.Reset();
 				light.emissive.Reset();
 			}
@@ -204,26 +207,26 @@ MStatus FireMaterialViewRenderer::translateLightSource(const MUuid& id, const MO
 		{
 			if (light.light)
 			{
-				m_renderData.m_context.GetScene().Detach(light.light);
+				m_renderDataPtr->m_context.GetScene().Detach(light.light);
 				light.light.Reset();
 			}
 		}
 
-		FireMaya::translateLight(light, m_renderData.m_context.GetScope(), m_renderData.m_context.GetContext(), node, MMatrix());
-		if (!m_renderData.m_endLight)
+		FireMaya::translateLight(light, m_renderDataPtr->m_context.GetScope(), m_renderDataPtr->m_context.GetContext(), node, MMatrix());
+		if (!m_renderDataPtr->m_endLight)
 		{
 			if (light.isAreaLight)
 			{
 				if (light.areaLight)
 				{
-					m_renderData.m_context.GetScene().Attach(light.areaLight);
+					m_renderDataPtr->m_context.GetScene().Attach(light.areaLight);
 					light.areaLight.SetVisibility(true);
 				}
 			}
 			else
 			{
 				if (light.light)
-					m_renderData.m_context.GetScene().Attach(light.light);
+					m_renderDataPtr->m_context.GetScene().Attach(light.light);
 			}
 		}
 		return MS::kSuccess;
@@ -234,14 +237,16 @@ MStatus FireMaterialViewRenderer::translateCamera(const MUuid& id, const MObject
 {
 	return FireRenderThread::RunOnceAndWait<MStatus>([this, id, node]()
 	{
+		assert(m_renderDataPtr);
+
 		m_cameraId = id;
 		MFnDependencyNode nodeFn(node);
 
-		m_renderData.m_camera = m_renderData.m_context.GetContext().CreateCamera();
-		m_renderData.m_context.GetScene().SetCamera(m_renderData.m_camera);
+		m_renderDataPtr->m_camera = m_renderDataPtr->m_context.GetContext().CreateCamera();
+		m_renderDataPtr->m_context.GetScene().SetCamera(m_renderDataPtr->m_camera);
 
 		MMatrix mtx;
-		FireMaya::translateCamera(m_renderData.m_camera, node, mtx, true);
+		FireMaya::translateCamera(m_renderDataPtr->m_camera, node, mtx, true);
 
 		return MS::kSuccess;
 	});
@@ -260,11 +265,12 @@ MStatus FireMaterialViewRenderer::translateTransform(const MUuid& id, const MUui
 {
 	return FireRenderThread::RunOnceAndWait<MStatus>([this, id, childId, matrix]()
 	{
+		assert(m_renderDataPtr);
 		rpr_int frstatus;
 
 		if (childId == m_cameraId)
 		{
-			if (m_renderData.m_camera)
+			if (m_renderDataPtr->m_camera)
 			{
 				MPoint eye = MPoint(0, 0, 0, 1) * matrix;
 				// convert eye and lookat from cm to m
@@ -272,7 +278,7 @@ MStatus FireMaterialViewRenderer::translateTransform(const MUuid& id, const MUui
 				MVector viewDir = MVector::zNegAxis * matrix;
 				MVector upDir = MVector::yAxis * matrix;
 				MPoint  lookat = eye + viewDir;
-				frstatus = rprCameraLookAt(m_renderData.m_camera.Handle(),
+				frstatus = rprCameraLookAt(m_renderDataPtr->m_camera.Handle(),
 					static_cast<float>(eye.x), static_cast<float>(eye.y), static_cast<float>(eye.z),
 					static_cast<float>(lookat.x), static_cast<float>(lookat.y), static_cast<float>(lookat.z),
 					static_cast<float>(upDir.x), static_cast<float>(upDir.y), static_cast<float>(upDir.z));
@@ -291,20 +297,20 @@ MStatus FireMaterialViewRenderer::translateTransform(const MUuid& id, const MUui
 			float mfloats[4][4];
 			m.get(mfloats);
 
-			if (m_renderData.m_shape)
-				m_renderData.m_shape.SetTransform((rpr_float*)mfloats);
+			if (m_renderDataPtr->m_shape)
+				m_renderDataPtr->m_shape.SetTransform((rpr_float*)mfloats);
 		}
 
 
-		std::map<std::string, FrLight>::iterator it = m_renderData.m_lights.find(childId.asString().asChar());
+		std::map<std::string, FrLight>::iterator it = m_renderDataPtr->m_lights.find(childId.asString().asChar());
 
-		if (it != m_renderData.m_lights.end())
+		if (it != m_renderDataPtr->m_lights.end())
 		{
 			MMatrix m = matrix;
 			MMatrix scaleM;
 			scaleM.setToIdentity();
 			scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
-			if (m_renderData.m_lightsNames[childId.asString().asChar()].find("Fill") != std::string::npos)
+			if (m_renderDataPtr->m_lightsNames[childId.asString().asChar()].find("Fill") != std::string::npos)
 			{
 				float mf[4][4] = { {0.023902599999999993f, 0.0, 0.9997140000000001f, 0.0f},
 				{0.03361340000000001f, 0.9994350000000001f, -0.0008036780000000049f, 0.0f},
@@ -312,7 +318,7 @@ MStatus FireMaterialViewRenderer::translateTransform(const MUuid& id, const MUui
 				{3.91f, 0.843f, -3.061f, 1.0f} };
 				m = MMatrix(mf);
 			}
-			if (m_renderData.m_lightsNames[childId.asString().asChar()].find("Rim") != std::string::npos)
+			if (m_renderDataPtr->m_lightsNames[childId.asString().asChar()].find("Rim") != std::string::npos)
 			{
 				float mf[4][4] = { { 0.569934f, 0.0f, -0.8216899999999999f, 0.0f},
 				{0.1500699999999999f, -0.9831809999999999f, 0.10408999999999993f, 0.0f},
@@ -340,24 +346,25 @@ MStatus FireMaterialViewRenderer::translateShader(const MUuid& id, const MObject
 {
 	return FireRenderThread::RunOnceAndWait<MStatus>([this, id, node]()
 	{
-		std::get<frw::Shader>(m_renderData.m_surfaceShader) = m_renderData.m_context.GetShader(node);
+		assert(m_renderDataPtr);
+		std::get<frw::Shader>(m_renderDataPtr->m_surfaceShader) = m_renderDataPtr->m_context.GetShader(node);
 
 		MFnDependencyNode fnShdr(node);
 		std::string shdrName = fnShdr.name().asChar(); 
 		std::string shaderId = getNodeUUid(node);
 		shaderId += shdrName;
-		std::get<FireMaya::NodeId>(m_renderData.m_surfaceShader) = shaderId;
+		std::get<FireMaya::NodeId>(m_renderDataPtr->m_surfaceShader) = shaderId;
 
-		m_renderData.m_volumeShader = m_renderData.m_context.GetVolumeShader(node);
+		m_renderDataPtr->m_volumeShader = m_renderDataPtr->m_context.GetVolumeShader(node);
 
-		if (m_renderData.m_shape && std::get<frw::Shader>(m_renderData.m_surfaceShader))
+		if (m_renderDataPtr->m_shape && std::get<frw::Shader>(m_renderDataPtr->m_surfaceShader))
 		{
-			m_renderData.m_shape.SetShader(std::get<frw::Shader>(m_renderData.m_surfaceShader));
+			m_renderDataPtr->m_shape.SetShader(std::get<frw::Shader>(m_renderDataPtr->m_surfaceShader));
 		}
 
-		if (m_renderData.m_shape && m_renderData.m_volumeShader)
+		if (m_renderDataPtr->m_shape && m_renderDataPtr->m_volumeShader)
 		{
-			m_renderData.m_shape.SetVolumeShader(m_renderData.m_volumeShader);
+			m_renderDataPtr->m_shape.SetVolumeShader(m_renderDataPtr->m_volumeShader);
 		}
 
 		return MS::kSuccess;
@@ -383,12 +390,13 @@ MStatus FireMaterialViewRenderer::setProperty(const MUuid& id, const MString& na
 {
 	return FireRenderThread::RunOnceAndWait<MStatus>([this, id, name, value]()
 	{
+		assert(m_renderDataPtr);
 		if ((id == m_envId) && (name == "imageFile"))
 		{
-			if (m_renderData.m_endLight)
+			if (m_renderDataPtr->m_endLight)
 			{
-				m_renderData.m_context.GetScene().Detach(m_renderData.m_endLight);
-				m_renderData.m_endLight.Reset();
+				m_renderDataPtr->m_context.GetScene().Detach(m_renderDataPtr->m_endLight);
+				m_renderDataPtr->m_endLight.Reset();
 			}
 
 			if (value != "")
@@ -431,58 +439,58 @@ MStatus FireMaterialViewRenderer::setProperty(const MUuid& id, const MString& na
 				fileObj.setRawFullName(newPath);
 				if (fileObj.exists())
 				{
-					m_renderData.m_endLight = m_renderData.m_context.GetContext().CreateEnvironmentLight();
+					m_renderDataPtr->m_endLight = m_renderDataPtr->m_context.GetContext().CreateEnvironmentLight();
 
-					m_renderData.m_envImage = frw::Image(m_renderData.m_context.GetContext(), newPath.asChar());
+					m_renderDataPtr->m_envImage = frw::Image(m_renderDataPtr->m_context.GetContext(), newPath.asChar());
 
-					if (m_renderData.m_envImage)
-						m_renderData.m_endLight.SetImage(m_renderData.m_envImage);
+					if (m_renderDataPtr->m_envImage)
+						m_renderDataPtr->m_endLight.SetImage(m_renderDataPtr->m_envImage);
 
-					m_renderData.m_endLight.SetLightIntensityScale(1.0f);
-					m_renderData.m_context.GetScene().Attach(m_renderData.m_endLight);
+					m_renderDataPtr->m_endLight.SetLightIntensityScale(1.0f);
+					m_renderDataPtr->m_context.GetScene().Attach(m_renderDataPtr->m_endLight);
 
 					MMatrix scaleM;
 					scaleM.setToIdentity();
 					scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 2.0;
 					float mfloats[4][4];
 					scaleM.get(mfloats);
-					m_renderData.m_endLight.SetTransform((rpr_float*)mfloats);
+					m_renderDataPtr->m_endLight.SetTransform((rpr_float*)mfloats);
 				}
 
 				//remove lights
-				for (auto it : m_renderData.m_lights)
+				for (auto it : m_renderDataPtr->m_lights)
 				{
 					FrLight& light = it.second;
 					if (light.isAreaLight)
 					{
 						if (light.areaLight)
-							m_renderData.m_context.GetScene().Detach(light.areaLight);
+							m_renderDataPtr->m_context.GetScene().Detach(light.areaLight);
 					}
 					else
 					{
 						if (light.light)
-							m_renderData.m_context.GetScene().Detach(light.light);
+							m_renderDataPtr->m_context.GetScene().Detach(light.light);
 					}
 				}
 			}
 			else
 			{
 				//add lights
-				for (auto it : m_renderData.m_lights)
+				for (auto it : m_renderDataPtr->m_lights)
 				{
 					FrLight& light = it.second;
 					if (light.isAreaLight)
 					{
 						if (light.areaLight)
 						{
-							m_renderData.m_context.GetScene().Attach(light.areaLight);
+							m_renderDataPtr->m_context.GetScene().Attach(light.areaLight);
 							light.areaLight.SetVisibility(true);
 						}
 					}
 					else
 					{
 						if (light.light)
-							m_renderData.m_context.GetScene().Attach(light.light);
+							m_renderDataPtr->m_context.GetScene().Attach(light.light);
 					}
 				}
 			}
@@ -493,14 +501,15 @@ MStatus FireMaterialViewRenderer::setProperty(const MUuid& id, const MString& na
 
 MStatus FireMaterialViewRenderer::setShader(const MUuid& id, const MUuid& shaderId)
 {
-	if (m_renderData.m_shape && std::get<frw::Shader>(m_renderData.m_surfaceShader))
+	assert(m_renderDataPtr);
+	if (m_renderDataPtr->m_shape && std::get<frw::Shader>(m_renderDataPtr->m_surfaceShader))
 	{
-		m_renderData.m_shape.SetShader(std::get<frw::Shader>(m_renderData.m_surfaceShader));
+		m_renderDataPtr->m_shape.SetShader(std::get<frw::Shader>(m_renderDataPtr->m_surfaceShader));
 	}
 
-	if (m_renderData.m_shape && m_renderData.m_volumeShader)
+	if (m_renderDataPtr->m_shape && m_renderDataPtr->m_volumeShader)
 	{
-		m_renderData.m_shape.SetVolumeShader(m_renderData.m_volumeShader);
+		m_renderDataPtr->m_shape.SetVolumeShader(m_renderDataPtr->m_volumeShader);
 	}
 
 	return MS::kSuccess;
@@ -508,10 +517,10 @@ MStatus FireMaterialViewRenderer::setShader(const MUuid& id, const MUuid& shader
 
 MStatus FireMaterialViewRenderer::setResolution(unsigned int width, unsigned int height)
 {
-	m_renderData.m_width = width;
-	m_renderData.m_height = height;
+	m_renderDataPtr->m_width = width;
+	m_renderDataPtr->m_height = height;
 
-	m_renderData.m_pixels.resize(m_renderData.m_width * m_renderData.m_height);
+	m_renderDataPtr->m_pixels.resize(m_renderDataPtr->m_width * m_renderDataPtr->m_height);
 
 	return MS::kSuccess;
 }
@@ -520,20 +529,21 @@ MStatus FireMaterialViewRenderer::endSceneUpdate()
 {
 	return FireRenderThread::RunOnceAndWait<MStatus>([this]() -> MStatus
 	{
+		assert(m_renderDataPtr);
 		rpr_framebuffer_format fmt = { 4, RPR_COMPONENT_TYPE_FLOAT32 };
 
-		m_renderData.m_framebufferColor = frw::FrameBuffer(m_renderData.m_context.GetContext(), m_renderData.m_width, m_renderData.m_height, fmt);
-		m_renderData.m_framebufferColor.Clear();
+		m_renderDataPtr->m_framebufferColor = frw::FrameBuffer(m_renderDataPtr->m_context.GetContext(), m_renderDataPtr->m_width, m_renderDataPtr->m_height, fmt);
+		m_renderDataPtr->m_framebufferColor.Clear();
 
-		m_renderData.m_framebufferResolved = frw::FrameBuffer(m_renderData.m_context.GetContext(), m_renderData.m_width, m_renderData.m_height, fmt);
-		m_renderData.m_framebufferResolved.Clear();
+		m_renderDataPtr->m_framebufferResolved = frw::FrameBuffer(m_renderDataPtr->m_context.GetContext(), m_renderDataPtr->m_width, m_renderDataPtr->m_height, fmt);
+		m_renderDataPtr->m_framebufferResolved.Clear();
 
-		m_renderData.m_context.GetContext().SetAOV(m_renderData.m_framebufferColor, RPR_AOV_COLOR);
+		m_renderDataPtr->m_context.GetContext().SetAOV(m_renderDataPtr->m_framebufferColor, RPR_AOV_COLOR);
 
 		m_numIteration = 0;
 		m_threadCmd = ThreadCommand::RENDER_IMAGE;
 
-		m_renderData.m_mutex.unlock();
+		m_renderDataPtr->m_mutex.unlock();
 
 		return MS::kSuccess;
 	});
@@ -560,7 +570,7 @@ void FireMaterialViewRenderer::render()
 	RPR_THREAD_ONLY;
 
 	rpr_int frstatus;
-	auto context = m_renderData.m_context.GetContext();
+	auto context = m_renderDataPtr->m_context.GetContext();
 
 	context.SetParameter(RPR_CONTEXT_ITERATIONS, 1);
 	context.SetParameter(RPR_CONTEXT_FRAMECOUNT, m_numIteration);
@@ -573,43 +583,43 @@ void FireMaterialViewRenderer::render()
 	catch (const FireRenderException&) 
 	{
 		//Prevents view freezing after close material view with invalid material selected
-		auto& shader = std::get<frw::Shader>(m_renderData.m_surfaceShader);
+		auto& shader = std::get<frw::Shader>(m_renderDataPtr->m_surfaceShader);
 		shader.Reset();
 
 		//Prevents view freezing after selecting invalid material and then selecting valid
-		auto& nodeId = std::get<FireMaya::NodeId>(m_renderData.m_surfaceShader);
-		m_renderData.m_context.GetScope().SetCachedShader(nodeId, nullptr);
+		auto& nodeId = std::get<FireMaya::NodeId>(m_renderDataPtr->m_surfaceShader);
+		m_renderDataPtr->m_context.GetScope().SetCachedShader(nodeId, nullptr);
 
 		m_threadCmd = ThreadCommand::BEGIN_UPDATE;
 		return;
 	}
 
-	m_renderData.m_framebufferColor.Resolve(m_renderData.m_framebufferResolved, false);
+	m_renderDataPtr->m_framebufferColor.Resolve(m_renderDataPtr->m_framebufferResolved, false);
 
 	size_t dataSize = 0;
-	frstatus = rprFrameBufferGetInfo(m_renderData.m_framebufferResolved.Handle(), RPR_FRAMEBUFFER_DATA, 0, NULL, &dataSize);
+	frstatus = rprFrameBufferGetInfo(m_renderDataPtr->m_framebufferResolved.Handle(), RPR_FRAMEBUFFER_DATA, 0, NULL, &dataSize);
 	checkStatus(frstatus);
 
-	size_t WidthHeight = m_renderData.m_width * m_renderData.m_height;
+	size_t WidthHeight = m_renderDataPtr->m_width * m_renderDataPtr->m_height;
 
-	if (m_renderData.m_pixels.empty())
-		m_renderData.m_pixels.resize(WidthHeight);
+	if (m_renderDataPtr->m_pixels.empty())
+		m_renderDataPtr->m_pixels.resize(WidthHeight);
 
-	frstatus = rprFrameBufferGetInfo(m_renderData.m_framebufferResolved.Handle(), RPR_FRAMEBUFFER_DATA, dataSize, m_renderData.m_pixels.data(), nullptr);
+	frstatus = rprFrameBufferGetInfo(m_renderDataPtr->m_framebufferResolved.Handle(), RPR_FRAMEBUFFER_DATA, dataSize, m_renderDataPtr->m_pixels.data(), nullptr);
 	checkStatus(frstatus);
 
 	m_numIteration++;
 
 	MPxRenderer::RefreshParams parameters;
-	parameters.height = m_renderData.m_height;
-	parameters.width = m_renderData.m_width;
-	parameters.top = m_renderData.m_height - 1;
+	parameters.height = m_renderDataPtr->m_height;
+	parameters.width = m_renderDataPtr->m_width;
+	parameters.top = m_renderDataPtr->m_height - 1;
 	parameters.bottom = 0;
 	parameters.left = 0;
-	parameters.right = m_renderData.m_width - 1;
+	parameters.right = m_renderDataPtr->m_width - 1;
 	parameters.channels = 4;
 	parameters.bytesPerChannel = sizeof(float);
-	parameters.data = m_renderData.m_pixels.data();
+	parameters.data = m_renderDataPtr->m_pixels.data();
 	refresh(parameters);
 
 	if (m_numIteration >= FireRenderGlobalsData::getThumbnailIterCount())
