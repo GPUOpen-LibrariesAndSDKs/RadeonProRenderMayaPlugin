@@ -1,3 +1,55 @@
+# Version 3.3.15
+
+## Bugs Fixed:
+- Density, albedo and emission ramps have been added for better support of volume rendering.
+- Scaling of sequences of VDB files has been fixed.
+- Transparency and the 5 color option for the Toon Shader have been added.
+- Animated alembic files are now supported.
+- The sky default intensity is now 1.0.
+- A possible crash on macOS when exporting .rpr files with the denoiser turned on has been eliminated.
+- An issue where instanced objects could be missing from the render has been fixed.
+- Volume Material now works correctly in the RPR Final mode.
+- A crash that could occur when exiting Maya while RPR is rendering has been eliminated.
+- Incorrect Subsurface Scattering on Vega GPUS has been fixed.
+- Black rendering of toon shaders on macOS has been fixed.
+- A crash that could occur when processing shaders objects with subdivision added has been eliminated.
+- The startup time for CPU rendering has been reduced.
+- Low utilization on macOS with CPU + GPU rendering has been eliminated.
+- Performance in scenes with multiple transparent materials has been improved.
+- An issue with artifacts in alpha texture masks has been fixed.
+- The render performance on Vega and Polaris GPUs has been improved.
+- Particle motion blur on GPUs now works correctly.
+- A crash that could occur when using .tif textures with zip compression has been eliminated.
+- An issue with emission shaders disappearing in volume objects has been eliminated.
+
+
+## New Features:
+- Support for Fog and Heterogenous Volume rendering has been added to the RPR Full mode.  Simulated volumes are now rendered on CPU and GPU.
+- An option of exporting DeepEXR files for compositing has been added.  DeepEXR files contain multiple depth samples, allowing compositing better with depth.
+- Support for the Voronoi Texture node has been added.
+
+## Fixes:
+- The texture cache location is now saved between sessions.
+- Scenes that have many instances could crash IPR — fixed.
+- A crash could happen with a correct HDRI image on an environment light — fixed.
+- Support for Object ID and Random Color lookups in shader nodes has been added.
+- After a critical render error, users could not render again without restarting Maya — fixed.
+- Optimizations to the export of objects with deformation motion blur have been made.
+- An error with references to materials in another scene has been fixed.
+- The Albedo AOV now passes the “Base color” on the Toon shader.
+- A halo no longer appears around shadow and reflection catcher objects.
+- AOVs passed through transparent or refractive materials — fixed.
+- Better noise convergence with emissive materials using textures has been achieved.
+- Performance with outline rendering has been improved.
+- Performance degradation on WX7100 GPUs has been eliminated.
+- The Object ID Lookup node now works in the Full mode.
+- Objects with Toon shaders attached now cast shadows correctly if the flag is disabled.
+- An issue detected on the latest NVidia drivers has been fixed.
+
+## Known Issues:
+- Volumes are not implemented on macOS.
+- Vega GPUs with AMD 21.10 drivers can cause an issue when using the ML Denoiser.
+
 # Version 3.3
 
 ## New Features:
