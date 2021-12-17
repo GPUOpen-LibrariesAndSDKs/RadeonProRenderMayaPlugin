@@ -292,14 +292,21 @@ public:
 
 	// Contour
 	bool contourIsEnabled;
+
 	bool contourUseObjectID;
 	bool contourUseMaterialID;
 	bool contourUseShadingNormal;
+	bool contourUseUV;
+
 	float contourLineWidthObjectID;
 	float contourLineWidthMaterialID;
 	float contourLineWidthShadingNormal;
+	float contourLineWidthUV;
+
 	float contourNormalThreshold;
+	float contourUVThreshold;
 	float contourAntialiasing;
+
 	bool contourIsDebugEnabled;
 
 	// Camera type.
@@ -974,7 +981,6 @@ bool GetRampValues(MPlug& plug, std::vector<RampCtrlPoint<valType>>& out)
 {
 	// get ramp from plug
 	MRampAttribute valueRamp(plug);
-	MStatus status;
 
 	// get data from plug
 	MIntArray indexes;
@@ -996,6 +1002,29 @@ bool GetRampValues(MPlug& plug, std::vector<RampCtrlPoint<valType>>& out)
 
 	// save data
 	return SaveCtrlPoints<MayaDataContainer, valType>(dataValues, positions, interps, indexes, out);
+}
+
+template <typename MayaDataContainer>
+bool SetRampValues(MPlug& plug, const MayaDataContainer& values)
+{
+	// get ramp from plug
+	MRampAttribute valueRamp(plug);
+
+	MIntArray interps(values.length(), MRampAttribute::kLinear);
+
+	unsigned int len = values.length();
+	MFloatArray positions(len, 0.0f);
+	for (unsigned int idx = 0; idx < len; ++idx)
+	{
+		positions[idx] = idx * 1.0f / (values.length() - 1);
+	}
+
+	MStatus status;
+	valueRamp.setRamp(values, positions, interps);
+	if (status != MS::kSuccess)
+		return false;
+
+	return true;
 }
 
 // function to grab ramp control points from maya Ramp

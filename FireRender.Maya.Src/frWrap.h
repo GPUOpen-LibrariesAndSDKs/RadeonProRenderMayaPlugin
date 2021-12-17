@@ -240,7 +240,6 @@ namespace frw
 		ContextParameterRoughnessCap = RPR_CONTEXT_ROUGHNESS_CAP,
 		ContextParameterDisplayGamma = RPR_CONTEXT_DISPLAY_GAMMA,
 		ContextParameterMaterialStackSize = RPR_CONTEXT_MATERIAL_STACK_SIZE,
-		ContextParameterClippingPlane = RPR_CONTEXT_CLIPPING_PLANE,
 		ContextParameterGPU0Name = RPR_CONTEXT_GPU0_NAME,
 		ContextParameterGPU1Name = RPR_CONTEXT_GPU1_NAME,
 		ContextParameterGPU2Name = RPR_CONTEXT_GPU2_NAME,

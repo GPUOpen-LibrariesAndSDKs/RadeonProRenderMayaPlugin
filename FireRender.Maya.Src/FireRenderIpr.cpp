@@ -648,7 +648,9 @@ void FireRenderIpr::globalsChangedCallback(MNodeMessage::AttributeMessage msg, M
 	if ((name == "RadeonProRenderGlobals.contourLineWidthObjectID") ||
 		(name == "RadeonProRenderGlobals.contourLineWidthMaterialID") ||
 		(name == "RadeonProRenderGlobals.contourLineWidthShadingNormal") ||
+		(name == "RadeonProRenderGlobals.contourLineWidthUV") ||
 		(name == "RadeonProRenderGlobals.contourNormalThreshold") ||
+		(name == "RadeonProRenderGlobals.contourUVThreshold") ||
 		(name == "RadeonProRenderGlobals.contourAntialiasing") 
 		)
 	{

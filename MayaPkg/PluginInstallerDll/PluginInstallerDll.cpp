@@ -179,6 +179,56 @@ bool CheckPathForRPRPresence(const std::string& path)
     return infile.good();
 }
 
+void patchMayaEnvFile(const std::wstring& maya_version)
+{
+	std::wstring destPath = GetSystemFolderPaths(CSIDL_PERSONAL) + L"\\maya\\" + maya_version + L"\\Maya.env";
+
+	std::fstream infile(destPath);
+	std::string line;
+
+	std::string envVariableEntry = "GPU_ENABLE_LC=1";
+
+	std::string str(destPath.begin(), destPath.end());
+	LogSystem(("Maye.env filepath: " + str + "\n").c_str());
+
+	bool found = false;
+	bool fileEmpty = true;
+
+	if (infile.is_open())
+	{ 
+		LogSystem("Maya.env file is opened\n");
+	}
+	else
+	{
+		LogSystem("Maya.env file is not opened\n");
+	}
+
+	while (std::getline(infile, line))
+	{
+		if (line.size() > 0)
+		{
+			fileEmpty = false;
+		}
+
+		if (line.compare(envVariableEntry) == 0) {
+			found = true;
+			break;
+		}
+	}
+	infile.close();
+
+	if (!found) 
+	{
+		std::fstream oFile(destPath, std::ios::app);
+
+		if (!fileEmpty)
+		{
+			oFile << std::endl;
+		}
+		oFile << envVariableEntry << std::endl;
+	}
+}
+
 extern "C" __declspec(dllexport) UINT postInstall(MSIHANDLE hInstall) 
 {
 	LogSystem("postInstall\n");
@@ -235,5 +285,26 @@ extern "C" __declspec(dllexport) UINT botoInstall(MSIHANDLE hInstall)
 
 	installBoto3();
 
+	return ERROR_SUCCESS;
+}
+
+extern "C" __declspec(dllexport) UINT patchMayaEnv2019(MSIHANDLE hInstall)
+{
+	LogSystem("patchMayaEnv2019\n");
+	patchMayaEnvFile(L"2019");
+	return ERROR_SUCCESS;
+}
+
+extern "C" __declspec(dllexport) UINT patchMayaEnv2020(MSIHANDLE hInstall)
+{
+	LogSystem("patchMayaEnv2020\n");
+	patchMayaEnvFile(L"2020");
+	return ERROR_SUCCESS;
+}
+
+extern "C" __declspec(dllexport) UINT patchMayaEnv2022(MSIHANDLE hInstall)
+{
+	LogSystem("patchMayaEnv2022\n");
+	patchMayaEnvFile(L"2022");
 	return ERROR_SUCCESS;
 }

@@ -57,10 +57,15 @@ private:
 	MColor GetColor(const MDagPath& path);
 
 private:
-	struct CurrentValues
+	struct GridSizeValues
 	{
 		short nx, ny, nz;
-	} m_currentTrackedValues;
+	} m_GridSizeValues;
+
+	struct VoxelSizeValues
+	{
+		double nx, ny, nz;
+	} m_VoxelSizeValues;
 
 	MFnDependencyNode m_depNodeObj;
 

@@ -36,6 +36,7 @@ global proc AEVolumeCheckEnableDensity(string $nodeName)
 	
 	editorTemplate -dimControl $nodeName "densitySelectedGrid" ($enabled == 0);
 	editorTemplate -dimControl $nodeName "volumeDimensionsDensity" true;
+	editorTemplate -dimControl $nodeName "volumeVoxelSizeDensity" true;
 	editorTemplate -dimControl $nodeName "densityMultiplier" ($enabled == 0);
 }
 
@@ -317,20 +318,24 @@ global proc AERPRVolumeTemplate(string $nodeName)
 			editorTemplate -label "Enable" -addControl "albedoEnabled" "AEVolumeCheckEnableAlbedo";
 			editorTemplate -label "Grid Dimensions" -addControl "volumeDimensionsAlbedo";
 			editorTemplate -callCustom "albedoGridSelectNew" "albedoGridSelectReplace" "albedoSelectedGrid" "loadedGrids";
+			AEaddRampControl ($nodeName + ".albedoRamp");
 		editorTemplate -endLayout;
 
 		editorTemplate -beginLayout "Emission" -collapse 0 EmissionLayout;
 			editorTemplate -label "Enable" -addControl "emissionEnabled" "AEVolumeCheckEnableEmission";
 			editorTemplate -label "Grid Dimensions" -addControl "volumeDimensionsEmission";
 			editorTemplate -callCustom "emissionGridSelectNew" "emissionGridSelectReplace" "emissionSelectedGrid" "loadedGrids";
+			AEaddRampControl ($nodeName + ".emissionRamp");
 			editorTemplate -label "Intensity Multiplier" -addControl "emissionIntensity";
 		editorTemplate -endLayout;
 
 		editorTemplate -beginLayout "Density" -collapse 0 DensityLayout;
 			editorTemplate -label "Enable" -addControl "densityEnabled" "AEVolumeCheckEnableDensity";
 			editorTemplate -label "Grid Dimensions" -addControl "volumeDimensionsDensity";
+			editorTemplate -label "Voxel size" -addControl "volumeVoxelSizeDensity";
 			editorTemplate -callCustom "densityGridSelectNew" "densityGridSelectReplace" "densitySelectedGrid" "loadedGrids";
 			editorTemplate -label "Density Grid" -addControl "densityGradType";
+			AEaddRampControl ($nodeName + ".densityRamp");
 			editorTemplate -label "Multiplier" -addControl "densityMultiplier";
 		editorTemplate -endLayout;
 

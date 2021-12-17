@@ -322,7 +322,6 @@ std::tuple<int, int, bool> getTexturePixelStride(MHWRender::MRasterFormat fForma
 	return std::make_tuple(channels, componentSize, success);
 }
 
-#ifdef _DEBUG
 const int bytesPerPixel = 4; /// red, green, blue
 const int fileHeaderSize = 14;
 const int infoHeaderSize = 40;
@@ -407,7 +406,6 @@ unsigned char* createBitmapInfoHeader(int height, int width) {
 
 	return infoHeader;
 }
-#endif
 
 struct tileParams
 {

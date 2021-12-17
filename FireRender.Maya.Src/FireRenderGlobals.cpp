@@ -139,14 +139,21 @@ namespace
 
 		// contour
 		MObject contourIsEnabled;
+
 		MObject contourUseObjectID;
 		MObject contourUseMaterialID;
 		MObject contourUseShadingNormal;
+		MObject contourUseUV;
+
 		MObject contourLineWidthObjectID;
 		MObject contourLineWidthMaterialID;
 		MObject contourLineWidthShadingNormal;
+		MObject contourLineWidthUV;
+
 		MObject contourNormalThreshold;
+		MObject contourUVThreshold;
 		MObject contourAntialiasing;
+
 		MObject contourIsDebugEnabled;
 
 		// Deep EXR
@@ -634,6 +641,9 @@ void FireRenderGlobals::createContourEffectAttributes()
 	Attribute::contourUseShadingNormal = nAttr.create("contourUseShadingNormal", "cosn", MFnNumericData::kBoolean, 1, &status);
 	MAKE_INPUT(nAttr);
 
+	Attribute::contourUseUV = nAttr.create("contourUseUV", "couv", MFnNumericData::kBoolean, 1, &status);
+	MAKE_INPUT(nAttr);
+
 	Attribute::contourLineWidthObjectID = nAttr.create("contourLineWidthObjectID", "cowb", MFnNumericData::kFloat, 1.0f, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(1.0f);
@@ -649,10 +659,20 @@ void FireRenderGlobals::createContourEffectAttributes()
 	nAttr.setMin(1.0f);
 	nAttr.setMax(10.0f);
 
+	Attribute::contourLineWidthUV = nAttr.create("contourLineWidthUV", "cowu", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(1.0f);
+	nAttr.setMax(10.0f);
+
 	Attribute::contourNormalThreshold = nAttr.create("contourNormalThreshold", "cont", MFnNumericData::kFloat, 45.0f, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0.0f);
 	nAttr.setMax(180.0f);
+
+	Attribute::contourUVThreshold = nAttr.create("contourUVThreshold", "cout", MFnNumericData::kFloat, 1.0f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0f);
+	nAttr.setMax(1.0f);
 
 	Attribute::contourAntialiasing = nAttr.create("contourAntialiasing", "coaa", MFnNumericData::kFloat, 1.0f, &status);
 	MAKE_INPUT(nAttr);
@@ -666,10 +686,13 @@ void FireRenderGlobals::createContourEffectAttributes()
 	CHECK_MSTATUS(addAttribute(Attribute::contourUseObjectID));
 	CHECK_MSTATUS(addAttribute(Attribute::contourUseMaterialID));
 	CHECK_MSTATUS(addAttribute(Attribute::contourUseShadingNormal));
+	CHECK_MSTATUS(addAttribute(Attribute::contourUseUV));
 	CHECK_MSTATUS(addAttribute(Attribute::contourLineWidthObjectID));
 	CHECK_MSTATUS(addAttribute(Attribute::contourLineWidthMaterialID));
 	CHECK_MSTATUS(addAttribute(Attribute::contourLineWidthShadingNormal));
+	CHECK_MSTATUS(addAttribute(Attribute::contourLineWidthUV));
 	CHECK_MSTATUS(addAttribute(Attribute::contourNormalThreshold));
+	CHECK_MSTATUS(addAttribute(Attribute::contourUVThreshold));
 	CHECK_MSTATUS(addAttribute(Attribute::contourAntialiasing));
 	CHECK_MSTATUS(addAttribute(Attribute::contourIsDebugEnabled));
 }

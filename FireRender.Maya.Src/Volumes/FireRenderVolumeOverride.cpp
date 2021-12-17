@@ -32,9 +32,13 @@ FireRenderVolumeOverride::FireRenderVolumeOverride(const MObject& obj)
 	m_depNodeObj(obj),
 	m_changed(true)
 {
-	m_currentTrackedValues.nx = 4;
-	m_currentTrackedValues.ny = 4;
-	m_currentTrackedValues.nz = 4;
+	m_GridSizeValues.nx = 4;
+	m_GridSizeValues.ny = 4;
+	m_GridSizeValues.nz = 4;
+
+	m_VoxelSizeValues.nx = 0.25;
+	m_VoxelSizeValues.ny = 0.25;
+	m_VoxelSizeValues.nz = 0.25;
 }
 
 FireRenderVolumeOverride::~FireRenderVolumeOverride()
@@ -52,21 +56,41 @@ void FireRenderVolumeOverride::updateDG()
 
 	MDataHandle volumeGirdSizes = RPRVolumeAttributes::GetVolumeGridDimentions(m_depNodeObj.object());
 
-	if (volumeGirdSizes.asShort3()[0] != m_currentTrackedValues.nx)
+	if (volumeGirdSizes.asShort3()[0] != m_GridSizeValues.nx)
 	{
-		m_currentTrackedValues.nx = volumeGirdSizes.asShort3()[0];
+		m_GridSizeValues.nx = volumeGirdSizes.asShort3()[0];
 		m_changed = true;
 	}
 
-	if (volumeGirdSizes.asShort3()[1] != m_currentTrackedValues.ny)
+	if (volumeGirdSizes.asShort3()[1] != m_GridSizeValues.ny)
 	{
-		m_currentTrackedValues.ny = volumeGirdSizes.asShort3()[1];
+		m_GridSizeValues.ny = volumeGirdSizes.asShort3()[1];
 		m_changed = true;
 	}
 
-	if (volumeGirdSizes.asShort3()[2] != m_currentTrackedValues.nz)
+	if (volumeGirdSizes.asShort3()[2] != m_GridSizeValues.nz)
 	{
-		m_currentTrackedValues.nz = volumeGirdSizes.asShort3()[2];
+		m_GridSizeValues.nz = volumeGirdSizes.asShort3()[2];
+		m_changed = true;
+	}
+
+	MDataHandle volumeVoxelSizes = RPRVolumeAttributes::GetVolumeVoxelSize(m_depNodeObj.object());
+
+	if (volumeVoxelSizes.asDouble3()[0] != m_VoxelSizeValues.nx)
+	{
+		m_VoxelSizeValues.nx = volumeVoxelSizes.asDouble3()[0];
+		m_changed = true;
+	}
+
+	if (volumeVoxelSizes.asDouble3()[1] != m_VoxelSizeValues.ny)
+	{
+		m_VoxelSizeValues.ny = volumeVoxelSizes.asDouble3()[1];
+		m_changed = true;
+	}
+
+	if (volumeVoxelSizes.asDouble3()[2] != m_VoxelSizeValues.nz)
+	{
+		m_VoxelSizeValues.nz = volumeVoxelSizes.asDouble3()[2];
 		m_changed = true;
 	}
 }
@@ -171,11 +195,9 @@ void FireRenderVolumeOverride::populateGeometry(
 		return;
 	}
 
-	const float maxSize = std::max<float>(m_currentTrackedValues.nx,
-		std::max<float>(m_currentTrackedValues.ny, m_currentTrackedValues.nz));
-	const float sizeX = m_currentTrackedValues.nx / maxSize;
-	const float sizeY = m_currentTrackedValues.ny / maxSize;
-	const float sizeZ = m_currentTrackedValues.nz / maxSize;
+	const float sizeX = m_GridSizeValues.nx * m_VoxelSizeValues.nx;
+	const float sizeY = m_GridSizeValues.ny * m_VoxelSizeValues.ny;
+	const float sizeZ = m_GridSizeValues.nz * m_VoxelSizeValues.nz;
 
 	// create volume boundaries
 	std::vector<float> veritces = {
@@ -197,8 +219,8 @@ void FireRenderVolumeOverride::populateGeometry(
 
 	// create grid
 	int last_boundary_vtx_idx = (int) ((veritces.size() / 3) - 1);
-	float step = sizeX / (m_currentTrackedValues.nx);
-	for (short idx = 1; idx < (m_currentTrackedValues.nx); ++idx)
+	float step = sizeX / (m_GridSizeValues.nx);
+	for (short idx = 1; idx < (m_GridSizeValues.nx); ++idx)
 	{
 		veritces.push_back(-sizeX / 2 + step*idx);
 		veritces.push_back(-sizeY / 2);
@@ -213,8 +235,8 @@ void FireRenderVolumeOverride::populateGeometry(
 	}
 
 	last_boundary_vtx_idx = (int) ((veritces.size()/3) - 1);
-	step = sizeZ / (m_currentTrackedValues.nz);
-	for (short idx = 1; idx < (m_currentTrackedValues.nz); ++idx)
+	step = sizeZ / (m_GridSizeValues.nz);
+	for (short idx = 1; idx < (m_GridSizeValues.nz); ++idx)
 	{
 		veritces.push_back(-sizeX / 2);
 		veritces.push_back(-sizeY / 2);

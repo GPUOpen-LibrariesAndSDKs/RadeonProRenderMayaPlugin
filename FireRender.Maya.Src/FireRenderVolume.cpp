@@ -269,21 +269,27 @@ bool FireRenderRPRVolume::TranslateVolume()
 	if (vdata.densityGrid.IsValid()) // grid exists
 	{
 		m_densityGrid = Context().CreateVolumeGrid(
-			vdata.densityGrid.gridSizeX,
-			vdata.densityGrid.gridSizeY,
-			vdata.densityGrid.gridSizeZ,
+			vdata.densityGrid.size.gridSizeX,
+			vdata.densityGrid.size.gridSizeY,
+			vdata.densityGrid.size.gridSizeZ,
 			vdata.densityGrid.gridOnIndices,
 			vdata.densityGrid.gridOnValueIndices,
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
 		);
+
+		// scale
+		m_bboxScale.setToIdentity();
+		m_bboxScale[0][0] = vdata.densityGrid.size.gridSizeX * vdata.densityGrid.size.voxelSizeX;
+		m_bboxScale[1][1] = vdata.densityGrid.size.gridSizeY * vdata.densityGrid.size.voxelSizeY;
+		m_bboxScale[2][2] = vdata.densityGrid.size.gridSizeZ * vdata.densityGrid.size.voxelSizeZ;
 	}
 
 	if (vdata.albedoGrid.IsValid()) // grid exists
 	{
 		m_albedoGrid = Context().CreateVolumeGrid(
-			vdata.albedoGrid.gridSizeX,
-			vdata.albedoGrid.gridSizeY,
-			vdata.albedoGrid.gridSizeZ,
+			vdata.albedoGrid.size.gridSizeX,
+			vdata.albedoGrid.size.gridSizeY,
+			vdata.albedoGrid.size.gridSizeZ,
 			vdata.albedoGrid.gridOnIndices,
 			vdata.albedoGrid.gridOnValueIndices,
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
@@ -293,9 +299,9 @@ bool FireRenderRPRVolume::TranslateVolume()
 	if (vdata.emissionGrid.IsValid()) // grid exists
 	{
 		m_emissionGrid = Context().CreateVolumeGrid(
-			vdata.emissionGrid.gridSizeX,
-			vdata.emissionGrid.gridSizeY,
-			vdata.emissionGrid.gridSizeZ,
+			vdata.emissionGrid.size.gridSizeX,
+			vdata.emissionGrid.size.gridSizeY,
+			vdata.emissionGrid.size.gridSizeZ,
 			vdata.emissionGrid.gridOnIndices,
 			vdata.emissionGrid.gridOnValueIndices,
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
@@ -403,6 +409,107 @@ frw::ImageNode CreateLookupTextureNode(FireRenderCommonVolume *object, std::vect
 	return lookupNode;
 }
 
+void generateBitmapImage(unsigned char* image, int height, int width, int pitch, const char* imageFileName);
+
+void NorthstarRPRVolume_DebugDumpLookupFloat3(std::vector<float>& dataToDump, const std::string& pathToFile, const std::string& caption)
+{
+	unsigned int height = 100;
+	unsigned int width = dataToDump.size() / 3;
+
+	std::vector<unsigned char> buffer2;
+	buffer2.reserve(height * width);
+
+	for (unsigned int y = 0; y < height; y++)
+	{
+		for (unsigned int x = 0; x < dataToDump.size(); x+=3)
+		{
+			char r = (char)(255 * dataToDump[x+0]);
+			char g = (char)(255 * dataToDump[x+1]);
+			char b = (char)(255 * dataToDump[x+2]);
+
+			buffer2.push_back(b);
+			buffer2.push_back(g);
+			buffer2.push_back(r);
+			buffer2.push_back(255);
+		}
+	}
+
+	static int debugDumpIdx = 0;
+	std::string dumpAddr = pathToFile + caption + std::to_string(debugDumpIdx++) + ".bmp";
+	unsigned char* dst2 = buffer2.data();
+	generateBitmapImage(dst2, height, width, width * 4, dumpAddr.c_str());
+}
+
+void NorthstarRPRVolume_DebugDumpGrid(
+	size_t gridSizeX, 
+	size_t gridSizeY, 
+	size_t gridSizeZ, 
+	std::vector<uint32_t>& gridOnIndices,
+	std::vector<float>& dataToDump, 
+	std::vector<float>* plookupTable,
+	const std::string& pathToFile,
+	const std::string& caption)
+{
+	static int debugDumpIdx = 0;
+
+	for (size_t Z = 0; Z < gridSizeZ; ++Z) // slices by z
+	{
+		std::vector<std::array<unsigned char, 4>> buffer4;
+
+		buffer4.resize(gridSizeX * gridSizeZ, { 0, 255, 0, 255} );
+
+		for (size_t idx = 0; idx < gridOnIndices.size()/3; idx++)
+		{
+			uint32_t z = gridOnIndices[idx*3 + 2];
+
+			if (z != Z)
+				continue;
+
+			uint32_t x = gridOnIndices[idx*3];
+			uint32_t y = gridOnIndices[idx*3 + 1];
+
+			std::array<unsigned char, 4>& cell = buffer4[x + y * gridSizeX];
+			if (plookupTable == nullptr)
+			{
+				cell[0] = (char)(255 * dataToDump[idx]);
+				cell[1] = (char)(255 * dataToDump[idx]);
+				cell[2] = (char)(255 * dataToDump[idx]);
+			}
+			else
+			{
+				float gridVal = dataToDump[idx];
+
+				// find 2 closest ctrl points
+				size_t countCtrlPoints = plookupTable->size() / 3;
+				float step = 1.0f / countCtrlPoints;
+				size_t leftSideCtrlPoint = round(gridVal/step);
+				size_t rightSideCtrlPoint = leftSideCtrlPoint;
+				if (leftSideCtrlPoint < countCtrlPoints - 1)
+				{
+					rightSideCtrlPoint = leftSideCtrlPoint + 1;
+				}
+
+				// interpolate color values from 2 ctrl points
+				std::vector<float>& lookupTable = *plookupTable;
+				float r = (lookupTable[leftSideCtrlPoint*3] + lookupTable[rightSideCtrlPoint*3])/2;
+				float g = (lookupTable[leftSideCtrlPoint*3 + 1] + lookupTable[rightSideCtrlPoint*3 + 1])/2;
+				float b = (lookupTable[leftSideCtrlPoint*3 + 2] + lookupTable[rightSideCtrlPoint*3 + 2])/2;
+
+				cell[2] = (char)(255 * r);
+				cell[1] = (char)(255 * g);
+				cell[0] = (char)(255 * b);
+			}
+
+			cell[3] = 255;
+		}
+
+		std::string dumpAddr = pathToFile + caption + std::to_string(Z) + "_" + std::to_string(debugDumpIdx) + ".bmp";
+		unsigned char* dst4 = reinterpret_cast<unsigned char*>(buffer4.data());
+		generateBitmapImage(dst4, gridSizeY, gridSizeX, gridSizeX * 4, dumpAddr.c_str());
+	}
+	debugDumpIdx++;
+}
+
 bool NorthstarRPRVolume::TranslateVolume()
 {
 	// setup
@@ -429,13 +536,43 @@ bool NorthstarRPRVolume::TranslateVolume()
 	m_albedoGrid.Reset();
 	m_emissionGrid.Reset();
 
-
 	if (vdata.densityGrid.IsValid()) // grid exists
 	{
+		// normalize density grid
+		float maxDensityGridValue = *std::max_element(
+			vdata.densityGrid.gridOnValueIndices.begin(), vdata.densityGrid.gridOnValueIndices.end());
+		if (maxDensityGridValue > 1.0f)
+		{
+			for (size_t idx = 0; idx < vdata.densityGrid.gridOnValueIndices.size(); idx++)
+			{
+				vdata.densityGrid.gridOnValueIndices[idx] = vdata.densityGrid.gridOnValueIndices[idx] / maxDensityGridValue;
+			}
+		}
+
+		// compute grid values because density lookup is not implemented in Northstar
+		std::vector<float>& lookupTable = vdata.densityGrid.valuesLookUpTable;
+		size_t countCtrlPoints = lookupTable.size() / 3;
+		float step = 1.0f / ((countCtrlPoints > 1) ? (countCtrlPoints - 1) : 1);
+		for (float& gridVal : vdata.densityGrid.gridOnValueIndices)
+		{
+			// - find 2 closest ctrl points
+			volatile size_t leftSideCtrlPoint = floor(gridVal / step);
+
+			volatile size_t rightSideCtrlPoint = leftSideCtrlPoint;
+			if (leftSideCtrlPoint < countCtrlPoints - 1)
+			{
+				rightSideCtrlPoint = leftSideCtrlPoint + 1;
+			}
+
+			// - interpolate color values from 2 ctrl points
+			gridVal = gridVal * (lookupTable[leftSideCtrlPoint * 3] + lookupTable[rightSideCtrlPoint * 3]) / 2.0f;
+		}
+
+		// proceed with grid creation
 		m_densityGrid = Context().CreateVolumeGrid(
-			vdata.densityGrid.gridSizeX,
-			vdata.densityGrid.gridSizeY,
-			vdata.densityGrid.gridSizeZ,
+			vdata.densityGrid.size.gridSizeX,
+			vdata.densityGrid.size.gridSizeY,
+			vdata.densityGrid.size.gridSizeZ,
 			vdata.densityGrid.gridOnIndices,
 			vdata.densityGrid.gridOnValueIndices,
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
@@ -443,7 +580,6 @@ bool NorthstarRPRVolume::TranslateVolume()
 
 		MFnDependencyNode depNode(node);
 		float const maxDensityValue = RPRVolumeAttributes::GetDensityMultiplier(depNode);
-
 		auto densityGridNode = frw::GridNode(context()->GetMaterialSystem());
 		densityGridNode.SetGrid(m_densityGrid);
 		volumeShader.xSetValue(RPR_MATERIAL_INPUT_DENSITYGRID, densityGridNode);
@@ -451,31 +587,53 @@ bool NorthstarRPRVolume::TranslateVolume()
 
 		// scale
 		m_bboxScale.setToIdentity();
-		float max_size = std::max<float>(vdata.densityGrid.gridSizeX,
-			std::max<float>(vdata.densityGrid.gridSizeY, vdata.densityGrid.gridSizeZ));
-		m_bboxScale[0][0] = vdata.densityGrid.gridSizeX / max_size;
-		m_bboxScale[1][1] = vdata.densityGrid.gridSizeY / max_size;
-		m_bboxScale[2][2] = vdata.densityGrid.gridSizeZ / max_size;
+		m_bboxScale[0][0] = vdata.densityGrid.size.gridSizeX * vdata.densityGrid.size.voxelSizeX;
+		m_bboxScale[1][1] = vdata.densityGrid.size.gridSizeY * vdata.densityGrid.size.voxelSizeY;
+		m_bboxScale[2][2] = vdata.densityGrid.size.gridSizeZ * vdata.densityGrid.size.voxelSizeZ;
 
+#ifdef DUMP_VOLUME_DATA
+		NorthstarRPRVolume_DebugDumpGrid(
+			vdata.densityGrid.gridSizeX,
+			vdata.densityGrid.gridSizeY,
+			vdata.densityGrid.gridSizeZ,
+			vdata.densityGrid.gridOnIndices,
+			vdata.densityGrid.gridOnValueIndices,
+			nullptr,
+			"C://temp//dbg//",
+			"density_grid_Z_"
+		);
+#endif
 	}
 	
 	if (vdata.albedoGrid.IsValid()) // grid exists
 	{
+		// normalize grid data
+		float maxAlbedoGridValue = *std::max_element(
+			vdata.albedoGrid.gridOnValueIndices.begin(),
+			vdata.albedoGrid.gridOnValueIndices.end());
+		if (maxAlbedoGridValue > 1.0f)
+		{
+			for (size_t idx = 0; idx < vdata.albedoGrid.gridOnValueIndices.size(); idx++)
+			{
+				vdata.albedoGrid.gridOnValueIndices[idx] = vdata.albedoGrid.gridOnValueIndices[idx] / maxAlbedoGridValue;
+			}
+		}
+
+		// create grid
 		m_albedoGrid = Context().CreateVolumeGrid(
-			vdata.albedoGrid.gridSizeX,
-			vdata.albedoGrid.gridSizeY,
-			vdata.albedoGrid.gridSizeZ,
+			vdata.albedoGrid.size.gridSizeX,
+			vdata.albedoGrid.size.gridSizeY,
+			vdata.albedoGrid.size.gridSizeZ,
 			vdata.albedoGrid.gridOnIndices,
 			vdata.albedoGrid.gridOnValueIndices,
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
 		);
 
 		auto albedoGridNode = frw::GridNode(context()->GetMaterialSystem());
-		albedoGridNode.SetGrid(m_albedoGrid);
+		albedoGridNode.SetGrid(m_albedoGrid);		
 
 		float maxAlbedoValue = *std::max_element(vdata.albedoGrid.valuesLookUpTable.begin(), vdata.albedoGrid.valuesLookUpTable.end());
-
-		if (vdata.emissionGrid.IsValid() && maxAlbedoValue > 1)  //we need to normalize albedo with enabled emission
+		if (maxAlbedoValue > 1.0f)  //we need to normalize albedo with enabled emission
 		{
 			std::vector<float> albedoValues;
 			albedoValues.resize(vdata.albedoGrid.valuesLookUpTable.size());
@@ -486,6 +644,21 @@ bool NorthstarRPRVolume::TranslateVolume()
 			}
 			auto albedoLookupNode = CreateLookupTextureNode(this, albedoValues, albedoGridNode);
 			volumeShader.xSetValue(RPR_MATERIAL_INPUT_COLOR, albedoLookupNode);
+
+#ifdef DUMP_VOLUME_DATA
+			NorthstarRPRVolume_DebugDumpLookupFloat3(albedoValues, "C://temp//dbg//", "temperature_lookup");
+
+			NorthstarRPRVolume_DebugDumpGrid(
+				vdata.albedoGrid.gridSizeX,
+				vdata.albedoGrid.gridSizeY,
+				vdata.albedoGrid.gridSizeZ,
+				vdata.albedoGrid.gridOnIndices,
+				vdata.albedoGrid.gridOnValueIndices,
+				&albedoValues,
+				"C://temp//dbg//",
+				"temperature_grid_Z_"
+			);
+#endif
 		}
 		else
 		{
@@ -495,11 +668,24 @@ bool NorthstarRPRVolume::TranslateVolume()
 	}
 
 	if (vdata.emissionGrid.IsValid()) // grid exists
-	{	
+	{
+		// normalize grid data
+		float maxEmissionGridValue = *std::max_element(
+			vdata.emissionGrid.gridOnValueIndices.begin(),
+			vdata.emissionGrid.gridOnValueIndices.end());
+		if (maxEmissionGridValue > 1.0f)
+		{
+			for (size_t idx = 0; idx < vdata.emissionGrid.gridOnValueIndices.size(); idx++)
+			{
+				vdata.emissionGrid.gridOnValueIndices[idx] = vdata.emissionGrid.gridOnValueIndices[idx] / maxEmissionGridValue;
+			}
+		}
+
+		// create grid
 		m_emissionGrid = Context().CreateVolumeGrid(
-			vdata.emissionGrid.gridSizeX,
-			vdata.emissionGrid.gridSizeY,
-			vdata.emissionGrid.gridSizeZ,
+			vdata.emissionGrid.size.gridSizeX,
+			vdata.emissionGrid.size.gridSizeY,
+			vdata.emissionGrid.size.gridSizeZ,
 			vdata.emissionGrid.gridOnIndices,
 			vdata.emissionGrid.gridOnValueIndices,
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
@@ -515,6 +701,29 @@ bool NorthstarRPRVolume::TranslateVolume()
 		{
 			volumeShader.xSetParameterF(RPR_MATERIAL_INPUT_COLOR, 0.0f, 0.0f, 0.0f, 1.0f); // we need to set zero albedo
 		}
+
+#ifdef DUMP_VOLUME_DATA
+		float maxEmissionValue = *std::max_element(vdata.emissionGrid.valuesLookUpTable.begin(), vdata.emissionGrid.valuesLookUpTable.end());
+		std::vector<float> emissionValues;
+		emissionValues.resize(vdata.emissionGrid.valuesLookUpTable.size());
+		for (size_t idx = 0; idx < vdata.emissionGrid.valuesLookUpTable.size(); idx++)
+		{
+			emissionValues[idx] = vdata.emissionGrid.valuesLookUpTable[idx] / maxEmissionValue;
+		}
+
+		NorthstarRPRVolume_DebugDumpLookupFloat3(/*emissionValues*/ vdata.emissionGrid.valuesLookUpTable, "C://temp//dbg//", "emission_lookup");
+
+		NorthstarRPRVolume_DebugDumpGrid(
+			vdata.emissionGrid.gridSizeX,
+			vdata.emissionGrid.gridSizeY,
+			vdata.emissionGrid.gridSizeZ,
+			vdata.emissionGrid.gridOnIndices,
+			vdata.emissionGrid.gridOnValueIndices,
+			/*&emissionValues, */ &vdata.emissionGrid.valuesLookUpTable,
+			"C://temp//dbg//",
+			"emission_grid_Z_"
+		);
+#endif
 	}
 	m_boundingBoxMesh.SetVolumeShader(volumeShader);
 
