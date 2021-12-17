@@ -23,33 +23,6 @@
 - An issue with emission shaders disappearing in volume objects has been eliminated.
 
 
-## New Features:
-- Support for Fog and Heterogenous Volume rendering has been added to the RPR Full mode.  Simulated volumes are now rendered on CPU and GPU.
-- An option of exporting DeepEXR files for compositing has been added.  DeepEXR files contain multiple depth samples, allowing compositing better with depth.
-- Support for the Voronoi Texture node has been added.
-
-## Fixes:
-- The texture cache location is now saved between sessions.
-- Scenes that have many instances could crash IPR — fixed.
-- A crash could happen with a correct HDRI image on an environment light — fixed.
-- Support for Object ID and Random Color lookups in shader nodes has been added.
-- After a critical render error, users could not render again without restarting Maya — fixed.
-- Optimizations to the export of objects with deformation motion blur have been made.
-- An error with references to materials in another scene has been fixed.
-- The Albedo AOV now passes the “Base color” on the Toon shader.
-- A halo no longer appears around shadow and reflection catcher objects.
-- AOVs passed through transparent or refractive materials — fixed.
-- Better noise convergence with emissive materials using textures has been achieved.
-- Performance with outline rendering has been improved.
-- Performance degradation on WX7100 GPUs has been eliminated.
-- The Object ID Lookup node now works in the Full mode.
-- Objects with Toon shaders attached now cast shadows correctly if the flag is disabled.
-- An issue detected on the latest NVidia drivers has been fixed.
-
-## Known Issues:
-- Volumes are not implemented on macOS.
-- Vega GPUs with AMD 21.10 drivers can cause an issue when using the ML Denoiser.
-
 # Version 3.3
 
 ## New Features:
