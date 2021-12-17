@@ -107,11 +107,13 @@ MStatus FireRenderCmd::doIt(const MArgList & args)
 
 	// Enable or disable debugging.
 	if (argData.isFlagSet(kDebugTraceFlag))
+	{
 		return updateDebugOutput(argData);
-
+	}
 	else if (argData.isFlagSet(kExportsGLTF))
+	{
 		return exportsGLTF(argData);
-
+	}
 	else if (argData.isFlagSet(kOpenFolder))
 	{
 		MString path;
@@ -150,13 +152,20 @@ MStatus FireRenderCmd::doIt(const MArgList & args)
 			s_rendering = false;
 		}
 	}
+
+	return MStatus::kSuccess;
 }
 
 // Static Methods
 // -----------------------------------------------------------------------------
 void FireRenderCmd::cleanUp()
 {
+	if (s_ipr)
+		s_ipr->stop();
 	s_ipr.reset();
+
+	if (s_production)
+		s_production->stop();
 	s_production.reset();
 }
 

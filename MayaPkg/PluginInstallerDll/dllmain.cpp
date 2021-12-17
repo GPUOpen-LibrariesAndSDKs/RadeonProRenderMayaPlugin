@@ -27,7 +27,7 @@ void LogCallback(const char *sz)
 		if (!GetTempPathA(sizeof(buffer), buffer))
 			strcpy_s(buffer, sizeof(buffer), "c://");
 
-		strcat_s(buffer, sizeof(buffer), "istallerDll.log");
+		strcat_s(buffer, sizeof(buffer), "installerDll.log");
 	}
 
 	std::stringstream ss;
@@ -53,11 +53,11 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 	{
 	case DLL_PROCESS_ATTACH:
 		Logger::AddCallback(LogCallback, Logger::LevelInfo);
-		LogSystem("Start istaller dll...");
+		LogSystem("Start installer dll...");
 		break;
 
 	case DLL_PROCESS_DETACH:
-		LogSystem("Stop istaller dll.");
+		LogSystem("Stop installer dll.");
 		break;
 
 	case DLL_THREAD_ATTACH:

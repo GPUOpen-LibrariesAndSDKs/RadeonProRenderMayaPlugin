@@ -23,12 +23,9 @@ namespace
 {
 	namespace Attribute
 	{
-		MObject scatterColor;
-		MObject transmissionColor;
-		MObject emissionColor;
+		MObject color;
 		MObject density;
-		MObject scatteringDirection;
-		MObject multiScattering;
+		MObject weight;
 
 		MObject	output;
 	}
@@ -55,49 +52,32 @@ MStatus FireMaya::VolumeMaterial::initialize()
 	MFnNumericAttribute nAttr;
 	MFnEnumAttribute eAttr;
 
-	Attribute::scatterColor = nAttr.createColor("scatterColor", "c");
+	Attribute::color = nAttr.createColor("color", "c");
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
 
-	Attribute::transmissionColor = nAttr.createColor("transmissionColor", "ct");
+ 	Attribute::density = nAttr.create("density", "d", MFnNumericData::kFloat, 100.);
 	MAKE_INPUT(nAttr);
-	CHECK_MSTATUS(nAttr.setDefault(1.0f, 1.0f, 1.0f));
+	nAttr.setMin(0.0);
+	nAttr.setMax(1000.f);
 
-	Attribute::emissionColor = nAttr.createColor("emissionColor", "ce");
+	Attribute::weight = nAttr.create("weight", "w", MFnNumericData::kFloat, 1.);
 	MAKE_INPUT(nAttr);
-	CHECK_MSTATUS(nAttr.setDefault(.0f, .0f, .0f));
-
-	Attribute::density = nAttr.create("density", "d", MFnNumericData::kFloat, 1.);
-	MAKE_INPUT(nAttr);
-	nAttr.setSoftMin(0.0);
-	nAttr.setSoftMax(10.f);
-
-	Attribute::scatteringDirection = nAttr.create("scatteringDirection", "sd", MFnNumericData::kFloat, 0.0);
-	MAKE_INPUT(nAttr);
-	nAttr.setSoftMin(-1.0f);
-	nAttr.setSoftMax(1.0f);
-
-	Attribute::multiScattering = nAttr.create("multiscatter", "ms", MFnNumericData::kBoolean, true);
-	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0);
+	nAttr.setMax(1.f);
 
 	// output color
 	Attribute::output = nAttr.createColor("outColor", "oc");
 	MAKE_OUTPUT(nAttr);
 
-	CHECK_MSTATUS(addAttribute(Attribute::scatterColor));
-	CHECK_MSTATUS(addAttribute(Attribute::transmissionColor));
+	CHECK_MSTATUS(addAttribute(Attribute::color));
 	CHECK_MSTATUS(addAttribute(Attribute::density));
-	CHECK_MSTATUS(addAttribute(Attribute::emissionColor));
-	CHECK_MSTATUS(addAttribute(Attribute::scatteringDirection));
-	CHECK_MSTATUS(addAttribute(Attribute::multiScattering));
+	CHECK_MSTATUS(addAttribute(Attribute::weight));
 	CHECK_MSTATUS(addAttribute(Attribute::output));
 
-	CHECK_MSTATUS(attributeAffects(Attribute::scatterColor, Attribute::output));
-	CHECK_MSTATUS(attributeAffects(Attribute::transmissionColor, Attribute::output));
+	CHECK_MSTATUS(attributeAffects(Attribute::color, Attribute::output));
 	CHECK_MSTATUS(attributeAffects(Attribute::density, Attribute::output));
-	CHECK_MSTATUS(attributeAffects(Attribute::emissionColor, Attribute::output));
-	CHECK_MSTATUS(attributeAffects(Attribute::scatteringDirection, Attribute::output));
-	CHECK_MSTATUS(attributeAffects(Attribute::multiScattering, Attribute::output));
+	CHECK_MSTATUS(attributeAffects(Attribute::weight, Attribute::output));
 
 	return MS::kSuccess;
 }
@@ -110,7 +90,7 @@ MStatus FireMaya::VolumeMaterial::compute(const MPlug& plug, MDataBlock& block)
 		// It needs to get IPR properly updating while changing attributes on the "left" nodes in dependency graph
 		ForceEvaluateAllAttributes(true);
 
-		MFloatVector& surfaceColor = block.inputValue(Attribute::scatterColor).asFloatVector();
+		MFloatVector& surfaceColor = block.inputValue(Attribute::color).asFloatVector();
 
 		// set color attribute
 		MDataHandle outColorHandle = block.outputValue(Attribute::output);
@@ -137,25 +117,18 @@ frw::Shader FireMaya::VolumeMaterial::GetVolumeShader(Scope& scope)
 
 	frw::Shader material = frw::Shader(ms, frw::ShaderTypeVolume);
 
-	auto scatterColor = scope.GetValue(shaderNode.findPlug(Attribute::scatterColor, false));
-	auto transmissionColor = scope.GetValue(shaderNode.findPlug(Attribute::transmissionColor, false));
-	auto emissionColor = scope.GetValue(shaderNode.findPlug(Attribute::emissionColor, false));
-	auto k = shaderNode.findPlug(Attribute::density, false).asFloat();
-	auto scatteringDirection = shaderNode.findPlug(Attribute::scatteringDirection, false).asFloat();
-	auto multiScatter = shaderNode.findPlug(Attribute::multiScattering, false).asBool();
+	auto color = scope.GetValue(shaderNode.findPlug(Attribute::color, false));
+	auto density = shaderNode.findPlug(Attribute::density, false).asFloat();
+	auto weight = shaderNode.findPlug(Attribute::weight, false).asFloat();
 
-	// scattering
-	material.SetValue(RPR_MATERIAL_INPUT_SCATTERING, scatterColor * k);
+	// density
+	material.SetValue(RPR_MATERIAL_INPUT_DENSITY, density);
 
-	// absorption
-	material.SetValue(RPR_MATERIAL_INPUT_ABSORBTION, (1 - transmissionColor) * k);
+	// color
+	material.SetValue(RPR_MATERIAL_INPUT_COLOR, color);
 
-	// emission
-	material.SetValue(RPR_MATERIAL_INPUT_EMISSION, emissionColor * k);
-
-	// phase and multi on/off
-	material.SetValue(RPR_MATERIAL_INPUT_G, scatteringDirection);
-	material.SetValue(RPR_MATERIAL_INPUT_MULTISCATTER, multiScatter ? 1.f : 0.f);
+	// weight
+	material.SetValue(RPR_MATERIAL_INPUT_WEIGHT, weight);
 
 	return material;
 }

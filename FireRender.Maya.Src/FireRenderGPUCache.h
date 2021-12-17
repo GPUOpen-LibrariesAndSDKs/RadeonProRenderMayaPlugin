@@ -56,13 +56,14 @@ public:
 	virtual void attributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug) override;
 	virtual void Freshen(bool shouldCalculateHash) override;
 	static void ShaderDirtyCallback(MObject& node, void* clientData);
+	static void TimeChangedCallback(void* clientData);
 
 	void Rebuild(void);
 	void ProcessShaders(void);
 
 protected:
 	void ReloadMesh(const MDagPath& meshPath);
-	void ReadAlembicFile(void);
+	void ReadAlembicFile(uint32_t frame = 0);
 	void RebuildTransforms(void);
 	void GetShapes(std::vector<frw::Shape>& outShapes, std::vector<std::array<float, 16>>& tmMatrs);
 
@@ -74,6 +75,7 @@ protected:
 protected:
 	bool m_changedFile;
 	std::map<std::string, RPRAlembicWrapperCacheEntry>::iterator m_file;
+	unsigned int m_curr_frameNumber;
 };
 
 

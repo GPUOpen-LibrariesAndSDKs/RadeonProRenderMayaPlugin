@@ -464,7 +464,8 @@ void FireRenderContext::turnOnAOVsForDenoiser(bool allocBuffer)
 static const std::vector<int> g_contourAovs = {
 	RPR_AOV_OBJECT_ID, 
 	RPR_AOV_SHADING_NORMAL,
-	RPR_AOV_MATERIAL_ID 
+	RPR_AOV_MATERIAL_ID,
+	RPR_AOV_UV
 };
 
 void FireRenderContext::turnOnAOVsForContour(bool allocBuffer /*= false*/)
@@ -2635,7 +2636,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncStarted);
 
-	std::deque<std::shared_ptr<FireRenderObject> > meshesToInitialize; // meshes which would be pre-processed
+	std::deque<std::shared_ptr<FireRenderObject> > meshesToReload; // meshes which would be pre-processed
 	std::deque<std::shared_ptr<FireRenderObject> > meshesToFreshen; // meshes which would be freshened
 
 	while (!m_dirtyObjects.empty())
@@ -2669,13 +2670,15 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 				assert(pMesh != nullptr);
 
 				bool meshChanged = pMesh->InitializeMaterials();
-				if (meshChanged)
+				bool shouldLoad = pMesh->IsMeshVisible(pMesh->DagPath(), this);
+
+				if (meshChanged && shouldLoad)
 				{
-					meshesToInitialize.emplace_back() = ptr;
+					meshesToReload.emplace_back() = ptr;
 				}
 				else
 				{
-					pMesh->SetPreProcessedSafe();
+					pMesh->SetReloadedSafe();
 					meshesToFreshen.emplace_back() = ptr;
 				}
 
@@ -2684,7 +2687,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 
 			if (ptr->IsMashInstancer())
 			{
-				meshesToInitialize.emplace_back() = ptr;
+				meshesToReload.emplace_back() = ptr;
 
 				continue;
 			}
@@ -2715,14 +2718,14 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 	do
 	{
 		// iterate through meshes
-		for (auto it = meshesToInitialize.begin(); it != meshesToInitialize.end(); ++it)
+		for (auto it = meshesToReload.begin(); it != meshesToReload.end(); ++it)
 		{
 			if (!it->get())
 			{
 				continue;
 			}
 
-			const bool success = it->get()->PreProcessMesh(currentSampeIdx);
+			const bool success = it->get()->ReloadMesh(currentSampeIdx);
 			if (success && (currentSampeIdx == 0))
 			{
 				meshesToFreshen.emplace_back() = *it;

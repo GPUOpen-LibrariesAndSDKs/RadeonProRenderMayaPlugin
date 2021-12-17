@@ -571,6 +571,16 @@ public:
 		m_mainMeshesDictionary[uuid] = mainMesh;
 	}
 
+	void AddMainMesh(FireRenderMeshCommon* mainMesh, std::string& suffix)
+	{
+		std::string uuid = mainMesh->uuidWithoutInstanceNumber();
+
+		const FireRenderMeshCommon* alreadyHas = GetMainMesh(uuid + suffix);
+		assert(!alreadyHas);
+
+		m_mainMeshesDictionary[uuid + suffix] = mainMesh;
+	}
+
 	void RemoveMainMesh(const FireRenderMesh* mainMesh)
 	{
 		std::string uuid = mainMesh->uuidWithoutInstanceNumber();

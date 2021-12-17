@@ -58,7 +58,7 @@ global proc createRenderEffectsTab()
 	// Contour Render Mode
 	//
 	frameLayout -label "Contour Render Mode" -cll true -cl 0 fireRenderContourFrame;
-	createFireRenderContourFrame ("fireRenderContourFrame");
+	createFireRenderContourFrame("fireRenderContourFrame");
 	setParent ..;
 
 	setParent ..;
@@ -99,6 +99,11 @@ global proc createFireRenderContourFrame(string $parent)
 		-label "Use Shading Normal"
 		-attribute "RadeonProRenderGlobals.contourUseShadingNormal"
 		contourUseShadingNormal;
+
+	attrControlGrp
+		-label "Use UV"
+		-attribute "RadeonProRenderGlobals.contourUseUV"
+		contourUseUV;
 	
 	attrControlGrp
 		-label "Line Width Object"
@@ -111,10 +116,18 @@ global proc createFireRenderContourFrame(string $parent)
 	attrControlGrp
 		-label "Line Width Normal"
 		-attribute "RadeonProRenderGlobals.contourLineWidthShadingNormal" contourLineWidthShadingNormal;
+
+	attrControlGrp
+		-label "Line Width UV"
+		-attribute "RadeonProRenderGlobals.contourLineWidthUV" contourLineWidthUV;
 	
 	attrControlGrp
 		-label "Normal Threshold"
 		-attribute "RadeonProRenderGlobals.contourNormalThreshold" contourNormalThreshold;
+
+	attrControlGrp
+		-label "UV Threshold"
+		-attribute "RadeonProRenderGlobals.contourUVThreshold" contourUVThreshold;
 	
 	attrControlGrp
 		-label "Antialiasing"
@@ -143,6 +156,7 @@ global proc onUpdateContour()
 			setAttr RadeonProRenderGlobals.aovShadingNormal -lock $enabled $enabled;
 			setAttr RadeonProRenderGlobals.aovMaterialIndex -lock $enabled $enabled;
 			setAttr RadeonProRenderGlobals.aovObjectId -lock $enabled $enabled;
+			setAttr RadeonProRenderGlobals.aovUV -lock $enabled $enabled;
 		}
 	}
 	else
@@ -150,15 +164,19 @@ global proc onUpdateContour()
 		setAttr RadeonProRenderGlobals.aovShadingNormal -lock $enabled;
 		setAttr RadeonProRenderGlobals.aovMaterialIndex -lock $enabled;
 		setAttr RadeonProRenderGlobals.aovObjectId -lock $enabled;
+		setAttr RadeonProRenderGlobals.aovUV -lock $enabled;
 	}
 
 	attrControlGrp -edit -enable $enabled contourUseObjectID;
 	attrControlGrp -edit -enable $enabled contourUseMaterialID;
 	attrControlGrp -edit -enable $enabled contourUseShadingNormal;
+	attrControlGrp -edit -enable $enabled contourUseUV;
 	attrControlGrp -edit -enable $enabled contourLineWidthObjectID;
 	attrControlGrp -edit -enable $enabled contourLineWidthMaterialID;
 	attrControlGrp -edit -enable $enabled contourLineWidthShadingNormal;
+	attrControlGrp -edit -enable $enabled contourLineWidthUV;
 	attrControlGrp -edit -enable $enabled contourNormalThreshold;
+	attrControlGrp -edit -enable $enabled contourUVThreshold;
 	attrControlGrp -edit -enable $enabled contourAntialiasing;
 	attrControlGrp -edit -enable $enabled contourIsDebugEnabled;
 }
