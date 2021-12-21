@@ -25,8 +25,9 @@ MTypeId FireRenderVolumeLocator::id(FireMaya::TypeId::FireRenderVolumeLocator);
 MString FireRenderVolumeLocator::drawDbClassification("drawdb/geometry/FireRenderVolumeLocator");
 MString FireRenderVolumeLocator::drawRegistrantId("FireRenderVolumeNode");
 
-FireRenderVolumeLocator::FireRenderVolumeLocator() :
-	m_attributeChangedCallback(0)
+FireRenderVolumeLocator::FireRenderVolumeLocator() 
+	: m_attributeChangedCallback(0)
+	, m_timeChangedCallback(0)
 {
 }
 
@@ -198,12 +199,15 @@ void FireRenderVolumeLocator::onAttributeChanged(MNodeMessage::AttributeMessage 
 
 	if ((plug == RPRVolumeAttributes::vdbFile) || (plug == RPRVolumeAttributes::namingSchema))
 	{
-		RPRVolumeAttributes::SetupVolumeFromFile(mobj, rprVolumeLocatorNode->m_gridParams);
+		RPRVolumeAttributes::SetupVolumeFromFile(mobj, rprVolumeLocatorNode->m_gridParams, rprVolumeLocatorNode->m_maxGridParams, true);
 	}
 
 	else if ((plug == RPRVolumeAttributes::albedoSelectedGrid) || (plug == RPRVolumeAttributes::emissionSelectedGrid) || (plug == RPRVolumeAttributes::densitySelectedGrid))
 	{
-		RPRVolumeAttributes::SetupGridSizeFromFile(mobj, plug, rprVolumeLocatorNode->m_gridParams);
+		auto& tmpGridParams = (rprVolumeLocatorNode->m_maxGridParams.size() > 0) ? 
+			rprVolumeLocatorNode->m_maxGridParams : 
+			rprVolumeLocatorNode->m_gridParams;
+		RPRVolumeAttributes::SetupGridSizeFromFile(mobj, plug, tmpGridParams);
 	}
 }
 
@@ -219,6 +223,6 @@ void FireRenderVolumeLocator::onTimeChanged(void* clientData)
 	MFnDependencyNode depNode(mobj);
 	MGlobal::executeCommand(MString("dgdirty " + depNode.name()));
 
-	RPRVolumeAttributes::SetupVolumeFromFile(mobj, rprVolumeLocatorNode->m_gridParams);
+	RPRVolumeAttributes::SetupVolumeFromFile(mobj, rprVolumeLocatorNode->m_gridParams, rprVolumeLocatorNode->m_maxGridParams, false);
 }
 

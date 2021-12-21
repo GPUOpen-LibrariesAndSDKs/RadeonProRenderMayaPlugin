@@ -65,6 +65,7 @@ private:
 	MCallbackId m_timeChangedCallback;
 
 	GridParams m_gridParams;
+	GridParams m_maxGridParams;
 
 private:
 	static void onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
