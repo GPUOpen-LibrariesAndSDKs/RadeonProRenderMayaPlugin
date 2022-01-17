@@ -32,7 +32,6 @@ limitations under the License.
 
 MObject FireRenderIESLightLocator::aFilePath;
 MObject FireRenderIESLightLocator::aAreaWidth;
-MObject FireRenderIESLightLocator::aRotations[3];
 MObject	FireRenderIESLightLocator::aIntensity;
 MObject	FireRenderIESLightLocator::aDisplay;
 MObject FireRenderIESLightLocator::aMeshRepresentationUpdated;
@@ -95,29 +94,6 @@ MStatus FireRenderIESLightLocator::initialize()
 	nAttr.setSoftMax(2.0);
 	addAttribute(aAreaWidth);
 
-	const char* aRotationFullNames[3]
-	{
-		"xRotation",
-		"yRotation",
-		"zRotation",
-	};
-
-	const char* aRotationShortNames[3]
-	{
-		"rtx",
-		"rty",
-		"rtz",
-	};
-
-	for (size_t i = 0; i < 3; ++i)
-	{
-		aRotations[i] = nAttr.create(aRotationFullNames[i], aRotationShortNames[i], MFnNumericData::kFloat, 0.f);
-		makeAttribute(nAttr);
-		nAttr.setSoftMin(-180);
-		nAttr.setSoftMax( 180);
-		addAttribute(aRotations[i]);
-	}
-
 	aIntensity = nAttr.create("intensity", "i", MFnNumericData::kFloat, 1.f);
 	makeAttribute(nAttr);
 	nAttr.setMin(0);
@@ -145,9 +121,7 @@ MStatus FireRenderIESLightLocator::initialize()
 		};
 	};
 
-	setMeshReprAffects(
-		aFilePath, aDisplay, aAreaWidth,
-		aRotations[0], aRotations[1], aRotations[2]);
+	setMeshReprAffects(aFilePath, aDisplay, aAreaWidth);
 
 	return MS::kSuccess;
 }
@@ -167,31 +141,6 @@ bool FireRenderIESLightLocator::GetDisplay() const
 	return findPlugTryGetValue(thisMObject(), aDisplay, true);
 }
 
-float FireRenderIESLightLocator::GetXRotation() const
-{
-	return GetAxisRotation(0);
-}
-
-float FireRenderIESLightLocator::GetYRotation() const
-{
-	return GetAxisRotation(1);
-}
-
-float FireRenderIESLightLocator::GetZRotation() const
-{
-	return GetAxisRotation(2);
-}
-
-float FireRenderIESLightLocator::GetAxisRotation(unsigned axis) const
-{
-	if (axis > 2)
-	{
-		assert(!"Invalid usage");
-		return 0.f;
-	}
-
-	return findPlugTryGetValue(thisMObject(), FireRenderIESLightLocator::aRotations[axis], 0.f);
-}
 
 void FireRenderIESLightLocator::UpdateMesh(bool forced) const
 {
@@ -200,12 +149,6 @@ void FireRenderIESLightLocator::UpdateMesh(bool forced) const
 		m_mesh->SetEnabled(GetDisplay());
 		m_mesh->SetScale(GetAreaWidth());
 		m_mesh->SetFilename(GetFilename(), forced);
-
-		for (int axis = 0; axis < 3; ++axis)
-		{
-			float angle = GetAxisRotation(axis);
-			m_mesh->SetAngle(angle, axis);
-		}
 	}
 }
 
@@ -323,10 +266,7 @@ void FireRenderIESLightLocatorOverride::updateRenderItems(const MDagPath& path, 
 	{
 		float areaWidth = GetAreaWidth();
 
-		MEulerRotation rotation(
-			FireMaya::deg2rad(GetAxisRotation(0)),
-			FireMaya::deg2rad(GetAxisRotation(1)),
-			FireMaya::deg2rad(GetAxisRotation(2)));
+		MEulerRotation rotation(M_PI / 2, 0, 0);
 		MMatrix matrix = rotation.asMatrix();
 
 		MTransformationMatrix trm;
@@ -408,30 +348,4 @@ float FireRenderIESLightLocatorOverride::GetAreaWidth() const
 bool FireRenderIESLightLocatorOverride::GetDisplay() const
 {
 	return findPlugTryGetValue(m_obj, FireRenderIESLightLocator::aDisplay, true);
-}
-
-float FireRenderIESLightLocatorOverride::GetXRotation() const
-{
-	return GetAxisRotation(0);
-}
-
-float FireRenderIESLightLocatorOverride::GetYRotation() const
-{
-	return GetAxisRotation(1);
-}
-
-float FireRenderIESLightLocatorOverride::GetZRotation() const
-{
-	return GetAxisRotation(2);
-}
-
-float FireRenderIESLightLocatorOverride::GetAxisRotation(unsigned axis) const
-{
-	if (axis > 2)
-	{
-		assert(!"Invalid usage");
-		return 0.f;
-	}
-
-	return findPlugTryGetValue(m_obj, FireRenderIESLightLocator::aRotations[axis], 0.f);
 }

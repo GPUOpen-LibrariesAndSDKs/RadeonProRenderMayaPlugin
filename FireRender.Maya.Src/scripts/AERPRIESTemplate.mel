@@ -76,9 +76,6 @@ global proc AERPRIESTemplate( string $nodeName )
 		editorTemplate -beginLayout "Radeon ProRender" -collapse 0;
 			editorTemplate -callCustom AEIESFileNameNew AEIESFileNameReplace "iesFile";
 			editorTemplate -addControl "areaWidth";
-			editorTemplate -addControl "xRotation";
-			editorTemplate -addControl "yRotation";
-			editorTemplate -addControl "zRotation";
 			editorTemplate -addControl "intensity";
 			editorTemplate -addControl "display";
 			editorTemplate -addControl "color";
