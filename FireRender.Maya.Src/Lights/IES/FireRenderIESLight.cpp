@@ -31,7 +31,6 @@ limitations under the License.
 #endif
 
 MObject FireRenderIESLightLocator::aFilePath;
-MObject FireRenderIESLightLocator::aAreaWidth;
 MObject	FireRenderIESLightLocator::aIntensity;
 MObject	FireRenderIESLightLocator::aDisplay;
 MObject FireRenderIESLightLocator::aMeshRepresentationUpdated;
@@ -87,13 +86,6 @@ MStatus FireRenderIESLightLocator::initialize()
 	tAttr.setUsedAsFilename(true);
 	addAttribute(aFilePath);
 
-	aAreaWidth = nAttr.create("areaWidth", "aw", MFnNumericData::kFloat, 1.f);
-	makeAttribute(nAttr);
-	nAttr.setMin(0);
-	nAttr.setMax(100);
-	nAttr.setSoftMax(2.0);
-	addAttribute(aAreaWidth);
-
 	aIntensity = nAttr.create("intensity", "i", MFnNumericData::kFloat, 1.f);
 	makeAttribute(nAttr);
 	nAttr.setMin(0);
@@ -121,7 +113,7 @@ MStatus FireRenderIESLightLocator::initialize()
 		};
 	};
 
-	setMeshReprAffects(aFilePath, aDisplay, aAreaWidth);
+	setMeshReprAffects(aFilePath, aDisplay);
 
 	return MS::kSuccess;
 }
@@ -131,10 +123,6 @@ MString FireRenderIESLightLocator::GetFilename() const
 	return findPlugTryGetValue(thisMObject(), aFilePath, ""_ms);
 }
 
-float FireRenderIESLightLocator::GetAreaWidth() const
-{
-	return findPlugTryGetValue(thisMObject(), aAreaWidth, 1.f);
-}
 
 bool FireRenderIESLightLocator::GetDisplay() const
 {
@@ -147,7 +135,6 @@ void FireRenderIESLightLocator::UpdateMesh(bool forced) const
 	if (m_mesh)
 	{
 		m_mesh->SetEnabled(GetDisplay());
-		m_mesh->SetScale(GetAreaWidth());
 		m_mesh->SetFilename(GetFilename(), forced);
 	}
 }
@@ -264,16 +251,9 @@ void FireRenderIESLightLocatorOverride::updateRenderItems(const MDagPath& path, 
 
 	if (mesh)
 	{
-		float areaWidth = GetAreaWidth();
-
 		MEulerRotation rotation(M_PI / 2, 0, 0);
 		MMatrix matrix = rotation.asMatrix();
 
-		MTransformationMatrix trm;
-		double scale[3]{ areaWidth, areaWidth, areaWidth };
-		trm.setScale(scale, MSpace::Space::kObject);
-
-		matrix *= trm.asMatrix();
 		bool ok = mesh->setMatrix(&matrix);
 		assert(ok);
 
@@ -338,11 +318,6 @@ void FireRenderIESLightLocatorOverride::SetFilename(const MString& filePath)
 		dgModifier.newPlugValueString(plug, filePath);
 		dgModifier.doIt();
 	}
-}
-
-float FireRenderIESLightLocatorOverride::GetAreaWidth() const
-{
-	return findPlugTryGetValue(m_obj, FireRenderIESLightLocator::aAreaWidth, 1.f);
 }
 
 bool FireRenderIESLightLocatorOverride::GetDisplay() const
