@@ -527,6 +527,16 @@ void AddExtensionAttributesCommon()
 	MObject emitterAttr = nAttr.create("RPRIsEmitter", "iem", MFnNumericData::kBoolean, false);
 	nAttr.setNiceNameOverride("RPR Is Emitter");
 	locatorClass.addExtensionAttribute(emitterAttr);
+
+
+	// Add shadow color attribute to geometry objects
+	MNodeClass nurbsClass("nurbsSurface");
+	MNodeClass meshClass("mesh");
+
+	const MObject nurbsShadowColorAttr = nAttr.createColor("RPRShadowColor", "shc");
+	const MObject meshShadowColorAttr = nAttr.createColor("RPRShadowColor", "shc");
+	nurbsClass.addExtensionAttribute(nurbsShadowColorAttr);
+	meshClass.addExtensionAttribute(meshShadowColorAttr);
 }
 
 void AddExtensionAttributesForMaterials()

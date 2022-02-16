@@ -1046,6 +1046,12 @@ namespace frw
 			checkStatus(res);
 		}
 
+		void SetShadowColor(const Value &color)
+		{
+			auto res = rprShapeSetShadowColor(Handle(), color.GetX(), color.GetY(), color.GetZ());
+			checkStatus(res);
+		}
+
 		void SetLinearMotion(float x, float y, float z)
 		{
 			auto res = rprShapeSetLinearMotion(Handle(), x, y, z);
