@@ -1541,6 +1541,7 @@ void FireRenderMesh::Rebuild()
 	}
 
 	SetupObjectId(meshPath.transform());
+	SetupShadowColor();
 
 	m.changed.mesh = false;
 	m.changed.transform = false;
@@ -1565,6 +1566,27 @@ void FireRenderMesh::SetupObjectId(MObject parentTransformObject)
 		if (element.shape.Handle() != nullptr)
 		{
 			element.shape.SetObjectId(objectId);
+		}
+	}
+}
+
+void FireRenderMesh::SetupShadowColor()
+{
+	MObject node = Object();
+	MPlug plug = MFnDependencyNode(node).findPlug("RPRShadowColor");
+
+	if (plug.isNull())
+	{
+		return;
+	}
+
+	frw::Value colorValue = Scope().GetValue(plug);
+
+	for (FrElement element : m.elements)
+	{
+		if (element.shape.Handle() != nullptr)
+		{
+			element.shape.SetShadowColor(colorValue);
 		}
 	}
 }

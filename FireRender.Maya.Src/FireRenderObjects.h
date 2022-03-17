@@ -418,6 +418,8 @@ protected:
 
 	void SetupObjectId(MObject parentTransform);
 
+	void SetupShadowColor();
+
 protected:
 	FireMaya::MeshTranslator::MeshPolygonData m_meshData;
 
