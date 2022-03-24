@@ -206,32 +206,31 @@ void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
 	if (partialShortName == "fruuid")
 		return;
 
-	MFnDependencyNode dnode(node);
-
-	MString name = dnode.name();
-
-	// check for RPRObjectId attrbiute change. roi is brief name for this attribute
-	if (node.hasFn(MFn::kTransform) && (partialShortName == "roi"))
+	if (node.hasFn(MFn::kTransform))
 	{
 		MFnTransform transform(node);
 
-		MarkDirtyAllDirectChildren(transform);
-	}
-
-	// If changeing render layers or collections inside render layer
-	if (partialShortName.indexW("rlio[") != -1)
-	{
-		if (node.hasFn(MFn::kTransform))
+		// check for RPRObjectId attrbiute change. roi is brief name for this attribute
+		if (partialShortName == "roi")
 		{
-			MFnTransform transform(node);
+			MarkDirtyAllDirectChildren(transform);
+		}
+
+		// If changeing render layers or collections inside render layer
+		if (partialShortName.indexW("rlio[") != -1)
+		{
 			MarkDirtyTransformRecursive(transform);
 		}
-		else
+
+		// if translattion is changed on the parent transform, make sure all children marked dirty
+		static std::set<std::string> attributeSet = { "t", "tx", "ty", "tz",
+												"r", "rx", "ry", "rz",
+												"s", "sx", "sy", "sz" };
+
+		if (attributeSet.find(std::string(partialShortName.asChar())) != attributeSet.end())
 		{
-
+			MarkDirtyTransformRecursive(transform);
 		}
-
-
 	}
 
 	setDirty();
