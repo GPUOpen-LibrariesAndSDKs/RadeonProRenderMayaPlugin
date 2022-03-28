@@ -2525,17 +2525,15 @@ void FireRenderCamera::Freshen(bool shouldCalculateHash)
 
 		bool cameraMotionBlur = context()->cameraMotionBlur() && context()->motionBlur();
 
-		MVector linearVector = MVector(0, 0, 0);
-		MVector angularVector = MVector(1, 0, 0);
-		double rotationAngle = 0.0;
 
-		if (cameraMotionBlur)
+		// We use different schemes for MotionBlur for Tahoe and NorthStar
+		if (cameraMotionBlur && TahoeContext::IsGivenContextRPR2(context()))
 		{
-			FireMaya::CalculateMotionBlurParams(dagNode, GetSelfTransform(), linearVector, angularVector, rotationAngle);
-		}
+			float nextFrameFloats[4][4];
+			FireMaya::GetMatrixForTheNextFrame(dagNode, nextFrameFloats, Instance());
 
-		m_camera.SetLinearMotion((float) linearVector.x, (float) linearVector.y, (float) linearVector.z);
-		m_camera.SetAngularMotion((float) angularVector.x, (float) angularVector.y, (float) angularVector.z, (float) rotationAngle);
+			m_camera.SetMotionTransform(&nextFrameFloats[0][0], false);
+		}
 	}
 	else
 	{
