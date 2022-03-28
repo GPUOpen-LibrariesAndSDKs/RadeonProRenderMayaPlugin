@@ -1611,6 +1611,17 @@ namespace frw
 			data().m_mode = mode;
 		}
 
+
+		void SetMotionTransform(const float* tm, bool transpose = false)
+		{
+			rpr_status res = rprCameraSetMotionTransform(Handle(), false, tm, 1); // matrix at time=1
+			checkStatus(res);
+
+			res = rprCameraSetMotionTransformCount(Handle(), 1);
+			checkStatus(res);
+		}
+
+		// REMOVE THIS AFTER REMOVING TAHOE
 		void SetLinearMotion(float x, float y, float z)
 		{
 			auto res = rprCameraSetLinearMotion(Handle(), x, y, z);
@@ -1625,6 +1636,7 @@ namespace frw
 			}
 		}
 
+		// REMOVE THIS AFTER REMOVING TAHOE
 		void SetAngularMotion(float x, float y, float z, float w)
 		{
 			auto res = rprCameraSetAngularMotion(Handle(), x, y, z, w);
