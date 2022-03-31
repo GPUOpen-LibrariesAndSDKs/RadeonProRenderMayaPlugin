@@ -206,32 +206,31 @@ void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
 	if (partialShortName == "fruuid")
 		return;
 
-	MFnDependencyNode dnode(node);
-
-	MString name = dnode.name();
-
-	// check for RPRObjectId attrbiute change. roi is brief name for this attribute
-	if (node.hasFn(MFn::kTransform) && (partialShortName == "roi"))
+	if (node.hasFn(MFn::kTransform))
 	{
 		MFnTransform transform(node);
 
-		MarkDirtyAllDirectChildren(transform);
-	}
-
-	// If changeing render layers or collections inside render layer
-	if (partialShortName.indexW("rlio[") != -1)
-	{
-		if (node.hasFn(MFn::kTransform))
+		// check for RPRObjectId attrbiute change. roi is brief name for this attribute
+		if (partialShortName == "roi")
 		{
-			MFnTransform transform(node);
+			MarkDirtyAllDirectChildren(transform);
+		}
+
+		// If changeing render layers or collections inside render layer
+		if (partialShortName.indexW("rlio[") != -1)
+		{
 			MarkDirtyTransformRecursive(transform);
 		}
-		else
+
+		// if translattion is changed on the parent transform, make sure all children marked dirty
+		static std::set<std::string> attributeSet = { "t", "tx", "ty", "tz",
+												"r", "rx", "ry", "rz",
+												"s", "sx", "sy", "sz" };
+
+		if (attributeSet.find(std::string(partialShortName.asChar())) != attributeSet.end())
 		{
-
+			MarkDirtyTransformRecursive(transform);
 		}
-
-
 	}
 
 	setDirty();
@@ -2526,17 +2525,15 @@ void FireRenderCamera::Freshen(bool shouldCalculateHash)
 
 		bool cameraMotionBlur = context()->cameraMotionBlur() && context()->motionBlur();
 
-		MVector linearVector = MVector(0, 0, 0);
-		MVector angularVector = MVector(1, 0, 0);
-		double rotationAngle = 0.0;
 
-		if (cameraMotionBlur)
+		// We use different schemes for MotionBlur for Tahoe and NorthStar
+		if (cameraMotionBlur && TahoeContext::IsGivenContextRPR2(context()))
 		{
-			FireMaya::CalculateMotionBlurParams(dagNode, GetSelfTransform(), linearVector, angularVector, rotationAngle);
-		}
+			float nextFrameFloats[4][4];
+			FireMaya::GetMatrixForTheNextFrame(dagNode, nextFrameFloats, Instance());
 
-		m_camera.SetLinearMotion((float) linearVector.x, (float) linearVector.y, (float) linearVector.z);
-		m_camera.SetAngularMotion((float) angularVector.x, (float) angularVector.y, (float) angularVector.z, (float) rotationAngle);
+			m_camera.SetMotionTransform(&nextFrameFloats[0][0], false);
+		}
 	}
 	else
 	{
