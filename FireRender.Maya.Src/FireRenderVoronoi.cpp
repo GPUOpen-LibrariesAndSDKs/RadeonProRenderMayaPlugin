@@ -19,6 +19,7 @@ namespace
 	namespace Attribute
 	{
 		MObject	uv;
+		MObject uvSize;
 		MObject scale;
 		MObject randomness;
 		MObject dimension;
@@ -39,6 +40,10 @@ MStatus FireMaya::Voronoi::initialize()
 	MFnEnumAttribute eAttr;
 
 	Attribute::uv = nAttr.create("uvCoord", "uv", MFnNumericData::k2Float);
+	MAKE_INPUT(nAttr);
+
+	// Note: we are not using this, but we have to have it to support classification of this node as a texture2D in Maya:
+	Attribute::uvSize = nAttr.create("uvFilterSize", "fs", MFnNumericData::k2Float);
 	MAKE_INPUT(nAttr);
 
 	Attribute::scale = nAttr.create("scale", "s", MFnNumericData::kFloat, 1);
@@ -69,6 +74,7 @@ MStatus FireMaya::Voronoi::initialize()
 	MAKE_INPUT_CONST(eAttr);
 
 	CHECK_MSTATUS(addAttribute(Attribute::uv));
+	CHECK_MSTATUS(addAttribute(Attribute::uvSize));
 	CHECK_MSTATUS(addAttribute(Attribute::scale));
 	CHECK_MSTATUS(addAttribute(Attribute::randomness));
 	CHECK_MSTATUS(addAttribute(Attribute::output));
@@ -77,6 +83,7 @@ MStatus FireMaya::Voronoi::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::outType));
 
 	CHECK_MSTATUS(attributeAffects(Attribute::uv, Attribute::output));
+	CHECK_MSTATUS(attributeAffects(Attribute::uvSize, Attribute::output));
 	CHECK_MSTATUS(attributeAffects(Attribute::scale, Attribute::output));
 	CHECK_MSTATUS(attributeAffects(Attribute::randomness, Attribute::output));
 	CHECK_MSTATUS(attributeAffects(Attribute::mapChannel, Attribute::output));
