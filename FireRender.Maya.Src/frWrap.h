@@ -1140,6 +1140,20 @@ namespace frw
 			}
 		}
 
+		void SetReceiveShadowFlag(bool receivesShadows)
+		{
+			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_RECEIVE_SHADOW, receivesShadows);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
 		void SetContourVisibilityFlag(bool isContourVisible)
 		{
 			auto res = rprShapeSetContourIgnore(Handle(), !isContourVisible);
@@ -1493,6 +1507,20 @@ namespace frw
 		void SetShadowFlag(bool castsShadows)
 		{
 			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_SHADOW, castsShadows);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
+		void SetReceiveShadowFlag(bool receivesShadows)
+		{
+			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_RECEIVE_SHADOW, receivesShadows);
 
 			if (res == RPR_ERROR_UNSUPPORTED)
 			{

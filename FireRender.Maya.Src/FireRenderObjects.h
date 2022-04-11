@@ -294,6 +294,7 @@ public:
 	void setReflectionVisibility(bool reflectionVisibility);
 	void setRefractionVisibility(bool refractionVisibility);
 	void setCastShadows(bool castShadow);
+	void setReceiveShadows(bool recieveShadow);
 	void setPrimaryVisibility(bool primaryVisibility);
 	void setContourVisibility(bool contourVisibility);
 
@@ -885,6 +886,7 @@ public:
 	void setReflectionVisibility(bool reflectionVisibility);
 	void setRefractionVisibility(bool refractionVisibility);
 	void setCastShadows(bool castShadow);
+	void setReceiveShadows(bool recieveShadow);
 
 protected:
 	// applies transform to node
