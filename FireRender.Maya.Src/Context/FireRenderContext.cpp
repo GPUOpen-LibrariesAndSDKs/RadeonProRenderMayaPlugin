@@ -2518,12 +2518,15 @@ void FireRenderContext::setDirtyObject(FireRenderObject* obj)
 	// We should skip inactive cameras, because their changes shouldn't affect result image
 	// If ignore this step - image in IPR would redraw when moving different camera in viewport
 	// That image redrawing in IPR causes black square artifats
-	MItDag itDag;
-	MStatus status = itDag.reset(obj->Object(), MItDag::kDepthFirst, MFn::kCamera);
-	CHECK_MSTATUS(status);
-	for (; !itDag.isDone(); itDag.next())
+	if (m_camera.DagPath().transform() != obj->Object())
 	{
-		return;
+		MItDag itDag;
+		MStatus status = itDag.reset(obj->Object(), MItDag::kDepthFirst, MFn::kCamera);
+		CHECK_MSTATUS(status);
+		for (; !itDag.isDone(); itDag.next())
+		{
+			return;
+		}
 	}
 
 	AutoMutexLock lock(m_dirtyMutex);

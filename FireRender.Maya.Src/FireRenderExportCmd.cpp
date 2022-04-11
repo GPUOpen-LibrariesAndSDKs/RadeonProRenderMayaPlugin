@@ -417,9 +417,6 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		AnimationExporter animationExporter(false);
 
 		tahoeContextPtr->SetRenderType(RenderType::ProductionRender);
-		tahoeContextPtr->buildScene();
-
-		tahoeContextPtr->setResolution(settings.width, settings.height, true);
 
 		MDagPathArray cameras = GetSceneCameras();
 		unsigned int countCameras = cameras.length();
@@ -457,6 +454,9 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 				}
 			}
 		}
+
+		tahoeContextPtr->buildScene(false, false ,false);
+		tahoeContextPtr->setResolution(settings.width, settings.height, true);
 
 		// setup frame ranges
 		if (!isSequenceExportEnabled)
