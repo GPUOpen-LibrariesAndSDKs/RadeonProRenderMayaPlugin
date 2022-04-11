@@ -1121,9 +1121,6 @@ MObject FireRenderXmlImportCmd::createShadingNode(MString materialName, std::map
 		case frw::ShaderTypeEmissive:
 			matType = FireMaya::Material::kEmissive;
 			break;
-		case frw::ShaderTypeWard:
-			matType = FireMaya::Material::kWard;
-			break;
 		case frw::ShaderTypeOrenNayer:
 			matType = FireMaya::Material::kOrenNayar;
 			break;
