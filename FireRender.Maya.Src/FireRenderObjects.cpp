@@ -191,6 +191,11 @@ void FireRenderNode::MarkDirtyAllDirectChildren(const MFnTransform& transform)
 
 		FireRenderObject* pObject = context()->getRenderObject(childDagPath);
 
+		if (pObject == nullptr && context()->GetCamera().DagPath() == childDagPath)
+		{
+			pObject = &context()->GetCamera();
+		}
+
 		if (pObject != nullptr)
 		{
 			context()->setDirtyObject(pObject);
