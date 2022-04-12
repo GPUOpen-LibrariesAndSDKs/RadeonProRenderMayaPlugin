@@ -215,6 +215,9 @@ public:
 	// Set camera
 	void setCamera(MDagPath& cameraPath, bool useNonDefaultCameraType = false);
 
+	//Get Camera
+	FireRenderCamera& GetCamera() { return m_camera; }
+
 	// Render function (optionally Locks)
 	void render(bool lock = true);
 

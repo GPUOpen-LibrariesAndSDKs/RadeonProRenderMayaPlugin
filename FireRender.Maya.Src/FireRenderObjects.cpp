@@ -191,6 +191,11 @@ void FireRenderNode::MarkDirtyAllDirectChildren(const MFnTransform& transform)
 
 		FireRenderObject* pObject = context()->getRenderObject(childDagPath);
 
+		if (pObject == nullptr && context()->GetCamera().DagPath() == childDagPath)
+		{
+			pObject = &context()->GetCamera();
+		}
+
 		if (pObject != nullptr)
 		{
 			context()->setDirtyObject(pObject);
@@ -809,6 +814,10 @@ void FireRenderMeshCommon::setRenderStats(MDagPath dagPath)
 	bool castsShadows;
 	castsShadowsPlug.getValue(castsShadows);
 
+	MPlug receivesShadowsPlug = depNode.findPlug("receiveShadows");
+	bool receiveShadows;
+	receivesShadowsPlug.getValue(receiveShadows);
+
 	MPlug primaryVisibilityPlug = depNode.findPlug("primaryVisibility");
 	bool primaryVisibility;
 	primaryVisibilityPlug.getValue(primaryVisibility);
@@ -836,6 +845,8 @@ void FireRenderMeshCommon::setRenderStats(MDagPath dagPath)
 	setContourVisibility(isVisibleInContour);
 
 	setCastShadows(castsShadows);
+
+	setReceiveShadows(receiveShadows);
 }
 
 bool FireRenderMesh::IsSelected(const MDagPath& dagPath) const
@@ -919,6 +930,15 @@ void FireRenderMeshCommon::setCastShadows(bool castShadow)
 	{
 		if (auto shape = element.shape)
 			shape.SetShadowFlag(castShadow);
+	}
+}
+
+void FireRenderMeshCommon::setReceiveShadows(bool receiveShadow)
+{
+	for (auto element : m.elements)
+	{
+		if (auto shape = element.shape)
+			shape.SetReceiveShadowFlag(receiveShadow);
 	}
 }
 

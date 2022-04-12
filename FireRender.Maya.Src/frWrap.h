@@ -166,7 +166,8 @@ namespace frw
 		ValueTypeHSVToRGB = RPR_MATERIAL_NODE_HSV_TO_RGB,
 		ValueTypeRRGToHSV = RPR_MATERIAL_NODE_RGB_TO_HSV,
 		ValueTypeToonRamp = RPR_MATERIAL_NODE_TOON_RAMP,
-		ValueTypeGridSampler = RPR_MATERIAL_NODE_GRID_SAMPLER
+		ValueTypeGridSampler = RPR_MATERIAL_NODE_GRID_SAMPLER,
+		ValueTypePrimvarLookup = RPR_MATERIAL_NODE_PRIMVAR_LOOKUP
 	};
 
 	enum ShaderType
@@ -181,7 +182,6 @@ namespace frw
 		ShaderTypeMicrofacetRefraction = RPR_MATERIAL_NODE_MICROFACET_REFRACTION,
 		ShaderTypeTransparent = RPR_MATERIAL_NODE_TRANSPARENT,
 		ShaderTypeEmissive = RPR_MATERIAL_NODE_EMISSIVE,
-		ShaderTypeWard = RPR_MATERIAL_NODE_WARD,
 		ShaderTypeBlend = RPR_MATERIAL_NODE_BLEND,
 		ShaderTypeStandard = RPR_MATERIAL_NODE_UBERV2,
 		ShaderTypeOrenNayer = RPR_MATERIAL_NODE_ORENNAYAR,
@@ -189,7 +189,8 @@ namespace frw
 		ShaderTypeAdd = RPR_MATERIAL_NODE_ADD,
 		ShaderTypeVolume = RPR_MATERIAL_NODE_VOLUME,
 		ShaderTypeFlatColor = RPR_MATERIAL_NODE_PASSTHROUGH,
-		ShaderTypeToon = RPR_MATERIAL_NODE_TOON_CLOSURE
+		ShaderTypeToon = RPR_MATERIAL_NODE_TOON_CLOSURE,
+		ShaderTypeMicrofacetAnisotropicReflection = RPR_MATERIAL_NODE_MICROFACET_ANISOTROPIC_REFLECTION
 	};
 
 	enum ContextParameterType
@@ -1082,32 +1083,32 @@ namespace frw
 
 		void SetVertexColors(const std::vector<int>& vertexIndices, const std::vector<MColor>& vertexColors, rpr_int indexCount)
 		{
+			const int numComponents = 4;
 			std::vector<rpr_float> colors;
-			colors.resize(indexCount);
+			colors.resize(indexCount * numComponents);
 
-			for (int colorComponent = 0; colorComponent < 4; colorComponent++)
+			for (int colorComponent = 0; colorComponent < numComponents; colorComponent++)
 			{
 				for (int vertexIndex : vertexIndices)
 				{
 					switch (colorComponent)
 					{
 					case 0:
-						colors[vertexIndex] = vertexColors[vertexIndex].r;
+						colors[vertexIndex * numComponents] = vertexColors[vertexIndex].r;
 						break;
 					case 1:
-						colors[vertexIndex] = vertexColors[vertexIndex].g;
+						colors[vertexIndex * numComponents + 1] = vertexColors[vertexIndex].g;
 						break;
 					case 2:
-						colors[vertexIndex] = vertexColors[vertexIndex].b;
+						colors[vertexIndex * numComponents + 2] = vertexColors[vertexIndex].b;
 						break;
 					case 3:
-						colors[vertexIndex] = vertexColors[vertexIndex].a;
+						colors[vertexIndex * numComponents + 3] = vertexColors[vertexIndex].a;
 						break;
 					}
 				}
-
-				rprShapeSetVertexValue(Handle(), colorComponent, vertexIndices.data(), colors.data(), indexCount);
 			}
+			rprShapeSetPrimvar(Handle(), 0, colors.data(), colors.size(), numComponents, RPR_PRIMVAR_INTERPOLATION_VERTEX); // we use primvar channel with number zero to store vertex colors
 		}
 
 #ifdef FRW_USE_MAX_TYPES
@@ -1128,6 +1129,20 @@ namespace frw
 		void SetShadowFlag(bool castsShadows)
 		{
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_SHADOW, castsShadows);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
+		void SetReceiveShadowFlag(bool receivesShadows)
+		{
+			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_RECEIVE_SHADOW, receivesShadows);
 
 			if (res == RPR_ERROR_UNSUPPORTED)
 			{
@@ -1492,6 +1507,20 @@ namespace frw
 		void SetShadowFlag(bool castsShadows)
 		{
 			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_SHADOW, castsShadows);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
+		void SetReceiveShadowFlag(bool receivesShadows)
+		{
+			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_RECEIVE_SHADOW, receivesShadows);
 
 			if (res == RPR_ERROR_UNSUPPORTED)
 			{
@@ -2608,6 +2637,15 @@ namespace frw
 		LookupNode(const MaterialSystem& h, LookupType v) : ValueNode(h, ValueTypeLookup)
 		{
 			SetValueInt(RPR_MATERIAL_INPUT_VALUE, v);
+		}
+	};
+
+	class PrimvarLookupNode : public ValueNode
+	{
+	public:
+		PrimvarLookupNode(const MaterialSystem& h, rpr_int key) : ValueNode(h, ValueTypePrimvarLookup)
+		{
+			SetValueInt(RPR_MATERIAL_INPUT_VALUE, key);
 		}
 	};
 
