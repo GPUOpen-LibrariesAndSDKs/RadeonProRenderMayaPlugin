@@ -184,7 +184,9 @@ bool FireRenderIpr::start()
 			m_contextPtr->enableAOV(RPR_AOV_SHADOW_CATCHER);
 		if (globals.aovs.getAOV(RPR_AOV_REFLECTION_CATCHER)->active)
 			m_contextPtr->enableAOV(RPR_AOV_REFLECTION_CATCHER);
-		
+
+		// Important to call setCamera before build scene
+		m_contextPtr->setCamera(m_camera, true);
 		if (!m_contextPtr->buildScene(false, false, false))
 		{
 			return false;
@@ -202,7 +204,6 @@ bool FireRenderIpr::start()
 
 		m_needsContextRefresh = true;
 		m_contextPtr->setResolution(m_width, m_height, true);
-		m_contextPtr->setCamera(m_camera, true);
 		m_contextPtr->setStartedRendering();
 		m_contextPtr->setUseRegion(m_isRegion);
 

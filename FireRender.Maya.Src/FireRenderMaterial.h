@@ -28,7 +28,6 @@ namespace FireMaya
 			kRefract,
 			kTransparent,
 			kEmissive,
-			kWard,
 			kOrenNayar,
 			kDiffuseRefraction,	// 1.7.16
 			kPassThrough,
