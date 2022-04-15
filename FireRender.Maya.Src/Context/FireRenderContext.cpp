@@ -409,6 +409,7 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 		setupContextPostSceneCreation(m_globals);
 
 		setMotionBlurParameters(m_globals);
+		setupContextAirVolume(m_globals);
 
 		// Update render selected objects only flag
 		int isRenderSelectedOnly = 0;

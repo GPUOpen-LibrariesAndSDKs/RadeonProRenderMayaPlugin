@@ -55,6 +55,11 @@ global proc createRenderEffectsTab()
 	createFireRenderToneMappingFrame fireRenderTonemappingFrame;
 	setParent ..;
 
+	// Atmospheric Volume
+	frameLayout -label "Atmospheric Volume" -cll true -cl 0 fireRenderAtmosphericVolumeFrame;
+	createFireRenderAtmosphericVolumeFrame("fireRenderAtmosphericVolumeFrame");
+	setParent ..;
+
 	// Contour Render Mode
 	//
 	frameLayout -label "Contour Render Mode" -cll true -cl 0 fireRenderContourFrame;
@@ -70,6 +75,67 @@ global proc createRenderEffectsTab()
 		-af fireRenderEffectsScrollLayout "left" 0
 		-af fireRenderEffectsScrollLayout "right" 0
 		$parentForm;
+}
+
+global proc createFireRenderAtmosphericVolumeFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+		setParent $parent;
+
+		columnLayout -adjustableColumn true -cat "left" 10;
+
+		attrControlGrp
+			-label "Enable"
+			-attribute "RadeonProRenderGlobals.airVolumeEnabled"
+			-changeCommand "onUpdateAtmosphericVolume";
+
+		attrControlGrp
+			-label "Fog Color"
+			-attribute "RadeonProRenderGlobals.fogColor"
+			fogColor;
+
+		attrControlGrp
+			-label "Fog Distance"
+			-attribute "RadeonProRenderGlobals.fogDistance"
+			fogDistance;
+
+		attrControlGrp
+			-label "Fog Height"
+			-attribute "RadeonProRenderGlobals.fogHeight"
+			fogHeight;
+
+		attrControlGrp
+			-label "Air Volume Density"
+			-attribute "RadeonProRenderGlobals.airVolumeDensity"
+			airVolumeDensity;
+
+		attrControlGrp
+			-label "Air Volume Color"
+			-attribute "RadeonProRenderGlobals.airVolumeColor"
+			airVolumeColor;
+
+		attrControlGrp
+			-label "Air Volume Clamp"
+			-attribute "RadeonProRenderGlobals.airVolumeClamp"
+			airVolumeClamp;
+
+	setParent ..;
+	setUITemplate -popTemplate;
+
+	onUpdateAtmosphericVolume();
+}
+
+global proc onUpdateAtmosphericVolume()
+{
+	$enabled = `getAttr RadeonProRenderGlobals.airVolumeEnabled`;
+
+	attrControlGrp -edit -enable $enabled fogColor;
+	attrControlGrp -edit -enable $enabled fogDistance;
+	attrControlGrp -edit -enable $enabled fogHeight;
+	attrControlGrp -edit -enable $enabled airVolumeDensity;
+	attrControlGrp -edit -enable $enabled airVolumeColor;
+	attrControlGrp -edit -enable $enabled airVolumeClamp;
 }
 
 global proc createFireRenderContourFrame(string $parent)

@@ -26,6 +26,7 @@ public:
 
 	void setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance) override;
 	void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) override;
+	void setupContextAirVolume(const FireRenderGlobalsData& fireRenderGlobalsData) override;
 
 	bool IsRenderQualitySupported(RenderQuality quality) const override;
 

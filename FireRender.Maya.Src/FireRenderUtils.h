@@ -48,6 +48,27 @@ typedef std::chrono::time_point<std::chrono::steady_clock> TimePoint;
 // Utility class used to read attributes form the render global node
 // and configure the rpr_context
 
+struct AirVolumeSettings
+{
+	AirVolumeSettings()
+		: enabled(false)
+		, fogColor(1.0f, 1.0f, 1.0f, 0.0f)
+		, fogDistance(5000)
+		, fogHeight(1.5f)
+		, airVolumeDensity(0.8f)
+		, airVolumeColor(1.0f, 1.0f, 1.0f, 0.0f)
+		, airVolumeClamp(0.1f)
+	{}
+
+	bool enabled;
+	MColor fogColor;
+	float fogDistance;
+	float fogHeight;
+	float airVolumeDensity;
+	MColor airVolumeColor;
+	float airVolumeClamp;
+};
+
 struct DenoiserSettings
 {
 	DenoiserSettings()
@@ -327,6 +348,7 @@ public:
 	unsigned int oocTexCache;
 
 	DenoiserSettings denoiserSettings;
+	AirVolumeSettings airVolumeSettings;
 
 	// Use Metal Performance Shaders for MacOS
 	bool useMPS;
@@ -341,6 +363,7 @@ private:
 	short getSamples(const FireRenderContext& context) const;
 
 	void readDenoiserParameters(const MFnDependencyNode& frGlobalsNode);
+	void readAirVolumeParameters(const MFnDependencyNode& frGlobalsNode);
 };
 
 namespace FireMaya

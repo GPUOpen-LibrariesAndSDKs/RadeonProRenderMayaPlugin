@@ -98,6 +98,7 @@ public:
 	static void addRenderQualityModes(MFnEnumAttribute& eAttr);
 
 	static void createDenoiserAttributes();
+	static void createAirVolumeAttributes();
 
     static void createFinalRenderAttributes();
 	static void createViewportAttributes();
