@@ -128,6 +128,15 @@ namespace
 
 		MObject viewportDenoiseUpscaleEnabled;
 
+		// Air Volume
+		MObject airVolumeEnabled;
+		MObject fogColor;
+		MObject fogDistance;
+		MObject fogHeight;
+		MObject airVolumeDensity;
+		MObject airVolumeColor;
+		MObject airVolumeClamp;
+
 		// image saving
 		MObject renderaGlobalsExrMultilayerEnabled;
 
@@ -578,6 +587,8 @@ MStatus FireRenderGlobals::initialize()
 
 	createDenoiserAttributes();
 
+	createAirVolumeAttributes();
+
 	// create legacy attributes to avoid errors in mel while opening old scenes
 	createLegacyAttributes();
 
@@ -937,6 +948,51 @@ void FireRenderGlobals::setupRenderDevices()
 			}
 		}
 	}
+}
+
+void FireRenderGlobals::createAirVolumeAttributes()
+{
+	MStatus status; 
+	MFnNumericAttribute nAttr;
+
+	Attribute::airVolumeEnabled = nAttr.create("airVolumeEnabled", "ave", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setReadable(true);
+	CHECK_MSTATUS(addAttribute(Attribute::airVolumeEnabled));
+
+	Attribute::fogColor = nAttr.createColor("fogColor", "foc", &status);
+	nAttr.setDefault(1.0, 1.0, 1.0);
+	MAKE_INPUT(nAttr);
+	nAttr.setReadable(true);
+	CHECK_MSTATUS(addAttribute(Attribute::fogColor));
+
+	Attribute::fogDistance = nAttr.create("fogDistance", "fod", MFnNumericData::kFloat, 5000, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setMax(10000);
+	CHECK_MSTATUS(addAttribute(Attribute::fogDistance));
+
+	Attribute::fogHeight = nAttr.create("fogHeight", "foh", MFnNumericData::kFloat, 1.5f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0f);
+	nAttr.setMax(10.0f);
+	CHECK_MSTATUS(addAttribute(Attribute::fogHeight));
+
+	Attribute::airVolumeDensity = nAttr.create("airVolumeDensity", "avd", MFnNumericData::kFloat, 0.8f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0f);
+	nAttr.setMax(1.0f);
+	CHECK_MSTATUS(addAttribute(Attribute::airVolumeDensity));
+
+	Attribute::airVolumeColor = nAttr.createColor("airVolumeColor", "avc", &status);
+	nAttr.setDefault(1.0, 1.0, 1.0);
+	MAKE_INPUT(nAttr);
+	nAttr.setReadable(true);
+	CHECK_MSTATUS(addAttribute(Attribute::airVolumeColor));
+
+	Attribute::airVolumeClamp = nAttr.create("airVolumeClamp", "avp", MFnNumericData::kFloat, 0.1f, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::airVolumeClamp));
 }
 
 void FireRenderGlobals::createDenoiserAttributes()

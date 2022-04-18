@@ -68,7 +68,7 @@ MSyntax FireRenderExportCmd::newSyntax()
 	CHECK_MSTATUS(syntax.addFlag(kFilePathFlag, kFilePathFlagLong, MSyntax::kString));
 	CHECK_MSTATUS(syntax.addFlag(kSelectionFlag, kSelectionFlagLong, MSyntax::kNoArg));
 	CHECK_MSTATUS(syntax.addFlag(kAllFlag, kAllFlagLong, MSyntax::kNoArg));
-	CHECK_MSTATUS(syntax.addFlag(kFramesFlag, kFramesFlagLong, MSyntax::kBoolean, MSyntax::kLong, MSyntax::kLong, MSyntax::kBoolean, MSyntax::kBoolean));
+	CHECK_MSTATUS(syntax.addFlag(kFramesFlag, kFramesFlagLong, MSyntax::kBoolean, MSyntax::kLong, MSyntax::kLong, MSyntax::kBoolean, MSyntax::kBoolean, MSyntax::kBoolean));
 	CHECK_MSTATUS(syntax.addFlag(kCompressionFlag, kCompressionFlagLong, MSyntax::kString));
 	CHECK_MSTATUS(syntax.addFlag(kPadding, kPaddingLong, MSyntax::kString, MSyntax::kLong));
 	CHECK_MSTATUS(syntax.addFlag(kSelectedCamera, kSelectedCameraLong, MSyntax::kString));
@@ -392,6 +392,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 	int lastFrame = 1;
 	bool isExportAsSingleFileEnabled = false;
 	bool isIncludeTextureCacheEnabled = false;
+	bool isAnimationAsSingleFileEnabled = false;
 	if (argData.isFlagSet(kFramesFlag))
 	{
 		argData.getFlagArgument(kFramesFlag, 0, isSequenceExportEnabled);
@@ -399,6 +400,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		argData.getFlagArgument(kFramesFlag, 2, lastFrame);
 		argData.getFlagArgument(kFramesFlag, 3, isExportAsSingleFileEnabled);
 		argData.getFlagArgument(kFramesFlag, 4, isIncludeTextureCacheEnabled);
+		argData.getFlagArgument(kFramesFlag, 5, isAnimationAsSingleFileEnabled);
 	}
 
 	MString compressionOption = "None";
@@ -459,7 +461,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		tahoeContextPtr->setResolution(settings.width, settings.height, true);
 
 		// setup frame ranges
-		if (!isSequenceExportEnabled)
+		if (!isSequenceExportEnabled || isAnimationAsSingleFileEnabled)
 		{
 			lastFrame = firstFrame;
 		}
@@ -483,7 +485,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		}
 
 		// read file name pattern and padding
-		if (isSequenceExportEnabled && !argData.isFlagSet(kPadding))
+		if (isSequenceExportEnabled && !isAnimationAsSingleFileEnabled && !argData.isFlagSet(kPadding))
 		{
 			MGlobal::displayError("Can't export sequence without setting name pattern and padding!");
 			return MS::kFailure;
@@ -501,7 +503,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		for (int frame = firstFrame; frame <= lastFrame; ++frame)
 		{
 			// Move the animation to the next frame.
-			if (isSequenceExportEnabled)
+			if (isSequenceExportEnabled && !isAnimationAsSingleFileEnabled)
 			{
 				MTime time;
 				time.setValue(static_cast<double>(frame));
@@ -514,8 +516,8 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			tahoeContextPtr->Freshen();
 
 			// update file path
-			std::wstring newFilePath;
-			if (isSequenceExportEnabled)
+			std::wstring newFilePath; 
+			if (isSequenceExportEnabled && !isAnimationAsSingleFileEnabled)
 			{
 				//GetPattern();
 				std::wstring name_regex;
@@ -540,7 +542,11 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			{
 				newFilePath = fileName + L"." + fileExtension;
 
-				animationExporter.Export(*tahoeContextPtr, &cameras, rprsContext);
+				// exporting animation as single file
+				if(isSequenceExportEnabled)
+				{
+					animationExporter.Export(*tahoeContextPtr, &cameras, rprsContext);
+				}
 			}
 
 			// launch export
