@@ -2573,7 +2573,10 @@ void FireRenderContext::TriggerProgressCallback(const ContextWorkProgressData& s
 {
 	if (m_WorkProgressCallback)
 	{
-		m_WorkProgressCallback(syncProgressData);
+		FireRenderThread::RunProcOnMainThread([this, syncProgressData]()
+		{
+			m_WorkProgressCallback(syncProgressData);
+		});
 	}
 }
 
