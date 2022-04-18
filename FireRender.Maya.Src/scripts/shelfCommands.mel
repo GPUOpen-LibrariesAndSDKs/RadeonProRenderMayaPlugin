@@ -139,14 +139,7 @@ global proc launchSceneExport()
 	if ($countPaths > 0)
 	{
 		$isSqExEnabled = `checkBox -query -value exportSqCheckBx`;
-		if ($isSqExEnabled)
-		{
-			$isAnimSingleFileEnabled = `checkBox -query -value singleAnimationFileCheckBx`;
-			if ($isAnimSingleFileEnabled)
-			{
-				$isSqExEnabled = 0;
-			}
-		}
+		$isAnimSingleFileEnabled = `checkBox -query -value singleAnimationFileCheckBx`;
 		int $firstFrameIdx = `intSliderGrp -query -value sliderFirstFrameName`;
 		int $lastFrameIdx = `intSliderGrp -query -value sliderLastFrameName`;
 		$isSingleFileEnabled = `checkBox  -query -value singleFileCheckBx`;
@@ -161,7 +154,7 @@ global proc launchSceneExport()
 		fireRenderExport 
 			-scene 
 			-file $result 
-			-frames $isSqExEnabled $firstFrameIdx $lastFrameIdx $isSingleFileEnabled $isIncludeTextureCacheEnabled 
+			-frames $isSqExEnabled $firstFrameIdx $lastFrameIdx $isSingleFileEnabled $isIncludeTextureCacheEnabled $isAnimSingleFileEnabled
 			-compress $selectedOption
 			-padding $namePattern $framePadding
 			-camera $selectedCam;

@@ -409,6 +409,7 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 		setupContextPostSceneCreation(m_globals);
 
 		setMotionBlurParameters(m_globals);
+		setupContextAirVolume(m_globals);
 
 		// Update render selected objects only flag
 		int isRenderSelectedOnly = 0;
@@ -2572,7 +2573,10 @@ void FireRenderContext::TriggerProgressCallback(const ContextWorkProgressData& s
 {
 	if (m_WorkProgressCallback)
 	{
-		m_WorkProgressCallback(syncProgressData);
+		FireRenderThread::RunProcOnMainThread([this, syncProgressData]()
+		{
+			m_WorkProgressCallback(syncProgressData);
+		});
 	}
 }
 
