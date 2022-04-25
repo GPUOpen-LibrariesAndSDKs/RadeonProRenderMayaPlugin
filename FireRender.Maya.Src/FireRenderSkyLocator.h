@@ -67,9 +67,6 @@ public:
 
 protected:
 	static void onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
-	static void onSelectionChanged(void *clientData);
-	void SubscribeSelectionChangedEvent(bool subscribe = true);
-	void AddSelectedMeshToPortalList(void);
 
 	virtual const MString GetNodeTypeName(void) const override;
 
@@ -79,7 +76,6 @@ public:
 	static  MString     drawDbClassification;
 	static  MString     drawDbGeomClassification;
 	static  MString     drawRegistrantId;
-	static	MObject		SkySelectingPortalMesh;
 
 	MCallbackId m_attributeChangedCallback;
 	MCallbackId m_selectionChangedCallback;

@@ -683,7 +683,6 @@ FireRenderMesh::~FireRenderMesh()
 
 void FireRenderMesh::clear()
 {
-	m.elements.clear();
 	FireRenderObject::clear();
 }
 
@@ -699,8 +698,9 @@ void FireRenderMeshCommon::detachFromScene()
 			if (auto shape = element.shape)
 				scene.Detach(shape);
 		}
+
+		m_isVisible = false;
 	}
-	m_isVisible = false;
 }
 
 void FireRenderMeshCommon::attachToScene()
@@ -715,6 +715,7 @@ void FireRenderMeshCommon::attachToScene()
 			if (auto shape = element.shape)
 				scene.Attach(shape);
 		}
+
 		m_isVisible = true;
 	}
 }
@@ -724,10 +725,9 @@ void FireRenderMesh::RegisterCallbacks()
 	FireRenderNode::RegisterCallbacks();
 	if (context()->getCallbackCreationDisabled())
 		return;
-
-	for (auto& it : m.elements)
+	for (auto& element : m.elements)
 	{
-		for (auto& shadingEngine : it.shadingEngines)
+		for (auto& shadingEngine : element.shadingEngines)
 		{
 			if (shadingEngine.isNull())
 				continue;
@@ -786,7 +786,7 @@ void FireRenderMesh::buildSphere()
 		texcoord_indices, sizeof(int),
 		polyCountArray, 400))
 	{
-		m.elements.push_back(FrElement{ sphere });
+		m.elements.push_back( FrElement{ sphere } );
 	}
 }
 
@@ -842,7 +842,10 @@ void FireRenderMeshCommon::setRenderStats(MDagPath dagPath)
 
 	setRefractionVisibility(visibleInRefractions);
 
-	setContourVisibility(isVisibleInContour);
+	if (context()->IsContourModeSupported())
+	{
+		setContourVisibility(isVisibleInContour);
+	}
 
 	setCastShadows(castsShadows);
 
@@ -886,9 +889,9 @@ void FireRenderMeshCommon::setVisibility(bool visibility)
 
 void FireRenderMeshCommon::setReflectionVisibility(bool reflectionVisibility)
 {
-	for (auto element : m.elements)
+	for (auto& element : m.elements)
 	{
-		for (auto& shader : element.shaders) 
+		for (auto& shader : element.shaders)
 		{
 			if (shader.IsShadowCatcher() || shader.IsReflectionCatcher())
 			{
@@ -906,7 +909,7 @@ void FireRenderMeshCommon::setReflectionVisibility(bool reflectionVisibility)
 
 void FireRenderMeshCommon::setRefractionVisibility(bool refractionVisibility)
 {
-	for (auto element : m.elements)
+	for (auto& element : m.elements)
 	{
 		for (auto& shader : element.shaders)
 		{
@@ -917,7 +920,7 @@ void FireRenderMeshCommon::setRefractionVisibility(bool refractionVisibility)
 
 				break;
 			}
-			
+
 			if (auto shape = element.shape)
 				shape.setRefractionVisibility(refractionVisibility);
 		}
@@ -1099,15 +1102,12 @@ bool FireRenderMesh::setupDisplacement(std::vector<MObject>& shadingEngines, frw
 							{
 								FireRenderContext *ctx = this->context();
 
-								TahoePluginVersion version = GetTahoeVersionToUse();
-								bool isRPR20 = version == TahoePluginVersion::RPR2;
-
 								frw::Scene scn = ctx->GetScene();
 								frw::Camera cam = scn.GetCamera();
 								frw::Context ctx2 = scn.GetContext();
 								rpr_framebuffer fb = ctx->frameBufferAOV(RPR_AOV_COLOR);
 
-								shape.SetAdaptiveSubdivisionFactor(adaptiveFactor, ctx->height(), cam.Handle(), fb, isRPR20);
+								shape.SetAdaptiveSubdivisionFactor(adaptiveFactor, ctx->height(), cam.Handle(), fb, true /*isRPR20*/);
 							}
 							shape.SetSubdivisionCreaseWeight(creaseWeight);
 							shape.SetSubdivisionBoundaryInterop(boundary);
@@ -1155,18 +1155,11 @@ void FireRenderMesh::ReinitializeMesh(const MDagPath& meshPath)
 
 	m.elements.clear();
 
-	std::vector<frw::Shape> shapes;
-
 	// node is not visible => skip
 	if (IsMeshVisible(meshPath, this->context()))
 	{
-		GetShapes(shapes);
-	}
-
-	m.elements.resize(shapes.size());
-	for (unsigned int i = 0; i < shapes.size(); i++)
-	{
-		m.elements[i].shape = shapes[i];
+		m.elements.emplace_back();
+		GetShapes(m.elements.back().shape);
 	}
 }
 
@@ -1316,18 +1309,19 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 
 	MFnDependencyNode nodeFn(Object());
 
-	bool isRPR1 = m.elements.size() > 1;
-	for (int i = 0; i < m.elements.size(); i++) // should be always only 1 for RPR2, but keeping array for now for backward compatibility with RPR1
+	for (auto& element : m.elements)
 	{
-		auto& element = m.elements[i];
 		element.shaders.clear();
 
 		if (!element.shape)
-			continue;
+		{
+			return;
+		}
+		assert(element.shape);
 
 		element.shape.SetShader(nullptr);
 
-		unsigned int shaderIdx = isRPR1 ? i : 0;
+		unsigned int shaderIdx = 0;
 		for (; shaderIdx < element.shadingEngines.size(); ++shaderIdx)
 		{
 			MObject& shadingEngine = element.shadingEngines[shaderIdx];
@@ -1366,11 +1360,6 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 			if ((shType == frw::ShaderTypeRprx) && (IsUberEmissive(element.shaders.back())))
 			{
 				m.isEmissive = true;
-			}
-
-			if (isRPR1)
-			{
-				break;
 			}
 		}
 
@@ -1413,7 +1402,7 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 		// if no valid surface shader, we should set to transparent in case of volumes present
 		if (element.volumeShader)
 		{
-			if ((element.shaders.size() == 0) || 
+			if ((element.shaders.size() == 0) ||
 				((element.shaders.size() == 1) && (element.shaders[0] == element.volumeShader))
 				)
 			{
@@ -1424,7 +1413,6 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 
 			element.shape.SetVolumeShader(element.volumeShader);
 		}
-
 	}
 
 	RebuildTransforms();
@@ -1520,15 +1508,7 @@ void FireRenderMesh::Rebuild()
 
 	// If there is just one shader and the number of shader is not changed then just update the shader
 	bool shadersChanged = false;
-	bool isRPR2 = TahoeContext::IsGivenContextRPR2(context);
-	if (isRPR2)
-	{
-		shadersChanged = (m.elements.size() > 0) && (shadingEngines.length() != m.elements[0].shaders.size());
-	}
-	else
-	{
-		shadersChanged = shadingEngines.length() != m.elements.size();
-	}
+	shadersChanged = (m.elements.size() > 0) && (shadingEngines.length() != m.elements.back().shaders.size());
 
 	if (m.changed.mesh || shadersChanged || (m.elements.size() == 0))
 	{
@@ -1560,7 +1540,10 @@ void FireRenderMesh::Rebuild()
 	}
 
 	SetupObjectId(meshPath.transform());
-	SetupShadowColor();
+	if (context->IsShadowColorSupported())
+	{
+		SetupShadowColor();
+	}
 
 	m.changed.mesh = false;
 	m.changed.transform = false;
@@ -1580,11 +1563,14 @@ void FireRenderMesh::SetupObjectId(MObject parentTransformObject)
 		objectId = plug.asInt();
 	}
 
-	for (FrElement element : m.elements)
+	for (auto& element : m.elements)
 	{
 		if (element.shape.Handle() != nullptr)
 		{
-			element.shape.SetObjectId(objectId);
+			if (context()->IsMeshObjectIDSupported())
+			{
+				element.shape.SetObjectId(objectId);
+			}
 		}
 	}
 }
@@ -1620,9 +1606,9 @@ void FireRenderMeshCommon::ForceShaderDirtyCallback(MObject& node, void* clientD
 	// clientData should be FireRenderMesh
 	FireRenderMesh* self = static_cast<FireRenderMesh*>(clientData);
 
-	for (auto& it : self->m.elements)
+	for (auto& element : self->m.elements)
 	{
-		for (auto& shadingEngine : it.shadingEngines)
+		for (auto& shadingEngine : element.shadingEngines)
 		{
 			MObject shaderOb = getSurfaceShader(shadingEngine);
 			MGlobal::executeCommand("dgdirty " + MFnDependencyNode(shaderOb).name());
@@ -1653,7 +1639,7 @@ bool FireRenderMesh::IsMeshVisible(const MDagPath& meshPath, const FireRenderCon
 	return isVisible;
 }
 
-void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
+void FireRenderMesh::GetShapes(frw::Shape& outShape)
 {
 	FireRenderContext* context = this->context();
 
@@ -1661,14 +1647,9 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 
 	if ((mainMesh != nullptr) && !mainMesh->IsNotInitialized())
 	{
-		const std::vector<FrElement>& elements = mainMesh->Elements();
+		assert(!m.elements.empty());
 
-		outShapes.reserve(elements.size());
-
-		for (const FrElement& element : elements)
-		{
-			outShapes.push_back(element.shape.CreateInstance(Context()));
-		}
+		outShape = mainMesh->Elements().back().shape.CreateInstance(Context());
 
 		m.isMainInstance = false;
 	}
@@ -1679,29 +1660,24 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 	{
 		// should not be here!
 		assert(false);
-
-		outShapes.clear();
 	}
 
 	if ((mainMesh == nullptr) || (mainMesh == this))
 	{
 		assert(IsNotInitialized());
 
-		bool success = TranslateMeshWrapped(dagPath, outShapes);
+		bool success = TranslateMeshWrapped(dagPath, outShape);
 		assert(success);
 	}
 
-	for (int i = 0; i < outShapes.size(); i++)
-	{
-		MString fullPathName = dagPath.fullPathName();
-		std::string shapeName = std::string(fullPathName.asChar()) + "_" + std::to_string(i);
-		outShapes[i].SetName(shapeName.c_str());
-	}
+	MString fullPathName = dagPath.fullPathName();
+	std::string shapeName = std::string(fullPathName.asChar()) + "_" + std::to_string(0);
+	outShape.SetName(shapeName.c_str());
 
 	SaveUsedUV(Object());
 }
 
-bool FireRenderMesh::TranslateMeshWrapped(const MDagPath& dagPath, std::vector<frw::Shape>& outShapes)
+bool FireRenderMesh::TranslateMeshWrapped(const MDagPath& dagPath, frw::Shape& outShape)
 {
 	assert(IsMainInstance()); // should already be main instance at this point
 
@@ -1709,7 +1685,7 @@ bool FireRenderMesh::TranslateMeshWrapped(const MDagPath& dagPath, std::vector<f
 		return false;
 
 	FireRenderContext* context = this->context();
-	bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && TahoeContext::IsGivenContextRPR2(context) && !context->isInteractive();
+	bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && NorthStarContext::IsGivenContextNorthStar(context) && !context->isInteractive();
 	unsigned int motionSamplesCount = deformationMotionBlurEnabled ? context->motionSamples() : 0;
 
 	//Ignore set objects dirty calls while creating a mesh, because it might lead to infinite lookps in case if deformtion motion blur is used
@@ -1718,7 +1694,7 @@ bool FireRenderMesh::TranslateMeshWrapped(const MDagPath& dagPath, std::vector<f
 		MFnDagNode dagNode(Object());
 		MString name = dagNode.fullPathName();
 		assert(m_meshData.IsInitialized());
-		outShapes = FireMaya::MeshTranslator::TranslateMesh(m_meshData, context->GetContext(), Object(), m.faceMaterialIndices, motionSamplesCount, dagPath.fullPathName());
+		outShape = FireMaya::MeshTranslator::TranslateMesh(m_meshData, context->GetContext(), Object(), m.faceMaterialIndices, motionSamplesCount, dagPath.fullPathName());
 	}
 
 	m.isPreProcessed = false;
@@ -1784,20 +1760,17 @@ void FireRenderMesh::RebuildTransforms()
 	float mfloats[4][4];
 	FireMaya::ScaleMatrixFromCmToMFloats(matrix, mfloats);	
 
-	for (auto& element : m.elements)
+	if ((!m.elements.empty()) && (m.elements.back().shape))
 	{
-		if (element.shape)
-		{
-			element.shape.SetTransform(&mfloats[0][0]);
-		}
+		m.elements.back().shape.SetTransform(&mfloats[0][0]);
 	}
 }
 
 void FireRenderMeshCommon::AssignShadingEngines(const MObjectArray& shadingEngines)
 {
-	for (unsigned int i = 0; i < m.elements.size(); i++)
+	for (auto& element : m.elements)
 	{
-		DumpMayaArray(m.elements[i].shadingEngines, shadingEngines);
+		WriteMayaArrayTo(element.shadingEngines, shadingEngines);
 	}
 }
 
@@ -1822,35 +1795,16 @@ void FireRenderMeshCommon::ProcessMotionBlur(const MFnDagNode& meshFn)
 		return;
 	}
 
-	// We use different schemes for MotionBlur for Tahoe and NorthStar
-	if (TahoeContext::IsGivenContextRPR2(context()))
+	assert(NorthStarContext::IsGivenContextNorthStar(context()));
+
+	float nextFrameFloats[4][4];
+	FireMaya::GetMatrixForTheNextFrame(meshFn, nextFrameFloats, Instance());
+
+	for (auto element : m.elements)
 	{
-		float nextFrameFloats[4][4];
-		FireMaya::GetMatrixForTheNextFrame(meshFn, nextFrameFloats, Instance());
-
-		for (auto& element : m.elements)
+		if (element.shape)
 		{
-			if (element.shape)
-			{
-				element.shape.SetMotionTransform(&nextFrameFloats[0][0], false);
-			}
-		}
-	}
-	else
-	{
-		MVector linearMotion(0, 0, 0);
-		MVector rotationAxis(1, 0, 0);
-		double rotationAngle = 0.0;
-
-		FireMaya::CalculateMotionBlurParams(meshFn, GetSelfTransform(), linearMotion, rotationAxis, rotationAngle, Instance());
-
-		for (auto& element : m.elements)
-		{
-			if (element.shape)
-			{
-				element.shape.SetLinearMotion(float(linearMotion.x), float(linearMotion.y), float(linearMotion.z));
-				element.shape.SetAngularMotion(float(rotationAxis.x), float(rotationAxis.y), float(rotationAxis.z), float(rotationAngle));
-			}
+			element.shape.SetMotionTransform(&nextFrameFloats[0][0], false);
 		}
 	}
 }
@@ -1913,10 +1867,13 @@ void FireRenderMesh::Freshen(bool shouldCalculateHash)
 HashValue FireRenderMesh::CalculateHash()
 {
 	auto hash = FireRenderNode::CalculateHash();
-	for (auto& e : m.elements)
+
+	if (!m.elements.empty())
 	{
+		auto& e = m.elements.back();
 		hash << e.shadingEngines;
 	}
+
 	return hash;
 }
 
@@ -1928,7 +1885,7 @@ bool FireRenderMesh::InitializeMaterials()
 	MObjectArray shadingEngines = GetShadingEngines(meshFn, Instance());
 
 	// If there is just one shader and the number of shader is not changed then just update the shader
-	bool onlyShaderChanged = (!m.changed.mesh && (shadingEngines.length() == m.elements.size()));
+	bool onlyShaderChanged = !m.changed.mesh && (shadingEngines.length() == 0);
 
 	return !onlyShaderChanged;
 }
@@ -1951,7 +1908,7 @@ bool FireRenderMesh::ReloadMesh(unsigned int sampleIdx /*= 0*/)
 
 	bool success = false;
 	MDagPath dagPath = DagPath();
-	bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && TahoeContext::IsGivenContextRPR2(context) && !context->isInteractive();
+	bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && NorthStarContext::IsGivenContextNorthStar(context) && !context->isInteractive();
 	unsigned int motionSamplesCount = deformationMotionBlurEnabled ? context->motionSamples() : 0;
 	//Ignore set objects dirty calls while creating a mesh, because it might lead to infinite lookps in case if deformtion motion blur is used
 	{
@@ -2538,7 +2495,7 @@ void FireRenderCamera::Freshen(bool shouldCalculateHash)
 		}
 
 		// Set exposure from motion blur block parameters if we didn't add fireRenderExposure attribute to the camera before
-		if (context()->motionBlur() && fnCamera.findPlug("fireRenderExposure").isNull())
+		if (context()->IsCameraSetExposureSupported() && context()->motionBlur() && fnCamera.findPlug("fireRenderExposure").isNull())
 		{
 			rprCameraSetExposure(m_camera.Handle(), context()->motionBlurCameraExposure());
 		}
@@ -2547,7 +2504,7 @@ void FireRenderCamera::Freshen(bool shouldCalculateHash)
 
 
 		// We use different schemes for MotionBlur for Tahoe and NorthStar
-		if (cameraMotionBlur && TahoeContext::IsGivenContextRPR2(context()))
+		if (cameraMotionBlur)
 		{
 			float nextFrameFloats[4][4];
 			FireMaya::GetMatrixForTheNextFrame(dagNode, nextFrameFloats, Instance());
@@ -2557,7 +2514,10 @@ void FireRenderCamera::Freshen(bool shouldCalculateHash)
 	}
 	else
 	{
-		rprCameraSetExposure(m_camera.Handle(), 1.f);
+		if (context()->IsCameraSetExposureSupported())
+		{
+			rprCameraSetExposure(m_camera.Handle(), 1.f);
+		}
 	}
 
 	RegisterCallbacks();

@@ -12,80 +12,10 @@
 
 source "fireRenderEnvironment.mel";
 
-global proc AERefreshObjectListSetup_Sky()
-{
-	if ((`optionMenuGrp -q -exists "OptionMenuGroupObjectList_Sky"`) == false){
-		string $oldNode[] = `listConnections -shapes true "RPRSkyShape.portal"`;
-		string $selectedItem = $oldNode[0];
 
-		// List all objects in the scene
-		string $allObjects[];
-		string $tempName;
-		$allObjects = `ls -g`;
-		string $objectList = `optionMenuGrp -label "Object as Portal:" -cc AEObjectListChanged_Sky "OptionMenuGroupObjectList_Sky"`;
-		menuItem -label "NONE";
-
-		int $selectedExists = 0;
-		for ($tempName in $allObjects)
-		{
-			if ($tempName != "RPRIBLShape" && $tempName != "RPRSkyShape"){
-				menuItem -label $tempName;
-			}
-
-			if ($tempName == $selectedItem){
-				$selectedExists = 1;
-			}
-		}
-
-		if ($selectedExists == 1){
-			optionMenuGrp -e -v $selectedItem "OptionMenuGroupObjectList_Sky";
-		}else{
-			optionMenuGrp -e -v "NONE" "OptionMenuGroupObjectList_Sky";
-		}
-	}
-
-	setUITemplate -pst attributeEditorTemplate;
-
-	rowLayout -nc 2;
-	text -l "";
-
-	button -label "Refresh Object List"
-		-c "refreshSkyPortalObjectsRPR"
-		-width 217
-		refreshObjectListButton_Sky;
-	setParent ..;
-
-	setUITemplate -ppt;
-}
 
 global proc AERPRSkySetTimeToNow()
 {
-}
-
-global proc AERefreshObjectListEditSetup_Sky()
-{
-	setUITemplate -pst attributeEditorTemplate;
-	button -e -c "refreshSkyPortalObjectsRPR" refreshObjectListButton_Sky;
-	setUITemplate -ppt;
-}
-
-global proc AEObjectListChanged_Sky()
-{
-	string $item = `optionMenuGrp -q -v "OptionMenuGroupObjectList_Sky"`;
-	string $oldNode[] = `listConnections -shapes true "RPRSkyShape.portal"`;
-
-	if (size($oldNode))
-	{
-		if ($oldNode[0] != $item){
-			disconnectAttr ($oldNode[0] + ".message") "RPRSkyShape.portal";
-		}else{
-			return;
-		}
-	}
-
-	if ($item != "NONE") {
-		connectAttr ($item + ".message") "RPRSkyShape.portal";
-	}
 }
 
 global proc AERPRSkyGetLocationButton()
@@ -290,39 +220,6 @@ global proc AERPRSkySunPositionTypeChanged(string $nodeName)
 	}
 }
 
-global proc onSelectSkyMeshButtonClicked(string $attrName)
-{
-	setAttr $attrName 1;
-}
-
-global proc string getSkyMeshButtonCommand(string $attrName)
-{
-	return "onSelectSkyMeshButtonClicked(\"" + $attrName + "\")";
-}
-
-global proc SkyPortalMeshSelectNew( string $attrName )
-{
-	$command = getSkyMeshButtonCommand($attrName);
-	rowLayout;
-	button
-		-label "Add Portal Mesh"
-		-width 150
-		-command $command
-		SkyPortalMeshSelectButton;
-	setParent ..;
-
-	connectControl SkyPortalMeshSelectButton $attrName;
-}
-
-global proc SkyPortaltMeshSelectReplace( string $attrName )
-{
-	$command = getSkyMeshButtonCommand($attrName);
-
-	connectControl SkyPortalMeshSelectButton $attrName;
-
-	button -edit -command $command SkyPortalMeshSelectButton;
-}
-
 global proc AERPRSkyTemplate(string $nodeName)
 {
 	AEswatchDisplay $nodeName;
@@ -364,15 +261,6 @@ global proc AERPRSkyTemplate(string $nodeName)
 		editorTemplate -callCustom "AERPRSkyGetLocationButton" "AERPRSkyGetLocationButtonEdit";
 	editorTemplate -endLayout;
 
-	editorTemplate -beginLayout "Portal" -collapse 1;
-		editorTemplate -callCustom "SkyPortalMeshSelectNew" "SkyPortaltMeshSelectReplace" "SkySelectingPortalMesh";
-	editorTemplate -endLayout;
-
-	//editorTemplate -beginLayout "Portal" -collapse 1;
-	//	editorTemplate -addControl "portal";
-	//	// List all objects in the scene
-	//	editorTemplate -callCustom "AERefreshObjectListSetup_Sky" "AERefreshObjectListEditSetup_Sky";
-	//editorTemplate -endLayout;
 	AEdependNodeTemplate $nodeName;
 
 	editorTemplate -addExtraControls;

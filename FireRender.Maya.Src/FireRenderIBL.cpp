@@ -33,8 +33,6 @@ MObject FireRenderIBL::aFilePath;
 MObject	FireRenderIBL::aIntensity;
 MObject	FireRenderIBL::aDisplay;
 MObject	FireRenderIBL::aFlipIBL;
-MObject FireRenderIBL::IBLSelectingPortalMesh;
-MObject FireRenderIBL::aPortalHolder;
 MObject FireRenderIBL::aColor;
 
 MTypeId FireRenderIBL::id(FireMaya::TypeId::FireRenderIBL);
@@ -102,12 +100,6 @@ MStatus FireRenderIBL::initialize()
 	nAttr.setReadable(true);
 	nAttr.setWritable(true);
 
-	IBLSelectingPortalMesh = nAttr.create("IBLSelectingPortalMesh", "ibls", MFnNumericData::kBoolean, false);
-	nAttr.setKeyable(true);
-	nAttr.setStorable(true);
-	nAttr.setReadable(true);
-	nAttr.setWritable(true);
-
 	// Create attribute inside current node and connect it to RadeonProRenderGlobals.flipIBL attribute to
 	// have an automatical update
 	aFlipIBL = nAttr.create("flipIBL", "fibl", MFnNumericData::kBoolean, 0);
@@ -131,9 +123,6 @@ MStatus FireRenderIBL::initialize()
 	status = addAttribute(aDisplay);
 	assert(status == MStatus::kSuccess);
 
-	status = addAttribute(IBLSelectingPortalMesh);
-	assert(status == MStatus::kSuccess);
-
 	status = addAttribute(aFlipIBL);
 	assert(status == MStatus::kSuccess);
 
@@ -148,88 +137,6 @@ void FireRenderIBL::onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug
 	if (!(msg | MNodeMessage::AttributeMessage::kAttributeSet))
 	{
 		return;
-	}
-
-	if (plug == FireRenderIBL::IBLSelectingPortalMesh)
-	{
-		FireRenderIBL* fireRenderIBLNode = static_cast<FireRenderIBL*> (clientData);
-		fireRenderIBLNode->SubscribeSelectionChangedEvent();
-	}
-}
-
-void FireRenderIBL::SubscribeSelectionChangedEvent(bool subscribe)
-{
-	if (subscribe)
-	{
-		if (m_selectionChangedCallback == 0)
-		{
-			m_selectionChangedCallback = MEventMessage::addEventCallback("SelectionChanged", onSelectionChanged, this);
-		}
-	}
-	else
-	{
-		if (m_selectionChangedCallback != 0)
-		{
-			MNodeMessage::removeCallback(m_selectionChangedCallback);
-		}
-
-		m_selectionChangedCallback = 0;
-	}
-}
-
-void FireRenderIBL::onSelectionChanged(void *clientData)
-{
-	FireRenderIBL* fireRenderIBLNode = static_cast<FireRenderIBL*> (clientData);
-	fireRenderIBLNode->SubscribeSelectionChangedEvent(false);
-
-	// Add selected mesh to portals list
-	fireRenderIBLNode->AddSelectedMeshToPortalList();
-}
-
-void FireRenderIBL::AddSelectedMeshToPortalList(void)
-{
-	MSelectionList sList;
-	MGlobal::getActiveSelectionList(sList);
-	MObject nodeObject = thisMObject();
-
-	for (unsigned int i = 0; i < sList.length(); i++)
-	{
-		MDagPath path;
-
-		sList.getDagPath(i, path);
-
-		if (!path.node().hasFn(MFn::kTransform))
-		{
-			continue;
-		}
-		path.extendToShape();
-
-		MHWRender::DisplayStatus displayStatus = MHWRender::MGeometryUtilities::displayStatus(path);
-		MObject inputObj = path.node();
-		if (displayStatus != MHWRender::kLead)
-			continue;
-
-		if (!inputObj.hasFn(MFn::kMesh))
-			continue;
-
-		MFnDagNode mFnThisNode(nodeObject);
-		MObject iblNode = mFnThisNode.parent(0);
-
-		MFnDagNode mFnInputShapeNode(inputObj);
-		if (mFnInputShapeNode.isChildOf(iblNode))
-		{
-			continue;
-		}
-
-		MFnDagNode mFnInputNode(mFnInputShapeNode.parent(0));
-		MString inputNodeName = mFnInputNode.name();
-		MString cmd = "setAttr " + inputNodeName + ".inheritsTransform 0; ";
-		MStatus status = MGlobal::executeCommand(cmd);
-		CHECK_MSTATUS(status);
-
-		MDagModifier dagModifier;
-		MStatus result = dagModifier.reparentNode(mFnInputShapeNode.parent(0), iblNode);
-		dagModifier.doIt();
 	}
 }
 

@@ -185,9 +185,6 @@ public:
 	/** Return true if the render is interactive (Viewport or IPR). */
 	bool isInteractive() const;
 
-	/** Return true if OpenGL interop is active. */
-	bool isGLInteropActive() const;
-
 	// Build the scene for the swatch renderer
 	// The scene is composed by a poly-sphere and a single light
 	// \param shaderObj Shader used to render the sphere
@@ -235,7 +232,7 @@ public:
 
 	bool isRenderView() const;
 
-	bool createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete = true, bool glViewport = false, int* pOutRes = nullptr, bool createScene = true);
+	bool createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete = true, int* pOutRes = nullptr, bool createScene = true);
 
 	// Return the context
 	rpr_context context();
@@ -530,7 +527,6 @@ public:
 
 	void setRenderMode(RenderMode renderMode);
 
-	virtual void SetupPreviewMode() {}
 	void SetPreviewMode(int preview);
 
 	bool hasTonemappingChanged() const { return m_tonemappingChanged; }
@@ -659,6 +655,24 @@ public:
 
 	virtual bool IsDeformationMotionBlurEnabled() const { return false; }
 
+	virtual bool IsMaterialNodeIDSupported() const { return true; }
+	virtual bool IsMeshObjectIDSupported() const { return true; }
+	virtual bool IsContourModeSupported() const { return true; }
+	virtual bool IsCameraSetExposureSupported() const { return true; }
+	virtual bool IsShadowColorSupported() const { return true; }
+	virtual bool IsUberReflectionDielectricSupported() const { return true; }
+	virtual bool IsUberRefractionAbsorbtionColorSupported() const { return true; }
+	virtual bool IsUberRefractionAbsorbtionDistanceSupported() const { return true; }
+	virtual bool IsUberRefractionCausticsSupported() const { return true; }
+	virtual bool IsUberSSSWeightSupported() const { return true; }
+	virtual bool IsUberSheenWeightSupported() const { return true; }
+	virtual bool IsUberBackscatterWeightSupported() const { return true; }
+	virtual bool IsUberShlickApproximationSupported() const { return true; }
+	virtual bool IsUberCoatingThicknessSupported() const { return true; }
+	virtual bool IsUberCoatingTransmissionColorSupported() const { return true; }
+	virtual bool IsUberReflectionNormalSupported() const { return true; }
+	virtual bool IsUberScaleSupported() const { return true; }
+
 	bool IsGLTFExport() const override { return m_bIsGLTFExport; }
 	void SetGLTFExport(bool isGLTFExport) { m_bIsGLTFExport = isGLTFExport; }
 
@@ -785,9 +799,6 @@ private:
 
 	/** True if the render should be interactive. */
 	bool m_interactive;
-
-	/** True if OpenGL interop is enabled. */
-	bool m_glInteropActive;
 
 	/** A list of nodes that have been added since the last refresh. */
 	std::vector<MObject> m_addedNodes;

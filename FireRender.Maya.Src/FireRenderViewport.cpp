@@ -118,9 +118,8 @@ MStatus FireRenderViewport::setup()
 	MAIN_THREAD_ONLY;
 
 	// Check if updating viewport's texture is required.
-	// No action is required if GL interop is active: the shared OpenGL frame buffer is rendered directly.
-	// This code is needed for CPU rendering case (gl interop is switched off with CPU)
-	if (!m_contextPtr->isGLInteropActive() && m_pixelsUpdated)
+	// This code is needed for CPU rendering case 
+	if (m_pixelsUpdated)
 	{
 		// Acquire the pixels lock.
 		AutoMutexLock pixelsLock(m_pixelsLock);
@@ -139,7 +138,7 @@ bool FireRenderViewport::IsDenoiserUpscalerEnabled() const
 		return false;
 	}
 
-	if (!TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
+	if (!NorthStarContext::IsGivenContextNorthStar(m_contextPtr.get()))
 	{
 		return false;
 	}
@@ -168,7 +167,7 @@ MStatus FireRenderViewport::doSetup()
 
 	// Check if animation caching should be used.
 	bool useAnimationCache =
-		animating && m_useAnimationCache && !m_contextPtr->isGLInteropActive();
+		animating && m_useAnimationCache;
 
 	// Stop the viewport render thread if using cached frames.
 	if (m_isRunning && useAnimationCache)
@@ -303,7 +302,7 @@ bool FireRenderViewport::RunOnViewportThread()
 				{
 					AutoMutexLock contextLock(m_contextLock);
 					
-					if (!TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
+					if (!NorthStarContext::IsGivenContextNorthStar(m_contextPtr.get()))
 					{
 						AutoMutexLock pixelsLock(m_pixelsLock);
 
@@ -519,24 +518,11 @@ MStatus FireRenderViewport::refresh()
 // -----------------------------------------------------------------------------
 void FireRenderViewport::preBlit()
 {
-	// If GL Interop is active, ensure that Maya
-	// has exclusive access to the OpenGL frame
-	// buffer before using it to draw to the viewport.
-	if (m_contextPtr->isGLInteropActive())
-	{
-		m_pixelsLock.lock();
-	}
 }
 
 // -----------------------------------------------------------------------------
 void FireRenderViewport::postBlit()
 {
-	// Release the context lock after the shared
-	// GL frame buffer has been drawn to the viewport.
-	if (m_contextPtr->isGLInteropActive())
-	{
-		m_pixelsLock.unlock();
-	}
 }
 
 
@@ -571,7 +557,7 @@ bool FireRenderViewport::initialize()
 			return false;
 		}
 
-		if (TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
+		if (NorthStarContext::IsGivenContextNorthStar(m_contextPtr.get()))
 		{
 			m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderViewport::OnBufferAvailableCallback, this, std::placeholders::_1));
 		}
@@ -651,10 +637,7 @@ MStatus FireRenderViewport::resize(unsigned int width, unsigned int height)
 		}
 
 		// Resize the frame buffer.
-		if (m_contextPtr->isGLInteropActive())
-			resizeFrameBufferGLInterop(width, height);
-		else
-			resizeFrameBufferStandard(width, height);
+		resizeFrameBufferStandard(width, height);
 
 		// Update the camera.
 		M3dView mView;
@@ -705,20 +688,6 @@ void FireRenderViewport::resizeFrameBufferStandard(unsigned int width, unsigned 
 }
 
 // -----------------------------------------------------------------------------
-void FireRenderViewport::resizeFrameBufferGLInterop(unsigned int width, unsigned int height)
-{
-	// Resize the pixel buffer that
-	// will receive frame buffer data.
-	m_texture.Resize(width, height);
-
-	// Get the GL texture.
-	if (m_texture.GetTexture() != nullptr)
-	{
-		// Update the RPR context.
-		m_contextPtr->resize(width, height, false, GetGlTexture());
-	}
-}
-
 rpr_GLuint* FireRenderViewport::GetGlTexture() const
 {
 	return static_cast<rpr_GLuint*>(m_texture.GetTexture()->resourceHandle());
@@ -789,14 +758,6 @@ MStatus FireRenderViewport::refreshContext()
 // -----------------------------------------------------------------------------
 void FireRenderViewport::readFrameBuffer(FireMaya::StoredFrame* storedFrame, bool runDenoiserAndUpscaler/* = false*/)
 {
-	// The resolved frame buffer is shared with the Maya viewport
-	// when GL interop is active, so only the resolve step is required.
-	if (m_contextPtr->isGLInteropActive())
-	{
-		m_contextPtr->frameBufferAOV_Resolved(m_currentAOV);
-		return;
-	}
-
 	// Read the frame buffer.
 	RenderRegion region(0, m_contextPtr->width() - 1, m_contextPtr->height() - 1, 0);
 
