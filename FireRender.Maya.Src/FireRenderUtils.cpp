@@ -1749,7 +1749,7 @@ HardwareResources::HardwareResources()
             doWhiteList = false;
         }
 
-		int tahoeID = TahoeContext::GetPluginID(TahoePluginVersion::RPR1);
+		int tahoeID = NorthStarContext::GetPluginID();
 
         device.creationFlag = device.creationFlag | additionalFlags;
 		device.compatibility = rprIsDeviceCompatible(tahoeID, RPR_TOOLS_DEVICE(i), nullptr, doWhiteList, os, additionalFlags );
@@ -2296,26 +2296,9 @@ RenderQuality GetRenderQualityForRenderType(RenderType renderType)
 	return quality;
 }
 
-TahoePluginVersion GetTahoeVersionToUse()
-{
-	MPlug plug = GetRadeonProRenderGlobalsPlug("tahoeVersion");
-
-	if (!plug.isNull())
-	{
-		return static_cast<TahoePluginVersion>(plug.asShort());
-	}
-	else
-	{
-		// plug should not be null
-		assert(false);
-	}
-
-	return TahoePluginVersion::RPR1;
-}
-
 bool CheckIsInteractivePossible()
 {
-	// return treu in anticipation that IPR For RPR2 would be fixed for the next Release.
+	// return true in anticipation that IPR For RPR2 would be fixed for the next Release.
 	return true;
 }
 

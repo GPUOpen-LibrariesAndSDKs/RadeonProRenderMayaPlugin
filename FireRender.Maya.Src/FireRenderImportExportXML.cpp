@@ -185,7 +185,7 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 		}
 	}
 
-	TahoeContext context;
+	NorthStarContext context;
 	context.setCallbackCreationDisabled(true);
 
 	rpr_int res = context.initializeContext();

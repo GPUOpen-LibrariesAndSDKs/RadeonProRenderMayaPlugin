@@ -67,8 +67,6 @@ public:
 	static MObject	aDisplay;
 	static MObject	aPortal;
 	static MObject	aFlipIBL;
-	static MObject  IBLSelectingPortalMesh;
-	static MObject aPortalHolder;
 	static MObject aColor;
 
 public:
@@ -81,10 +79,6 @@ public:
 
 protected:
 	static void onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
-	static void onSelectionChanged(void *clientData);
-
-	void SubscribeSelectionChangedEvent(bool subscribe = true);
-	void AddSelectedMeshToPortalList(void);
 
 	virtual const MString GetNodeTypeName(void) const override;
 

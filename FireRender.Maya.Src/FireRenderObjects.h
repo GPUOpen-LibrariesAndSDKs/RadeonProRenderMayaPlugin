@@ -124,7 +124,7 @@ public:
 
 	virtual bool IsMesh(void) const { return false; }
 	virtual bool ReloadMesh(unsigned int sampleIdx = 0) { return false; }
-	virtual bool IsMashInstancer(void) const { return false; }
+	virtual bool ShouldForceReload(void) const { return false; }
 
 	// hash is generated during Freshen call
 	HashValue GetStateHash() { return m.hash; }
@@ -291,12 +291,12 @@ public:
 	// utility functions
 	void setRenderStats(MDagPath dagPath);
 	void setVisibility(bool visibility);
-	void setReflectionVisibility(bool reflectionVisibility);
-	void setRefractionVisibility(bool refractionVisibility);
-	void setCastShadows(bool castShadow);
+	virtual void setReflectionVisibility(bool reflectionVisibility);
+	virtual void setRefractionVisibility(bool refractionVisibility);
+	virtual void setCastShadows(bool castShadow);
 	void setReceiveShadows(bool recieveShadow);
-	void setPrimaryVisibility(bool primaryVisibility);
-	void setContourVisibility(bool contourVisibility);
+	virtual void setPrimaryVisibility(bool primaryVisibility);
+	virtual void setContourVisibility(bool contourVisibility);
 
 	virtual bool IsMesh(void) const { return false; }
 
@@ -304,7 +304,7 @@ public:
 	virtual bool ReloadMesh(unsigned int sampleIdx = 0) { return false; }
 
 	// translate mesh
-	virtual bool TranslateMeshWrapped(const MDagPath& dagPath, std::vector<frw::Shape>& outShapes) { return false; }
+	virtual bool TranslateMeshWrapped(const MDagPath& dagPath, frw::Shape& outShape) { return false; }
 
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const = 0;
 
@@ -320,8 +320,8 @@ protected:
 	const std::vector<int>& GetFaceMaterialIndices(void) const;
 
 	// utility functions
-	void AssignShadingEngines(const MObjectArray& shadingEngines);
-	void ProcessMotionBlur(const MFnDagNode& meshFn);
+	virtual void AssignShadingEngines(const MObjectArray& shadingEngines);
+	virtual void ProcessMotionBlur(const MFnDagNode& meshFn);
 
 	bool IsMotionBlurEnabled(const MFnDagNode& meshFn);
 
@@ -330,7 +330,7 @@ protected:
 
 	struct
 	{
-		std::vector<FrElement> elements; // should be always only 1, but keeping array for now for backward compatibility
+		std::vector<FrElement> elements;
 		std::vector<int> faceMaterialIndices;
 		bool isEmissive = false;
 		bool isMainInstance = false;
@@ -391,7 +391,7 @@ public:
 
 	virtual bool InitializeMaterials() override;
 	virtual bool ReloadMesh(unsigned int sampleIdx = 0) override;
-	virtual bool TranslateMeshWrapped(const MDagPath& dagPath, std::vector<frw::Shape>& outShapes) override;
+	virtual bool TranslateMeshWrapped(const MDagPath& dagPath, frw::Shape& outShape) override;
 
 	// build a sphere
 	void buildSphere();
@@ -425,7 +425,7 @@ protected:
 	FireMaya::MeshTranslator::MeshPolygonData m_meshData;
 
 private:
-	void GetShapes(std::vector<frw::Shape>& outShapes);
+	void GetShapes(frw::Shape& outShape);
 	
 	bool IsSelected(const MDagPath& dagPath) const;
 

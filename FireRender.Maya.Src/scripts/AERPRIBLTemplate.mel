@@ -12,111 +12,6 @@
 
 source "fireRenderEnvironment.mel";
 
-global proc AERefreshObjectListSetup_IBL(  )
-{
-	if ((`optionMenuGrp -q -exists "OptionMenuGroupObjectList_IBL"`) == false)
-	{
-		string $oldNode[] = `listConnections -shapes true "RPRIBLShape.portal"`;
-		string $selectedItem = $oldNode[0];
-
-		///
-		// List all objects in the scene
-		string $allObjects[];
-		string $tempName;
-		$allObjects = `ls -g`;
-		string $objectList = `optionMenuGrp -label "Object as Portal:" -cc AEObjectListChanged_IBL "OptionMenuGroupObjectList_IBL"`;
-		menuItem -label "NONE";
-
-		int $selectedExists = 0;
-		for ($tempName in $allObjects)
-		{
-			if ($tempName != "RPRIBLShape" && $tempName != "RPRSkyShape"){
-				menuItem -label $tempName;
-			}
-
-			if ($tempName == $selectedItem){
-				$selectedExists = 1;
-			}
-		}
-
-		if ($selectedExists == 1){
-			optionMenuGrp -e -v $selectedItem "OptionMenuGroupObjectList_IBL";
-		}else{
-			optionMenuGrp -e -v "NONE" "OptionMenuGroupObjectList_IBL";
-		}
-	}
-
-	setUITemplate -pst attributeEditorTemplate;
-
-	rowLayout -nc 2;
-	text -l "";
-	button -label "Refresh Object List" 
-		-c "refreshIBLPortalObjectsRPR"
-		-width 217
-		refreshObjectListButton_IBL;
-	setParent ..;
-
-	setUITemplate -ppt;
-}
-
-global proc AERefreshObjectListEditSetup_IBL( )
-{
-	setUITemplate -pst attributeEditorTemplate;	
-	button -e -c "refreshIBLPortalObjectsRPR" refreshObjectListButton_IBL;
-	setUITemplate -ppt;
-}
-
-global proc AEObjectListChanged_IBL(){
-	string $item = `optionMenuGrp -q -v "OptionMenuGroupObjectList_IBL"`;
-	string $oldNode[] = `listConnections -shapes true "RPRIBLShape.portal"`;
-
-	if (size($oldNode))
-	{
-		if ($oldNode[0] != $item){
-			disconnectAttr ($oldNode[0] + ".message") "RPRIBLShape.portal";
-		}else{
-			return;
-		}
-	}
-
-	if ($item != "NONE") {
-		connectAttr ($item + ".message") "RPRIBLShape.portal";
-	}
-}
-
-global proc onSelectIBLMeshButtonClicked(string $attrName)
-{
-	setAttr $attrName 1;
-}
-
-global proc string getIBLMeshButtonCommand(string $attrName)
-{
-	return "onSelectIBLMeshButtonClicked(\"" + $attrName + "\")";
-}
-
-global proc IBLPortalMeshSelectNew( string $attrName )
-{
-	$command = getIBLMeshButtonCommand($attrName);
-	rowLayout;
-	button
-		-label "Add Portal Mesh"
-		-width 150
-		-command $command
-		IBLPortalMeshSelectButton;
-	setParent ..;
-
-	connectControl IBLPortalMeshSelectButton $attrName;
-}
-
-global proc IBLPortaltMeshSelectReplace( string $attrName )
-{
-	$command = getIBLMeshButtonCommand($attrName);
-
-	connectControl IBLPortalMeshSelectButton $attrName;
-
-	button -edit -command $command IBLPortalMeshSelectButton;
-}
-
 global proc AERPRIBLTemplate( string $nodeName )
 {
 	AEswatchDisplay $nodeName;
@@ -126,7 +21,6 @@ global proc AERPRIBLTemplate( string $nodeName )
 		editorTemplate -addControl "color";
 		editorTemplate -addControl "intensity";
 		editorTemplate -addControl "display";
-		editorTemplate -callCustom "IBLPortalMeshSelectNew" "IBLPortaltMeshSelectReplace" "IBLSelectingPortalMesh";
 	editorTemplate -endLayout;
 
 	editorTemplate -endLayout;

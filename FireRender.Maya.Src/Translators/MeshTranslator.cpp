@@ -359,21 +359,16 @@ bool FireMaya::MeshTranslator::PreProcessMesh(
 	return successfullyProcessed;
 }
 
-std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(
+frw::Shape FireMaya::MeshTranslator::TranslateMesh(
 	MeshPolygonData& meshPolygonData,
 	const frw::Context& context,
 	const MObject& originalObject,
 	std::vector<int>& outFaceMaterialIndices,
 	unsigned int deformationFrameCount, MString fullDagPath)
 {
-	std::vector<frw::Shape> resultShapes;
-
 	DebugPrint("TranslateMesh: %s", meshPolygonData.fullName.asUTF8());
 
 	outFaceMaterialIndices.clear();
-
-	TahoePluginVersion version = GetTahoeVersionToUse();
-	bool isRPR20 = version == TahoePluginVersion::RPR2;
 
 	// get fnMesh
 	// - NOTE: this will be removed in future PR
@@ -407,18 +402,10 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(
 	}
 
 	// translate mesh
-	if (isRPR20)
-	{
-		resultShapes.resize(1);
-		SingleShaderMeshTranslator::TranslateMesh(
-			context, fnMesh, resultShapes, meshPolygonData, meshPolygonData.faceMaterialIndices, outFaceMaterialIndices
-		);
-	}
-	else
-	{
-		resultShapes.resize(meshPolygonData.materialCount);
-		MultipleShaderMeshTranslator::TranslateMesh(context, fnMesh, resultShapes, meshPolygonData, meshPolygonData.faceMaterialIndices);
-	}
+	frw::Shape outShape;
+	SingleShaderMeshTranslator::TranslateMesh(
+		context, fnMesh, outShape, meshPolygonData, meshPolygonData.faceMaterialIndices, outFaceMaterialIndices
+	);
 
 	// Now remove any temporary mesh we created.
 	MFnDagNode node(originalObject);
@@ -431,10 +418,10 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(
 		RemoveSmoothedTemporaryMesh(node, smoothed);
 	}
 
-	return resultShapes;
+	return outShape;
 }
 
-std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(
+frw::Shape FireMaya::MeshTranslator::TranslateMesh(
 	const frw::Context& context, 
 	const MObject& originalObject, 
 	std::vector<int>& outFaceMaterialIndices,
@@ -446,17 +433,18 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(
 	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
 #endif
 
-	std::vector<frw::Shape> resultShapes;
 	MStatus mayaStatus;
 
 	MFnDagNode node(originalObject);
 
 	DebugPrint("TranslateMesh: %s", node.fullPathName().asUTF8());
 
+	frw::Shape outShape;
+
 	// Don't render intermediate object
 	if (node.isIntermediateObject(&mayaStatus))
 	{
-		return resultShapes;
+		return outShape;
 	}
 
 	// Create tesselated object
@@ -464,14 +452,14 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(
 	if (MStatus::kSuccess != mayaStatus)
 	{
 		mayaStatus.perror("Tesselation error");
-		return resultShapes;
+		return outShape;
 	}
 
 	MObject smoothed = GetSmoothedObjectIfNecessary(originalObject, mayaStatus);
 	if (MStatus::kSuccess != mayaStatus)
 	{
 		mayaStatus.perror("Smoothing error");
-		return resultShapes;
+		return outShape;
 	}
 
 	// Consider geting mesh from tesselated or smoothed objects
@@ -492,7 +480,7 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(
 	if (MStatus::kSuccess != mayaStatus)
 	{
 		mayaStatus.perror("MFnMesh constructor");
-		return resultShapes;
+		return outShape;
 	}
 
 	// get number of materials used in this mesh
@@ -509,30 +497,18 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(
 		std::string nodeName = fnMesh.name().asChar();
 		std::string message = nodeName + " wasn't created: Mesh has no vertices";
 		MGlobal::displayWarning(message.c_str());
-		return resultShapes;
+		return outShape;
 	}
 
 	outFaceMaterialIndices.clear();
+	SingleShaderMeshTranslator::TranslateMesh(
+		context, fnMesh, outShape, meshPolygonData, faceMaterialIndices, outFaceMaterialIndices
+	);
 
-	TahoePluginVersion version = GetTahoeVersionToUse();
-	bool isRPR20 = version == TahoePluginVersion::RPR2;
-
-	if (isRPR20)
-	{
-		resultShapes.resize(1);
-		SingleShaderMeshTranslator::TranslateMesh(
-			context, fnMesh, resultShapes, meshPolygonData, faceMaterialIndices, outFaceMaterialIndices
-		);
 #ifdef OPTIMIZATION_CLOCK
-		std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
-		std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
+	std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
+	std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
 #endif
-	}
-	else
-	{
-		resultShapes.resize(materialCount);
-		MultipleShaderMeshTranslator::TranslateMesh(context, fnMesh, resultShapes, meshPolygonData, faceMaterialIndices);
-	}
 
 	// Now remove any temporary mesh we created.
 	if (!tessellated.isNull())
@@ -550,7 +526,7 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(
 	FireRenderContext::inTranslateMesh += elapsed.count();
 #endif
 
-	return resultShapes;
+	return outShape;
 }
 
 MObject FireMaya::MeshTranslator::Smoothed2ndUV(const MObject& object, MStatus& status)

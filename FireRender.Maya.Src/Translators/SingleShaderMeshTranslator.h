@@ -23,7 +23,7 @@ namespace FireMaya
 		static void TranslateMesh(
 			const frw::Context& context,
 			const MFnMesh& fnMesh,
-			std::vector<frw::Shape>& elements,
+			frw::Shape& outShape,
 			MeshTranslator::MeshPolygonData& meshPolygonData,
 			const MIntArray& faceMaterialIndices,
 			std::vector<int>& outFaceMaterialIndices

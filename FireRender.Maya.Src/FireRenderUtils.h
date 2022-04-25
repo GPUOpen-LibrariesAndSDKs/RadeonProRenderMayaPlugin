@@ -165,13 +165,8 @@ enum class RenderQuality
 	RenderQualityFull = 0,
 	RenderQualityHigh,
 	RenderQualityMedium,
-	RenderQualityLow
-};
-
-enum TahoePluginVersion
-{
-	RPR1 = 1,	// Tahoe 1.X
-	RPR2 = 2,	// Tahoe 2.X
+	RenderQualityLow,
+	RenderQualityNorthStar
 };
 
 
@@ -1116,7 +1111,7 @@ void setAttribProps(MFnAttribute& attr, const MObject& attrObj);
 void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals, std::vector<int>& vertexIndices, std::vector<int>& normalIndices);
 
 template <typename OutT, typename MayaArrayT>
-void DumpMayaArray(std::vector<OutT>& out, const MayaArrayT& source)
+void WriteMayaArrayTo(std::vector<OutT>& out, const MayaArrayT& source)
 {
 	using MayaElementT = decltype(
 		std::declval<MayaArrayT&>()[std::declval<unsigned int>()]
@@ -1134,7 +1129,6 @@ std::vector<MString> dumpAttributeNamesDbg(MObject node);
 RenderQuality GetRenderQualityFromPlug(const char* plugName);
 RenderQuality GetRenderQualityForRenderType(RenderType renderType);
 
-TahoePluginVersion GetTahoeVersionToUse();
 bool CheckIsInteractivePossible();
 
 

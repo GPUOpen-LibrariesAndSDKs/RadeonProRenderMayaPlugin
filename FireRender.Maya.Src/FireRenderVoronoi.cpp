@@ -114,8 +114,13 @@ frw::Value FireMaya::Voronoi::GetValue(const Scope& scope) const
 	auto uv = scope.GetConnectedValue(shaderNode.findPlug("uvCoord", false)) | scope.MaterialSystem().ValueLookupUV(mapChannel);
 	valueNode.SetValue(RPR_MATERIAL_INPUT_UV, uv);
 
-	auto scale = scope.GetValue(shaderNode.findPlug(Attribute::scale, false));
-	valueNode.SetValue(RPR_MATERIAL_INPUT_SCALE, scale);
+	const IFireRenderContextInfo* ctxInfo = scope.GetIContextInfo();
+	assert(ctxInfo);
+	if (ctxInfo->IsUberScaleSupported())
+	{
+		auto scale = scope.GetValue(shaderNode.findPlug(Attribute::scale, false));
+		valueNode.SetValue(RPR_MATERIAL_INPUT_SCALE, scale);
+	}
 
 	auto randomness = scope.GetValue(shaderNode.findPlug(Attribute::randomness, false));
 	valueNode.SetValue(RPR_MATERIAL_INPUT_RANDOMNESS, randomness);

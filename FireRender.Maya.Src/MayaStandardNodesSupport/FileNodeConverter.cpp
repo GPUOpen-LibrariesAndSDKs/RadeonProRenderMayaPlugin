@@ -147,7 +147,7 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 
 			bool imageHasAlpha = false;
 			
-			if (TahoeContext::IsGivenContextRPR2(dynamic_cast<const FireRenderContext*>(m_params.scope.GetIContextInfo())))
+			if (NorthStarContext::IsGivenContextNorthStar(dynamic_cast<const FireRenderContext*>(m_params.scope.GetIContextInfo())))
 			{
 				MPlug fileHasAlphaPlug = m_params.shaderNode.findPlug("fileHasAlpha");
 
