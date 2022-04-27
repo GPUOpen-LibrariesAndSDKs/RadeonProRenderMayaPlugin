@@ -30,6 +30,7 @@ limitations under the License.
 #include <maya/MCommonRenderSettingsData.h>
 #include <maya/MFnRenderLayer.h>
 #include "AnimationExporter.h"
+#include "MayaStandardNodesSupport/FileNodeConverter.h"
 
 #include <fstream>
 #include <regex>
@@ -137,7 +138,20 @@ bool SaveExportConfig(const std::wstring& filePath, NorthStarContext& ctx, const
 		json << "\"iterations\" : " << ctx.getCompletionCriteria().completionCriteriaMaxIterations << ",\n";
 	}
 
-	json << "\"gamma\" : " << 1 << ",\n";
+	float gammaValue = 1.8f;
+
+	MString renderingSpaceName;
+	MStatus colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -otn;"), renderingSpaceName);
+	if (colorManagementStatus == MStatus::kSuccess)
+	{
+		gammaValue = MayaStandardNodeConverters::FileNodeConverter::ColorSpace2Gamma(renderingSpaceName);
+	}
+
+	if (ctx.Globals().applyGammaToMayaViews)
+	{
+		gammaValue = gammaValue * ctx.Globals().displayGamma;
+	}
+	json << "\"gamma\" : " << gammaValue << ",\n";
 
 	// - aovs
 	static std::map<unsigned int, std::wstring> aov2name =
