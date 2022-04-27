@@ -681,6 +681,8 @@ public:
 
 	int GetSamplesPerUpdate() const { return m_samplesPerUpdate; }
 
+	const FireRenderGlobalsData& Globals(void) const { return m_globals; }
+
 	bool setupUpscalerForViewport(RV_PIXEL* data);
 	bool setupDenoiserForViewport();
 
