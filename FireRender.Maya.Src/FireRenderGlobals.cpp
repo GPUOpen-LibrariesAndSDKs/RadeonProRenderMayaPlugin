@@ -129,10 +129,11 @@ namespace
 		MObject viewportDenoiseUpscaleEnabled;
 
 		// Air Volume
-		MObject airVolumeEnabled;
+		MObject fogEnabled;
 		MObject fogColor;
 		MObject fogDistance;
 		MObject fogHeight;
+		MObject airVolumeEnabled;
 		MObject airVolumeDensity;
 		MObject airVolumeColor;
 		MObject airVolumeClamp;
@@ -964,6 +965,11 @@ void FireRenderGlobals::createAirVolumeAttributes()
 	MAKE_INPUT(nAttr);
 	nAttr.setReadable(true);
 	CHECK_MSTATUS(addAttribute(Attribute::airVolumeEnabled));
+
+	Attribute::fogEnabled = nAttr.create("fogEnabled", "fge", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setReadable(true);
+	CHECK_MSTATUS(addAttribute(Attribute::fogEnabled));
 
 	Attribute::fogColor = nAttr.createColor("fogColor", "foc", &status);
 	nAttr.setDefault(1.0, 1.0, 1.0);

@@ -553,7 +553,11 @@ void FireRenderGlobalsData::readAirVolumeParameters(const MFnDependencyNode& frG
 {
 	MPlug plug = frGlobalsNode.findPlug("airVolumeEnabled");
 	if (!plug.isNull())
-		airVolumeSettings.enabled = plug.asBool();
+		airVolumeSettings.airVolumeEnabled = plug.asBool();
+
+	plug = frGlobalsNode.findPlug("fogEnabled");
+	if (!plug.isNull())
+		airVolumeSettings.fogEnabled = plug.asBool();
 
 	plug = frGlobalsNode.findPlug("fogColor", false);
 	if (!plug.isNull())
@@ -708,6 +712,17 @@ bool FireRenderGlobalsData::IsMotionBlur(MString name)
 	name = GetPropertyNameFromPlugName(name);
 
 	static const std::set<std::string> propNames { "motionBlur", "cameraMotionBlur", "motionBlurCameraExposure", "viewportMotionBlur", "velocityAOVMotionBlur"};
+
+	return propNames.find(name.asChar()) != propNames.end();
+}
+
+bool FireRenderGlobalsData::IsAirVolume(MString name)
+{
+	name = GetPropertyNameFromPlugName(name);
+
+	static const std::set<std::string> propNames{ 
+		"airVolumeEnabled", "fogEnabled", "fogColor", "fogDistance", "fogHeight", "airVolumeDensity", "airVolumeColor", "airVolumeClamp" 
+	};
 
 	return propNames.find(name.asChar()) != propNames.end();
 }

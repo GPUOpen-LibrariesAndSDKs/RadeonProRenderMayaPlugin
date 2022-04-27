@@ -51,7 +51,8 @@ typedef std::chrono::time_point<std::chrono::steady_clock> TimePoint;
 struct AirVolumeSettings
 {
 	AirVolumeSettings()
-		: enabled(false)
+		: airVolumeEnabled(false)
+		, fogEnabled(false)
 		, fogColor(1.0f, 1.0f, 1.0f, 0.0f)
 		, fogDistance(5000)
 		, fogHeight(1.5f)
@@ -60,7 +61,8 @@ struct AirVolumeSettings
 		, airVolumeClamp(0.1f)
 	{}
 
-	bool enabled;
+	bool airVolumeEnabled;
+	bool fogEnabled;
 	MColor fogColor;
 	float fogDistance;
 	float fogHeight;
@@ -196,6 +198,8 @@ public:
 	static bool isDenoiser(MString name);
 
 	static bool IsMotionBlur(MString name);
+
+	static bool IsAirVolume(MString name);
 
 	static void getCPUThreadSetup(bool& overriden, int& cpuThreadCount, RenderType renderType);
 	static int getThumbnailIterCount(bool* pSwatchesEnabled = nullptr);

@@ -91,33 +91,39 @@ void NorthStarContext::setupContextAirVolume(const FireRenderGlobalsData& fireRe
 	frw::Context context = GetContext();
 	rpr_int frstatus = RPR_SUCCESS;
 
-	if (!fireRenderGlobalsData.airVolumeSettings.enabled)
+	if (!fireRenderGlobalsData.airVolumeSettings.airVolumeEnabled)
 	{
-		context.SetParameter(RPR_CONTEXT_FOG_DISTANCE, -1.0f);
 		context.SetParameter(RPR_CONTEXT_ATMOSPHERE_VOLUME_DENSITY, 0.0f);
+	}
+	else
+	{
+		context.SetParameter(RPR_CONTEXT_ATMOSPHERE_VOLUME_DENSITY, fireRenderGlobalsData.airVolumeSettings.airVolumeDensity);
 
-		return;
+		context.SetParameter(RPR_CONTEXT_ATMOSPHERE_VOLUME_COLOR,
+			fireRenderGlobalsData.airVolumeSettings.airVolumeColor.r,
+			fireRenderGlobalsData.airVolumeSettings.airVolumeColor.g,
+			fireRenderGlobalsData.airVolumeSettings.airVolumeColor.b,
+			0.0f);
+
+		context.SetParameter(RPR_CONTEXT_ATMOSPHERE_VOLUME_RADIANCE_CLAMP, fireRenderGlobalsData.airVolumeSettings.airVolumeDensity);
 	}
 
-	context.SetParameter(RPR_CONTEXT_FOG_COLOR,
-		fireRenderGlobalsData.airVolumeSettings.fogColor.r,
-		fireRenderGlobalsData.airVolumeSettings.fogColor.g,
-		fireRenderGlobalsData.airVolumeSettings.fogColor.b,
-		0.0f);
+	if (!fireRenderGlobalsData.airVolumeSettings.fogEnabled)
+	{
+		context.SetParameter(RPR_CONTEXT_FOG_DISTANCE, -1.0f);
+	}
+	else
+	{
+		context.SetParameter(RPR_CONTEXT_FOG_COLOR,
+			fireRenderGlobalsData.airVolumeSettings.fogColor.r,
+			fireRenderGlobalsData.airVolumeSettings.fogColor.g,
+			fireRenderGlobalsData.airVolumeSettings.fogColor.b,
+			0.0f);
 
-	context.SetParameter(RPR_CONTEXT_FOG_DISTANCE, fireRenderGlobalsData.airVolumeSettings.fogDistance);
+		context.SetParameter(RPR_CONTEXT_FOG_DISTANCE, fireRenderGlobalsData.airVolumeSettings.fogDistance);
 
-	context.SetParameter(RPR_CONTEXT_FOG_HEIGHT, fireRenderGlobalsData.airVolumeSettings.fogHeight);
-
-	context.SetParameter(RPR_CONTEXT_ATMOSPHERE_VOLUME_DENSITY, fireRenderGlobalsData.airVolumeSettings.airVolumeDensity);
-
-	context.SetParameter(RPR_CONTEXT_ATMOSPHERE_VOLUME_COLOR,
-		fireRenderGlobalsData.airVolumeSettings.airVolumeColor.r,
-		fireRenderGlobalsData.airVolumeSettings.airVolumeColor.g,
-		fireRenderGlobalsData.airVolumeSettings.airVolumeColor.b,
-		0.0f);
-
-	context.SetParameter(RPR_CONTEXT_ATMOSPHERE_VOLUME_RADIANCE_CLAMP, fireRenderGlobalsData.airVolumeSettings.airVolumeDensity);
+		context.SetParameter(RPR_CONTEXT_FOG_HEIGHT, fireRenderGlobalsData.airVolumeSettings.fogHeight);
+	}
 }
 
 void NorthStarContext::setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance /*= false*/)

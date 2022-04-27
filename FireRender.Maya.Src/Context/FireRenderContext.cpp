@@ -2009,6 +2009,7 @@ void FireRenderContext::updateFromGlobals(bool applyLock)
 
 	m_globals.readFromCurrentScene();
 	setupContextContourMode(m_globals, createFlags);
+	setupContextAirVolume(m_globals);
 	setupContextPostSceneCreation(m_globals);
 
 	updateLimitsFromGlobalData(m_globals);
@@ -2076,6 +2077,10 @@ void FireRenderContext::globalsChangedCallback(MNodeMessage::AttributeMessage ms
 				restartRender = true;
 			}
 			else if (FireRenderGlobalsData::IsMotionBlur(plug.name()))
+			{
+				restartRender = true;
+			}
+			else if (FireRenderGlobalsData::IsAirVolume(plug.name()))
 			{
 				restartRender = true;
 			}

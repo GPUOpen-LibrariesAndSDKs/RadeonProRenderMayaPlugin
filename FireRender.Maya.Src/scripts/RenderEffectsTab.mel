@@ -56,7 +56,7 @@ global proc createRenderEffectsTab()
 	setParent ..;
 
 	// Atmospheric Volume
-	frameLayout -label "Atmospheric Volume" -cll true -cl 0 fireRenderAtmosphericVolumeFrame;
+	frameLayout -label "Atmospheric Volume / Fog" -cll true -cl 0 fireRenderAtmosphericVolumeFrame;
 	createFireRenderAtmosphericVolumeFrame("fireRenderAtmosphericVolumeFrame");
 	setParent ..;
 
@@ -86,8 +86,28 @@ global proc createFireRenderAtmosphericVolumeFrame(string $parent)
 		columnLayout -adjustableColumn true -cat "left" 10;
 
 		attrControlGrp
-			-label "Enable"
+			-label "Enable Atmospheric Volume"
 			-attribute "RadeonProRenderGlobals.airVolumeEnabled"
+			-changeCommand "onUpdateAtmosphericVolume";
+
+		attrControlGrp
+			-label "Air Volume Density"
+			-attribute "RadeonProRenderGlobals.airVolumeDensity"
+			airVolumeDensity;
+
+		attrControlGrp
+			-label "Air Volume Color"
+			-attribute "RadeonProRenderGlobals.airVolumeColor"
+			airVolumeColor;
+
+		attrControlGrp
+			-label "Air Volume Clamp"
+			-attribute "RadeonProRenderGlobals.airVolumeClamp"
+			airVolumeClamp;
+
+		attrControlGrp
+			-label "Enable Fog"
+			-attribute "RadeonProRenderGlobals.fogEnabled"
 			-changeCommand "onUpdateAtmosphericVolume";
 
 		attrControlGrp
@@ -105,21 +125,6 @@ global proc createFireRenderAtmosphericVolumeFrame(string $parent)
 			-attribute "RadeonProRenderGlobals.fogHeight"
 			fogHeight;
 
-		attrControlGrp
-			-label "Air Volume Density"
-			-attribute "RadeonProRenderGlobals.airVolumeDensity"
-			airVolumeDensity;
-
-		attrControlGrp
-			-label "Air Volume Color"
-			-attribute "RadeonProRenderGlobals.airVolumeColor"
-			airVolumeColor;
-
-		attrControlGrp
-			-label "Air Volume Clamp"
-			-attribute "RadeonProRenderGlobals.airVolumeClamp"
-			airVolumeClamp;
-
 	setParent ..;
 	setUITemplate -popTemplate;
 
@@ -128,14 +133,15 @@ global proc createFireRenderAtmosphericVolumeFrame(string $parent)
 
 global proc onUpdateAtmosphericVolume()
 {
-	$enabled = `getAttr RadeonProRenderGlobals.airVolumeEnabled`;
+	$enabledAV = `getAttr RadeonProRenderGlobals.airVolumeEnabled`;
+	$enabledFog = `getAttr RadeonProRenderGlobals.fogEnabled`;
 
-	attrControlGrp -edit -enable $enabled fogColor;
-	attrControlGrp -edit -enable $enabled fogDistance;
-	attrControlGrp -edit -enable $enabled fogHeight;
-	attrControlGrp -edit -enable $enabled airVolumeDensity;
-	attrControlGrp -edit -enable $enabled airVolumeColor;
-	attrControlGrp -edit -enable $enabled airVolumeClamp;
+	attrControlGrp -edit -enable $enabledFog fogColor;
+	attrControlGrp -edit -enable $enabledFog fogDistance;
+	attrControlGrp -edit -enable $enabledFog fogHeight;
+	attrControlGrp -edit -enable $enabledAV airVolumeDensity;
+	attrControlGrp -edit -enable $enabledAV airVolumeColor;
+	attrControlGrp -edit -enable $enabledAV airVolumeClamp;
 }
 
 global proc createFireRenderContourFrame(string $parent)
