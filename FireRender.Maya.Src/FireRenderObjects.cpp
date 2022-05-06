@@ -1330,7 +1330,7 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 			if (surfaceShader.isNull())
 				continue;
 
-			element.shaders.push_back(context->GetShader(surfaceShader, shadingEngine, this));
+			element.shaders.push_back(context->GetShader(surfaceShader, shadingEngine, this, m.changed.shader));
 
 			const std::vector<int>& faceMaterialIndices = GetFaceMaterialIndices();
 			std::vector<int> face_ids;
@@ -2078,6 +2078,17 @@ void FireRenderLight::Freshen(bool shouldCalculateHash)
 		}
 	}
 
+	for (auto* meshPtr : m_linkedMeshes)
+	{
+		FireRenderMesh* mesh = dynamic_cast<FireRenderMesh*>(const_cast<FireRenderMeshCommon*>(meshPtr));
+
+		if (mesh != nullptr)
+		{
+			mesh->OnShaderDirty();
+		}
+	}
+	m_linkedMeshes.clear();
+
 	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
@@ -2117,6 +2128,11 @@ void FireRenderLight::setPortal(bool value)
 bool FireRenderLight::portal()
 {
 	return m_portal;
+}
+
+void FireRenderLight::addLinkedMesh(FireRenderMeshCommon const* mesh)
+{
+	m_linkedMeshes.emplace_back(mesh);
 }
 
 FireRenderPhysLight::FireRenderPhysLight(FireRenderContext* context, const MDagPath& dagPath) :
@@ -2307,7 +2323,23 @@ void FireRenderEnvLight::Freshen(bool shouldCalculateHash)
 		}
 	}
 
+	for (auto* meshPtr : m_linkedMeshes)
+	{
+		FireRenderMesh* mesh = dynamic_cast<FireRenderMesh*>(const_cast<FireRenderMeshCommon*>(meshPtr));
+
+		if (mesh != nullptr)
+		{
+			mesh->OnShaderDirty();
+		}
+	}
+	m_linkedMeshes.clear();
+
 	FireRenderNode::Freshen(shouldCalculateHash);
+}
+
+void FireRenderEnvLight::addLinkedMesh(FireRenderMeshCommon const* mesh)
+{
+	m_linkedMeshes.emplace_back(mesh);
 }
 
 //===================
