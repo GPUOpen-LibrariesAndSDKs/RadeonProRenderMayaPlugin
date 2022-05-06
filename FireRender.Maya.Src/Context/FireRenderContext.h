@@ -686,6 +686,9 @@ public:
 	bool setupUpscalerForViewport(RV_PIXEL* data);
 	bool setupDenoiserForViewport();
 
+	// used for toon shader light linking
+	frw::Light GetRprLightFromNode(const MObject& node) override;
+
 protected:
 	static int INCORRECT_PLUGIN_ID;
 
