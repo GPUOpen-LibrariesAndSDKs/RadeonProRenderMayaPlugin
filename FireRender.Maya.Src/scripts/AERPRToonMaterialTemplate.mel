@@ -57,6 +57,8 @@ global proc AERPRToonMaterialTemplate( string $nodeName )
 			editorTemplate -l "Light Linking Enable" -addControl "enableLightLinking" "LightLinkingEnableChanged";
 			editorTemplate -l "Linked Light" -addControl "linkedLight";
 			
+			editorTemplate -l "Use Mid Color As Albedo" -addControl "enableMidColorAsAlbedo";
+			
 		editorTemplate -endLayout;
 	editorTemplate -endLayout;
 
@@ -84,6 +86,8 @@ global proc ShowAdvancedChanges(string $nodeName)
 	editorTemplate -dimControl $nodeName rampPosition2 $dim;
 	
 	editorTemplate -dimControl $nodeName enableLightLinking $dim;
+	
+	editorTemplate -dimControl $nodeName enableMidColorAsAlbedo $dim;
 
 	UpdateRampFieldsEnable($nodeName);
 }
