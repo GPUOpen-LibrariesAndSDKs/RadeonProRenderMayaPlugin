@@ -44,6 +44,9 @@ namespace
 
 		// light linking
 		MObject enableLightLinking;
+
+		// mid color as albedo
+		MObject enableMidColorAsAlbedo;
 	}
 }
 
@@ -168,6 +171,10 @@ MStatus FireMaya::ToonMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	nAttr.setConnectable(false);
 
+	Attribute::enableMidColorAsAlbedo = nAttr.create("enableMidColorAsAlbedo", "emcaa", MFnNumericData::kBoolean, 0);
+	MAKE_INPUT(nAttr);
+	nAttr.setConnectable(false);
+
 	// Adding all attributes to the node type
 	addAttribute(Attribute::output);
 
@@ -199,6 +206,7 @@ MStatus FireMaya::ToonMaterial::initialize()
 	ADD_ATTRIBUTE(Attribute::rampRangeHighlight);
 
 	ADD_ATTRIBUTE(Attribute::enableLightLinking);
+	ADD_ATTRIBUTE(Attribute::enableMidColorAsAlbedo);
 
 	return MStatus::kSuccess;
 }
@@ -293,6 +301,8 @@ frw::Shader FireMaya::ToonMaterial::GetShader(Scope& scope)
 	{
 		linkLight(scope, shader);
 	}
+
+	shader.SetValueInt(RPR_MATERIAL_INPUT_MID_IS_ALBEDO, shaderNode.findPlug(Attribute::enableMidColorAsAlbedo, false).asBool());
 	
 	return shader;
 }
