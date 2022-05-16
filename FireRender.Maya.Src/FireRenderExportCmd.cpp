@@ -73,8 +73,9 @@ MSyntax FireRenderExportCmd::newSyntax()
 	CHECK_MSTATUS(syntax.addFlag(kCompressionFlag, kCompressionFlagLong, MSyntax::kString));
 	CHECK_MSTATUS(syntax.addFlag(kPadding, kPaddingLong, MSyntax::kString, MSyntax::kLong));
 	CHECK_MSTATUS(syntax.addFlag(kSelectedCamera, kSelectedCameraLong, MSyntax::kString));
+	CHECK_MSTATUS(syntax.addFlag(kLayerExportFlag, kLayerExportFlagLong, MSyntax::kBoolean));
 
-	return syntax;
+	return syntax; 
 }
 
 std::string GetPluginLibrary(bool isRPR2)
@@ -404,9 +405,11 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 	bool isSequenceExportEnabled = false;
 	int firstFrame = 1;
 	int lastFrame = 1;
+	unsigned int totalLayers = 0;
 	bool isExportAsSingleFileEnabled = false;
 	bool isIncludeTextureCacheEnabled = false;
 	bool isAnimationAsSingleFileEnabled = false;
+	bool isLayerExportEnabled = false;
 	if (argData.isFlagSet(kFramesFlag))
 	{
 		argData.getFlagArgument(kFramesFlag, 0, isSequenceExportEnabled);
@@ -416,8 +419,12 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		argData.getFlagArgument(kFramesFlag, 4, isIncludeTextureCacheEnabled);
 		argData.getFlagArgument(kFramesFlag, 5, isAnimationAsSingleFileEnabled);
 	}
+	if (argData.isFlagSet(kLayerExportFlag))
+	{
+		argData.getFlagArgument(kLayerExportFlag, 0, isLayerExportEnabled);
+	}
 
-	MString compressionOption = "None";
+ 	MString compressionOption = "None";
 	if (argData.isFlagSet(kCompressionFlag))
 	{
 		argData.getFlagArgument(kCompressionFlag, 0, compressionOption);
@@ -509,6 +516,21 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		argData.getFlagArgument(kPadding, 0, namePattern);
 		unsigned int framePadding = 0;
 		argData.getFlagArgument(kPadding, 1, framePadding);
+
+		// process layer export
+		if (isLayerExportEnabled)
+		{
+			MObjectArray layers;
+			MFnRenderLayer::listAllRenderLayers(layers);
+			totalLayers = layers.length();
+
+			for (int i = 0; i < totalLayers; i++)
+			{
+				MObject layer = layers[i];
+				MFnDependencyNode layerNodeFn(layer);
+				MString name = layerNodeFn.name();
+			}
+		}
 
 		// create rprs context
 		frw::RPRSContext rprsContext;
