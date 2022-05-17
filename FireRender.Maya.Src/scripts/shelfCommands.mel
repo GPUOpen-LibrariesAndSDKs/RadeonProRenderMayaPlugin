@@ -148,7 +148,7 @@ global proc launchSceneExport()
 		string $namePattern = `optionMenu -query -value frameExtentionOption`;
 		int $framePadding = `getAttr defaultRenderGlobals.extensionPadding`;
 		string $selectedCam = `optionMenu -query -value selectedCamera`;
-		$isLayerExportEnabled = `checkBox -query -value layerExportCheckBx`;
+		$isAllLayersExportEnabled = `checkBox -query -value allLayersExportCheckBx`;
 
 		catchQuiet ( `OxSetIsRendering(true)` );
 		
@@ -160,7 +160,7 @@ global proc launchSceneExport()
 			-compress $selectedOption
 			-padding $namePattern $framePadding
 			-camera $selectedCam
-			-layers $isLayerExportEnabled;
+			-layers $isAllLayersExportEnabled;
 
 		catchQuiet ( `OxSetIsRendering(false)` );
 
@@ -303,7 +303,7 @@ global proc exportSceneRPR()
 			checkBox 
 				-label "Export Each Layer In Separate File" 
 				-value false 
-				layerExportCheckBx;
+				allLayersExportCheckBx;
 
 			optionMenu 
 				-label "Compression " 

@@ -405,11 +405,10 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 	bool isSequenceExportEnabled = false;
 	int firstFrame = 1;
 	int lastFrame = 1;
-	unsigned int totalLayers = 0;
 	bool isExportAsSingleFileEnabled = false;
 	bool isIncludeTextureCacheEnabled = false;
 	bool isAnimationAsSingleFileEnabled = false;
-	bool isLayerExportEnabled = false;
+	bool isAllLayersExportEnabled = false;
 	if (argData.isFlagSet(kFramesFlag))
 	{
 		argData.getFlagArgument(kFramesFlag, 0, isSequenceExportEnabled);
@@ -421,7 +420,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 	}
 	if (argData.isFlagSet(kLayerExportFlag))
 	{
-		argData.getFlagArgument(kLayerExportFlag, 0, isLayerExportEnabled);
+		argData.getFlagArgument(kLayerExportFlag, 0, isAllLayersExportEnabled);
 	}
 
  	MString compressionOption = "None";
@@ -432,177 +431,192 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 
 	if (argData.isFlagSet(kAllFlag))
 	{
-		// initialize
-		MCommonRenderSettingsData settings;
-		MRenderUtil::getCommonRenderSettings(settings);
-
-		NorthStarContextPtr northStarContextPtr = ContextCreator::CreateNorthStarContext();
-		AnimationExporter animationExporter(false);
-
-		northStarContextPtr->SetRenderType(RenderType::ProductionRender);
-
-		MDagPathArray cameras = GetSceneCameras();
-		unsigned int countCameras = cameras.length();
-
-		if (countCameras == 0)
+		MObjectArray layers;
+		MObject existingRenderLayer = MFnRenderLayer::currentLayer(); // save current layer to restore it after export
+		if (isAllLayersExportEnabled)
 		{
-			MGlobal::displayError("Renderable cameras haven't been found! Using default camera!");
-
-			MDagPath cameraPath = getDefaultCamera();
-			MString cameraName = getNameByDagPath(cameraPath);
-			northStarContextPtr->setCamera(cameraPath, true);
-		}
-		else  // (cameras.length() >= 1)
-		{
-			MString selectedCameraName;
-			MStatus res = argData.getFlagArgument(kSelectedCamera, 0, selectedCameraName);
-			if (res != MStatus::kSuccess)
-			{
-				northStarContextPtr->setCamera(cameras[0], true);
-			}
-			else
-			{
-				unsigned int selectedCameraIdx = 0;
-				northStarContextPtr->setCamera(cameras[selectedCameraIdx], true);
-
-				for (; selectedCameraIdx < countCameras; ++selectedCameraIdx)
-				{
-					MDagPath& cameraPath = cameras[selectedCameraIdx];
-					MString cameraName = getNameByDagPath(cameraPath);
-					if (selectedCameraName == cameraName)
-					{
-						northStarContextPtr->setCamera(cameras[selectedCameraIdx], true);
-						break;
-					}
-				}
-			}
-		}
-
-		northStarContextPtr->buildScene(false, false, false);
-		northStarContextPtr->setResolution(settings.width, settings.height, true);
-
-		// setup frame ranges
-		if (!isSequenceExportEnabled || isAnimationAsSingleFileEnabled)
-		{
-			lastFrame = firstFrame;
-		}
-
-		// process file path
-		std::wstring fileName;
-		std::wstring fileExtension = L"rpr";
-		std::wstring filePath = processedFilePath.asWChar();
-
-		// Remove extension from file name, because it would be added later
-		size_t fileExtensionIndex = filePath.find(L"." + fileExtension);
-		bool fileExtensionNotProvided = fileExtensionIndex == -1;
-
-		if (fileExtensionNotProvided)
-		{
-			fileName = filePath;
+			MFnRenderLayer::listAllRenderLayers(layers); // will export all layers
 		}
 		else
 		{
-			fileName = filePath.substr(0, fileExtensionIndex);
+			layers.append(existingRenderLayer); // will export only current layer
 		}
 
-		// read file name pattern and padding
-		if (isSequenceExportEnabled && !isAnimationAsSingleFileEnabled && !argData.isFlagSet(kPadding))
+		// process each layer
+		for (MObject layer : layers)
 		{
-			MGlobal::displayError("Can't export sequence without setting name pattern and padding!");
-			return MS::kFailure;
-		}
+			// setup layer to export
+			MFnDependencyNode layerNodeFn(layer);
+			MGlobal::executeCommand("editRenderLayerGlobals -currentRenderLayer " + layerNodeFn.name(), false, true);
 
-		MString namePattern;
-		argData.getFlagArgument(kPadding, 0, namePattern);
-		unsigned int framePadding = 0;
-		argData.getFlagArgument(kPadding, 1, framePadding);
+			// initialize
+			MCommonRenderSettingsData settings;
+			MRenderUtil::getCommonRenderSettings(settings);
 
-		// process layer export
-		if (isLayerExportEnabled)
-		{
-			MObjectArray layers;
-			MFnRenderLayer::listAllRenderLayers(layers);
-			totalLayers = layers.length();
+			NorthStarContextPtr northStarContextPtr = ContextCreator::CreateNorthStarContext();
+			AnimationExporter animationExporter(false);
 
-			for (int i = 0; i < totalLayers; i++)
+			northStarContextPtr->SetRenderType(RenderType::ProductionRender);
+
+			MDagPathArray cameras = GetSceneCameras();
+			unsigned int countCameras = cameras.length();
+
+			if (countCameras == 0)
 			{
-				MObject layer = layers[i];
-				MFnDependencyNode layerNodeFn(layer);
-				MString name = layerNodeFn.name();
+				MGlobal::displayError("Renderable cameras haven't been found! Using default camera!");
+
+				MDagPath cameraPath = getDefaultCamera();
+				MString cameraName = getNameByDagPath(cameraPath);
+				northStarContextPtr->setCamera(cameraPath, true);
 			}
-		}
-
-		// create rprs context
-		frw::RPRSContext rprsContext;
-
-		// process each frame
-		for (int frame = firstFrame; frame <= lastFrame; ++frame)
-		{
-			// Move the animation to the next frame.
-			if (isSequenceExportEnabled && !isAnimationAsSingleFileEnabled)
+			else  // (cameras.length() >= 1)
 			{
-				MTime time;
-				time.setValue(static_cast<double>(frame));
-				MStatus isTimeSet = MGlobal::viewFrame(time);
-				CHECK_MSTATUS(isTimeSet);
-			}
-
-			// Refresh the context so it matches the
-			// current animation state and start the render.
-			northStarContextPtr->Freshen();
-
-			// update file path
-			std::wstring newFilePath; 
-			if (isSequenceExportEnabled && !isAnimationAsSingleFileEnabled)
-			{
-				//GetPattern();
-				std::wstring name_regex;
-				std::wstring frame_regex(L"#");
-				std::wstring extension_regex;
-				GetUINameFrameExtPattern(name_regex, extension_regex);
-				std::wstring pattern = namePattern.asWChar();
-
-				// Replace extension at first, because it shouldn't match name_regex or frame_regex for given .rpr format
-				std::wstring result = std::regex_replace(pattern, std::wregex(extension_regex), fileExtension);
-
-				std::wstringstream frameStream;
-				frameStream << std::setfill(L'0') << std::setw(framePadding) << frame;
-				result = std::regex_replace(result, std::wregex(frame_regex), frameStream.str().c_str());
-
-				// Replace name after all operations, because it could match frame or extension regex
-				result = std::regex_replace(result, std::wregex(name_regex), fileName);
-
-				newFilePath = result.c_str();
-			}
-			else
-			{
-				newFilePath = fileName + L"." + fileExtension;
-
-				// exporting animation as single file
-				if(isSequenceExportEnabled)
+				MString selectedCameraName;
+				MStatus res = argData.getFlagArgument(kSelectedCamera, 0, selectedCameraName);
+				if (res != MStatus::kSuccess)
 				{
-					animationExporter.Export(*northStarContextPtr, &cameras, rprsContext);
+					northStarContextPtr->setCamera(cameras[0], true);
+				}
+				else
+				{
+					unsigned int selectedCameraIdx = 0;
+					northStarContextPtr->setCamera(cameras[selectedCameraIdx], true);
+
+					for (; selectedCameraIdx < countCameras; ++selectedCameraIdx)
+					{
+						MDagPath& cameraPath = cameras[selectedCameraIdx];
+						MString cameraName = getNameByDagPath(cameraPath);
+						if (selectedCameraName == cameraName)
+						{
+							northStarContextPtr->setCamera(cameras[selectedCameraIdx], true);
+							break;
+						}
+					}
 				}
 			}
 
-			// launch export
-			rpr_int statusExport = rprsExport(MString(newFilePath.c_str()).asUTF8(), northStarContextPtr->context(), northStarContextPtr->scene(),
-				0, 0, 0, 0, 0, 0, SetupExportFlags(isExportAsSingleFileEnabled, isIncludeTextureCacheEnabled, compressionOption), 
-				rprsContext.Handle());
-			
-			// save config
-			bool res = SaveExportConfig(newFilePath, *northStarContextPtr, fileName);
-			if (!res)
+			northStarContextPtr->buildScene(false, false, false);
+			northStarContextPtr->setResolution(settings.width, settings.height, true);
+
+			// setup frame ranges
+			if (!isSequenceExportEnabled || isAnimationAsSingleFileEnabled)
 			{
-				MGlobal::displayError("Unable to export render config!\n");
+				lastFrame = firstFrame;
 			}
-			
-			if (statusExport != RPR_SUCCESS)
+
+			// process file path
+			std::wstring fileName;
+			std::wstring fileExtension = L"rpr";
+			std::wstring filePath = processedFilePath.asWChar();
+
+			// Remove extension from file name, because it would be added later
+			size_t fileExtensionIndex = filePath.find(L"." + fileExtension);
+			bool fileExtensionNotProvided = fileExtensionIndex == -1;
+
+			if (fileExtensionNotProvided)
 			{
-				MGlobal::displayError("Unable to export fire render scene\n");
+				fileName = filePath;
+			}
+			else
+			{
+				fileName = filePath.substr(0, fileExtensionIndex);
+			}
+
+			// append layer name to filename
+			// add support for different layer name suffix formats in the future
+			if (isAllLayersExportEnabled)
+			{
+				MString layerSuffix = "_" + layerNodeFn.name();
+				fileName = fileName + layerSuffix.asWChar();
+			}
+
+			// read file name pattern and padding
+			if (isSequenceExportEnabled && !isAnimationAsSingleFileEnabled && !argData.isFlagSet(kPadding))
+			{
+				MGlobal::displayError("Can't export sequence without setting name pattern and padding!");
 				return MS::kFailure;
 			}
+
+			MString namePattern;
+			argData.getFlagArgument(kPadding, 0, namePattern);
+			unsigned int framePadding = 0;
+			argData.getFlagArgument(kPadding, 1, framePadding);
+
+			// create rprs context
+			frw::RPRSContext rprsContext;
+
+			// process each frame
+			for (int frame = firstFrame; frame <= lastFrame; ++frame)
+			{
+				// Move the animation to the next frame.
+				if (isSequenceExportEnabled && !isAnimationAsSingleFileEnabled)
+				{
+					MTime time;
+					time.setValue(static_cast<double>(frame));
+					MStatus isTimeSet = MGlobal::viewFrame(time);
+					CHECK_MSTATUS(isTimeSet);
+				}
+
+				// Refresh the context so it matches the
+				// current animation state and start the render.
+				northStarContextPtr->Freshen();
+
+				// update file path
+				std::wstring newFilePath;
+				if (isSequenceExportEnabled && !isAnimationAsSingleFileEnabled)
+				{
+					//GetPattern();
+					std::wstring name_regex;
+					std::wstring frame_regex(L"#");
+					std::wstring extension_regex;
+					GetUINameFrameExtPattern(name_regex, extension_regex);
+					std::wstring pattern = namePattern.asWChar();
+
+					// Replace extension at first, because it shouldn't match name_regex or frame_regex for given .rpr format
+					std::wstring result = std::regex_replace(pattern, std::wregex(extension_regex), fileExtension);
+
+					std::wstringstream frameStream;
+					frameStream << std::setfill(L'0') << std::setw(framePadding) << frame;
+					result = std::regex_replace(result, std::wregex(frame_regex), frameStream.str().c_str());
+
+					// Replace name after all operations, because it could match frame or extension regex
+					result = std::regex_replace(result, std::wregex(name_regex), fileName);
+
+					newFilePath = result.c_str();
+				}
+				else
+				{
+					newFilePath = fileName + L"." + fileExtension;
+
+					// exporting animation as single file
+					if (isSequenceExportEnabled)
+					{
+						animationExporter.Export(*northStarContextPtr, &cameras, rprsContext);
+					}
+				}
+
+				// launch export
+				rpr_int statusExport = rprsExport(MString(newFilePath.c_str()).asUTF8(), northStarContextPtr->context(), northStarContextPtr->scene(),
+					0, 0, 0, 0, 0, 0, SetupExportFlags(isExportAsSingleFileEnabled, isIncludeTextureCacheEnabled, compressionOption),
+					rprsContext.Handle());
+
+				// save config
+				bool res = SaveExportConfig(newFilePath, *northStarContextPtr, fileName);
+				if (!res)
+				{
+					MGlobal::displayError("Unable to export render config!\n");
+				}
+
+				if (statusExport != RPR_SUCCESS)
+				{
+					MGlobal::displayError("Unable to export fire render scene\n");
+					return MS::kFailure;
+				}
+			}
 		}
+		// restore existing render layer
+		MFnDependencyNode existingLayerNodeFn(existingRenderLayer);
+		MGlobal::executeCommand("editRenderLayerGlobals -currentRenderLayer " + existingLayerNodeFn.name(), false, true);
 
 		return MS::kSuccess;
 	}
