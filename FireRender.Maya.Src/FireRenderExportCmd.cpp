@@ -427,6 +427,55 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		argData.getFlagArgument(kCompressionFlag, 0, compressionOption);
 	}
 
+	// initialize
+	MCommonRenderSettingsData settings;
+	MRenderUtil::getCommonRenderSettings(settings);
+
+	NorthStarContextPtr northStarContextPtr = ContextCreator::CreateNorthStarContext();
+	AnimationExporter animationExporter(false);
+
+	northStarContextPtr->SetRenderType(RenderType::ProductionRender);
+
+	MDagPathArray cameras = GetSceneCameras();
+	unsigned int countCameras = cameras.length();
+
+	if (countCameras == 0)
+	{
+		MGlobal::displayError("Renderable cameras haven't been found! Using default camera!");
+
+		MDagPath cameraPath = getDefaultCamera();
+		MString cameraName = getNameByDagPath(cameraPath);
+		northStarContextPtr->setCamera(cameraPath, true);
+	}
+	else  // (cameras.length() >= 1)
+	{
+		MString selectedCameraName;
+		MStatus res = argData.getFlagArgument(kSelectedCamera, 0, selectedCameraName);
+		if (res != MStatus::kSuccess)
+		{
+			northStarContextPtr->setCamera(cameras[0], true);
+		}
+		else
+		{
+			unsigned int selectedCameraIdx = 0;
+			northStarContextPtr->setCamera(cameras[selectedCameraIdx], true);
+
+			for (; selectedCameraIdx < countCameras; ++selectedCameraIdx)
+			{
+				MDagPath& cameraPath = cameras[selectedCameraIdx];
+				MString cameraName = getNameByDagPath(cameraPath);
+				if (selectedCameraName == cameraName)
+				{
+					northStarContextPtr->setCamera(cameras[selectedCameraIdx], true);
+					break;
+				}
+			}
+		}
+	}
+
+	northStarContextPtr->buildScene(false, false, false);
+	northStarContextPtr->setResolution(settings.width, settings.height, true);
+
 	if (argData.isFlagSet(kAllFlag))
 	{
 		MObjectArray layers;
@@ -446,55 +495,6 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 			// setup layer to export
 			MFnDependencyNode layerNodeFn(layer);
 			MGlobal::executeCommand("editRenderLayerGlobals -currentRenderLayer " + layerNodeFn.name(), false, true);
-
-			// initialize
-			MCommonRenderSettingsData settings;
-			MRenderUtil::getCommonRenderSettings(settings);
-
-			NorthStarContextPtr northStarContextPtr = ContextCreator::CreateNorthStarContext();
-			AnimationExporter animationExporter(false);
-
-			northStarContextPtr->SetRenderType(RenderType::ProductionRender);
-
-			MDagPathArray cameras = GetSceneCameras();
-			unsigned int countCameras = cameras.length();
-
-			if (countCameras == 0)
-			{
-				MGlobal::displayError("Renderable cameras haven't been found! Using default camera!");
-
-				MDagPath cameraPath = getDefaultCamera();
-				MString cameraName = getNameByDagPath(cameraPath);
-				northStarContextPtr->setCamera(cameraPath, true);
-			}
-			else  // (cameras.length() >= 1)
-			{
-				MString selectedCameraName;
-				MStatus res = argData.getFlagArgument(kSelectedCamera, 0, selectedCameraName);
-				if (res != MStatus::kSuccess)
-				{
-					northStarContextPtr->setCamera(cameras[0], true);
-				}
-				else
-				{
-					unsigned int selectedCameraIdx = 0;
-					northStarContextPtr->setCamera(cameras[selectedCameraIdx], true);
-
-					for (; selectedCameraIdx < countCameras; ++selectedCameraIdx)
-					{
-						MDagPath& cameraPath = cameras[selectedCameraIdx];
-						MString cameraName = getNameByDagPath(cameraPath);
-						if (selectedCameraName == cameraName)
-						{
-							northStarContextPtr->setCamera(cameras[selectedCameraIdx], true);
-							break;
-						}
-					}
-				}
-			}
-
-			northStarContextPtr->buildScene(false, false, false);
-			northStarContextPtr->setResolution(settings.width, settings.height, true);
 
 			// setup frame ranges
 			if (!isSequenceExportEnabled || isAnimationAsSingleFileEnabled)
