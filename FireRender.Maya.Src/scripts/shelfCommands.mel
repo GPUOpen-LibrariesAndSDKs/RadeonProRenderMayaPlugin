@@ -149,18 +149,31 @@ global proc launchSceneExport()
 		int $framePadding = `getAttr defaultRenderGlobals.extensionPadding`;
 		string $selectedCam = `optionMenu -query -value selectedCamera`;
 		$isAllLayersExportEnabled = `checkBox -query -value allLayersExportCheckBx`;
-
+		
 		catchQuiet ( `OxSetIsRendering(true)` );
 		
-
-		fireRenderExport 
+		if($isAllLayersExportEnabled)
+		{
+			fireRenderExport 
 			-scene 
 			-file $result 
 			-frames $isSqExEnabled $firstFrameIdx $lastFrameIdx $isSingleFileEnabled $isIncludeTextureCacheEnabled $isAnimSingleFileEnabled
 			-compress $selectedOption
 			-padding $namePattern $framePadding
 			-camera $selectedCam
-			-layers $isAllLayersExportEnabled;
+			-layers;
+		}
+		else
+		{
+			fireRenderExport 
+			-scene 
+			-file $result 
+			-frames $isSqExEnabled $firstFrameIdx $lastFrameIdx $isSingleFileEnabled $isIncludeTextureCacheEnabled $isAnimSingleFileEnabled
+			-compress $selectedOption
+			-padding $namePattern $framePadding
+			-camera $selectedCam;
+		}
+		
 
 		catchQuiet ( `OxSetIsRendering(false)` );
 

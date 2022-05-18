@@ -73,7 +73,7 @@ MSyntax FireRenderExportCmd::newSyntax()
 	CHECK_MSTATUS(syntax.addFlag(kCompressionFlag, kCompressionFlagLong, MSyntax::kString));
 	CHECK_MSTATUS(syntax.addFlag(kPadding, kPaddingLong, MSyntax::kString, MSyntax::kLong));
 	CHECK_MSTATUS(syntax.addFlag(kSelectedCamera, kSelectedCameraLong, MSyntax::kString));
-	CHECK_MSTATUS(syntax.addFlag(kLayerExportFlag, kLayerExportFlagLong, MSyntax::kBoolean));
+	CHECK_MSTATUS(syntax.addFlag(kLayerExportFlag, kLayerExportFlagLong, MSyntax::kNoArg));
 
 	return syntax; 
 }
@@ -408,7 +408,7 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 	bool isExportAsSingleFileEnabled = false;
 	bool isIncludeTextureCacheEnabled = false;
 	bool isAnimationAsSingleFileEnabled = false;
-	bool isAllLayersExportEnabled = false;
+	
 	if (argData.isFlagSet(kFramesFlag))
 	{
 		argData.getFlagArgument(kFramesFlag, 0, isSequenceExportEnabled);
@@ -418,10 +418,8 @@ MStatus FireRenderExportCmd::doIt(const MArgList & args)
 		argData.getFlagArgument(kFramesFlag, 4, isIncludeTextureCacheEnabled);
 		argData.getFlagArgument(kFramesFlag, 5, isAnimationAsSingleFileEnabled);
 	}
-	if (argData.isFlagSet(kLayerExportFlag))
-	{
-		argData.getFlagArgument(kLayerExportFlag, 0, isAllLayersExportEnabled);
-	}
+
+	bool isAllLayersExportEnabled = argData.isFlagSet(kLayerExportFlag);
 
  	MString compressionOption = "None";
 	if (argData.isFlagSet(kCompressionFlag))
