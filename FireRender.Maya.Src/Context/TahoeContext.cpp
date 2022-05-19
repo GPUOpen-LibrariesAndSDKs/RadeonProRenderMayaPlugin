@@ -11,6 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ********************************************************************/
 #include "TahoeContext.h"
+
 #include "maya/MColorManagementUtilities.h"
 #include "maya/MFileObject.h"
 
@@ -417,6 +418,8 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 	checkStatus(frstatus);
 
 	// Release existing effects
+	m_tonemap.reset();
+
 	if (white_balance)
 	{
 		context.Detach(white_balance);
@@ -429,16 +432,16 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 		simple_tonemap.Reset();
 	}
 
-	if (tonemap)
+	if (m_tonemap)
 	{
-		context.Detach(tonemap);
-		tonemap.Reset();
+		//context.Detach(m_tonemap);
+		//m_tonemap.Reset();
 	}
 
-	if (normalization)
+	if (m_normalization)
 	{
-		context.Detach(normalization);
-		normalization.Reset();
+		context.Detach(m_normalization);
+		m_normalization.Reset();
 	}
 
 	if (gamma_correction)
@@ -451,8 +454,8 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 	// work, which is required for OpenGL interop. Frame buffer normalization
 	// should be applied before other post effects.
 	// Also gamma effect requires normalization when tonemapping is not used.
-	normalization = frw::PostEffect(context, frw::PostEffectTypeNormalization);
-	context.Attach(normalization);
+	m_normalization = frw::PostEffect(context, frw::PostEffectTypeNormalization);
+	context.Attach(m_normalization);
 
 	// Create new effects
 	switch (fireRenderGlobalsData.toneMappingType)
@@ -460,59 +463,22 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 	case 0:
 		break;
 
-	case 1:
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_LINEAR);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_LINEAR_SCALE, fireRenderGlobalsData.toneMappingLinearScale);
+	case 1: // RPR_TONEMAPPING_OPERATOR_LINEAR => RIF_IMAGE_FILTER_LINEAR_TONEMAP
 		break;
 
-	case 2:
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_PHOTOLINEAR);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_SENSITIVITY, fireRenderGlobalsData.toneMappingPhotolinearSensitivity);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_FSTOP, fireRenderGlobalsData.toneMappingPhotolinearFstop);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_EXPOSURE, fireRenderGlobalsData.toneMappingPhotolinearExposure);
+	case 2: // RPR_TONEMAPPING_OPERATOR_PHOTOLINEAR
 		break;
 
-	case 3:
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_AUTOLINEAR);
+	case 3: // RPR_TONEMAPPING_OPERATOR_AUTOLINEAR
 		break;
 
-	case 4:
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_MAXWHITE);
+	case 4: // RPR_TONEMAPPING_OPERATOR_MAXWHITE
 		break;
 
-	case 5:
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_REINHARD02);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_REINHARD02_PRE_SCALE, fireRenderGlobalsData.toneMappingReinhard02Prescale);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_REINHARD02_POST_SCALE, fireRenderGlobalsData.toneMappingReinhard02Postscale);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_REINHARD02_BURN, fireRenderGlobalsData.toneMappingReinhard02Burn);
+	case 5: // RPR_TONEMAPPING_OPERATOR_REINHARD02
 		break;
 
-	case 6:
+	case 6: // PostEffectTypeSimpleTonemap
 		if (!simple_tonemap)
 		{
 			simple_tonemap = frw::PostEffect(context, frw::PostEffectTypeSimpleTonemap);
@@ -548,7 +514,7 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 		white_balance.SetParameter("colortemp", temperature);
 	}
 
-	bool setDisplayGamma = fireRenderGlobalsData.applyGammaToMayaViews || simple_tonemap || tonemap || wbApplied;
+	bool setDisplayGamma = fireRenderGlobalsData.applyGammaToMayaViews || simple_tonemap || m_tonemap || wbApplied;
 	float displayGammaValue = setDisplayGamma ? fireRenderGlobalsData.displayGamma : 1.0f;
 	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_DISPLAY_GAMMA, displayGammaValue);
 	checkStatus(frstatus);
@@ -556,7 +522,7 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 
 bool TahoeContext::needResolve() const
 {
-	return bool(white_balance) || bool(simple_tonemap) || bool(tonemap) || bool(normalization) || bool(gamma_correction);
+	return bool(white_balance) || bool(simple_tonemap) || bool(m_tonemap) || bool(m_normalization) || bool(gamma_correction);
 }
 
 bool TahoeContext::IsRenderQualitySupported(RenderQuality quality) const
