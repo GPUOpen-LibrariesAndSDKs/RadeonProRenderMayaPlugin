@@ -251,12 +251,12 @@ bool FireRenderContext::TryCreateTonemapImageFilters()
 		}
 		case 5:
 		{
-			m_tonemap->CreateFilter(RifFilterType::AutoLinearTonemap);
+			m_tonemap->CreateFilter(RifFilterType::ReinhardTonemap);
 			m_tonemap->AddInput(RifColor, PixelBuffers()[RPR_AOV_COLOR].data(), rifImageSize, 0.0f);
 			RifParam p = { RifParamType::RifFloat, (rif_float)2.2f };
 			m_tonemap->AddParam("gamma", p);
 			p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingReinhard02Prescale };
-			m_tonemap->AddParam("burn", p);
+			m_tonemap->AddParam("preScale", p);
 			p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingReinhard02Postscale };
 			m_tonemap->AddParam("postScale", p);
 			p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingReinhard02Burn };
