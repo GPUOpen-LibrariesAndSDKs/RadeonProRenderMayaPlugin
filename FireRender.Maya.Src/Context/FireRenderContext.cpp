@@ -100,7 +100,6 @@ FireRenderContext::FireRenderContext() :
 	m_progress(0),
 	m_interactive(false),
 	m_camera(this, MDagPath()),
-	m_glInteropActive(false),
 	m_globalsChanged(false),
 	m_renderLayersChanged(false),
 	m_cameraDirty(true),
@@ -146,7 +145,7 @@ int FireRenderContext::initializeContext()
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags(m_RenderType);
 
 	rpr_int res;
-	createContextEtc(createFlags, true, false, &res);
+	createContextEtc(createFlags, true, &res);
 
 	return res;
 }
@@ -272,17 +271,7 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 
 		if (createResolveFB)
 		{
-			// Create an OpenGL interop resolved frame buffer if
-			// required, otherwise, create a standard frame buffer.
-			if (m_glInteropActive && glTexture)
-			{
-				m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, glTexture);
-			}
-			else
-			{
-				m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
-			}
-
+			m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
 			m.framebufferAOV_resolved[index].Clear();
 		}
 	}
@@ -375,32 +364,13 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 		bool avoidMaterialSystemDeletion_workaround = isViewport && (createFlags & RPR_CREATION_FLAGS_ENABLE_CPU);
 
 		rpr_int res;
-		if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, glViewport, &res, false))
+		if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, &res, false))
 		{
-			// Failed to create context
-			if (glViewport)
-			{
-				// If we attempted to create gl interop context, try again without interop
-				if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, false))
-				{
-					// Failed again, aborting
-					MGlobal::displayError("Failed to create Radeon ProRender context in interop and non-interop modes. Aborting.");
-					return false;
-				}
-				else
-				{
-					// Success, display a message and continue
-					MGlobal::displayWarning("Unable to create Radeon ProRender context in interop mode. Falling back to non-interop mode.");
-				}
-			}
-			else
-			{
-				MGlobal::displayError("Aborting switching to Radeon ProRender.");
-				MString msg;
-				FireRenderError error(res, msg, true);
+			MGlobal::displayError("Aborting switching to Radeon ProRender.");
+			MString msg;
+			FireRenderError error(res, msg, true);
 
-				return false;
-			}
+			return false;
 		}
 
 		GetScope().CreateScene();
@@ -984,7 +954,7 @@ void FireRenderContext::initSwatchScene()
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags();
 
 	rpr_int res;
-	if (!createContextEtc(createFlags, true, false, &res))
+	if (!createContextEtc(createFlags, true, &res))
 	{
 		MString msg;
 		FireRenderError errorToShow(res, msg, true);
@@ -998,10 +968,13 @@ void FireRenderContext::initSwatchScene()
 	mesh->setVisibility(true);
 	m_sceneObjects["mesh"] = std::shared_ptr<FireRenderObject>(mesh);
 
-	if (mesh && mesh->Elements().size() > 0)
+	if (mesh)
 	{
 		if (auto shader = GetShader(MObject()))
-			mesh->Element(0).shape.SetShader(shader);
+		{
+			for (auto& element : mesh->Elements())
+				element.shape.SetShader(shader);
+		}
 	}
 
 	m_camera.buildSwatchCamera();
@@ -1015,8 +988,6 @@ void FireRenderContext::initSwatchScene()
 	setupContextPostSceneCreation(m_globals);
 
 	UpdateCompletionCriteriaForSwatch();
-
-	SetupPreviewMode();
 }
 
 void FireRenderContext::UpdateCompletionCriteriaForSwatch()
@@ -1317,26 +1288,13 @@ void FireRenderContext::BuildLateinitObjects()
 	m_LateinitMASHInstancers.clear();
 }
 
-bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete, bool glViewport, int* pOutRes, bool createScene /*= true*/)
+bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete, int* pOutRes, bool createScene /*= true*/)
 {
-	return FireRenderThread::RunOnceAndWait<bool>([this, &creation_flags, destroyMaterialSystemOnDelete, glViewport, pOutRes, createScene]()
+	return FireRenderThread::RunOnceAndWait<bool>([this, &creation_flags, destroyMaterialSystemOnDelete, pOutRes, createScene]()
 	{
 		RPR_THREAD_ONLY;
 
 		DebugPrint("FireRenderContext::createContextEtc(%d)", creation_flags);
-
-		// Use OpenGL interop for OpenGL based viewports if required.
-		if (glViewport)
-		{
-			// GL interop is active if enabled and not using CPU rendering.
-			bool useCPU = (creation_flags & RPR_CREATION_FLAGS_ENABLE_CPU) != 0;
-			m_glInteropActive = !useCPU && IsGLInteropEnabled();
-
-			if (m_glInteropActive)
-				creation_flags |= RPR_CREATION_FLAGS_ENABLE_GL_INTEROP;
-		}
-		else
-			m_glInteropActive = false;
 
 		rpr_context handle;
 		bool contextCreated = createContext(creation_flags, handle, pOutRes);
@@ -1445,45 +1403,21 @@ bool FireRenderContext::ConsiderShadowReflectionCatcherOverride(const ReadFrameB
 
 	std::lock_guard<std::mutex> lock(m_rifLock);
 
-	TahoePluginVersion version = GetTahoeVersionToUse();
-	bool isRPR20 = version == TahoePluginVersion::RPR2;
-
 	if (isShadowCather && isReflectionCatcher)
 	{
-		if (isRPR20)
-		{
-			rifReflectionShadowCatcherOutput(params);
-		}
-		else
-		{
-			compositeReflectionShadowCatcherOutput(params);
-		}
+		rifReflectionShadowCatcherOutput(params);
 		return true;
 	}
 
 	if (isShadowCather)
 	{
-		if (isRPR20)
-		{
-			rifShadowCatcherOutput(params);
-		}
-		else
-		{
-			compositeShadowCatcherOutput(params);
-		}
+		rifShadowCatcherOutput(params);
 		return true;
 	}
 
 	if (isReflectionCatcher)
 	{
-		if (isRPR20)
-		{
-			rifReflectionCatcherOutput(params);
-		}
-		else
-		{
-			compositeReflectionCatcherOutput(params);
-		}
+		rifReflectionCatcherOutput(params);
 		return true;
 	}
 
@@ -2075,6 +2009,7 @@ void FireRenderContext::updateFromGlobals(bool applyLock)
 
 	m_globals.readFromCurrentScene();
 	setupContextContourMode(m_globals, createFlags);
+	setupContextAirVolume(m_globals);
 	setupContextPostSceneCreation(m_globals);
 
 	updateLimitsFromGlobalData(m_globals);
@@ -2142,6 +2077,10 @@ void FireRenderContext::globalsChangedCallback(MNodeMessage::AttributeMessage ms
 				restartRender = true;
 			}
 			else if (FireRenderGlobalsData::IsMotionBlur(plug.name()))
+			{
+				restartRender = true;
+			}
+			else if (FireRenderGlobalsData::IsAirVolume(plug.name()))
 			{
 				restartRender = true;
 			}
@@ -2240,11 +2179,6 @@ void FireRenderContext::setMotionBlurParameters(const FireRenderGlobalsData& glo
 bool FireRenderContext::isInteractive() const
 {
 	return (m_RenderType == RenderType::IPR) || (m_RenderType == RenderType::ViewportRender);
-}
-
-bool FireRenderContext::isGLInteropActive() const
-{
-	return m_glInteropActive;
 }
 
 void FireRenderContext::renderLayerManagerCallback(MNodeMessage::AttributeMessage msg, MPlug & plug, MPlug & otherPlug, void * clientData)
@@ -2692,7 +2626,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 				continue;
 			}
 
-			if (ptr->IsMashInstancer())
+			if (ptr->ShouldForceReload())
 			{
 				meshesToReload.emplace_back() = ptr;
 
@@ -2768,8 +2702,6 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		UpdateDefaultLights();
 		setCameraAttributeChanged(true);
 	}
-
-	SetupPreviewMode();
 
 	if (cancelled())
 		return false;
@@ -3041,7 +2973,7 @@ frw::FrameBuffer GetOutFrameBuffer(const FireRenderContext::ReadFrameBufferReque
 // -----------------------------------------------------------------------------
 void FireRenderContext::rifShadowCatcherOutput(const ReadFrameBufferRequestParams& params)
 {
-	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
+	const bool forceCPUContext = true;
 
 	const rpr_framebuffer colorFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
 	const rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
@@ -3107,7 +3039,7 @@ void FireRenderContext::rifShadowCatcherOutput(const ReadFrameBufferRequestParam
 
 void FireRenderContext::rifReflectionCatcherOutput(const ReadFrameBufferRequestParams& params)
 {
-	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
+	bool forceCPUContext = true;
 
 	const rpr_framebuffer colorFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
 	const rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
@@ -3158,7 +3090,7 @@ void FireRenderContext::rifReflectionCatcherOutput(const ReadFrameBufferRequestP
 
 void FireRenderContext::rifReflectionShadowCatcherOutput(const ReadFrameBufferRequestParams& params)
 {
-	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
+	bool forceCPUContext = true;
 	
 	const rpr_framebuffer colorFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
 	const rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
@@ -3383,7 +3315,7 @@ frw::Shader FireRenderContext::GetShader(MObject ob, MObject shadingEngine, cons
 
 		MPlug materialIdPlug = sgDependecyNode.findPlug("rmi", false);
 
-		if (!materialIdPlug.isNull())
+		if (IsMaterialNodeIDSupported() && !materialIdPlug.isNull())
 		{
 			shader.SetMaterialId(materialIdPlug.asInt());
 		}
@@ -3649,3 +3581,39 @@ void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestPa
 	});
 }
 
+frw::Light FireRenderContext::GetRprLightFromNode(const MObject& node)
+{
+	const char* uuid = MFnDependencyNode(node).uuid().asString().asChar();
+
+	if (m_sceneObjects.find(uuid) == m_sceneObjects.end())
+	{
+		MGlobal::displayError("Unable to find linked light!");
+		return frw::Light();
+	}
+
+	if (GetScope().GetCurrentlyParsedMesh() == nullptr)
+	{
+		MGlobal::displayError("'GetRprLightFromNode' method called outside of mesh parsing scope");
+		return frw::Light();
+	}
+
+	FireRenderObject* lightObjectPointer = m_sceneObjects[uuid].get();
+
+	FireRenderLight* fireRenderLight = dynamic_cast<FireRenderLight*>(lightObjectPointer);
+	FireRenderEnvLight* envLight = dynamic_cast<FireRenderEnvLight*>(lightObjectPointer);
+
+	if (fireRenderLight && !fireRenderLight->GetFrLight().isAreaLight)
+	{
+		fireRenderLight->addLinkedMesh(GetScope().GetCurrentlyParsedMesh());
+		return fireRenderLight->GetFrLight().light;
+	}
+	else if (envLight)
+	{
+		envLight->addLinkedMesh(GetScope().GetCurrentlyParsedMesh());
+		return envLight->getLight();
+	}
+
+	MGlobal::displayWarning("light with uuid " + MString(lightObjectPointer->uuid().c_str()) + " is not support linking");
+	return frw::Light();
+	
+}

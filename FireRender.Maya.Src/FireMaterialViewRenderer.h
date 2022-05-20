@@ -40,7 +40,7 @@ public:
 
 	std::map<std::string, std::string> m_lightsNames;
 
-	TahoeContext m_context;
+	NorthStarContext m_context;
 
 	std::tuple<frw::Shader, FireMaya::NodeId> m_surfaceShader;
 

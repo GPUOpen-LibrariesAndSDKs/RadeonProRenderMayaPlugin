@@ -51,7 +51,8 @@ typedef std::chrono::time_point<std::chrono::steady_clock> TimePoint;
 struct AirVolumeSettings
 {
 	AirVolumeSettings()
-		: enabled(false)
+		: airVolumeEnabled(false)
+		, fogEnabled(false)
 		, fogColor(1.0f, 1.0f, 1.0f, 0.0f)
 		, fogDistance(5000)
 		, fogHeight(1.5f)
@@ -60,7 +61,8 @@ struct AirVolumeSettings
 		, airVolumeClamp(0.1f)
 	{}
 
-	bool enabled;
+	bool airVolumeEnabled;
+	bool fogEnabled;
 	MColor fogColor;
 	float fogDistance;
 	float fogHeight;
@@ -165,13 +167,8 @@ enum class RenderQuality
 	RenderQualityFull = 0,
 	RenderQualityHigh,
 	RenderQualityMedium,
-	RenderQualityLow
-};
-
-enum TahoePluginVersion
-{
-	RPR1 = 1,	// Tahoe 1.X
-	RPR2 = 2,	// Tahoe 2.X
+	RenderQualityLow,
+	RenderQualityNorthStar
 };
 
 
@@ -201,6 +198,8 @@ public:
 	static bool isDenoiser(MString name);
 
 	static bool IsMotionBlur(MString name);
+
+	static bool IsAirVolume(MString name);
 
 	static void getCPUThreadSetup(bool& overriden, int& cpuThreadCount, RenderType renderType);
 	static int getThumbnailIterCount(bool* pSwatchesEnabled = nullptr);
@@ -1116,7 +1115,7 @@ void setAttribProps(MFnAttribute& attr, const MObject& attrObj);
 void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals, std::vector<int>& vertexIndices, std::vector<int>& normalIndices);
 
 template <typename OutT, typename MayaArrayT>
-void DumpMayaArray(std::vector<OutT>& out, const MayaArrayT& source)
+void WriteMayaArrayTo(std::vector<OutT>& out, const MayaArrayT& source)
 {
 	using MayaElementT = decltype(
 		std::declval<MayaArrayT&>()[std::declval<unsigned int>()]
@@ -1134,7 +1133,6 @@ std::vector<MString> dumpAttributeNamesDbg(MObject node);
 RenderQuality GetRenderQualityFromPlug(const char* plugName);
 RenderQuality GetRenderQualityForRenderType(RenderType renderType);
 
-TahoePluginVersion GetTahoeVersionToUse();
 bool CheckIsInteractivePossible();
 
 

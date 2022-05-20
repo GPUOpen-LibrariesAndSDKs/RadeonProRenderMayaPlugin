@@ -30,8 +30,6 @@ MString FireRenderSkyLocator::drawDbClassification("drawdb/geometry/light/FireRe
 MString FireRenderSkyLocator::drawDbGeomClassification("drawdb/geometry/light/FireRenderSkyLocator");
 MString FireRenderSkyLocator::drawRegistrantId("FireRenderSkyNode");
 
-MObject FireRenderSkyLocator::SkySelectingPortalMesh;
-
 const MString FireRenderSkyLocator::GetNodeTypeName(void) const
 {
 	return "RPRSky";
@@ -198,13 +196,6 @@ MStatus FireRenderSkyLocator::initialize()
 	nAttr.setMax(180);
 	addAttribute(a);
 
-	SkySelectingPortalMesh = nAttr.create("SkySelectingPortalMesh", "skys", MFnNumericData::kBoolean, false);
-	nAttr.setKeyable(true);
-	nAttr.setStorable(true);
-	nAttr.setReadable(true);
-	nAttr.setWritable(true);
-	addAttribute(SkySelectingPortalMesh);
-
 	return MS::kSuccess;
 }
 
@@ -238,15 +229,6 @@ void* FireRenderSkyLocator::creator()
 	return new FireRenderSkyLocator();
 }
 
-void FireRenderSkyLocator::onSelectionChanged(void *clientData)
-{
-	FireRenderSkyLocator* fireRenderSkyNode = static_cast<FireRenderSkyLocator*> (clientData);
-	fireRenderSkyNode->SubscribeSelectionChangedEvent(false);
-
-	// Add selected mesh to portals list
-	fireRenderSkyNode->AddSelectedMeshToPortalList();
-}
-
 void FireRenderSkyLocator::postConstructor()
 {
 	FireRenderLightCommon::postConstructor();
@@ -274,80 +256,8 @@ void FireRenderSkyLocator::onAttributeChanged(MNodeMessage::AttributeMessage msg
 	{
 		return;
 	}
-
-	if (plug == FireRenderSkyLocator::SkySelectingPortalMesh)
-	{
-		FireRenderSkyLocator* fireRenderSkyNode = static_cast<FireRenderSkyLocator*> (clientData);
-		fireRenderSkyNode->SubscribeSelectionChangedEvent();
-	}
 }
 
-void FireRenderSkyLocator::SubscribeSelectionChangedEvent(bool subscribe)
-{
-	if (subscribe)
-	{
-		if (m_selectionChangedCallback == 0)
-		{
-			m_selectionChangedCallback = MEventMessage::addEventCallback("SelectionChanged", onSelectionChanged, this);
-		}
-	}
-	else
-	{
-		if (m_selectionChangedCallback != 0)
-		{
-			MNodeMessage::removeCallback(m_selectionChangedCallback);
-		}
-
-		m_selectionChangedCallback = 0;
-	}
-}
-
-void FireRenderSkyLocator::AddSelectedMeshToPortalList(void)
-{
-	MSelectionList sList;
-	MGlobal::getActiveSelectionList(sList);
-	MObject nodeObject = thisMObject();
-
-	for (unsigned int i = 0; i < sList.length(); i++)
-	{
-		MDagPath path;
-
-		sList.getDagPath(i, path);
-
-		if (!path.node().hasFn(MFn::kTransform))
-		{
-			continue;
-		}
-		path.extendToShape();
-
-		MHWRender::DisplayStatus displayStatus = MHWRender::MGeometryUtilities::displayStatus(path);
-		MObject inputObj = path.node();
-		if (displayStatus != MHWRender::kLead)
-			continue;
-
-		if (!inputObj.hasFn(MFn::kMesh))
-			continue;
-
-		MFnDagNode mFnThisNode(nodeObject);
-		MObject skyNode = mFnThisNode.parent(0);
-
-		MFnDagNode mFnInputShapeNode(inputObj);
-		if (mFnInputShapeNode.isChildOf(skyNode))
-		{
-			continue;
-		}
-
-		MFnDagNode mFnInputNode(mFnInputShapeNode.parent(0));
-		MString inputNodeName = mFnInputNode.name();
-		MString cmd = "setAttr " + inputNodeName + ".inheritsTransform 0; ";
-		MStatus status = MGlobal::executeCommand(cmd);
-		CHECK_MSTATUS(status);
-
-		MDagModifier dagModifier;
-		MStatus result = dagModifier.reparentNode(mFnInputShapeNode.parent(0), skyNode);
-		dagModifier.doIt();
-	}
-}
 
 // ================================
 // Viewport 2.0 override

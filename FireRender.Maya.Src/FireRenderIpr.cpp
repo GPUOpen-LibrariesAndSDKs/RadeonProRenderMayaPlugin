@@ -202,7 +202,7 @@ bool FireRenderIpr::start()
 			return false;
 		}
 
-		if (TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
+		if (NorthStarContext::IsGivenContextNorthStar(m_contextPtr.get()))
 		{
 			m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderIpr::OnBufferAvailableCallback, this, std::placeholders::_1));
 		}

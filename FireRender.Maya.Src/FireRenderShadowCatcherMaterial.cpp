@@ -163,7 +163,10 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 	
 	MFnDependencyNode shaderNode(thisMObject());
 
-	frw::Shader shader(scope.MaterialSystem(), scope.Context());
+	frw::Shader shader(scope.MaterialSystem(), scope.Context()); 
+	
+	const IFireRenderContextInfo* ctxInfo = scope.GetIContextInfo();
+	assert(ctxInfo);
 	
 	if (shaderNode.findPlug(Attribute::scenabled, false).asBool())
 	{
@@ -185,7 +188,7 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 			pContext->m_bgWeight = bgWeight.GetX();
 		}
 
-		if (shadowColor.IsFloat())
+		if (ctxInfo->IsShadowColorSupported() && shadowColor.IsFloat())
 		{
 			float r = shadowColor.GetX();
 			float g = shadowColor.GetY();

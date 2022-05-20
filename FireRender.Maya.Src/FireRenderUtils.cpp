@@ -553,7 +553,11 @@ void FireRenderGlobalsData::readAirVolumeParameters(const MFnDependencyNode& frG
 {
 	MPlug plug = frGlobalsNode.findPlug("airVolumeEnabled");
 	if (!plug.isNull())
-		airVolumeSettings.enabled = plug.asBool();
+		airVolumeSettings.airVolumeEnabled = plug.asBool();
+
+	plug = frGlobalsNode.findPlug("fogEnabled");
+	if (!plug.isNull())
+		airVolumeSettings.fogEnabled = plug.asBool();
 
 	plug = frGlobalsNode.findPlug("fogColor", false);
 	if (!plug.isNull())
@@ -708,6 +712,17 @@ bool FireRenderGlobalsData::IsMotionBlur(MString name)
 	name = GetPropertyNameFromPlugName(name);
 
 	static const std::set<std::string> propNames { "motionBlur", "cameraMotionBlur", "motionBlurCameraExposure", "viewportMotionBlur", "velocityAOVMotionBlur"};
+
+	return propNames.find(name.asChar()) != propNames.end();
+}
+
+bool FireRenderGlobalsData::IsAirVolume(MString name)
+{
+	name = GetPropertyNameFromPlugName(name);
+
+	static const std::set<std::string> propNames{ 
+		"airVolumeEnabled", "fogEnabled", "fogColor", "fogDistance", "fogHeight", "airVolumeDensity", "airVolumeColor", "airVolumeClamp" 
+	};
 
 	return propNames.find(name.asChar()) != propNames.end();
 }
@@ -1749,7 +1764,7 @@ HardwareResources::HardwareResources()
             doWhiteList = false;
         }
 
-		int tahoeID = TahoeContext::GetPluginID(TahoePluginVersion::RPR1);
+		int tahoeID = NorthStarContext::GetPluginID();
 
         device.creationFlag = device.creationFlag | additionalFlags;
 		device.compatibility = rprIsDeviceCompatible(tahoeID, RPR_TOOLS_DEVICE(i), nullptr, doWhiteList, os, additionalFlags );
@@ -2296,26 +2311,9 @@ RenderQuality GetRenderQualityForRenderType(RenderType renderType)
 	return quality;
 }
 
-TahoePluginVersion GetTahoeVersionToUse()
-{
-	MPlug plug = GetRadeonProRenderGlobalsPlug("tahoeVersion");
-
-	if (!plug.isNull())
-	{
-		return static_cast<TahoePluginVersion>(plug.asShort());
-	}
-	else
-	{
-		// plug should not be null
-		assert(false);
-	}
-
-	return TahoePluginVersion::RPR1;
-}
-
 bool CheckIsInteractivePossible()
 {
-	// return treu in anticipation that IPR For RPR2 would be fixed for the next Release.
+	// return true in anticipation that IPR For RPR2 would be fixed for the next Release.
 	return true;
 }
 
