@@ -65,7 +65,7 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	FileAccessMode mode)
 {
 	// Create new context and fill it with scene
-	std::unique_ptr<TahoeContext> fireRenderContext = std::make_unique<TahoeContext>();
+	std::unique_ptr<NorthStarContext> fireRenderContext = std::make_unique<NorthStarContext>();
 	ContextAutoCleaner contextAutoCleaner(fireRenderContext.get());
 
 	// to be sure RenderProgressBars will be closed upon function exit

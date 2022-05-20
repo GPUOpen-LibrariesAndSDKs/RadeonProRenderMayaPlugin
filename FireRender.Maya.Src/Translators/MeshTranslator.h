@@ -117,9 +117,9 @@ namespace FireMaya
 		};
 
 		static bool PreProcessMesh(MeshPolygonData& outMeshPolygonData, const frw::Context& context, const MObject& originalObject, unsigned int deformationFrameCount = 0, unsigned int currentDeformationFrame = 0, MString fullDagPath = "");
-		static std::vector<frw::Shape> TranslateMesh(MeshPolygonData& meshPolygonData, const frw::Context& context, const MObject& originalObject, std::vector<int>& outFaceMaterialIndices, unsigned int deformationFrameCount = 0, MString fullDagPath = "");
+		static frw::Shape TranslateMesh(MeshPolygonData& meshPolygonData, const frw::Context& context, const MObject& originalObject, std::vector<int>& outFaceMaterialIndices, unsigned int deformationFrameCount = 0, MString fullDagPath = "");
 
-		static std::vector<frw::Shape> TranslateMesh(const frw::Context& context, const MObject& originalObject, std::vector<int>& outFaceMaterialIndices, unsigned int deformationFrameCount = 0, MString fullDagPath="");
+		static frw::Shape TranslateMesh(const frw::Context& context, const MObject& originalObject, std::vector<int>& outFaceMaterialIndices, unsigned int deformationFrameCount = 0, MString fullDagPath="");
 
 	private:
 

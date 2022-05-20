@@ -815,6 +815,9 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 #define SET_RPRX_VALUE(_param_, _attrib_) \
 	material.xSetValue(_param_, GET_VALUE(_attrib_));
 
+	const IFireRenderContextInfo* ctxInfo = scope.GetIContextInfo();
+	assert(ctxInfo);
+
 	MDistance::Unit sceneUnits = MDistance::uiUnit();
 	MDistance distance(1.0, sceneUnits);
 	float scale_multiplier = (float) distance.asMeters();
@@ -834,7 +837,10 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		params.param = RPR_MATERIAL_INPUT_UBER_DIFFUSE_NORMAL;
 		ApplyNormalMap(params);
 
-		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_BACKSCATTER_WEIGHT, backscatteringWeight);
+		if (ctxInfo->IsUberBackscatterWeightSupported())
+		{
+			SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_BACKSCATTER_WEIGHT, backscatteringWeight);
+		}
 
 		if (GET_BOOL(separateBackscatterColor))
 			SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_BACKSCATTER_COLOR, backscatteringColor);
@@ -845,6 +851,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	}
 
 	// Reflection
+	bool isUberReflectionDielectricSupported = ctxInfo->IsUberReflectionDielectricSupported();
 	if (GET_BOOL(reflectionEnable))
 	{
 		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_REFLECTION_COLOR, reflectionColor);
@@ -867,29 +874,41 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		}
 
 		// Is Frensel Approximation On
-		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_FRESNEL_SCHLICK_APPROXIMATION, reflectionIsFresnelApproximationOn);
+		if (ctxInfo->IsUberShlickApproximationSupported())
+		{
+			SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_FRESNEL_SCHLICK_APPROXIMATION, reflectionIsFresnelApproximationOn);
+		}
 
-		NormalMapParams params(scope, material, shaderNode);
-		params.attrUseCommonNormalMap = Attribute::reflectUseShaderNormal;
-		params.mapPlug = Attribute::reflectNormal;
-		params.param = RPR_MATERIAL_INPUT_UBER_REFLECTION_NORMAL;
-		ApplyNormalMap(params);
+		if (ctxInfo->IsUberReflectionNormalSupported())
+		{
+			NormalMapParams params(scope, material, shaderNode);
+			params.attrUseCommonNormalMap = Attribute::reflectUseShaderNormal;
+			params.mapPlug = Attribute::reflectNormal;
+			params.param = RPR_MATERIAL_INPUT_UBER_REFLECTION_NORMAL;
+			ApplyNormalMap(params);
+		}
 
 		// check for the external attribute. Its needed for Demo preparation for Hybrid DX12 engine
 		MPlug plug = shaderNode.findPlug("dx12_R0", false);
 
-		if (!plug.isNull())
+		if (isUberReflectionDielectricSupported)
 		{
-			material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE, scope.GetValue(plug));
-		}
-		else
-		{
-			material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE, frw::Value(0.5f));
+			if (!plug.isNull())
+			{
+				material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE, scope.GetValue(plug));
+			}
+			else
+			{
+				material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE, frw::Value(0.5f));
+			}
 		}
 	}
 	else
 	{
-		material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE, frw::Value(0.0f));
+		if (isUberReflectionDielectricSupported)
+		{
+			material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_DIELECTRIC_REFLECTANCE, frw::Value(0.0f));
+		}
 		material.xSetParameterF(RPR_MATERIAL_INPUT_UBER_REFLECTION_WEIGHT, 0, 0, 0, 0);
 	}
 
@@ -911,9 +930,15 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		params.param = RPR_MATERIAL_INPUT_UBER_COATING_NORMAL;
 		ApplyNormalMap(params);
 
-		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_COATING_THICKNESS, clearCoatThickness);
-		frw::Value clearCoatTransmissionColorInverse = frw::Value(1) - GET_VALUE(clearCoatTransmissionColor);
-		material.xSetValue(RPR_MATERIAL_INPUT_UBER_COATING_TRANSMISSION_COLOR, clearCoatTransmissionColorInverse);
+		if (ctxInfo->IsUberCoatingThicknessSupported())
+		{
+			SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_COATING_THICKNESS, clearCoatThickness);
+		}
+		if (ctxInfo->IsUberCoatingTransmissionColorSupported())
+		{
+			frw::Value clearCoatTransmissionColorInverse = frw::Value(1) - GET_VALUE(clearCoatTransmissionColor);
+			material.xSetValue(RPR_MATERIAL_INPUT_UBER_COATING_TRANSMISSION_COLOR, clearCoatTransmissionColorInverse);
+		}
 	}
 	else
 	{
@@ -927,12 +952,21 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_REFRACTION_WEIGHT, refractionWeight);
 		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_REFRACTION_ROUGHNESS, refractionRoughness);
 		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_REFRACTION_IOR, refractionIOR);
-		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_REFRACTION_ABSORPTION_COLOR, refractionAbsorptionColor);
-		frw::Value valueRefractionAbsorptionDistance = GET_VALUE(refractionAbsorptionDistance) * scale_multiplier;
-		material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFRACTION_ABSORPTION_DISTANCE, valueRefractionAbsorptionDistance);
+		if (ctxInfo->IsUberRefractionAbsorbtionColorSupported())
+		{
+			SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_REFRACTION_ABSORPTION_COLOR, refractionAbsorptionColor);
+		}
+		if (ctxInfo->IsUberRefractionAbsorbtionDistanceSupported())
+		{
+			frw::Value valueRefractionAbsorptionDistance = GET_VALUE(refractionAbsorptionDistance) * scale_multiplier;
+			material.xSetValue(RPR_MATERIAL_INPUT_UBER_REFRACTION_ABSORPTION_DISTANCE, valueRefractionAbsorptionDistance);
+		}
 
-		bool doAllowCaustics = GET_BOOL(refractionAllowCaustics);
-		material.xSetParameterU(RPR_MATERIAL_INPUT_UBER_REFRACTION_CAUSTICS, doAllowCaustics ? RPR_TRUE : RPR_FALSE);
+		if (ctxInfo->IsUberRefractionCausticsSupported())
+		{
+			bool doAllowCaustics = GET_BOOL(refractionAllowCaustics);
+			material.xSetParameterU(RPR_MATERIAL_INPUT_UBER_REFRACTION_CAUSTICS, doAllowCaustics ? RPR_TRUE : RPR_FALSE);
+		}
 		bool bThinSurface = GET_BOOL(refractionThinSurface);
 		bool bLinkedIOR = GET_BOOL(refractionLinkToReflection);
 		material.xSetParameterU(RPR_MATERIAL_INPUT_UBER_REFRACTION_THIN_SURFACE, bThinSurface ? RPR_TRUE : RPR_FALSE);
@@ -971,41 +1005,47 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	}
 
 	// Subsurface
-	if (GET_BOOL(sssEnable))
+	if (ctxInfo->IsUberSSSWeightSupported())
 	{
-		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SSS_WEIGHT, sssWeight);
-
-		if (GET_BOOL(sssUseDiffuseColor))
+		if (GET_BOOL(sssEnable))
 		{
-			SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_COLOR, diffuseColor);
+			SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SSS_WEIGHT, sssWeight);
+
+			if (GET_BOOL(sssUseDiffuseColor))
+			{
+				SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_COLOR, diffuseColor);
+			}
+			else
+			{
+				SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_COLOR, volumeScatter);
+			}
+
+			// SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SSS_WEIGHT, sssWeight);
+
+			frw::Value valueSubsurfaceRadius = GET_VALUE(subsurfaceRadius) * scale_multiplier;
+			material.xSetValue(RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_DISTANCE, valueSubsurfaceRadius);
+			SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_DIRECTION, volumeScatteringDirection);
+			material.xSetParameterU(RPR_MATERIAL_INPUT_UBER_SSS_MULTISCATTER, GET_BOOL(volumeMultipleScattering) ? RPR_TRUE : RPR_FALSE);
 		}
 		else
 		{
-			SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_COLOR, volumeScatter);
+			material.xSetParameterF(RPR_MATERIAL_INPUT_UBER_SSS_WEIGHT, 0, 0, 0, 0);
 		}
-
-		// SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SSS_WEIGHT, sssWeight);
-
-		frw::Value valueSubsurfaceRadius = GET_VALUE(subsurfaceRadius) * scale_multiplier;
-		material.xSetValue(RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_DISTANCE, valueSubsurfaceRadius);
-		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SSS_SCATTER_DIRECTION, volumeScatteringDirection);
-		material.xSetParameterU(RPR_MATERIAL_INPUT_UBER_SSS_MULTISCATTER, GET_BOOL(volumeMultipleScattering) ? RPR_TRUE : RPR_FALSE);
-	}
-	else
-	{
-		material.xSetParameterF(RPR_MATERIAL_INPUT_UBER_SSS_WEIGHT, 0, 0, 0, 0);
 	}
 
 	// Sheen
-	if (GET_BOOL(sheenEnabled))
+	if (ctxInfo->IsUberSheenWeightSupported())
 	{
-		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SHEEN_WEIGHT, sheenWeight);
-		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SHEEN, sheenColor);
-		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SHEEN_TINT, sheenTint);
-	}
-	else
-	{
-		material.xSetParameterF(RPR_MATERIAL_INPUT_UBER_SHEEN_WEIGHT, 0, 0, 0, 0);
+		if (GET_BOOL(sheenEnabled))
+		{
+			SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SHEEN_WEIGHT, sheenWeight);
+			SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SHEEN, sheenColor);
+			SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_SHEEN_TINT, sheenTint);
+		}
+		else
+		{
+			material.xSetParameterF(RPR_MATERIAL_INPUT_UBER_SHEEN_WEIGHT, 0, 0, 0, 0);
+		}
 	}
 
 	// Material attributes

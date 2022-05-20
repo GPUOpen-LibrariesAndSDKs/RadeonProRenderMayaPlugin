@@ -16,21 +16,19 @@ limitations under the License.
 
 #include <map>
 
-class TahoeContext : public FireRenderContext
+class NorthStarContext : public FireRenderContext
 {
 public:
-	TahoeContext();
+	NorthStarContext();
 
-	static rpr_int GetPluginID(TahoePluginVersion version);
-	static bool IsGivenContextRPR2(const FireRenderContext* pContext);
+	static rpr_int GetPluginID();
+	static bool IsGivenContextNorthStar(const FireRenderContext* pContext);
 
 	void setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance) override;
 	void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) override;
 	void setupContextAirVolume(const FireRenderGlobalsData& fireRenderGlobalsData) override;
 
 	bool IsRenderQualitySupported(RenderQuality quality) const override;
-
-	void SetPluginEngine(TahoePluginVersion version);
 
 	virtual bool IsDenoiserSupported() const override;
 	virtual bool IsDisplacementSupported() const override;
@@ -50,8 +48,6 @@ public:
 	virtual void SetRenderUpdateCallback(RenderUpdateCallback callback, void* data) override;
 	virtual void AbortRender() override;
 
-	virtual void SetupPreviewMode() override;
-
 protected:
 	rpr_int CreateContextInternal(rpr_creation_flags createFlags, rpr_context* pContext) override;
 
@@ -59,19 +55,14 @@ protected:
 
 	bool needResolve() const override;
 
-	bool IsGLInteropEnabled() const override;
-
 	virtual void OnPreRender() override;
 
 	virtual int GetAOVMaxValue() override;
 
 private:
-	TahoePluginVersion m_PluginVersion;
-
-	typedef std::map< TahoePluginVersion, rpr_int> LoadedPluginMap;
-	static LoadedPluginMap m_gLoadedPluginsIDsMap;
-
+	static rpr_int m_gTahoePluginID;
+	
 	bool m_PreviewMode;
 };
 
-typedef std::shared_ptr<TahoeContext> TahoeContextPtr;
+typedef std::shared_ptr<NorthStarContext> NorthStarContextPtr;

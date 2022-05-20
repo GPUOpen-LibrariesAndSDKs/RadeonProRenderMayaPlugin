@@ -147,7 +147,7 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 
 			bool imageHasAlpha = false;
 			
-			if (TahoeContext::IsGivenContextRPR2(dynamic_cast<const FireRenderContext*>(m_params.scope.GetIContextInfo())))
+			if (NorthStarContext::IsGivenContextNorthStar(dynamic_cast<const FireRenderContext*>(m_params.scope.GetIContextInfo())))
 			{
 				MPlug fileHasAlphaPlug = m_params.shaderNode.findPlug("fileHasAlpha");
 
@@ -197,21 +197,21 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 	return nullptr;
 }
 
-float MayaStandardNodeConverters::FileNodeConverter::ColorSpace2Gamma(const MString& colorSpace) const
+float MayaStandardNodeConverters::FileNodeConverter::ColorSpace2Gamma(const MString& colorSpace)
 {
-	if (colorSpace == "sRGB")
+	if ((colorSpace == "sRGB") || (colorSpace == "sRGB gamma"))
 		return 2.2f;
 
-	else if (colorSpace == "camera Rec 709")
+	else if ((colorSpace == "camera Rec 709") || (colorSpace == "Rec 709 gamma"))
 		return 2.2f;
 
 	else if (colorSpace == "Raw")
 		return 1.0f;
 
-	else if (colorSpace == "gamma 1.8 Rec 709")
+	else if ((colorSpace == "gamma 1.8 Rec 709") || (colorSpace == "1.8 gamma"))
 		return 1.8f;
 
-	else if (colorSpace == "gamma 2.2 Rec 709")
+	else if ((colorSpace == "gamma 2.2 Rec 709") || (colorSpace == "2.2 gamma"))
 		return 2.2f;
 
 	else if (colorSpace == "gamma 2.4 Rec 709 (video)")

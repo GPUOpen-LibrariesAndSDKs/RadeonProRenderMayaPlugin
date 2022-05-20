@@ -195,9 +195,6 @@ private:
 	/** Resize not using GL interop. */
 	void resizeFrameBufferStandard(unsigned int width, unsigned int height);
 
-	/** Resize using GL interop. */
-	void resizeFrameBufferGLInterop(unsigned int width, unsigned int height);
-
 	/** Render a cached frame. */
 	MStatus renderCached(unsigned int width, unsigned int height);
 

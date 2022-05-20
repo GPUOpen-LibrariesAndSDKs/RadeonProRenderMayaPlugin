@@ -49,7 +49,7 @@ private:
 	bool sceneIsCleaned;
 	MSpinLock mutex;
 
-	TahoeContext context;
+	NorthStarContext context;
 	std::atomic<bool> backgroundRendererBusy;
 
 	std::list<FireRenderMaterialSwatchRender*> queueToProcess;
