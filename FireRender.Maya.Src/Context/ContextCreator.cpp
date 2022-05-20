@@ -13,6 +13,7 @@ limitations under the License.
 #include "ContextCreator.h"
 
 #include "HybridContext.h"
+#include "HybridProContext.h"
 #include "TahoeContext.h"
 
 
@@ -21,20 +22,34 @@ FireRenderContextPtr ContextCreator::CreateHybridContext()
 	return std::make_shared<HybridContext>();
 }
 
-TahoeContextPtr ContextCreator::CreateTahoeContext(TahoePluginVersion version)
+FireRenderContextPtr ContextCreator::CreateHybridProContext()
 {
-	std::shared_ptr<TahoeContext> instance = std::make_shared<TahoeContext>();
-	instance->SetPluginEngine(version);
+	return std::make_shared<HybridProContext>();
+}
+
+NorthStarContextPtr ContextCreator::CreateNorthStarContext()
+{
+	std::shared_ptr<NorthStarContext> instance = std::make_shared<NorthStarContext>();
 
 	return instance;
 }
 
-FireRenderContextPtr ContextCreator::CreateAppropriateContextForRenderQuality(RenderQuality quality)
+FireRenderContextPtr ContextCreator::CreateAppropriateContextForRenderQuality(RenderQuality quality, RenderType renderType)
 {
-#ifdef WIN32
-	if (quality == RenderQuality::RenderQualityFull)
+	if (quality == RenderQuality::RenderQualityNorthStar)
 	{
-		return CreateTahoeContext(GetTahoeVersionToUse());
+		return CreateNorthStarContext();
+	}
+
+#ifdef WIN32
+	if ((quality == RenderQuality::RenderQualityFull) && (renderType == RenderType::ProductionRender))
+	{
+		return CreateNorthStarContext();
+	}
+
+	if ((quality == RenderQuality::RenderQualityFull) && (renderType == RenderType::ViewportRender || renderType == RenderType::IPR))
+	{
+		return CreateHybridProContext();
 	}
 	else
 	{
@@ -42,10 +57,11 @@ FireRenderContextPtr ContextCreator::CreateAppropriateContextForRenderQuality(Re
 	}
 #endif
 
-	return CreateTahoeContext(GetTahoeVersionToUse());
+	return CreateNorthStarContext();
 }
 
 FireRenderContextPtr ContextCreator::CreateAppropriateContextForRenderType(RenderType renderType)
 {
-	return CreateAppropriateContextForRenderQuality(GetRenderQualityForRenderType(renderType));
+	RenderQuality quality = GetRenderQualityForRenderType(renderType);
+	return CreateAppropriateContextForRenderQuality(quality, renderType);
 }

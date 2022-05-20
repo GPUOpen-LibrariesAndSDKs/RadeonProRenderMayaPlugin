@@ -15,7 +15,7 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "505C0BCA2660C2BA000E11A9"
-                     BuildableName = "Maya2022.bundle"
+                     BuildableName = "RadeonProRender.bundle"
                      BlueprintName = "Maya2022"
                      ReferencedContainer = "container:RadeonProRender.xcodeproj">
                   </BuildableReference>
@@ -33,7 +33,7 @@
                   <BuildableReference
                      BuildableIdentifier = "primary"
                      BlueprintIdentifier = "505C0BCA2660C2BA000E11A9"
-                     BuildableName = "Maya2022.bundle"
+                     BuildableName = "RadeonProRender.bundle"
                      BlueprintName = "Maya2022"
                      ReferencedContainer = "container:RadeonProRender.xcodeproj">
                   </BuildableReference>
@@ -51,7 +51,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "505C0BCA2660C2BA000E11A9"
-               BuildableName = "Maya2022.bundle"
+               BuildableName = "RadeonProRender.bundle"
                BlueprintName = "Maya2022"
                ReferencedContainer = "container:RadeonProRender.xcodeproj">
             </BuildableReference>
@@ -87,7 +87,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "505C0BCA2660C2BA000E11A9"
-            BuildableName = "Maya2022.bundle"
+            BuildableName = "RadeonProRender.bundle"
             BlueprintName = "Maya2022"
             ReferencedContainer = "container:RadeonProRender.xcodeproj">
          </BuildableReference>

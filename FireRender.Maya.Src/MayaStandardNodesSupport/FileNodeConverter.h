@@ -22,8 +22,8 @@ namespace MayaStandardNodeConverters
 	public:
 		FileNodeConverter(const ConverterParams& params);
 		virtual frw::Value Convert() const override;
+		static float ColorSpace2Gamma(const MString& colorSpace);
 	private:
-		float ColorSpace2Gamma(const MString& colorSpace) const;
 	};
 
 }

@@ -18,6 +18,7 @@ enum class RenderQuality;
 namespace frw
 {
 	enum ShaderType;
+	class Light;
 }
 
 namespace FireMaya
@@ -41,8 +42,25 @@ public:
 
 	virtual bool IsShaderSupported(frw::ShaderType) const = 0;
 	virtual bool IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) const = 0;
+	virtual bool IsShadowColorSupported() const = 0;
 	
 	virtual frw::Shader GetDefaultColorShader(frw::Value color) = 0;
 
+	virtual bool IsUberReflectionDielectricSupported() const = 0;
+	virtual bool IsUberRefractionAbsorbtionColorSupported() const = 0;
+	virtual bool IsUberRefractionAbsorbtionDistanceSupported() const = 0;
+	virtual bool IsUberRefractionCausticsSupported() const = 0;
+	virtual bool IsUberSSSWeightSupported() const = 0;
+	virtual bool IsUberSheenWeightSupported() const = 0;
+	virtual bool IsUberBackscatterWeightSupported() const = 0;
+	virtual bool IsUberShlickApproximationSupported() const = 0;
+	virtual bool IsUberCoatingThicknessSupported() const = 0;
+	virtual bool IsUberCoatingTransmissionColorSupported() const = 0;
+	virtual bool IsUberReflectionNormalSupported() const = 0;
+	virtual bool IsUberScaleSupported() const = 0;
+
 	virtual bool IsGLTFExport() const = 0;
+
+	// used for toon shader light linking
+	virtual frw::Light GetRprLightFromNode(const MObject& node) = 0;
 };

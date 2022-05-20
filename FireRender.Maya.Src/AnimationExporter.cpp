@@ -180,7 +180,8 @@ int getUVLightGroup(const MDagPath& inDagPath)
 
 void AnimationExporter::assignMesh(FireRenderMesh* pMesh, const MString& groupName, const MDagPath& dagPath)
 {
-	for (auto& element : pMesh->Elements())
+	auto& elements = pMesh->Elements();
+	for (auto& element : elements)
 	{
 		int res = m_pFunc_AssignShapeToGroup(element.shape.Handle(), groupName.asChar());
 		assert(res == RPR_SUCCESS);

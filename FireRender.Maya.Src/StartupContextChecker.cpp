@@ -22,11 +22,11 @@ void StartupContextChecker::CheckContexts()
 
 	//Check rpr context
 	rpr_int res;
-	TahoeContext rprContext;
+	NorthStarContext rprContext;
 	try
 	{
 		auto createFlags = FireMaya::Options::GetContextDeviceFlags();
-		rprContext.createContextEtc(createFlags, true, false, &res);
+		rprContext.createContextEtc(createFlags, true, &res);
 	}
 	catch (const FireRenderException & e)
 	{
