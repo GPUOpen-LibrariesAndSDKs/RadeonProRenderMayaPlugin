@@ -129,10 +129,11 @@ namespace
 		MObject viewportDenoiseUpscaleEnabled;
 
 		// Air Volume
-		MObject airVolumeEnabled;
+		MObject fogEnabled;
 		MObject fogColor;
 		MObject fogDistance;
 		MObject fogHeight;
+		MObject airVolumeEnabled;
 		MObject airVolumeDensity;
 		MObject airVolumeColor;
 		MObject airVolumeClamp;
@@ -491,13 +492,18 @@ MStatus FireRenderGlobals::initialize()
 	addRenderQualityModes(eAttr);
 	MAKE_INPUT_CONST(eAttr);
 
-	ViewportRenderAttributes::renderQuality = eAttr.create("renderQualityViewport", "rqv", (short) RenderQuality::RenderQualityFull, &status);
-	addRenderQualityModes(eAttr);
+	ViewportRenderAttributes::renderQuality = eAttr.create("renderQualityViewport", "rqv", (short) RenderQuality::RenderQualityNorthStar, &status);
+#ifdef WIN32
+	eAttr.addField("HybridPro", (short)RenderQuality::RenderQualityFull); 
+	eAttr.addField("High", (short)RenderQuality::RenderQualityHigh);
+	eAttr.addField("Medium", (short)RenderQuality::RenderQualityMedium);
+	eAttr.addField("Low", (short)RenderQuality::RenderQualityLow);
+#endif
+	eAttr.addField("NorthStar", (short)RenderQuality::RenderQualityNorthStar);
 	MAKE_INPUT_CONST(eAttr);
 
-	Attribute::tahoeVersion = eAttr.create("tahoeVersion", "tahv", TahoePluginVersion::RPR2, &status);
-	eAttr.addField("RPR 1 (Legacy)", TahoePluginVersion::RPR1);
-	eAttr.addField("RPR 2", TahoePluginVersion::RPR2);
+	Attribute::tahoeVersion = eAttr.create("renderVersion", "tahv", 0, &status);
+	eAttr.addField("North Star", 0);
 	MAKE_INPUT_CONST(eAttr);
 	CHECK_MSTATUS(addAttribute(Attribute::tahoeVersion));
 
@@ -959,6 +965,11 @@ void FireRenderGlobals::createAirVolumeAttributes()
 	MAKE_INPUT(nAttr);
 	nAttr.setReadable(true);
 	CHECK_MSTATUS(addAttribute(Attribute::airVolumeEnabled));
+
+	Attribute::fogEnabled = nAttr.create("fogEnabled", "fge", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setReadable(true);
+	CHECK_MSTATUS(addAttribute(Attribute::fogEnabled));
 
 	Attribute::fogColor = nAttr.createColor("fogColor", "foc", &status);
 	nAttr.setDefault(1.0, 1.0, 1.0);

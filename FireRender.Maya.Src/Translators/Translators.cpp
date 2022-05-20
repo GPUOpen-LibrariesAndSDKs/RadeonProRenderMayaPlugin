@@ -653,10 +653,10 @@ namespace FireMaya
 				}
 
 				std::vector<int> faceMaterialIndices;
-				const std::vector<frw::Shape> shapes = MeshTranslator::TranslateMesh(frcontext, shapeDagPath.node(), faceMaterialIndices);
-				if (shapes.size() > 0)
+				frw::Shape shape = MeshTranslator::TranslateMesh(frcontext, shapeDagPath.node(), faceMaterialIndices);
+				if (shape)
 				{
-					frlight.areaLight = shapes[0];
+					frlight.areaLight = shape;
 				}
 				else
 				{

@@ -15,7 +15,7 @@ limitations under the License.
 void FireMaya::SingleShaderMeshTranslator::TranslateMesh(
 	const frw::Context& context,
 	const MFnMesh& fnMesh,
-	std::vector<frw::Shape>& elements,
+	frw::Shape& outShape,
 	MeshTranslator::MeshPolygonData& meshData,
 	const MIntArray& faceMaterialIndices,
 	std::vector<int>& outFaceMaterialIndices)
@@ -115,7 +115,7 @@ void FireMaya::SingleShaderMeshTranslator::TranslateMesh(
 		mesh_properties[2] = (rpr_mesh_info)0;
 	}
 
-	elements[0] = context.CreateMeshEx(
+	outShape = context.CreateMeshEx(
 		meshData.GetVertices(), meshData.GetTotalVertexCount(), sizeof(Float3),
 		meshData.GetNormals(), meshData.GetTotalNormalCount(), sizeof(Float3),
 		nullptr, 0, 0,
@@ -127,7 +127,7 @@ void FireMaya::SingleShaderMeshTranslator::TranslateMesh(
 
 	if (!vertexColors.empty())
 	{
-		elements[0].SetVertexColors(colorVertexIndices, vertexColors, (rpr_int) meshData.countVertices);
+		outShape.SetVertexColors(colorVertexIndices, vertexColors, (rpr_int) meshData.countVertices);
 	}
 
 	meshData.clear();

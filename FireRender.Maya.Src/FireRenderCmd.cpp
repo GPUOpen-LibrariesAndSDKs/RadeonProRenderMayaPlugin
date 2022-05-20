@@ -387,9 +387,9 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 
 	// The render context.
 
-	TahoeContextPtr tahoeContextPtr = ContextCreator::CreateTahoeContext(GetTahoeVersionToUse());
+	NorthStarContextPtr northStarContextPtr = ContextCreator::CreateNorthStarContext();
 
-	TahoeContext& context = *tahoeContextPtr;
+	NorthStarContext& context = *northStarContextPtr;
 
 	try
 	{
@@ -452,11 +452,6 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 			devicesStr += std::string(RenderStampUtils::GetCPUNameString()) + " / " + RenderStampUtils::GetFriendlyUsedGPUName();
 		}
 		devicesStr += "\n";
-
-		// Get RPR version
-		TahoePluginVersion version = GetTahoeVersionToUse();
-		std::string versionStr = "RPR version : ";
-		versionStr += (version == RPR1) ? "RPR1\n" : "RPR2\n";
 
 		// Get the list of cameras to render frames for.
 		MDagPathArray renderableCameras = GetSceneCameras(true);
