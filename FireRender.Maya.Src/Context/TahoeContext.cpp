@@ -126,6 +126,20 @@ void NorthStarContext::setupContextAirVolume(const FireRenderGlobalsData& fireRe
 	}
 }
 
+void NorthStarContext::setupContextCryptomatteSettings(const FireRenderGlobalsData& fireRenderGlobalsData)
+{
+	frw::Context context = GetContext();
+	rpr_context frcontext = context.Handle();
+
+	rpr_int frstatus = RPR_SUCCESS;
+
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CRYPTOMATTE_EXTENDED, fireRenderGlobalsData.cryptomatteExtendedMode);
+	checkStatus(frstatus);
+
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CRYPTOMATTE_SPLIT_INDIRECT, fireRenderGlobalsData.cryptomatteSplitIndirect);
+	checkStatus(frstatus);
+}
+
 void NorthStarContext::setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance /*= false*/)
 {
 	frw::Context context = GetContext();
