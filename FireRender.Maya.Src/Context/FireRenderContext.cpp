@@ -380,6 +380,7 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 
 		setMotionBlurParameters(m_globals);
 		setupContextAirVolume(m_globals);
+		setupContextCryptomatteSettings(m_globals);
 
 		// Update render selected objects only flag
 		int isRenderSelectedOnly = 0;
@@ -2017,6 +2018,7 @@ void FireRenderContext::updateFromGlobals(bool applyLock)
 	setupContextContourMode(m_globals, createFlags);
 	setupContextAirVolume(m_globals);
 	setupContextPostSceneCreation(m_globals);
+	setupContextCryptomatteSettings(m_globals);
 
 	updateLimitsFromGlobalData(m_globals);
 	updateMotionBlurParameters(m_globals);
