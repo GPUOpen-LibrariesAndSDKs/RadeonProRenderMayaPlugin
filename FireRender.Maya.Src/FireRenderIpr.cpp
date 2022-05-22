@@ -404,8 +404,25 @@ bool FireRenderIpr::RunOnViewportThread()
 			{
 				m_finishedFrame = true;
 
-				// run denoiser
 				bool isOutputAOVColor = m_currentAOVToDisplay == RPR_AOV_COLOR;
+
+				// run tonemapper
+				m_contextPtr->ResetRAMBuffers();
+				if (m_contextPtr->IsTonemappingEnabled() && isOutputAOVColor)
+				{
+					bool tonemapSuccessful = m_contextPtr->TonemapIntoRAM();
+					if (tonemapSuccessful)
+					{
+						RV_PIXEL* data = (RV_PIXEL*)m_contextPtr->PixelBuffers()[RPR_AOV_COLOR].data();
+
+						// put tonemapped image to ipr buffer
+						memcpy(m_pixels.data(), data, sizeof(RV_PIXEL) * m_pixels.size());
+
+						scheduleRenderViewUpdate();
+					}
+				}
+
+				// run denoiser
 				if (m_contextPtr->IsDenoiserEnabled() && isOutputAOVColor)
 				{
 					std::vector<float> vecData = m_contextPtr->DenoiseIntoRAM();
