@@ -322,10 +322,10 @@ bool aovExists(int index)
 	if (index <= RPR_AOV_CAMERA_NORMAL)
 		return true;
 
-	if ((index >= RPR_AOV_CRYPTOMATTE_MAT0) && (index <= RPR_AOV_CRYPTOMATTE_MAT2))
+	if ((index >= RPR_AOV_CRYPTOMATTE_MAT0) && (index <= RPR_AOV_CRYPTOMATTE_MAT5))
 		return true;
 
-	if ((index >= RPR_AOV_CRYPTOMATTE_OBJ0) && (index <= RPR_AOV_CRYPTOMATTE_OBJ2))
+	if ((index >= RPR_AOV_CRYPTOMATTE_OBJ0) && (index <= RPR_AOV_CRYPTOMATTE_OBJ5))
 		return true;
 
 	if (index == RPR_AOV_DEEP_COLOR)
@@ -476,6 +476,7 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 
 		setMotionBlurParameters(m_globals);
 		setupContextAirVolume(m_globals);
+		setupContextCryptomatteSettings(m_globals);
 
 		// Update render selected objects only flag
 		int isRenderSelectedOnly = 0;
@@ -1561,9 +1562,15 @@ void FireRenderContext::DebugDumpAOV(int aov, char* pathToFile /*= nullptr*/) co
 		,{RPR_AOV_CRYPTOMATTE_MAT0, "RPR_AOV_CRYPTOMATTE_MAT0" }
 		,{RPR_AOV_CRYPTOMATTE_MAT1, "RPR_AOV_CRYPTOMATTE_MAT1" }
 		,{RPR_AOV_CRYPTOMATTE_MAT2, "RPR_AOV_CRYPTOMATTE_MAT2" }
+		,{RPR_AOV_CRYPTOMATTE_MAT3, "RPR_AOV_CRYPTOMATTE_MAT3" }
+		,{RPR_AOV_CRYPTOMATTE_MAT4, "RPR_AOV_CRYPTOMATTE_MAT4" }
+		,{RPR_AOV_CRYPTOMATTE_MAT5, "RPR_AOV_CRYPTOMATTE_MAT5" }
 		,{RPR_AOV_CRYPTOMATTE_OBJ0, "RPR_AOV_CRYPTOMATTE_OBJ0" }
 		,{RPR_AOV_CRYPTOMATTE_OBJ1, "RPR_AOV_CRYPTOMATTE_OBJ1" }
 		,{RPR_AOV_CRYPTOMATTE_OBJ2, "RPR_AOV_CRYPTOMATTE_OBJ2" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ3, "RPR_AOV_CRYPTOMATTE_OBJ3" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ4, "RPR_AOV_CRYPTOMATTE_OBJ4" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ5, "RPR_AOV_CRYPTOMATTE_OBJ5" }
 		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
 	};
 
@@ -2128,6 +2135,7 @@ void FireRenderContext::updateFromGlobals(bool applyLock)
 	setupContextContourMode(m_globals, createFlags);
 	setupContextAirVolume(m_globals);
 	setupContextPostSceneCreation(m_globals);
+	setupContextCryptomatteSettings(m_globals);
 
 	updateLimitsFromGlobalData(m_globals);
 	updateMotionBlurParameters(m_globals);
