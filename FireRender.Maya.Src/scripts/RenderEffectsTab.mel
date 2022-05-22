@@ -65,6 +65,11 @@ global proc createRenderEffectsTab()
 	frameLayout -label "Contour Render Mode" -cll true -cl 0 fireRenderContourFrame;
 	createFireRenderContourFrame("fireRenderContourFrame");
 	setParent ..;
+	
+	// Cryptomatte
+	frameLayout -label "Cryptomatte" -cll true -cl 0 fireRenderCryptomatteFrame;
+	createFireRenderCryptomatteFrame("fireRenderCryptomatteFrame");
+	setParent ..;
 
 	setParent ..;
 
@@ -129,6 +134,28 @@ global proc createFireRenderAtmosphericVolumeFrame(string $parent)
 	setUITemplate -popTemplate;
 
 	onUpdateAtmosphericVolume();
+}
+
+global proc createFireRenderCryptomatteFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	
+	setParent $parent;
+	
+	columnLayout -adjustableColumn true -cat "left" 10;
+	
+	attrControlGrp
+		-label "Extended Mode"
+		-attribute "RadeonProRenderGlobals.cryptomatteExtendedMode"
+		cryptomatteExtendedMode;
+		
+	attrControlGrp
+		-label "Split Indirect"
+		-attribute "RadeonProRenderGlobals.cryptomatteSplitIndirect"
+		cryptomatteSplitIndirect;
+
+	setParent ..;
+	setUITemplate -popTemplate;
 }
 
 global proc onUpdateAtmosphericVolume()
