@@ -435,64 +435,12 @@ void NorthStarContext::updateTonemapping(const FireRenderGlobalsData& fireRender
 	// Create new effects
 	switch (fireRenderGlobalsData.toneMappingType)
 	{
-	case 0:
-		break;
-      
+	case 0:      
 	case 1:
-		//RPR_TONEMAPPING_OPERATOR_LINEAR
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_LINEAR);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_LINEAR_SCALE, fireRenderGlobalsData.toneMappingLinearScale);
-		break;
-
 	case 2:
-		//RPR_TONEMAPPING_OPERATOR_PHOTOLINEAR
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_PHOTOLINEAR);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_SENSITIVITY, fireRenderGlobalsData.toneMappingPhotolinearSensitivity);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_FSTOP, fireRenderGlobalsData.toneMappingPhotolinearFstop);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_EXPOSURE, fireRenderGlobalsData.toneMappingPhotolinearExposure);
-		break;
-
 	case 3:
-		//RPR_TONEMAPPING_OPERATOR_AUTOLINEAR
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_AUTOLINEAR);
-		break;
-
 	case 4:
-		//RPR_TONEMAPPING_OPERATOR_MAXWHITE
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_MAXWHITE);
-		break;
-
 	case 5:
-		//RPR_TONEMAPPING_OPERATOR_REINHARD02
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_REINHARD02);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_REINHARD02_PRE_SCALE, fireRenderGlobalsData.toneMappingReinhard02Prescale);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_REINHARD02_POST_SCALE, fireRenderGlobalsData.toneMappingReinhard02Postscale);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_REINHARD02_BURN, fireRenderGlobalsData.toneMappingReinhard02Burn);
 		break;
 
 	case 6:
