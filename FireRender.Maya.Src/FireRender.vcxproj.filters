@@ -689,6 +689,12 @@
     <ClCompile Include="ViewportTexture.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FireRenderVoronoi.cpp">
+      <Filter>Materials</Filter>
+    </ClCompile>
+    <ClCompile Include="Context\HybridProContext.cpp">
+      <Filter>Context</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -1185,6 +1191,12 @@
     </ClInclude>
     <ClInclude Include="ViewportTexture.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderVoronoi.h">
+      <Filter>Materials</Filter>
+    </ClInclude>
+    <ClInclude Include="Context\HybridProContext.h">
+      <Filter>Context</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

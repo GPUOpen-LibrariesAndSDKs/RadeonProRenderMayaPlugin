@@ -80,7 +80,6 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
     <Compile Include="Wix files\PluginFinishDlg.wxs" />
     <Compile Include="Wix files\PluginWelcomeDlg.wxs" />
     <Compile Include="Wix files\Product.wxs" />
-    <Compile Include="Wix files\UserRegistrationDlg.wxs" />
     <Compile Include="Wix files\WiXUI_Wizard.wxs" />
 <!--
 EXCLUDE MATERIAL LIBRARY FROM INSTALLER

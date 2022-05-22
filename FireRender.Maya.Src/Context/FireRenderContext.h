@@ -185,9 +185,6 @@ public:
 	/** Return true if the render is interactive (Viewport or IPR). */
 	bool isInteractive() const;
 
-	/** Return true if OpenGL interop is active. */
-	bool isGLInteropActive() const;
-
 	// Build the scene for the swatch renderer
 	// The scene is composed by a poly-sphere and a single light
 	// \param shaderObj Shader used to render the sphere
@@ -215,6 +212,9 @@ public:
 	// Set camera
 	void setCamera(MDagPath& cameraPath, bool useNonDefaultCameraType = false);
 
+	//Get Camera
+	FireRenderCamera& GetCamera() { return m_camera; }
+
 	// Render function (optionally Locks)
 	void render(bool lock = true);
 
@@ -232,7 +232,7 @@ public:
 
 	bool isRenderView() const;
 
-	bool createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete = true, bool glViewport = false, int* pOutRes = nullptr, bool createScene = true);
+	bool createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete = true, int* pOutRes = nullptr, bool createScene = true);
 
 	// Return the context
 	rpr_context context();
@@ -527,7 +527,6 @@ public:
 
 	void setRenderMode(RenderMode renderMode);
 
-	virtual void SetupPreviewMode() {}
 	void SetPreviewMode(int preview);
 
 	bool hasTonemappingChanged() const { return m_tonemappingChanged; }
@@ -547,7 +546,7 @@ public:
 	frw::PostEffect normalization;
 	frw::PostEffect gamma_correction;
 
-	const FireRenderMeshCommon* GetMainMesh(const std::string& uuid) const
+	FireRenderMeshCommon* GetMainMesh(const std::string& uuid) const
 	{
 		assert(!uuid.empty());
 
@@ -561,7 +560,7 @@ public:
 		return nullptr;
 	}
 
-	void AddMainMesh(const FireRenderMeshCommon* mainMesh)
+	void AddMainMesh(FireRenderMeshCommon* mainMesh)
 	{
 		std::string uuid = mainMesh->uuidWithoutInstanceNumber();
 
@@ -569,6 +568,16 @@ public:
 		assert(!alreadyHas);
 
 		m_mainMeshesDictionary[uuid] = mainMesh;
+	}
+
+	void AddMainMesh(FireRenderMeshCommon* mainMesh, std::string& suffix)
+	{
+		std::string uuid = mainMesh->uuidWithoutInstanceNumber();
+
+		const FireRenderMeshCommon* alreadyHas = GetMainMesh(uuid + suffix);
+		assert(!alreadyHas);
+
+		m_mainMeshesDictionary[uuid + suffix] = mainMesh;
 	}
 
 	void RemoveMainMesh(const FireRenderMesh* mainMesh)
@@ -623,6 +632,7 @@ public:
 
 	virtual void setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance = false) {}
 	virtual void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) {}
+	virtual void setupContextAirVolume(const FireRenderGlobalsData& fireRenderGlobalsData) {}
 	virtual bool IsAOVSupported(int aov) const { return true; }
 
 	virtual bool IsRenderQualitySupported(RenderQuality quality) const override = 0;
@@ -631,6 +641,7 @@ public:
 	virtual bool IsDisplacementSupported() const override { return true; }
 	virtual bool IsHairSupported() const override { return true; }
 	virtual bool IsVolumeSupported() const override { return true; }
+	virtual bool IsNorthstarVolumeSupported() const { return false; }
 	virtual bool ShouldForceRAMDenoiser() const override { return false; }
 
 	virtual bool IsPhysicalLightTypeSupported(PLType lightType) const { return true; }
@@ -642,6 +653,26 @@ public:
 
 	virtual bool MetalContextAvailable() const { return false; }
 
+	virtual bool IsDeformationMotionBlurEnabled() const { return false; }
+
+	virtual bool IsMaterialNodeIDSupported() const { return true; }
+	virtual bool IsMeshObjectIDSupported() const { return true; }
+	virtual bool IsContourModeSupported() const { return true; }
+	virtual bool IsCameraSetExposureSupported() const { return true; }
+	virtual bool IsShadowColorSupported() const { return true; }
+	virtual bool IsUberReflectionDielectricSupported() const { return true; }
+	virtual bool IsUberRefractionAbsorbtionColorSupported() const { return true; }
+	virtual bool IsUberRefractionAbsorbtionDistanceSupported() const { return true; }
+	virtual bool IsUberRefractionCausticsSupported() const { return true; }
+	virtual bool IsUberSSSWeightSupported() const { return true; }
+	virtual bool IsUberSheenWeightSupported() const { return true; }
+	virtual bool IsUberBackscatterWeightSupported() const { return true; }
+	virtual bool IsUberShlickApproximationSupported() const { return true; }
+	virtual bool IsUberCoatingThicknessSupported() const { return true; }
+	virtual bool IsUberCoatingTransmissionColorSupported() const { return true; }
+	virtual bool IsUberReflectionNormalSupported() const { return true; }
+	virtual bool IsUberScaleSupported() const { return true; }
+
 	bool IsGLTFExport() const override { return m_bIsGLTFExport; }
 	void SetGLTFExport(bool isGLTFExport) { m_bIsGLTFExport = isGLTFExport; }
 
@@ -650,8 +681,13 @@ public:
 
 	int GetSamplesPerUpdate() const { return m_samplesPerUpdate; }
 
+	const FireRenderGlobalsData& Globals(void) const { return m_globals; }
+
 	bool setupUpscalerForViewport(RV_PIXEL* data);
 	bool setupDenoiserForViewport();
+
+	// used for toon shader light linking
+	frw::Light GetRprLightFromNode(const MObject& node) override;
 
 protected:
 	static int INCORRECT_PLUGIN_ID;
@@ -769,9 +805,6 @@ private:
 	/** True if the render should be interactive. */
 	bool m_interactive;
 
-	/** True if OpenGL interop is enabled. */
-	bool m_glInteropActive;
-
 	/** A list of nodes that have been added since the last refresh. */
 	std::vector<MObject> m_addedNodes;
 
@@ -817,7 +850,7 @@ private:
 	}
 
 	/** map corresponds shape in Maya with main FireRenderMesh (used for instancing) **/
-	std::map<std::string, const FireRenderMeshCommon*> m_mainMeshesDictionary;
+	std::map<std::string, FireRenderMeshCommon*> m_mainMeshesDictionary;
 
 	/** map corresponding dag path of the node with the mode **/
 	std::map<std::string, MDagPath> m_nodePathCache;

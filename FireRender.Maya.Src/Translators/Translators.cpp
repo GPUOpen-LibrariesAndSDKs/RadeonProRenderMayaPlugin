@@ -115,9 +115,6 @@ namespace FireMaya
 		MStatus mstatus;
 		MFnCamera fnCamera(camera);
 
-		// Maya always returns all lengths in centimeters despite the settings in Preferences (detected experimentally)
-		float cmToMCoefficient = 0.01f;
-
 		auto frcamera = frw_camera.Handle();
 
 		bool showFilmGate = fnCamera.isDisplayFilmGate();
@@ -159,7 +156,7 @@ namespace FireMaya
 			checkStatus(frstatus);
 
 			// convert fnCamera.focusDistance() in cm to m
-			float focusDistance = static_cast<float>(fnCamera.focusDistance(&mstatus) * cmToMCoefficient);
+			float focusDistance = static_cast<float>(fnCamera.focusDistance(&mstatus) * GetSceneUnitsConversionCoefficient());
 			checkStatus(frstatus);
 
 			frstatus = rprCameraSetFocusDistance(frcamera, focusDistance);
@@ -250,10 +247,10 @@ namespace FireMaya
 		}
 
 		// Setting Near and Far clipping plane
-		frstatus = rprCameraSetNearPlane(frcamera, (float)(fnCamera.nearClippingPlane() * cmToMCoefficient));
+		frstatus = rprCameraSetNearPlane(frcamera, (float)(fnCamera.nearClippingPlane() * GetSceneUnitsConversionCoefficient()));
 		checkStatus(frstatus);
 
-		frstatus = rprCameraSetFarPlane(frcamera, (float)(fnCamera.farClippingPlane() * cmToMCoefficient));
+		frstatus = rprCameraSetFarPlane(frcamera, (float)(fnCamera.farClippingPlane() * GetSceneUnitsConversionCoefficient()));
 		checkStatus(frstatus);
 		
 		float filmOffsetX = (float) fnCamera.horizontalFilmOffset(&mstatus);
@@ -309,7 +306,7 @@ namespace FireMaya
 		// convert Maya mesh in cm to m
 		MMatrix scaleM;
 		scaleM.setToIdentity();
-		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
 		MMatrix matrix = inMatrix;
 		matrix *= scaleM;
 
@@ -655,10 +652,11 @@ namespace FireMaya
 					return false; // no mesh found
 				}
 
-				const std::vector<frw::Shape> shapes = MeshTranslator::TranslateMesh(frcontext, shapeDagPath.node());
-				if (shapes.size() > 0)
+				std::vector<int> faceMaterialIndices;
+				frw::Shape shape = MeshTranslator::TranslateMesh(frcontext, shapeDagPath.node(), faceMaterialIndices);
+				if (shape)
 				{
-					frlight.areaLight = shapes[0];
+					frlight.areaLight = shape;
 				}
 				else
 				{
@@ -800,7 +798,7 @@ namespace FireMaya
 		// convert Maya mesh in cm to m
 		MMatrix scaleM;
 		scaleM.setToIdentity();
-		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
 
 		// We are going to flip IBL horizontally here by default.
 		// To achieve that we need just make negative scale factor for X component
@@ -867,7 +865,7 @@ namespace FireMaya
 		// convert Maya mesh in cm to m
 		MMatrix scaleM;
 		scaleM.setToIdentity();
-		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
 		m *= scaleM;
 		float mfloats[4][4];
 		m.get(mfloats);
@@ -961,7 +959,7 @@ namespace FireMaya
 		// convert Maya mesh in cm to m
 		MMatrix scaleM;
 		scaleM.setToIdentity();
-		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
 		m *= scaleM;
 		float mfloats[4][4];
 		m.get(mfloats);
@@ -1021,7 +1019,7 @@ namespace FireMaya
 		// convert Maya mesh in cm to m
 		MMatrix scaleM;
 		scaleM.setToIdentity();
-		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01f;
+		scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
 		m *= scaleM;
 
 		MFnDependencyNode fnLight(object);

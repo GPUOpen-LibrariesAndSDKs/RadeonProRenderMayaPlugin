@@ -1,3 +1,61 @@
+# Version 3.3
+
+## New Features:
+- Support for Fog and Heterogenous Volume rendering has been added to the RPR Full mode.  Simulated volumes are now rendered on CPU and GPU.
+- An option of exporting DeepEXR files for compositing has been added.  DeepEXR files contain multiple depth samples, allowing compositing better with depth.
+- Support for the Voronoi Texture node has been added.
+
+## Fixes:
+- The texture cache location is now saved between sessions.
+- Scenes that have many instances could crash IPR — fixed.
+- A crash could happen with a correct HDRI image on an environment light — fixed.
+- Support for Object ID and Random Color lookups in shader nodes has been added.
+- After a critical render error, users could not render again without restarting Maya — fixed.
+- Optimizations to the export of objects with deformation motion blur have been made.
+- An error with references to materials in another scene has been fixed.
+- The Albedo AOV now passes the “Base color” on the Toon shader.
+- A halo no longer appears around shadow and reflection catcher objects.
+- AOVs passed through transparent or refractive materials — fixed.
+- Better noise convergence with emissive materials using textures has been achieved.
+- Performance with outline rendering has been improved.
+- Performance degradation on WX7100 GPUs has been eliminated.
+- The Object ID Lookup node now works in the Full mode.
+- Objects with Toon shaders attached now cast shadows correctly if the flag is disabled.
+- An issue detected on the latest NVidia drivers has been fixed.
+
+## Known Issues:
+- Volumes are not implemented on macOS.
+- Vega GPUs with AMD 21.10 drivers can cause an issue when using the ML Denoiser.
+
+
+# Version 3.2
+
+## New Features:
+- Subsurface Scattering and Volume shaders now work in RPR 2.0.  This allows the rendering of organic materials, such as skin, which absorb light into their interior.  Volume shaders can now also be used for simple fog boxes. 
+- Viewport denoising and upscaling improves the interactivity and speed of Viewport rendering.  With the use of the Radeon Image Filter Library, this allows Radeon ProRender to render at half resolution faster, and then upscale to the full size of the Viewport.
+- Deformation motion blur gives accurate motion blur to objects that are being deformed, for example, a flag flapping in the wind or a ball squashing.
+- The new RPR Toon Shader has been added.  This enables cartoon-style shading for a non-photorealistic look.  Toon shaders can be used in a “simple” mode for just setting a color or a gradient of different colors for shadow vs lit areas of the object.
+- Support for Maya 2022 has been added.
+- Mesh export has been optimized for better performance.  In general, all scenes should synchronize faster; besides, meshes with per-face material shaders attached have been optimized.
+
+## Issues Fixed:
+- The Camera Normal AOV has been enabled for .rpr file export.
+- The selected renderer quality mode is exported with a .rpr config file for offline rendering.
+- When the denoiser was enabled and an AOV selected to view in IPR mode, an incorrect AOV was displayed ― fixed.
+- A crash that could occur if Maya passed a zero-sized mesh has been fixed.
+- nHair visibility flags are added for setting the ray visibility on hair.  By default, Maya makes hair invisible to refraction and reflection, which these new settings override.
+- An issue that could cause missing geometry in scenes with multiple references to the same file ― fixed.
+- UVs and edge creases of smoothed meshes were not being respected correctly ― fixed.
+- Maya could hang when the user double-clicked the IPR button ― fixed.
+- Overbright edges of objects with Uber shaders in metalness mode ― fixed.
+- Shaders with high roughness could have artifacts with reflection or refraction ― fixed.
+
+## Known Issues:
+- In RPR 2.0, heterogenous volumes, smoke and fire simulations or VDB files are not yet supported.
+- Subsurface scattering and volume shader are currently disabled on macOS due to long compile times.
+- Some AOVs may have artifacts on AMD cards with drivers earlier than 21.6.1
+
+	
 # Version 3.1
 
 ## New Features:

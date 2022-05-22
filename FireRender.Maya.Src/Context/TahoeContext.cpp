@@ -14,64 +14,43 @@ limitations under the License.
 #include "maya/MColorManagementUtilities.h"
 #include "maya/MFileObject.h"
 
-TahoeContext::LoadedPluginMap TahoeContext::m_gLoadedPluginsIDsMap;
 
-TahoeContext::TahoeContext() :
-	m_PluginVersion(TahoePluginVersion::RPR1),
+rpr_int NorthStarContext::m_gTahoePluginID = INCORRECT_PLUGIN_ID;
+
+NorthStarContext::NorthStarContext() :
 	m_PreviewMode(true)
 {
 
 }
 
-void TahoeContext::SetPluginEngine(TahoePluginVersion version)
+rpr_int NorthStarContext::GetPluginID()
 {
-	m_PluginVersion = version;
-}
-
-rpr_int TahoeContext::GetPluginID(TahoePluginVersion version)
-{
-	rpr_int pluginId = INCORRECT_PLUGIN_ID;
-	LoadedPluginMap::const_iterator it = m_gLoadedPluginsIDsMap.find(version);
-	if (it == m_gLoadedPluginsIDsMap.end())
+	if (m_gTahoePluginID == INCORRECT_PLUGIN_ID)
 	{
-        std::string libName;
-        
-        if (version == TahoePluginVersion::RPR1)
-        {
-            libName = "Tahoe64";
-        }
-        else if (version == TahoePluginVersion::RPR2)
-        {
-            libName = "Northstar64";
-        }
+		std::string libName = "Northstar64";
+
 #ifdef OSMac_
-        libName = "lib" + libName + ".dylib";
-        std::string pathToTahoeDll = "/Users/Shared/RadeonProRender/Maya/lib/" + libName;
-        if (0 != access(pathToTahoeDll.c_str(), F_OK))
-        {
-             pathToTahoeDll = "/Users/Shared/RadeonProRender/lib/" + libName;
-        }
-		pluginId = rprRegisterPlugin(pathToTahoeDll.c_str());
+		libName = "lib" + libName + ".dylib";
+		std::string pathToTahoeDll = "/Users/Shared/RadeonProRender/Maya/lib/" + libName;
+		if (0 != access(pathToTahoeDll.c_str(), F_OK))
+		{
+			pathToTahoeDll = "/Users/Shared/RadeonProRender/lib/" + libName;
+		}
+		m_gTahoePluginID = rprRegisterPlugin(pathToTahoeDll.c_str());
 #elif __linux__
-		pluginId = rprRegisterPlugin("libTahoe64.so");
+		m_gTahoePluginID = rprRegisterPlugin("libTahoe64.so");
 #else
 		libName += ".dll";
-		pluginId = rprRegisterPlugin(libName.c_str());
+		m_gTahoePluginID = rprRegisterPlugin("Northstar64.dll");
 #endif
-
-		m_gLoadedPluginsIDsMap[version] = pluginId;
-	}
-	else
-	{
-		pluginId = it->second;
 	}
 
-	return pluginId;
+	return m_gTahoePluginID;
 }
 
-rpr_int TahoeContext::CreateContextInternal(rpr_creation_flags createFlags, rpr_context* pContext)
+rpr_int NorthStarContext::CreateContextInternal(rpr_creation_flags createFlags, rpr_context* pContext)
 {
-	rpr_int pluginID = GetPluginID(m_PluginVersion);
+	rpr_int pluginID = GetPluginID();
 
 	if (pluginID == INCORRECT_PLUGIN_ID)
 	{
@@ -107,54 +86,100 @@ rpr_int TahoeContext::CreateContextInternal(rpr_creation_flags createFlags, rpr_
 	return res;
 }
 
-void TahoeContext::setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance /*= false*/)
+void NorthStarContext::setupContextAirVolume(const FireRenderGlobalsData& fireRenderGlobalsData)
+{
+	frw::Context context = GetContext();
+	rpr_int frstatus = RPR_SUCCESS;
+
+	if (!fireRenderGlobalsData.airVolumeSettings.airVolumeEnabled)
+	{
+		context.SetParameter(RPR_CONTEXT_ATMOSPHERE_VOLUME_DENSITY, 0.0f);
+	}
+	else
+	{
+		context.SetParameter(RPR_CONTEXT_ATMOSPHERE_VOLUME_DENSITY, fireRenderGlobalsData.airVolumeSettings.airVolumeDensity);
+
+		context.SetParameter(RPR_CONTEXT_ATMOSPHERE_VOLUME_COLOR,
+			fireRenderGlobalsData.airVolumeSettings.airVolumeColor.r,
+			fireRenderGlobalsData.airVolumeSettings.airVolumeColor.g,
+			fireRenderGlobalsData.airVolumeSettings.airVolumeColor.b,
+			0.0f);
+
+		context.SetParameter(RPR_CONTEXT_ATMOSPHERE_VOLUME_RADIANCE_CLAMP, fireRenderGlobalsData.airVolumeSettings.airVolumeDensity);
+	}
+
+	if (!fireRenderGlobalsData.airVolumeSettings.fogEnabled)
+	{
+		context.SetParameter(RPR_CONTEXT_FOG_DISTANCE, -1.0f);
+	}
+	else
+	{
+		context.SetParameter(RPR_CONTEXT_FOG_COLOR,
+			fireRenderGlobalsData.airVolumeSettings.fogColor.r,
+			fireRenderGlobalsData.airVolumeSettings.fogColor.g,
+			fireRenderGlobalsData.airVolumeSettings.fogColor.b,
+			0.0f);
+
+		context.SetParameter(RPR_CONTEXT_FOG_DISTANCE, fireRenderGlobalsData.airVolumeSettings.fogDistance);
+
+		context.SetParameter(RPR_CONTEXT_FOG_HEIGHT, fireRenderGlobalsData.airVolumeSettings.fogHeight);
+	}
+}
+
+void NorthStarContext::setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance /*= false*/)
 {
 	frw::Context context = GetContext();
 	rpr_context frcontext = context.Handle();
 
 	rpr_int frstatus = RPR_SUCCESS;
+	
+	// contour must be set before scene creation
+	bool isContourModeOn = fireRenderGlobalsData.contourIsEnabled && !(createFlags & RPR_CREATION_FLAGS_ENABLE_CPU);
 
-	if (m_PluginVersion == TahoePluginVersion::RPR2)
-	{
-		// contour must be set before scene creation
-		bool isContourModeOn = fireRenderGlobalsData.contourIsEnabled && !(createFlags & RPR_CREATION_FLAGS_ENABLE_CPU);
+	if (!isContourModeOn)
+		return;
 
-		if (isContourModeOn)
-		{
-			frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_GPUINTEGRATOR, "gpucontour");
-			checkStatus(frstatus);
+	frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_GPUINTEGRATOR, "gpucontour");
+	checkStatus(frstatus);
 
-			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_USE_OBJECTID, fireRenderGlobalsData.contourUseObjectID);
-			checkStatus(frstatus);
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_USE_OBJECTID, fireRenderGlobalsData.contourUseObjectID);
+	checkStatus(frstatus);
 
-			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_USE_MATERIALID, fireRenderGlobalsData.contourUseMaterialID);
-			checkStatus(frstatus);
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_USE_MATERIALID, fireRenderGlobalsData.contourUseMaterialID);
+	checkStatus(frstatus);
 
-			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_USE_NORMAL, fireRenderGlobalsData.contourUseShadingNormal);
-			checkStatus(frstatus);
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_USE_NORMAL, fireRenderGlobalsData.contourUseShadingNormal);
+	checkStatus(frstatus);
 
-			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_LINEWIDTH_OBJECTID, fireRenderGlobalsData.contourLineWidthObjectID);
-			checkStatus(frstatus);
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_USE_UV, fireRenderGlobalsData.contourUseUV);
+	checkStatus(frstatus);
 
-			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_LINEWIDTH_MATERIALID, fireRenderGlobalsData.contourLineWidthMaterialID);
-			checkStatus(frstatus);
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_LINEWIDTH_OBJECTID, fireRenderGlobalsData.contourLineWidthObjectID);
+	checkStatus(frstatus);
 
-			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_LINEWIDTH_NORMAL, fireRenderGlobalsData.contourLineWidthShadingNormal);
-			checkStatus(frstatus);
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_LINEWIDTH_MATERIALID, fireRenderGlobalsData.contourLineWidthMaterialID);
+	checkStatus(frstatus);
 
-			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_NORMAL_THRESHOLD, fireRenderGlobalsData.contourNormalThreshold);
-			checkStatus(frstatus);
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_LINEWIDTH_NORMAL, fireRenderGlobalsData.contourLineWidthShadingNormal);
+	checkStatus(frstatus);
 
-			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_ANTIALIASING, fireRenderGlobalsData.contourAntialiasing);
-			checkStatus(frstatus);
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_LINEWIDTH_UV, fireRenderGlobalsData.contourLineWidthUV);
+	checkStatus(frstatus);
 
-			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_DEBUG_ENABLED, fireRenderGlobalsData.contourIsDebugEnabled);
-			checkStatus(frstatus);
-		}
-	}
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_NORMAL_THRESHOLD, fireRenderGlobalsData.contourNormalThreshold);
+	checkStatus(frstatus);
+
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_UV_THRESHOLD, fireRenderGlobalsData.contourUVThreshold);
+	checkStatus(frstatus);
+
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_CONTOUR_ANTIALIASING, fireRenderGlobalsData.contourAntialiasing);
+	checkStatus(frstatus);
+
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CONTOUR_DEBUG_ENABLED, fireRenderGlobalsData.contourIsDebugEnabled);
+	checkStatus(frstatus);
 }
 
-void TahoeContext::setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance)
+void NorthStarContext::setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance)
 {
 	frw::Context context = GetContext();
 	rpr_context frcontext = context.Handle();
@@ -219,15 +244,22 @@ void TahoeContext::setupContextPostSceneCreation(const FireRenderGlobalsData& fi
 
 		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_MIN_SPP, fireRenderGlobalsData.completionCriteriaFinalRender.completionCriteriaMinIterations);
 		checkStatus(frstatus);
+
+		// if Deep Exr enabled
+		if (fireRenderGlobalsData.aovs.IsAOVActive(RPR_AOV_DEEP_COLOR))
+		{
+			MDistance distance(fireRenderGlobalsData.deepEXRMergeZThreshold, MDistance::uiUnit());
+
+			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_DEEP_SUBPIXEL_MERGE_Z_THRESHOLD, distance.asMeters());
+			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_DEEP_GPU_ALLOCATION_LEVEL, 4);
+			frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_DEEP_COLOR_ENABLED, 1);
+		}
 	}
 	else if (isInteractive())
 	{
 		setSamplesPerUpdate(1);
         
-        if (m_PluginVersion == TahoePluginVersion::RPR2)
-        {
-            SetIterationsPowerOf2Mode(true);
-        }
+        SetIterationsPowerOf2Mode(true);
 
 		frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_THRESHOLD, fireRenderGlobalsData.adaptiveThresholdViewport);
 		checkStatus(frstatus);
@@ -303,57 +335,54 @@ void TahoeContext::setupContextPostSceneCreation(const FireRenderGlobalsData& fi
 
 	updateTonemapping(fireRenderGlobalsData, disableWhiteBalance);
 
-	if (m_PluginVersion == TahoePluginVersion::RPR2)
+	frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_TEXTURE_CACHE_PATH, fireRenderGlobalsData.textureCachePath.asChar());
+	checkStatus(frstatus);
+
+	// OCIO
+	const std::map<std::string, std::string>& eVars = EnvironmentVarsWrapper<char>::GetEnvVarsTable();
+	auto envOCIOPath = eVars.find("OCIO");
+	if (envOCIOPath != eVars.end())
 	{
-		frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_TEXTURE_CACHE_PATH, fireRenderGlobalsData.textureCachePath.asChar());
+		MFileObject path;
+		path.setRawFullName(envOCIOPath->second.c_str());
+		MString setupCommand = MString("colorManagementPrefs -e -configFilePath \"") + path.resolvedFullName() + MString("\";");
+		MGlobal::executeCommand(setupCommand);
+		MGlobal::executeCommand(MString("colorManagementPrefs -e -cmEnabled 1;"));
+		MGlobal::executeCommand(MString("colorManagementPrefs -e -cmConfigFileEnabled 1;"));
+	}
+
+	MStatus colorManagementStatus;
+	int isColorManagementOn = 0;
+	colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -cmEnabled;"), isColorManagementOn);
+
+	int isConfigFileEnable = 0;
+	colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -cmConfigFileEnabled;"), isConfigFileEnable);
+
+	if ((isColorManagementOn > 0) && (isConfigFileEnable > 0))
+	{
+		MString configFilePath;
+		colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -cfp;"), configFilePath);
+
+		MString renderingSpaceName;
+		colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -rsn;"), renderingSpaceName);
+
+		frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_CONFIG_PATH, configFilePath.asChar());
 		checkStatus(frstatus);
 
-		// OCIO
-		const std::map<std::string, std::string>& eVars = EnvironmentVarsWrapper<char>::GetEnvVarsTable();
-		auto envOCIOPath = eVars.find("OCIO");
-		if (envOCIOPath != eVars.end())
-		{
-			MFileObject path;
-			path.setRawFullName(envOCIOPath->second.c_str());
-			MString setupCommand = MString("colorManagementPrefs -e -configFilePath \"") + path.resolvedFullName() + MString("\";");
-			MGlobal::executeCommand(setupCommand);
-			MGlobal::executeCommand(MString("colorManagementPrefs -e -cmEnabled 1;"));
-			MGlobal::executeCommand(MString("colorManagementPrefs -e -cmConfigFileEnabled 1;"));
-		}
+		frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_RENDERING_COLOR_SPACE, renderingSpaceName.asChar());
+		checkStatus(frstatus);
+	}
+	else
+	{
+		frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_CONFIG_PATH, "");
+		checkStatus(frstatus);
 
-		MStatus colorManagementStatus;
-		int isColorManagementOn = 0;
-		colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -cmEnabled;"), isColorManagementOn);
-
-		int isConfigFileEnable = 0;
-		colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -cmConfigFileEnabled;"), isConfigFileEnable);
-
-		if ((isColorManagementOn > 0) && (isConfigFileEnable > 0))
-		{
-			MString configFilePath;
-			colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -cfp;"), configFilePath);
-
-			MString renderingSpaceName;
-			colorManagementStatus = MGlobal::executeCommand(MString("colorManagementPrefs -q -rsn;"), renderingSpaceName);
-
-			frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_CONFIG_PATH, configFilePath.asChar());
-			checkStatus(frstatus);
-
-			frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_RENDERING_COLOR_SPACE, renderingSpaceName.asChar());
-			checkStatus(frstatus);
-		}
-		else
-		{
-			frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_CONFIG_PATH, "");
-			checkStatus(frstatus);
-
-			frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_RENDERING_COLOR_SPACE, "");
-			checkStatus(frstatus);
-		}
+		frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_OCIO_RENDERING_COLOR_SPACE, "");
+		checkStatus(frstatus);
 	}
 }
 
-void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance)
+void NorthStarContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance)
 {
 	frw::Context context = GetContext();
 	rpr_context frcontext = context.Handle();
@@ -387,7 +416,6 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 		context.Detach(normalization);
 		normalization.Reset();
 	}
-
 	if (gamma_correction)
 	{
 		context.Detach(gamma_correction);
@@ -408,6 +436,7 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 		break;
 
 	case 1:
+		//RPR_TONEMAPPING_OPERATOR_LINEAR
 		if (!tonemap)
 		{
 			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
@@ -418,6 +447,7 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 		break;
 
 	case 2:
+		//RPR_TONEMAPPING_OPERATOR_PHOTOLINEAR
 		if (!tonemap)
 		{
 			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
@@ -430,6 +460,7 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 		break;
 
 	case 3:
+		//RPR_TONEMAPPING_OPERATOR_AUTOLINEAR
 		if (!tonemap)
 		{
 			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
@@ -439,6 +470,7 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 		break;
 
 	case 4:
+		//RPR_TONEMAPPING_OPERATOR_MAXWHITE
 		if (!tonemap)
 		{
 			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
@@ -448,6 +480,7 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 		break;
 
 	case 5:
+		//RPR_TONEMAPPING_OPERATOR_REINHARD02
 		if (!tonemap)
 		{
 			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
@@ -460,6 +493,7 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 		break;
 
 	case 6:
+		//frw::PostEffectTypeSimpleTonemap
 		if (!simple_tonemap)
 		{
 			simple_tonemap = frw::PostEffect(context, frw::PostEffectTypeSimpleTonemap);
@@ -484,15 +518,16 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 	bool wbApplied = fireRenderGlobalsData.toneMappingWhiteBalanceEnabled && !disableWhiteBalance;
 	if (wbApplied)
 	{
+		//frw::PostEffectTypeWhiteBalance
 		if (!white_balance)
 		{
 			white_balance = frw::PostEffect(context, frw::PostEffectTypeWhiteBalance);
 			context.Attach(white_balance);
-		}
 
-		float temperature = fireRenderGlobalsData.toneMappingWhiteBalanceValue;
-		white_balance.SetParameter("colorspace", RPR_COLOR_SPACE_SRGB); // check: Max uses Adobe SRGB here
-		white_balance.SetParameter("colortemp", temperature);
+			float temperature = fireRenderGlobalsData.toneMappingWhiteBalanceValue;
+			white_balance.SetParameter("colorspace", RPR_COLOR_SPACE_SRGB); // check: Max uses Adobe SRGB here
+			white_balance.SetParameter("colortemp", temperature);
+		}
 	}
 
 	bool setDisplayGamma = fireRenderGlobalsData.applyGammaToMayaViews || simple_tonemap || tonemap || wbApplied;
@@ -501,119 +536,100 @@ void TahoeContext::updateTonemapping(const FireRenderGlobalsData& fireRenderGlob
 	checkStatus(frstatus);
 }
 
-bool TahoeContext::needResolve() const
+bool NorthStarContext::needResolve() const
 {
 	return bool(white_balance) || bool(simple_tonemap) || bool(tonemap) || bool(normalization) || bool(gamma_correction);
 }
 
-bool TahoeContext::IsRenderQualitySupported(RenderQuality quality) const
+bool NorthStarContext::IsRenderQualitySupported(RenderQuality quality) const
 {
 	return quality == RenderQuality::RenderQualityFull;
 }
 
-bool TahoeContext::IsDenoiserSupported() const
+bool NorthStarContext::IsDenoiserSupported() const
 {
 	return true;
 }
 
-bool TahoeContext::ShouldForceRAMDenoiser() const
-{
-	return m_PluginVersion == TahoePluginVersion::RPR2;
-}
-
-bool TahoeContext::IsDisplacementSupported() const
+bool NorthStarContext::ShouldForceRAMDenoiser() const
 {
 	return true;
 }
 
-bool TahoeContext::IsHairSupported() const
+bool NorthStarContext::IsDisplacementSupported() const
 {
 	return true;
 }
 
-bool TahoeContext::IsVolumeSupported() const
+bool NorthStarContext::IsHairSupported() const
 {
-	return m_PluginVersion == TahoePluginVersion::RPR1;
-}
-
-bool TahoeContext::IsAOVSupported(int aov) const 
-{
-	return (aov != RPR_AOV_VIEW_SHADING_NORMAL) && (aov != RPR_AOV_COLOR_RIGHT);
-}
-
-bool TahoeContext::IsPhysicalLightTypeSupported(PLType lightType) const
-{
-	if (lightType == PLTDisk || lightType == PLTSphere)
-	{
-		return m_PluginVersion == TahoePluginVersion::RPR2;
-	}
-
 	return true;
 }
 
-bool TahoeContext::IsGLInteropEnabled() const
+bool NorthStarContext::IsVolumeSupported() const
 {
-	return m_PluginVersion == TahoePluginVersion::RPR1;
+	return true;
 }
 
-bool TahoeContext::MetalContextAvailable() const
+bool NorthStarContext::IsNorthstarVolumeSupported() const
 {
-    return true;
+	return true;
 }
 
-void TahoeContext::SetRenderUpdateCallback(RenderUpdateCallback callback, void* data)
+bool NorthStarContext::IsAOVSupported(int aov) const 
 {
-	if (m_PluginVersion == TahoePluginVersion::RPR2)
-	{
-		GetScope().Context().SetUpdateCallback((void*)callback, data);
-	}
-}
-
-bool TahoeContext::IsGivenContextRPR2(const FireRenderContext* pContext)
-{
-	const TahoeContext* pTahoeContext = dynamic_cast<const TahoeContext*> (pContext);
-
-	if (pTahoeContext == nullptr)
+	if (aov >= RPR_AOV_MAX)
 	{
 		return false;
 	}
 
-	return pTahoeContext->m_PluginVersion == TahoePluginVersion::RPR2;
+	return (aov != RPR_AOV_VIEW_SHADING_NORMAL) && (aov != RPR_AOV_COLOR_RIGHT);
 }
 
-void TahoeContext::AbortRender()
+bool NorthStarContext::IsPhysicalLightTypeSupported(PLType lightType) const
 {
-	if (m_PluginVersion == TahoePluginVersion::RPR2)
-	{
-		GetScope().Context().AbortRender();
-	}
+	return true;
 }
 
-void TahoeContext::SetupPreviewMode()
+bool NorthStarContext::MetalContextAvailable() const
 {
-	if (m_PluginVersion == TahoePluginVersion::RPR1)
-	{
-		RenderType renderType = GetRenderType();
-		int preview = 0;
-
-		if ((renderType == RenderType::ViewportRender) ||
-			(renderType == RenderType::IPR) ||
-			(renderType == RenderType::Thumbnail))
-		{
-			preview = 1;
-		}
-
-		SetPreviewMode(preview);
-	}
+    return true;
 }
 
-void TahoeContext::OnPreRender()
+bool NorthStarContext::IsDeformationMotionBlurEnabled() const
+{
+	assert(NorthStarContext::IsGivenContextNorthStar(this));
+	return true;
+}
+
+void NorthStarContext::SetRenderUpdateCallback(RenderUpdateCallback callback, void* data)
+{
+	GetScope().Context().SetUpdateCallback((void*)callback, data);
+}
+
+bool NorthStarContext::IsGivenContextNorthStar(const FireRenderContext* pContext)
+{
+	const NorthStarContext* pNorthStarContext = dynamic_cast<const NorthStarContext*> (pContext);
+
+	if (pNorthStarContext == nullptr)
+	{
+		return false;
+	}
+
+	return true;
+}
+
+void NorthStarContext::AbortRender()
+{
+	GetScope().Context().AbortRender();
+}
+
+void NorthStarContext::OnPreRender()
 {
 	RenderType renderType = GetRenderType();
 
-	if ( (m_PluginVersion == TahoePluginVersion::RPR1) || 
-		((renderType != RenderType::ViewportRender) &&
-			(renderType != RenderType::IPR)))
+	if ((renderType != RenderType::ViewportRender) &&
+		(renderType != RenderType::IPR))
 	{
 		return;
 	}
@@ -637,13 +653,10 @@ void TahoeContext::OnPreRender()
 	}
 }
 
-int TahoeContext::GetAOVMaxValue()
+int NorthStarContext::GetAOVMaxValue()
 {
-	bool isRPR20 = TahoeContext::IsGivenContextRPR2(this);
+	assert(NorthStarContext::IsGivenContextNorthStar(this));
 
-	if (isRPR20)
-		return RPR_AOV_MAX;
-
-	return 0x20;
+	return RPR_AOV_MAX;
 }
 

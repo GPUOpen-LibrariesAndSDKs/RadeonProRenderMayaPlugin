@@ -16,12 +16,9 @@ global proc AERPRVolumeMaterialTemplate( string $nodeName )
 	editorTemplate -beginScrollLayout;
 
 	editorTemplate -beginLayout "Volume" -collapse 0;
-		editorTemplate -addControl "scatterColor";
-		editorTemplate -addControl "transmissionColor";
-		editorTemplate -addControl "emissionColor";
+		editorTemplate -addControl "color";
 		editorTemplate -addControl "density";
-		editorTemplate -addControl "scatteringDirection";
-		editorTemplate -addControl "multiscatter";
+		editorTemplate -addControl "weight";
 	editorTemplate -endLayout;
 	AEdependNodeTemplate $nodeName;
 

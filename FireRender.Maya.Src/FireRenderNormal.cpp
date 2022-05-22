@@ -86,9 +86,14 @@ frw::Value FireMaya::Normal::GetValue(const Scope& scope) const
 		frw::NormalMapNode imageNode(scope.MaterialSystem());
 		imageNode.SetMap(color);
 
-		frw::Value strength = scope.GetValue(shaderNode.findPlug(Attribute::strength, false));
-		if (strength != 1.)
-			imageNode.SetValue(RPR_MATERIAL_INPUT_SCALE, strength);
+		const IFireRenderContextInfo* ctxInfo = scope.GetIContextInfo();
+		assert(ctxInfo);
+		if (ctxInfo->IsUberScaleSupported())
+		{
+			frw::Value strength = scope.GetValue(shaderNode.findPlug(Attribute::strength, false));
+			if (strength != 1.)
+				imageNode.SetValue(RPR_MATERIAL_INPUT_SCALE, strength);
+		}
 
 		return imageNode;
 	}

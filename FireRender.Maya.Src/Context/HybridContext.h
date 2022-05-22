@@ -45,8 +45,27 @@ public:
 	bool IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) const override;
 	frw::Shader GetDefaultColorShader(frw::Value color) override;
 
+	virtual bool IsMaterialNodeIDSupported() const { return false; }
+	virtual bool IsMeshObjectIDSupported() const { return false; }
+	virtual bool IsContourModeSupported() const { return false; }
+	virtual bool IsCameraSetExposureSupported() const { return false; }
+	virtual bool IsShadowColorSupported() const { return false; }
+
+	virtual bool IsUberReflectionDielectricSupported() const { return false; }
+	virtual bool IsUberRefractionAbsorbtionColorSupported() const { return false; }
+	virtual bool IsUberRefractionAbsorbtionDistanceSupported() const { return false; }
+	virtual bool IsUberRefractionCausticsSupported() const { return false; }
+	virtual bool IsUberSSSWeightSupported() const { return false; }
+	virtual bool IsUberSheenWeightSupported() const { return false; }
+	virtual bool IsUberBackscatterWeightSupported() const { return false; }
+	virtual bool IsUberShlickApproximationSupported() const { return false; }
+	virtual bool IsUberCoatingThicknessSupported() const { return false; }
+	virtual bool IsUberCoatingTransmissionColorSupported() const { return false; }
+	virtual bool IsUberReflectionNormalSupported() const { return false; }
+	virtual bool IsUberScaleSupported() const { return false; }
+
 protected:
-	rpr_int CreateContextInternal(rpr_creation_flags createFlags, rpr_context* pContext) override;
+	virtual rpr_int CreateContextInternal(rpr_creation_flags createFlags, rpr_context* pContext) override;
 	void updateTonemapping(const FireRenderGlobalsData&, bool disableWhiteBalance) override;
 
 	bool IsGLInteropEnabled() const override;

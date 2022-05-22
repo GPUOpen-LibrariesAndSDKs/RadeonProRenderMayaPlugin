@@ -107,11 +107,13 @@ MStatus FireRenderCmd::doIt(const MArgList & args)
 
 	// Enable or disable debugging.
 	if (argData.isFlagSet(kDebugTraceFlag))
+	{
 		return updateDebugOutput(argData);
-
+	}
 	else if (argData.isFlagSet(kExportsGLTF))
+	{
 		return exportsGLTF(argData);
-
+	}
 	else if (argData.isFlagSet(kOpenFolder))
 	{
 		MString path;
@@ -127,23 +129,43 @@ MStatus FireRenderCmd::doIt(const MArgList & args)
 	}
 	else
 	{
-		// Start or update an IPR render.
-		if (argData.isFlagSet(kIprFlag))
-			return renderIpr(argData);
-		// Start or update a batch render.
-		else if (argData.isFlagSet(kBatchFlag))
-			return renderBatch(argData);
-		// Start a single frame render.
-		else
-			return renderFrame(argData);
+		try
+		{
+			// Start or update an IPR render.
+			if (argData.isFlagSet(kIprFlag))
+				return renderIpr(argData);
+			// Start or update a batch render.
+			else if (argData.isFlagSet(kBatchFlag))
+				return renderBatch(argData);
+			// Start a single frame render.
+			else
+				return renderFrame(argData);
+		}
+		catch (std::exception& err)
+		{
+			MGlobal::displayError(MString("std::exception: ") + err.what());
+			s_rendering = false;
+		}
+		catch (...)
+		{
+			MGlobal::displayError(MString("Exception in FireRenderCmd !!!"));
+			s_rendering = false;
+		}
 	}
+
+	return MStatus::kSuccess;
 }
 
 // Static Methods
 // -----------------------------------------------------------------------------
 void FireRenderCmd::cleanUp()
 {
+	if (s_ipr)
+		s_ipr->stop();
 	s_ipr.reset();
+
+	if (s_production)
+		s_production->stop();
 	s_production.reset();
 }
 
@@ -212,7 +234,7 @@ MStatus FireRenderCmd::renderFrame(const MArgDatabase& argData)
 		MString filePath = getOutputFilePath(settings, frame, cameraName, true);
 
 		// Write output files.
-		aovs->writeToFile(filePath, settings.imageFormat, [](const MString& path)
+		aovs->writeToFile(*s_production->GetContext(), filePath, settings.imageFormat, [](const MString& path)
 		{
 			MString cmd;
 
@@ -231,13 +253,13 @@ MStatus FireRenderCmd::renderFrame(const MArgDatabase& argData)
 	s_rendering = true;
 
 	s_production->UpdateGlobals();
-	if (!s_production->isTileRender())
+	if (s_production->isTileRender())
 	{
-		s_production->startFullFrameRender();
+		s_production->startTileRender();
 	}
 	else
 	{
-		s_production->startTileRender();
+		s_production->startFullFrameRender();
 	}
 
 	if (s_waitForIt || argData.isFlagSet(kWaitForIt))
@@ -365,9 +387,9 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 
 	// The render context.
 
-	TahoeContextPtr tahoeContextPtr = ContextCreator::CreateTahoeContext(GetTahoeVersionToUse());
+	NorthStarContextPtr northStarContextPtr = ContextCreator::CreateNorthStarContext();
 
-	TahoeContext& context = *tahoeContextPtr;
+	NorthStarContext& context = *northStarContextPtr;
 
 	try
 	{
@@ -386,8 +408,10 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		MString newLayerName;
 		switchRenderLayer(args, oldLayerName, newLayerName);
 
-		// Enable active AOVs.
 		FireRenderAOVs& aovs = globals.aovs;
+
+		// Enable active AOVs.
+
 		aovs.applyToContext(context);
 
 		// Initialize the scene.
@@ -428,11 +452,6 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 			devicesStr += std::string(RenderStampUtils::GetCPUNameString()) + " / " + RenderStampUtils::GetFriendlyUsedGPUName();
 		}
 		devicesStr += "\n";
-
-		// Get RPR version
-		TahoePluginVersion version = GetTahoeVersionToUse();
-		std::string versionStr = "RPR version : ";
-		versionStr += (version == RPR1) ? "RPR1\n" : "RPR2\n";
 
 		// Get the list of cameras to render frames for.
 		MDagPathArray renderableCameras = GetSceneCameras(true);
@@ -510,7 +529,7 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 				}
 
 				// Save the frame to file.
-				aovs.writeToFile(filePath, settings.imageFormat);
+				aovs.writeToFile(context, filePath, settings.imageFormat);
 
 				// Execute the post frame command if there is one.
 				MGlobal::executeCommand(settings.postRenderMel);

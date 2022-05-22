@@ -30,6 +30,7 @@ limitations under the License.
 #include <maya/MItDependencyNodes.h>
 #include <maya/MUserEventMessage.h>
 #include <maya/MItDependencyGraph.h>
+#include <maya/MAnimControl.h>
 
 #include "AutoLock.h"
 #include "VRay.h"
@@ -42,6 +43,8 @@ limitations under the License.
 #include "FireRenderThread.h"
 #include "FireRenderMaterialSwatchRender.h"
 #include "CompositeWrapper.h"
+
+#include <deque>
 
 #ifdef WIN32 // alembic support is disabled on MAC until alembic build issue on MAC is resolved
 #include "FireRenderGPUCache.h"
@@ -97,7 +100,6 @@ FireRenderContext::FireRenderContext() :
 	m_progress(0),
 	m_interactive(false),
 	m_camera(this, MDagPath()),
-	m_glInteropActive(false),
 	m_globalsChanged(false),
 	m_renderLayersChanged(false),
 	m_cameraDirty(true),
@@ -143,7 +145,7 @@ int FireRenderContext::initializeContext()
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags(m_RenderType);
 
 	rpr_int res;
-	createContextEtc(createFlags, true, false, &res);
+	createContextEtc(createFlags, true, &res);
 
 	return res;
 }
@@ -175,7 +177,7 @@ void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool rende
 		return;
 
 	int MaxAOV = GetAOVMaxValue();
-	for (int i = 0; i != MaxAOV; ++i)
+	for (int i = 0; i < MaxAOV; ++i)
 	{
 		initBuffersForAOV(context, i, glTexture);
 	}
@@ -230,6 +232,9 @@ bool aovExists(int index)
 	if ((index >= RPR_AOV_CRYPTOMATTE_OBJ0) && (index <= RPR_AOV_CRYPTOMATTE_OBJ2))
 		return true;
 
+	if (index == RPR_AOV_DEEP_COLOR)
+		return true;
+
 	return false;
 }
 
@@ -252,26 +257,30 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 
 	if (aovEnabled[index]) 
     {
-		m.framebufferAOV[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
+		bool createResolveFB = true;
+		if (index == RPR_AOV_DEEP_COLOR)
+		{
+			fmt.type = RPR_COMPONENT_TYPE_DEEP;
+
+			createResolveFB = false;
+		}
+		
+		m.framebufferAOV[index] = frw::FrameBuffer (context, m_width, m_height, fmt);
 		m.framebufferAOV[index].Clear();
 		context.SetAOV(m.framebufferAOV[index], index);
 
-		// Create an OpenGL interop resolved frame buffer if
-		// required, otherwise, create a standard frame buffer.
-		if (m_glInteropActive && glTexture)
-        { 
-			m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, glTexture);
-        }
-        else
-        {
-            m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
-        }
-
-		m.framebufferAOV_resolved[index].Clear();
+		if (createResolveFB)
+		{
+			m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
+			m.framebufferAOV_resolved[index].Clear();
+		}
 	}
 	else
 	{
-		context.SetAOV(nullptr, index);
+		if (aovExists(index))
+		{
+			context.SetAOV(nullptr, index);
+		}
 	}
 }
 
@@ -355,32 +364,13 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 		bool avoidMaterialSystemDeletion_workaround = isViewport && (createFlags & RPR_CREATION_FLAGS_ENABLE_CPU);
 
 		rpr_int res;
-		if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, glViewport, &res, false))
+		if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, &res, false))
 		{
-			// Failed to create context
-			if (glViewport)
-			{
-				// If we attempted to create gl interop context, try again without interop
-				if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, false))
-				{
-					// Failed again, aborting
-					MGlobal::displayError("Failed to create Radeon ProRender context in interop and non-interop modes. Aborting.");
-					return false;
-				}
-				else
-				{
-					// Success, display a message and continue
-					MGlobal::displayWarning("Unable to create Radeon ProRender context in interop mode. Falling back to non-interop mode.");
-				}
-			}
-			else
-			{
-				MGlobal::displayError("Aborting switching to Radeon ProRender.");
-				MString msg;
-				FireRenderError error(res, msg, true);
+			MGlobal::displayError("Aborting switching to Radeon ProRender.");
+			MString msg;
+			FireRenderError error(res, msg, true);
 
-				return false;
-			}
+			return false;
 		}
 
 		GetScope().CreateScene();
@@ -389,6 +379,7 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 		setupContextPostSceneCreation(m_globals);
 
 		setMotionBlurParameters(m_globals);
+		setupContextAirVolume(m_globals);
 
 		// Update render selected objects only flag
 		int isRenderSelectedOnly = 0;
@@ -444,7 +435,8 @@ void FireRenderContext::turnOnAOVsForDenoiser(bool allocBuffer)
 static const std::vector<int> g_contourAovs = {
 	RPR_AOV_OBJECT_ID, 
 	RPR_AOV_SHADING_NORMAL,
-	RPR_AOV_MATERIAL_ID 
+	RPR_AOV_MATERIAL_ID,
+	RPR_AOV_UV
 };
 
 void FireRenderContext::turnOnAOVsForContour(bool allocBuffer /*= false*/)
@@ -962,7 +954,7 @@ void FireRenderContext::initSwatchScene()
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags();
 
 	rpr_int res;
-	if (!createContextEtc(createFlags, true, false, &res))
+	if (!createContextEtc(createFlags, true, &res))
 	{
 		MString msg;
 		FireRenderError errorToShow(res, msg, true);
@@ -976,10 +968,13 @@ void FireRenderContext::initSwatchScene()
 	mesh->setVisibility(true);
 	m_sceneObjects["mesh"] = std::shared_ptr<FireRenderObject>(mesh);
 
-	if (mesh && mesh->Elements().size() > 0)
+	if (mesh)
 	{
 		if (auto shader = GetShader(MObject()))
-			mesh->Element(0).shape.SetShader(shader);
+		{
+			for (auto& element : mesh->Elements())
+				element.shape.SetShader(shader);
+		}
 	}
 
 	m_camera.buildSwatchCamera();
@@ -993,8 +988,6 @@ void FireRenderContext::initSwatchScene()
 	setupContextPostSceneCreation(m_globals);
 
 	UpdateCompletionCriteriaForSwatch();
-
-	SetupPreviewMode();
 }
 
 void FireRenderContext::UpdateCompletionCriteriaForSwatch()
@@ -1034,7 +1027,7 @@ void FireRenderContext::render(bool lock)
 	if (m_restartRender)
 	{
 		int MaxAOV = GetAOVMaxValue();
-		for (int i = 0; i != MaxAOV; ++i) 
+		for (int i = 0; i < MaxAOV; ++i) 
 		{
 			if (aovEnabled[i])
 			{
@@ -1295,26 +1288,13 @@ void FireRenderContext::BuildLateinitObjects()
 	m_LateinitMASHInstancers.clear();
 }
 
-bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete, bool glViewport, int* pOutRes, bool createScene /*= true*/)
+bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete, int* pOutRes, bool createScene /*= true*/)
 {
-	return FireRenderThread::RunOnceAndWait<bool>([this, &creation_flags, destroyMaterialSystemOnDelete, glViewport, pOutRes, createScene]()
+	return FireRenderThread::RunOnceAndWait<bool>([this, &creation_flags, destroyMaterialSystemOnDelete, pOutRes, createScene]()
 	{
 		RPR_THREAD_ONLY;
 
 		DebugPrint("FireRenderContext::createContextEtc(%d)", creation_flags);
-
-		// Use OpenGL interop for OpenGL based viewports if required.
-		if (glViewport)
-		{
-			// GL interop is active if enabled and not using CPU rendering.
-			bool useCPU = (creation_flags & RPR_CREATION_FLAGS_ENABLE_CPU) != 0;
-			m_glInteropActive = !useCPU && IsGLInteropEnabled();
-
-			if (m_glInteropActive)
-				creation_flags |= RPR_CREATION_FLAGS_ENABLE_GL_INTEROP;
-		}
-		else
-			m_glInteropActive = false;
 
 		rpr_context handle;
 		bool contextCreated = createContext(creation_flags, handle, pOutRes);
@@ -1378,7 +1358,7 @@ rpr_framebuffer FireRenderContext::frameBufferAOV_Resolved(int aov) {
 		return nullptr;
 	}
 
-	if (needResolve())
+	if (needResolve() && aov != RPR_AOV_DEEP_COLOR)
 	{
 		//resolve tone mapping
 		m.framebufferAOV[aov].Resolve(m.framebufferAOV_resolved[aov], aov != RPR_AOV_COLOR);
@@ -1423,45 +1403,21 @@ bool FireRenderContext::ConsiderShadowReflectionCatcherOverride(const ReadFrameB
 
 	std::lock_guard<std::mutex> lock(m_rifLock);
 
-	TahoePluginVersion version = GetTahoeVersionToUse();
-	bool isRPR20 = version == TahoePluginVersion::RPR2;
-
 	if (isShadowCather && isReflectionCatcher)
 	{
-		if (isRPR20)
-		{
-			rifReflectionShadowCatcherOutput(params);
-		}
-		else
-		{
-			compositeReflectionShadowCatcherOutput(params);
-		}
+		rifReflectionShadowCatcherOutput(params);
 		return true;
 	}
 
 	if (isShadowCather)
 	{
-		if (isRPR20)
-		{
-			rifShadowCatcherOutput(params);
-		}
-		else
-		{
-			compositeShadowCatcherOutput(params);
-		}
+		rifShadowCatcherOutput(params);
 		return true;
 	}
 
 	if (isReflectionCatcher)
 	{
-		if (isRPR20)
-		{
-			rifReflectionCatcherOutput(params);
-		}
-		else
-		{
-			compositeReflectionCatcherOutput(params);
-		}
+		rifReflectionCatcherOutput(params);
 		return true;
 	}
 
@@ -1845,10 +1801,6 @@ void FireRenderContext::RemoveRenderObject(const MObject& ob)
 					Dynamic cast is needed to type check
 				*/
 				FireRenderMesh* mesh = dynamic_cast<FireRenderMesh*>(frNode);
-				if (mesh != nullptr)
-				{
-					RemoveMainMesh(mesh);
-				}
 
 				// remove object from scene
 				frNode->detachFromScene();
@@ -2057,6 +2009,7 @@ void FireRenderContext::updateFromGlobals(bool applyLock)
 
 	m_globals.readFromCurrentScene();
 	setupContextContourMode(m_globals, createFlags);
+	setupContextAirVolume(m_globals);
 	setupContextPostSceneCreation(m_globals);
 
 	updateLimitsFromGlobalData(m_globals);
@@ -2124,6 +2077,10 @@ void FireRenderContext::globalsChangedCallback(MNodeMessage::AttributeMessage ms
 				restartRender = true;
 			}
 			else if (FireRenderGlobalsData::IsMotionBlur(plug.name()))
+			{
+				restartRender = true;
+			}
+			else if (FireRenderGlobalsData::IsAirVolume(plug.name()))
 			{
 				restartRender = true;
 			}
@@ -2222,11 +2179,6 @@ void FireRenderContext::setMotionBlurParameters(const FireRenderGlobalsData& glo
 bool FireRenderContext::isInteractive() const
 {
 	return (m_RenderType == RenderType::IPR) || (m_RenderType == RenderType::ViewportRender);
-}
-
-bool FireRenderContext::isGLInteropActive() const
-{
-	return m_glInteropActive;
 }
 
 void FireRenderContext::renderLayerManagerCallback(MNodeMessage::AttributeMessage msg, MPlug & plug, MPlug & otherPlug, void * clientData)
@@ -2348,15 +2300,27 @@ bool FireRenderContext::AddSceneObject(const MDagPath& dagPath)
 		{
 			ob = CreateSky(dagPath);
 		}
-		else if (dagNode.typeName() == "fluidShape" && volumeSupported)
+		else if (dagNode.typeName() == "fluidShape" && volumeSupported) // Maya native volume
 		{
-			// Maya native volume
-			ob = CreateSceneObject<FireRenderFluidVolume, NodeCachingOptions::AddPath>(dagPath);
+			if (IsNorthstarVolumeSupported())
+			{
+				ob = CreateSceneObject<NorthstarFluidVolume, NodeCachingOptions::AddPath>(dagPath);
+			}
+			else
+			{
+				ob = CreateSceneObject<FireRenderFluidVolume, NodeCachingOptions::AddPath>(dagPath);
+			}
 		}
-		else if (dagNode.typeName() == "RPRVolume" && volumeSupported)
+		else if (dagNode.typeName() == "RPRVolume" && volumeSupported) // can read .vdb files
 		{
-			// can read .vdb files
-			ob = CreateSceneObject<FireRenderRPRVolume, NodeCachingOptions::AddPath>(dagPath);
+			if (IsNorthstarVolumeSupported()) 
+			{
+				ob = CreateSceneObject<NorthstarRPRVolume, NodeCachingOptions::AddPath>(dagPath);
+			}
+			else
+			{
+				ob = CreateSceneObject<FireRenderRPRVolume, NodeCachingOptions::AddPath>(dagPath);
+			}
 		}
 		else if (dagNode.typeName() == "instancer")
 		{
@@ -2489,12 +2453,15 @@ void FireRenderContext::setDirtyObject(FireRenderObject* obj)
 	// We should skip inactive cameras, because their changes shouldn't affect result image
 	// If ignore this step - image in IPR would redraw when moving different camera in viewport
 	// That image redrawing in IPR causes black square artifats
-	MItDag itDag;
-	MStatus status = itDag.reset(obj->Object(), MItDag::kDepthFirst, MFn::kCamera);
-	CHECK_MSTATUS(status);
-	for (; !itDag.isDone(); itDag.next())
+	if (m_camera.DagPath().transform() != obj->Object())
 	{
-		return;
+		MItDag itDag;
+		MStatus status = itDag.reset(obj->Object(), MItDag::kDepthFirst, MFn::kCamera);
+		CHECK_MSTATUS(status);
+		for (; !itDag.isDone(); itDag.next())
+		{
+			return;
+		}
 	}
 
 	AutoMutexLock lock(m_dirtyMutex);
@@ -2540,7 +2507,10 @@ void FireRenderContext::TriggerProgressCallback(const ContextWorkProgressData& s
 {
 	if (m_WorkProgressCallback)
 	{
-		m_WorkProgressCallback(syncProgressData);
+		FireRenderThread::RunProcOnMainThread([this, syncProgressData]()
+		{
+			m_WorkProgressCallback(syncProgressData);
+		});
 	}
 }
 
@@ -2601,12 +2571,14 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 	}
 
 	size_t dirtyObjectsSize = m_dirtyObjects.size();
-
 	ContextWorkProgressData syncProgressData;
 	syncProgressData.totalCount = dirtyObjectsSize;
 	TimePoint syncStartTime = GetCurrentChronoTime();
 
 	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncStarted);
+
+	std::deque<std::shared_ptr<FireRenderObject> > meshesToReload; // meshes which would be pre-processed
+	std::deque<std::shared_ptr<FireRenderObject> > meshesToFreshen; // meshes which would be freshened
 
 	while (!m_dirtyObjects.empty())
 	{
@@ -2625,27 +2597,101 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 			m_dirtyMutex.unlock();
 
 			// Now perform update
-			if (ptr)
-			{
-				changed = true;
-				DebugPrint("Freshing object");
-
-				UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectPreSync);
-				ptr->Freshen(shouldCalculateHash);
-
-				syncProgressData.currentIndex++;
-				UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectSyncComplete);
-
-				if (cancelled())
-				{
-					return false;
-				}
-			}
-			else
+			if (!ptr)
 			{
 				DebugPrint("Cancelled freshing null object");
+				continue;
+			}
+
+			changed = true;
+
+			if (ptr->IsMesh())
+			{
+				FireRenderMesh* pMesh = dynamic_cast<FireRenderMesh*>(ptr.get());
+				assert(pMesh != nullptr);
+
+				bool meshChanged = pMesh->InitializeMaterials();
+				bool shouldLoad = pMesh->IsMeshVisible(pMesh->DagPath(), this);
+
+				if (meshChanged && shouldLoad)
+				{
+					meshesToReload.emplace_back() = ptr;
+				}
+				else
+				{
+					pMesh->SetReloadedSafe();
+					meshesToFreshen.emplace_back() = ptr;
+				}
+
+				continue;
+			}
+
+			if (ptr->ShouldForceReload())
+			{
+				meshesToReload.emplace_back() = ptr;
+
+				continue;
+			}
+
+			DebugPrint("Freshing object");
+
+			UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectPreSync);
+			ptr->Freshen(shouldCalculateHash);
+
+			syncProgressData.currentIndex++;
+			UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectSyncComplete);
+
+			if (cancelled())
+			{
+				return false;
 			}
 		}
+	}
+
+	const bool isDeformationMotionBlurEnabled = motionBlur() && IsDeformationMotionBlurEnabled() && !isInteractive();
+	const unsigned int motionSamplesCount = isDeformationMotionBlurEnabled ? motionSamples() : 1;
+
+	// read data from meshes
+	MTime initialTime = MAnimControl::currentTime();
+	MTime currentTime = initialTime;
+	unsigned int currentSampeIdx = 0;
+
+	do
+	{
+		// iterate through meshes
+		for (auto it = meshesToReload.begin(); it != meshesToReload.end(); ++it)
+		{
+			if (!it->get())
+			{
+				continue;
+			}
+
+			const bool success = it->get()->ReloadMesh(currentSampeIdx);
+			if (success && (currentSampeIdx == 0))
+			{
+				meshesToFreshen.emplace_back() = *it;
+			}
+		}
+
+		if (++currentSampeIdx >= motionSamplesCount)
+			break;
+
+		// positioning on next point of time (starting from currentTime)
+		currentTime += (float)currentSampeIdx / (motionSamplesCount - 1);
+		MGlobal::viewFrame(currentTime);
+		
+	} while (currentTime != MAnimControl::maxTime());
+
+	MGlobal::viewFrame(initialTime);
+
+	// process read data (would be done in multiple threads in the future)
+	for (auto it = meshesToFreshen.begin(); it != meshesToFreshen.end(); ++it)
+	{
+		FireRenderObject* pMesh = it->get();
+		if (pMesh == nullptr)
+			continue;
+
+		pMesh->Freshen(shouldCalculateHash);
 	}
 
 	syncProgressData.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), syncStartTime);
@@ -2656,8 +2702,6 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		UpdateDefaultLights();
 		setCameraAttributeChanged(true);
 	}
-
-	SetupPreviewMode();
 
 	if (cancelled())
 		return false;
@@ -2929,7 +2973,7 @@ frw::FrameBuffer GetOutFrameBuffer(const FireRenderContext::ReadFrameBufferReque
 // -----------------------------------------------------------------------------
 void FireRenderContext::rifShadowCatcherOutput(const ReadFrameBufferRequestParams& params)
 {
-	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
+	const bool forceCPUContext = true;
 
 	const rpr_framebuffer colorFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
 	const rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
@@ -2995,7 +3039,7 @@ void FireRenderContext::rifShadowCatcherOutput(const ReadFrameBufferRequestParam
 
 void FireRenderContext::rifReflectionCatcherOutput(const ReadFrameBufferRequestParams& params)
 {
-	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
+	bool forceCPUContext = true;
 
 	const rpr_framebuffer colorFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
 	const rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
@@ -3046,7 +3090,7 @@ void FireRenderContext::rifReflectionCatcherOutput(const ReadFrameBufferRequestP
 
 void FireRenderContext::rifReflectionShadowCatcherOutput(const ReadFrameBufferRequestParams& params)
 {
-	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
+	bool forceCPUContext = true;
 	
 	const rpr_framebuffer colorFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
 	const rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
@@ -3271,7 +3315,7 @@ frw::Shader FireRenderContext::GetShader(MObject ob, MObject shadingEngine, cons
 
 		MPlug materialIdPlug = sgDependecyNode.findPlug("rmi", false);
 
-		if (!materialIdPlug.isNull())
+		if (IsMaterialNodeIDSupported() && !materialIdPlug.isNull())
 		{
 			shader.SetMaterialId(materialIdPlug.asInt());
 		}
@@ -3537,3 +3581,39 @@ void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestPa
 	});
 }
 
+frw::Light FireRenderContext::GetRprLightFromNode(const MObject& node)
+{
+	const char* uuid = MFnDependencyNode(node).uuid().asString().asChar();
+
+	if (m_sceneObjects.find(uuid) == m_sceneObjects.end())
+	{
+		MGlobal::displayError("Unable to find linked light!");
+		return frw::Light();
+	}
+
+	if (GetScope().GetCurrentlyParsedMesh() == nullptr)
+	{
+		MGlobal::displayError("'GetRprLightFromNode' method called outside of mesh parsing scope");
+		return frw::Light();
+	}
+
+	FireRenderObject* lightObjectPointer = m_sceneObjects[uuid].get();
+
+	FireRenderLight* fireRenderLight = dynamic_cast<FireRenderLight*>(lightObjectPointer);
+	FireRenderEnvLight* envLight = dynamic_cast<FireRenderEnvLight*>(lightObjectPointer);
+
+	if (fireRenderLight && !fireRenderLight->GetFrLight().isAreaLight)
+	{
+		fireRenderLight->addLinkedMesh(GetScope().GetCurrentlyParsedMesh());
+		return fireRenderLight->GetFrLight().light;
+	}
+	else if (envLight)
+	{
+		envLight->addLinkedMesh(GetScope().GetCurrentlyParsedMesh());
+		return envLight->getLight();
+	}
+
+	MGlobal::displayWarning("light with uuid " + MString(lightObjectPointer->uuid().c_str()) + " is not support linking");
+	return frw::Light();
+	
+}

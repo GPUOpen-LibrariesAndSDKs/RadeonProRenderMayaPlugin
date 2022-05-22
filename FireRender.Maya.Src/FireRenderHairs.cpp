@@ -235,7 +235,7 @@ void FireRenderHair::ApplyTransform(void)
 	// convert Maya mesh in cm to m
 	MMatrix scaleM;
 	scaleM.setToIdentity();
-	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
 	matrix *= scaleM;
 	float mfloats[4][4];
 	matrix.get(mfloats);
@@ -576,6 +576,14 @@ void FireRenderHair::setCastShadows(bool castShadow)
 	}
 }
 
+void FireRenderHair::setReceiveShadows(bool receiveShadow)
+{
+	for (frw::Curve& curve : m_Curves)
+	{
+		curve.SetReceiveShadowFlag(receiveShadow);
+	}
+}
+
 void FireRenderHair::setRenderStats(MDagPath dagPath)
 {
 	if (!dagPath.isValid())
@@ -607,6 +615,14 @@ void FireRenderHair::setRenderStats(MDagPath dagPath)
 		bool castsShadows = false;
 		castsShadowsPlug.getValue(castsShadows);
 		setCastShadows(castsShadows);
+	}
+
+	MPlug receivesShadowsPlug = depNode.findPlug("receiveShadows");
+	if (!receivesShadowsPlug.isNull())
+	{
+		bool recievesShadows = false;
+		receivesShadowsPlug.getValue(recievesShadows);
+		setReceiveShadows(recievesShadows);
 	}
 }
 
@@ -1168,6 +1184,14 @@ void FireRenderHairNHair::setRenderStats(MDagPath dagPath)
 		bool castsShadows = false;
 		castsShadowsPlug.getValue(castsShadows);
 		setCastShadows(castsShadows);
+	}
+
+	MPlug receivesShadowsPlug = depNode.findPlug("receiveShadows");
+	if (!receivesShadowsPlug.isNull())
+	{
+		bool recievesShadows = false;
+		receivesShadowsPlug.getValue(recievesShadows);
+		setReceiveShadows(recievesShadows);
 	}
 }
 

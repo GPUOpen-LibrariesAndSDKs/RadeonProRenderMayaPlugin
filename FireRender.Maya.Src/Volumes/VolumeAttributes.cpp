@@ -45,7 +45,7 @@ MObject RPRVolumeAttributes::albedoEnabled;
 MObject RPRVolumeAttributes::volumeDimensionsAlbedo;
 MObject RPRVolumeAttributes::albedoSelectedGrid;
 MObject RPRVolumeAttributes::albedoGradType;
-MObject RPRVolumeAttributes::albedoValue;
+MObject RPRVolumeAttributes::albedoRamp;
 // - emission
 MObject RPRVolumeAttributes::emissionEnabled;
 MObject RPRVolumeAttributes::volumeDimensionsEmission;
@@ -57,9 +57,10 @@ MObject RPRVolumeAttributes::emissionRamp;
 // - density
 MObject RPRVolumeAttributes::densityEnabled;
 MObject RPRVolumeAttributes::volumeDimensionsDensity;
+MObject RPRVolumeAttributes::volumeVoxelSizeDensity;
 MObject RPRVolumeAttributes::densitySelectedGrid;
 MObject RPRVolumeAttributes::densityGradType;
-MObject RPRVolumeAttributes::densityValue;
+MObject RPRVolumeAttributes::densityRamp;
 MObject RPRVolumeAttributes::densityMultiplier;
 
 namespace
@@ -171,7 +172,13 @@ namespace
 	};
 }
 
-MStatus postConstructor_initialise_ramp_curve(MObject parentNode, MObject rampObj, int index, float position, float value, int interpolation)
+MStatus postConstructor_initialise_ramp_curve_dbg(
+	MObject parentNode, 
+	MObject rampObj, 
+	int index, 
+	float position, 
+	float value, 
+	int interpolation)
 {
 	MStatus status;
 
@@ -184,6 +191,34 @@ MStatus postConstructor_initialise_ramp_curve(MObject parentNode, MObject rampOb
 
 	MPlug valuePlug = elementPlug.child(1);
 	status = valuePlug.setFloat(value);
+
+	MPlug interpPlug = elementPlug.child(2);
+	interpPlug.setInt(interpolation);
+
+	return MS::kSuccess;
+}
+
+MStatus postConstructor_initialise_color_curve_dbg(
+	MObject& parentNode, 
+	MObject& rampObj, 
+	int index, 
+	float position, 
+	MColor value, 
+	int interpolation)
+{
+	MStatus status;
+
+	MPlug rampPlug(parentNode, rampObj);
+
+	MPlug elementPlug = rampPlug.elementByLogicalIndex(index, &status);
+
+	MPlug positionPlug = elementPlug.child(0, &status);
+	status = positionPlug.setFloat(position);
+
+	MPlug valuePlug = elementPlug.child(1);
+	status = valuePlug.child(0).setFloat(value.r);
+	status = valuePlug.child(1).setFloat(value.g);
+	status = valuePlug.child(2).setFloat(value.b);
 
 	MPlug interpPlug = elementPlug.child(2);
 	interpPlug.setInt(interpolation);
@@ -241,6 +276,11 @@ void RPRVolumeAttributes::Initialize()
 	tAttr.setHidden(true);
 	setAttribProps(tAttr, albedoSelectedGrid);
 
+	albedoRamp = rAttr.createColorRamp("albedoRamp", "valb", &status);
+	CHECK_MSTATUS(status);
+	status = MPxNode::addAttribute(albedoRamp);
+	CHECK_MSTATUS(status);
+
 	// Emission
 	emissionEnabled = nAttr.create("emissionEnabled", "eems", MFnNumericData::kBoolean, 0);
 	setAttribProps(nAttr, emissionEnabled);
@@ -254,6 +294,11 @@ void RPRVolumeAttributes::Initialize()
 	emissionSelectedGrid = tAttr.create("emissionSelectedGrid", "elsg", MFnData::kString, MFnStringData().create("Not used"), &status);
 	tAttr.setHidden(true);
 	setAttribProps(tAttr, emissionSelectedGrid);
+
+	emissionRamp = rAttr.createColorRamp("emissionRamp", "vems", &status);
+	CHECK_MSTATUS(status);
+	status = MPxNode::addAttribute(emissionRamp);
+	CHECK_MSTATUS(status);
 
 	emissionIntensity = nAttr.create("emissionIntensity", "iems", MFnNumericData::kFloat, 1.0f);
 	setAttribProps(nAttr, emissionIntensity);
@@ -270,15 +315,24 @@ void RPRVolumeAttributes::Initialize()
 	nAttr.setMin(1, 1, 1);
 	nAttr.setMax(10000, 10000, 10000);
 
+	volumeVoxelSizeDensity = nAttr.create("volumeVoxelSizeDensity", "dvxs", MFnNumericData::k3Double);
+	setAttribProps(nAttr, volumeVoxelSizeDensity);
+	CHECK_MSTATUS(nAttr.setDefault(0.25, 0.25, 0.25));
+
 	densitySelectedGrid = tAttr.create("densitySelectedGrid", "dnsg", MFnData::kString, MFnStringData().create("Not used"), &status);
 	tAttr.setHidden(true);
 	
 	setAttribProps(tAttr, densitySelectedGrid);
 
-	densityMultiplier = nAttr.create("densityMultiplier", "kdns", MFnNumericData::kFloat, 1000.0f);
+	densityMultiplier = nAttr.create("densityMultiplier", "kdns", MFnNumericData::kFloat, 800.0f);
 	setAttribProps(nAttr, densityMultiplier);
 	nAttr.setMin(0.0f);
-	nAttr.setSoftMax(100000.0f);
+	nAttr.setSoftMax(10000.0f);
+
+	densityRamp = rAttr.createCurveRamp("densityRamp", "vdns", &status);
+	CHECK_MSTATUS(status);
+	status = MPxNode::addAttribute(densityRamp);
+	CHECK_MSTATUS(status);
 }
 
 MDataHandle RPRVolumeAttributes::GetVolumeGridDimentions(const MFnDependencyNode& node)
@@ -294,18 +348,42 @@ MDataHandle RPRVolumeAttributes::GetVolumeGridDimentions(const MFnDependencyNode
 	return MDataHandle();
 }
 
+MDataHandle RPRVolumeAttributes::GetVolumeVoxelSize(const MFnDependencyNode& node)
+{
+	MPlug plug = node.findPlug(RPRVolumeAttributes::volumeVoxelSizeDensity);
+
+	assert(!plug.isNull());
+	if (!plug.isNull())
+	{
+		return plug.asMDataHandle();
+	}
+
+	return MDataHandle();
+}
+
 bool ProcessSchema(int schemaId, int frame, std::string& filePath)
 {
 	const std::string& fileExtension ("vdb");
 
+#ifdef WIN32
 	const static std::map<int, std::tuple<std::regex, std::regex, std::string>> mayaNamePattern =
 	{
-		{ 0, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.]+)+(\.)([0-9])+\.(vdb)$)"), std::regex(R"((\.)([0-9])+\.(vdb)$)"),	"name.#.ext"	}},
-		{ 1, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.]+)+(\.)(vdb)\.([0-9])+$)"), std::regex(R"((\.)(vdb)\.([0-9])+$)"),	"name.ext.#"	}},
-		{ 2, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.]+)+\.([0-9])+$)"),			std::regex(R"(\.([0-9])+$)"),			"name.#"		}},
-		{ 3, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.]+)+([0-9])+\.(vdb)$)"),		std::regex(R"(([0-9])+\.(vdb)$)"),		"name#.ext"		}},
-		{ 4, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.]+)+(\_)([0-9])+\.(vdb)$)"), std::regex(R"((\_)([0-9])+\.(vdb))"),	"name_#.ext"	}}
+		{ 0, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.\)\(]+)+(\.)([0-9])+\.(vdb)$)"), std::regex(R"((\.)([0-9])+\.(vdb)$)"),	"name.#.ext"	}},
+		{ 1, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.\)\(]+)+(\.)(vdb)\.([0-9])+$)"), std::regex(R"((\.)(vdb)\.([0-9])+$)"),	"name.ext.#"	}},
+		{ 2, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.\)\(]+)+\.([0-9])+$)"),			std::regex(R"(\.([0-9])+$)"),			"name.#"		}},
+		{ 3, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.\)\(]+)+([0-9])+\.(vdb)$)"),		std::regex(R"(([0-9])+\.(vdb)$)"),		"name#.ext"		}},
+		{ 4, {std::regex(R"(^(?:[\w]\:)(\/[a-zA-Z_\-\s0-9\.\)\(]+)+_([0-9])+\.(vdb)$)"), std::regex(R"(_([0-9])+\.(vdb)$)"),		"name_#.ext"	}}
 	};
+#else // macOS
+	const static std::map<int, std::tuple<std::regex, std::regex, std::string>> mayaNamePattern =
+	{
+		{ 0, {std::regex(R"(^(\/[a-zA-Z_\-\s0-9\.]+)+(\.)([0-9])+\.(vdb)$)"),	std::regex(R"((\.)([0-9])+\.(vdb)$)"),	"name.#.ext"	}},
+		{ 1, {std::regex(R"(^(\/[a-zA-Z_\-\s0-9\.]+)+(\.)(vdb)\.([0-9])+$)"),	std::regex(R"((\.)(vdb)\.([0-9])+$)"),	"name.ext.#"	}},
+		{ 2, {std::regex(R"(^(\/[a-zA-Z_\-\s0-9\.]+)+\.([0-9])+$)"),			std::regex(R"(\.([0-9])+$)"),			"name.#"		}},
+		{ 3, {std::regex(R"(^(\/[a-zA-Z_\-\s0-9\.]+)+([0-9])+\.(vdb)$)"),		std::regex(R"(([0-9])+\.(vdb)$)"),		"name#.ext"		}},
+		{ 4, {std::regex(R"(^(\/[a-zA-Z_\-\s0-9\.]+)+_([0-9])+\.(vdb)$)"),		std::regex(R"(_([0-9])+\.(vdb)$)"),		"name_#.ext"	}}
+	};
+#endif
 
 	// get regex record corresponding to ui option
 	auto it = mayaNamePattern.find(schemaId);
@@ -406,7 +484,7 @@ VolumeGradient RPRVolumeAttributes::GetAlbedoGradientType(const MFnDependencyNod
 
 MPlug RPRVolumeAttributes::GetAlbedoRamp(const MFnDependencyNode& node)
 {
-	MPlug plug = node.findPlug(RPRVolumeAttributes::albedoValue);
+	MPlug plug = node.findPlug(RPRVolumeAttributes::albedoRamp);
 
 	assert(!plug.isNull());
 
@@ -442,7 +520,7 @@ VolumeGradient RPRVolumeAttributes::GetEmissionGradientType(const MFnDependencyN
 
 MPlug RPRVolumeAttributes::GetEmissionValueRamp(const MFnDependencyNode& node)
 {
-	MPlug plug = node.findPlug(RPRVolumeAttributes::emissionValue);
+	MPlug plug = node.findPlug(RPRVolumeAttributes::emissionRamp);
 
 	assert(!plug.isNull());
 
@@ -500,7 +578,7 @@ VolumeGradient RPRVolumeAttributes::GetDensityGradientType(const MFnDependencyNo
 
 MPlug RPRVolumeAttributes::GetDensityRamp(const MFnDependencyNode& node)
 {
-	MPlug plug = node.findPlug(RPRVolumeAttributes::densityValue);
+	MPlug plug = node.findPlug(RPRVolumeAttributes::densityRamp);
 
 	assert(!plug.isNull());
 
@@ -565,7 +643,7 @@ MString RPRVolumeAttributes::GetSelectedEmissionGridName(const MFnDependencyNode
 	return MString(value);
 }
 
-void SetVolumeUIDimensions(std::array<int, 3 >& dimValues, MPlug& plugToSet)
+void SetVolumeUIGridSize(VDBGridSize& dimValues, MPlug& plugToSet)
 {
 	assert(!plugToSet.isNull());
 	if (plugToSet.isNull())
@@ -576,15 +654,53 @@ void SetVolumeUIDimensions(std::array<int, 3 >& dimValues, MPlug& plugToSet)
 	if (!isCompund)
 		return;
 
-	unsigned int numChildren = plugToSet.numChildren(&status);
-	for (unsigned int child_idx = 0; child_idx < numChildren; ++child_idx)
-	{
-		MPlug childPlug = plugToSet.child(child_idx, &status);
-		if (status != MStatus::kSuccess)
-			return;
+	// set x dimension
+	MPlug childPlug = plugToSet.child(0, &status);
+	if (status != MStatus::kSuccess)
+		return;
+	status = childPlug.setShort(dimValues.gridSizeX);
 
-		status = childPlug.setShort(dimValues[child_idx]);
-	}
+	// set y dimension
+	childPlug = plugToSet.child(1, &status);
+	if (status != MStatus::kSuccess)
+		return;
+	status = childPlug.setShort(dimValues.gridSizeY);
+
+	// set z dimension
+	childPlug = plugToSet.child(2, &status);
+	if (status != MStatus::kSuccess)
+		return;
+	status = childPlug.setShort(dimValues.gridSizeZ);
+}
+
+void SetVolumeUIVoxelSize(VDBGridSize& dimValues, MPlug& plugToSet)
+{
+	assert(!plugToSet.isNull());
+	if (plugToSet.isNull())
+		return;
+
+	MStatus status;
+	bool isCompund = plugToSet.isCompound(&status);
+	if (!isCompund)
+		return;
+
+	// set x dimension
+	MPlug childPlug = plugToSet.child(0, &status);
+	if (status != MStatus::kSuccess)
+		return;
+	status = childPlug.setDouble(dimValues.voxelSizeX);
+
+	// set y dimension
+	childPlug = plugToSet.child(1, &status);
+	if (status != MStatus::kSuccess)
+		return;
+	status = childPlug.setDouble(dimValues.voxelSizeY);
+
+	// set z dimension
+	childPlug = plugToSet.child(2, &status);
+	if (status != MStatus::kSuccess)
+		return;
+	status = childPlug.setDouble(dimValues.voxelSizeZ);
 }
 
 // modify input grid to be used as density and calculate corresponing lookup table
@@ -596,14 +712,6 @@ void ProcessDensityGrid(
 	float densityMultiplier)
 {
 	float valueScale = (maxVal <= minVal) ? 1.0f : (1.0f / (maxVal - minVal));
-
-	valuesLookUpTable.reserve(6);
-	valuesLookUpTable.push_back(0.0f);
-	valuesLookUpTable.push_back(0.0f);
-	valuesLookUpTable.push_back(0.0f);
-	valuesLookUpTable.push_back(1.1f * densityMultiplier); // replace const with coef from UI
-	valuesLookUpTable.push_back(1.1f * densityMultiplier);
-	valuesLookUpTable.push_back(1.1f * densityMultiplier);
 
 	float offset = 0.0f;
 	if (minVal*valueScale < 0.0f) // density less than zero is not a valid case for RPR but it is possible in VDB grid
@@ -620,17 +728,11 @@ void ProcessDensityGrid(
 // modify input grid to be used as albedo and calculate corresponing lookup table
 void ProcessTemperatureGrid(
 	std::vector<float>& floatGridOnValueIndices,
-	std::vector<float>& valuesLookUpTable,
 	float minVal,
 	float maxVal,
 	float temperatureColorMul = 1.0f)
 {
 	const float temperatureOffset = (minVal < 0) ? -minVal : 0.0f;
-
-	for (int i = 0; i < (int)sizeof(temperatureToColor) / sizeof(temperatureToColor[0]); i++)
-	{
-		valuesLookUpTable.push_back(temperatureToColor[i] * temperatureColorMul);
-	}
 
 	for (float& gridValue : floatGridOnValueIndices)
 	{
@@ -638,12 +740,79 @@ void ProcessTemperatureGrid(
 	}
 }
 
-void RPRVolumeAttributes::SetupVolumeFromFile(MObject& node, FireRenderVolumeLocator::GridParams& gridParams)
+void GetMaxGridSize(const std::string& filename, const MFnDependencyNode& node, VDBGridParams& maxGridParams)
+{
+	maxGridParams.clear();
+
+	// iterate over animation frames to find max bbox size
+	MTime startTime = MAnimControl::minTime();
+	unsigned int startFrame = static_cast<unsigned int>(startTime.value());
+	MTime endTime = MAnimControl::maxTime();
+	unsigned int endFrame = static_cast<unsigned int>(endTime.value());
+
+	MPlug vdbSchemaPlug = node.findPlug(RPRVolumeAttributes::namingSchema);
+	assert(!vdbSchemaPlug.isNull());
+	VDBGridParams gridParams;
+	for (unsigned int tmpFrame = startFrame; tmpFrame < endFrame; ++tmpFrame)
+	{
+		std::string tmpFilePath = filename;
+
+		// try find anim file
+		bool success = ProcessSchema(vdbSchemaPlug.asInt(), tmpFrame, tmpFilePath);
+		if (!success)
+			continue;
+
+		std::ifstream f(tmpFilePath);
+		bool fileExists = f.good();
+		if (!fileExists)
+			continue;
+
+		// read file and set grids list with grids from file
+		auto res = ReadVolumeDataFromFile(tmpFilePath, gridParams);
+		if (!std::get<bool>(res))
+			continue;
+
+		for (auto it = gridParams.begin(); it != gridParams.end(); ++it)
+		{
+			const std::string& gridName = it->first;
+			auto& maxGrid = maxGridParams[gridName];
+
+			if (it->second.upperBound[0] > maxGrid.gridSizeX)
+				maxGrid.gridSizeX = it->second.upperBound[0];
+
+			if (it->second.upperBound[1] > maxGrid.gridSizeY)
+				maxGrid.gridSizeY = it->second.upperBound[1];
+
+			if (it->second.upperBound[2] > maxGrid.gridSizeZ)
+				maxGrid.gridSizeZ = it->second.upperBound[2];
+		}
+	}
+
+	// save voxel sizes
+	for (auto it = gridParams.begin(); it != gridParams.end(); ++it)
+	{
+		const std::string& gridName = it->first;
+		auto& maxGrid = maxGridParams[gridName];
+
+		maxGrid.voxelSizeX = it->second.voxelSizeX;
+		maxGrid.voxelSizeY = it->second.voxelSizeY;
+		maxGrid.voxelSizeZ = it->second.voxelSizeZ;
+	}
+}
+
+void RPRVolumeAttributes::SetupVolumeFromFile(MObject& node, VDBGridParams& gridParams, VDBGridParams& maxGridParams, bool shouldSetup /*= false*/)
 {
 	// get .vdb file from UI form
 	std::string filename = GetVDBFilePath(node);
 	if (filename.empty())
 		return;
+
+	// setup volume data from file
+	if (shouldSetup)
+	{
+		// for animation
+		GetMaxGridSize(filename, node, maxGridParams);
+	}
 
 	// read file and set grids list with grids from file
 	ReadVolumeDataFromFile(filename, gridParams);
@@ -670,7 +839,8 @@ void RPRVolumeAttributes::SetupVolumeFromFile(MObject& node, FireRenderVolumeLoc
 	}
 
 	// - write fresh data that was read from grids into array attribute
-	for (auto it = gridParams.begin(); it != gridParams.end(); ++it)
+	auto& tmpGridParams = (maxGridParams.size() > 0) ? maxGridParams : gridParams;
+	for (auto it = tmpGridParams.begin(); it != tmpGridParams.end(); ++it)
 	{
 		MDataHandle handle = arrayBuilder.addLast(&status);
 		MString val = MString(it->first.c_str());
@@ -687,30 +857,90 @@ void RPRVolumeAttributes::SetupVolumeFromFile(MObject& node, FireRenderVolumeLoc
 	MString command = "FillGridList(\"" + partialPathName + "\");\n";
 	MStatus res = MGlobal::executeCommandOnIdle(command);
 	CHECK_MSTATUS(res);
+
+	// setup new grid parameters
+	MFnDependencyNode depNode(node);
+	MPlug densityPlug = depNode.findPlug(RPRVolumeAttributes::densitySelectedGrid);
+	SetupGridSizeFromFile(node, densityPlug, tmpGridParams);
 }
 
-void RPRVolumeAttributes::SetupGridSizeFromFile(MObject& node, MPlug& plug, FireRenderVolumeLocator::GridParams& gridParams)
+void RPRVolumeAttributes::SetupGridSizeFromFile(MObject& node, MPlug& plug, VDBGridParams& gridParams)
 {
 	MFnDependencyNode depNode(node);
 
 	if (plug == RPRVolumeAttributes::densitySelectedGrid)
 	{
+		// set selected grid dementions in ui
 		std::string selectedGridName = GetSelectedDensityGridName(depNode).asChar();
-		MPlug plug = depNode.findPlug(RPRVolumeAttributes::volumeDimensionsDensity);
-		SetVolumeUIDimensions(gridParams[selectedGridName], plug);
+		MPlug dimensionsPlug = depNode.findPlug(RPRVolumeAttributes::volumeDimensionsDensity);
+		MPlug voxelSizePlug = depNode.findPlug(RPRVolumeAttributes::volumeVoxelSizeDensity);
+		SetVolumeUIGridSize(gridParams[selectedGridName], dimensionsPlug);
+		SetVolumeUIVoxelSize(gridParams[selectedGridName], voxelSizePlug);
 	}
 	else if (plug == RPRVolumeAttributes::albedoSelectedGrid)
 	{
+		// set selected grid dementions in ui
 		std::string selectedGridName = GetSelectedAlbedoGridName(depNode).asChar();
 		MPlug plug = depNode.findPlug(RPRVolumeAttributes::volumeDimensionsAlbedo);
-		SetVolumeUIDimensions(gridParams[selectedGridName], plug);
+		SetVolumeUIGridSize(gridParams[selectedGridName], plug);
 	}
 	else if (plug == RPRVolumeAttributes::emissionSelectedGrid)
 	{
+		// set selected grid dementions in ui
 		std::string selectedGridName = GetSelectedEmissionGridName(depNode).asChar();
 		MPlug plug = depNode.findPlug(RPRVolumeAttributes::volumeDimensionsEmission);
-		SetVolumeUIDimensions(gridParams[selectedGridName], plug);
+		SetVolumeUIGridSize(gridParams[selectedGridName], plug);
 	}
+}
+
+template <typename T>
+void CopyLookupValue(std::vector<float>& lookupTableOut, const std::vector<T>& remapedRampValue);
+
+template <>
+void CopyLookupValue(std::vector<float>& lookupTableOut, const std::vector<float>& remapedRampValue)
+{
+	lookupTableOut.resize(remapedRampValue.size() * 3);
+	for (size_t idx = 0; idx < remapedRampValue.size(); ++idx)
+	{
+		lookupTableOut[idx * 3]		= remapedRampValue[idx];
+		lookupTableOut[idx * 3 + 1] = remapedRampValue[idx];
+		lookupTableOut[idx * 3 + 2] = remapedRampValue[idx];
+	}
+}
+
+template <>
+void CopyLookupValue(std::vector<float>& lookupTableOut, const std::vector<MColor>& remapedRampValue)
+{
+	lookupTableOut.resize(remapedRampValue.size() * 3);
+	for (size_t idx = 0; idx < remapedRampValue.size(); ++idx)
+	{
+		lookupTableOut[idx * 3]		= remapedRampValue[idx].r;
+		lookupTableOut[idx * 3 + 1] = remapedRampValue[idx].g;
+		lookupTableOut[idx * 3 + 2] = remapedRampValue[idx].b;
+	}
+}
+
+template <typename MayaArrayT, typename valTypeT>
+void SetupLookupTableFromRamp(VDBGrid<float>& dataGrid, MPlug& rampPlug)
+{
+	using MayaElementT = decltype(
+		std::declval<MayaArrayT&>()[std::declval<unsigned int>()]
+	);
+	static_assert(std::is_same<MayaElementT, valTypeT&>::value, "array type mismatch");
+
+	dataGrid.valuesLookUpTable.resize(100);
+	std::vector<RampCtrlPoint<valTypeT>> ctrlPoints;
+	GetRampValues<MayaArrayT, valTypeT>(rampPlug, ctrlPoints);
+	std::vector<valTypeT> remapedRampValue(100, 0.0f);
+	RemapRampControlPoints(remapedRampValue.size(), remapedRampValue, ctrlPoints);
+	CopyLookupValue(dataGrid.valuesLookUpTable, remapedRampValue);
+}
+
+void CopyGridSizeValues(VDBGrid<float>& destination, const VDBGridSize& source)
+{
+	destination.size.gridSizeX = source.gridSizeX;
+	destination.size.gridSizeY = source.gridSizeY;
+	destination.size.gridSizeZ = source.gridSizeZ;
 }
 
 void RPRVolumeAttributes::FillVolumeData(VDBVolumeData& data, const MObject& node)
@@ -720,6 +950,10 @@ void RPRVolumeAttributes::FillVolumeData(VDBVolumeData& data, const MObject& nod
 	std::string filename = GetVDBFilePath(depNode);
 	if (filename.empty())
 		return;
+
+	VDBGridParams maxGridParams;
+	GetMaxGridSize(filename, node, maxGridParams);
+	bool treatAsAnimation = maxGridParams.size() > 0;
 
 	// process vdb file
 	// initialize openvdb; it is necessary to call it before beginning working with vdb
@@ -737,6 +971,7 @@ void RPRVolumeAttributes::FillVolumeData(VDBVolumeData& data, const MObject& nod
 	{
 		// display error message in Maya
 		std::string err = ex.what();
+		MGlobal::displayError(MString(err.c_str()));
 
 		return;
 	}
@@ -749,8 +984,15 @@ void RPRVolumeAttributes::FillVolumeData(VDBVolumeData& data, const MObject& nod
 			std::string densityGridName = GetSelectedDensityGridName(depNode).asChar();
 			ReadFileGridToVDBGrid(data.densityGrid, file, densityGridName);
 
+			if (treatAsAnimation)
+			{
+				CopyGridSizeValues(data.densityGrid, maxGridParams[densityGridName]);
+			}
+
 			// - setup look up table values
 			ProcessDensityGrid(data.densityGrid.gridOnValueIndices, data.densityGrid.valuesLookUpTable, data.densityGrid.minValue, data.densityGrid.maxValue, GetDensityMultiplier(depNode));
+			MPlug densityRampPlug = RPRVolumeAttributes::GetDensityRamp(node);
+			SetupLookupTableFromRamp<MFloatArray, float>(data.densityGrid, densityRampPlug);
 		}
 
 		// read albedo
@@ -759,8 +1001,15 @@ void RPRVolumeAttributes::FillVolumeData(VDBVolumeData& data, const MObject& nod
 			std::string albedoGridName = GetSelectedAlbedoGridName(depNode).asChar();
 			ReadFileGridToVDBGrid(data.albedoGrid, file, albedoGridName);
 
+			if (treatAsAnimation)
+			{
+				CopyGridSizeValues(data.albedoGrid, maxGridParams[albedoGridName]);
+			}
+
 			// - setup look up table values
-			ProcessTemperatureGrid(data.albedoGrid.gridOnValueIndices, data.albedoGrid.valuesLookUpTable, data.albedoGrid.minValue, data.albedoGrid.maxValue);
+			ProcessTemperatureGrid(data.albedoGrid.gridOnValueIndices, data.albedoGrid.minValue, data.albedoGrid.maxValue);
+			MPlug albedoRampPlug = RPRVolumeAttributes::GetAlbedoRamp(node);
+			SetupLookupTableFromRamp<MColorArray, MColor>(data.albedoGrid, albedoRampPlug);
 		}
 
 		// read emission
@@ -769,8 +1018,15 @@ void RPRVolumeAttributes::FillVolumeData(VDBVolumeData& data, const MObject& nod
 			std::string emissionGridName = GetSelectedEmissionGridName(depNode).asChar();
 			ReadFileGridToVDBGrid(data.emissionGrid, file, emissionGridName);
 
+			if (treatAsAnimation)
+			{
+				CopyGridSizeValues(data.emissionGrid, maxGridParams[emissionGridName]);
+			}
+
 			// - setup look up table values
-			ProcessTemperatureGrid(data.emissionGrid.gridOnValueIndices, data.emissionGrid.valuesLookUpTable, data.emissionGrid.minValue, data.emissionGrid.maxValue, GetEmissionIntensity(depNode));
+			ProcessTemperatureGrid(data.emissionGrid.gridOnValueIndices, data.emissionGrid.minValue, data.emissionGrid.maxValue);
+			MPlug emissionRampPlug = RPRVolumeAttributes::GetEmissionValueRamp(node);
+			SetupLookupTableFromRamp<MColorArray, MColor>(data.emissionGrid, emissionRampPlug);
 		}
 
 		// close the file.
@@ -780,9 +1036,62 @@ void RPRVolumeAttributes::FillVolumeData(VDBVolumeData& data, const MObject& nod
 	{
 		// display error message in Maya
 		std::string err = ex.what();
+		MGlobal::displayError(MString(err.c_str()));
 
 		return;
 	}
+}
+
+template <typename T>
+bool RPRVolumeAttributes::GetSingleGridData(VDBGrid<T>& outGridData, const MObject& node, const std::string& gridName)
+{
+	MFnDependencyNode depNode(node);
+
+	std::string filename = GetVDBFilePath(depNode);
+	if (filename.empty())
+		return false;
+
+	// process vdb file
+	// initialize openvdb; it is necessary to call it before beginning working with vdb
+	openvdb::initialize();
+
+	// create a VDB file object.
+	openvdb::io::File file(filename);
+
+	try
+	{
+		// open the file; this reads the file header, but not any grids.
+		file.open();
+	}
+	catch (openvdb::IoError ex)
+	{
+		// display error message in Maya
+		std::string err = ex.what();
+		MGlobal::displayError(MString(err.c_str()));
+
+		return false;
+	}
+
+	try
+	{
+		auto res = ReadFileGridToVDBGrid(outGridData, file, gridName);
+		if (!std::get<bool>(res))
+		{
+			std::string& errMsg = std::get<std::string>(res);
+			MGlobal::displayError(MString(errMsg.c_str()));
+			return false;
+		}
+	}
+	catch (openvdb::Exception& ex)
+	{
+		// display error message in Maya
+		std::string err = ex.what();
+		MGlobal::displayError(MString(err.c_str()));
+
+		return false;
+	}
+
+	return true;
 }
 
 void RPRVolumeAttributes::FillVolumeData(VolumeData& data, const MObject& node, FireMaya::Scope* scope)

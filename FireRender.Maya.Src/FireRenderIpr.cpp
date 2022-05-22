@@ -98,6 +98,16 @@ void FireRenderIpr::updateRegion()
 		!(m_region.getWidth() == m_width && m_region.getHeight() == m_height);
 
 	// Default to the full render view if the region is invalid.
+
+	if (m_isRegion)
+	{
+		// sometimes Maya send us region which is bigger then entire size. In this case - reset region rendering
+		if (m_region.getWidth() > m_width || m_region.getHeight() > m_height)
+		{
+			m_isRegion = false;
+		}
+	}
+
 	if (!m_isRegion)
 		m_region = RenderRegion(0, m_width - 1, m_height - 1, 0);
 
@@ -184,13 +194,15 @@ bool FireRenderIpr::start()
 			m_contextPtr->enableAOV(RPR_AOV_SHADOW_CATCHER);
 		if (globals.aovs.getAOV(RPR_AOV_REFLECTION_CATCHER)->active)
 			m_contextPtr->enableAOV(RPR_AOV_REFLECTION_CATCHER);
-		
+
+		// Important to call setCamera before build scene
+		m_contextPtr->setCamera(m_camera, true);
 		if (!m_contextPtr->buildScene(false, false, false))
 		{
 			return false;
 		}
 
-		if (TahoeContext::IsGivenContextRPR2(m_contextPtr.get()))
+		if (NorthStarContext::IsGivenContextNorthStar(m_contextPtr.get()))
 		{
 			m_NorthStarRenderingHelper.SetData(m_contextPtr.get(), std::bind(&FireRenderIpr::OnBufferAvailableCallback, this, std::placeholders::_1));
 		}
@@ -202,7 +214,6 @@ bool FireRenderIpr::start()
 
 		m_needsContextRefresh = true;
 		m_contextPtr->setResolution(m_width, m_height, true);
-		m_contextPtr->setCamera(m_camera, true);
 		m_contextPtr->setStartedRendering();
 		m_contextPtr->setUseRegion(m_isRegion);
 
@@ -648,7 +659,9 @@ void FireRenderIpr::globalsChangedCallback(MNodeMessage::AttributeMessage msg, M
 	if ((name == "RadeonProRenderGlobals.contourLineWidthObjectID") ||
 		(name == "RadeonProRenderGlobals.contourLineWidthMaterialID") ||
 		(name == "RadeonProRenderGlobals.contourLineWidthShadingNormal") ||
+		(name == "RadeonProRenderGlobals.contourLineWidthUV") ||
 		(name == "RadeonProRenderGlobals.contourNormalThreshold") ||
+		(name == "RadeonProRenderGlobals.contourUVThreshold") ||
 		(name == "RadeonProRenderGlobals.contourAntialiasing") 
 		)
 	{

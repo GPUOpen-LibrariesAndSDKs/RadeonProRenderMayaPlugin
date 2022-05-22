@@ -19,6 +19,8 @@
 #include <maya/MMatrix.h>
 #include <maya/MDagPath.h>
 #include <maya/MSelectionList.h>
+#include <maya/MAnimControl.h>
+#include <maya/MEventMessage.h>
 
 #include <Alembic/Abc/All.h>
 #include <Alembic/AbcCoreOgawa/All.h>
@@ -29,6 +31,7 @@ using namespace Alembic::AbcGeom;
 
 FireRenderGPUCache::FireRenderGPUCache(FireRenderContext* context, const MDagPath& dagPath) 
 	: 	m_changedFile(true)
+	,	m_curr_frameNumber(0)
 	,	FireRenderMeshCommon(context, dagPath)
 {}
 
@@ -81,11 +84,14 @@ void FireRenderGPUCache::clear()
 // TODO: move it to common parent class!
 void FireRenderGPUCache::Freshen(bool shouldCalculateHash)
 {
+	MDagPath meshPath = DagPath();
+	MMatrix mMtx = meshPath.inclusiveMatrix();
+
 	Rebuild();
 	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
-void FireRenderGPUCache::ReadAlembicFile()
+void FireRenderGPUCache::ReadAlembicFile(uint32_t frame /*= 0*/)
 {
 	MStatus res;
 	
@@ -99,37 +105,61 @@ void FireRenderGPUCache::ReadAlembicFile()
 	CHECK_MSTATUS(res);
 
 	// ensure that file with such name exists
-	const std::ifstream abcFile (cacheFilePath.c_str(), std::ios::in);
+	const std::ifstream abcFile(cacheFilePath.c_str(), std::ios::in);
 	if (!abcFile.good())
 		return;
 
-	m_file = abcCache.find(cacheFilePath);
+	// get Maya frame rate
+	MTime::Unit timeUnit = MTime::uiUnit();
+	MTime frameRate;
+	frameRate.setUnit(timeUnit);
+	double fFrameRate = frameRate.as(MTime::kSeconds);
+
+	// file already read => load it from cache
+	m_file = abcCache.find(cacheFilePath + std::to_string(frame) + std::to_string(fFrameRate));
 	if (m_file != abcCache.end())
 	{
 		return;
 	}
-	
+
 	// proceed reading file
-	abcCache[cacheFilePath] = RPRAlembicWrapperCacheEntry();
-	m_file = abcCache.find(cacheFilePath);
+	abcCache[cacheFilePath + std::to_string(frame) + std::to_string(fFrameRate)] = RPRAlembicWrapperCacheEntry();
+	m_file = abcCache.find(cacheFilePath + std::to_string(frame) + std::to_string(fFrameRate));
 	assert(m_file != abcCache.end());
-	
+
 	try
 	{
 		m_file->second.m_archive = IArchive(Alembic::AbcCoreOgawa::ReadArchive(), cacheFilePath);
 	}
-	catch (std::exception &e)
+	catch (std::exception& e)
 	{
 		char error[100];
 		sprintf(error, "open alembic error: %s\n", e.what());
 		MGlobal::displayError(error);
 		return;
 	}
-	
+
 	if (!m_file->second.m_archive.valid())
 		return;
 
+	// get alembic time entries
+	double oStartTime;
+	double oEndTime;
+	GetArchiveStartAndEndTime(m_file->second.m_archive, oStartTime, oEndTime);
+
 	uint32_t getNumTimeSamplings = m_file->second.m_archive.getNumTimeSamplings();
+
+	// get Alembic frame entry
+	uint32_t abcFirstFrame = oStartTime / fFrameRate; // <= frame in Maya playback that corresponds to zero index of alembic animation record
+	uint32_t abcLastFrame = oEndTime / fFrameRate; // <= frame in Maya playback that corresponds to last index of alembic animation record
+
+	uint32_t sampleIdx = frame - abcFirstFrame;
+
+	if (frame <= abcFirstFrame)
+		sampleIdx = 0;
+
+	if (frame > abcLastFrame)
+		sampleIdx = abcLastFrame - abcFirstFrame;
 
 	std::string errorMessage;
 	if (m_file->second.m_storage.open(cacheFilePath, errorMessage) == false)
@@ -139,7 +169,6 @@ void FireRenderGPUCache::ReadAlembicFile()
 		return;
 	}
 
-	static int sampleIdx = 0;
 	m_file->second.m_scene = m_file->second.m_storage.read(sampleIdx, errorMessage);
 	if (!m_file->second.m_scene)
 	{
@@ -173,14 +202,15 @@ void FireRenderGPUCache::RebuildTransforms()
 
 	MMatrix scaleM;
 	scaleM.setToIdentity();
-	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = 0.01;
+	scaleM[0][0] = scaleM[1][1] = scaleM[2][2] = GetSceneUnitsConversionCoefficient();
 	matrix *= scaleM;
 
 	for (auto& element : m.elements)
 	{
+		assert(element.shape);
 		if (!element.shape)
 			continue;
-		
+
 		// transform
 		float(*f)[4][4] = reinterpret_cast<float(*)[4][4]>(element.TM.data());
 		MMatrix elementTransform(*f);
@@ -194,7 +224,6 @@ void FireRenderGPUCache::RebuildTransforms()
 		elementTransform.get(mfloats);
 
 		element.shape.SetTransform(&mfloats[0][0]);
-
 	}
 
 	// motion blur
@@ -205,21 +234,41 @@ void FireRenderGPUCache::ProcessShaders()
 {
 	FireRenderContext* context = this->context();
 
-	for (int i = 0; i < m.elements.size(); i++)
+	for (auto& element : m.elements)
 	{
-		auto& element = m.elements[i];
-		element.shader = context->GetShader(getSurfaceShader(element.shadingEngine), element.shadingEngine, this);
+		assert(element.shape);
+		if (!element.shape)
+			continue;
 
-		if (element.shape)
+		element.shape.SetShader(nullptr);
+
+		for (unsigned int shaderIdx = 0; shaderIdx < element.shadingEngines.size(); ++shaderIdx)
 		{
-			element.shape.SetShader(element.shader);
+			MObject& shadingEngine = element.shadingEngines[shaderIdx];
+			element.shaders.push_back(context->GetShader(getSurfaceShader(shadingEngine), shadingEngine, this));
 
-			frw::ShaderType shType = element.shader.GetShaderType();
+			std::vector<int>& faceMaterialIndices = m.faceMaterialIndices;
+			std::vector<int> face_ids;
+			face_ids.reserve(faceMaterialIndices.size());
+			for (int faceIdx = 0; faceIdx < faceMaterialIndices.size(); ++faceIdx)
+			{
+				if (faceMaterialIndices[faceIdx] == shaderIdx)
+					face_ids.push_back(faceIdx);
+			}
+
+			element.shape.SetPerFaceShader(element.shaders.back(), face_ids);
+
+			frw::ShaderType shType = element.shaders.back().GetShaderType();
 			if (shType == frw::ShaderTypeEmissive)
 				m.isEmissive = true;
 
-			if ((shType == frw::ShaderTypeRprx) && (IsUberEmissive(element.shader)))
+			if (element.shaders.back().IsShadowCatcher() || element.shaders.back().IsReflectionCatcher())
+				continue;
+
+			if ((shType == frw::ShaderTypeRprx) && (IsUberEmissive(element.shaders.back())))
+			{
 				m.isEmissive = true;
+			}
 		}
 	}
 }
@@ -235,7 +284,10 @@ void FireRenderGPUCache::Rebuild()
 	bool needReadFile = m_changedFile;
 	if (needReadFile)
 	{
-		ReadAlembicFile();
+		MTime currTime = MAnimControl::currentTime();
+		uint32_t currFrame = (uint32_t)currTime.as(MTime::uiUnit());
+		ReadAlembicFile(currFrame);
+		m_curr_frameNumber = currFrame;
 		ReloadMesh(meshPath);
 	}
 
@@ -250,7 +302,6 @@ void FireRenderGPUCache::Rebuild()
 
 	ProcessShaders();
 
-	// if (IsMeshVisible())
 	attachToScene();
 
 	m.changed.mesh = false;
@@ -261,6 +312,9 @@ void FireRenderGPUCache::Rebuild()
 
 void FireRenderGPUCache::ReloadMesh(const MDagPath& meshPath)
 {
+	MMatrix mMtx = meshPath.inclusiveMatrix();
+
+	setVisibility(false);
 	m.elements.clear();
 
 	// node is not visible => skip
@@ -454,7 +508,8 @@ void FireRenderGPUCache::GetShapes(std::vector<frw::Shape>& outShapes, std::vect
 	frw::Context ctx = context()->GetContext();
 	assert(ctx.IsValid());
 
-	const FireRenderMeshCommon* mainMesh = this->context()->GetMainMesh(uuid());
+	const FireRenderMeshCommon* pMainMesh = this->context()->GetMainMesh(uuid() + std::to_string(m_curr_frameNumber));
+	const FireRenderGPUCache* mainMesh = dynamic_cast<const FireRenderGPUCache*>(pMainMesh);
 
 	if (mainMesh != nullptr)
 	{
@@ -494,7 +549,7 @@ void FireRenderGPUCache::GetShapes(std::vector<frw::Shape>& outShapes, std::vect
 		}
 
 		m.isMainInstance = true;
-		context()->AddMainMesh(this);
+		context()->AddMainMesh(this, std::to_string(m_curr_frameNumber));
 	}
 
 	MDagPath dagPath = DagPath();
@@ -535,18 +590,25 @@ void FireRenderGPUCache::attributeChanged(MNodeMessage::AttributeMessage msg, MP
 void FireRenderGPUCache::RegisterCallbacks()
 {
 	FireRenderNode::RegisterCallbacks();
-
-	for (auto& it : m.elements)
+	if (context()->getCallbackCreationDisabled())
+		return;
+	for (auto& element : m.elements)
 	{
-		if (!it.shadingEngine.isNull())
+		for (auto& shadingEngine : element.shadingEngines)
 		{
-			MObject shaderOb = getSurfaceShader(it.shadingEngine);
-			if (!shaderOb.isNull())
-			{
-				AddCallback(MNodeMessage::addNodeDirtyCallback(shaderOb, ShaderDirtyCallback, this));
-			}
+			if (shadingEngine.isNull())
+				continue;
+
+			MObject shaderOb = getSurfaceShader(shadingEngine);
+
+			if (shaderOb.isNull())
+				continue;
+
+			AddCallback(MNodeMessage::addNodeDirtyCallback(shaderOb, ShaderDirtyCallback, this));
 		}
 	}
+
+	AddCallback(MEventMessage::addEventCallback("timeChanged", TimeChangedCallback, this));
 }
 
 void FireRenderGPUCache::ShaderDirtyCallback(MObject& node, void* clientData)
@@ -558,4 +620,19 @@ void FireRenderGPUCache::ShaderDirtyCallback(MObject& node, void* clientData)
 		self->OnShaderDirty();
 	}
 }
+
+void FireRenderGPUCache::TimeChangedCallback(void* clientData)
+{
+	MGlobal::displayInfo("FireRenderGPUCache::TimeChangedCallback FireRenderGPUCache::TimeChangedCallback FireRenderGPUCache::TimeChangedCallback");
+
+	auto self = static_cast<FireRenderGPUCache*>(clientData);
+	if (!self)
+		return;
+
+	self->m_changedFile = true;
+
+	self->OnNodeDirty();
+}
+
+
 

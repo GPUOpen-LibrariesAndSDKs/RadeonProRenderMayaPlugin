@@ -40,7 +40,7 @@ public:
 
 	std::map<std::string, std::string> m_lightsNames;
 
-	TahoeContext m_context;
+	NorthStarContext m_context;
 
 	std::tuple<frw::Shader, FireMaya::NodeId> m_surfaceShader;
 
@@ -54,13 +54,14 @@ public:
 
 	frw::Image m_envImage;
 
-	rpr_framebuffer m_framebuffer;
+	frw::FrameBuffer m_framebufferColor;
+	frw::FrameBuffer m_framebufferResolved;
 
 	unsigned int m_width;
 
 	unsigned int m_height;
 
-	float *m_pixels;
+	std::vector<RV_PIXEL> m_pixels;
 };
 
 class MaterialViewThreadWorder;
@@ -140,7 +141,7 @@ public:
 
 	// Render data
 	// Contain the context and other data information needed by the render function
-	FireRenderRenderData m_renderData;
+	std::unique_ptr<FireRenderRenderData> m_renderDataPtr;
 
 	// Flag used to synchronize the render thread and the main thread
 	volatile bool m_isThreadRunning;

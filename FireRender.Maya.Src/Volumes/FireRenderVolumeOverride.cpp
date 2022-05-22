@@ -32,9 +32,13 @@ FireRenderVolumeOverride::FireRenderVolumeOverride(const MObject& obj)
 	m_depNodeObj(obj),
 	m_changed(true)
 {
-	m_currentTrackedValues.nx = 4;
-	m_currentTrackedValues.ny = 4;
-	m_currentTrackedValues.nz = 4;
+	m_GridSizeValues.nx = 4;
+	m_GridSizeValues.ny = 4;
+	m_GridSizeValues.nz = 4;
+
+	m_VoxelSizeValues.nx = 0.25;
+	m_VoxelSizeValues.ny = 0.25;
+	m_VoxelSizeValues.nz = 0.25;
 }
 
 FireRenderVolumeOverride::~FireRenderVolumeOverride()
@@ -52,21 +56,41 @@ void FireRenderVolumeOverride::updateDG()
 
 	MDataHandle volumeGirdSizes = RPRVolumeAttributes::GetVolumeGridDimentions(m_depNodeObj.object());
 
-	if (volumeGirdSizes.asShort3()[0] != m_currentTrackedValues.nx)
+	if (volumeGirdSizes.asShort3()[0] != m_GridSizeValues.nx)
 	{
-		m_currentTrackedValues.nx = volumeGirdSizes.asShort3()[0];
+		m_GridSizeValues.nx = volumeGirdSizes.asShort3()[0];
 		m_changed = true;
 	}
 
-	if (volumeGirdSizes.asShort3()[1] != m_currentTrackedValues.ny)
+	if (volumeGirdSizes.asShort3()[1] != m_GridSizeValues.ny)
 	{
-		m_currentTrackedValues.ny = volumeGirdSizes.asShort3()[1];
+		m_GridSizeValues.ny = volumeGirdSizes.asShort3()[1];
 		m_changed = true;
 	}
 
-	if (volumeGirdSizes.asShort3()[2] != m_currentTrackedValues.nz)
+	if (volumeGirdSizes.asShort3()[2] != m_GridSizeValues.nz)
 	{
-		m_currentTrackedValues.nz = volumeGirdSizes.asShort3()[2];
+		m_GridSizeValues.nz = volumeGirdSizes.asShort3()[2];
+		m_changed = true;
+	}
+
+	MDataHandle volumeVoxelSizes = RPRVolumeAttributes::GetVolumeVoxelSize(m_depNodeObj.object());
+
+	if (volumeVoxelSizes.asDouble3()[0] != m_VoxelSizeValues.nx)
+	{
+		m_VoxelSizeValues.nx = volumeVoxelSizes.asDouble3()[0];
+		m_changed = true;
+	}
+
+	if (volumeVoxelSizes.asDouble3()[1] != m_VoxelSizeValues.ny)
+	{
+		m_VoxelSizeValues.ny = volumeVoxelSizes.asDouble3()[1];
+		m_changed = true;
+	}
+
+	if (volumeVoxelSizes.asDouble3()[2] != m_VoxelSizeValues.nz)
+	{
+		m_VoxelSizeValues.nz = volumeVoxelSizes.asDouble3()[2];
 		m_changed = true;
 	}
 }
@@ -171,17 +195,21 @@ void FireRenderVolumeOverride::populateGeometry(
 		return;
 	}
 
+	const float sizeX = m_GridSizeValues.nx * m_VoxelSizeValues.nx;
+	const float sizeY = m_GridSizeValues.ny * m_VoxelSizeValues.ny;
+	const float sizeZ = m_GridSizeValues.nz * m_VoxelSizeValues.nz;
+
 	// create volume boundaries
 	std::vector<float> veritces = {
-		-0.5f, -0.5f, -0.5f,
-		0.5f, -0.5f, -0.5f,
-		0.5f, 0.5f, -0.5f,
-		-0.5f, 0.5f, -0.5f,
+		-sizeX / 2, -sizeY / 2, -sizeZ / 2,
+		 sizeX / 2, -sizeY / 2, -sizeZ / 2,
+		 sizeX / 2,  sizeY / 2, -sizeZ / 2,
+		-sizeX / 2,  sizeY / 2, -sizeZ / 2,
 
-		-0.5f, -0.5f, 0.5f,
-		0.5f, -0.5f, 0.5f,
-		0.5f, 0.5f, 0.5f,
-		-0.5f, 0.5f, 0.5f,
+		-sizeX / 2, -sizeY / 2,  sizeZ / 2,
+		 sizeX / 2, -sizeY / 2,  sizeZ / 2,
+		 sizeX / 2,  sizeY / 2,  sizeZ / 2,
+		-sizeX / 2,  sizeY / 2,  sizeZ / 2,
 	};
 	std::vector<int> vertexIndices = {
 		0, 1, 1, 2, 2, 3, 3, 0,
@@ -191,32 +219,32 @@ void FireRenderVolumeOverride::populateGeometry(
 
 	// create grid
 	int last_boundary_vtx_idx = (int) ((veritces.size() / 3) - 1);
-	float step = 1.0f / (m_currentTrackedValues.nx);
-	for (short idx = 1; idx < (m_currentTrackedValues.nx); ++idx)
+	float step = sizeX / (m_GridSizeValues.nx);
+	for (short idx = 1; idx < (m_GridSizeValues.nx); ++idx)
 	{
-		veritces.push_back(-0.5f + step*idx);
-		veritces.push_back(-0.5f);
-		veritces.push_back(-0.5f);
+		veritces.push_back(-sizeX / 2 + step*idx);
+		veritces.push_back(-sizeY / 2);
+		veritces.push_back(-sizeZ / 2);
 
-		veritces.push_back(-0.5f + step*idx);
-		veritces.push_back(-0.5f);
-		veritces.push_back(0.5f);
+		veritces.push_back(-sizeX / 2 + step*idx);
+		veritces.push_back(-sizeY / 2);
+		veritces.push_back( sizeZ / 2);
 
 		vertexIndices.push_back(last_boundary_vtx_idx + (idx-1)*2 + 1);
 		vertexIndices.push_back(last_boundary_vtx_idx + (idx-1)*2 + 2);
 	}
 
 	last_boundary_vtx_idx = (int) ((veritces.size()/3) - 1);
-	step = 1.0f / (m_currentTrackedValues.nz);
-	for (short idx = 1; idx < (m_currentTrackedValues.nz); ++idx)
+	step = sizeZ / (m_GridSizeValues.nz);
+	for (short idx = 1; idx < (m_GridSizeValues.nz); ++idx)
 	{
-		veritces.push_back(-0.5f);
-		veritces.push_back(-0.5f);
-		veritces.push_back(-0.5f + step*idx);
+		veritces.push_back(-sizeX / 2);
+		veritces.push_back(-sizeY / 2);
+		veritces.push_back(-sizeZ / 2 + step*idx);
 
-		veritces.push_back(0.5f);
-		veritces.push_back(-0.5f);
-		veritces.push_back(-0.5f + step*idx);
+		veritces.push_back( sizeX / 2);
+		veritces.push_back(-sizeY / 2);
+		veritces.push_back(-sizeZ / 2 + step*idx);
 
 		vertexIndices.push_back(last_boundary_vtx_idx + (idx-1)*2 + 1);
 		vertexIndices.push_back(last_boundary_vtx_idx + (idx-1)*2 + 2);

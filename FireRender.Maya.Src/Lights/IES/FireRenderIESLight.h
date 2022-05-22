@@ -64,12 +64,7 @@ public:
 	static MStatus initialize();
 
 	MString GetFilename() const;
-	float GetAreaWidth() const;
 	bool GetDisplay() const;
-	float GetXRotation() const;
-	float GetYRotation() const;
-	float GetZRotation() const;
-	float GetAxisRotation(unsigned axis) const;
 
 public:
 	static MTypeId	id;
@@ -77,8 +72,6 @@ public:
 	static MString	drawDbGeomClassification;
 	static MString	drawRegistrantId;
 	static MObject	aFilePath;
-	static MObject	aAreaWidth;
-	static MObject	aRotations[3];
 	static MObject	aIntensity;
 	static MObject	aDisplay;
 	static MObject	aMeshRepresentationUpdated;
@@ -131,13 +124,7 @@ public:
 
 	MString GetFilename() const;
 	void SetFilename(const MString& filePath);
-
-	float GetAreaWidth() const;
 	bool GetDisplay() const;
-	float GetXRotation() const;
-	float GetYRotation() const;
-	float GetZRotation() const;
-	float GetAxisRotation(unsigned axis) const;
 
 private:
 

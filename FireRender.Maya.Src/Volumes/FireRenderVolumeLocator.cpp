@@ -25,8 +25,9 @@ MTypeId FireRenderVolumeLocator::id(FireMaya::TypeId::FireRenderVolumeLocator);
 MString FireRenderVolumeLocator::drawDbClassification("drawdb/geometry/FireRenderVolumeLocator");
 MString FireRenderVolumeLocator::drawRegistrantId("FireRenderVolumeNode");
 
-FireRenderVolumeLocator::FireRenderVolumeLocator() :
-	m_attributeChangedCallback(0)
+FireRenderVolumeLocator::FireRenderVolumeLocator() 
+	: m_attributeChangedCallback(0)
+	, m_timeChangedCallback(0)
 {
 }
 
@@ -35,6 +36,10 @@ FireRenderVolumeLocator::~FireRenderVolumeLocator()
 	if (m_attributeChangedCallback != 0)
 	{
 		MNodeMessage::removeCallback(m_attributeChangedCallback);
+	}
+	if (m_timeChangedCallback != 0)
+	{
+		MEventMessage::removeCallback(m_timeChangedCallback);
 	}
 }
 
@@ -62,6 +67,8 @@ void FireRenderVolumeLocator::postConstructor()
 	MObject mobj = thisMObject();
 	m_attributeChangedCallback = MNodeMessage::addAttributeChangedCallback(mobj, FireRenderVolumeLocator::onAttributeChanged, this, &status);
 	assert(status == MStatus::kSuccess);
+	m_timeChangedCallback = MEventMessage::addEventCallback("timeChanged", FireRenderVolumeLocator::onTimeChanged, this, &status);
+	assert(status == MStatus::kSuccess);
 
 	setMPSafe(true);
 
@@ -74,7 +81,30 @@ void FireRenderVolumeLocator::postConstructor()
 	SetDefaultStringArrayAttrValue(lgPlug, block);
 
 	// set default values for ramps
-	// - will be added when/if we will add ramps
+	// - if we don't then there will be no default control point and Maya will display a ui error
+	// - this happens despite api documentation saying that default control point is created automatically - it's not.
+	// - Since we need to set these values anyway, we set them to what user most likely wants
+	MPlug albedoRampPlug(thisMObject(), RPRVolumeAttributes::albedoRamp);
+	const float albedoSrc[][4] = { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+	MColorArray albedoValues(albedoSrc, 2);
+	SetRampValues(albedoRampPlug, albedoValues);
+
+	MPlug emissionRampPlug(thisMObject(), RPRVolumeAttributes::emissionRamp);
+	const float emissionSrc[][4] = {
+		 0.0f, 0.0f, 0.0f, 1.0f,
+		 0.0f, 0.0f, 0.0f, 1.0f,
+		 0.2f, 0.0f, 0.0f, 1.0f,
+		 0.6f, 0.2f, 0.0f, 1.0f,
+		 0.6f, 1.0f, 0.0f, 1.0f,
+		 1.0f, 1.0f, 1.0f, 1.0f
+	};
+	MColorArray emissionValues(emissionSrc, 6);
+	SetRampValues(emissionRampPlug, emissionValues);
+
+	MPlug densityRampPlug(thisMObject(), RPRVolumeAttributes::densityRamp);
+	const float densitySrc[] = { 0.5f, 0.7f, 0.8f, 1.0f };
+	MFloatArray densityValues(densitySrc, 4);
+	SetRampValues(densityRampPlug, densityValues);
 }
 
 MStatus FireRenderVolumeLocator::setDependentsDirty(const MPlug& plugBeingDirtied,	MPlugArray&	affectedPlugs)
@@ -126,8 +156,28 @@ bool FireRenderVolumeLocator::isBounded() const
 
 MBoundingBox FireRenderVolumeLocator::boundingBox() const
 {
-	MPoint corner1(-1.0, -1.0, -1.0);
-	MPoint corner2(1.0, 1.0, 1.0);
+	// get the size
+	MObject thisNode = thisMObject();
+	MFnDependencyNode fnNode(thisNode);
+
+	volatile std::string thisNodeName = fnNode.name().asChar();
+
+	MDataHandle volumeGirdSizes = RPRVolumeAttributes::GetVolumeGridDimentions(fnNode);
+	short nx = volumeGirdSizes.asShort3()[0];
+	short ny = volumeGirdSizes.asShort3()[1];
+	short nz = volumeGirdSizes.asShort3()[2];
+
+	MDataHandle volumeVoxelSizes = RPRVolumeAttributes::GetVolumeVoxelSize(fnNode);
+	double vx = volumeVoxelSizes.asDouble3()[0];
+	double vy = volumeVoxelSizes.asDouble3()[1];
+	double vz = volumeVoxelSizes.asDouble3()[2];
+
+	const float sizeX = nx * vx;
+	const float sizeY = ny * vy;
+	const float sizeZ = nz * vz;
+
+	MPoint corner1(-sizeX/2.0f, -sizeY/2.0f, -sizeZ/2.0f);
+	MPoint corner2(sizeX/2.0f, sizeY/2.0f, sizeZ/2.0f);
 
 	return MBoundingBox(corner1, corner2);
 }
@@ -149,12 +199,30 @@ void FireRenderVolumeLocator::onAttributeChanged(MNodeMessage::AttributeMessage 
 
 	if ((plug == RPRVolumeAttributes::vdbFile) || (plug == RPRVolumeAttributes::namingSchema))
 	{
-		RPRVolumeAttributes::SetupVolumeFromFile(mobj, rprVolumeLocatorNode->m_gridParams);
+		RPRVolumeAttributes::SetupVolumeFromFile(mobj, rprVolumeLocatorNode->m_gridParams, rprVolumeLocatorNode->m_maxGridParams, true);
 	}
 
 	else if ((plug == RPRVolumeAttributes::albedoSelectedGrid) || (plug == RPRVolumeAttributes::emissionSelectedGrid) || (plug == RPRVolumeAttributes::densitySelectedGrid))
 	{
-		RPRVolumeAttributes::SetupGridSizeFromFile(mobj, plug, rprVolumeLocatorNode->m_gridParams);
+		auto& tmpGridParams = (rprVolumeLocatorNode->m_maxGridParams.size() > 0) ? 
+			rprVolumeLocatorNode->m_maxGridParams : 
+			rprVolumeLocatorNode->m_gridParams;
+		RPRVolumeAttributes::SetupGridSizeFromFile(mobj, plug, tmpGridParams);
 	}
+}
+
+void FireRenderVolumeLocator::onTimeChanged(void* clientData)
+{
+	if (clientData == nullptr)
+	{
+		return;
+	}
+	FireRenderVolumeLocator* rprVolumeLocatorNode = static_cast<FireRenderVolumeLocator*> (clientData);
+	MObject mobj = rprVolumeLocatorNode->thisMObject();
+
+	MFnDependencyNode depNode(mobj);
+	MGlobal::executeCommand(MString("dgdirty " + depNode.name()));
+
+	RPRVolumeAttributes::SetupVolumeFromFile(mobj, rprVolumeLocatorNode->m_gridParams, rprVolumeLocatorNode->m_maxGridParams, false);
 }
 

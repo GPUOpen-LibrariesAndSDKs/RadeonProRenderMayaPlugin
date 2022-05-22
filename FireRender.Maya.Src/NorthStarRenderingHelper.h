@@ -4,6 +4,7 @@
 #include <thread>
 #include <memory>
 #include <condition_variable>
+#include <functional>
 
 class FireRenderContext;
 
@@ -19,6 +20,7 @@ public:
 	void Start();
 	void StopAndJoin();
 	void SetStopFlag();
+	bool IsStopped() const { return !m_UpdateThreadRunning && !m_DataReady; }
 
 private:
 	std::atomic<bool> m_DataReady;

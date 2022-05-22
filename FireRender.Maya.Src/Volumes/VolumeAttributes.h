@@ -191,6 +191,7 @@ public:
 	static void Initialize();
 
 	static MDataHandle GetVolumeGridDimentions(const MFnDependencyNode& node);
+	static MDataHandle GetVolumeVoxelSize(const MFnDependencyNode& node);
 	static std::string GetVDBFilePath(const MFnDependencyNode& node);
 
 	static bool GetAlbedoEnabled(const MFnDependencyNode& node);
@@ -213,10 +214,13 @@ public:
 
 	static void FillVolumeData(VolumeData& data, const MObject& node, FireMaya::Scope* scope);
 
-	static void SetupVolumeFromFile(MObject& node, FireRenderVolumeLocator::GridParams& gridParams);
-	static void SetupGridSizeFromFile(MObject& node, MPlug& plug, FireRenderVolumeLocator::GridParams& gridParams);
+	static void SetupVolumeFromFile(MObject& node, VDBGridParams& gridParams, VDBGridParams& maxGridParams, bool shouldSetup = false);
+	static void SetupGridSizeFromFile(MObject& node, MPlug& plug, VDBGridParams& gridParams);
 
 	static void FillVolumeData(VDBVolumeData& data, const MObject& node);
+
+	template <typename T>
+	static bool GetSingleGridData(VDBGrid<T>& outGridData, const MObject& node, const std::string& gridName);
 
 public:
 	// General
@@ -234,7 +238,7 @@ public:
 	static MObject volumeDimensionsAlbedo; // selected grid dimesions
 	static MObject albedoSelectedGrid; // selected grid
 	static MObject albedoGradType; // gradient type
-	static MObject albedoValue;    // values ramp
+	static MObject albedoRamp;    // values ramp
 
 	// Emission
 	static MObject emissionEnabled;
@@ -248,8 +252,9 @@ public:
 	// Density
 	static MObject densityEnabled;
 	static MObject volumeDimensionsDensity; // selected grid dimesions
+	static MObject volumeVoxelSizeDensity; // selected grid voxel size
 	static MObject densitySelectedGrid; // selected grid
 	static MObject densityGradType; // gradient type
-	static MObject densityValue;    // values ramp
+	static MObject densityRamp;    // values ramp
 	static MObject densityMultiplier; // density is multiplied by this value
 };
