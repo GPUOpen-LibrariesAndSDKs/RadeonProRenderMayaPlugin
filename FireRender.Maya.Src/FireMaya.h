@@ -93,6 +93,7 @@ namespace FireMaya
 			FireRenderAONode,
 			FireRenderVolumeLocator,
 			FireRenderToonMaterial,
+			FireRenderVoronoi,
 
 			// ^ always add new ids to end of list (max 128 entries here)
 			FireRenderNodeIdEndCurrent, // <- this value is allowed to change, it marks the end of current list
@@ -218,7 +219,7 @@ namespace FireMaya
 
 		DataPtr m;
 
-		void RegisterCallback(MObject node);
+		void RegisterCallback(MObject node, std::string* pOverridenUUID = nullptr);
 
 		IFireRenderContextInfo* m_pContextInfo; // Scope can not exist without a context, thus using raw pointer here is safe
 

@@ -38,3 +38,14 @@ MMatrix FireRenderMeshMASH::GetSelfTransform()
 {
 	return m_SelfTransform;
 }
+
+bool FireRenderMeshMASH::ReloadMesh(unsigned int sampleIdx /*= 0*/)
+{
+	return (FireRenderMesh::ReloadMesh(sampleIdx));
+}
+
+void FireRenderMeshMASH::Rebuild(void)
+{
+	FireRenderMesh::Rebuild();
+}
+

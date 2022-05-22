@@ -12,7 +12,6 @@ limitations under the License.
 ********************************************************************/
 #include "FireMaya.h"
 #include "common.h"
-#include "Math/half.h"
 #include "FireRenderThread.h"
 #include "VRay.h"
 #include "Context/FireRenderContext.h"
@@ -323,7 +322,6 @@ std::tuple<int, int, bool> getTexturePixelStride(MHWRender::MRasterFormat fForma
 	return std::make_tuple(channels, componentSize, success);
 }
 
-#ifdef _DEBUG
 const int bytesPerPixel = 4; /// red, green, blue
 const int fileHeaderSize = 14;
 const int infoHeaderSize = 40;
@@ -408,7 +406,6 @@ unsigned char* createBitmapInfoHeader(int height, int width) {
 
 	return infoHeader;
 }
-#endif
 
 struct tileParams
 {
@@ -1012,7 +1009,7 @@ frw::Image FireMaya::Scope::CreateImageInternal(MString colorSpace,
 		tempBuffer.resize(width * height * channels);
 		for (auto y = 0u; y < height; y++)
 		{
-			auto src = static_cast<const half *>(srcData) + y * rowPitch / sizeof(half);
+			auto src = static_cast<const unsigned short*>(srcData) + y * rowPitch / sizeof(unsigned short);
 			auto dst = tempBuffer.data() + y * (width * channels);
 			for (auto x = 0u; x < width * channels; x++)
 			{
@@ -1707,7 +1704,7 @@ frw::Shader FireMaya::Scope::ParseShader(MObject node)
 			diffuseShader.SetColor(diffColor);
 
 			///
-			frw::Shader wardShader(materialSystem, frw::ShaderTypeWard);
+			frw::Shader specularShader(materialSystem, frw::ShaderTypeMicrofacetAnisotropicReflection);
 
 			frw::Value roughness = GetValue(shaderNode.findPlug("roughness"));
 			frw::Value fresnel = GetValue(shaderNode.findPlug("fresnelReflectiveIndex"));
@@ -1725,18 +1722,20 @@ frw::Shader FireMaya::Scope::ParseShader(MObject node)
 				mayaSpreadY = 98.0;
 			}
 
-			frw::Value spreadX = materialSystem.ValueMul(roughness, 1.0 - mayaSpreadX / 100.0);
-			frw::Value spreadY = materialSystem.ValueMul(roughness, 1.0 - mayaSpreadY / 100.0);
+			frw::Value anisotropic = materialSystem.ValueSub(mayaSpreadX, mayaSpreadY);
+			anisotropic = materialSystem.ValueDiv(anisotropic, frw::Value(100.0));
+			specularShader.SetValue(RPR_MATERIAL_INPUT_ANISOTROPIC, anisotropic);
 
-			wardShader.SetValue(RPR_MATERIAL_INPUT_COLOR, specularColor);
+			specularShader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS, roughness);
+
+			specularShader.SetValue(RPR_MATERIAL_INPUT_COLOR, specularColor);
+
 			double rads = -1.0 * angle.GetX() * M_PI / 180.0;
 			frw::Value radians = frw::Value(rads, rads, rads);
-			wardShader.SetValue(RPR_MATERIAL_INPUT_ROTATION, radians);
+			specularShader.SetValue(RPR_MATERIAL_INPUT_ROTATION, radians);
+		
 
-			wardShader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS_X, spreadX);
-			wardShader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS_Y, spreadY);
-
-			result = materialSystem.ShaderBlend(diffuseShader, wardShader, 0.5);
+			result = materialSystem.ShaderBlend(diffuseShader, specularShader, 0.5);
 		} break;
 		case MayaLayeredShader:
 			// TODO
@@ -1791,8 +1790,18 @@ frw::Shader FireMaya::Scope::ParseVolumeShader(MObject node)
 }
 
 
-void FireMaya::Scope::RegisterCallback(MObject node)
+void FireMaya::Scope::RegisterCallback(MObject node, std::string* pOverridenUUID /*= nullptr*/)
 {
+	if (pOverridenUUID != nullptr)
+	{
+		if (m->m_nodeDirtyCallbacks.find(*pOverridenUUID) == m->m_nodeDirtyCallbacks.end())
+		{
+			m->m_nodeDirtyCallbacks[*pOverridenUUID] = MNodeMessage::addNodeDirtyCallback(node, NodeDirtyCallback, this);
+		}
+
+		return;
+	}
+
 	std::string uuid = getNodeUUid(node);
 	if (m->m_nodeDirtyCallbacks.find(uuid) == m->m_nodeDirtyCallbacks.end())
 	{
@@ -1807,7 +1816,10 @@ void FireMaya::Scope::NodeDirtyCallback(MObject& ob)
 		MFnDependencyNode node(ob);
 		DebugPrint("Callback: %s dirty", node.typeName().asUTF8());
 
+		std::string shdrName = node.name().asChar();
 		auto shaderId = getNodeUUid(ob);
+		shaderId += shdrName;
+
 		if (auto shader = GetCachedShader(shaderId)) {
 			shader.SetDirty(true);
 		}
@@ -1829,6 +1841,9 @@ void FireMaya::Scope::NodeDirtyCallback(MObject& ob)
 
 void FireMaya::Scope::NodeDirtyCallback(MObject& node, void* clientData)
 {
+	MFnDependencyNode fnShdr(node);
+	std::string shdrName = fnShdr.name().asChar();
+
 	Scope* self = static_cast<Scope*>(clientData);
 	self->NodeDirtyCallback(node);
 }
@@ -1929,9 +1944,14 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMeshCommon*
 		return frw::Shader();
 	}
 
+	MFnDependencyNode fnShdr(node);
+	std::string shdrName = fnShdr.name().asChar();
 	std::string shaderId = getNodeUUid(node);
+	shaderId += shdrName;
 	frw::Shader shader = GetCachedShader(shaderId);
 
+	bool shdrIsVaild = shader.IsValid();
+	bool shdrNotDirty = !shader.IsDirty();
 	if (!forceUpdate && shader.IsValid() && !shader.IsDirty())
 	{
 		return shader;
@@ -1940,7 +1960,7 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMeshCommon*
 	// register callbacks if one doesn't already exist
 	if (!shader.IsValid())
 	{
-		RegisterCallback(node);
+		RegisterCallback(node, &shaderId);
 	}
 
 	DebugPrint("Parsing shader: %s (forceUpdate=%d, shader.IsDirty()=%d)", shaderId.c_str(), forceUpdate, shader.IsDirty());

@@ -55,11 +55,15 @@ global proc createRenderEffectsTab()
 	createFireRenderToneMappingFrame fireRenderTonemappingFrame;
 	setParent ..;
 
+	// Atmospheric Volume
+	frameLayout -label "Atmospheric Volume / Fog" -cll true -cl 0 fireRenderAtmosphericVolumeFrame;
+	createFireRenderAtmosphericVolumeFrame("fireRenderAtmosphericVolumeFrame");
+	setParent ..;
+
 	// Contour Render Mode
 	//
 	frameLayout -label "Contour Render Mode" -cll true -cl 0 fireRenderContourFrame;
-
-	createFireRenderContourFrame ("fireRenderContourFrame");
+	createFireRenderContourFrame("fireRenderContourFrame");
 	setParent ..;
 
 	setParent ..;
@@ -71,6 +75,73 @@ global proc createRenderEffectsTab()
 		-af fireRenderEffectsScrollLayout "left" 0
 		-af fireRenderEffectsScrollLayout "right" 0
 		$parentForm;
+}
+
+global proc createFireRenderAtmosphericVolumeFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+		setParent $parent;
+
+		columnLayout -adjustableColumn true -cat "left" 10;
+
+		attrControlGrp
+			-label "Enable Atmospheric Volume"
+			-attribute "RadeonProRenderGlobals.airVolumeEnabled"
+			-changeCommand "onUpdateAtmosphericVolume";
+
+		attrControlGrp
+			-label "Air Volume Density"
+			-attribute "RadeonProRenderGlobals.airVolumeDensity"
+			airVolumeDensity;
+
+		attrControlGrp
+			-label "Air Volume Color"
+			-attribute "RadeonProRenderGlobals.airVolumeColor"
+			airVolumeColor;
+
+		attrControlGrp
+			-label "Air Volume Clamp"
+			-attribute "RadeonProRenderGlobals.airVolumeClamp"
+			airVolumeClamp;
+
+		attrControlGrp
+			-label "Enable Fog"
+			-attribute "RadeonProRenderGlobals.fogEnabled"
+			-changeCommand "onUpdateAtmosphericVolume";
+
+		attrControlGrp
+			-label "Fog Color"
+			-attribute "RadeonProRenderGlobals.fogColor"
+			fogColor;
+
+		attrControlGrp
+			-label "Fog Distance"
+			-attribute "RadeonProRenderGlobals.fogDistance"
+			fogDistance;
+
+		attrControlGrp
+			-label "Fog Height"
+			-attribute "RadeonProRenderGlobals.fogHeight"
+			fogHeight;
+
+	setParent ..;
+	setUITemplate -popTemplate;
+
+	onUpdateAtmosphericVolume();
+}
+
+global proc onUpdateAtmosphericVolume()
+{
+	$enabledAV = `getAttr RadeonProRenderGlobals.airVolumeEnabled`;
+	$enabledFog = `getAttr RadeonProRenderGlobals.fogEnabled`;
+
+	attrControlGrp -edit -enable $enabledFog fogColor;
+	attrControlGrp -edit -enable $enabledFog fogDistance;
+	attrControlGrp -edit -enable $enabledFog fogHeight;
+	attrControlGrp -edit -enable $enabledAV airVolumeDensity;
+	attrControlGrp -edit -enable $enabledAV airVolumeColor;
+	attrControlGrp -edit -enable $enabledAV airVolumeClamp;
 }
 
 global proc createFireRenderContourFrame(string $parent)
@@ -100,6 +171,11 @@ global proc createFireRenderContourFrame(string $parent)
 		-label "Use Shading Normal"
 		-attribute "RadeonProRenderGlobals.contourUseShadingNormal"
 		contourUseShadingNormal;
+
+	attrControlGrp
+		-label "Use UV"
+		-attribute "RadeonProRenderGlobals.contourUseUV"
+		contourUseUV;
 	
 	attrControlGrp
 		-label "Line Width Object"
@@ -112,10 +188,18 @@ global proc createFireRenderContourFrame(string $parent)
 	attrControlGrp
 		-label "Line Width Normal"
 		-attribute "RadeonProRenderGlobals.contourLineWidthShadingNormal" contourLineWidthShadingNormal;
+
+	attrControlGrp
+		-label "Line Width UV"
+		-attribute "RadeonProRenderGlobals.contourLineWidthUV" contourLineWidthUV;
 	
 	attrControlGrp
 		-label "Normal Threshold"
 		-attribute "RadeonProRenderGlobals.contourNormalThreshold" contourNormalThreshold;
+
+	attrControlGrp
+		-label "UV Threshold"
+		-attribute "RadeonProRenderGlobals.contourUVThreshold" contourUVThreshold;
 	
 	attrControlGrp
 		-label "Antialiasing"
@@ -131,6 +215,7 @@ global proc createFireRenderContourFrame(string $parent)
 	onUpdateContour();
 }
 
+
 global proc onUpdateContour()
 {
 	$enabled = `getAttr RadeonProRenderGlobals.contourIsEnabled`;
@@ -143,6 +228,7 @@ global proc onUpdateContour()
 			setAttr RadeonProRenderGlobals.aovShadingNormal -lock $enabled $enabled;
 			setAttr RadeonProRenderGlobals.aovMaterialIndex -lock $enabled $enabled;
 			setAttr RadeonProRenderGlobals.aovObjectId -lock $enabled $enabled;
+			setAttr RadeonProRenderGlobals.aovUV -lock $enabled $enabled;
 		}
 	}
 	else
@@ -150,15 +236,19 @@ global proc onUpdateContour()
 		setAttr RadeonProRenderGlobals.aovShadingNormal -lock $enabled;
 		setAttr RadeonProRenderGlobals.aovMaterialIndex -lock $enabled;
 		setAttr RadeonProRenderGlobals.aovObjectId -lock $enabled;
+		setAttr RadeonProRenderGlobals.aovUV -lock $enabled;
 	}
 
 	attrControlGrp -edit -enable $enabled contourUseObjectID;
 	attrControlGrp -edit -enable $enabled contourUseMaterialID;
 	attrControlGrp -edit -enable $enabled contourUseShadingNormal;
+	attrControlGrp -edit -enable $enabled contourUseUV;
 	attrControlGrp -edit -enable $enabled contourLineWidthObjectID;
 	attrControlGrp -edit -enable $enabled contourLineWidthMaterialID;
 	attrControlGrp -edit -enable $enabled contourLineWidthShadingNormal;
+	attrControlGrp -edit -enable $enabled contourLineWidthUV;
 	attrControlGrp -edit -enable $enabled contourNormalThreshold;
+	attrControlGrp -edit -enable $enabled contourUVThreshold;
 	attrControlGrp -edit -enable $enabled contourAntialiasing;
 	attrControlGrp -edit -enable $enabled contourIsDebugEnabled;
 }

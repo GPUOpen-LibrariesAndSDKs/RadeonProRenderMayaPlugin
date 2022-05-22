@@ -236,6 +236,12 @@ void FireRenderAOV::readFrameBuffer(FireRenderContext& context)
 	if (!active || !pixels || m_region.isZeroArea() || !context.IsAOVSupported(id))
 		return;
 
+	// It special aov, skip it here
+	if (id == RPR_AOV_DEEP_COLOR)
+	{
+		return;
+	}
+
 	bool hasAlphaMask = context.camera().GetAlphaMask();
 	bool opacityMerge = hasAlphaMask && context.isAOVEnabled(RPR_AOV_OPACITY) && !context.IsTileRender();
 
@@ -283,6 +289,7 @@ void FireRenderAOV::setRenderStamp(const MString& inRenderStamp)
 }
 
 // -----------------------------------------------------------------------------
+
 bool FireRenderAOV::IsCryptomateiralAOV(void) const
 {
 	if		(id == RPR_AOV_CRYPTOMATTE_MAT0)		{ return true; } 
@@ -295,8 +302,26 @@ bool FireRenderAOV::IsCryptomateiralAOV(void) const
 	return false;
 }
 
+void FireRenderAOV::SaveDeepExrFrameBuffer(FireRenderContext& context, const std::string& filePath) const
+{
+	std::string exrFilePath;
+	size_t index = filePath.find_last_of(".");
+	const std::string exrExt = ".exr";
+
+	if (index == std::string::npos)
+	{
+		exrFilePath += exrExt;
+	}
+	else
+	{
+		exrFilePath = filePath.substr(0, index) + exrExt;
+	}
+
+	rprFrameBufferSaveToFile(context.frameBufferAOV(RPR_AOV_DEEP_COLOR), exrFilePath.c_str());
+}
+
 // -----------------------------------------------------------------------------
-bool FireRenderAOV::writeToFile(const MString& filePath, bool colorOnly, unsigned int imageFormat, FileWrittenCallback fileWrittenCallback) const
+bool FireRenderAOV::writeToFile(FireRenderContext& context, const MString& filePath, bool colorOnly, unsigned int imageFormat, FileWrittenCallback fileWrittenCallback) const
 {
 	// Check that the AOV is active and in a valid state.
 	if (!active || !pixels || m_region.isZeroArea())
@@ -305,6 +330,13 @@ bool FireRenderAOV::writeToFile(const MString& filePath, bool colorOnly, unsigne
 	// Use the incoming path if only outputting the color AOV,
 	// otherwise, get a new path that includes a folder for the AOV.
 	MString path = colorOnly ? filePath : getOutputFilePath(filePath);
+
+	if (id == RPR_AOV_DEEP_COLOR)
+	{
+		SaveDeepExrFrameBuffer(context, path.asChar());
+
+		return true;
+	}
 
 	// Save the pixels to file.
 	FireRenderImageUtil::save(path, m_region.getWidth(), m_region.getHeight(), pixels.get(), imageFormat);

@@ -39,10 +39,11 @@ limitations under the License.
 #include <maya/MColor.h>
 #include "FireRenderMath.h"
 #include "ProRenderGLTF.h"
+#include "RprLoadStore.h"
 
 //#define FRW_LOGGING 1
 
-#define RPR_AOV_MAX 0x3b
+#define RPR_AOV_MAX 0x41
 
 #if FRW_LOGGING
 
@@ -136,7 +137,9 @@ namespace frw
 		LookupTypeVertexValue1 = RPR_MATERIAL_NODE_LOOKUP_VERTEX_VALUE1,
 		LookupTypeVertexValue2 = RPR_MATERIAL_NODE_LOOKUP_VERTEX_VALUE2,
 		LookupTypeVertexValue3 = RPR_MATERIAL_NODE_LOOKUP_VERTEX_VALUE3,
-		LookupTypeShapeRandomColor = RPR_MATERIAL_NODE_LOOKUP_SHAPE_RANDOM_COLOR
+		LookupTypeShapeRandomColor = RPR_MATERIAL_NODE_LOOKUP_SHAPE_RANDOM_COLOR,
+		LookupTypeObjectID = RPR_MATERIAL_NODE_LOOKUP_OBJECT_ID,
+		LookupTypePrimitiveRandomColor = RPR_MATERIAL_NODE_LOOKUP_PRIMITIVE_RANDOM_COLOR
 	};
 
 	enum ValueType
@@ -150,6 +153,7 @@ namespace frw
 		ValueTypeGradientMap = RPR_MATERIAL_NODE_GRADIENT_TEXTURE,
 		ValueTypeCheckerMap = RPR_MATERIAL_NODE_CHECKER_TEXTURE, //did not get color input
 		ValueTypeDotMap = RPR_MATERIAL_NODE_DOT_TEXTURE, //did not get color input
+		ValueTypeVoronoiMap = RPR_MATERIAL_NODE_VORONOI_TEXTURE, //did not get color input
 		ValueTypeConstant = RPR_MATERIAL_NODE_CONSTANT_TEXTURE,
 		ValueTypeLookup = RPR_MATERIAL_NODE_INPUT_LOOKUP,
 		ValueTypeBlend = RPR_MATERIAL_NODE_BLEND_VALUE,
@@ -161,7 +165,9 @@ namespace frw
 		ValueTypeBufferSampler = RPR_MATERIAL_NODE_BUFFER_SAMPLER, // buffer node
 		ValueTypeHSVToRGB = RPR_MATERIAL_NODE_HSV_TO_RGB,
 		ValueTypeRRGToHSV = RPR_MATERIAL_NODE_RGB_TO_HSV,
-		ValueTypeToonRamp = RPR_MATERIAL_NODE_TOON_RAMP
+		ValueTypeToonRamp = RPR_MATERIAL_NODE_TOON_RAMP,
+		ValueTypeGridSampler = RPR_MATERIAL_NODE_GRID_SAMPLER,
+		ValueTypePrimvarLookup = RPR_MATERIAL_NODE_PRIMVAR_LOOKUP
 	};
 
 	enum ShaderType
@@ -176,7 +182,6 @@ namespace frw
 		ShaderTypeMicrofacetRefraction = RPR_MATERIAL_NODE_MICROFACET_REFRACTION,
 		ShaderTypeTransparent = RPR_MATERIAL_NODE_TRANSPARENT,
 		ShaderTypeEmissive = RPR_MATERIAL_NODE_EMISSIVE,
-		ShaderTypeWard = RPR_MATERIAL_NODE_WARD,
 		ShaderTypeBlend = RPR_MATERIAL_NODE_BLEND,
 		ShaderTypeStandard = RPR_MATERIAL_NODE_UBERV2,
 		ShaderTypeOrenNayer = RPR_MATERIAL_NODE_ORENNAYAR,
@@ -184,7 +189,8 @@ namespace frw
 		ShaderTypeAdd = RPR_MATERIAL_NODE_ADD,
 		ShaderTypeVolume = RPR_MATERIAL_NODE_VOLUME,
 		ShaderTypeFlatColor = RPR_MATERIAL_NODE_PASSTHROUGH,
-		ShaderTypeToon = RPR_MATERIAL_NODE_TOON_CLOSURE
+		ShaderTypeToon = RPR_MATERIAL_NODE_TOON_CLOSURE,
+		ShaderTypeMicrofacetAnisotropicReflection = RPR_MATERIAL_NODE_MICROFACET_ANISOTROPIC_REFLECTION
 	};
 
 	enum ContextParameterType
@@ -235,7 +241,6 @@ namespace frw
 		ContextParameterRoughnessCap = RPR_CONTEXT_ROUGHNESS_CAP,
 		ContextParameterDisplayGamma = RPR_CONTEXT_DISPLAY_GAMMA,
 		ContextParameterMaterialStackSize = RPR_CONTEXT_MATERIAL_STACK_SIZE,
-		ContextParameterClippingPlane = RPR_CONTEXT_CLIPPING_PLANE,
 		ContextParameterGPU0Name = RPR_CONTEXT_GPU0_NAME,
 		ContextParameterGPU1Name = RPR_CONTEXT_GPU1_NAME,
 		ContextParameterGPU2Name = RPR_CONTEXT_GPU2_NAME,
@@ -908,7 +913,8 @@ namespace frw
 		{
 			DECLARE_OBJECT_DATA
 		public:
-			Object shader;
+			Object shader; // optimization for shape with only one shader
+			std::vector<Object> shaders;
 			Object volumeShader;
 			Object displacementShader;
 			virtual ~Data();
@@ -924,6 +930,7 @@ namespace frw
 
 		void SetShader(Shader shader);
 		Shader GetShader() const;
+		void SetPerFaceShader(Shader shader, std::vector<int>& face_ids);
 
 		void SetVolumeShader( const Shader& shader );
 		Shader GetVolumeShader() const;
@@ -1040,6 +1047,12 @@ namespace frw
 			checkStatus(res);
 		}
 
+		void SetShadowColor(const Value &color)
+		{
+			auto res = rprShapeSetShadowColor(Handle(), color.GetX(), color.GetY(), color.GetZ());
+			checkStatus(res);
+		}
+
 		void SetLinearMotion(float x, float y, float z)
 		{
 			auto res = rprShapeSetLinearMotion(Handle(), x, y, z);
@@ -1070,32 +1083,32 @@ namespace frw
 
 		void SetVertexColors(const std::vector<int>& vertexIndices, const std::vector<MColor>& vertexColors, rpr_int indexCount)
 		{
+			const int numComponents = 4;
 			std::vector<rpr_float> colors;
-			colors.resize(indexCount);
+			colors.resize(indexCount * numComponents);
 
-			for (int colorComponent = 0; colorComponent < 4; colorComponent++)
+			for (int colorComponent = 0; colorComponent < numComponents; colorComponent++)
 			{
 				for (int vertexIndex : vertexIndices)
 				{
 					switch (colorComponent)
 					{
 					case 0:
-						colors[vertexIndex] = vertexColors[vertexIndex].r;
+						colors[vertexIndex * numComponents] = vertexColors[vertexIndex].r;
 						break;
 					case 1:
-						colors[vertexIndex] = vertexColors[vertexIndex].g;
+						colors[vertexIndex * numComponents + 1] = vertexColors[vertexIndex].g;
 						break;
 					case 2:
-						colors[vertexIndex] = vertexColors[vertexIndex].b;
+						colors[vertexIndex * numComponents + 2] = vertexColors[vertexIndex].b;
 						break;
 					case 3:
-						colors[vertexIndex] = vertexColors[vertexIndex].a;
+						colors[vertexIndex * numComponents + 3] = vertexColors[vertexIndex].a;
 						break;
 					}
 				}
-
-				rprShapeSetVertexValue(Handle(), colorComponent, vertexIndices.data(), colors.data(), indexCount);
 			}
+			rprShapeSetPrimvar(Handle(), 0, colors.data(), colors.size(), numComponents, RPR_PRIMVAR_INTERPOLATION_VERTEX); // we use primvar channel with number zero to store vertex colors
 		}
 
 #ifdef FRW_USE_MAX_TYPES
@@ -1116,6 +1129,20 @@ namespace frw
 		void SetShadowFlag(bool castsShadows)
 		{
 			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_SHADOW, castsShadows);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
+		void SetReceiveShadowFlag(bool receivesShadows)
+		{
+			auto res = rprShapeSetVisibilityFlag(Handle(), RPR_SHAPE_VISIBILITY_RECEIVE_SHADOW, receivesShadows);
 
 			if (res == RPR_ERROR_UNSUPPORTED)
 			{
@@ -1491,6 +1518,20 @@ namespace frw
 			}
 		}
 
+		void SetReceiveShadowFlag(bool receivesShadows)
+		{
+			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_RECEIVE_SHADOW, receivesShadows);
+
+			if (res == RPR_ERROR_UNSUPPORTED)
+			{
+				return;
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
 		void SetPrimaryVisibility(bool visible)
 		{
 			auto res = rprCurveSetVisibilityFlag(Handle(), RPR_CURVE_VISIBILITY_PRIMARY_ONLY_FLAG, visible);
@@ -1599,6 +1640,17 @@ namespace frw
 			data().m_mode = mode;
 		}
 
+
+		void SetMotionTransform(const float* tm, bool transpose = false)
+		{
+			rpr_status res = rprCameraSetMotionTransform(Handle(), false, tm, 1); // matrix at time=1
+			checkStatus(res);
+
+			res = rprCameraSetMotionTransformCount(Handle(), 1);
+			checkStatus(res);
+		}
+
+		// REMOVE THIS AFTER REMOVING TAHOE
 		void SetLinearMotion(float x, float y, float z)
 		{
 			auto res = rprCameraSetLinearMotion(Handle(), x, y, z);
@@ -1613,6 +1665,7 @@ namespace frw
 			}
 		}
 
+		// REMOVE THIS AFTER REMOVING TAHOE
 		void SetAngularMotion(float x, float y, float z, float w)
 		{
 			auto res = rprCameraSetAngularMotion(Handle(), x, y, z, w);
@@ -2036,6 +2089,8 @@ namespace frw
 			const rpr_int* normal_indices, rpr_int nidx_stride, const rpr_int** texcoord_indices,
 			const rpr_int* tidx_stride, const rpr_int * num_face_vertices, size_t num_faces, rpr_mesh_info* meshAttrArray = nullptr, const std::string& optionalMeshName = "") const;
 
+		Shape CreateVoidMesh();
+
 		PointLight CreatePointLight()
 		{
 			FRW_PRINT_DEBUG("CreatePointLight()");
@@ -2161,6 +2216,16 @@ namespace frw
 			return Volume(h, *this);
 		}
 
+		struct VolumeData
+		{
+			rpr_grid m_densityGrid;
+			rpr_grid m_albedoGrid;
+			rpr_grid m_emissionGrid;
+			std::vector<float> m_densityLookup;
+			std::vector<float> m_albedoLookup;
+			std::vector<float> m_emissionLookup;
+		};
+
 		Volume CreateVolume(size_t gridSizeX,
 			size_t gridSizeY,
 			size_t gridSizeZ,
@@ -2178,6 +2243,57 @@ namespace frw
 		{
 			FRW_PRINT_DEBUG("CreateVolume()");
 
+			// create rpr volume node
+			rpr_hetero_volume h = 0;
+			rpr_int status = rprContextCreateHeteroVolume(Handle(), &h);
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR create volume failed!");
+
+			// create volume data
+			auto volumeData = CreateVolumeData(gridSizeX, gridSizeY, gridSizeZ, voxelData, numberOfVoxels, albedoCtrPoints,
+				countOfAlbedoCtrlPoints, albedoVal, emissionCtrPoints, countOfEmissionCtrlPoints, emissionVal,
+				densityCtrPoints, countOfDensityCtrlPoints, densityVal);
+
+			// - attach albedo grid and lookup to volume
+			status = rprHeteroVolumeSetAlbedoGrid(h, volumeData.m_albedoGrid);
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach albedo grid!");
+			status = rprHeteroVolumeSetAlbedoLookup(h, volumeData.m_albedoLookup.data(), (rpr_uint) (volumeData.m_albedoLookup.size() / 3));
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach albedo lookup table!");
+
+			// - attach emission grid and lookup to volume
+			status = rprHeteroVolumeSetEmissionGrid(h, volumeData.m_emissionGrid);
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach emission grid!");
+			status = rprHeteroVolumeSetEmissionLookup(h, volumeData.m_emissionLookup.data(), (rpr_uint) (volumeData.m_emissionLookup.size() / 3));
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach emission lookup table!");
+
+			// - attach density grid and lookup to volume
+			status = rprHeteroVolumeSetDensityGrid(h, volumeData.m_densityGrid);
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach grid!");
+			status = rprHeteroVolumeSetDensityLookup(h, volumeData.m_densityLookup.data(), (rpr_uint) (volumeData.m_densityLookup.size() / 3) );
+			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach lookup table!");
+			
+			return Volume(h, *this);
+		}
+
+		VolumeData CreateVolumeData(size_t gridSizeX,
+			size_t gridSizeY,
+			size_t gridSizeZ,
+			float const* voxelData, // float3 albedo RGB, float3 emision, float density (currently not used because we set ramps instead of passing volume color and density values directly
+			size_t numberOfVoxels,
+			float const* albedoCtrPoints = nullptr,
+			size_t countOfAlbedoCtrlPoints = 0,
+			float const* albedoVal = nullptr,
+			float const* emissionCtrPoints = nullptr,
+			size_t countOfEmissionCtrlPoints = 0,
+			float const* emissionVal = nullptr,
+			float const* densityCtrPoints = nullptr,
+			size_t countOfDensityCtrlPoints = 0,
+			float const* densityVal = nullptr)
+		{
+			FRW_PRINT_DEBUG("CreateVolumeData()");
+
+			// create data object
+			VolumeData volumeData;
+
 			// ensure correct volume grid data size
 			bool isGridDataValid = numberOfVoxels == gridSizeX * gridSizeY * gridSizeZ;
 			if (!isGridDataValid)
@@ -2193,11 +2309,6 @@ namespace frw
 			{
 				indicesList[idx] = idx;
 			}
-
-			// create rpr volume node
-			rpr_hetero_volume h = 0;
-			rpr_int status = rprContextCreateHeteroVolume(Handle(), &h);
-			checkStatusThrow(status, "Unable to create Hetero Volume - RPR create volume failed!");
 
 			// albedo
 			// - atm only ctrl points are supported
@@ -2217,24 +2328,22 @@ namespace frw
 			}
 
 			rpr_grid albedoGrid;
-			status = rprContextCreateGrid(Handle(), &albedoGrid,
+			rpr_int status = rprContextCreateGrid(Handle(), &albedoGrid,
 				gridSizeX, gridSizeY, gridSizeZ,
 				&indicesList[0], indicesList.size(), RPR_GRID_INDICES_TOPOLOGY_I_U64,
 				&albedo[0], albedo.size() * sizeof(albedo[0]), 0
 			);
 			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to create albedo grid!");
-			
-			// - attach grid and lookup to volume
-			status = rprHeteroVolumeSetAlbedoGrid(h, albedoGrid);
-			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach albedo grid!");
-			status = rprHeteroVolumeSetAlbedoLookup(h, albedo_look_up.data(), (rpr_uint) (albedo_look_up.size() / 3));
-			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach albedo lookup table!");
+
+			// store grid and lookup into data object
+			volumeData.m_albedoGrid = albedoGrid;
+			volumeData.m_albedoLookup = albedo_look_up;
 
 			// emission
 			// - atm only ctrl points are supported
 			// - create look up table
 			assert(countOfEmissionCtrlPoints);
-			std::vector<float> emission_look_up; emission_look_up.reserve(countOfEmissionCtrlPoints*3);
+			std::vector<float> emission_look_up; emission_look_up.reserve(countOfEmissionCtrlPoints * 3);
 			for (size_t idx = 0; idx < countOfEmissionCtrlPoints; ++idx)
 			{
 				emission_look_up.push_back(emissionCtrPoints[idx] * 10.f);
@@ -2255,11 +2364,9 @@ namespace frw
 			);
 			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to create emission grid!");
 
-			// - attach grid and lookup to volume
-			status = rprHeteroVolumeSetEmissionGrid(h, emissionGrid);
-			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach emission grid!");
-			status = rprHeteroVolumeSetEmissionLookup(h, emission_look_up.data(), (rpr_uint) (emission_look_up.size() / 3));
-			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach emission lookup table!");
+			// store grid and lookup into data object
+			volumeData.m_emissionGrid = emissionGrid;
+			volumeData.m_emissionLookup = emission_look_up;
 
 			// density
 			// - atm only ctrl points are supported
@@ -2268,9 +2375,9 @@ namespace frw
 			std::vector<float> density_look_up; density_look_up.reserve(countOfDensityCtrlPoints);
 			for (size_t idx = 0; idx < countOfDensityCtrlPoints; ++idx)
 			{
-				density_look_up.push_back(densityCtrPoints[idx]* 1000.0f);
-				density_look_up.push_back(densityCtrPoints[idx]* 1000.0f);
-				density_look_up.push_back(densityCtrPoints[idx]* 1000.0f);
+				density_look_up.push_back(densityCtrPoints[idx] * 1000.0f);
+				density_look_up.push_back(densityCtrPoints[idx] * 1000.0f);
+				density_look_up.push_back(densityCtrPoints[idx] * 1000.0f);
 			}
 
 			// - create density grid
@@ -2288,13 +2395,11 @@ namespace frw
 			);
 			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to create densitty grid!");
 
-			// - attach grid and lookup to volume
-			status = rprHeteroVolumeSetDensityGrid(h, densityGrid);
-			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach grid!");
-			status = rprHeteroVolumeSetDensityLookup(h, density_look_up.data(), (rpr_uint) (density_look_up.size() / 3) );
-			checkStatusThrow(status, "Unable to create Hetero Volume - RPR failed to attach lookup table!");
-			
-			return Volume(h, *this);
+			// store grid and lookup into data object
+			volumeData.m_densityGrid = densityGrid;
+			volumeData.m_densityLookup = density_look_up;
+
+			return volumeData;
 		}
 
 		Curve CreateCurve(size_t num_controlPoints, rpr_float const * controlPointsData, 
@@ -2470,14 +2575,6 @@ namespace frw
 			checkStatus(res);
 
 			info.name = "";
-#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
-			// get name
-			res = rprContextGetParameterInfo(Handle(), i, ParameterInfoName, 0, nullptr, &size);
-			checkStatus(res);
-			info.name.resize(size);
-			res = rprContextGetParameterInfo(Handle(), i, ParameterInfoName, size, const_cast<char*>(info.name.data()), nullptr);
-			checkStatus(res);
-#endif
 
 			// get description
 			res = rprContextGetParameterInfo(Handle(), i, ParameterInfoDescription, 0, nullptr, &size);
@@ -2496,26 +2593,17 @@ namespace frw
 
 		static void TraceOutput(const char * tracingfolder)
 		{
-#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
-			rprContextSetParameter1u(nullptr, "tracing", 0);
-#else
 			rprContextSetParameterByKey1u(nullptr, RPR_CONTEXT_TRACING_ENABLED, 0);
-#endif
+
 			if (tracingfolder)
 			{
-#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
-				auto res = rprContextSetParameterString(nullptr, "tracingfolder", tracingfolder);
-#else
 				auto res = rprContextSetParameterByKeyString(nullptr, RPR_CONTEXT_TRACING_PATH, tracingfolder);
-#endif
+
 				if (RPR_SUCCESS == res)
-#if RPR_VERSION_MAJOR_MINOR_REVISION < 0x00103402 
-					rprContextSetParameter1u(nullptr, "tracing", 1);
-#else
 					rprContextSetParameterByKey1u(nullptr, RPR_CONTEXT_TRACING_ENABLED, 1);
-#endif
 			}
 		}
+
 		void DumpParameterInfo();
 	};
 
@@ -2532,12 +2620,32 @@ namespace frw
 		}
 	};
 
+	class GridNode : public ValueNode
+	{
+	public:
+		explicit GridNode(const MaterialSystem& h) : ValueNode(h, ValueTypeGridSampler) {}
+		rpr_int SetGrid(VolumeGrid v)
+		{
+			AddReference(v);
+			return rprMaterialNodeSetInputGridDataByKey(Handle(), RPR_MATERIAL_INPUT_DATA, v.Handle());
+		}
+	};
+
 	class LookupNode : public ValueNode
 	{
 	public:
 		LookupNode(const MaterialSystem& h, LookupType v) : ValueNode(h, ValueTypeLookup)
 		{
 			SetValueInt(RPR_MATERIAL_INPUT_VALUE, v);
+		}
+	};
+
+	class PrimvarLookupNode : public ValueNode
+	{
+	public:
+		PrimvarLookupNode(const MaterialSystem& h, rpr_int key) : ValueNode(h, ValueTypePrimvarLookup)
+		{
+			SetValueInt(RPR_MATERIAL_INPUT_VALUE, key);
 		}
 	};
 
@@ -3456,6 +3564,35 @@ namespace frw
 			}
 		}
 
+		void AttachToShape(Shape::Data& shape, std::vector<int>& face_ids)
+		{
+			Data& d = data();
+			d.numAttachedShapes++;
+			rpr_int res;
+
+			if (!Handle())
+				return;
+
+			FRW_PRINT_DEBUG("\tShape.AttachMaterial: d: 0x%016llX - numAttachedShapes: %d shape=0x%016llX x_material=0x%016llX", &d, d.numAttachedShapes, shape.Handle(), Handle());
+			res = rprShapeSetMaterialFaces(shape.Handle(), Handle(), face_ids.data(), face_ids.size());
+			checkStatus(res);
+
+			if (d.isShadowCatcher)
+			{
+				res = rprShapeSetShadowCatcher(shape.Handle(), true);
+				if (res != RPR_ERROR_UNSUPPORTED)
+				{
+					checkStatus(res);
+				}
+			}
+
+			if (d.isReflectionCatcher)
+			{
+				res = rprShapeSetReflectionCatcher(shape.Handle(), true);
+				checkStatus(res);
+			}
+		}
+
 		void AttachToCurve(frw::Curve::Data& crv)
 		{
 			Data& d = data();
@@ -3563,6 +3700,21 @@ namespace frw
 			}
 			assert(!"bad type");
 			return false;
+		}
+
+		void xSetParameterLight(rpr_material_node_input parameter, Light light)
+		{
+			const Data& d = data();
+			rpr_int res = rprMaterialNodeSetInputLightDataByKey(Handle(), parameter, light.Handle());
+			if (res == RPR_ERROR_UNSUPPORTED ||
+				res == RPR_ERROR_INVALID_PARAMETER)
+			{
+				// print error/warning if needed
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 
 		void SetMaterialId(rpr_uint id)
@@ -3828,6 +3980,14 @@ namespace frw
 			old.DetachFromShape(data());
 		}
 
+		for (auto it = data().shaders.begin(); it != data().shaders.end(); ++it)
+		{
+			Shader oldShader = it->As<Shader>();
+			RemoveReference(oldShader);
+			oldShader.DetachFromShape(data());
+		}
+		data().shaders.clear();
+
 		AddReference(shader);
 		data().shader = shader;
 		shader.AttachToShape(data());
@@ -3836,6 +3996,14 @@ namespace frw
 	inline Shader Shape::GetShader() const
 	{
 		return data().shader.As<Shader>();
+	}
+
+	// note that old shaders must be removed before this function is called!
+	inline void Shape::SetPerFaceShader(Shader shader, std::vector<int>& face_ids)
+	{
+		AddReference(shader);
+		data().shaders.push_back(shader);
+		shader.AttachToShape(data(), face_ids);
 	}
 
 	inline void Shape::SetVolumeShader(const frw::Shader& shader)
@@ -4192,6 +4360,27 @@ namespace frw
 		return shapeObj;
 	}
 
+	// This method is being used by Northstar volumes
+	inline Shape Context::CreateVoidMesh()
+	{
+		rpr_shape shape = nullptr;
+
+		rpr_mesh_info mesh_properties[16];
+		mesh_properties[0] = (rpr_mesh_info)RPR_MESH_VOLUME_FLAG;
+		mesh_properties[1] = (rpr_mesh_info)1; // enable the Volume flag for the Mesh
+		mesh_properties[2] = (rpr_mesh_info)0;
+
+
+		auto status = rprContextCreateMeshEx2(Handle(), nullptr, 0, 0, nullptr, 0, 0, nullptr, 0, 0, 0, nullptr, nullptr,
+			nullptr, nullptr, 0, nullptr, 0, nullptr, nullptr, nullptr, 0, mesh_properties, &shape);
+
+		checkStatusThrow(status, ("Unable to create mesh"));
+
+		Shape shapeObj(shape, *this);
+
+		return shapeObj;
+	}
+
 	inline void Context::SetAOV(FrameBuffer frameBuffer, rpr_aov aov)
 	{
 		auto res = rprContextSetAOV(Handle(), aov, frameBuffer.Handle());
@@ -4291,4 +4480,63 @@ namespace frw
 		}
 	}
 
+	class RPRSContext
+	{
+		class Data
+		{
+			friend RPRSContext;
+
+			RPRS_context m_handle;
+
+			bool operator==(void* h) const = delete;
+
+		public:
+			Data(void)
+				: m_handle(nullptr)
+			{
+				rpr_int statusContext = rprsCreateContext(&m_handle);
+				assert(statusContext == RPR_SUCCESS);
+			}
+
+			~Data(void)
+			{
+				if (!IsValid())
+					return;
+
+				rprsDeleteContext(m_handle);
+			}
+
+			bool IsValid() const { return m_handle != nullptr; }
+
+			RPRS_context Handle() const { return m_handle; }
+		};
+		typedef std::shared_ptr<Data> DataPtr;
+
+		DataPtr m; // never null
+
+	protected:
+		RPRSContext(DataPtr p) : m(p) {}
+
+	public:
+		RPRSContext(Data* data = nullptr)
+		{
+			if (!data) data = new Data();
+
+			m.reset(data);
+		}
+
+		void Reset()
+		{
+			m = std::make_shared<Data>();
+		}
+
+		bool operator==(const RPRSContext& rhs) const { return m.get() == rhs.m.get(); }
+
+		long UseCount() const { return m.use_count(); }
+		RPRS_context Handle() const { return m->Handle(); }
+
+		// for easier scope and creation flow
+		explicit operator bool() const { return m->IsValid(); }
+		bool IsValid() const { return m->IsValid(); }
+	};
 }

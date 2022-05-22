@@ -61,6 +61,7 @@ limitations under the License.
 #include "FireRenderChecker.h"
 #include "FireRenderArithmetic.h"
 #include "FireRenderDot.h"
+#include "FireRenderVoronoi.h"
 #include "FireRenderBlendValue.h"
 #include "FireRenderGradient.h"
 #include "FireRenderLookup.h"
@@ -526,6 +527,16 @@ void AddExtensionAttributesCommon()
 	MObject emitterAttr = nAttr.create("RPRIsEmitter", "iem", MFnNumericData::kBoolean, false);
 	nAttr.setNiceNameOverride("RPR Is Emitter");
 	locatorClass.addExtensionAttribute(emitterAttr);
+
+
+	// Add shadow color attribute to geometry objects
+	MNodeClass nurbsClass("nurbsSurface");
+	MNodeClass meshClass("mesh");
+
+	const MObject nurbsShadowColorAttr = nAttr.createColor("RPRShadowColor", "shc");
+	const MObject meshShadowColorAttr = nAttr.createColor("RPRShadowColor", "shc");
+	nurbsClass.addExtensionAttribute(nurbsShadowColorAttr);
+	meshClass.addExtensionAttribute(meshShadowColorAttr);
 }
 
 void AddExtensionAttributesForMaterials()
@@ -869,6 +880,11 @@ MStatus initializePlugin(MObject obj)
 		FireMaya::Dot::initialize,
 		MPxNode::kDependNode, &UserUtilityClassify));
 
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "Voronoi", FireMaya::Voronoi::FRTypeID(),
+		FireMaya::Voronoi::creator,
+		FireMaya::Voronoi::initialize,
+		MPxNode::kDependNode, &UserTextureClassify));
+
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "BlendValue", FireMaya::BlendValue::FRTypeID(),
 		FireMaya::BlendValue::creator,
 		FireMaya::BlendValue::initialize,
@@ -1010,6 +1026,7 @@ MStatus uninitializePlugin(MObject obj)
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::Arithmetic::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::Checker::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::Dot::FRTypeID()));
+	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::Voronoi::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::BlendValue::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::Gradient::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::Lookup::FRTypeID()));

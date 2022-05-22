@@ -20,68 +20,16 @@ InstancerMASH::InstancerMASH(FireRenderContext* context, const MDagPath& dagPath
 	m_instancedObjectsCachedSize(0)
 {
 	GenerateInstances();
-	RegisterCallbacks();
 }
 
 void InstancerMASH::RegisterCallbacks()
 {
-	AddCallback(MNodeMessage::addNodeDirtyPlugCallback(m.object, plugDirty_callback, this));
-}
+	FireRenderNode::RegisterCallbacks();
 
-void InstancerMASH::Freshen(bool shouldCalculateHash)
-{
-	if (GetTargetObjects().empty())
-	{
+	if (context()->getCallbackCreationDisabled())
 		return;
-	}
 
-	if (m_instancedObjects.empty())
-	{
-		GenerateInstances();
-	}
-
-	MTransformationMatrix instancerMatrix = MFnTransform(m.object).transformation();
-	std::vector<MMatrix> matricesFromMASH = GetTransformMatrices();
-
-	std::vector<MObject> targetObjects = GetTargetObjects();
-
-	for (size_t i = 0; i < GetInstanceCount(); i++)
-	{
-		std::vector<std::shared_ptr<FireRenderMeshMASH>>& instancedObjects = m_instancedObjects.at(i);
-		for (auto& instancedFRObject : instancedObjects)
-		{
-			const FireRenderMesh& renderMesh = instancedFRObject->GetOriginalFRMeshinstancedObject();
-
-			//Target node translation shouldn't affect the result 
-			// translation of shape in group however should
-			MFnDagNode meshTransformNode(MFnDagNode(renderMesh.Object()).parent(0));
-			MTransformationMatrix targetNodeMatrix = MFnTransform(meshTransformNode.object()).transformation();
-			MFnDagNode groupTransformNode(meshTransformNode.parent(0));
-			if (groupTransformNode.name() != "world")
-			{
-				MTransformationMatrix groupNodeMatrix = MFnTransform(groupTransformNode.object()).transformation();
-				groupNodeMatrix.setTranslation({ 0., 0., 0. }, MSpace::kObject);
-				MMatrix groupTransform = groupNodeMatrix.asMatrix();
-				MMatrix meshTransform = targetNodeMatrix.asMatrix();
-
-				targetNodeMatrix = meshTransform * groupTransform;
-			}
-			else
-			{
-				targetNodeMatrix.setTranslation({ 0., 0., 0. }, MSpace::kObject);
-			}
-
-			MMatrix newTransform = targetNodeMatrix.asMatrix();
-			newTransform *= matricesFromMASH.at(i);
-			newTransform *= instancerMatrix.asMatrix();
-
-			instancedFRObject->SetSelfTransform(newTransform);
-			instancedFRObject->Rebuild();
-			instancedFRObject->setDirty();
-		}
-	}
-
-	m_instancedObjectsCachedSize = GetInstanceCount();
+	AddCallback(MNodeMessage::addNodeDirtyPlugCallback(m.object, plugDirty_callback, this));
 }
 
 void InstancerMASH::OnPlugDirty(MObject& node, MPlug& plug)
@@ -228,14 +176,25 @@ bool InstancerMASH::MASHContext::Init(MFnArrayAttrsData& arrayAttrsData, const I
 	if (!ojectIndexArrayExists)
 		return false;
 
-	m_objectIndexArray = arrayAttrsData.getDoubleData("objectIndex", &res);
+	// Get list of objects that are instanced by mash
+	std::vector<MObject> targetObjects = pInstancer->GetTargetObjects();
+
+	MDoubleArray dblArray = arrayAttrsData.getDoubleData("objectIndex", &res);
 	assert(res == MStatus::kSuccess);
+
+	for (unsigned int idx = 0; idx < dblArray.length(); ++idx)
+	{
+		// MASH "Id Count" property might be bigger then real count of objects. We need to fix indices accordingly
+		if (dblArray[idx] >= targetObjects.size())
+		{
+			dblArray[idx] = (double) (targetObjects.size() - 1);
+		}
+	}
+
+	m_objectIndexArray = dblArray;
 
 	// Generate unique uuid, because we can't use instancer uuid - it initiates infinite Freshen() on whole hierarchy
 	m_uuidVectors.resize(m_objectIndexArray.length());
-
-	// Get list of objects that are instanced by mash
-	std::vector<MObject> targetObjects = pInstancer->GetTargetObjects();
 
 	for (unsigned int idx = 0; idx < m_objectIndexArray.length(); ++idx)
 	{
@@ -468,3 +427,88 @@ bool InstancerMASH::ShouldBeRecreated() const
 		||
 		GetTargetObjects().empty();
 }
+
+bool InstancerMASH::ReloadMesh(unsigned int sampleIdx /*= 0*/)
+{
+	if (sampleIdx != 0)
+	{
+		for (auto it = m_instancedObjects.begin(); it != m_instancedObjects.end(); ++it)
+		{
+			for (auto& instancedFRObject : it->second)
+			{
+				instancedFRObject->ReloadMesh(sampleIdx);
+			}
+		}
+
+		return true;
+	}
+
+	if (GetTargetObjects().empty())
+	{
+		return false;
+	}
+
+	if (m_instancedObjects.empty())
+	{
+		GenerateInstances();
+	}
+
+	MTransformationMatrix instancerMatrix = MFnTransform(m.object).transformation();
+	std::vector<MMatrix> matricesFromMASH = GetTransformMatrices();
+
+	std::vector<MObject> targetObjects = GetTargetObjects();
+
+	for (size_t i = 0; i < GetInstanceCount(); i++)
+	{
+		std::vector<std::shared_ptr<FireRenderMeshMASH>>& instancedObjects = m_instancedObjects.at(i);
+		for (auto& instancedFRObject : instancedObjects)
+		{
+			const FireRenderMesh& renderMesh = instancedFRObject->GetOriginalFRMeshinstancedObject();
+
+			//Target node translation shouldn't affect the result 
+			// translation of shape in group however should
+			MFnDagNode meshTransformNode(MFnDagNode(renderMesh.Object()).parent(0));
+			MTransformationMatrix targetNodeMatrix = MFnTransform(meshTransformNode.object()).transformation();
+			MFnDagNode groupTransformNode(meshTransformNode.parent(0));
+			if (groupTransformNode.name() != "world")
+			{
+				MTransformationMatrix groupNodeMatrix = MFnTransform(groupTransformNode.object()).transformation();
+				groupNodeMatrix.setTranslation({ 0., 0., 0. }, MSpace::kObject);
+				MMatrix groupTransform = groupNodeMatrix.asMatrix();
+				MMatrix meshTransform = targetNodeMatrix.asMatrix();
+
+				targetNodeMatrix = meshTransform * groupTransform;
+			}
+			else
+			{
+				targetNodeMatrix.setTranslation({ 0., 0., 0. }, MSpace::kObject);
+			}
+
+			MMatrix newTransform = targetNodeMatrix.asMatrix();
+			newTransform *= matricesFromMASH.at(i);
+			newTransform *= instancerMatrix.asMatrix();
+
+			instancedFRObject->SetSelfTransform(newTransform);
+			instancedFRObject->ReloadMesh(sampleIdx);
+		}
+	}
+
+	m_instancedObjectsCachedSize = GetInstanceCount();
+
+	return true;
+}
+
+void InstancerMASH::Freshen(bool shouldCalculateHash)
+{
+	RegisterCallbacks();
+
+	for (auto it = m_instancedObjects.begin(); it != m_instancedObjects.end(); ++it)
+	{
+		for (auto& instancedFRObject : it->second)
+		{
+			instancedFRObject->Rebuild();
+			instancedFRObject->setDirty();
+		}
+	}
+}
+

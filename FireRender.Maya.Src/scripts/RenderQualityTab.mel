@@ -62,7 +62,7 @@ proc createFinalRenderQualityPart()
 	frameLayout -label "Final Render Advanced Settings" -cll true -cl 0 fireRenderQualityAdvancedFrame;
 
 	attrControlGrp
-		-label "Ray Epsilon(mm)"
+		-label "Ray Epsilon(0.1 scene units)"
 		-attribute "RadeonProRenderGlobals.raycastEpsilon";
 
         attrControlGrp
@@ -127,7 +127,7 @@ global proc createQualityTab()
 	frameLayout -label "Engine:" -cll true -cl 0 fireRenderTahoeEngineFrame;
 		attrControlGrp
 		    -label "Render Engine:"
-		     -attribute "RadeonProRenderGlobals.tahoeVersion";
+		     -attribute "RadeonProRenderGlobals.renderVersion";
 	setParent ..;
 
 

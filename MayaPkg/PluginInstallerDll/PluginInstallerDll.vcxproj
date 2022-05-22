@@ -72,7 +72,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>Advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>Advapi32.lib;User32.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
     <CustomBuildStep />
@@ -97,7 +97,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(OutDir)$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalDependencies>Advapi32.lib</AdditionalDependencies>
+      <AdditionalDependencies>Advapi32.lib;User32.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
     <CustomBuildStep />

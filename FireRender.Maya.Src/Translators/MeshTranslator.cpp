@@ -43,6 +43,9 @@ FireMaya::MeshTranslator::MeshPolygonData::MeshPolygonData()
 	, countNormals(0)
 	, triangleVertexIndicesCount(0)
 	, motionSamplesCount(0)
+	, haveDeformation(false)
+	, fullName("")
+	, m_isInitialized(false)
 {
 }
 
@@ -65,6 +68,27 @@ void ChangeCurrentTimeAndUpdateMesh(MFnMesh& fnMesh, const MTime& time, MString 
 	{
 		assert(false);
 	}
+}
+
+bool DoesMeshHaveDeformation(const MString& fullDagPath)
+{
+	// back-off
+	if (fullDagPath.length() == 0)
+		return false;
+	
+	// Check if mesh has deformers or rigs inside construction history
+	MString command;
+	command.format("source common.mel; hasGivenMeshDeformerOrRigAttached(\"^1s\");", fullDagPath);
+
+	MStatus status;
+	MString result = MGlobal::executeCommandStringResult(command, false, false, &status);
+
+	if (result.asInt() == 0)
+	{
+		return false;
+	}
+
+	return true;
 }
 
 bool FireMaya::MeshTranslator::MeshPolygonData::ProcessDeformationFrameCount(MFnMesh& fnMesh, MString fullDagPath)
@@ -99,9 +123,6 @@ bool FireMaya::MeshTranslator::MeshPolygonData::ProcessDeformationFrameCount(MFn
 	size_t floatsVertexOneFrame = 3 * countVertices;
 	size_t floatsNormalOneFrame = 3 * countNormals;
 
-	arrVertices.resize(floatsVertexOneFrame * motionSamplesCount);
-	arrNormals.resize(floatsNormalOneFrame * motionSamplesCount);
-
 	unsigned int currentTimeIndex = 0;
 
 	MDagPath dagPath;
@@ -127,12 +148,26 @@ bool FireMaya::MeshTranslator::MeshPolygonData::ProcessDeformationFrameCount(MFn
 	return true;
 }
 
+void FireMaya::MeshTranslator::MeshPolygonData::clear()
+{
+	m_isInitialized = false;
+
+	arrVertices.clear();
+	arrNormals.clear();
+
+	uvCoords.clear();
+	sizeCoords.clear();
+	puvCoords.clear();
+}
+
 bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(MFnMesh& fnMesh, unsigned int deformationFrameCount, MString fullDagPath)
 {
 	GetUVCoords(fnMesh, uvSetNames, uvCoords, puvCoords, sizeCoords);
 	unsigned int uvSetCount = uvSetNames.length();
 
 	MStatus mstatus;
+
+	MString meshName = fnMesh.name();
 
 	// pointer to array of vertices coordinates in Maya
 	pVertices = fnMesh.getRawPoints(&mstatus);
@@ -158,10 +193,32 @@ bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(MFnMesh& fnMesh, unsi
 	countNormals = fnMesh.numNormals(&mstatus);
 	assert(MStatus::kSuccess == mstatus);
 
-	motionSamplesCount = deformationFrameCount;
-	if (!ProcessDeformationFrameCount(fnMesh, fullDagPath))
+	size_t floatsVertexOneFrame = 3 * countVertices;
+	size_t floatsNormalOneFrame = 3 * countNormals;
+
+	haveDeformation = DoesMeshHaveDeformation(fullDagPath) && (deformationFrameCount > 0);
+
+	arrVertices.resize(haveDeformation ? floatsVertexOneFrame * deformationFrameCount : floatsVertexOneFrame );
+	arrNormals.resize(haveDeformation ? floatsNormalOneFrame * deformationFrameCount : floatsNormalOneFrame );
+
+	if (haveDeformation)
 	{
-		motionSamplesCount = 0;
+		motionSamplesCount = deformationFrameCount;
+	}
+
+	if (!haveDeformation)
+	{
+		const float* pData = fnMesh.getRawPoints(&mstatus);
+		assert(MStatus::kSuccess == mstatus);
+		std::copy(pData, pData + countVertices * 3, arrVertices.data());
+
+		pData = fnMesh.getRawNormals(&mstatus);
+		assert(MStatus::kSuccess == mstatus);
+		std::copy(pData, pData + countNormals * 3, arrNormals.data());
+	}
+	else
+	{
+		ReadDeformationFrame(fnMesh, 0);
 	}
 
 	// get triangle count (max possible count; this number is used for reserve only)
@@ -170,28 +227,55 @@ bool FireMaya::MeshTranslator::MeshPolygonData::Initialize(MFnMesh& fnMesh, unsi
 	mstatus = fnMesh.getTriangles(triangleCounts, triangleVertices);
 	triangleVertexIndicesCount = triangleVertices.length();
 
+	m_isInitialized = true;
 	return true;
 }
 
-std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Context& context, const MObject& originalObject, unsigned int deformationFrameCount, MString fullDagPath)
+bool FireMaya::MeshTranslator::MeshPolygonData::ReadDeformationFrame(MFnMesh& fnMesh, unsigned int currentDeformationFrame)
+{
+	if (!haveDeformation)
+	{
+		return true;
+	}
+
+	size_t floatsVertexOneFrame = 3 * countVertices;
+	size_t floatsNormalOneFrame = 3 * countNormals;
+	MStatus status;
+
+	const float* pData = fnMesh.getRawPoints(&status);
+	assert(MStatus::kSuccess == status);
+	assert(arrVertices.size() >= floatsVertexOneFrame * currentDeformationFrame);
+	std::copy(pData, pData + floatsVertexOneFrame, arrVertices.data() + floatsVertexOneFrame * currentDeformationFrame);
+
+	pData = fnMesh.getRawNormals(&status);
+	assert(MStatus::kSuccess == status);
+	assert(arrNormals.size() >= floatsNormalOneFrame * currentDeformationFrame);
+	std::copy(pData, pData + floatsNormalOneFrame, arrNormals.data() + floatsNormalOneFrame * currentDeformationFrame);
+
+	return true;
+}
+
+bool FireMaya::MeshTranslator::PreProcessMesh(
+	MeshPolygonData& outMeshPolygonData,
+	const frw::Context& context,
+	const MObject& originalObject,
+	unsigned int deformationFrameCount /*= 0*/,
+	unsigned int currentDeformationFrame /*= 0*/,
+	MString fullDagPath /*= ""*/)
 {
 	MAIN_THREAD_ONLY;
 
-#ifdef OPTIMIZATION_CLOCK
-	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-#endif
-
-	std::vector<frw::Shape> resultShapes;
 	MStatus mayaStatus;
 
 	MFnDagNode node(originalObject);
+	outMeshPolygonData.fullName = node.fullPathName();
 
-	DebugPrint("TranslateMesh: %s", node.fullPathName().asUTF8());
+	DebugPrint("PreProcessMesh: %s, deformantion frame %d", outMeshPolygonData.fullName.asUTF8(), currentDeformationFrame);
 
 	// Don't render intermediate object
 	if (node.isIntermediateObject(&mayaStatus))
 	{
-		return resultShapes;
+		return false;
 	}
 
 	// Create tesselated object
@@ -199,14 +283,183 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 	if (MStatus::kSuccess != mayaStatus)
 	{
 		mayaStatus.perror("Tesselation error");
-		return resultShapes;
+		return false;
 	}
 
 	MObject smoothed = GetSmoothedObjectIfNecessary(originalObject, mayaStatus);
 	if (MStatus::kSuccess != mayaStatus)
 	{
+		mayaStatus.perror("Smoothing error");
+		return false;
+	}
+
+	// Consider geting mesh from tesselated or smoothed objects
+	MObject object = originalObject;
+
+	if (!tessellated.isNull())
+	{
+		object = tessellated;
+	}
+
+	if (!smoothed.isNull())
+	{
+		object = smoothed;
+	}
+
+	// get fnMesh
+	MFnMesh fnMesh(object, &mayaStatus);
+
+	if (MStatus::kSuccess != mayaStatus)
+	{
+		mayaStatus.perror("MFnMesh constructor error");
+		return false;
+	}
+
+	// all checks clear => proceed with extracting mesh data from Maya
+	bool successfullyProcessed = false;
+
+	// get number of materials used in this mesh
+	if (currentDeformationFrame == 0)
+	{
+		outMeshPolygonData.materialCount = GetFaceMaterials(fnMesh, outMeshPolygonData.faceMaterialIndices);	
+
+		// for tesselated or smoothed mesh disable deformation MB for now
+		successfullyProcessed = outMeshPolygonData.Initialize(
+			fnMesh,
+			object != originalObject ? 0 : deformationFrameCount,
+			fullDagPath
+		);
+	}
+	else
+	{
+		successfullyProcessed = outMeshPolygonData.ReadDeformationFrame(
+			fnMesh,
+			currentDeformationFrame
+		);
+	}
+
+	if (!successfullyProcessed)
+	{
+		std::string nodeName = fnMesh.name().asChar();
+		std::string message = nodeName + " wasn't created: Mesh has no vertices";
+		MGlobal::displayWarning(message.c_str());
+		return false;
+	}
+
+	// Now remove any temporary mesh we created.
+	if (!tessellated.isNull())
+	{
+		RemoveTesselatedTemporaryMesh(node, tessellated);
+	}
+	if (!smoothed.isNull())
+	{
+		RemoveSmoothedTemporaryMesh(node, smoothed);
+	}
+
+	return successfullyProcessed;
+}
+
+frw::Shape FireMaya::MeshTranslator::TranslateMesh(
+	MeshPolygonData& meshPolygonData,
+	const frw::Context& context,
+	const MObject& originalObject,
+	std::vector<int>& outFaceMaterialIndices,
+	unsigned int deformationFrameCount, MString fullDagPath)
+{
+	DebugPrint("TranslateMesh: %s", meshPolygonData.fullName.asUTF8());
+
+	outFaceMaterialIndices.clear();
+
+	// get fnMesh
+	// - NOTE: this will be removed in future PR
+	MObject object = originalObject;
+	MStatus mayaStatus;
+	MObject tessellated = GetTesselatedObjectIfNecessary(originalObject, mayaStatus);
+	if (MStatus::kSuccess != mayaStatus)
+	{
 		mayaStatus.perror("Tesselation error");
-		return resultShapes;
+	}
+
+	MObject smoothed = GetSmoothedObjectIfNecessary(originalObject, mayaStatus);
+	if (MStatus::kSuccess != mayaStatus)
+	{
+		mayaStatus.perror("Smoothing error");
+	}
+
+	if (!tessellated.isNull())
+	{
+		object = tessellated;
+	}
+	if (!smoothed.isNull())
+	{
+		object = smoothed;
+	}
+
+	MFnMesh fnMesh(object, &mayaStatus);
+	if (MStatus::kSuccess != mayaStatus)
+	{
+		mayaStatus.perror("MFnMesh constructor");
+	}
+
+	// translate mesh
+	frw::Shape outShape;
+	SingleShaderMeshTranslator::TranslateMesh(
+		context, fnMesh, outShape, meshPolygonData, meshPolygonData.faceMaterialIndices, outFaceMaterialIndices
+	);
+
+	// Now remove any temporary mesh we created.
+	MFnDagNode node(originalObject);
+	if (!tessellated.isNull())
+	{
+		RemoveTesselatedTemporaryMesh(node, tessellated);
+	}
+	if (!smoothed.isNull())
+	{
+		RemoveSmoothedTemporaryMesh(node, smoothed);
+	}
+
+	return outShape;
+}
+
+frw::Shape FireMaya::MeshTranslator::TranslateMesh(
+	const frw::Context& context, 
+	const MObject& originalObject, 
+	std::vector<int>& outFaceMaterialIndices,
+	unsigned int deformationFrameCount, MString fullDagPath)
+{
+	MAIN_THREAD_ONLY;
+
+#ifdef OPTIMIZATION_CLOCK
+	std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+#endif
+
+	MStatus mayaStatus;
+
+	MFnDagNode node(originalObject);
+
+	DebugPrint("TranslateMesh: %s", node.fullPathName().asUTF8());
+
+	frw::Shape outShape;
+
+	// Don't render intermediate object
+	if (node.isIntermediateObject(&mayaStatus))
+	{
+		return outShape;
+	}
+
+	// Create tesselated object
+	MObject tessellated = GetTesselatedObjectIfNecessary(originalObject, mayaStatus);
+	if (MStatus::kSuccess != mayaStatus)
+	{
+		mayaStatus.perror("Tesselation error");
+		return outShape;
+	}
+
+	MObject smoothed = GetSmoothedObjectIfNecessary(originalObject, mayaStatus);
+	if (MStatus::kSuccess != mayaStatus)
+	{
+		mayaStatus.perror("Smoothing error");
+		return outShape;
 	}
 
 	// Consider geting mesh from tesselated or smoothed objects
@@ -227,14 +480,12 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 	if (MStatus::kSuccess != mayaStatus)
 	{
 		mayaStatus.perror("MFnMesh constructor");
-		return resultShapes;
+		return outShape;
 	}
 
-	// get number of submeshes in mesh (number of materials used in this mesh)
+	// get number of materials used in this mesh
 	MIntArray faceMaterialIndices;
-	int elementCount = GetFaceMaterials(fnMesh, faceMaterialIndices);
-	resultShapes.resize(elementCount);
-	assert(faceMaterialIndices.length() == fnMesh.numPolygons());
+	int materialCount = GetFaceMaterials(fnMesh, faceMaterialIndices);
 
 	// get common data from mesh
 	MeshPolygonData meshPolygonData;
@@ -246,22 +497,18 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 		std::string nodeName = fnMesh.name().asChar();
 		std::string message = nodeName + " wasn't created: Mesh has no vertices";
 		MGlobal::displayWarning(message.c_str());
-		return resultShapes;
+		return outShape;
 	}
 
-	// use special case TranslateMesh that is optimized for 1 shader
-	if (elementCount == 1)
-	{
-		SingleShaderMeshTranslator::TranslateMesh(context, fnMesh, resultShapes, meshPolygonData);
+	outFaceMaterialIndices.clear();
+	SingleShaderMeshTranslator::TranslateMesh(
+		context, fnMesh, outShape, meshPolygonData, faceMaterialIndices, outFaceMaterialIndices
+	);
+
 #ifdef OPTIMIZATION_CLOCK
-		std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
-		std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
+	std::chrono::steady_clock::time_point fin = std::chrono::steady_clock::now();
+	std::chrono::milliseconds elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(fin - start);
 #endif
-	}
-	else
-	{
-		MultipleShaderMeshTranslator::TranslateMesh(context, fnMesh, resultShapes, meshPolygonData, faceMaterialIndices);
-	}
 
 	// Now remove any temporary mesh we created.
 	if (!tessellated.isNull())
@@ -279,7 +526,7 @@ std::vector<frw::Shape> FireMaya::MeshTranslator::TranslateMesh(const frw::Conte
 	FireRenderContext::inTranslateMesh += elapsed.count();
 #endif
 
-	return resultShapes;
+	return outShape;
 }
 
 MObject FireMaya::MeshTranslator::Smoothed2ndUV(const MObject& object, MStatus& status)
@@ -667,6 +914,7 @@ void FireMaya::MeshTranslator::GetUVCoords(
 	std::vector<const float*>& puvCoords,
 	std::vector<size_t>& sizeCoords)
 {
+	uvSetNames.clear();
 	fnMesh.getUVSetNames(uvSetNames);
 	unsigned int uvSetCount = uvSetNames.length();
 

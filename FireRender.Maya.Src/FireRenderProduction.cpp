@@ -270,6 +270,7 @@ bool FireRenderProduction::Init(int contextWidth, int contextHeight, RenderRegio
 	}
 
 	m_contextPtr->enableAOV(RPR_AOV_OPACITY);
+
 	if (m_globals.adaptiveThreshold > 0.0f)
 	{
 		m_contextPtr->enableAOV(RPR_AOV_VARIANCE);
@@ -428,7 +429,9 @@ void FireRenderProduction::OnBufferAvailableCallback(float progress)
 	m_renderViewAOV->readFrameBuffer(*m_contextPtr);
 	
 	if (!shouldUpdateRenderView)
+	{
 		return;
+	}
 
 	FireRenderThread::RunProcOnMainThread([this]()
 		{
@@ -473,7 +476,7 @@ bool FireRenderProduction::stop()
 	}
 
 	stopMayaRender();
-
+	 
 	FireRenderThread::RunProcOnMainThread([&]()
 	{
 		m_stopCallback(m_aovs, m_settings);
@@ -489,6 +492,14 @@ bool FireRenderProduction::stop()
 		RenderStampUtils::ClearCache();
 	});
 
+	if (FireRenderThread::AreWeOnMainThread())
+	{
+		while (!m_NorthStarRenderingHelper.IsStopped())
+		{
+			FireRenderThread::RunItemsQueuedForTheMainThread();
+		}
+	}
+
 	m_NorthStarRenderingHelper.StopAndJoin();
 
 	if (m_contextPtr)
@@ -496,7 +507,7 @@ bool FireRenderProduction::stop()
 		if (FireRenderThread::AreWeOnMainThread())
 		{
 			// Try-lock context lock. If can't lock it then RPR thread is rendering - run item queue
-				while (!m_contextLock.try_lock())
+			while (!m_contextLock.try_lock())
 			{
 				FireRenderThread::RunItemsQueuedForTheMainThread();
 			}
@@ -771,7 +782,7 @@ void FireRenderProduction::UploadAthenaData()
 	std::vector<std::string> aovsUsed;
 	aovsUsed.reserve(aovNames.size());
 
-	for (int aovID = 0; aovID != RPR_AOV_MAX; aovID++)
+	for (int aovID = 0; aovID < RPR_AOV_MAX; aovID++)
 		if (m_contextPtr->isAOVEnabled(aovID))
 			aovsUsed.push_back(aovNames[aovID]);
 
@@ -1097,7 +1108,7 @@ void FireRenderProduction::RenderFullFrame()
 			MString filePath = GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->FolderPath().c_str();
 			filePath += m_contextPtr->m_currentIteration;
 			filePath += ".jpg";
-			m_renderViewAOV->writeToFile(filePath, colorOnly, imageFormat);
+			m_renderViewAOV->writeToFile(*m_contextPtr, filePath, colorOnly, imageFormat);
 
 			std::ofstream timeLoggingFile;
 			timeLoggingFile.open(GlobalRenderUtilsDataHolder::GetGlobalRenderUtilsDataHolder()->FolderPath() + "time_log.txt", std::ofstream::out | std::ofstream::app);

@@ -16,6 +16,7 @@ limitations under the License.
 #include <maya/MPxGeometryOverride.h>
 #include <maya/MMessage.h>
 #include <maya/MNodeMessage.h>
+#include <maya/MEventMessage.h>
 #include <memory>
 #include <map>
 
@@ -23,6 +24,8 @@ limitations under the License.
 * The RPR Volume locator contains the
 * system attributes.
 */
+
+class VDBGridSize;
 
 class FireRenderVolumeLocator : public MPxLocatorNode
 {
@@ -50,7 +53,7 @@ public:
 
 	static MStatus initialize();
 
-	using GridParams = std::map<std::string, std::array<int, 3>>;
+	using GridParams = std::map<std::string, VDBGridSize>;
 
 public:
 	static MTypeId id;
@@ -59,9 +62,12 @@ public:
 
 private:
 	MCallbackId m_attributeChangedCallback;
+	MCallbackId m_timeChangedCallback;
 
 	GridParams m_gridParams;
+	GridParams m_maxGridParams;
 
 private:
 	static void onAttributeChanged(MNodeMessage::AttributeMessage msg, MPlug &plug, MPlug &otherPlug, void *clientData);
+	static void onTimeChanged(void* clientData);
 };

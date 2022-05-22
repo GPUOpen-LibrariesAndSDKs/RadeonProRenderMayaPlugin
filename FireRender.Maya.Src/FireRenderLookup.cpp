@@ -40,6 +40,8 @@ MStatus FireMaya::Lookup::initialize()
 	eAttr.addField("Object XYZ", frw::LookupTypePositionLocal);
 	eAttr.addField("Vertex Color", frw::LookupTypeVertexColor);
 	eAttr.addField("Random Color", frw::LookupTypeShapeRandomColor);
+	eAttr.addField("Random Primitive Color", frw::LookupTypePrimitiveRandomColor);
+	eAttr.addField("Object ID", frw::LookupTypeObjectID);
 	MAKE_INPUT_CONST(eAttr);
 
 	Attribute::output = nAttr.createPoint("out", "o");
@@ -73,25 +75,8 @@ frw::Value FireMaya::Lookup::GetValue(const Scope& scope) const
 
 	if (type == frw::LookupTypeVertexColor)
 	{
-		return CombineVertexColor(scope.MaterialSystem());
+		return frw::PrimvarLookupNode(scope.MaterialSystem(), 0); // we use primvar channel with number zero to store vertex colors
 	}
 
 	return frw::LookupNode(scope.MaterialSystem(), type);
-}
-
-frw::Value FireMaya::Lookup::CombineVertexColor(const frw::MaterialSystem& materialSystem) const
-{
-	frw::LookupNode redChannel(materialSystem, frw::LookupTypeVertexValue0);
-	frw::LookupNode greenChannel(materialSystem, frw::LookupTypeVertexValue1);
-	frw::LookupNode blueChannel(materialSystem, frw::LookupTypeVertexValue2);
-	frw::LookupNode alphaChannel(materialSystem, frw::LookupTypeVertexValue3);
-
-	frw::ArithmeticNode redVector(materialSystem, frw::Operator::OperatorMultiply, redChannel, { 1.0f, 0.0f, 0.0f, 0.0f });
-	frw::ArithmeticNode greenVector(materialSystem, frw::Operator::OperatorMultiply, greenChannel, { 0.0f, 1.0f, 0.0f, 0.0f });
-	frw::ArithmeticNode blueVector(materialSystem, frw::Operator::OperatorMultiply, blueChannel, { 0.0f, 0.0f, 1.0f, 0.0f });
-	frw::ArithmeticNode alphaVector(materialSystem, frw::Operator::OperatorMultiply, alphaChannel, { 0.0f, 0.0f, 0.0f, 1.0f });
-
-	frw::ArithmeticNode add1(materialSystem, frw::Operator::OperatorAdd, redVector, greenVector);
-	frw::ArithmeticNode add2(materialSystem, frw::Operator::OperatorAdd, add1, blueVector);
-	return frw::ArithmeticNode(materialSystem, frw::Operator::OperatorAdd, add2, alphaVector);
 }

@@ -82,17 +82,21 @@ void FireMaya::MultipleShaderMeshTranslator::FillDictionaryWithColorData(
 	const MIntArray& indicesInPolygon,
 	MeshTranslator::MeshIdxDictionary& outMeshDictionary)
 {
+	// vertex colors
+	MColorArray polygonColors;
+	MStatus result = meshPolygonIterator.getColors(polygonColors);
+
 	// Save polygon color data into dictionary with corresponging indices
 	for (unsigned int localVertexIndex = 0; localVertexIndex < indicesInPolygon.length(); localVertexIndex++)
 	{
+		if (localVertexIndex >= polygonColors.length())
+			continue;
+
 		int globalVertexIndex = indicesInPolygon[localVertexIndex];
 		int coreVertexIndex = outMeshDictionary.vertexCoordsIndicesGlobalToDictionary[globalVertexIndex];
 
-		MColor result;
-		meshPolygonIterator.getColor(result, localVertexIndex);
-
-		outMeshDictionary.vertexColors.push_back(result);
-		outMeshDictionary.colorVertexIndices.push_back(coreVertexIndex);
+		outMeshDictionary.vertexColors[globalVertexIndex] = polygonColors[localVertexIndex];
+		outMeshDictionary.colorVertexIndices[globalVertexIndex] = globalVertexIndex;
 	}
 }
 
@@ -236,6 +240,8 @@ void FireMaya::MultipleShaderMeshTranslator::ReserveShaderData(
 	{
 		int shaderId = faceMaterialIndices[it.index()];
 
+		assert(shaderId < idxSizes.size());
+
 		idxSizes[shaderId].coords_size += coordsPerPolygon;
 		idxSizes[shaderId].indices_size += indicesPerPolygon;
 
@@ -250,8 +256,6 @@ void FireMaya::MultipleShaderMeshTranslator::ReserveShaderData(
 		shaderData[shaderId].normalCoords.reserve(idxSizes[shaderId].coords_size);
 		shaderData[shaderId].vertexCoordsIndices.reserve(idxSizes[shaderId].indices_size);
 		shaderData[shaderId].normalIndices.reserve(idxSizes[shaderId].indices_size);
-		shaderData[shaderId].colorVertexIndices.reserve(idxSizes[shaderId].coords_size);
-		shaderData[shaderId].vertexColors.reserve(idxSizes[shaderId].coords_size);
 	}
 }
 
@@ -379,7 +383,23 @@ void FireMaya::MultipleShaderMeshTranslator::CreateRPRMeshes(
 
 		if (!currShaderData.vertexColors.empty())
 		{
-			elements[shaderId].SetVertexColors(currShaderData.colorVertexIndices, currShaderData.vertexColors, (rpr_int) currShaderData.vertexCoords.size());
+			std::vector<int> colorVertexIndices; 
+			colorVertexIndices.resize(currShaderData.colorVertexIndices.size(), 0);
+			for (int idx = 0; idx < currShaderData.colorVertexIndices.size(); ++idx)
+			{
+				const auto it = currShaderData.colorVertexIndices.find(idx);
+				colorVertexIndices[idx] = it->second;
+			}
+
+			std::vector<MColor> vertexColors;
+			vertexColors.resize(currShaderData.vertexColors.size());
+			for (int idx = 0; idx < currShaderData.vertexColors.size(); ++idx)
+			{
+				const auto it = currShaderData.vertexColors.find(idx);
+				vertexColors[idx] = it->second;
+			}
+
+			elements[shaderId].SetVertexColors(colorVertexIndices, vertexColors, (rpr_int) currShaderData.vertexCoords.size());
 		}
 	}
 

@@ -65,7 +65,7 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	FileAccessMode mode)
 {
 	// Create new context and fill it with scene
-	std::unique_ptr<TahoeContext> fireRenderContext = std::make_unique<TahoeContext>();
+	std::unique_ptr<NorthStarContext> fireRenderContext = std::make_unique<NorthStarContext>();
 	ContextAutoCleaner contextAutoCleaner(fireRenderContext.get());
 
 	// to be sure RenderProgressBars will be closed upon function exit
@@ -128,11 +128,14 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 	if (!scene || !context || !materialSystem)
 		return MS::kFailure;
 
+	// create rprs context
+	frw::RPRSContext rprsContext;
+
 	try
 	{
 		m_progressBars->SetTextAboveProgress("Preparing Animation...", true);
 
-		animationExporter.Export(*fireRenderContext, &renderableCameras);
+		animationExporter.Export(*fireRenderContext, &renderableCameras, rprsContext);
 
 		std::vector<rpr_scene> scenes;
 		scenes.push_back(scene.Handle());
@@ -158,7 +161,7 @@ MStatus	GLTFTranslator::writer(const MFileObject& file,
 			materialSystem.Handle(),
 			scenes.data(),
 			scenes.size(),
-			gltfFlags);
+			gltfFlags, rprsContext.Handle());
 
 		if (err != GLTF_SUCCESS)
 		{
