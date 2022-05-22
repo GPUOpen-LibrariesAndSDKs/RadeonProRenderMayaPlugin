@@ -14,13 +14,6 @@ global proc AERPRToonMaterialTemplate( string $nodeName )
 {
 	AEswatchDisplay $nodeName;
 	
-	// Init linked light attribute after creation
-	if (!`attributeExists "linkedLight" $nodeName`)
-	{
-		addAttr -at enum -en "none" -ln linkedLight -r 0 -w 1 -k 0 -s 1 $nodeName;
-		RefreshLinkedLightAttribute $nodeName "";
-	}
-	
 	editorTemplate -beginScrollLayout;
 
 	editorTemplate -beginLayout "ToonShader" -collapse 0;
@@ -68,6 +61,16 @@ global proc AERPRToonMaterialTemplate( string $nodeName )
 
 	editorTemplate -endScrollLayout;
 }
+
+global proc InitLightLinking (string $nodeName)
+{
+	if (!`attributeExists "linkedLight" $nodeName`)
+	{
+		addAttr -at enum -en "none" -ln linkedLight -r 0 -w 1 -k 0 -s 1 $nodeName;
+		RefreshLinkedLightAttribute $nodeName "";
+	}
+}
+
 
 global proc ShowAdvancedChanges(string $nodeName)
 {
