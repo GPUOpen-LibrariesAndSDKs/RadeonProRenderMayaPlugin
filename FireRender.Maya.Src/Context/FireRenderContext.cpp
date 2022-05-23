@@ -262,6 +262,10 @@ bool FireRenderContext::TryCreateTonemapImageFilters()
 			m_tonemap->AddParam("burn", p);
 			break;
 		}
+		case 6:
+		{
+			return false;
+		}
 
 		default:
 			assert(false);
@@ -3403,7 +3407,7 @@ void FireRenderContext::SetRenderType(RenderType renderType)
 
 bool FireRenderContext::IsTonemappingEnabled(void) const
 {
-	return (m_globals.toneMappingType != 0);
+	return (m_globals.toneMappingType != 0) && (!m_globals.contourIsEnabled);
 }
 
 bool FireRenderContext::IsDenoiserEnabled(void) const 
@@ -3577,7 +3581,7 @@ bool FireRenderContext::TonemapIntoRAM()
 	// create and run tonemap filters
 	std::lock_guard<std::mutex> lock(m_rifLock);
 	bool isTonemapperInitialized = TryCreateTonemapImageFilters(); 
-	assert(isTonemapperInitialized);
+
 	if (!isTonemapperInitialized)
 		return false;
 
