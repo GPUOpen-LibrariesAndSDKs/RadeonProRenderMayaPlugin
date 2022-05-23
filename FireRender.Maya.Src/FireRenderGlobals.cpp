@@ -168,6 +168,10 @@ namespace
 
 		// Deep EXR
 		MObject deepEXRMergeZThreshold;
+
+		// Cryptomatte
+		MObject cryptomatteExtendedMode;
+		MObject cryptomatteSplitIndirect;
 	}
 
     struct RenderingDeviceAttributes
@@ -313,6 +317,7 @@ MStatus FireRenderGlobals::initialize()
 	createCompletionCriteriaAttributes();
 	createTileRenderAttributes();
 	createContourEffectAttributes();
+	createCryptomatteAttributes();
 
 	Attribute::textureCompression = nAttr.create("textureCompression", "texC", MFnNumericData::kBoolean, false, &status);
 	MAKE_INPUT(nAttr);
@@ -639,6 +644,21 @@ void FireRenderGlobals::createTileRenderAttributes()
 	nAttr.setSoftMax(tileDefaultSizeMax);
 
 	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::tileRenderY));
+}
+
+void FireRenderGlobals::createCryptomatteAttributes()
+{
+	MFnNumericAttribute nAttr;
+	MStatus status;
+
+	Attribute::cryptomatteExtendedMode = nAttr.create("cryptomatteExtendedMode", "crmem", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+
+	Attribute::cryptomatteSplitIndirect = nAttr.create("cryptomatteSplitIndirect", "crsin", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+
+	CHECK_MSTATUS(addAttribute(Attribute::cryptomatteExtendedMode));
+	CHECK_MSTATUS(addAttribute(Attribute::cryptomatteSplitIndirect));
 }
 
 void FireRenderGlobals::createContourEffectAttributes()

@@ -633,6 +633,7 @@ public:
 	virtual void setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance = false) {}
 	virtual void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) {}
 	virtual void setupContextAirVolume(const FireRenderGlobalsData& fireRenderGlobalsData) {}
+	virtual void setupContextCryptomatteSettings(const FireRenderGlobalsData& fireRenderGlobalsData) {}
 	virtual bool IsAOVSupported(int aov) const { return true; }
 
 	virtual bool IsRenderQualitySupported(RenderQuality quality) const override = 0;
