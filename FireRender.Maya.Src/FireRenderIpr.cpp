@@ -349,7 +349,7 @@ bool FireRenderIpr::RunOnViewportThread()
 	if (m_contextPtr && !m_contextPtr->DoesContextSupportCurrentSettings())
 	{
 		// Restart IPR
-		MGlobal::executeCommandOnIdle("IPRRenderIntoNewWindow();");
+		MGlobal::executeCommandOnIdle("RedoPreviousIPRRender();");
 		m_contextPtr->ResetContextSupportCurrentSettings();
 	}
 
