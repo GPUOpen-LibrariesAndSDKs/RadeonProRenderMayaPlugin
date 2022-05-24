@@ -242,21 +242,12 @@ void FireRenderGPUCache::ProcessShaders()
 
 		element.shape.SetShader(nullptr);
 
+		assert(element.shadingEngines.size() == 1);
 		for (unsigned int shaderIdx = 0; shaderIdx < element.shadingEngines.size(); ++shaderIdx)
 		{
 			MObject& shadingEngine = element.shadingEngines[shaderIdx];
 			element.shaders.push_back(context->GetShader(getSurfaceShader(shadingEngine), shadingEngine, this));
-
-			std::vector<int>& faceMaterialIndices = m.faceMaterialIndices;
-			std::vector<int> face_ids;
-			face_ids.reserve(faceMaterialIndices.size());
-			for (int faceIdx = 0; faceIdx < faceMaterialIndices.size(); ++faceIdx)
-			{
-				if (faceMaterialIndices[faceIdx] == shaderIdx)
-					face_ids.push_back(faceIdx);
-			}
-
-			element.shape.SetPerFaceShader(element.shaders.back(), face_ids);
+			element.shape.SetShader(element.shaders.back());
 
 			frw::ShaderType shType = element.shaders.back().GetShaderType();
 			if (shType == frw::ShaderTypeEmissive)
