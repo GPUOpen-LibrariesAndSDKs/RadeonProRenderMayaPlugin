@@ -3813,7 +3813,9 @@ void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestPa
 
 frw::Light FireRenderContext::GetRprLightFromNode(const MObject& node)
 {
-	const char* uuid = MFnDependencyNode(node).uuid().asString().asChar();
+	MUuid uuidPointer = MFnDependencyNode(node).uuid();
+	MString uuidString = uuidPointer.asString();
+	const char* uuid = uuidString.asChar();
 
 	if (m_sceneObjects.find(uuid) == m_sceneObjects.end())
 	{
