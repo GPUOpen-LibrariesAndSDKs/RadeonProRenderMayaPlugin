@@ -1,3 +1,31 @@
+# Version 3.4
+## Features:
+- A new option for overriding an object’s shadow color has been added.
+Furthermore, a new option for overriding whether an object receives shadows has been added.
+- Support for Atmosphere and Fog in the Effects settings section has been added.  Artists can now add a dense (or sparse) fog to render real world atmospheres more realistically.  There are settings for density, falloff, height above the ground, and more.
+- Toon shaders can now be linked to a specific light.
+- New extended Cryptomatte AOVs have been added for more flexibility in compositing.
+
+## Fixes:
+- Partially transparent and reflective Uber shaders could be darker than physically correct — fixed.
+- Incorrect rotational motion blur has been fixed.
+- Issues with IES lights and atmosphere volumes have been fixed.
+- Albedo AOV now shows the mid color of toon shaders.
+- IES light bugs fixed:
+    - Unused settings for rotation, area width, and scale have been removed;
+    - Rotation now matches that of Arnold;
+    - Issues with moving and exporting IES lights have been fixed.
+- .rpr file export fixes:
+    - Fixes for animation exports;
+    - Camera motion blur is now exported;
+    - Scene gamma setting is now set when exporting;
+    - Artists can now choose which layer(s) to export.
+- Errors when creating an RPR Voronoi node have been corrected.
+- In some cases, an animated camera could not update in IPR render or sequence export — fixed.
+- The mid color of toon shaders can now be used for the Albedo AOV.
+- Tone mapping incorrect behavior has been fixed.
+- Materials can now be assigned to Alembic files.
+
 # Version 3.3
 
 ## New Features:
