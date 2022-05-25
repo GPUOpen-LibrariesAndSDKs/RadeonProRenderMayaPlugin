@@ -99,6 +99,7 @@ public:
 
 	static void createDenoiserAttributes();
 	static void createAirVolumeAttributes();
+	static void createCryptomatteAttributes();
 
     static void createFinalRenderAttributes();
 	static void createViewportAttributes();

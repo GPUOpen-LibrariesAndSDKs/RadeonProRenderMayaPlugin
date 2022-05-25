@@ -341,9 +341,15 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 		attrControlGrp -label "Crypto Material Mat0" -attribute "RadeonProRenderGlobals.aovCryptoMaterialMat0";
 		attrControlGrp -label "Crypto Material Mat1" -attribute "RadeonProRenderGlobals.aovCryptoMaterialMat1";
 		attrControlGrp -label "Crypto Material Mat2" -attribute "RadeonProRenderGlobals.aovCryptoMaterialMat2";
+		attrControlGrp -label "Crypto Material Mat3" -attribute "RadeonProRenderGlobals.aovCryptoMaterialMat3";
+		attrControlGrp -label "Crypto Material Mat4" -attribute "RadeonProRenderGlobals.aovCryptoMaterialMat4";
+		attrControlGrp -label "Crypto Material Mat5" -attribute "RadeonProRenderGlobals.aovCryptoMaterialMat5";
 		attrControlGrp -label "Crypto Material Obj0" -attribute "RadeonProRenderGlobals.aovCryptoMaterialObj0";
 		attrControlGrp -label "Crypto Material Obj1" -attribute "RadeonProRenderGlobals.aovCryptoMaterialObj1";
 		attrControlGrp -label "Crypto Material Obj2" -attribute "RadeonProRenderGlobals.aovCryptoMaterialObj2";
+		attrControlGrp -label "Crypto Material Obj3" -attribute "RadeonProRenderGlobals.aovCryptoMaterialObj3";
+		attrControlGrp -label "Crypto Material Obj4" -attribute "RadeonProRenderGlobals.aovCryptoMaterialObj4";
+		attrControlGrp -label "Crypto Material Obj5" -attribute "RadeonProRenderGlobals.aovCryptoMaterialObj5";
 
 	setParent ..;
 	setUITemplate -popTemplate;

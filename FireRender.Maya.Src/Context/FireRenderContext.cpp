@@ -183,6 +183,106 @@ void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool rende
 	}
 }
 
+MString GetModelPath(); // forward declaration
+
+bool FireRenderContext::TryCreateTonemapImageFilters()
+{
+	if (!IsTonemappingEnabled())
+		return false;
+
+	if (m_pixelBuffers.size() == 0)
+		return false;
+
+	std::uint32_t width = m_useRegion ? (uint32_t)m_region.getWidth() : (uint32_t)m_pixelBuffers[RPR_AOV_COLOR].width();
+	std::uint32_t height = m_useRegion ? (uint32_t)m_region.getHeight() : (uint32_t)m_pixelBuffers[RPR_AOV_COLOR].height();
+	size_t rifImageSize = sizeof(RV_PIXEL) * width * height;
+
+	try
+	{
+		MString mlModelsFolder = GetModelPath();
+
+		m_tonemap = std::shared_ptr<ImageFilter>(new ImageFilter(
+			context(),
+			width,
+			height,
+			mlModelsFolder.asChar()
+		));
+
+		void* pBuffer = PixelBuffers()[RPR_AOV_COLOR].data();
+
+		switch (m_globals.toneMappingType)
+		{
+		case 1:
+		{
+			m_tonemap->CreateFilter(RifFilterType::LinearTonemap);
+			m_tonemap->AddInput(RifColor, PixelBuffers()[RPR_AOV_COLOR].data(), rifImageSize, 0.0f);
+			RifParam p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingLinearScale };
+			m_tonemap->AddParam("key", p);
+			break;
+		}
+		case 2:
+		{
+			m_tonemap->CreateFilter(RifFilterType::PhotoLinearTonemap);
+			m_tonemap->AddInput(RifColor, PixelBuffers()[RPR_AOV_COLOR].data(), rifImageSize, 0.0f);
+			RifParam p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingPhotolinearSensitivity };
+			m_tonemap->AddParam("sensitivity", p);
+			p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingPhotolinearFstop };
+			m_tonemap->AddParam("fstop", p);
+			p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingPhotolinearExposure };
+			m_tonemap->AddParam("exposureTime", p);
+			p = { RifParamType::RifFloat, (rif_float)2.2f };
+			m_tonemap->AddParam("gamma", p);
+			break;
+		}
+		case 3:
+		{
+			m_tonemap->CreateFilter(RifFilterType::AutoLinearTonemap);
+			m_tonemap->AddInput(RifColor, PixelBuffers()[RPR_AOV_COLOR].data(), rifImageSize, 0.0f);
+			RifParam p = { RifParamType::RifFloat, (rif_float)2.2f };
+			m_tonemap->AddParam("gamma", p);
+			break;
+		}
+		case 4:
+		{
+			m_tonemap->CreateFilter(RifFilterType::MaxWhiteTonemap);
+			m_tonemap->AddInput(RifColor, PixelBuffers()[RPR_AOV_COLOR].data(), rifImageSize, 0.0f);
+			break;
+		}
+		case 5:
+		{
+			m_tonemap->CreateFilter(RifFilterType::ReinhardTonemap);
+			m_tonemap->AddInput(RifColor, PixelBuffers()[RPR_AOV_COLOR].data(), rifImageSize, 0.0f);
+			RifParam p = { RifParamType::RifFloat, (rif_float)2.2f };
+			m_tonemap->AddParam("gamma", p);
+			p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingReinhard02Prescale };
+			m_tonemap->AddParam("preScale", p);
+			p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingReinhard02Postscale };
+			m_tonemap->AddParam("postScale", p);
+			p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingReinhard02Burn };
+			m_tonemap->AddParam("burn", p);
+			break;
+		}
+		case 6:
+		{
+			return false;
+		}
+
+		default:
+			assert(false);
+		}
+
+		m_tonemap->AttachFilter();
+		return true;
+	}
+	catch (std::exception& e)
+	{
+		m_denoiserFilter.reset();
+		ErrorPrint(e.what());
+		MGlobal::displayError("RPR failed to setup tonemapper, turning it off.");
+		return false;
+	}
+}
+
 bool FireRenderContext::TryCreateDenoiserImageFilters(bool useRAMBufer /* = false*/)
 {
 	bool shouldDenoise = IsDenoiserSupported() &&
@@ -226,10 +326,10 @@ bool aovExists(int index)
 	if (index <= RPR_AOV_CAMERA_NORMAL)
 		return true;
 
-	if ((index >= RPR_AOV_CRYPTOMATTE_MAT0) && (index <= RPR_AOV_CRYPTOMATTE_MAT2))
+	if ((index >= RPR_AOV_CRYPTOMATTE_MAT0) && (index <= RPR_AOV_CRYPTOMATTE_MAT5))
 		return true;
 
-	if ((index >= RPR_AOV_CRYPTOMATTE_OBJ0) && (index <= RPR_AOV_CRYPTOMATTE_OBJ2))
+	if ((index >= RPR_AOV_CRYPTOMATTE_OBJ0) && (index <= RPR_AOV_CRYPTOMATTE_OBJ5))
 		return true;
 
 	if (index == RPR_AOV_DEEP_COLOR)
@@ -380,6 +480,7 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 
 		setMotionBlurParameters(m_globals);
 		setupContextAirVolume(m_globals);
+		setupContextCryptomatteSettings(m_globals);
 
 		// Update render selected objects only flag
 		int isRenderSelectedOnly = 0;
@@ -915,15 +1016,16 @@ void FireRenderContext::cleanScene()
 			rprContextDetachPostEffect(context(), simple_tonemap.Handle());
 			simple_tonemap.Reset();
 		}
-		if (tonemap)
+		if (m_tonemap)
 		{
-			rprContextDetachPostEffect(context(), tonemap.Handle());
-			tonemap.Reset();
+			//rprContextDetachPostEffect(context(), m_tonemap.Handle());
+			//m_tonemap.Reset();
+			m_tonemap.reset();
 		}
-		if (normalization)
+		if (m_normalization)
 		{
-			rprContextDetachPostEffect(context(), normalization.Handle());
-			normalization.Reset();
+			rprContextDetachPostEffect(context(), m_normalization.Handle());
+			m_normalization.Reset();
 		}
 		if (gamma_correction)
 		{
@@ -1464,9 +1566,15 @@ void FireRenderContext::DebugDumpAOV(int aov, char* pathToFile /*= nullptr*/) co
 		,{RPR_AOV_CRYPTOMATTE_MAT0, "RPR_AOV_CRYPTOMATTE_MAT0" }
 		,{RPR_AOV_CRYPTOMATTE_MAT1, "RPR_AOV_CRYPTOMATTE_MAT1" }
 		,{RPR_AOV_CRYPTOMATTE_MAT2, "RPR_AOV_CRYPTOMATTE_MAT2" }
+		,{RPR_AOV_CRYPTOMATTE_MAT3, "RPR_AOV_CRYPTOMATTE_MAT3" }
+		,{RPR_AOV_CRYPTOMATTE_MAT4, "RPR_AOV_CRYPTOMATTE_MAT4" }
+		,{RPR_AOV_CRYPTOMATTE_MAT5, "RPR_AOV_CRYPTOMATTE_MAT5" }
 		,{RPR_AOV_CRYPTOMATTE_OBJ0, "RPR_AOV_CRYPTOMATTE_OBJ0" }
 		,{RPR_AOV_CRYPTOMATTE_OBJ1, "RPR_AOV_CRYPTOMATTE_OBJ1" }
 		,{RPR_AOV_CRYPTOMATTE_OBJ2, "RPR_AOV_CRYPTOMATTE_OBJ2" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ3, "RPR_AOV_CRYPTOMATTE_OBJ3" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ4, "RPR_AOV_CRYPTOMATTE_OBJ4" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ5, "RPR_AOV_CRYPTOMATTE_OBJ5" }
 		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
 	};
 
@@ -1490,6 +1598,26 @@ void FireRenderContext::DebugDumpAOV(int aov, char* pathToFile /*= nullptr*/) co
 	ssFileNameNOTResolved << aovNames[aov] << "_NOTresolved.png";
 	rprFrameBufferSaveToFile(m.framebufferAOV[aov].Handle(), ssFileNameNOTResolved.str().c_str());
 #endif
+}
+
+std::vector<float> FireRenderContext::GetTonemappedData(bool& result)
+{
+	try
+	{
+		m_tonemap->Run();
+		std::vector<float> vecData = m_tonemap->GetData();
+		result = true;
+		return vecData;
+	}
+	catch (std::exception& e)
+	{
+		m_denoiserFilter.reset();
+		ErrorPrint(e.what());
+		MGlobal::displayError("RPR failed to execute denoiser, turning it off.");
+
+		result = false;
+		return std::vector<float>();
+	}
 }
 
 std::vector<float> FireRenderContext::GetDenoisedData(bool& result)
@@ -2011,6 +2139,7 @@ void FireRenderContext::updateFromGlobals(bool applyLock)
 	setupContextContourMode(m_globals, createFlags);
 	setupContextAirVolume(m_globals);
 	setupContextPostSceneCreation(m_globals);
+	setupContextCryptomatteSettings(m_globals);
 
 	updateLimitsFromGlobalData(m_globals);
 	updateMotionBlurParameters(m_globals);
@@ -3276,6 +3405,11 @@ void FireRenderContext::SetRenderType(RenderType renderType)
 	}
 }
 
+bool FireRenderContext::IsTonemappingEnabled(void) const
+{
+	return (m_globals.toneMappingType != 0) && (!m_globals.contourIsEnabled);
+}
+
 bool FireRenderContext::IsDenoiserEnabled(void) const 
 {
 	if (!IsDenoiserSupported())
@@ -3409,6 +3543,61 @@ std::vector<float> FireRenderContext::DenoiseAndUpscaleForViewport()
 	return vecData;
 }
 
+bool FireRenderContext::TonemapIntoRAM()
+{
+	// prepare color RAM buffer
+	auto it = m_pixelBuffers.find(RPR_AOV_COLOR);
+	assert(it == m_pixelBuffers.end()); // pixel buffers should be empty at this point
+	auto ret = m_pixelBuffers.insert(std::pair<unsigned int, PixelBuffer>(RPR_AOV_COLOR, PixelBuffer()));
+	ret.first->second.resize(m_width, m_height);
+
+	// setup params
+	RenderRegion tempRegion;
+	if (useRegion())
+	{
+		tempRegion = m_region;
+	}
+	else
+	{
+		tempRegion = RenderRegion(m_width, m_height);
+	}
+	ReadFrameBufferRequestParams params(tempRegion);
+	params.pixels = m_pixelBuffers[RPR_AOV_COLOR].get();
+	params.aov = RPR_AOV_COLOR;
+	params.width = m_width;
+	params.height = m_height;
+	params.mergeOpacity = false;
+	params.mergeShadowCatcher = true;
+	params.shadowColor = m_shadowColor;
+	params.bgColor = m_bgColor;
+	params.bgWeight = m_bgWeight;
+	params.shadowTransp = m_shadowTransparency;
+	params.bgTransparency = m_backgroundTransparency;
+	params.shadowWeight = m_shadowWeight;
+
+	// read frame buffer
+	readFrameBuffer(params);
+
+	// create and run tonemap filters
+	std::lock_guard<std::mutex> lock(m_rifLock);
+	bool isTonemapperInitialized = TryCreateTonemapImageFilters(); 
+
+	if (!isTonemapperInitialized)
+		return false;
+
+	// run tonemaper on cached data
+	std::vector<float> vecData;
+	bool tonemapResult = false;
+	vecData = GetTonemappedData(tonemapResult);
+	assert(tonemapResult);
+
+	// save result in RAM buffer
+	RV_PIXEL* data = (RV_PIXEL*)vecData.data();
+	m_pixelBuffers[RPR_AOV_COLOR].overwrite(data, tempRegion, params.height, params.width, RPR_AOV_COLOR);
+
+	return true;
+}
+
 std::vector<float> FireRenderContext::DenoiseIntoRAM()
 {
 	bool shouldDenoise = IsDenoiserEnabled() &&
@@ -3501,6 +3690,40 @@ void FireRenderContext::ProcessMergeOpactityFromRAM(RV_PIXEL* data, int bufferWi
 	CombineOpacity(RPR_AOV_COLOR, data, tempRegion.getArea());
 }
 
+void FireRenderContext::ProcessTonemap(
+	FireRenderAOV& renderViewAOV,
+	FireRenderAOV& colorAOV,
+	unsigned int width,
+	unsigned int height,
+	const RenderRegion& region,
+	std::function<void(RV_PIXEL* pData)> callbackFunc)
+{
+	// run tonemapper
+	bool success = TonemapIntoRAM();
+	if (!success)
+		return;
+
+	// output tonemapper result
+	RV_PIXEL* data = nullptr;
+	auto it = PixelBuffers().find(RPR_AOV_COLOR);
+	bool hasAov = it != PixelBuffers().end();
+	if (!hasAov)
+		return;
+
+	data = (RV_PIXEL*)it->second.data();
+
+	// save result
+	bool isOutputAOVColor = renderViewAOV.id == RPR_AOV_COLOR;
+	FireRenderAOV& outAOV = isOutputAOVColor ? renderViewAOV : colorAOV;
+	outAOV.pixels.overwrite(data, region, height, width, RPR_AOV_COLOR);
+
+	// callback
+	if (isOutputAOVColor)
+	{
+		callbackFunc(data);
+	}
+}
+
 void FireRenderContext::ProcessDenoise(
 	FireRenderAOV& renderViewAOV, 
 	FireRenderAOV& colorAOV,
@@ -3545,12 +3768,19 @@ void FireRenderContext::ProcessDenoise(
 	}
 }
 
-void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestParams& params)
+void FireRenderContext::ResetRAMBuffers()
 {
 	m_pixelBuffers.clear();
+}
 
+void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestParams& params)
+{
 	ForEachFramebuffer([&](int aovId)
 	{
+		auto it = m_pixelBuffers.find(aovId);
+		if (it != m_pixelBuffers.end())
+			return;
+
 		auto ret = m_pixelBuffers.insert(std::pair<unsigned int, PixelBuffer>(aovId, PixelBuffer()));
 		ret.first->second.resize(m_width, m_height);
 

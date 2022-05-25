@@ -11,6 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ********************************************************************/
 #include "TahoeContext.h"
+
 #include "maya/MColorManagementUtilities.h"
 #include "maya/MFileObject.h"
 
@@ -124,6 +125,20 @@ void NorthStarContext::setupContextAirVolume(const FireRenderGlobalsData& fireRe
 
 		context.SetParameter(RPR_CONTEXT_FOG_HEIGHT, fireRenderGlobalsData.airVolumeSettings.fogHeight);
 	}
+}
+
+void NorthStarContext::setupContextCryptomatteSettings(const FireRenderGlobalsData& fireRenderGlobalsData)
+{
+	frw::Context context = GetContext();
+	rpr_context frcontext = context.Handle();
+
+	rpr_int frstatus = RPR_SUCCESS;
+
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CRYPTOMATTE_EXTENDED, fireRenderGlobalsData.cryptomatteExtendedMode);
+	checkStatus(frstatus);
+
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_CRYPTOMATTE_SPLIT_INDIRECT, fireRenderGlobalsData.cryptomatteSplitIndirect);
+	checkStatus(frstatus);
 }
 
 void NorthStarContext::setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance /*= false*/)
@@ -393,6 +408,8 @@ void NorthStarContext::updateTonemapping(const FireRenderGlobalsData& fireRender
 	checkStatus(frstatus);
 
 	// Release existing effects
+	m_tonemap.reset();
+
 	if (white_balance)
 	{
 		context.Detach(white_balance);
@@ -405,16 +422,16 @@ void NorthStarContext::updateTonemapping(const FireRenderGlobalsData& fireRender
 		simple_tonemap.Reset();
 	}
 
-	if (tonemap)
+	if (m_tonemap)
 	{
-		context.Detach(tonemap);
-		tonemap.Reset();
+		//context.Detach(m_tonemap);
+		//m_tonemap.Reset();
 	}
 
-	if (normalization)
+	if (m_normalization)
 	{
-		context.Detach(normalization);
-		normalization.Reset();
+		context.Detach(m_normalization);
+		m_normalization.Reset();
 	}
 	if (gamma_correction)
 	{
@@ -426,70 +443,18 @@ void NorthStarContext::updateTonemapping(const FireRenderGlobalsData& fireRender
 	// work, which is required for OpenGL interop. Frame buffer normalization
 	// should be applied before other post effects.
 	// Also gamma effect requires normalization when tonemapping is not used.
-	normalization = frw::PostEffect(context, frw::PostEffectTypeNormalization);
-	context.Attach(normalization);
+	m_normalization = frw::PostEffect(context, frw::PostEffectTypeNormalization);
+	context.Attach(m_normalization);
 
 	// Create new effects
 	switch (fireRenderGlobalsData.toneMappingType)
 	{
-	case 0:
-		break;
-
+	case 0:      
 	case 1:
-		//RPR_TONEMAPPING_OPERATOR_LINEAR
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_LINEAR);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_LINEAR_SCALE, fireRenderGlobalsData.toneMappingLinearScale);
-		break;
-
 	case 2:
-		//RPR_TONEMAPPING_OPERATOR_PHOTOLINEAR
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_PHOTOLINEAR);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_SENSITIVITY, fireRenderGlobalsData.toneMappingPhotolinearSensitivity);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_FSTOP, fireRenderGlobalsData.toneMappingPhotolinearFstop);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_PHOTO_LINEAR_EXPOSURE, fireRenderGlobalsData.toneMappingPhotolinearExposure);
-		break;
-
 	case 3:
-		//RPR_TONEMAPPING_OPERATOR_AUTOLINEAR
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_AUTOLINEAR);
-		break;
-
 	case 4:
-		//RPR_TONEMAPPING_OPERATOR_MAXWHITE
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_MAXWHITE);
-		break;
-
 	case 5:
-		//RPR_TONEMAPPING_OPERATOR_REINHARD02
-		if (!tonemap)
-		{
-			tonemap = frw::PostEffect(context, frw::PostEffectTypeToneMap);
-			context.Attach(tonemap);
-		}
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_TYPE, RPR_TONEMAPPING_OPERATOR_REINHARD02);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_REINHARD02_PRE_SCALE, fireRenderGlobalsData.toneMappingReinhard02Prescale);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_REINHARD02_POST_SCALE, fireRenderGlobalsData.toneMappingReinhard02Postscale);
-		context.SetParameter(RPR_CONTEXT_TONE_MAPPING_REINHARD02_BURN, fireRenderGlobalsData.toneMappingReinhard02Burn);
 		break;
 
 	case 6:
@@ -530,7 +495,7 @@ void NorthStarContext::updateTonemapping(const FireRenderGlobalsData& fireRender
 		}
 	}
 
-	bool setDisplayGamma = fireRenderGlobalsData.applyGammaToMayaViews || simple_tonemap || tonemap || wbApplied;
+	bool setDisplayGamma = fireRenderGlobalsData.applyGammaToMayaViews || simple_tonemap || m_tonemap || wbApplied;
 	float displayGammaValue = setDisplayGamma ? fireRenderGlobalsData.displayGamma : 1.0f;
 	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_DISPLAY_GAMMA, displayGammaValue);
 	checkStatus(frstatus);
@@ -538,7 +503,7 @@ void NorthStarContext::updateTonemapping(const FireRenderGlobalsData& fireRender
 
 bool NorthStarContext::needResolve() const
 {
-	return bool(white_balance) || bool(simple_tonemap) || bool(tonemap) || bool(normalization) || bool(gamma_correction);
+	return bool(white_balance) || bool(simple_tonemap) || bool(m_tonemap) || bool(m_normalization) || bool(gamma_correction);
 }
 
 bool NorthStarContext::IsRenderQualitySupported(RenderQuality quality) const

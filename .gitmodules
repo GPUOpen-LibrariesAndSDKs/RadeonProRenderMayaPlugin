@@ -1,6 +1,6 @@
 [submodule "FireRender.Components"]
 	path = RadeonProRenderSharedComponents
-	url = git@github.com:GPUOpen-LibrariesAndSDKs/RadeonProRenderSharedComponents.git
+	url = git@github.com:DMotorygin/RadeonProRenderSharedComponents.git
 [submodule "RadeonProRenderSDK"]
 	path = RadeonProRenderSDK
 	url = git@github.com:GPUOpen-LibrariesAndSDKs/RadeonProRenderSDK.git
