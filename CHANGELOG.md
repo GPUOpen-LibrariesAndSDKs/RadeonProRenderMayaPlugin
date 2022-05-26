@@ -1,4 +1,5 @@
 # Version 3.4
+
 ## Features:
 - A new option for overriding an object’s shadow color has been added.
 Furthermore, a new option for overriding whether an object receives shadows has been added.
@@ -25,6 +26,32 @@ Furthermore, a new option for overriding whether an object receives shadows has 
 - The mid color of toon shaders can now be used for the Albedo AOV.
 - Tone mapping incorrect behavior has been fixed.
 - Materials can now be assigned to Alembic files.
+
+
+# Version 3.3.15
+
+## Bugs Fixed:
+- Density, albedo and emission ramps have been added for better support of volume rendering.
+- Scaling of sequences of VDB files has been fixed.
+- Transparency and the 5 color option for the Toon Shader have been added.
+- Animated alembic files are now supported.
+- The sky default intensity is now 1.0.
+- A possible crash on macOS when exporting .rpr files with the denoiser turned on has been eliminated.
+- An issue where instanced objects could be missing from the render has been fixed.
+- Volume Material now works correctly in the RPR Final mode.
+- A crash that could occur when exiting Maya while RPR is rendering has been eliminated.
+- Incorrect Subsurface Scattering on Vega GPUS has been fixed.
+- Black rendering of toon shaders on macOS has been fixed.
+- A crash that could occur when processing shaders objects with subdivision added has been eliminated.
+- The startup time for CPU rendering has been reduced.
+- Low utilization on macOS with CPU + GPU rendering has been eliminated.
+- Performance in scenes with multiple transparent materials has been improved.
+- An issue with artifacts in alpha texture masks has been fixed.
+- The render performance on Vega and Polaris GPUs has been improved.
+- Particle motion blur on GPUs now works correctly.
+- A crash that could occur when using .tif textures with zip compression has been eliminated.
+- An issue with emission shaders disappearing in volume objects has been eliminated.
+
 
 # Version 3.3
 
