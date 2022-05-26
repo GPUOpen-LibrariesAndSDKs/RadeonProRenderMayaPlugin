@@ -185,9 +185,6 @@ public:
 	/** Return true if the render is interactive (Viewport or IPR). */
 	bool isInteractive() const;
 
-	/** Return true if OpenGL interop is active. */
-	bool isGLInteropActive() const;
-
 	// Build the scene for the swatch renderer
 	// The scene is composed by a poly-sphere and a single light
 	// \param shaderObj Shader used to render the sphere
@@ -206,6 +203,8 @@ public:
 	// Setup denoiser if necessary
 	bool TryCreateDenoiserImageFilters(bool useRAMBufer = false);
 
+	bool TryCreateTonemapImageFilters(void);
+
 	// Set the frame buffer resolution
 	void setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
 
@@ -214,6 +213,9 @@ public:
 
 	// Set camera
 	void setCamera(MDagPath& cameraPath, bool useNonDefaultCameraType = false);
+
+	//Get Camera
+	FireRenderCamera& GetCamera() { return m_camera; }
 
 	// Render function (optionally Locks)
 	void render(bool lock = true);
@@ -232,7 +234,7 @@ public:
 
 	bool isRenderView() const;
 
-	bool createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete = true, bool glViewport = false, int* pOutRes = nullptr, bool createScene = true);
+	bool createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete = true, int* pOutRes = nullptr, bool createScene = true);
 
 	// Return the context
 	rpr_context context();
@@ -297,8 +299,11 @@ public:
 	// writes input aov frame bufer on disk (both resolved and not resolved)
 	void DebugDumpAOV(int aov, char* pathToFile = nullptr) const;
 
-	// runs denoiser, returns pixel array as float vector if denoiser runs succesfully
+	// runs denoiser, returns pixel array as float vector if denoiser runs successfully
 	std::vector<float> GetDenoisedData(bool& result);
+
+	// runs tonemappre, returns pixel arras as float vector if denoiser runs successfully
+	std::vector<float> GetTonemappedData(bool& result);
 
 	// reads aov directly into internal storage
 	RV_PIXEL* GetAOVData(const ReadFrameBufferRequestParams& params);
@@ -336,8 +341,14 @@ public:
 	// try running denoiser; result is saved into RAM buffer in context
 	std::vector<float> DenoiseIntoRAM(void);
 
+	// try running tonemapper; result is saved into RAM buffer in context
+	bool TonemapIntoRAM(void);
+
 	// runs denoiser, puts result in aov and applies render stamp
 	void ProcessDenoise(FireRenderAOV& renderViewAOV, FireRenderAOV& colorAOV, unsigned int width, unsigned int height, const RenderRegion& region, std::function<void(RV_PIXEL* pData)> callbackFunc);
+	
+	// runs tonemapper, puts result in aov
+	void ProcessTonemap(FireRenderAOV& renderViewAOV, FireRenderAOV& colorAOV, unsigned int width, unsigned int height, const RenderRegion& region, std::function<void(RV_PIXEL* pData)> callbackFunc);
 
 	// try merge opacity from context to supplied buffer
 	void ProcessMergeOpactityFromRAM(RV_PIXEL* data, int bufferWidth, int bufferHeight);
@@ -527,7 +538,6 @@ public:
 
 	void setRenderMode(RenderMode renderMode);
 
-	virtual void SetupPreviewMode() {}
 	void SetPreviewMode(int preview);
 
 	bool hasTonemappingChanged() const { return m_tonemappingChanged; }
@@ -539,12 +549,15 @@ public:
 
 	bool IsDenoiserEnabled(void) const;
 
+	virtual bool IsTonemappingEnabled(void) const;
+
 	bool IsTileRender(void) const { return (m_globals.tileRenderingEnabled && !isInteractive()); }
 
+	std::shared_ptr<ImageFilter> m_tonemap;
+
+	frw::PostEffect m_normalization;
 	frw::PostEffect white_balance;
 	frw::PostEffect simple_tonemap;
-	frw::PostEffect tonemap;
-	frw::PostEffect normalization;
 	frw::PostEffect gamma_correction;
 
 	FireRenderMeshCommon* GetMainMesh(const std::string& uuid) const
@@ -633,6 +646,8 @@ public:
 
 	virtual void setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance = false) {}
 	virtual void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) {}
+	virtual void setupContextAirVolume(const FireRenderGlobalsData& fireRenderGlobalsData) {}
+	virtual void setupContextCryptomatteSettings(const FireRenderGlobalsData& fireRenderGlobalsData) {}
 	virtual bool IsAOVSupported(int aov) const { return true; }
 
 	virtual bool IsRenderQualitySupported(RenderQuality quality) const override = 0;
@@ -655,6 +670,24 @@ public:
 
 	virtual bool IsDeformationMotionBlurEnabled() const { return false; }
 
+	virtual bool IsMaterialNodeIDSupported() const { return true; }
+	virtual bool IsMeshObjectIDSupported() const { return true; }
+	virtual bool IsContourModeSupported() const { return true; }
+	virtual bool IsCameraSetExposureSupported() const { return true; }
+	virtual bool IsShadowColorSupported() const { return true; }
+	virtual bool IsUberReflectionDielectricSupported() const { return true; }
+	virtual bool IsUberRefractionAbsorbtionColorSupported() const { return true; }
+	virtual bool IsUberRefractionAbsorbtionDistanceSupported() const { return true; }
+	virtual bool IsUberRefractionCausticsSupported() const { return true; }
+	virtual bool IsUberSSSWeightSupported() const { return true; }
+	virtual bool IsUberSheenWeightSupported() const { return true; }
+	virtual bool IsUberBackscatterWeightSupported() const { return true; }
+	virtual bool IsUberShlickApproximationSupported() const { return true; }
+	virtual bool IsUberCoatingThicknessSupported() const { return true; }
+	virtual bool IsUberCoatingTransmissionColorSupported() const { return true; }
+	virtual bool IsUberReflectionNormalSupported() const { return true; }
+	virtual bool IsUberScaleSupported() const { return true; }
+
 	bool IsGLTFExport() const override { return m_bIsGLTFExport; }
 	void SetGLTFExport(bool isGLTFExport) { m_bIsGLTFExport = isGLTFExport; }
 
@@ -663,8 +696,15 @@ public:
 
 	int GetSamplesPerUpdate() const { return m_samplesPerUpdate; }
 
+	void ResetRAMBuffers(void);
+  
+	const FireRenderGlobalsData& Globals(void) const { return m_globals; }
+
 	bool setupUpscalerForViewport(RV_PIXEL* data);
 	bool setupDenoiserForViewport();
+
+	// used for toon shader light linking
+	frw::Light GetRprLightFromNode(const MObject& node) override;
 
 protected:
 	static int INCORRECT_PLUGIN_ID;
@@ -781,9 +821,6 @@ private:
 
 	/** True if the render should be interactive. */
 	bool m_interactive;
-
-	/** True if OpenGL interop is enabled. */
-	bool m_glInteropActive;
 
 	/** A list of nodes that have been added since the last refresh. */
 	std::vector<MObject> m_addedNodes;

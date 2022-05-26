@@ -191,6 +191,11 @@ void FireRenderNode::MarkDirtyAllDirectChildren(const MFnTransform& transform)
 
 		FireRenderObject* pObject = context()->getRenderObject(childDagPath);
 
+		if (pObject == nullptr && context()->GetCamera().DagPath() == childDagPath)
+		{
+			pObject = &context()->GetCamera();
+		}
+
 		if (pObject != nullptr)
 		{
 			context()->setDirtyObject(pObject);
@@ -206,32 +211,31 @@ void FireRenderNode::OnPlugDirty(MObject& node, MPlug &plug)
 	if (partialShortName == "fruuid")
 		return;
 
-	MFnDependencyNode dnode(node);
-
-	MString name = dnode.name();
-
-	// check for RPRObjectId attrbiute change. roi is brief name for this attribute
-	if (node.hasFn(MFn::kTransform) && (partialShortName == "roi"))
+	if (node.hasFn(MFn::kTransform))
 	{
 		MFnTransform transform(node);
 
-		MarkDirtyAllDirectChildren(transform);
-	}
-
-	// If changeing render layers or collections inside render layer
-	if (partialShortName.indexW("rlio[") != -1)
-	{
-		if (node.hasFn(MFn::kTransform))
+		// check for RPRObjectId attrbiute change. roi is brief name for this attribute
+		if (partialShortName == "roi")
 		{
-			MFnTransform transform(node);
+			MarkDirtyAllDirectChildren(transform);
+		}
+
+		// If changeing render layers or collections inside render layer
+		if (partialShortName.indexW("rlio[") != -1)
+		{
 			MarkDirtyTransformRecursive(transform);
 		}
-		else
+
+		// if translattion is changed on the parent transform, make sure all children marked dirty
+		static std::set<std::string> attributeSet = { "t", "tx", "ty", "tz",
+												"r", "rx", "ry", "rz",
+												"s", "sx", "sy", "sz" };
+
+		if (attributeSet.find(std::string(partialShortName.asChar())) != attributeSet.end())
 		{
-
+			MarkDirtyTransformRecursive(transform);
 		}
-
-
 	}
 
 	setDirty();
@@ -679,7 +683,6 @@ FireRenderMesh::~FireRenderMesh()
 
 void FireRenderMesh::clear()
 {
-	m.elements.clear();
 	FireRenderObject::clear();
 }
 
@@ -695,8 +698,9 @@ void FireRenderMeshCommon::detachFromScene()
 			if (auto shape = element.shape)
 				scene.Detach(shape);
 		}
+
+		m_isVisible = false;
 	}
-	m_isVisible = false;
 }
 
 void FireRenderMeshCommon::attachToScene()
@@ -711,6 +715,7 @@ void FireRenderMeshCommon::attachToScene()
 			if (auto shape = element.shape)
 				scene.Attach(shape);
 		}
+
 		m_isVisible = true;
 	}
 }
@@ -720,10 +725,9 @@ void FireRenderMesh::RegisterCallbacks()
 	FireRenderNode::RegisterCallbacks();
 	if (context()->getCallbackCreationDisabled())
 		return;
-
-	for (auto& it : m.elements)
+	for (auto& element : m.elements)
 	{
-		for (auto& shadingEngine : it.shadingEngines)
+		for (auto& shadingEngine : element.shadingEngines)
 		{
 			if (shadingEngine.isNull())
 				continue;
@@ -782,7 +786,7 @@ void FireRenderMesh::buildSphere()
 		texcoord_indices, sizeof(int),
 		polyCountArray, 400))
 	{
-		m.elements.push_back(FrElement{ sphere });
+		m.elements.push_back( FrElement{ sphere } );
 	}
 }
 
@@ -810,6 +814,10 @@ void FireRenderMeshCommon::setRenderStats(MDagPath dagPath)
 	bool castsShadows;
 	castsShadowsPlug.getValue(castsShadows);
 
+	MPlug receivesShadowsPlug = depNode.findPlug("receiveShadows");
+	bool receiveShadows;
+	receivesShadowsPlug.getValue(receiveShadows);
+
 	MPlug primaryVisibilityPlug = depNode.findPlug("primaryVisibility");
 	bool primaryVisibility;
 	primaryVisibilityPlug.getValue(primaryVisibility);
@@ -834,9 +842,14 @@ void FireRenderMeshCommon::setRenderStats(MDagPath dagPath)
 
 	setRefractionVisibility(visibleInRefractions);
 
-	setContourVisibility(isVisibleInContour);
+	if (context()->IsContourModeSupported())
+	{
+		setContourVisibility(isVisibleInContour);
+	}
 
 	setCastShadows(castsShadows);
+
+	setReceiveShadows(receiveShadows);
 }
 
 bool FireRenderMesh::IsSelected(const MDagPath& dagPath) const
@@ -876,9 +889,9 @@ void FireRenderMeshCommon::setVisibility(bool visibility)
 
 void FireRenderMeshCommon::setReflectionVisibility(bool reflectionVisibility)
 {
-	for (auto element : m.elements)
+	for (auto& element : m.elements)
 	{
-		for (auto& shader : element.shaders) 
+		for (auto& shader : element.shaders)
 		{
 			if (shader.IsShadowCatcher() || shader.IsReflectionCatcher())
 			{
@@ -896,7 +909,7 @@ void FireRenderMeshCommon::setReflectionVisibility(bool reflectionVisibility)
 
 void FireRenderMeshCommon::setRefractionVisibility(bool refractionVisibility)
 {
-	for (auto element : m.elements)
+	for (auto& element : m.elements)
 	{
 		for (auto& shader : element.shaders)
 		{
@@ -907,7 +920,7 @@ void FireRenderMeshCommon::setRefractionVisibility(bool refractionVisibility)
 
 				break;
 			}
-			
+
 			if (auto shape = element.shape)
 				shape.setRefractionVisibility(refractionVisibility);
 		}
@@ -920,6 +933,15 @@ void FireRenderMeshCommon::setCastShadows(bool castShadow)
 	{
 		if (auto shape = element.shape)
 			shape.SetShadowFlag(castShadow);
+	}
+}
+
+void FireRenderMeshCommon::setReceiveShadows(bool receiveShadow)
+{
+	for (auto element : m.elements)
+	{
+		if (auto shape = element.shape)
+			shape.SetReceiveShadowFlag(receiveShadow);
 	}
 }
 
@@ -1080,15 +1102,12 @@ bool FireRenderMesh::setupDisplacement(std::vector<MObject>& shadingEngines, frw
 							{
 								FireRenderContext *ctx = this->context();
 
-								TahoePluginVersion version = GetTahoeVersionToUse();
-								bool isRPR20 = version == TahoePluginVersion::RPR2;
-
 								frw::Scene scn = ctx->GetScene();
 								frw::Camera cam = scn.GetCamera();
 								frw::Context ctx2 = scn.GetContext();
 								rpr_framebuffer fb = ctx->frameBufferAOV(RPR_AOV_COLOR);
 
-								shape.SetAdaptiveSubdivisionFactor(adaptiveFactor, ctx->height(), cam.Handle(), fb, isRPR20);
+								shape.SetAdaptiveSubdivisionFactor(adaptiveFactor, ctx->height(), cam.Handle(), fb, true /*isRPR20*/);
 							}
 							shape.SetSubdivisionCreaseWeight(creaseWeight);
 							shape.SetSubdivisionBoundaryInterop(boundary);
@@ -1136,18 +1155,11 @@ void FireRenderMesh::ReinitializeMesh(const MDagPath& meshPath)
 
 	m.elements.clear();
 
-	std::vector<frw::Shape> shapes;
-
 	// node is not visible => skip
 	if (IsMeshVisible(meshPath, this->context()))
 	{
-		GetShapes(shapes);
-	}
-
-	m.elements.resize(shapes.size());
-	for (unsigned int i = 0; i < shapes.size(); i++)
-	{
-		m.elements[i].shape = shapes[i];
+		m.elements.emplace_back();
+		GetShapes(m.elements.back().shape);
 	}
 }
 
@@ -1297,18 +1309,19 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 
 	MFnDependencyNode nodeFn(Object());
 
-	bool isRPR1 = m.elements.size() > 1;
-	for (int i = 0; i < m.elements.size(); i++) // should be always only 1 for RPR2, but keeping array for now for backward compatibility with RPR1
+	for (auto& element : m.elements)
 	{
-		auto& element = m.elements[i];
 		element.shaders.clear();
 
 		if (!element.shape)
-			continue;
+		{
+			return;
+		}
+		assert(element.shape);
 
 		element.shape.SetShader(nullptr);
 
-		unsigned int shaderIdx = isRPR1 ? i : 0;
+		unsigned int shaderIdx = 0;
 		for (; shaderIdx < element.shadingEngines.size(); ++shaderIdx)
 		{
 			MObject& shadingEngine = element.shadingEngines[shaderIdx];
@@ -1317,7 +1330,7 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 			if (surfaceShader.isNull())
 				continue;
 
-			element.shaders.push_back(context->GetShader(surfaceShader, shadingEngine, this));
+			element.shaders.push_back(context->GetShader(surfaceShader, shadingEngine, this, m.changed.shader));
 
 			const std::vector<int>& faceMaterialIndices = GetFaceMaterialIndices();
 			std::vector<int> face_ids;
@@ -1347,11 +1360,6 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 			if ((shType == frw::ShaderTypeRprx) && (IsUberEmissive(element.shaders.back())))
 			{
 				m.isEmissive = true;
-			}
-
-			if (isRPR1)
-			{
-				break;
 			}
 		}
 
@@ -1394,7 +1402,7 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 		// if no valid surface shader, we should set to transparent in case of volumes present
 		if (element.volumeShader)
 		{
-			if ((element.shaders.size() == 0) || 
+			if ((element.shaders.size() == 0) ||
 				((element.shaders.size() == 1) && (element.shaders[0] == element.volumeShader))
 				)
 			{
@@ -1405,7 +1413,6 @@ void FireRenderMesh::ProcessMesh(const MDagPath& meshPath)
 
 			element.shape.SetVolumeShader(element.volumeShader);
 		}
-
 	}
 
 	RebuildTransforms();
@@ -1501,15 +1508,7 @@ void FireRenderMesh::Rebuild()
 
 	// If there is just one shader and the number of shader is not changed then just update the shader
 	bool shadersChanged = false;
-	bool isRPR2 = TahoeContext::IsGivenContextRPR2(context);
-	if (isRPR2)
-	{
-		shadersChanged = (m.elements.size() > 0) && (shadingEngines.length() != m.elements[0].shaders.size());
-	}
-	else
-	{
-		shadersChanged = shadingEngines.length() != m.elements.size();
-	}
+	shadersChanged = (m.elements.size() > 0) && (shadingEngines.length() != m.elements.back().shaders.size());
 
 	if (m.changed.mesh || shadersChanged || (m.elements.size() == 0))
 	{
@@ -1541,6 +1540,10 @@ void FireRenderMesh::Rebuild()
 	}
 
 	SetupObjectId(meshPath.transform());
+	if (context->IsShadowColorSupported())
+	{
+		SetupShadowColor();
+	}
 
 	m.changed.mesh = false;
 	m.changed.transform = false;
@@ -1560,11 +1563,35 @@ void FireRenderMesh::SetupObjectId(MObject parentTransformObject)
 		objectId = plug.asInt();
 	}
 
+	for (auto& element : m.elements)
+	{
+		if (element.shape.Handle() != nullptr)
+		{
+			if (context()->IsMeshObjectIDSupported())
+			{
+				element.shape.SetObjectId(objectId);
+			}
+		}
+	}
+}
+
+void FireRenderMesh::SetupShadowColor()
+{
+	MObject node = Object();
+	MPlug plug = MFnDependencyNode(node).findPlug("RPRShadowColor");
+
+	if (plug.isNull())
+	{
+		return;
+	}
+
+	frw::Value colorValue = Scope().GetValue(plug);
+
 	for (FrElement element : m.elements)
 	{
 		if (element.shape.Handle() != nullptr)
 		{
-			element.shape.SetObjectId(objectId);
+			element.shape.SetShadowColor(colorValue);
 		}
 	}
 }
@@ -1579,9 +1606,9 @@ void FireRenderMeshCommon::ForceShaderDirtyCallback(MObject& node, void* clientD
 	// clientData should be FireRenderMesh
 	FireRenderMesh* self = static_cast<FireRenderMesh*>(clientData);
 
-	for (auto& it : self->m.elements)
+	for (auto& element : self->m.elements)
 	{
-		for (auto& shadingEngine : it.shadingEngines)
+		for (auto& shadingEngine : element.shadingEngines)
 		{
 			MObject shaderOb = getSurfaceShader(shadingEngine);
 			MGlobal::executeCommand("dgdirty " + MFnDependencyNode(shaderOb).name());
@@ -1612,7 +1639,7 @@ bool FireRenderMesh::IsMeshVisible(const MDagPath& meshPath, const FireRenderCon
 	return isVisible;
 }
 
-void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
+void FireRenderMesh::GetShapes(frw::Shape& outShape)
 {
 	FireRenderContext* context = this->context();
 
@@ -1620,14 +1647,9 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 
 	if ((mainMesh != nullptr) && !mainMesh->IsNotInitialized())
 	{
-		const std::vector<FrElement>& elements = mainMesh->Elements();
+		assert(!m.elements.empty());
 
-		outShapes.reserve(elements.size());
-
-		for (const FrElement& element : elements)
-		{
-			outShapes.push_back(element.shape.CreateInstance(Context()));
-		}
+		outShape = mainMesh->Elements().back().shape.CreateInstance(Context());
 
 		m.isMainInstance = false;
 	}
@@ -1638,29 +1660,24 @@ void FireRenderMesh::GetShapes(std::vector<frw::Shape>& outShapes)
 	{
 		// should not be here!
 		assert(false);
-
-		outShapes.clear();
 	}
 
 	if ((mainMesh == nullptr) || (mainMesh == this))
 	{
 		assert(IsNotInitialized());
 
-		bool success = TranslateMeshWrapped(dagPath, outShapes);
+		bool success = TranslateMeshWrapped(dagPath, outShape);
 		assert(success);
 	}
 
-	for (int i = 0; i < outShapes.size(); i++)
-	{
-		MString fullPathName = dagPath.fullPathName();
-		std::string shapeName = std::string(fullPathName.asChar()) + "_" + std::to_string(i);
-		outShapes[i].SetName(shapeName.c_str());
-	}
+	MString fullPathName = dagPath.fullPathName();
+	std::string shapeName = std::string(fullPathName.asChar()) + "_" + std::to_string(0);
+	outShape.SetName(shapeName.c_str());
 
 	SaveUsedUV(Object());
 }
 
-bool FireRenderMesh::TranslateMeshWrapped(const MDagPath& dagPath, std::vector<frw::Shape>& outShapes)
+bool FireRenderMesh::TranslateMeshWrapped(const MDagPath& dagPath, frw::Shape& outShape)
 {
 	assert(IsMainInstance()); // should already be main instance at this point
 
@@ -1668,7 +1685,7 @@ bool FireRenderMesh::TranslateMeshWrapped(const MDagPath& dagPath, std::vector<f
 		return false;
 
 	FireRenderContext* context = this->context();
-	bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && TahoeContext::IsGivenContextRPR2(context) && !context->isInteractive();
+	bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && NorthStarContext::IsGivenContextNorthStar(context) && !context->isInteractive();
 	unsigned int motionSamplesCount = deformationMotionBlurEnabled ? context->motionSamples() : 0;
 
 	//Ignore set objects dirty calls while creating a mesh, because it might lead to infinite lookps in case if deformtion motion blur is used
@@ -1677,7 +1694,7 @@ bool FireRenderMesh::TranslateMeshWrapped(const MDagPath& dagPath, std::vector<f
 		MFnDagNode dagNode(Object());
 		MString name = dagNode.fullPathName();
 		assert(m_meshData.IsInitialized());
-		outShapes = FireMaya::MeshTranslator::TranslateMesh(m_meshData, context->GetContext(), Object(), m.faceMaterialIndices, motionSamplesCount, dagPath.fullPathName());
+		outShape = FireMaya::MeshTranslator::TranslateMesh(m_meshData, context->GetContext(), Object(), m.faceMaterialIndices, motionSamplesCount, dagPath.fullPathName());
 	}
 
 	m.isPreProcessed = false;
@@ -1743,20 +1760,17 @@ void FireRenderMesh::RebuildTransforms()
 	float mfloats[4][4];
 	FireMaya::ScaleMatrixFromCmToMFloats(matrix, mfloats);	
 
-	for (auto& element : m.elements)
+	if ((!m.elements.empty()) && (m.elements.back().shape))
 	{
-		if (element.shape)
-		{
-			element.shape.SetTransform(&mfloats[0][0]);
-		}
+		m.elements.back().shape.SetTransform(&mfloats[0][0]);
 	}
 }
 
 void FireRenderMeshCommon::AssignShadingEngines(const MObjectArray& shadingEngines)
 {
-	for (unsigned int i = 0; i < m.elements.size(); i++)
+	for (auto& element : m.elements)
 	{
-		DumpMayaArray(m.elements[i].shadingEngines, shadingEngines);
+		WriteMayaArrayTo(element.shadingEngines, shadingEngines);
 	}
 }
 
@@ -1781,35 +1795,16 @@ void FireRenderMeshCommon::ProcessMotionBlur(const MFnDagNode& meshFn)
 		return;
 	}
 
-	// We use different schemes for MotionBlur for Tahoe and NorthStar
-	if (TahoeContext::IsGivenContextRPR2(context()))
+	assert(NorthStarContext::IsGivenContextNorthStar(context()));
+
+	float nextFrameFloats[4][4];
+	FireMaya::GetMatrixForTheNextFrame(meshFn, nextFrameFloats, Instance());
+
+	for (auto element : m.elements)
 	{
-		float nextFrameFloats[4][4];
-		FireMaya::GetMatrixForTheNextFrame(meshFn, nextFrameFloats, Instance());
-
-		for (auto& element : m.elements)
+		if (element.shape)
 		{
-			if (element.shape)
-			{
-				element.shape.SetMotionTransform(&nextFrameFloats[0][0], false);
-			}
-		}
-	}
-	else
-	{
-		MVector linearMotion(0, 0, 0);
-		MVector rotationAxis(1, 0, 0);
-		double rotationAngle = 0.0;
-
-		FireMaya::CalculateMotionBlurParams(meshFn, GetSelfTransform(), linearMotion, rotationAxis, rotationAngle, Instance());
-
-		for (auto& element : m.elements)
-		{
-			if (element.shape)
-			{
-				element.shape.SetLinearMotion(float(linearMotion.x), float(linearMotion.y), float(linearMotion.z));
-				element.shape.SetAngularMotion(float(rotationAxis.x), float(rotationAxis.y), float(rotationAxis.z), float(rotationAngle));
-			}
+			element.shape.SetMotionTransform(&nextFrameFloats[0][0], false);
 		}
 	}
 }
@@ -1872,10 +1867,13 @@ void FireRenderMesh::Freshen(bool shouldCalculateHash)
 HashValue FireRenderMesh::CalculateHash()
 {
 	auto hash = FireRenderNode::CalculateHash();
-	for (auto& e : m.elements)
+
+	if (!m.elements.empty())
 	{
+		auto& e = m.elements.back();
 		hash << e.shadingEngines;
 	}
+
 	return hash;
 }
 
@@ -1887,7 +1885,7 @@ bool FireRenderMesh::InitializeMaterials()
 	MObjectArray shadingEngines = GetShadingEngines(meshFn, Instance());
 
 	// If there is just one shader and the number of shader is not changed then just update the shader
-	bool onlyShaderChanged = (!m.changed.mesh && (shadingEngines.length() == m.elements.size()));
+	bool onlyShaderChanged = !m.changed.mesh && (shadingEngines.length() == 0);
 
 	return !onlyShaderChanged;
 }
@@ -1910,7 +1908,7 @@ bool FireRenderMesh::ReloadMesh(unsigned int sampleIdx /*= 0*/)
 
 	bool success = false;
 	MDagPath dagPath = DagPath();
-	bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && TahoeContext::IsGivenContextRPR2(context) && !context->isInteractive();
+	bool deformationMotionBlurEnabled = IsMotionBlurEnabled(MFnDagNode(dagPath.node())) && NorthStarContext::IsGivenContextNorthStar(context) && !context->isInteractive();
 	unsigned int motionSamplesCount = deformationMotionBlurEnabled ? context->motionSamples() : 0;
 	//Ignore set objects dirty calls while creating a mesh, because it might lead to infinite lookps in case if deformtion motion blur is used
 	{
@@ -2080,6 +2078,17 @@ void FireRenderLight::Freshen(bool shouldCalculateHash)
 		}
 	}
 
+	for (auto* meshPtr : m_linkedMeshes)
+	{
+		FireRenderMesh* mesh = dynamic_cast<FireRenderMesh*>(const_cast<FireRenderMeshCommon*>(meshPtr));
+
+		if (mesh != nullptr)
+		{
+			mesh->OnShaderDirty();
+		}
+	}
+	m_linkedMeshes.clear();
+
 	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
@@ -2119,6 +2128,11 @@ void FireRenderLight::setPortal(bool value)
 bool FireRenderLight::portal()
 {
 	return m_portal;
+}
+
+void FireRenderLight::addLinkedMesh(FireRenderMeshCommon const* mesh)
+{
+	m_linkedMeshes.emplace_back(mesh);
 }
 
 FireRenderPhysLight::FireRenderPhysLight(FireRenderContext* context, const MDagPath& dagPath) :
@@ -2309,7 +2323,23 @@ void FireRenderEnvLight::Freshen(bool shouldCalculateHash)
 		}
 	}
 
+	for (auto* meshPtr : m_linkedMeshes)
+	{
+		FireRenderMesh* mesh = dynamic_cast<FireRenderMesh*>(const_cast<FireRenderMeshCommon*>(meshPtr));
+
+		if (mesh != nullptr)
+		{
+			mesh->OnShaderDirty();
+		}
+	}
+	m_linkedMeshes.clear();
+
 	FireRenderNode::Freshen(shouldCalculateHash);
+}
+
+void FireRenderEnvLight::addLinkedMesh(FireRenderMeshCommon const* mesh)
+{
+	m_linkedMeshes.emplace_back(mesh);
 }
 
 //===================
@@ -2497,28 +2527,29 @@ void FireRenderCamera::Freshen(bool shouldCalculateHash)
 		}
 
 		// Set exposure from motion blur block parameters if we didn't add fireRenderExposure attribute to the camera before
-		if (context()->motionBlur() && fnCamera.findPlug("fireRenderExposure").isNull())
+		if (context()->IsCameraSetExposureSupported() && context()->motionBlur() && fnCamera.findPlug("fireRenderExposure").isNull())
 		{
 			rprCameraSetExposure(m_camera.Handle(), context()->motionBlurCameraExposure());
 		}
 
 		bool cameraMotionBlur = context()->cameraMotionBlur() && context()->motionBlur();
 
-		MVector linearVector = MVector(0, 0, 0);
-		MVector angularVector = MVector(1, 0, 0);
-		double rotationAngle = 0.0;
 
+		// We use different schemes for MotionBlur for Tahoe and NorthStar
 		if (cameraMotionBlur)
 		{
-			FireMaya::CalculateMotionBlurParams(dagNode, GetSelfTransform(), linearVector, angularVector, rotationAngle);
-		}
+			float nextFrameFloats[4][4];
+			FireMaya::GetMatrixForTheNextFrame(dagNode, nextFrameFloats, Instance());
 
-		m_camera.SetLinearMotion((float) linearVector.x, (float) linearVector.y, (float) linearVector.z);
-		m_camera.SetAngularMotion((float) angularVector.x, (float) angularVector.y, (float) angularVector.z, (float) rotationAngle);
+			m_camera.SetMotionTransform(&nextFrameFloats[0][0], false);
+		}
 	}
 	else
 	{
-		rprCameraSetExposure(m_camera.Handle(), 1.f);
+		if (context()->IsCameraSetExposureSupported())
+		{
+			rprCameraSetExposure(m_camera.Handle(), 1.f);
+		}
 	}
 
 	RegisterCallbacks();

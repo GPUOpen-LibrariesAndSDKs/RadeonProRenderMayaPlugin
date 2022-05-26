@@ -112,6 +112,9 @@ MCallbackId beforeOpenSceneCallback;
 
 MCallbackId mayaExitingCallback;
 
+// used for light linking
+MCallbackId toonShaderCallback;
+
 
 #ifdef _WIN32
 static LPTOP_LEVEL_EXCEPTION_FILTER pTopLevelExceptionFilter = nullptr;
@@ -179,6 +182,12 @@ bool gExitingMaya = false;
 void checkFireRenderGlobals(void* data)
 {
 	MGlobal::executeCommand("source \"common.mel\"; checkRPRGlobalsNode();");
+}
+
+void onToonShaderCreate(MObject& node, void* clientData)
+{
+	MString name = MFnDependencyNode(node).name();
+	MGlobal::executeCommand("InitLightLinking " + name);
 }
 
 void swapToDefaultRenderOverride(void* data) {
@@ -527,6 +536,16 @@ void AddExtensionAttributesCommon()
 	MObject emitterAttr = nAttr.create("RPRIsEmitter", "iem", MFnNumericData::kBoolean, false);
 	nAttr.setNiceNameOverride("RPR Is Emitter");
 	locatorClass.addExtensionAttribute(emitterAttr);
+
+
+	// Add shadow color attribute to geometry objects
+	MNodeClass nurbsClass("nurbsSurface");
+	MNodeClass meshClass("mesh");
+
+	const MObject nurbsShadowColorAttr = nAttr.createColor("RPRShadowColor", "shc");
+	const MObject meshShadowColorAttr = nAttr.createColor("RPRShadowColor", "shc");
+	nurbsClass.addExtensionAttribute(nurbsShadowColorAttr);
+	meshClass.addExtensionAttribute(meshShadowColorAttr);
 }
 
 void AddExtensionAttributesForMaterials()
@@ -837,7 +856,10 @@ MStatus initializePlugin(MObject obj)
 		FireMaya::ToonMaterial::creator,
 		FireMaya::ToonMaterial::initialize,
 		MPxNode::kDependNode, &UserClassify));
-
+	// force load shader UI template to use callback functions
+	MGlobal::executeCommand("source AERPRToonMaterialTemplate");
+	toonShaderCallback = MDGMessage::addNodeAddedCallback(onToonShaderCreate, namePrefix + "ToonMaterial", NULL, &status);
+	CHECK_MSTATUS(status);
 
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "Displacement", FireMaya::Displacement::FRTypeID(),
 		FireMaya::Displacement::creator,
@@ -1060,6 +1082,8 @@ MStatus uninitializePlugin(MObject obj)
 
 	MMessage::removeCallback(beforeNewSceneCallback);
 	MMessage::removeCallback(beforeOpenSceneCallback);
+
+	MMessage::removeCallback(toonShaderCallback);
 
 	// Delete the viewport render override.
 	FireRenderOverride::deleteInstance();

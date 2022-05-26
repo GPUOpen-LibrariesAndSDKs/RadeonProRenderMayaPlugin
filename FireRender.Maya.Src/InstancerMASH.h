@@ -41,7 +41,7 @@ public:
 	virtual void RegisterCallbacks(void) override final;
 	virtual void Freshen(bool shouldCalculateHash) override final;
 	virtual void OnPlugDirty(MObject& node, MPlug& plug) override final;
-	virtual bool IsMashInstancer(void) const override { return true; }
+	virtual bool ShouldForceReload(void) const override { return true; } // Is Mash Instancer
 	virtual bool ReloadMesh(unsigned int sampleIdx = 0) override;
 
 private:

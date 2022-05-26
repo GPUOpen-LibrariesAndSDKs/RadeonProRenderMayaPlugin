@@ -65,6 +65,11 @@ public:
 	// Return true if the region has non-zero size in both dimensions.
 	bool isZeroArea() const
 	{
+		if (right < left || top < bottom)
+		{
+			return true;
+		}
+
 		return getWidth() <= 0 || getHeight() <= 0;
 	}
 

@@ -47,11 +47,8 @@ FireRenderRenderData::FireRenderRenderData() :
 
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags(RenderType::ViewportRender);
 
-	// force using NorthStar for material viewer
-	m_context.SetPluginEngine(TahoePluginVersion::RPR2);
-
 	rpr_int res;
-	if (!m_context.createContextEtc(createFlags, true, false, &res))
+	if (!m_context.createContextEtc(createFlags, true, &res))
 	{
 		MString msg;
 		FireRenderError errorToShow(res, msg, true);
@@ -165,10 +162,10 @@ MStatus FireMaterialViewRenderer::translateMesh(const MUuid& id, const MObject& 
 		m_renderDataPtr->m_shape.Reset();
 
 		std::vector<int> faceMaterialIndices;
-		const std::vector<frw::Shape> shapes = FireMaya::MeshTranslator::TranslateMesh(m_renderDataPtr->m_context.GetContext(), node, faceMaterialIndices);
-		if (!shapes.empty())
+		const frw::Shape shape = FireMaya::MeshTranslator::TranslateMesh(m_renderDataPtr->m_context.GetContext(), node, faceMaterialIndices);
+		if (shape)
 		{
-			m_renderDataPtr->m_shape = shapes[0];
+			m_renderDataPtr->m_shape = shape;
 			if (m_renderDataPtr->m_shape)
 				m_renderDataPtr->m_context.GetScene().Attach(m_renderDataPtr->m_shape);
 		}

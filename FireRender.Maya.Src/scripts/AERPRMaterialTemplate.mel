@@ -15,27 +15,27 @@ global proc AERPRMaterialType(string $nodeName)
 	int $disable[];
 	int $type = `getAttr ($nodeName + ".type")`;
 	if ($type == 0) {			// diffuse
-		$disable = {0, 1, 1, 1, 0, 1, 1, 1};
+		$disable = {0, 1, 1, 1, 0};
 	} else if ($type == 1) {	// microfacet
-		$disable = {0, 0, 0, 1, 0, 1, 1, 1};
+		$disable = {0, 0, 0, 1, 0};
 	} else if ($type == 2) {	// microfacet refract
-		$disable = {0, 0, 0, 1, 0, 1, 1, 1};
+		$disable = {0, 0, 0, 1, 0};
 	} else if ($type == 3) {	// reflect
-		$disable = {0, 1, 1, 1, 0, 1, 1, 1};
+		$disable = {0, 1, 1, 1, 0};
 	} else if ($type == 4) {	// refract
-		$disable = {0, 1, 0, 1, 0, 1, 1, 1};
+		$disable = {0, 1, 0, 1, 0};
 	} else if ($type == 5) {	// transparent
-		$disable = {0, 1, 1, 1, 1, 1, 1, 1};
+		$disable = {0, 1, 1, 1, 1};
 	} else if ($type == 6) {    // emissive
-		$disable = {0, 1, 1, 0, 1, 1, 1, 1};
+		$disable = {0, 1, 1, 0, 1};
 	} else if ($type == 7) {    // ward
-		$disable = {0, 1, 0, 1, 0, 0, 0, 0};
+		$disable = {0, 1, 0, 1, 0};
 	} else if ($type == 8) {    // oren
-		$disable = {0, 0, 1, 1, 0, 1, 1, 1};
+		$disable = {0, 0, 1, 1, 0};
 	} else if ($type == 9) {    // diffuse refraction
-		$disable = {0, 0, 1, 1, 0, 1, 1, 1};
+		$disable = {0, 0, 1, 1, 0};
 	} else if ($type == 10) {    // passthrough
-		$disable = {0, 1, 1, 1, 1, 1, 1, 1};
+		$disable = {0, 1, 1, 1, 1};
 	}
 
 	editorTemplate -dimControl $nodeName "color"            $disable[0];
@@ -43,9 +43,6 @@ global proc AERPRMaterialType(string $nodeName)
 	editorTemplate -dimControl $nodeName "refractiveIndex"  $disable[2];
 	editorTemplate -dimControl $nodeName "wattsPerSqm"      $disable[3];
 	editorTemplate -dimControl $nodeName "normalMap"        $disable[4];
-	editorTemplate -dimControl $nodeName "roughnessX"       $disable[5];
-	editorTemplate -dimControl $nodeName "roughnessY"       $disable[6];
-	editorTemplate -dimControl $nodeName "rotation"         $disable[7];
 }
 
 global proc AERPRMaterialTemplate( string $nodeName )
@@ -66,11 +63,6 @@ global proc AERPRMaterialTemplate( string $nodeName )
 	editorTemplate -endLayout;
 	editorTemplate -beginLayout "Emission" -collapse 0;
 		editorTemplate -addControl "wattsPerSqm";
-	editorTemplate -endLayout;
-	editorTemplate -beginLayout "Ward" -collapse 0;
-		editorTemplate -addControl "roughnessX";
-		editorTemplate -addControl "roughnessY";
-		editorTemplate -addControl "rotation";
 	editorTemplate -endLayout;
 	editorTemplate -beginLayout "Normal Map" -collapse 0;
 		editorTemplate -addControl "normalMap";

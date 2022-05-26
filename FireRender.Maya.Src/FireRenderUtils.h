@@ -48,6 +48,29 @@ typedef std::chrono::time_point<std::chrono::steady_clock> TimePoint;
 // Utility class used to read attributes form the render global node
 // and configure the rpr_context
 
+struct AirVolumeSettings
+{
+	AirVolumeSettings()
+		: airVolumeEnabled(false)
+		, fogEnabled(false)
+		, fogColor(1.0f, 1.0f, 1.0f, 0.0f)
+		, fogDistance(5000)
+		, fogHeight(1.5f)
+		, airVolumeDensity(0.8f)
+		, airVolumeColor(1.0f, 1.0f, 1.0f, 0.0f)
+		, airVolumeClamp(0.1f)
+	{}
+
+	bool airVolumeEnabled;
+	bool fogEnabled;
+	MColor fogColor;
+	float fogDistance;
+	float fogHeight;
+	float airVolumeDensity;
+	MColor airVolumeColor;
+	float airVolumeClamp;
+};
+
 struct DenoiserSettings
 {
 	DenoiserSettings()
@@ -144,13 +167,8 @@ enum class RenderQuality
 	RenderQualityFull = 0,
 	RenderQualityHigh,
 	RenderQualityMedium,
-	RenderQualityLow
-};
-
-enum TahoePluginVersion
-{
-	RPR1 = 1,	// Tahoe 1.X
-	RPR2 = 2,	// Tahoe 2.X
+	RenderQualityLow,
+	RenderQualityNorthStar
 };
 
 
@@ -180,6 +198,8 @@ public:
 	static bool isDenoiser(MString name);
 
 	static bool IsMotionBlur(MString name);
+
+	static bool IsAirVolume(MString name);
 
 	static void getCPUThreadSetup(bool& overriden, int& cpuThreadCount, RenderType renderType);
 	static int getThumbnailIterCount(bool* pSwatchesEnabled = nullptr);
@@ -327,6 +347,7 @@ public:
 	unsigned int oocTexCache;
 
 	DenoiserSettings denoiserSettings;
+	AirVolumeSettings airVolumeSettings;
 
 	// Use Metal Performance Shaders for MacOS
 	bool useMPS;
@@ -336,11 +357,16 @@ public:
 	//Deep EXR
 	float deepEXRMergeZThreshold;
 
+	// Cryptomatte settings
+	bool cryptomatteExtendedMode;
+	bool cryptomatteSplitIndirect;
+
 private:
 	short getMaxRayDepth(const FireRenderContext& context) const;
 	short getSamples(const FireRenderContext& context) const;
 
 	void readDenoiserParameters(const MFnDependencyNode& frGlobalsNode);
+	void readAirVolumeParameters(const MFnDependencyNode& frGlobalsNode);
 };
 
 namespace FireMaya
@@ -1093,7 +1119,7 @@ void setAttribProps(MFnAttribute& attr, const MObject& attrObj);
 void CreateBoxGeometry(std::vector<float>& veritces, std::vector<float>& normals, std::vector<int>& vertexIndices, std::vector<int>& normalIndices);
 
 template <typename OutT, typename MayaArrayT>
-void DumpMayaArray(std::vector<OutT>& out, const MayaArrayT& source)
+void WriteMayaArrayTo(std::vector<OutT>& out, const MayaArrayT& source)
 {
 	using MayaElementT = decltype(
 		std::declval<MayaArrayT&>()[std::declval<unsigned int>()]
@@ -1111,7 +1137,6 @@ std::vector<MString> dumpAttributeNamesDbg(MObject node);
 RenderQuality GetRenderQualityFromPlug(const char* plugName);
 RenderQuality GetRenderQualityForRenderType(RenderType renderType);
 
-TahoePluginVersion GetTahoeVersionToUse();
 bool CheckIsInteractivePossible();
 
 

@@ -1,5 +1,10 @@
 #include "FireRenderToonMaterial.h"
 #include "FireMaya.h"
+#include "FireRenderUtils.h"
+#include <maya/MSelectionList.h>
+#include <maya/MUuid.h>
+#include <maya/MDGMessage.h>
+#include <maya/MNodeMessage.h>
 
 namespace
 {
@@ -36,6 +41,12 @@ namespace
 		MObject rampRange1;
 		MObject rampRange2;
 		MObject rampRangeHighlight;
+
+		// light linking
+		MObject enableLightLinking;
+
+		// mid color as albedo
+		MObject enableMidColorAsAlbedo;
 	}
 }
 
@@ -156,6 +167,13 @@ MStatus FireMaya::ToonMaterial::initialize()
 	nAttr.setMin(0.0);
 	nAttr.setMax(1.0);
 
+	Attribute::enableLightLinking = nAttr.create("enableLightLinking", "ell", MFnNumericData::kBoolean, 0);
+	MAKE_INPUT(nAttr);
+	nAttr.setConnectable(false);
+
+	Attribute::enableMidColorAsAlbedo = nAttr.create("enableMidColorAsAlbedo", "emcaa", MFnNumericData::kBoolean, 0);
+	MAKE_INPUT(nAttr);
+	nAttr.setConnectable(false);
 
 	// Adding all attributes to the node type
 	addAttribute(Attribute::output);
@@ -186,6 +204,9 @@ MStatus FireMaya::ToonMaterial::initialize()
 	ADD_ATTRIBUTE(Attribute::rampRange1);
 	ADD_ATTRIBUTE(Attribute::rampRange2);
 	ADD_ATTRIBUTE(Attribute::rampRangeHighlight);
+
+	ADD_ATTRIBUTE(Attribute::enableLightLinking);
+	ADD_ATTRIBUTE(Attribute::enableMidColorAsAlbedo);
 
 	return MStatus::kSuccess;
 }
@@ -276,5 +297,114 @@ frw::Shader FireMaya::ToonMaterial::GetShader(Scope& scope)
 		return scope.MaterialSystem().ShaderBlend(shader, transparentShader, transparancyLevel);
 	}
 
+	if (shaderNode.findPlug(Attribute::enableLightLinking, false).asBool())
+	{
+		linkLight(scope, shader);
+	}
+
+	shader.SetValueInt(RPR_MATERIAL_INPUT_MID_IS_ALBEDO, shaderNode.findPlug(Attribute::enableMidColorAsAlbedo, false).asBool());
+	
 	return shader;
+}
+
+void FireMaya::ToonMaterial::postConstructor()
+{
+	ShaderNode::postConstructor();
+
+	nodeAddedCallback = MDGMessage::addNodeAddedCallback(onLightAdded, kDefaultNodeType, this);
+	nodeRemovedCallback = MDGMessage::addNodeRemovedCallback(onLightRemoved, kDefaultNodeType, this);
+	nodeRenamedCallback = MNodeMessage::addNameChangedCallback(MObject::kNullObj, onLightRenamed, this);
+}
+
+void FireMaya::ToonMaterial::linkLight(Scope& scope, frw::Shader& shader)
+{
+	const RenderType renderType = scope.GetIContextInfo()->GetRenderType();
+	if (renderType == RenderType::Thumbnail || renderType == RenderType::Undefined)
+	{
+		return; // skip if render mode is swatch
+	}
+
+	MFnDependencyNode shaderNode(thisMObject());
+	
+	// We have to use MEL command to get enum value as string
+	MString lightName = MGlobal::executeCommandStringResult("getAttr -as " + shaderNode.name() + ".linkedLight");
+	MSelectionList selection;
+	MObject light;
+	selection.add(lightName);
+	selection.getDependNode(0, light);
+
+	if (light.isNull()) 
+	{
+		MGlobal::displayError("Unable to find linked light!");
+		return;
+	}
+
+	frw::Light rprLight = scope.GetIContextInfo()->GetRprLightFromNode(light);
+
+	if (!rprLight.IsValid())
+	{
+		return;
+	}
+
+	shader.xSetParameterLight(RPR_MATERIAL_INPUT_LIGHT, rprLight);
+}
+
+bool checkIsLight(MObject& node)
+{
+	MFnDependencyNode depNode(node);
+	MString type = depNode.typeName();
+	return node.hasFn(MFn::kLight) || type == "RPRPhysicalLight" || type == "RPRIES" || type == "RPRIBL";
+}
+
+void FireMaya::ToonMaterial::onLightAdded(MObject& node, void* clientData)
+{
+	if (!checkIsLight(node))
+	{
+		return;
+	}
+	MFnDependencyNode lightNode(node);
+	FireMaya::ToonMaterial* thisNode = (FireMaya::ToonMaterial*)clientData;
+	MGlobal::executeCommand("ToonShaderLightAdded " + lightNode.name() + " " + thisNode->name());
+}
+
+void FireMaya::ToonMaterial::onLightRemoved(MObject& node, void* clientData)
+{
+	if (!checkIsLight(node))
+	{
+		return;
+	}
+	MFnDependencyNode lightNode(node);
+	FireMaya::ToonMaterial* thisNode = (FireMaya::ToonMaterial*)clientData;
+	MGlobal::executeCommand("ToonShaderLightRemoved " + lightNode.name() + " " + thisNode->name());
+}
+
+void FireMaya::ToonMaterial::onLightRenamed(MObject& node, const MString& prevName, void* clientData)
+{
+	if (!checkIsLight(node) || prevName == NULL)
+	{
+		return;
+	}
+	MFnDependencyNode lightNode(node);
+	MString name = lightNode.name();
+	FireMaya::ToonMaterial* thisNode = (FireMaya::ToonMaterial*)clientData;
+	if (lightNode.name() != prevName)
+	{
+		MGlobal::executeCommand("ToonShaderLightRenamed " + lightNode.name() + " " + prevName + " " + thisNode->name());
+	}
+}
+
+FireMaya::ToonMaterial::~ToonMaterial()
+{
+	if (nodeAddedCallback != 0)
+	{
+		MNodeMessage::removeCallback(nodeAddedCallback);
+	}
+	if (nodeRemovedCallback != 0)
+	{
+		MNodeMessage::removeCallback(nodeRemovedCallback);
+	}
+	if (nodeRenamedCallback != 0)
+	{
+		MNodeMessage::removeCallback(nodeRenamedCallback);
+	}
 }

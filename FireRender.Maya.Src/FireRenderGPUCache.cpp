@@ -207,9 +207,10 @@ void FireRenderGPUCache::RebuildTransforms()
 
 	for (auto& element : m.elements)
 	{
+		assert(element.shape);
 		if (!element.shape)
 			continue;
-		
+
 		// transform
 		float(*f)[4][4] = reinterpret_cast<float(*)[4][4]>(element.TM.data());
 		MMatrix elementTransform(*f);
@@ -223,7 +224,6 @@ void FireRenderGPUCache::RebuildTransforms()
 		elementTransform.get(mfloats);
 
 		element.shape.SetTransform(&mfloats[0][0]);
-
 	}
 
 	// motion blur
@@ -234,30 +234,20 @@ void FireRenderGPUCache::ProcessShaders()
 {
 	FireRenderContext* context = this->context();
 
-	for (int i = 0; i < m.elements.size(); i++)
+	for (auto& element : m.elements)
 	{
-		auto& element = m.elements[i];
-
+		assert(element.shape);
 		if (!element.shape)
 			continue;
 
 		element.shape.SetShader(nullptr);
 
+		assert(element.shadingEngines.size() == 1);
 		for (unsigned int shaderIdx = 0; shaderIdx < element.shadingEngines.size(); ++shaderIdx)
 		{
 			MObject& shadingEngine = element.shadingEngines[shaderIdx];
 			element.shaders.push_back(context->GetShader(getSurfaceShader(shadingEngine), shadingEngine, this));
-
-			std::vector<int>& faceMaterialIndices = m.faceMaterialIndices;
-			std::vector<int> face_ids;
-			face_ids.reserve(faceMaterialIndices.size());
-			for (int faceIdx = 0; faceIdx < faceMaterialIndices.size(); ++faceIdx)
-			{
-				if (faceMaterialIndices[faceIdx] == shaderIdx)
-					face_ids.push_back(faceIdx);
-			}
-
-			element.shape.SetPerFaceShader(element.shaders.back(), face_ids);
+			element.shape.SetShader(element.shaders.back());
 
 			frw::ShaderType shType = element.shaders.back().GetShaderType();
 			if (shType == frw::ShaderTypeEmissive)
@@ -303,7 +293,6 @@ void FireRenderGPUCache::Rebuild()
 
 	ProcessShaders();
 
-	// if (IsMeshVisible())
 	attachToScene();
 
 	m.changed.mesh = false;
@@ -510,7 +499,8 @@ void FireRenderGPUCache::GetShapes(std::vector<frw::Shape>& outShapes, std::vect
 	frw::Context ctx = context()->GetContext();
 	assert(ctx.IsValid());
 
-	const FireRenderMeshCommon* mainMesh = this->context()->GetMainMesh(uuid() + std::to_string(m_curr_frameNumber));
+	const FireRenderMeshCommon* pMainMesh = this->context()->GetMainMesh(uuid() + std::to_string(m_curr_frameNumber));
+	const FireRenderGPUCache* mainMesh = dynamic_cast<const FireRenderGPUCache*>(pMainMesh);
 
 	if (mainMesh != nullptr)
 	{
@@ -593,10 +583,9 @@ void FireRenderGPUCache::RegisterCallbacks()
 	FireRenderNode::RegisterCallbacks();
 	if (context()->getCallbackCreationDisabled())
 		return;
-
-	for (auto& it : m.elements)
+	for (auto& element : m.elements)
 	{
-		for (auto& shadingEngine : it.shadingEngines)
+		for (auto& shadingEngine : element.shadingEngines)
 		{
 			if (shadingEngine.isNull())
 				continue;
@@ -608,7 +597,6 @@ void FireRenderGPUCache::RegisterCallbacks()
 
 			AddCallback(MNodeMessage::addNodeDirtyCallback(shaderOb, ShaderDirtyCallback, this));
 		}
-
 	}
 
 	AddCallback(MEventMessage::addEventCallback("timeChanged", TimeChangedCallback, this));
@@ -636,4 +624,6 @@ void FireRenderGPUCache::TimeChangedCallback(void* clientData)
 
 	self->OnNodeDirty();
 }
+
+
 

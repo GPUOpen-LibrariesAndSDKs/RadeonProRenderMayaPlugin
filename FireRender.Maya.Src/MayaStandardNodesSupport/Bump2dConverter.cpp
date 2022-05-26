@@ -47,9 +47,14 @@ frw::Value MayaStandardNodeConverters::Bump2dConverter::GetBumpValue(const frw::
 	frw::BumpMapNode imageNode(m_params.scope.MaterialSystem());
 	imageNode.SetMap(color);
 
-	if (strength != 1.0f)
+	const IFireRenderContextInfo* ctxInfo = m_params.scope.GetIContextInfo();
+	assert(ctxInfo);
+	if (ctxInfo->IsUberScaleSupported())
 	{
-		imageNode.SetValue(RPR_MATERIAL_INPUT_SCALE, strength);
+		if (strength != 1.0f)
+		{
+			imageNode.SetValue(RPR_MATERIAL_INPUT_SCALE, strength);
+		}
 	}
 
 	return imageNode;
@@ -90,9 +95,14 @@ frw::Value MayaStandardNodeConverters::Bump2dConverter::GetNormalValue(const frw
 	frw::NormalMapNode imageNode(m_params.scope.MaterialSystem());
 	imageNode.SetMap(color);
 
-	if (strength != 1.0f)
+	const IFireRenderContextInfo* ctxInfo = m_params.scope.GetIContextInfo();
+	assert(ctxInfo);
+	if (ctxInfo->IsUberScaleSupported())
 	{
-		imageNode.SetValue(RPR_MATERIAL_INPUT_SCALE, strength);
+		if (strength != 1.0f)
+		{
+			imageNode.SetValue(RPR_MATERIAL_INPUT_SCALE, strength);
+		}
 	}
 
 	return imageNode;

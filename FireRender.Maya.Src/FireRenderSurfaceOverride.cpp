@@ -81,8 +81,6 @@ MString FireRenderMaterialNodeOverride::fragmentName() const
 		case FireMaya::Material::kMicrofacet:
 		case FireMaya::Material::kOrenNayar:
 			return "mayaBlinnSurface";
-		case FireMaya::Material::kWard:
-			return "mayaAnisotropicSurface";
 	}
 	return "mayaBlinnSurface";
 }
@@ -113,13 +111,6 @@ void FireRenderMaterialNodeOverride::updateShader(MHWRender::MShaderInstance& sh
 			float diff[] = { 0.f, 0.f, 0.f };
 			result = shader.setParameter("color", diff);
 			result = shader.setParameter("specularRollOff", 1.0f);
-		}
-		break;
-
-		case FireMaya::Material::kWard:
-		{
-			float diff[] = { 0.f, 0.f, 0.f };
-			result = shader.setParameter("color", diff);
 		}
 		break;
 
@@ -154,7 +145,6 @@ MString FireRenderMaterialNodeOverride::primaryColorParameter() const
 {
 	switch (getType())
 	{
-		case FireMaya::Material::kWard:
 		case FireMaya::Material::kMicrofacet:
 			return "specularColor";
 		case FireMaya::Material::kDiffuse:

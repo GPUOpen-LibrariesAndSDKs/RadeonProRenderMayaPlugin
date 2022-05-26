@@ -31,10 +31,7 @@ namespace
 		MObject normalMap;
 		MObject refractiveIndex;
 		MObject roughness;
-		MObject roughnessX;
-		MObject roughnessY;
 		MObject wattsPerSQM;
-		MObject rotation;
 
 		MObject disableSwatch;
 		MObject swatchIterations;
@@ -68,7 +65,6 @@ MStatus FireMaya::Material::initialize()
 	eAttr.addField("Refract", kRefract);
 	eAttr.addField("Transparent", kTransparent);
 	eAttr.addField("Emissive", kEmissive);
-	eAttr.addField("Ward", kWard);
 	eAttr.addField("Oren-Nayar", kOrenNayar);
 	eAttr.addField("Diffuse Refraction", kDiffuseRefraction);
 	eAttr.addField("Pass Through", kPassThrough);
@@ -104,21 +100,6 @@ MStatus FireMaya::Material::initialize()
 	nAttr.setMax(10000000.0);
 	nAttr.setSoftMax(100.0);
 
-	Attribute::roughnessX = nAttr.create("roughnessX", "rgX", MFnNumericData::kFloat, 0.5);
-	MAKE_INPUT(nAttr);
-	nAttr.setDefault(0.5);
-	nAttr.setSoftMin(0.0);
-	nAttr.setSoftMax(1.0);
-
-	Attribute::roughnessY = nAttr.create("roughnessY", "rgY", MFnNumericData::kFloat, 0.5);
-	MAKE_INPUT(nAttr);
-	nAttr.setDefault(0.5);
-	nAttr.setSoftMin(0.0);
-	nAttr.setSoftMax(1.0);
-
-	Attribute::rotation = nAttr.create("rotation", "rt", MFnNumericData::kFloat, 0.0);
-	MAKE_INPUT(nAttr);
-
 	// output color
 	Attribute::output = nAttr.createColor("outColor", "oc");
 	MAKE_OUTPUT(nAttr);
@@ -142,9 +123,6 @@ MStatus FireMaya::Material::initialize()
 	CHECK_MSTATUS(addAttribute(Attribute::refractiveIndex));
 	CHECK_MSTATUS(addAttribute(Attribute::roughness));
 	CHECK_MSTATUS(addAttribute(Attribute::wattsPerSQM));
-	CHECK_MSTATUS(addAttribute(Attribute::roughnessX));
-	CHECK_MSTATUS(addAttribute(Attribute::roughnessY));
-	CHECK_MSTATUS(addAttribute(Attribute::rotation));
 
 	CHECK_MSTATUS(addAttribute(Attribute::output));
 	CHECK_MSTATUS(addAttribute(Attribute::outputAlpha));
@@ -159,9 +137,6 @@ MStatus FireMaya::Material::initialize()
 	CHECK_MSTATUS(attributeAffects(Attribute::refractiveIndex, Attribute::output));
 	CHECK_MSTATUS(attributeAffects(Attribute::roughness, Attribute::output));
 	CHECK_MSTATUS(attributeAffects(Attribute::wattsPerSQM, Attribute::output));
-	CHECK_MSTATUS(attributeAffects(Attribute::roughnessX, Attribute::output));
-	CHECK_MSTATUS(attributeAffects(Attribute::roughnessY, Attribute::output));
-	CHECK_MSTATUS(attributeAffects(Attribute::rotation, Attribute::output));
 
 	return MS::kSuccess;
 }
@@ -241,7 +216,6 @@ frw::Shader FireMaya::Material::GetShader(Scope& scope)
 		{ kRefract, frw::ShaderTypeRefraction },
 		{ kTransparent, frw::ShaderTypeTransparent },
 		{ kEmissive, frw::ShaderTypeEmissive },
-		{ kWard, frw::ShaderTypeWard },
 		{ kOrenNayar, frw::ShaderTypeOrenNayer },
 		{ kDiffuseRefraction, frw::ShaderTypeDiffuseRefraction },
 		{ kPassThrough, frw::ShaderTypeFlatColor }
@@ -265,9 +239,6 @@ frw::Shader FireMaya::Material::GetShader(Scope& scope)
 		{ Attribute::color, RPR_MATERIAL_INPUT_COLOR },
 		{ Attribute::normalMap, RPR_MATERIAL_INPUT_NORMAL },
 		{ Attribute::roughness, RPR_MATERIAL_INPUT_ROUGHNESS },
-		{ Attribute::roughnessX, RPR_MATERIAL_INPUT_ROUGHNESS_X },
-		{ Attribute::roughnessY, RPR_MATERIAL_INPUT_ROUGHNESS_Y },
-		{ Attribute::rotation, RPR_MATERIAL_INPUT_ROTATION },
 		{ Attribute::refractiveIndex, RPR_MATERIAL_INPUT_IOR }
 	};
 

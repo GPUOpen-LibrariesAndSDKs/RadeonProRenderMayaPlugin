@@ -128,6 +128,16 @@ namespace
 
 		MObject viewportDenoiseUpscaleEnabled;
 
+		// Air Volume
+		MObject fogEnabled;
+		MObject fogColor;
+		MObject fogDistance;
+		MObject fogHeight;
+		MObject airVolumeEnabled;
+		MObject airVolumeDensity;
+		MObject airVolumeColor;
+		MObject airVolumeClamp;
+
 		// image saving
 		MObject renderaGlobalsExrMultilayerEnabled;
 
@@ -158,6 +168,10 @@ namespace
 
 		// Deep EXR
 		MObject deepEXRMergeZThreshold;
+
+		// Cryptomatte
+		MObject cryptomatteExtendedMode;
+		MObject cryptomatteSplitIndirect;
 	}
 
     struct RenderingDeviceAttributes
@@ -303,6 +317,7 @@ MStatus FireRenderGlobals::initialize()
 	createCompletionCriteriaAttributes();
 	createTileRenderAttributes();
 	createContourEffectAttributes();
+	createCryptomatteAttributes();
 
 	Attribute::textureCompression = nAttr.create("textureCompression", "texC", MFnNumericData::kBoolean, false, &status);
 	MAKE_INPUT(nAttr);
@@ -482,13 +497,18 @@ MStatus FireRenderGlobals::initialize()
 	addRenderQualityModes(eAttr);
 	MAKE_INPUT_CONST(eAttr);
 
-	ViewportRenderAttributes::renderQuality = eAttr.create("renderQualityViewport", "rqv", (short) RenderQuality::RenderQualityFull, &status);
-	addRenderQualityModes(eAttr);
+	ViewportRenderAttributes::renderQuality = eAttr.create("renderQualityViewport", "rqv", (short) RenderQuality::RenderQualityNorthStar, &status);
+#ifdef WIN32
+	eAttr.addField("HybridPro", (short)RenderQuality::RenderQualityFull); 
+	eAttr.addField("High", (short)RenderQuality::RenderQualityHigh);
+	eAttr.addField("Medium", (short)RenderQuality::RenderQualityMedium);
+	eAttr.addField("Low", (short)RenderQuality::RenderQualityLow);
+#endif
+	eAttr.addField("NorthStar", (short)RenderQuality::RenderQualityNorthStar);
 	MAKE_INPUT_CONST(eAttr);
 
-	Attribute::tahoeVersion = eAttr.create("tahoeVersion", "tahv", TahoePluginVersion::RPR2, &status);
-	eAttr.addField("RPR 1 (Legacy)", TahoePluginVersion::RPR1);
-	eAttr.addField("RPR 2", TahoePluginVersion::RPR2);
+	Attribute::tahoeVersion = eAttr.create("renderVersion", "tahv", 0, &status);
+	eAttr.addField("North Star", 0);
 	MAKE_INPUT_CONST(eAttr);
 	CHECK_MSTATUS(addAttribute(Attribute::tahoeVersion));
 
@@ -578,6 +598,8 @@ MStatus FireRenderGlobals::initialize()
 
 	createDenoiserAttributes();
 
+	createAirVolumeAttributes();
+
 	// create legacy attributes to avoid errors in mel while opening old scenes
 	createLegacyAttributes();
 
@@ -622,6 +644,21 @@ void FireRenderGlobals::createTileRenderAttributes()
 	nAttr.setSoftMax(tileDefaultSizeMax);
 
 	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::tileRenderY));
+}
+
+void FireRenderGlobals::createCryptomatteAttributes()
+{
+	MFnNumericAttribute nAttr;
+	MStatus status;
+
+	Attribute::cryptomatteExtendedMode = nAttr.create("cryptomatteExtendedMode", "crmem", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+
+	Attribute::cryptomatteSplitIndirect = nAttr.create("cryptomatteSplitIndirect", "crsin", MFnNumericData::kBoolean, 0, &status);
+	MAKE_INPUT(nAttr);
+
+	CHECK_MSTATUS(addAttribute(Attribute::cryptomatteExtendedMode));
+	CHECK_MSTATUS(addAttribute(Attribute::cryptomatteSplitIndirect));
 }
 
 void FireRenderGlobals::createContourEffectAttributes()
@@ -937,6 +974,56 @@ void FireRenderGlobals::setupRenderDevices()
 			}
 		}
 	}
+}
+
+void FireRenderGlobals::createAirVolumeAttributes()
+{
+	MStatus status; 
+	MFnNumericAttribute nAttr;
+
+	Attribute::airVolumeEnabled = nAttr.create("airVolumeEnabled", "ave", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setReadable(true);
+	CHECK_MSTATUS(addAttribute(Attribute::airVolumeEnabled));
+
+	Attribute::fogEnabled = nAttr.create("fogEnabled", "fge", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setReadable(true);
+	CHECK_MSTATUS(addAttribute(Attribute::fogEnabled));
+
+	Attribute::fogColor = nAttr.createColor("fogColor", "foc", &status);
+	nAttr.setDefault(1.0, 1.0, 1.0);
+	MAKE_INPUT(nAttr);
+	nAttr.setReadable(true);
+	CHECK_MSTATUS(addAttribute(Attribute::fogColor));
+
+	Attribute::fogDistance = nAttr.create("fogDistance", "fod", MFnNumericData::kFloat, 5000, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setMax(10000);
+	CHECK_MSTATUS(addAttribute(Attribute::fogDistance));
+
+	Attribute::fogHeight = nAttr.create("fogHeight", "foh", MFnNumericData::kFloat, 1.5f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0f);
+	nAttr.setMax(10.0f);
+	CHECK_MSTATUS(addAttribute(Attribute::fogHeight));
+
+	Attribute::airVolumeDensity = nAttr.create("airVolumeDensity", "avd", MFnNumericData::kFloat, 0.8f, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0.0f);
+	nAttr.setMax(1.0f);
+	CHECK_MSTATUS(addAttribute(Attribute::airVolumeDensity));
+
+	Attribute::airVolumeColor = nAttr.createColor("airVolumeColor", "avc", &status);
+	nAttr.setDefault(1.0, 1.0, 1.0);
+	MAKE_INPUT(nAttr);
+	nAttr.setReadable(true);
+	CHECK_MSTATUS(addAttribute(Attribute::airVolumeColor));
+
+	Attribute::airVolumeClamp = nAttr.create("airVolumeClamp", "avp", MFnNumericData::kFloat, 0.1f, &status);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(Attribute::airVolumeClamp));
 }
 
 void FireRenderGlobals::createDenoiserAttributes()
