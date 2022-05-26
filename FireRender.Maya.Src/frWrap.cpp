@@ -94,7 +94,6 @@ namespace frw
 			NODE_ENTRY(ShaderTypeMicrofacetRefraction),
 			NODE_ENTRY(ShaderTypeTransparent),
 			NODE_ENTRY(ShaderTypeEmissive),
-			NODE_ENTRY(ShaderTypeWard),
 			NODE_ENTRY(ShaderTypeBlend),
 			NODE_ENTRY(ShaderTypeOrenNayer),
 			NODE_ENTRY(ShaderTypeDiffuseRefraction),

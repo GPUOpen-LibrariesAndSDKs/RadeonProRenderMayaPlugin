@@ -100,7 +100,6 @@ FireRenderContext::FireRenderContext() :
 	m_progress(0),
 	m_interactive(false),
 	m_camera(this, MDagPath()),
-	m_glInteropActive(false),
 	m_globalsChanged(false),
 	m_renderLayersChanged(false),
 	m_cameraDirty(true),
@@ -146,7 +145,7 @@ int FireRenderContext::initializeContext()
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags(m_RenderType);
 
 	rpr_int res;
-	createContextEtc(createFlags, true, false, &res);
+	createContextEtc(createFlags, true, &res);
 
 	return res;
 }
@@ -181,6 +180,106 @@ void FireRenderContext::setResolution(unsigned int w, unsigned int h, bool rende
 	for (int i = 0; i < MaxAOV; ++i)
 	{
 		initBuffersForAOV(context, i, glTexture);
+	}
+}
+
+MString GetModelPath(); // forward declaration
+
+bool FireRenderContext::TryCreateTonemapImageFilters()
+{
+	if (!IsTonemappingEnabled())
+		return false;
+
+	if (m_pixelBuffers.size() == 0)
+		return false;
+
+	std::uint32_t width = m_useRegion ? (uint32_t)m_region.getWidth() : (uint32_t)m_pixelBuffers[RPR_AOV_COLOR].width();
+	std::uint32_t height = m_useRegion ? (uint32_t)m_region.getHeight() : (uint32_t)m_pixelBuffers[RPR_AOV_COLOR].height();
+	size_t rifImageSize = sizeof(RV_PIXEL) * width * height;
+
+	try
+	{
+		MString mlModelsFolder = GetModelPath();
+
+		m_tonemap = std::shared_ptr<ImageFilter>(new ImageFilter(
+			context(),
+			width,
+			height,
+			mlModelsFolder.asChar()
+		));
+
+		void* pBuffer = PixelBuffers()[RPR_AOV_COLOR].data();
+
+		switch (m_globals.toneMappingType)
+		{
+		case 1:
+		{
+			m_tonemap->CreateFilter(RifFilterType::LinearTonemap);
+			m_tonemap->AddInput(RifColor, PixelBuffers()[RPR_AOV_COLOR].data(), rifImageSize, 0.0f);
+			RifParam p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingLinearScale };
+			m_tonemap->AddParam("key", p);
+			break;
+		}
+		case 2:
+		{
+			m_tonemap->CreateFilter(RifFilterType::PhotoLinearTonemap);
+			m_tonemap->AddInput(RifColor, PixelBuffers()[RPR_AOV_COLOR].data(), rifImageSize, 0.0f);
+			RifParam p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingPhotolinearSensitivity };
+			m_tonemap->AddParam("sensitivity", p);
+			p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingPhotolinearFstop };
+			m_tonemap->AddParam("fstop", p);
+			p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingPhotolinearExposure };
+			m_tonemap->AddParam("exposureTime", p);
+			p = { RifParamType::RifFloat, (rif_float)2.2f };
+			m_tonemap->AddParam("gamma", p);
+			break;
+		}
+		case 3:
+		{
+			m_tonemap->CreateFilter(RifFilterType::AutoLinearTonemap);
+			m_tonemap->AddInput(RifColor, PixelBuffers()[RPR_AOV_COLOR].data(), rifImageSize, 0.0f);
+			RifParam p = { RifParamType::RifFloat, (rif_float)2.2f };
+			m_tonemap->AddParam("gamma", p);
+			break;
+		}
+		case 4:
+		{
+			m_tonemap->CreateFilter(RifFilterType::MaxWhiteTonemap);
+			m_tonemap->AddInput(RifColor, PixelBuffers()[RPR_AOV_COLOR].data(), rifImageSize, 0.0f);
+			break;
+		}
+		case 5:
+		{
+			m_tonemap->CreateFilter(RifFilterType::ReinhardTonemap);
+			m_tonemap->AddInput(RifColor, PixelBuffers()[RPR_AOV_COLOR].data(), rifImageSize, 0.0f);
+			RifParam p = { RifParamType::RifFloat, (rif_float)2.2f };
+			m_tonemap->AddParam("gamma", p);
+			p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingReinhard02Prescale };
+			m_tonemap->AddParam("preScale", p);
+			p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingReinhard02Postscale };
+			m_tonemap->AddParam("postScale", p);
+			p = { RifParamType::RifFloat, (rif_float)m_globals.toneMappingReinhard02Burn };
+			m_tonemap->AddParam("burn", p);
+			break;
+		}
+		case 6:
+		{
+			return false;
+		}
+
+		default:
+			assert(false);
+		}
+
+		m_tonemap->AttachFilter();
+		return true;
+	}
+	catch (std::exception& e)
+	{
+		m_denoiserFilter.reset();
+		ErrorPrint(e.what());
+		MGlobal::displayError("RPR failed to setup tonemapper, turning it off.");
+		return false;
 	}
 }
 
@@ -227,10 +326,10 @@ bool aovExists(int index)
 	if (index <= RPR_AOV_CAMERA_NORMAL)
 		return true;
 
-	if ((index >= RPR_AOV_CRYPTOMATTE_MAT0) && (index <= RPR_AOV_CRYPTOMATTE_MAT2))
+	if ((index >= RPR_AOV_CRYPTOMATTE_MAT0) && (index <= RPR_AOV_CRYPTOMATTE_MAT5))
 		return true;
 
-	if ((index >= RPR_AOV_CRYPTOMATTE_OBJ0) && (index <= RPR_AOV_CRYPTOMATTE_OBJ2))
+	if ((index >= RPR_AOV_CRYPTOMATTE_OBJ0) && (index <= RPR_AOV_CRYPTOMATTE_OBJ5))
 		return true;
 
 	if (index == RPR_AOV_DEEP_COLOR)
@@ -272,17 +371,7 @@ void FireRenderContext::initBuffersForAOV(frw::Context& context, int index, rpr_
 
 		if (createResolveFB)
 		{
-			// Create an OpenGL interop resolved frame buffer if
-			// required, otherwise, create a standard frame buffer.
-			if (m_glInteropActive && glTexture)
-			{
-				m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, glTexture);
-			}
-			else
-			{
-				m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
-			}
-
+			m.framebufferAOV_resolved[index] = frw::FrameBuffer(context, m_width, m_height, fmt);
 			m.framebufferAOV_resolved[index].Clear();
 		}
 	}
@@ -375,32 +464,13 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 		bool avoidMaterialSystemDeletion_workaround = isViewport && (createFlags & RPR_CREATION_FLAGS_ENABLE_CPU);
 
 		rpr_int res;
-		if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, glViewport, &res, false))
+		if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, &res, false))
 		{
-			// Failed to create context
-			if (glViewport)
-			{
-				// If we attempted to create gl interop context, try again without interop
-				if (!createContextEtc(createFlags, !avoidMaterialSystemDeletion_workaround, false))
-				{
-					// Failed again, aborting
-					MGlobal::displayError("Failed to create Radeon ProRender context in interop and non-interop modes. Aborting.");
-					return false;
-				}
-				else
-				{
-					// Success, display a message and continue
-					MGlobal::displayWarning("Unable to create Radeon ProRender context in interop mode. Falling back to non-interop mode.");
-				}
-			}
-			else
-			{
-				MGlobal::displayError("Aborting switching to Radeon ProRender.");
-				MString msg;
-				FireRenderError error(res, msg, true);
+			MGlobal::displayError("Aborting switching to Radeon ProRender.");
+			MString msg;
+			FireRenderError error(res, msg, true);
 
-				return false;
-			}
+			return false;
 		}
 
 		GetScope().CreateScene();
@@ -409,6 +479,8 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 		setupContextPostSceneCreation(m_globals);
 
 		setMotionBlurParameters(m_globals);
+		setupContextAirVolume(m_globals);
+		setupContextCryptomatteSettings(m_globals);
 
 		// Update render selected objects only flag
 		int isRenderSelectedOnly = 0;
@@ -944,15 +1016,16 @@ void FireRenderContext::cleanScene()
 			rprContextDetachPostEffect(context(), simple_tonemap.Handle());
 			simple_tonemap.Reset();
 		}
-		if (tonemap)
+		if (m_tonemap)
 		{
-			rprContextDetachPostEffect(context(), tonemap.Handle());
-			tonemap.Reset();
+			//rprContextDetachPostEffect(context(), m_tonemap.Handle());
+			//m_tonemap.Reset();
+			m_tonemap.reset();
 		}
-		if (normalization)
+		if (m_normalization)
 		{
-			rprContextDetachPostEffect(context(), normalization.Handle());
-			normalization.Reset();
+			rprContextDetachPostEffect(context(), m_normalization.Handle());
+			m_normalization.Reset();
 		}
 		if (gamma_correction)
 		{
@@ -983,7 +1056,7 @@ void FireRenderContext::initSwatchScene()
 	auto createFlags = FireMaya::Options::GetContextDeviceFlags();
 
 	rpr_int res;
-	if (!createContextEtc(createFlags, true, false, &res))
+	if (!createContextEtc(createFlags, true, &res))
 	{
 		MString msg;
 		FireRenderError errorToShow(res, msg, true);
@@ -997,10 +1070,13 @@ void FireRenderContext::initSwatchScene()
 	mesh->setVisibility(true);
 	m_sceneObjects["mesh"] = std::shared_ptr<FireRenderObject>(mesh);
 
-	if (mesh && mesh->Elements().size() > 0)
+	if (mesh)
 	{
 		if (auto shader = GetShader(MObject()))
-			mesh->Element(0).shape.SetShader(shader);
+		{
+			for (auto& element : mesh->Elements())
+				element.shape.SetShader(shader);
+		}
 	}
 
 	m_camera.buildSwatchCamera();
@@ -1014,8 +1090,6 @@ void FireRenderContext::initSwatchScene()
 	setupContextPostSceneCreation(m_globals);
 
 	UpdateCompletionCriteriaForSwatch();
-
-	SetupPreviewMode();
 }
 
 void FireRenderContext::UpdateCompletionCriteriaForSwatch()
@@ -1316,26 +1390,13 @@ void FireRenderContext::BuildLateinitObjects()
 	m_LateinitMASHInstancers.clear();
 }
 
-bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete, bool glViewport, int* pOutRes, bool createScene /*= true*/)
+bool FireRenderContext::createContextEtc(rpr_creation_flags creation_flags, bool destroyMaterialSystemOnDelete, int* pOutRes, bool createScene /*= true*/)
 {
-	return FireRenderThread::RunOnceAndWait<bool>([this, &creation_flags, destroyMaterialSystemOnDelete, glViewport, pOutRes, createScene]()
+	return FireRenderThread::RunOnceAndWait<bool>([this, &creation_flags, destroyMaterialSystemOnDelete, pOutRes, createScene]()
 	{
 		RPR_THREAD_ONLY;
 
 		DebugPrint("FireRenderContext::createContextEtc(%d)", creation_flags);
-
-		// Use OpenGL interop for OpenGL based viewports if required.
-		if (glViewport)
-		{
-			// GL interop is active if enabled and not using CPU rendering.
-			bool useCPU = (creation_flags & RPR_CREATION_FLAGS_ENABLE_CPU) != 0;
-			m_glInteropActive = !useCPU && IsGLInteropEnabled();
-
-			if (m_glInteropActive)
-				creation_flags |= RPR_CREATION_FLAGS_ENABLE_GL_INTEROP;
-		}
-		else
-			m_glInteropActive = false;
 
 		rpr_context handle;
 		bool contextCreated = createContext(creation_flags, handle, pOutRes);
@@ -1444,45 +1505,21 @@ bool FireRenderContext::ConsiderShadowReflectionCatcherOverride(const ReadFrameB
 
 	std::lock_guard<std::mutex> lock(m_rifLock);
 
-	TahoePluginVersion version = GetTahoeVersionToUse();
-	bool isRPR20 = version == TahoePluginVersion::RPR2;
-
 	if (isShadowCather && isReflectionCatcher)
 	{
-		if (isRPR20)
-		{
-			rifReflectionShadowCatcherOutput(params);
-		}
-		else
-		{
-			compositeReflectionShadowCatcherOutput(params);
-		}
+		rifReflectionShadowCatcherOutput(params);
 		return true;
 	}
 
 	if (isShadowCather)
 	{
-		if (isRPR20)
-		{
-			rifShadowCatcherOutput(params);
-		}
-		else
-		{
-			compositeShadowCatcherOutput(params);
-		}
+		rifShadowCatcherOutput(params);
 		return true;
 	}
 
 	if (isReflectionCatcher)
 	{
-		if (isRPR20)
-		{
-			rifReflectionCatcherOutput(params);
-		}
-		else
-		{
-			compositeReflectionCatcherOutput(params);
-		}
+		rifReflectionCatcherOutput(params);
 		return true;
 	}
 
@@ -1529,9 +1566,15 @@ void FireRenderContext::DebugDumpAOV(int aov, char* pathToFile /*= nullptr*/) co
 		,{RPR_AOV_CRYPTOMATTE_MAT0, "RPR_AOV_CRYPTOMATTE_MAT0" }
 		,{RPR_AOV_CRYPTOMATTE_MAT1, "RPR_AOV_CRYPTOMATTE_MAT1" }
 		,{RPR_AOV_CRYPTOMATTE_MAT2, "RPR_AOV_CRYPTOMATTE_MAT2" }
+		,{RPR_AOV_CRYPTOMATTE_MAT3, "RPR_AOV_CRYPTOMATTE_MAT3" }
+		,{RPR_AOV_CRYPTOMATTE_MAT4, "RPR_AOV_CRYPTOMATTE_MAT4" }
+		,{RPR_AOV_CRYPTOMATTE_MAT5, "RPR_AOV_CRYPTOMATTE_MAT5" }
 		,{RPR_AOV_CRYPTOMATTE_OBJ0, "RPR_AOV_CRYPTOMATTE_OBJ0" }
 		,{RPR_AOV_CRYPTOMATTE_OBJ1, "RPR_AOV_CRYPTOMATTE_OBJ1" }
 		,{RPR_AOV_CRYPTOMATTE_OBJ2, "RPR_AOV_CRYPTOMATTE_OBJ2" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ3, "RPR_AOV_CRYPTOMATTE_OBJ3" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ4, "RPR_AOV_CRYPTOMATTE_OBJ4" }
+		,{RPR_AOV_CRYPTOMATTE_OBJ5, "RPR_AOV_CRYPTOMATTE_OBJ5" }
 		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
 	};
 
@@ -1555,6 +1598,26 @@ void FireRenderContext::DebugDumpAOV(int aov, char* pathToFile /*= nullptr*/) co
 	ssFileNameNOTResolved << aovNames[aov] << "_NOTresolved.png";
 	rprFrameBufferSaveToFile(m.framebufferAOV[aov].Handle(), ssFileNameNOTResolved.str().c_str());
 #endif
+}
+
+std::vector<float> FireRenderContext::GetTonemappedData(bool& result)
+{
+	try
+	{
+		m_tonemap->Run();
+		std::vector<float> vecData = m_tonemap->GetData();
+		result = true;
+		return vecData;
+	}
+	catch (std::exception& e)
+	{
+		m_denoiserFilter.reset();
+		ErrorPrint(e.what());
+		MGlobal::displayError("RPR failed to execute denoiser, turning it off.");
+
+		result = false;
+		return std::vector<float>();
+	}
 }
 
 std::vector<float> FireRenderContext::GetDenoisedData(bool& result)
@@ -2074,7 +2137,9 @@ void FireRenderContext::updateFromGlobals(bool applyLock)
 
 	m_globals.readFromCurrentScene();
 	setupContextContourMode(m_globals, createFlags);
+	setupContextAirVolume(m_globals);
 	setupContextPostSceneCreation(m_globals);
+	setupContextCryptomatteSettings(m_globals);
 
 	updateLimitsFromGlobalData(m_globals);
 	updateMotionBlurParameters(m_globals);
@@ -2141,6 +2206,10 @@ void FireRenderContext::globalsChangedCallback(MNodeMessage::AttributeMessage ms
 				restartRender = true;
 			}
 			else if (FireRenderGlobalsData::IsMotionBlur(plug.name()))
+			{
+				restartRender = true;
+			}
+			else if (FireRenderGlobalsData::IsAirVolume(plug.name()))
 			{
 				restartRender = true;
 			}
@@ -2239,11 +2308,6 @@ void FireRenderContext::setMotionBlurParameters(const FireRenderGlobalsData& glo
 bool FireRenderContext::isInteractive() const
 {
 	return (m_RenderType == RenderType::IPR) || (m_RenderType == RenderType::ViewportRender);
-}
-
-bool FireRenderContext::isGLInteropActive() const
-{
-	return m_glInteropActive;
 }
 
 void FireRenderContext::renderLayerManagerCallback(MNodeMessage::AttributeMessage msg, MPlug & plug, MPlug & otherPlug, void * clientData)
@@ -2518,12 +2582,15 @@ void FireRenderContext::setDirtyObject(FireRenderObject* obj)
 	// We should skip inactive cameras, because their changes shouldn't affect result image
 	// If ignore this step - image in IPR would redraw when moving different camera in viewport
 	// That image redrawing in IPR causes black square artifats
-	MItDag itDag;
-	MStatus status = itDag.reset(obj->Object(), MItDag::kDepthFirst, MFn::kCamera);
-	CHECK_MSTATUS(status);
-	for (; !itDag.isDone(); itDag.next())
+	if (m_camera.DagPath().transform() != obj->Object())
 	{
-		return;
+		MItDag itDag;
+		MStatus status = itDag.reset(obj->Object(), MItDag::kDepthFirst, MFn::kCamera);
+		CHECK_MSTATUS(status);
+		for (; !itDag.isDone(); itDag.next())
+		{
+			return;
+		}
 	}
 
 	AutoMutexLock lock(m_dirtyMutex);
@@ -2569,7 +2636,10 @@ void FireRenderContext::TriggerProgressCallback(const ContextWorkProgressData& s
 {
 	if (m_WorkProgressCallback)
 	{
-		m_WorkProgressCallback(syncProgressData);
+		FireRenderThread::RunProcOnMainThread([this, syncProgressData]()
+		{
+			m_WorkProgressCallback(syncProgressData);
+		});
 	}
 }
 
@@ -2685,7 +2755,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 				continue;
 			}
 
-			if (ptr->IsMashInstancer())
+			if (ptr->ShouldForceReload())
 			{
 				meshesToReload.emplace_back() = ptr;
 
@@ -2761,8 +2831,6 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		UpdateDefaultLights();
 		setCameraAttributeChanged(true);
 	}
-
-	SetupPreviewMode();
 
 	if (cancelled())
 		return false;
@@ -3034,7 +3102,7 @@ frw::FrameBuffer GetOutFrameBuffer(const FireRenderContext::ReadFrameBufferReque
 // -----------------------------------------------------------------------------
 void FireRenderContext::rifShadowCatcherOutput(const ReadFrameBufferRequestParams& params)
 {
-	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
+	const bool forceCPUContext = true;
 
 	const rpr_framebuffer colorFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
 	const rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
@@ -3100,7 +3168,7 @@ void FireRenderContext::rifShadowCatcherOutput(const ReadFrameBufferRequestParam
 
 void FireRenderContext::rifReflectionCatcherOutput(const ReadFrameBufferRequestParams& params)
 {
-	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
+	bool forceCPUContext = true;
 
 	const rpr_framebuffer colorFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
 	const rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
@@ -3151,7 +3219,7 @@ void FireRenderContext::rifReflectionCatcherOutput(const ReadFrameBufferRequestP
 
 void FireRenderContext::rifReflectionShadowCatcherOutput(const ReadFrameBufferRequestParams& params)
 {
-	bool forceCPUContext = GetTahoeVersionToUse() == TahoePluginVersion::RPR2;
+	bool forceCPUContext = true;
 	
 	const rpr_framebuffer colorFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_COLOR);
 	const rpr_framebuffer opacityFrameBuffer = frameBufferAOV_Resolved(RPR_AOV_OPACITY);
@@ -3337,6 +3405,11 @@ void FireRenderContext::SetRenderType(RenderType renderType)
 	}
 }
 
+bool FireRenderContext::IsTonemappingEnabled(void) const
+{
+	return (m_globals.toneMappingType != 0) && (!m_globals.contourIsEnabled);
+}
+
 bool FireRenderContext::IsDenoiserEnabled(void) const 
 {
 	if (!IsDenoiserSupported())
@@ -3376,7 +3449,7 @@ frw::Shader FireRenderContext::GetShader(MObject ob, MObject shadingEngine, cons
 
 		MPlug materialIdPlug = sgDependecyNode.findPlug("rmi", false);
 
-		if (!materialIdPlug.isNull())
+		if (IsMaterialNodeIDSupported() && !materialIdPlug.isNull())
 		{
 			shader.SetMaterialId(materialIdPlug.asInt());
 		}
@@ -3468,6 +3541,61 @@ std::vector<float> FireRenderContext::DenoiseAndUpscaleForViewport()
 	}
 
 	return vecData;
+}
+
+bool FireRenderContext::TonemapIntoRAM()
+{
+	// prepare color RAM buffer
+	auto it = m_pixelBuffers.find(RPR_AOV_COLOR);
+	assert(it == m_pixelBuffers.end()); // pixel buffers should be empty at this point
+	auto ret = m_pixelBuffers.insert(std::pair<unsigned int, PixelBuffer>(RPR_AOV_COLOR, PixelBuffer()));
+	ret.first->second.resize(m_width, m_height);
+
+	// setup params
+	RenderRegion tempRegion;
+	if (useRegion())
+	{
+		tempRegion = m_region;
+	}
+	else
+	{
+		tempRegion = RenderRegion(m_width, m_height);
+	}
+	ReadFrameBufferRequestParams params(tempRegion);
+	params.pixels = m_pixelBuffers[RPR_AOV_COLOR].get();
+	params.aov = RPR_AOV_COLOR;
+	params.width = m_width;
+	params.height = m_height;
+	params.mergeOpacity = false;
+	params.mergeShadowCatcher = true;
+	params.shadowColor = m_shadowColor;
+	params.bgColor = m_bgColor;
+	params.bgWeight = m_bgWeight;
+	params.shadowTransp = m_shadowTransparency;
+	params.bgTransparency = m_backgroundTransparency;
+	params.shadowWeight = m_shadowWeight;
+
+	// read frame buffer
+	readFrameBuffer(params);
+
+	// create and run tonemap filters
+	std::lock_guard<std::mutex> lock(m_rifLock);
+	bool isTonemapperInitialized = TryCreateTonemapImageFilters(); 
+
+	if (!isTonemapperInitialized)
+		return false;
+
+	// run tonemaper on cached data
+	std::vector<float> vecData;
+	bool tonemapResult = false;
+	vecData = GetTonemappedData(tonemapResult);
+	assert(tonemapResult);
+
+	// save result in RAM buffer
+	RV_PIXEL* data = (RV_PIXEL*)vecData.data();
+	m_pixelBuffers[RPR_AOV_COLOR].overwrite(data, tempRegion, params.height, params.width, RPR_AOV_COLOR);
+
+	return true;
 }
 
 std::vector<float> FireRenderContext::DenoiseIntoRAM()
@@ -3562,6 +3690,40 @@ void FireRenderContext::ProcessMergeOpactityFromRAM(RV_PIXEL* data, int bufferWi
 	CombineOpacity(RPR_AOV_COLOR, data, tempRegion.getArea());
 }
 
+void FireRenderContext::ProcessTonemap(
+	FireRenderAOV& renderViewAOV,
+	FireRenderAOV& colorAOV,
+	unsigned int width,
+	unsigned int height,
+	const RenderRegion& region,
+	std::function<void(RV_PIXEL* pData)> callbackFunc)
+{
+	// run tonemapper
+	bool success = TonemapIntoRAM();
+	if (!success)
+		return;
+
+	// output tonemapper result
+	RV_PIXEL* data = nullptr;
+	auto it = PixelBuffers().find(RPR_AOV_COLOR);
+	bool hasAov = it != PixelBuffers().end();
+	if (!hasAov)
+		return;
+
+	data = (RV_PIXEL*)it->second.data();
+
+	// save result
+	bool isOutputAOVColor = renderViewAOV.id == RPR_AOV_COLOR;
+	FireRenderAOV& outAOV = isOutputAOVColor ? renderViewAOV : colorAOV;
+	outAOV.pixels.overwrite(data, region, height, width, RPR_AOV_COLOR);
+
+	// callback
+	if (isOutputAOVColor)
+	{
+		callbackFunc(data);
+	}
+}
+
 void FireRenderContext::ProcessDenoise(
 	FireRenderAOV& renderViewAOV, 
 	FireRenderAOV& colorAOV,
@@ -3606,12 +3768,19 @@ void FireRenderContext::ProcessDenoise(
 	}
 }
 
-void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestParams& params)
+void FireRenderContext::ResetRAMBuffers()
 {
 	m_pixelBuffers.clear();
+}
 
+void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestParams& params)
+{
 	ForEachFramebuffer([&](int aovId)
 	{
+		auto it = m_pixelBuffers.find(aovId);
+		if (it != m_pixelBuffers.end())
+			return;
+
 		auto ret = m_pixelBuffers.insert(std::pair<unsigned int, PixelBuffer>(aovId, PixelBuffer()));
 		ret.first->second.resize(m_width, m_height);
 
@@ -3642,3 +3811,41 @@ void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestPa
 	});
 }
 
+frw::Light FireRenderContext::GetRprLightFromNode(const MObject& node)
+{
+	MUuid uuidPointer = MFnDependencyNode(node).uuid();
+	MString uuidString = uuidPointer.asString();
+	const char* uuid = uuidString.asChar();
+
+	if (m_sceneObjects.find(uuid) == m_sceneObjects.end())
+	{
+		MGlobal::displayError("Unable to find linked light!");
+		return frw::Light();
+	}
+
+	if (GetScope().GetCurrentlyParsedMesh() == nullptr)
+	{
+		MGlobal::displayError("'GetRprLightFromNode' method called outside of mesh parsing scope");
+		return frw::Light();
+	}
+
+	FireRenderObject* lightObjectPointer = m_sceneObjects[uuid].get();
+
+	FireRenderLight* fireRenderLight = dynamic_cast<FireRenderLight*>(lightObjectPointer);
+	FireRenderEnvLight* envLight = dynamic_cast<FireRenderEnvLight*>(lightObjectPointer);
+
+	if (fireRenderLight && !fireRenderLight->GetFrLight().isAreaLight)
+	{
+		fireRenderLight->addLinkedMesh(GetScope().GetCurrentlyParsedMesh());
+		return fireRenderLight->GetFrLight().light;
+	}
+	else if (envLight)
+	{
+		envLight->addLinkedMesh(GetScope().GetCurrentlyParsedMesh());
+		return envLight->getLight();
+	}
+
+	MGlobal::displayWarning("light with uuid " + MString(lightObjectPointer->uuid().c_str()) + " is not support linking");
+	return frw::Light();
+	
+}

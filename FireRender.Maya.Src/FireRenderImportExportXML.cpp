@@ -185,7 +185,7 @@ MStatus FireRenderXmlExportCmd::doIt(const MArgList & args)
 		}
 	}
 
-	TahoeContext context;
+	NorthStarContext context;
 	context.setCallbackCreationDisabled(true);
 
 	rpr_int res = context.initializeContext();
@@ -1120,9 +1120,6 @@ MObject FireRenderXmlImportCmd::createShadingNode(MString materialName, std::map
 			break;
 		case frw::ShaderTypeEmissive:
 			matType = FireMaya::Material::kEmissive;
-			break;
-		case frw::ShaderTypeWard:
-			matType = FireMaya::Material::kWard;
 			break;
 		case frw::ShaderTypeOrenNayer:
 			matType = FireMaya::Material::kOrenNayar;

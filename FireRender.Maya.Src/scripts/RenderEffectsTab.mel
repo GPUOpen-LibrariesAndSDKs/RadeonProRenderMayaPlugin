@@ -55,10 +55,20 @@ global proc createRenderEffectsTab()
 	createFireRenderToneMappingFrame fireRenderTonemappingFrame;
 	setParent ..;
 
+	// Atmospheric Volume
+	frameLayout -label "Atmospheric Volume / Fog" -cll true -cl 0 fireRenderAtmosphericVolumeFrame;
+	createFireRenderAtmosphericVolumeFrame("fireRenderAtmosphericVolumeFrame");
+	setParent ..;
+
 	// Contour Render Mode
 	//
 	frameLayout -label "Contour Render Mode" -cll true -cl 0 fireRenderContourFrame;
 	createFireRenderContourFrame("fireRenderContourFrame");
+	setParent ..;
+	
+	// Cryptomatte
+	frameLayout -label "Cryptomatte" -cll true -cl 0 fireRenderCryptomatteFrame;
+	createFireRenderCryptomatteFrame("fireRenderCryptomatteFrame");
 	setParent ..;
 
 	setParent ..;
@@ -70,6 +80,95 @@ global proc createRenderEffectsTab()
 		-af fireRenderEffectsScrollLayout "left" 0
 		-af fireRenderEffectsScrollLayout "right" 0
 		$parentForm;
+}
+
+global proc createFireRenderAtmosphericVolumeFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+
+		setParent $parent;
+
+		columnLayout -adjustableColumn true -cat "left" 10;
+
+		attrControlGrp
+			-label "Enable Atmospheric Volume"
+			-attribute "RadeonProRenderGlobals.airVolumeEnabled"
+			-changeCommand "onUpdateAtmosphericVolume";
+
+		attrControlGrp
+			-label "Air Volume Density"
+			-attribute "RadeonProRenderGlobals.airVolumeDensity"
+			airVolumeDensity;
+
+		attrControlGrp
+			-label "Air Volume Color"
+			-attribute "RadeonProRenderGlobals.airVolumeColor"
+			airVolumeColor;
+
+		attrControlGrp
+			-label "Air Volume Clamp"
+			-attribute "RadeonProRenderGlobals.airVolumeClamp"
+			airVolumeClamp;
+
+		attrControlGrp
+			-label "Enable Fog"
+			-attribute "RadeonProRenderGlobals.fogEnabled"
+			-changeCommand "onUpdateAtmosphericVolume";
+
+		attrControlGrp
+			-label "Fog Color"
+			-attribute "RadeonProRenderGlobals.fogColor"
+			fogColor;
+
+		attrControlGrp
+			-label "Fog Distance"
+			-attribute "RadeonProRenderGlobals.fogDistance"
+			fogDistance;
+
+		attrControlGrp
+			-label "Fog Height"
+			-attribute "RadeonProRenderGlobals.fogHeight"
+			fogHeight;
+
+	setParent ..;
+	setUITemplate -popTemplate;
+
+	onUpdateAtmosphericVolume();
+}
+
+global proc createFireRenderCryptomatteFrame(string $parent)
+{
+	setUITemplate -pushTemplate attributeEditorTemplate;
+	
+	setParent $parent;
+	
+	columnLayout -adjustableColumn true -cat "left" 10;
+	
+	attrControlGrp
+		-label "Extended Mode"
+		-attribute "RadeonProRenderGlobals.cryptomatteExtendedMode"
+		cryptomatteExtendedMode;
+		
+	attrControlGrp
+		-label "Split Indirect"
+		-attribute "RadeonProRenderGlobals.cryptomatteSplitIndirect"
+		cryptomatteSplitIndirect;
+
+	setParent ..;
+	setUITemplate -popTemplate;
+}
+
+global proc onUpdateAtmosphericVolume()
+{
+	$enabledAV = `getAttr RadeonProRenderGlobals.airVolumeEnabled`;
+	$enabledFog = `getAttr RadeonProRenderGlobals.fogEnabled`;
+
+	attrControlGrp -edit -enable $enabledFog fogColor;
+	attrControlGrp -edit -enable $enabledFog fogDistance;
+	attrControlGrp -edit -enable $enabledFog fogHeight;
+	attrControlGrp -edit -enable $enabledAV airVolumeDensity;
+	attrControlGrp -edit -enable $enabledAV airVolumeColor;
+	attrControlGrp -edit -enable $enabledAV airVolumeClamp;
 }
 
 global proc createFireRenderContourFrame(string $parent)

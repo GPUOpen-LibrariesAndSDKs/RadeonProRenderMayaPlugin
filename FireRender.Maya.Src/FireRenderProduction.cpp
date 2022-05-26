@@ -899,7 +899,10 @@ bool FireRenderProduction::RunOnViewportThread()
 				
 				m_contextPtr->m_polycountLastRender = 0;
 
+				m_contextPtr->ResetRAMBuffers();
+				TonemapFromAOVs();
 				DenoiseFromAOVs();
+
 				stop();
 				m_rendersCount++;
 
@@ -931,6 +934,24 @@ bool FireRenderProduction::RunOnViewportThread()
 		default:
 			return true;
 	}
+}
+
+void FireRenderProduction::TonemapFromAOVs()
+{
+	if (!m_contextPtr->IsTonemappingEnabled())
+		return;
+
+	FireRenderAOV* pColorAOV = m_aovs->getAOV(RPR_AOV_COLOR);
+	assert(pColorAOV != nullptr);
+
+	m_contextPtr->ProcessTonemap(*m_renderViewAOV, *pColorAOV, m_region.getWidth(), m_region.getHeight(), RenderRegion(0, m_region.right - m_region.left, m_region.top - m_region.bottom, 0), [this](RV_PIXEL* data)
+	{
+		// Update the Maya render view.
+		FireRenderThread::RunProcOnMainThread([this, data]()
+		{
+			RenderViewUpdater::UpdateAndRefreshRegion(data, m_width, m_height, m_region);
+		});
+	});
 }
 
 void FireRenderProduction::DenoiseFromAOVs()

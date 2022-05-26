@@ -461,7 +461,7 @@ frw::Value RampNodeConverter::Convert() const
 			MPlugArray theDestinations;
 			bool haveDestinations = outPlug.destinations(theDestinations, &status);
 			std::vector<MPlug> destinations;
-			DumpMayaArray(destinations, theDestinations);
+			WriteMayaArrayTo(destinations, theDestinations);
 			std::vector<MString> destinationNames;
 			for (auto& tplug : destinations)
 				destinationNames.push_back(tplug.name());

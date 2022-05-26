@@ -26,8 +26,5 @@ namespace FireMaya
 		static MStatus initialize();
 
 		frw::Value GetValue(const Scope& scope) const override;
-
-	private:
-		frw::Value CombineVertexColor(const frw::MaterialSystem& materialSystem) const;
 	};
 }

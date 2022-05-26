@@ -132,13 +132,13 @@ void FireRenderMaterialSwatchRender::processFromBackgroundThread()
 		// consider using a different mesh depending on surface or value type
 		if (auto mesh = swatchInstance.getContext().getRenderObject<FireRenderMesh>("mesh"))
 		{
-			if (mesh->Elements().size())
+			for (auto& element : mesh->Elements())
 			{
-				if (auto shape = mesh->Element(0).shape)
-				{
-					shape.SetShader(m_shader);
-					shape.SetVolumeShader(m_volumeShader);
-				}
+				if (!element.shape)
+					continue;
+				auto& shape = element.shape;
+				shape.SetShader(m_shader);
+				shape.SetVolumeShader(m_volumeShader);
 			}
 		}
 

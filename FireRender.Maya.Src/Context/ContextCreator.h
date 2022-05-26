@@ -16,11 +16,12 @@ limitations under the License.
 class ContextCreator
 {
 public:
-	static FireRenderContextPtr CreateAppropriateContextForRenderQuality(RenderQuality quality);
+	static FireRenderContextPtr CreateAppropriateContextForRenderQuality(RenderQuality quality, RenderType renderType);
 	static FireRenderContextPtr CreateAppropriateContextForRenderType(RenderType renderType);
 
-	static TahoeContextPtr CreateTahoeContext(TahoePluginVersion version);
+	static NorthStarContextPtr CreateNorthStarContext();
 
 private:
 	static FireRenderContextPtr CreateHybridContext();
+	static FireRenderContextPtr CreateHybridProContext();
 };

@@ -1704,7 +1704,7 @@ frw::Shader FireMaya::Scope::ParseShader(MObject node)
 			diffuseShader.SetColor(diffColor);
 
 			///
-			frw::Shader wardShader(materialSystem, frw::ShaderTypeWard);
+			frw::Shader specularShader(materialSystem, frw::ShaderTypeMicrofacetAnisotropicReflection);
 
 			frw::Value roughness = GetValue(shaderNode.findPlug("roughness"));
 			frw::Value fresnel = GetValue(shaderNode.findPlug("fresnelReflectiveIndex"));
@@ -1722,18 +1722,20 @@ frw::Shader FireMaya::Scope::ParseShader(MObject node)
 				mayaSpreadY = 98.0;
 			}
 
-			frw::Value spreadX = materialSystem.ValueMul(roughness, 1.0 - mayaSpreadX / 100.0);
-			frw::Value spreadY = materialSystem.ValueMul(roughness, 1.0 - mayaSpreadY / 100.0);
+			frw::Value anisotropic = materialSystem.ValueSub(mayaSpreadX, mayaSpreadY);
+			anisotropic = materialSystem.ValueDiv(anisotropic, frw::Value(100.0));
+			specularShader.SetValue(RPR_MATERIAL_INPUT_ANISOTROPIC, anisotropic);
 
-			wardShader.SetValue(RPR_MATERIAL_INPUT_COLOR, specularColor);
+			specularShader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS, roughness);
+
+			specularShader.SetValue(RPR_MATERIAL_INPUT_COLOR, specularColor);
+
 			double rads = -1.0 * angle.GetX() * M_PI / 180.0;
 			frw::Value radians = frw::Value(rads, rads, rads);
-			wardShader.SetValue(RPR_MATERIAL_INPUT_ROTATION, radians);
+			specularShader.SetValue(RPR_MATERIAL_INPUT_ROTATION, radians);
+		
 
-			wardShader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS_X, spreadX);
-			wardShader.SetValue(RPR_MATERIAL_INPUT_ROUGHNESS_Y, spreadY);
-
-			result = materialSystem.ShaderBlend(diffuseShader, wardShader, 0.5);
+			result = materialSystem.ShaderBlend(diffuseShader, specularShader, 0.5);
 		} break;
 		case MayaLayeredShader:
 			// TODO

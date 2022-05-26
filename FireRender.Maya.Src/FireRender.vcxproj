@@ -156,6 +156,7 @@
     <ClCompile Include="Context\ContextCreator.cpp" />
     <ClCompile Include="Context\FireRenderContext.cpp" />
     <ClCompile Include="Context\HybridContext.cpp" />
+    <ClCompile Include="Context\HybridProContext.cpp" />
     <ClCompile Include="Context\TahoeContext.cpp" />
     <ClCompile Include="DependencyNode.cpp" />
     <ClCompile Include="EnableSaveIntermediateCmd.cpp" />
@@ -318,6 +319,7 @@
     <ClInclude Include="Context\ContextCreator.h" />
     <ClInclude Include="Context\FireRenderContext.h" />
     <ClInclude Include="Context\HybridContext.h" />
+    <ClInclude Include="Context\HybridProContext.h" />
     <ClInclude Include="Context\TahoeContext.h" />
     <ClInclude Include="DependencyNode.h" />
     <ClInclude Include="EnableSaveIntermediateCmd.h" />
