@@ -311,9 +311,6 @@ void FireMaya::ToonMaterial::postConstructor()
 {
 	ShaderNode::postConstructor();
 
-	// force load shader UI template to use callback functions
-	MGlobal::executeCommand("source AERPRToonMaterialTemplate");
-
 	nodeAddedCallback = MDGMessage::addNodeAddedCallback(onLightAdded, kDefaultNodeType, this);
 	nodeRemovedCallback = MDGMessage::addNodeRemovedCallback(onLightRemoved, kDefaultNodeType, this);
 	nodeRenamedCallback = MNodeMessage::addNameChangedCallback(MObject::kNullObj, onLightRenamed, this);

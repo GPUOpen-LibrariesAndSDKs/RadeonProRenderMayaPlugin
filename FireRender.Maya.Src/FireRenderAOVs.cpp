@@ -130,6 +130,15 @@ FireRenderAOVs::FireRenderAOVs() :
 	AddAOV(RPR_AOV_CRYPTOMATTE_MAT2, "aovCryptoMaterialMat2", "Crypto Material Mat2", "CryptoMaterial02",
 		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
 
+	AddAOV(RPR_AOV_CRYPTOMATTE_MAT3, "aovCryptoMaterialMat3", "Crypto Material Mat3", "CryptoMaterial03",
+		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
+
+	AddAOV(RPR_AOV_CRYPTOMATTE_MAT4, "aovCryptoMaterialMat4", "Crypto Material Mat4", "CryptoMaterial04",
+		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
+
+	AddAOV(RPR_AOV_CRYPTOMATTE_MAT5, "aovCryptoMaterialMat5", "Crypto Material Mat5", "CryptoMaterial05",
+		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
+
 	AddAOV(RPR_AOV_CRYPTOMATTE_OBJ0, "aovCryptoMaterialObj0", "Crypto Material Obj0", "CryptoObject00",
 		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
 
@@ -137,6 +146,15 @@ FireRenderAOVs::FireRenderAOVs() :
 		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
 
 	AddAOV(RPR_AOV_CRYPTOMATTE_OBJ2, "aovCryptoMaterialObj2", "Crypto Material Obj2", "CryptoObject02",
+		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
+
+	AddAOV(RPR_AOV_CRYPTOMATTE_OBJ3, "aovCryptoMaterialObj3", "Crypto Material Obj3", "CryptoObject03",
+		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
+
+	AddAOV(RPR_AOV_CRYPTOMATTE_OBJ4, "aovCryptoMaterialObj4", "Crypto Material Obj4", "CryptoObject04",
+		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
+
+	AddAOV(RPR_AOV_CRYPTOMATTE_OBJ5, "aovCryptoMaterialObj5", "Crypto Material Obj5", "CryptoObject05",
 		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
 
 	AddAOV(RPR_AOV_DEEP_COLOR, "aovDeepColor", "Deep Color", "deep_color",

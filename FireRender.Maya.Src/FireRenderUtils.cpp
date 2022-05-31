@@ -125,7 +125,9 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	contourNormalThreshold(45.0f),
 	contourUVThreshold(45.0f),
 	contourAntialiasing(1.0f),
-	contourIsDebugEnabled(false)
+	contourIsDebugEnabled(false),
+	cryptomatteExtendedMode(false),
+	cryptomatteSplitIndirect(false)
 {
 
 }
@@ -497,6 +499,13 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			deepEXRMergeZThreshold = plug.asFloat();
 
+		plug = frGlobalsNode.findPlug("cryptomatteExtendedMode");
+		if (!plug.isNull())
+			cryptomatteExtendedMode = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("cryptomatteSplitIndirect");
+		if (!plug.isNull())
+			cryptomatteSplitIndirect = plug.asBool();
 
 		aovs.readFromGlobals(frGlobalsNode);
 
