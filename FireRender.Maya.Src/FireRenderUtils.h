@@ -357,6 +357,10 @@ public:
 	//Deep EXR
 	float deepEXRMergeZThreshold;
 
+	// Cryptomatte settings
+	bool cryptomatteExtendedMode;
+	bool cryptomatteSplitIndirect;
+
 private:
 	short getMaxRayDepth(const FireRenderContext& context) const;
 	short getSamples(const FireRenderContext& context) const;

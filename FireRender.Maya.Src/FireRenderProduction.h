@@ -122,6 +122,7 @@ private:
 	void RenderFullFrame(void);
 	void RenderTiles(void);
 	void DenoiseFromAOVs(void);
+	void TonemapFromAOVs(void);
 
 	/** Schedule a render view update. */
 	void scheduleRenderViewUpdate();

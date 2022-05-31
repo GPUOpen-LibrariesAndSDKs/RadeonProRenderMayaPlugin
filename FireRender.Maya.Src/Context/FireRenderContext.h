@@ -203,6 +203,8 @@ public:
 	// Setup denoiser if necessary
 	bool TryCreateDenoiserImageFilters(bool useRAMBufer = false);
 
+	bool TryCreateTonemapImageFilters(void);
+
 	// Set the frame buffer resolution
 	void setResolution(unsigned int w, unsigned int h, bool renderView, rpr_GLuint* glTexture = nullptr);
 
@@ -297,8 +299,11 @@ public:
 	// writes input aov frame bufer on disk (both resolved and not resolved)
 	void DebugDumpAOV(int aov, char* pathToFile = nullptr) const;
 
-	// runs denoiser, returns pixel array as float vector if denoiser runs succesfully
+	// runs denoiser, returns pixel array as float vector if denoiser runs successfully
 	std::vector<float> GetDenoisedData(bool& result);
+
+	// runs tonemappre, returns pixel arras as float vector if denoiser runs successfully
+	std::vector<float> GetTonemappedData(bool& result);
 
 	// reads aov directly into internal storage
 	RV_PIXEL* GetAOVData(const ReadFrameBufferRequestParams& params);
@@ -336,8 +341,14 @@ public:
 	// try running denoiser; result is saved into RAM buffer in context
 	std::vector<float> DenoiseIntoRAM(void);
 
+	// try running tonemapper; result is saved into RAM buffer in context
+	bool TonemapIntoRAM(void);
+
 	// runs denoiser, puts result in aov and applies render stamp
 	void ProcessDenoise(FireRenderAOV& renderViewAOV, FireRenderAOV& colorAOV, unsigned int width, unsigned int height, const RenderRegion& region, std::function<void(RV_PIXEL* pData)> callbackFunc);
+	
+	// runs tonemapper, puts result in aov
+	void ProcessTonemap(FireRenderAOV& renderViewAOV, FireRenderAOV& colorAOV, unsigned int width, unsigned int height, const RenderRegion& region, std::function<void(RV_PIXEL* pData)> callbackFunc);
 
 	// try merge opacity from context to supplied buffer
 	void ProcessMergeOpactityFromRAM(RV_PIXEL* data, int bufferWidth, int bufferHeight);
@@ -538,12 +549,15 @@ public:
 
 	bool IsDenoiserEnabled(void) const;
 
+	virtual bool IsTonemappingEnabled(void) const;
+
 	bool IsTileRender(void) const { return (m_globals.tileRenderingEnabled && !isInteractive()); }
 
+	std::shared_ptr<ImageFilter> m_tonemap;
+
+	frw::PostEffect m_normalization;
 	frw::PostEffect white_balance;
 	frw::PostEffect simple_tonemap;
-	frw::PostEffect tonemap;
-	frw::PostEffect normalization;
 	frw::PostEffect gamma_correction;
 
 	FireRenderMeshCommon* GetMainMesh(const std::string& uuid) const
@@ -633,6 +647,7 @@ public:
 	virtual void setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance = false) {}
 	virtual void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) {}
 	virtual void setupContextAirVolume(const FireRenderGlobalsData& fireRenderGlobalsData) {}
+	virtual void setupContextCryptomatteSettings(const FireRenderGlobalsData& fireRenderGlobalsData) {}
 	virtual bool IsAOVSupported(int aov) const { return true; }
 
 	virtual bool IsRenderQualitySupported(RenderQuality quality) const override = 0;
@@ -681,6 +696,8 @@ public:
 
 	int GetSamplesPerUpdate() const { return m_samplesPerUpdate; }
 
+	void ResetRAMBuffers(void);
+  
 	const FireRenderGlobalsData& Globals(void) const { return m_globals; }
 
 	bool setupUpscalerForViewport(RV_PIXEL* data);
