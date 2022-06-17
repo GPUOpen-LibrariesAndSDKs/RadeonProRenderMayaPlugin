@@ -377,6 +377,9 @@ public:
 	// transform attribute changed callback
 	virtual void OnNodeDirty() override;
 
+	// Plug dirty
+	virtual void OnPlugDirty(MObject& node, MPlug& plug);
+
 	// node dirty
 	virtual void OnShaderDirty();
 
@@ -429,11 +432,16 @@ private:
 	
 	bool IsSelected(const MDagPath& dagPath) const;
 
+	void ProccessSmoothCallbackWorkaroundIfNeeds(const MObject& object);
+
 	// A mesh in Maya can have multiple shaders
 	// in fr it must be split in multiple shapes
 	// so this return the list of all the fr_shapes created for this Maya mesh
 
 	virtual HashValue CalculateHash() override;
+
+private:
+	unsigned int m_SkipCallbackCounter;
 };
 
 // Fire render light
