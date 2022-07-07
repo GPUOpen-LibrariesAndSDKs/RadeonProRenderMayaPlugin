@@ -22,6 +22,7 @@ global proc string getRPRPluginVersion()
 
 global string $rprCoreVersion;
 global string $rifVersion;
+global string $currentWorkingUnits;
 
 global proc setRprCoreVersion(string $rcv)
 {
@@ -81,6 +82,80 @@ global proc checkRPRGlobalsNode()
     } 
 }
 
+proc float getWorkingUnitCoeff(string $workingUnit)
+{
+    if ($workingUnit == "m")
+        return 1.0;
+    else if ($workingUnit == "mm")
+        return 0.001;
+    else if ($workingUnit == "cm")
+        return 0.01;
+    else if ($workingUnit == "in")
+        return 0.0254;
+    else if ($workingUnit == "ft")
+        return 0.3048;
+    else if ($workingUnit == "yd")
+        return 0.9144;	
+    else 
+    {
+        print ("Unknown working unit" + $workingUnit);
+    }
+
+    return 1.0;
+}
+
+global proc workingUnitsChanged()
+{
+    global string $currentWorkingUnits;
+
+    float $coeff = getWorkingUnitCoeff($currentWorkingUnits);
+    $currentWorkingUnits = `currentUnit -q -l`;
+    $coeff = $coeff / getWorkingUnitCoeff($currentWorkingUnits);
+    
+    string $attributesToChange[];
+    int $i = 0;
+
+    $attributesToChange[$i++] = "RadeonProRenderGlobals.raycastEpsilon";
+    $attributesToChange[$i++] = "RadeonProRenderGlobals.fogDistance";
+    $attributesToChange[$i++] = "RadeonProRenderGlobals.fogHeight";
+    $attributesToChange[$i++] = "RadeonProRenderGlobals.deepEXRMergeZThreshold";
+
+    string $materials[] = `ls -type RPRUberMaterial`;
+
+    for ($index = 0; $index < size($materials); $index++)
+    {
+        $nodeName = $materials[$index];
+        $attributesToChange[$i++] = $nodeName +"." + "refractAbsorptionDistance";
+        $attributesToChange[$i++] = $nodeName +"." + "displacementMin";
+        $attributesToChange[$i++] = $nodeName +"." + "displacementMax";
+        $attributesToChange[$i++] = $nodeName +"." + "subsurfaceRadius";
+    }
+
+    for ($index = 0; $index < size($attributesToChange); $index++)
+    {
+        $attrName = $attributesToChange[$index];
+
+        if (`getAttr -type $attrName` == "float")
+        {
+            $value = `getAttr $attrName` * $coeff;
+            setAttr $attrName $value;        
+        }
+        else if (`getAttr -type $attrName` == "float3")
+        {
+            float $float3Value[] = `getAttr $attrName`;
+            setAttr $attrName ($float3Value[0] * $coeff) ($float3Value[1] * $coeff) ($float3Value[2] * $coeff);        
+        }
+    }
+}
+
+global proc workingUnitsScriptJobSetup()
+{
+    global string $currentWorkingUnits;
+
+    scriptJob -e "linearUnitChanged" "workingUnitsChanged();" -killWithScene;
+    $currentWorkingUnits = `currentUnit -q -l`;
+}
+
 global int $mlDenoiserSupportedCPU;
 global proc setMlDenoiserSupportedCPU(int $value)
 {
@@ -102,7 +177,7 @@ global proc string hasGivenMeshDeformerOrRigAttached(string $mesh)
 	if (size($result) > 0)
 	{
 		return string(size($result));
-	}
+	}                
 
 	string $supportedNodes[] = `ls -nodeTypes`;
 	if (stringArrayContains("AlembicNode", $supportedNodes))
