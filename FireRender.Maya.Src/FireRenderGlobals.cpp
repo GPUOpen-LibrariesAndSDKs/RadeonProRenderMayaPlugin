@@ -351,7 +351,7 @@ MStatus FireRenderGlobals::initialize()
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0.0f);
 	nAttr.setSoftMax(2.0f);
-	nAttr.setMax(10.0f);
+	nAttr.setMax(1000.0f);
 
 	Attribute::EnableOOC = nAttr.create("enableOOC", "ooe", MFnNumericData::kBoolean, false, &status);
 	MAKE_INPUT(nAttr);
@@ -538,7 +538,7 @@ MStatus FireRenderGlobals::initialize()
 
 	nAttr.setMin(0);
 	nAttr.setSoftMin(0);
-	nAttr.setMax(100);
+	nAttr.setMax(10000);
 	nAttr.setSoftMax(10);
 
 	CHECK_MSTATUS(addAttribute(Attribute::deepEXRMergeZThreshold));
@@ -1000,13 +1000,13 @@ void FireRenderGlobals::createAirVolumeAttributes()
 	Attribute::fogDistance = nAttr.create("fogDistance", "fod", MFnNumericData::kFloat, 5000, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0);
-	nAttr.setMax(10000);
+	nAttr.setMax(10000000);
 	CHECK_MSTATUS(addAttribute(Attribute::fogDistance));
 
 	Attribute::fogHeight = nAttr.create("fogHeight", "foh", MFnNumericData::kFloat, 1.5f, &status);
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0.0f);
-	nAttr.setMax(10.0f);
+	nAttr.setMax(10000.0f);
 	CHECK_MSTATUS(addAttribute(Attribute::fogHeight));
 
 	Attribute::airVolumeDensity = nAttr.create("airVolumeDensity", "avd", MFnNumericData::kFloat, 0.8f, &status);

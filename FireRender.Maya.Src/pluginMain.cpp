@@ -179,9 +179,9 @@ void RPRRelease();
 
 bool gExitingMaya = false;
 
-void checkFireRenderGlobals(void* data)
+void NewSceneBasicSetup(void* data)
 {
-	MGlobal::executeCommand("source \"common.mel\"; checkRPRGlobalsNode();");
+	MGlobal::executeCommand("source \"common.mel\"; checkRPRGlobalsNode(); workingUnitsScriptJobSetup();");
 }
 
 void onToonShaderCreate(MObject& node, void* clientData)
@@ -761,7 +761,7 @@ MStatus initializePlugin(MObject obj)
 		FireRenderRenderPass::creator, FireRenderRenderPass::initialize,
 		MPxNode::kDependNode, &renderPassClassification));
 
-	checkFireRenderGlobals(NULL);
+	NewSceneBasicSetup(NULL);
 
 	beforeNewSceneCallback = MSceneMessage::addCallback(MSceneMessage::kBeforeNew, swapToDefaultRenderOverride, NULL, &status);
 	CHECK_MSTATUS(status);
@@ -771,9 +771,9 @@ MStatus initializePlugin(MObject obj)
 	mayaExitingCallback = MSceneMessage::addCallback(MSceneMessage::kMayaExiting, mayaExiting, NULL, &status);
 	CHECK_MSTATUS(status);
 
-	newSceneCallback = MSceneMessage::addCallback(MSceneMessage::kAfterNew, checkFireRenderGlobals, NULL, &status);
+	newSceneCallback = MSceneMessage::addCallback(MSceneMessage::kAfterNew, NewSceneBasicSetup, NULL, &status);
 	CHECK_MSTATUS(status);
-	openSceneCallback = MSceneMessage::addCallback(MSceneMessage::kAfterOpen, checkFireRenderGlobals, NULL, &status);
+	openSceneCallback = MSceneMessage::addCallback(MSceneMessage::kAfterOpen, NewSceneBasicSetup, NULL, &status);
 	CHECK_MSTATUS(status);
 
 	auto mlDenoiserSupportedCPU = static_cast<int>(StartupContextChecker::IsMLDenoiserSupportedCPU());
