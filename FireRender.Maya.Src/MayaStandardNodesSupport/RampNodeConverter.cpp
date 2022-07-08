@@ -26,22 +26,6 @@ RampNodeConverter::RampNodeConverter(const ConverterParams& params) : BaseConver
 
 namespace
 {
-	enum RampUVType
-	{
-		// supported by RPR
-		VRamp = 1 << 0,
-		URamp = 1 << 1,
-		DiagonalRamp = 1 << 2,
-		CircularRamp = 1 << 4,
-
-		// not supported by RPR
-		RadialRamp = 1 << 3,
-		BoxRamp = 1 << 5,
-		UVRamp = 1 << 6,
-		FourCornersRamp = 1 << 7,
-		TartanRamp = 1 << 8,
-	};
-
 	unsigned int RampsTypesSupportedByRPR = VRamp | URamp | DiagonalRamp | CircularRamp;
 }
 
@@ -488,4 +472,13 @@ frw::Value RampNodeConverter::Convert() const
 	// use RPR Nodes
 	return GetBufferSamplerConvertor(shaderNodeObject, m_params.scope, rampType);
 }
+}
+
+frw::ArithmeticNode GetRampNodeLookup(const FireMaya::Scope& scope, RampUVType rampType)
+{
+	const auto& nodeTreeGeneratorImpl = MayaStandardNodeConverters::m_rampGenerators.find(rampType);
+	assert(nodeTreeGeneratorImpl != MayaStandardNodeConverters::m_rampGenerators.end());
+	frw::ArithmeticNode rampNodeTree = nodeTreeGeneratorImpl->second(scope);
+
+	return rampNodeTree;
 }

@@ -12,35 +12,25 @@ limitations under the License.
 ********************************************************************/
 #pragma once
 
-#include "BaseConverter.h"
-#include <functional>
+#include "FireMaya.h"
 
-enum RampUVType
+namespace FireMaya
 {
-	// supported by RPR
-	VRamp = 1 << 0,
-	URamp = 1 << 1,
-	DiagonalRamp = 1 << 2,
-	CircularRamp = 1 << 4,
-
-	// not supported by RPR
-	RadialRamp = 1 << 3,
-	BoxRamp = 1 << 5,
-	UVRamp = 1 << 6,
-	FourCornersRamp = 1 << 7,
-	TartanRamp = 1 << 8,
-};
-
-frw::ArithmeticNode GetRampNodeLookup(const FireMaya::Scope& scope, RampUVType rampType);
-
-namespace MayaStandardNodeConverters
-{
-
-	class RampNodeConverter : public BaseConverter
+	class RPRRamp : public ValueNode
 	{
 	public:
-		RampNodeConverter(const ConverterParams& params);
-		virtual frw::Value Convert() const override;
-	};
 
+		// initialize and type info
+		static MTypeId FRTypeID() { return FireMaya::TypeId::FireRenderRamp; }
+		static void* creator();
+		static MStatus initialize();
+
+		frw::Value GetValue(const Scope& scope) const override; 
+
+		virtual void postConstructor() override;
+		
+		// Not Implemented Yet!
+		//virtual MStatus compute(const MPlug& plug, MDataBlock& block) override;
+	};
 }
+
