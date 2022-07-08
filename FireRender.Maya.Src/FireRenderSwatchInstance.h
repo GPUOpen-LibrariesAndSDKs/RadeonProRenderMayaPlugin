@@ -16,6 +16,7 @@ limitations under the License.
 
 #include "RenderCacheWarningDialog.h"
 #include "Context/TahoeContext.h"
+#include <maya/MTimerMessage.h>
 
 class FireRenderMaterialSwatchRender;
 
@@ -30,7 +31,7 @@ public:
 	FireRenderMaterialSwatchRender* dequeSwatch();
 	void removeFromQueue(FireRenderMaterialSwatchRender* swatch);
 
-	FireRenderContext& getContext() { return context; }
+	FireRenderContext& getContext() { return *pContext.get(); }
 
 private:
 	FireRenderSwatchInstance();
@@ -45,17 +46,21 @@ private:
 
 	FireRenderSwatchInstance& operator=(const FireRenderSwatchInstance&);
 
+	static void CheckProcessQueue(float elapsedTime, float lastTime, void* clientData);
+
 private:
 	bool sceneIsCleaned;
 	MSpinLock mutex;
 
-	NorthStarContext context;
+	std::unique_ptr<NorthStarContext> pContext;
 	std::atomic<bool> backgroundRendererBusy;
+	std::atomic<bool> m_shouldClearContext;
 
 	std::list<FireRenderMaterialSwatchRender*> queueToProcess;
 
 	RenderCacheWarningDialog rcWarningDialog;
 	bool m_warningDialogOpen;
+	MCallbackId callbackId_FireRenderSwatchInstance;
 
 	static FireRenderSwatchInstance m_instance;
 };
