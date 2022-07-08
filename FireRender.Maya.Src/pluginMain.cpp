@@ -82,6 +82,7 @@ limitations under the License.
 #include "FireRenderPassthrough.h"
 #include "FireRenderBump.h"
 #include "FireRenderNormal.h"
+#include "FireRenderRamp.h"
 
 #include "FireRenderMaterialSwatchRender.h"
 
@@ -942,6 +943,11 @@ MStatus initializePlugin(MObject obj)
         FireMaya::FireRenderAO::initialize,
         MPxNode::kDependNode, &UserUtilityClassify));
 
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "Ramp", FireMaya::RPRRamp::FRTypeID(),
+		FireMaya::RPRRamp::creator,
+		FireMaya::RPRRamp::initialize,
+		MPxNode::kDependNode, &UserUtilityClassify));
+
 	// Initialize the viewport render override.
 	FireRenderOverride::instance()->initialize();
 
@@ -1049,6 +1055,7 @@ MStatus uninitializePlugin(MObject obj)
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::Bump::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::Normal::FRTypeID()));
     CHECK_MSTATUS(plugin.deregisterNode(FireMaya::FireRenderAO::FRTypeID()));
+    CHECK_MSTATUS(plugin.deregisterNode(FireMaya::RPRRamp::FRTypeID()));
 
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::FireRenderPBRMaterial::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::ShadowCatcherMaterial::FRTypeID()));

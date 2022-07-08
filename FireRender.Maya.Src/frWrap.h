@@ -121,6 +121,12 @@ namespace frw
 		OperatorAbs = RPR_MATERIAL_NODE_OP_ABS,
 	};
 
+	enum RampInterpolationMode
+	{
+		InterpolationModeNone = RPR_INTERPOLATION_MODE_NONE,
+		InterpolationModeLinear = RPR_INTERPOLATION_MODE_LINEAR
+	};
+
 	const static int MATERIAL_NODE_LOOKUP_VERTEX_COLOR = 0x100;
 
 	enum LookupType
@@ -167,7 +173,8 @@ namespace frw
 		ValueTypeRRGToHSV = RPR_MATERIAL_NODE_RGB_TO_HSV,
 		ValueTypeToonRamp = RPR_MATERIAL_NODE_TOON_RAMP,
 		ValueTypeGridSampler = RPR_MATERIAL_NODE_GRID_SAMPLER,
-		ValueTypePrimvarLookup = RPR_MATERIAL_NODE_PRIMVAR_LOOKUP
+		ValueTypePrimvarLookup = RPR_MATERIAL_NODE_PRIMVAR_LOOKUP,
+		ValueTypeRamp = RPR_MATERIAL_NODE_RAMP
 	};
 
 	enum ShaderType
@@ -2690,6 +2697,37 @@ namespace frw
 			case 0: SetValue(RPR_MATERIAL_INPUT_COLOR0, v); break;
 			case 1: SetValue(RPR_MATERIAL_INPUT_COLOR1, v); break;
 			}
+		}
+	};
+
+	class RampNode : public ValueNode
+	{
+	public:
+		explicit RampNode(const MaterialSystem& h) : ValueNode(h, ValueTypeRamp) {}
+
+		void SetLookup(const Value& v)
+		{
+			if (v.IsNode())
+			{
+				Node n = v.GetNode();
+				AddReference(n);
+				auto res = rprMaterialNodeSetInputNByKey(Handle(), RPR_MATERIAL_INPUT_UV, n.Handle());
+				checkStatus(res);
+			}
+		}
+
+		void SetControlPoints(const float* ctrlp, int bufferSize)
+		{
+			assert(ctrlp != nullptr);
+			assert(bufferSize % 4 == 0); // control points should be float4
+			auto res = rprMaterialNodeSetInputDataByKey(Handle(), RPR_MATERIAL_INPUT_DATA, ctrlp, bufferSize * sizeof(float));
+			checkStatus(res);
+		}
+
+		void SetInterpolationMode(frw::RampInterpolationMode mode)
+		{
+			auto res = rprMaterialNodeSetInputUByKey(Handle(), RPR_MATERIAL_INPUT_TYPE, mode);
+			checkStatus(res);
 		}
 	};
 

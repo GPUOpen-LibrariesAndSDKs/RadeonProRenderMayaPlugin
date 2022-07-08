@@ -947,6 +947,32 @@ void RemapRampControlPoints(
 	}
 }
 
+template <typename valType>
+void RemapRampControlPointsNoInterpolation(
+	size_t countOutputPoints,
+	std::vector<valType>& output,
+	const std::vector<RampCtrlPoint<valType>>& inputControlPoints)
+{
+	output.clear();
+	output.reserve(countOutputPoints);
+
+	auto itCurr = inputControlPoints.begin();
+	auto itNext = inputControlPoints.begin(); ++itNext;
+
+	for (size_t idx = 0; idx < countOutputPoints; ++idx)
+	{
+		float positionOnRamp = (1.0f / (countOutputPoints - 1)) * idx;
+
+		if (positionOnRamp > itNext->position)
+		{
+			itNext++;
+			itCurr++;
+		}
+
+		output.push_back(itCurr->ctrlPointData);
+	}
+}
+
 // internal function to grab ramp control points from maya Ramp
 // shouldn't be used directly
 template <class MayaDataContainer, class valType>

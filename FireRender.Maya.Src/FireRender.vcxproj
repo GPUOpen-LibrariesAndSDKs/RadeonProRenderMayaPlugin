@@ -209,6 +209,7 @@
     <ClCompile Include="FireRenderPassthrough.cpp" />
     <ClCompile Include="FireRenderPBRMaterial.cpp" />
     <ClCompile Include="FireRenderProduction.cpp" />
+    <ClCompile Include="FireRenderRamp.cpp" />
     <ClCompile Include="FireRenderShadowCatcherMaterial.cpp" />
     <ClCompile Include="FireRenderSkyLocator.cpp" />
     <ClCompile Include="FireRenderStandardMaterial.cpp" />
@@ -371,6 +372,7 @@
     <ClInclude Include="FireRenderPassthrough.h" />
     <ClInclude Include="FireRenderPBRMaterial.h" />
     <ClInclude Include="FireRenderProduction.h" />
+    <ClInclude Include="FireRenderRamp.h" />
     <ClInclude Include="FireRenderShadowCatcherMaterial.h" />
     <ClInclude Include="FireRenderSkyLocator.h" />
     <ClInclude Include="FireRenderStandardMaterial.h" />
