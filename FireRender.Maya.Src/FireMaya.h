@@ -353,6 +353,10 @@ namespace FireMaya
 	const MString MAYA_FILE_NODE_OUTPUT_COLOR_COMPONENT_GREEN = "ocg";
 	const MString MAYA_FILE_NODE_OUTPUT_COLOR_COMPONENT_BLUE = "ocb";
 	const MString MAYA_FILE_NODE_OUTPUT_ALPHA = "oa";
+	const MString MAYA_FILE_NODE_OUTPUT_TRANSPARENCY = "ot";
+	const MString MAYA_FILE_NODE_OUTPUT_TRANSPARENCY_R = "otr";
+	const MString MAYA_FILE_NODE_OUTPUT_TRANSPARENCY_G = "otg";
+	const MString MAYA_FILE_NODE_OUTPUT_TRANSPARENCY_B = "otb";
 }
 // End of namespace FireMaya
 

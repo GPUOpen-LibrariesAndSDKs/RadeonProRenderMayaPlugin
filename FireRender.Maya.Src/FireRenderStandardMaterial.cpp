@@ -101,12 +101,13 @@ namespace
 		MObject emissiveDoubleSided;
 
 		// Material parameters
-		MObject transparencyLevel;		
+		MObject transparencyEnable;
+		MObject transparencyLevel;
+		MObject transparency3Components;
+		MObject useTransparency3Components;
 
 		MObject normalMap;
 		MObject normalMapEnable;
-
-		MObject transparencyEnable;
 
 		MObject displacementEnable;
 		MObject displacementMin;
@@ -516,6 +517,12 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 1.0);
 
+	Attribute::transparency3Components = nAttr.createColor("transparency3Components", "tr3c");
+	MAKE_INPUT(nAttr);
+
+	Attribute::useTransparency3Components = nAttr.create("useTransparency3Components", "ut3", MFnNumericData::kBoolean, 0 );
+	MAKE_INPUT_CONST(nAttr);
+
 	Attribute::displacementMap = nAttr.createColor("displacementMap", "disp");
 	MAKE_INPUT(nAttr);
 
@@ -677,6 +684,8 @@ MStatus FireMaya::StandardMaterial::initialize()
 	ADD_ATTRIBUTE(Attribute::emissiveDoubleSided);
 
 	ADD_ATTRIBUTE(Attribute::transparencyLevel);
+	ADD_ATTRIBUTE(Attribute::transparency3Components);
+	ADD_ATTRIBUTE(Attribute::useTransparency3Components);
 
 	ADD_ATTRIBUTE(Attribute::displacementMap);
 
@@ -1051,8 +1060,18 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	// Material attributes
 	if (GET_BOOL(transparencyEnable))
 	{
-		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_TRANSPARENCY, transparencyLevel);
+		if (GET_BOOL(useTransparency3Components))
+		{
+			frw::Value value = GET_VALUE(transparency3Components);
+
+			material.xSetValue(RPR_MATERIAL_INPUT_UBER_TRANSPARENCY, value.SelectX());
+		}
+		else
+		{
+			SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_TRANSPARENCY, transparencyLevel);
+		}
 	}
+
 	if (GET_BOOL(normalMapEnable))
 	{
 		frw::Value value = GET_VALUE(normalMap);
