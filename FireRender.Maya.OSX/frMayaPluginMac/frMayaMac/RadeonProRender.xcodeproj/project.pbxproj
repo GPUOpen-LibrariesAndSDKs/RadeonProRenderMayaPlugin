@@ -938,6 +938,12 @@
 		CE7CE7DE22CA0FD4007270C8 /* EnableSaveIntermediateCmd.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CE7CE7DB22CA0FD4007270C8 /* EnableSaveIntermediateCmd.cpp */; };
 		CE7CE7E222CA0FF1007270C8 /* EnableSaveIntermediateCmd.h in Headers */ = {isa = PBXBuildFile; fileRef = CE7CE7DF22CA0FF1007270C8 /* EnableSaveIntermediateCmd.h */; };
 		CEED8ECA227346E900136DEF /* FireRenderVolume.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */; };
+		F14A5B2E287C422200075AB9 /* FireRenderRamp.h in Headers */ = {isa = PBXBuildFile; fileRef = F14A5B2B287C422200075AB9 /* FireRenderRamp.h */; };
+		F14A5B2F287C422200075AB9 /* FireRenderRamp.h in Headers */ = {isa = PBXBuildFile; fileRef = F14A5B2B287C422200075AB9 /* FireRenderRamp.h */; };
+		F14A5B30287C422200075AB9 /* FireRenderRamp.h in Headers */ = {isa = PBXBuildFile; fileRef = F14A5B2B287C422200075AB9 /* FireRenderRamp.h */; };
+		F14A5B31287C422200075AB9 /* FireRenderRamp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F14A5B2D287C422200075AB9 /* FireRenderRamp.cpp */; };
+		F14A5B32287C422200075AB9 /* FireRenderRamp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F14A5B2D287C422200075AB9 /* FireRenderRamp.cpp */; };
+		F14A5B33287C422200075AB9 /* FireRenderRamp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F14A5B2D287C422200075AB9 /* FireRenderRamp.cpp */; };
 		F19A1609248A737000A959C7 /* FireRenderLightCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */; };
 		F19A160A248A737000A959C7 /* FireRenderLightCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */; };
 		F19A160C248A737000A959C7 /* FireRenderLightCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = F19A1607248A737000A959C7 /* FireRenderLightCommon.h */; };
@@ -1378,6 +1384,8 @@
 		CE7CE7DF22CA0FF1007270C8 /* EnableSaveIntermediateCmd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EnableSaveIntermediateCmd.h; path = ../../../FireRender.Maya.Src/EnableSaveIntermediateCmd.h; sourceTree = "<group>"; };
 		CEEB7BE022A510530002BBD5 /* athenaWrap.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = athenaWrap.cpp; path = ../../../FireRender.Components/cpp/Athena/athenaWrap.cpp; sourceTree = "<group>"; };
 		CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderVolume.cpp; path = ../../../FireRender.Maya.Src/FireRenderVolume.cpp; sourceTree = "<group>"; };
+		F14A5B2B287C422200075AB9 /* FireRenderRamp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderRamp.h; path = ../../../FireRender.Maya.Src/FireRenderRamp.h; sourceTree = "<group>"; };
+		F14A5B2D287C422200075AB9 /* FireRenderRamp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderRamp.cpp; path = ../../../FireRender.Maya.Src/FireRenderRamp.cpp; sourceTree = "<group>"; };
 		F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderLightCommon.cpp; path = ../../../FireRender.Maya.Src/Lights/FireRenderLightCommon.cpp; sourceTree = "<group>"; };
 		F19A1607248A737000A959C7 /* FireRenderLightCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderLightCommon.h; path = ../../../FireRender.Maya.Src/Lights/FireRenderLightCommon.h; sourceTree = "<group>"; };
 		F1E53D0627BD202700BB29E1 /* HybridProContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HybridProContext.h; path = ../../../FireRender.Maya.Src/Context/HybridProContext.h; sourceTree = "<group>"; };
@@ -1470,6 +1478,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				F14A5B2D287C422200075AB9 /* FireRenderRamp.cpp */,
+				F14A5B2B287C422200075AB9 /* FireRenderRamp.h */,
 				F1E53D0627BD202700BB29E1 /* HybridProContext.h */,
 				80AA24FE26E0F294000CEDA8 /* FireRenderVoronoi.cpp */,
 				80AA24FC26E0F294000CEDA8 /* FireRenderVoronoi.h */,
@@ -1908,6 +1918,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				505C0BCC2660C2BA000E11A9 /* FireRenderVolumeLocator.h in Headers */,
+				F14A5B30287C422200075AB9 /* FireRenderRamp.h in Headers */,
 				505C0BCD2660C2BA000E11A9 /* MultDoubleLinearConverter.h in Headers */,
 				505C0BCE2660C2BA000E11A9 /* TileRenderer.h in Headers */,
 				505C0BCF2660C2BA000E11A9 /* FireRenderVolumeOverride.h in Headers */,
@@ -2067,6 +2078,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8DB9AEAA225652CE00543147 /* FireRenderVolumeLocator.h in Headers */,
+				F14A5B2E287C422200075AB9 /* FireRenderRamp.h in Headers */,
 				B72F820B239F813F00C2BFB3 /* MultDoubleLinearConverter.h in Headers */,
 				CE5E271622804A3E00F3B6D7 /* TileRenderer.h in Headers */,
 				8DB9AEA9225652C200543147 /* FireRenderVolumeOverride.h in Headers */,
@@ -2226,6 +2238,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				B7531FCB23D9ED5600246738 /* FireRenderVolumeLocator.h in Headers */,
+				F14A5B2F287C422200075AB9 /* FireRenderRamp.h in Headers */,
 				B7531FCC23D9ED5600246738 /* MultDoubleLinearConverter.h in Headers */,
 				B7531FCD23D9ED5600246738 /* TileRenderer.h in Headers */,
 				B7531FCE23D9ED5600246738 /* FireRenderVolumeOverride.h in Headers */,
@@ -2513,6 +2526,7 @@
 				505C0C782660C2BA000E11A9 /* FireRenderPhysicalLightLocator.cpp in Sources */,
 				505C0C792660C2BA000E11A9 /* FireRenderPhysicalOverride.cpp in Sources */,
 				505C0C7A2660C2BA000E11A9 /* PhysicalLightAttributes.cpp in Sources */,
+				F14A5B33287C422200075AB9 /* FireRenderRamp.cpp in Sources */,
 				505C0C7B2660C2BA000E11A9 /* FileNodeConverter.cpp in Sources */,
 				505C0C7C2660C2BA000E11A9 /* TileRenderer.cpp in Sources */,
 				505C0C7D2660C2BA000E11A9 /* PhysicalLightGeometryUtility.cpp in Sources */,
@@ -2671,6 +2685,7 @@
 				8DBCC30822304666003EE361 /* FireRenderPhysicalOverride.cpp in Sources */,
 				8DBCC30922304666003EE361 /* PhysicalLightAttributes.cpp in Sources */,
 				B72F8202239F813F00C2BFB3 /* FileNodeConverter.cpp in Sources */,
+				F14A5B31287C422200075AB9 /* FireRenderRamp.cpp in Sources */,
 				CE5E271922804A3E00F3B6D7 /* TileRenderer.cpp in Sources */,
 				8DBCC30A22304666003EE361 /* PhysicalLightGeometryUtility.cpp in Sources */,
 				CEED8ECA227346E900136DEF /* FireRenderVolume.cpp in Sources */,
@@ -2829,6 +2844,7 @@
 				B753206E23D9ED5600246738 /* FireRenderPhysicalLightLocator.cpp in Sources */,
 				B753206F23D9ED5600246738 /* FireRenderPhysicalOverride.cpp in Sources */,
 				B753207023D9ED5600246738 /* PhysicalLightAttributes.cpp in Sources */,
+				F14A5B32287C422200075AB9 /* FireRenderRamp.cpp in Sources */,
 				B753207123D9ED5600246738 /* FileNodeConverter.cpp in Sources */,
 				B753207223D9ED5600246738 /* TileRenderer.cpp in Sources */,
 				B753207323D9ED5600246738 /* PhysicalLightGeometryUtility.cpp in Sources */,
