@@ -11,7 +11,7 @@ struct ConverterParams;
 // - use dataContainer to pass data
 // - return false if detects error or if passed action function returns false
 template <typename T>
-bool ProcessCompoundPlug(MPlug& compoundPlug, T& dataContainer, std::function<bool(MPlug& childPlug, T& dataContainer)> actionFunc)
+bool ForEachPlugInCompoundPlug(MPlug& compoundPlug, T& dataContainer, std::function<bool(MPlug& childPlug, T& dataContainer)> actionFunc)
 {
 	MStatus status;
 	bool isCompound = compoundPlug.isCompound(&status);
@@ -37,7 +37,7 @@ bool ProcessCompoundPlug(MPlug& compoundPlug, T& dataContainer, std::function<bo
 // - use dataContainer to pass data
 // - return false if detects error to execute or if passed action function returns false
 template <typename T>
-bool ProcessArrayPlug(MPlug& arrayPlug, T& dataContainer, std::function<bool(MPlug& elementPlug, T& dataContainer)> actionFunc)
+bool ForEachPlugInArrayPlug(MPlug& arrayPlug, T& dataContainer, std::function<bool(MPlug& elementPlug, T& dataContainer)> actionFunc)
 {
 	MStatus status;
 	bool isArray = arrayPlug.isArray(&status);
