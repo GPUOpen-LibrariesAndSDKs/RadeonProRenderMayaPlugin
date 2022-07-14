@@ -28,9 +28,6 @@ namespace FireMaya
 		frw::Value GetValue(const Scope& scope) const override; 
 
 		virtual void postConstructor() override;
-		
-		// Not Implemented Yet!
-		//virtual MStatus compute(const MPlug& plug, MDataBlock& block) override;
 	};
 }
 

@@ -883,7 +883,6 @@ enum class InterpolationMethod
 };
 
 // representation of Control Point on Ramp in Maya UI
-// type of value of control point can be MColor, float or int
 template <class T> 
 struct RampCtrlPoint // T is either MColor or float
 {
@@ -891,6 +890,8 @@ struct RampCtrlPoint // T is either MColor or float
 	InterpolationMethod method;
 	unsigned int index;
 	float position; // X input axis on graph
+
+	using CtrlPointDataContainerT = T;
 
 	RampCtrlPoint() : method(InterpolationMethod::kNone), index(UINT_MAX) {}
 };
@@ -973,6 +974,22 @@ void RemapRampControlPointsNoInterpolation(
 	}
 }
 
+template <typename MayaDataContainer, typename valType>
+void AssignCtrlPointValue(RampCtrlPoint<valType>& ctrlPoint, const MayaDataContainer& dataVals, unsigned int idx)
+{
+	ctrlPoint.ctrlPointData = dataVals[idx];
+}
+
+template <typename MayaDataContainer, typename... List> // tuple for compound ctrl point value
+void AssignCtrlPointValue(RampCtrlPoint<std::tuple<List...>>& ctrlPoint, const MayaDataContainer& dataVals, unsigned int idx)
+{
+	using MayaElementT = decltype(
+		std::declval<MayaDataContainer&>()[std::declval<unsigned int>()]
+		);
+
+	std::get<typename std::remove_reference<MayaElementT>::type>(ctrlPoint.ctrlPointData) = dataVals[idx];
+}
+
 // internal function to grab ramp control points from maya Ramp
 // shouldn't be used directly
 template <class MayaDataContainer, class valType>
@@ -998,7 +1015,7 @@ bool SaveCtrlPoints(
 	{
 		out.emplace_back();
 		auto& ctrlPointRef = out.back();
-		ctrlPointRef.ctrlPointData = dataVals[idx];
+		AssignCtrlPointValue(ctrlPointRef, dataVals, idx);
 		ctrlPointRef.method = (InterpolationMethod) interps[idx];
 		ctrlPointRef.position = positions[idx];
 		ctrlPointRef.index = indexes[idx];
@@ -1150,7 +1167,7 @@ void WriteMayaArrayTo(std::vector<OutT>& out, const MayaArrayT& source)
 	using MayaElementT = decltype(
 		std::declval<MayaArrayT&>()[std::declval<unsigned int>()]
 	);
-	static_assert(std::is_same<MayaElementT, OutT&>::value, "array type mismatch");
+	static_assert(std::is_same<MayaElementT, OutT&>::value, "array type mismatch!");
 
 	int length = source.length();
 	out.clear();

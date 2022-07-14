@@ -59,7 +59,7 @@ void ProcessRampValueAttribute(MPlug& fakeRampPlug, RampCtrlPoint<MColor>& ctrlP
 	// - this is compound attribute of 3 floats RGB
 	std::vector<float> color;
 	color.reserve(3);
-	bool res = ProcessCompoundPlug<std::vector<float>>(fakeRampPlug, color, ProcessColorPlug);
+	bool res = ForEachPlugInCompoundPlug<std::vector<float>>(fakeRampPlug, color, ProcessColorPlug);
 	assert(res);
 	ctrlPoint.ctrlPointData.set(MColor::kRGB, color[0], color[1], color[2]);
 }
@@ -83,7 +83,7 @@ void ProcessRampValueAttribute(MPlug& fakeRampPlug, RampCtrlPoint<std::pair<MCol
 	// - this is compound attribute of 3 floats RGB
 	std::vector<float> color;
 	color.reserve(3);
-	bool res = ProcessCompoundPlug<std::vector<float>>(fakeRampPlug, color, ProcessColorPlug);
+	bool res = ForEachPlugInCompoundPlug<std::vector<float>>(fakeRampPlug, color, ProcessColorPlug);
 	assert(res);
 	ctrlPoint.ctrlPointData.first.set(MColor::kRGB, color[0], color[1], color[2]);
 }
@@ -149,11 +149,11 @@ bool CreateCtrlPointsFromPlug(MObject rampObject, std::vector<RampCtrlPoint<T>>&
 		ctrlPoint.method = InterpolationMethod::kLinear;
 		ctrlPoint.index = (unsigned int)out.size() - 1;
 
-		return ProcessCompoundPlug<std::vector<RampCtrlPoint<T>>>(fakeRampPlug, out, ProcessFakeRampAttribute<T>);
+		return ForEachPlugInCompoundPlug<std::vector<RampCtrlPoint<T>>>(fakeRampPlug, out, ProcessFakeRampAttribute<T>);
 	};
 
 	// creates ramp control point from attributes data in pseudo ramp attribute rampPlug
-	bool res = ProcessArrayPlug<std::vector<RampCtrlPoint<T>>>(rampPlug, out, func);
+	bool res = ForEachPlugInArrayPlug<std::vector<RampCtrlPoint<T>>>(rampPlug, out, func);
 	if (!res)
 		return false;
 

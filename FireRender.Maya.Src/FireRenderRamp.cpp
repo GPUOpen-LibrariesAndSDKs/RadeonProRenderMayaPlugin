@@ -13,6 +13,7 @@ limitations under the License.
 #include "FireRenderRamp.h"
 #include "FireRenderUtils.h"
 #include "MayaStandardNodesSupport/RampNodeConverter.h"
+#include "MayaStandardNodesSupport/NodeProcessingUtils.h"
 
 #include <maya/MFnNumericAttribute.h>
 #include <maya/MColor.h>
@@ -77,13 +78,160 @@ void* FireMaya::RPRRamp::creator()
 	return new RPRRamp;
 }
 
+// control point can be MColor OR it can be connection to other node; in this case we need to save both node and connection plug name
+using CtrlPointDataT = std::tuple<MColor, MString, MObject>; 
+using CtrlPointT = RampCtrlPoint<CtrlPointDataT>;
+
+// this is called for every element of compound plug of a Ramp attribute;
+// in Maya a single control point of a Ramp attribute is represented as a compound plug;
+// thus Ramp attribute is an array of compound plugs
+template <typename T>
+bool ProcessCompundPlugElement(MPlug& childPlug, T& out)
+{
+	static_assert(std::is_same<CtrlPointDataT, T>::value, "data container type mismatch!");
+
+	// find color input plug
+	std::string elementName = childPlug.name().asChar();
+	if (elementName.find("inputRamp_Color") == std::string::npos)
+		return true; // this is not element that we are looking for => caller will continue processing elements of compound plug
+
+	// get connections
+	MStatus status;
+	MPlugArray connections;
+	bool connectedTo = childPlug.connectedTo(connections, true, true, &status);
+	if (!connectedTo)
+	{
+		std::get<MString>(out) = "";
+		std::get<MObject>(out) = MObject::kNullObj;
+
+		return true; // no connections found
+	}
+
+	// color input has connected node => save its name and object to output
+	assert(connections.length() == 1);
+
+	for (auto& it : connections)
+	{
+		// save connected node
+		std::get<MObject>(out) = it.node();
+
+		// get connected node output name (is needed to setup proper connection for material node tree)
+		std::string attrName = it.name().asChar();
+		MFnDependencyNode depN(it.node());
+		std::string connectedNodeName = depN.name().asChar();
+		connectedNodeName += ".";
+		attrName.erase(attrName.find(connectedNodeName), connectedNodeName.length());
+
+		MPlug outPlug = depN.findPlug(attrName.c_str(), &status);
+		assert(status == MStatus::kSuccess);
+		assert(!outPlug.isNull());
+		std::string plugName = outPlug.partialName().asChar();
+
+		// save connected node output name
+		std::get<MString>(out) = plugName.c_str();
+	}
+
+	return true; // connection found and processed
+}
+
+// this is called for every element of Ramp control points array;
+// in Maya control points of the Ramp attribute are stored as an array attribute
+template <typename T>
+bool ProcessRampArrayPlugElement(MPlug& elementPlug, T& out)
+{
+	static_assert(std::is_same<typename std::remove_reference<decltype(out)>::type, typename std::vector<CtrlPointT>::iterator>::value, "data container type mismatch!");
+
+	bool success = MayaStandardNodeConverters::ForEachPlugInCompoundPlug<CtrlPointDataT>(elementPlug, out->ctrlPointData, ProcessCompundPlugElement<CtrlPointDataT>);
+
+	out++;
+
+	return success;
+}
+
+// iterate through all control points of the Ramp and save connected nodes data to corresponding control points array entries if such nodes exist
+template <typename RampCtrlPointDataT>
+bool GetConnectedCtrlPointsObjects(MPlug& rampPlug, std::vector<RampCtrlPointDataT>& rampCtrlPoints)
+{
+	MStatus status;
+
+	// ensure valid input
+	bool isArray = rampPlug.isArray(&status);
+	assert(isArray);
+	if (!isArray)
+		return false;
+
+	bool doArraysMatch = rampCtrlPoints.size() == rampPlug.numElements();
+	if (!doArraysMatch)
+	{
+		rampCtrlPoints.pop_back(); // remove "technical" control point created by helper if necessary
+	}
+	doArraysMatch = rampCtrlPoints.size() == rampPlug.numElements();
+	assert(doArraysMatch);
+	if (!doArraysMatch)
+		return false;
+
+	// iterate through control points; passing iterator as a data container here to avoid extra unnecessary data copy
+	auto currCtrlPointIt = rampCtrlPoints.begin();
+	using containerIterT = decltype(currCtrlPointIt);
+	static_assert(std::is_same<containerIterT, typename std::vector<RampCtrlPointDataT>::iterator>::value, "data container type mismatch!");
+
+	bool success = MayaStandardNodeConverters::ForEachPlugInArrayPlug<containerIterT>(rampPlug, currCtrlPointIt, ProcessRampArrayPlugElement<containerIterT>);
+	assert(success);
+	assert(currCtrlPointIt == rampCtrlPoints.end());
+
+	return success;
+}
+
+// note that we can have either MColor OR connected node as ramp control point data value
+template <typename T>
+void TranslateControlPoints(frw::RampNode& rampNode, const FireMaya::Scope& scope, const std::vector<T>& outRampCtrlPoints)
+{
+	// control points values; need to set them for both color and node inputs
+	std::vector<float> ctrlPointsVals;
+	ctrlPointsVals.reserve(outRampCtrlPoints.size() * 4);
+
+	unsigned countMaterialInputs = 0; // necessary to pass this for RPRRampNode inputs logic
+
+	// iterate through control points array
+	for (const CtrlPointT& tCtrl : outRampCtrlPoints)
+	{
+		ctrlPointsVals.push_back(tCtrl.position);
+
+		MObject ctrlPointConnectedObject = std::get<MObject>(tCtrl.ctrlPointData);
+		if (ctrlPointConnectedObject == MObject::kNullObj)
+		{
+			// control point is a plain color and not a connected node
+			const MColor& colorValue = std::get<MColor>(tCtrl.ctrlPointData);
+			ctrlPointsVals.push_back(colorValue.r);
+			ctrlPointsVals.push_back(colorValue.g);
+			ctrlPointsVals.push_back(colorValue.b);
+			continue;
+		}
+
+		// control point is a connected node and must be processed accordingly
+		// - set color override values (so that RPR knows it must override color input with node input)
+		ctrlPointsVals.push_back(-1.0f);
+		ctrlPointsVals.push_back(-1.0f);
+		ctrlPointsVals.push_back(-1.0f);
+
+		// - add node input
+		frw::Value materialNode = scope.GetValue(ctrlPointConnectedObject, std::get<MString>(tCtrl.ctrlPointData));
+		rampNode.SetMaterialControlPointValue(countMaterialInputs++, materialNode);
+	}
+
+	rampNode.SetControlPoints(ctrlPointsVals.data(), ctrlPointsVals.size());
+}
+
 frw::Value FireMaya::RPRRamp::GetValue(const Scope& scope) const
 {
 	MFnDependencyNode shaderNode(thisMObject());
 
+	// create node
 	frw::RampNode rampNode(scope.MaterialSystem());
 
+	// process ramp parameters
 	frw::RampInterpolationMode mode = frw::InterpolationModeNone;
+
 	MPlug plug = shaderNode.findPlug(Attribute::rampInterpolationMode, false);
 	if (plug.isNull())
 		return frw::Value();
@@ -92,25 +240,24 @@ frw::Value FireMaya::RPRRamp::GetValue(const Scope& scope) const
 	if (MStatus::kSuccess == plug.getValue(temp))
 		mode = static_cast<frw::RampInterpolationMode>(temp);
 
-	using CtrlPointT = RampCtrlPoint<MColor>;
+	rampNode.SetInterpolationMode(mode);
+
+	// read input ramp
 	std::vector<CtrlPointT> outRampCtrlPoints;
 	MPlug ctrlPointsPlug = shaderNode.findPlug(Attribute::inputRamp, false);
+
+	// - read simple ramp control point values
 	bool isRampParced = GetRampValues<MColorArray>(ctrlPointsPlug, outRampCtrlPoints);
 	if (!isRampParced)
 		return frw::Value();
 
-	std::vector<float> ctrlPointsVals;
-	ctrlPointsVals.reserve(outRampCtrlPoints.size() * 4);
-	for (const CtrlPointT& tCtrl : outRampCtrlPoints)
-	{
-		ctrlPointsVals.push_back(tCtrl.position);
-		ctrlPointsVals.push_back(tCtrl.ctrlPointData.r);
-		ctrlPointsVals.push_back(tCtrl.ctrlPointData.g);
-		ctrlPointsVals.push_back(tCtrl.ctrlPointData.b);
-	}
+	// - read and process node ramp control point values
+	bool success = GetConnectedCtrlPointsObjects(ctrlPointsPlug, outRampCtrlPoints);
+	if (!success)
+		return frw::Value();
 
-	rampNode.SetInterpolationMode(mode);
-	rampNode.SetControlPoints(ctrlPointsVals.data(), ctrlPointsVals.size());
+	// - translate control points to RPR representation
+	TranslateControlPoints(rampNode, scope, outRampCtrlPoints);
 
 	// get proper lookup
 	MPlug rampPlug = shaderNode.findPlug(Attribute::rampUVType, false);
@@ -145,19 +292,3 @@ void FireMaya::RPRRamp::postConstructor()
 
 	ValueNode::postConstructor();
 }
-
-/*MStatus FireMaya::RPRRamp::compute(const MPlug& plug, MDataBlock& block)
-{
-	if ((plug == Attribute::output) || (plug.parent() == Attribute::output))
-	{
-		ForceEvaluateAllAttributes(true);
-
-
-
-		return MS::kSuccess;
-	}
-	else
-		return MS::kUnknownParameter;
-
-	return MS::kSuccess;
-}*/

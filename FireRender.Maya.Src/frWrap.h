@@ -2729,6 +2729,41 @@ namespace frw
 			auto res = rprMaterialNodeSetInputUByKey(Handle(), RPR_MATERIAL_INPUT_TYPE, mode);
 			checkStatus(res);
 		}
+
+		void SetMaterialControlPointValue(unsigned idx, const Value& v)
+		{
+			assert(idx <= 15);
+			if (idx > 15)
+				return;
+
+			static std::vector<rpr_material_node_input> rampOverrideInputs =
+			{ 
+				RPR_MATERIAL_INPUT_0,
+				RPR_MATERIAL_INPUT_1,
+				RPR_MATERIAL_INPUT_2,
+				RPR_MATERIAL_INPUT_3,
+				RPR_MATERIAL_INPUT_4,
+				RPR_MATERIAL_INPUT_5,
+				RPR_MATERIAL_INPUT_6,
+				RPR_MATERIAL_INPUT_7,
+				RPR_MATERIAL_INPUT_8,
+				RPR_MATERIAL_INPUT_9,
+				RPR_MATERIAL_INPUT_10,
+				RPR_MATERIAL_INPUT_11,
+				RPR_MATERIAL_INPUT_12,
+				RPR_MATERIAL_INPUT_13,
+				RPR_MATERIAL_INPUT_14,
+				RPR_MATERIAL_INPUT_15,
+			};
+
+			if (v.IsNode())
+			{
+				Node n = v.GetNode();
+				AddReference(n);
+				auto res = rprMaterialNodeSetInputNByKey(Handle(), rampOverrideInputs[idx], n.Handle());
+				checkStatus(res);
+			}
+		}
 	};
 
 	class NormalMapNode : public ValueNode
