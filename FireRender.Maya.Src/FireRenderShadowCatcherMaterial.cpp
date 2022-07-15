@@ -34,9 +34,6 @@ namespace
 	{
 		MObject scenabled;
 		MObject bgIsEnv;
-		MObject bgWeight;
-		MObject	bgColor;
-		MObject bgTransparency;
 		MObject shadowColor;
 		MObject shadowWeight;
 		MObject shadowTransparency;
@@ -82,8 +79,6 @@ MStatus FireMaya::ShadowCatcherMaterial::initialize()
 	{
 		{&Attribute::reflectionWeight, "reflectionWeight", "rcwt", 0.0, 1.0, 1.0, MFnNumericData::kFloat},
 		{&Attribute::reflectionRoughness, "reflectionRoughness", "rcrs", 0.0, 1.0, 0.01f, MFnNumericData::kFloat},
-		{&Attribute::bgWeight, "bgWeight", "bgw", 0.0, 1.0, 1.0, MFnNumericData::kFloat},
-		{&Attribute::bgTransparency, "bgTransparency", "bgt", 0.0, 1.0, 0.0, MFnNumericData::kFloat},
 		{&Attribute::shadowTransparency, "shadowTransp", "st", 0.0, 1.0, 0.0, MFnNumericData::kFloat},
 		{&Attribute::shadowWeight, "shadowWeight", "sw", 0.0, 1.0, 1.0, MFnNumericData::kFloat}
 	};
@@ -98,7 +93,6 @@ MStatus FireMaya::ShadowCatcherMaterial::initialize()
 
 	std::vector<ColorAttributeEntry> colorAttributes = 
 	{
-		{&Attribute::bgColor, "bgColor", "bgc", {1.0f, 1.0f, 1.0f} },
 		{&Attribute::shadowColor, "shadowColor", "sc", { 0.0f, 0.0f, 0.0f } },
 	};
 
@@ -172,20 +166,14 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 	{
 		// Code below this line copied from FireRenderStandardMaterial
 		frw::Value shadowColor = scope.GetValue(shaderNode.findPlug(Attribute::shadowColor, false));
-		frw::Value bgColor = scope.GetValue(shaderNode.findPlug(Attribute::bgColor, false));
 		frw::Value shadowAlpha = scope.GetValue(shaderNode.findPlug(Attribute::shadowTransparency, false));
 		frw::Value weight = scope.GetValue(shaderNode.findPlug(Attribute::shadowWeight, false));
-		frw::Value bgTransp = scope.GetValue(shaderNode.findPlug(Attribute::bgTransparency, false));
-		frw::Value bgWeight = scope.GetValue(shaderNode.findPlug(Attribute::bgWeight, false));
 		FireRenderContext* pContext = dynamic_cast<FireRenderContext*>(scope.GetIContextInfo());
 		if (pContext)
 		{
 			pContext->m_shadowColor = { shadowColor.GetX(), shadowColor.GetY(), shadowColor.GetZ() };
 			pContext->m_shadowTransparency = shadowAlpha.GetX();
-			pContext->m_backgroundTransparency = bgTransp.GetX();
 			pContext->m_shadowWeight = weight.GetX();
-			pContext->m_bgColor = { bgColor.GetX(), bgColor.GetY(), bgColor.GetZ() };
-			pContext->m_bgWeight = bgWeight.GetX();
 		}
 
 		if (ctxInfo->IsShadowColorSupported() && shadowColor.IsFloat())
@@ -205,13 +193,6 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 
 		bool bgIsEnv = shaderNode.findPlug(Attribute::bgIsEnv, false).asBool();
 		shader.SetBackgroundIsEnvironment(bgIsEnv);
-	
-		if (!bgIsEnv)
-		{
-			shader.xSetValue(RPR_MATERIAL_INPUT_UBER_DIFFUSE_COLOR, scope.GetValue(shaderNode.findPlug(Attribute::bgColor, false)));
-			shader.xSetValue(RPR_MATERIAL_INPUT_UBER_DIFFUSE_WEIGHT, scope.GetValue(shaderNode.findPlug(Attribute::bgWeight, false)));
-			shader.xSetValue(RPR_MATERIAL_INPUT_UBER_TRANSPARENCY, scope.GetValue(shaderNode.findPlug(Attribute::bgTransparency, false)));
-		}
 
 		shader.SetShadowCatcher(true);
 	}

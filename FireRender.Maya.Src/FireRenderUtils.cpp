@@ -507,6 +507,14 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			cryptomatteSplitIndirect = plug.asBool();
 
+		plug = frGlobalsNode.findPlug("aovShadowCatcher");
+		if (!plug.isNull())
+			shadowCatcherEnabled = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("aovReflectionCatcher");
+		if (!plug.isNull())
+			reflectionCatcherEnabled = plug.asBool();
+
 		aovs.readFromGlobals(frGlobalsNode);
 
 		readDenoiserParameters(frGlobalsNode);

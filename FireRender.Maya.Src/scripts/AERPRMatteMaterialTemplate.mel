@@ -16,9 +16,6 @@ global proc AEMatteCheckEnableSC(string $nodeName)
 	int $value = `getAttr $nodeAttr`;
 
 	editorTemplate -dimControl $nodeName "bgIsEnv" ($value == 0);
-	editorTemplate -dimControl $nodeName "bgWeight" ($value == 0);
-	editorTemplate -dimControl $nodeName "bgColor" ($value == 0);
-	editorTemplate -dimControl $nodeName "bgTransparency" ($value == 0);
 	editorTemplate -dimControl $nodeName "shadowColor" ($value == 0);
 	editorTemplate -dimControl $nodeName "shadowWeight" ($value == 0);
 	editorTemplate -dimControl $nodeName "shadowTransp" ($value == 0);
@@ -27,15 +24,24 @@ global proc AEMatteCheckEnableSC(string $nodeName)
 	editorTemplate -dimControl $nodeName "useDispMap" ($value == 0);
 	editorTemplate -dimControl $nodeName "dispMap" ($value == 0);
 
-	setAttr RadeonProRenderGlobals.aovShadowCatcher ($value);
 
 	int $isShadowCatcher = `getAttr RadeonProRenderGlobals.aovShadowCatcher`;
-	int $isReflectionCatcher = `getAttr RadeonProRenderGlobals.aovReflectionCatcher`;
-	if (($isShadowCatcher == 1) && ($isReflectionCatcher == 0))
+	
+	// user turns on shadow catcher
+	if ($isShadowCatcher == 0  && $value == 1)
 	{
+		// Unlock if AOV is already locked
+		setAttr RadeonProRenderGlobals.aovMattePass -lock 0;
+		
 		// Set aovs to ON state
-		setAttr RadeonProRenderGlobals.aovBackground 1;
-		setAttr RadeonProRenderGlobals.aovOpacity 1;
+		setAttr RadeonProRenderGlobals.aovMattePass 1;
+		setAttr RadeonProRenderGlobals.aovShadowCatcher 1;
+	}
+	
+	// user turns off shadow catcher
+	if ($isShadowCatcher == 1  && $value == 0)
+	{
+		setAttr RadeonProRenderGlobals.aovShadowCatcher 0;
 	}
 }
 
@@ -47,15 +53,27 @@ global proc AEMatteCheckEnableRC(string $nodeName)
 	editorTemplate -dimControl $nodeName "reflectionRoughness" ($value == 0);
 	editorTemplate -dimControl $nodeName "reflectionWeight" ($value == 0);
 
-	setAttr RadeonProRenderGlobals.aovReflectionCatcher ($value);
 
-	int $isShadowCatcher = `getAttr RadeonProRenderGlobals.aovShadowCatcher`;
 	int $isReflectionCatcher = `getAttr RadeonProRenderGlobals.aovReflectionCatcher`;
-	if (($isShadowCatcher == 0) && ($isReflectionCatcher == 1))
+	
+	// user turns on reflection catcher
+	if ($isReflectionCatcher == 0 && $value == 1)
 	{
+		// Unlock if AOV is already locked
+		setAttr RadeonProRenderGlobals.aovBackground -lock 0;
+		setAttr RadeonProRenderGlobals.aovOpacity -lock 0;
+	
 		// Set aovs to ON state
 		setAttr RadeonProRenderGlobals.aovBackground 1;
 		setAttr RadeonProRenderGlobals.aovOpacity 1;
+		setAttr RadeonProRenderGlobals.aovReflectionCatcher 1;
+	
+	}
+	
+	// user turns off reflection catcher
+	if ($isReflectionCatcher == 1 && $value == 0)
+	{
+		setAttr RadeonProRenderGlobals.aovReflectionCatcher 0;
 	}
 }
 
@@ -73,9 +91,6 @@ global proc AERPRMatteMaterialTemplate( string $nodeName )
 		editorTemplate -label "Enable" -addControl "scenabled" "AEMatteCheckEnableSC";
 
 		editorTemplate -l "Background is Environment" -addControl "bgIsEnv";
-		editorTemplate -l "Background weight" -addControl "bgWeight";
-		editorTemplate -l "Background color" -addControl "bgColor";
-		editorTemplate -l "Background transparency" -addControl "bgTransparency";
 
 		editorTemplate -l "Shadow color" -addControl "shadowColor";
 		editorTemplate -l "Shadow weight" -addControl "shadowWeight";
@@ -92,6 +107,7 @@ global proc AERPRMatteMaterialTemplate( string $nodeName )
 
 		editorTemplate -l "Reflection roughness" -addControl "reflectionRoughness";
 		editorTemplate -l "Reflection weight" -addControl "reflectionWeight";
+		
 	editorTemplate -endLayout;
 
 	AEdependNodeTemplate $nodeName;

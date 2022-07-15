@@ -1060,34 +1060,6 @@ namespace frw
 			checkStatus(res);
 		}
 
-		void SetLinearMotion(float x, float y, float z)
-		{
-			auto res = rprShapeSetLinearMotion(Handle(), x, y, z);
-
-			if (res == RPR_ERROR_UNSUPPORTED)
-			{
-				return;
-			}
-			else
-			{
-				checkStatus(res);
-			}
-		}
-
-		void SetAngularMotion(float x, float y, float z, float w)
-		{
-			auto res = rprShapeSetAngularMotion(Handle(), x, y, z, w);
-
-			if (res == RPR_ERROR_UNSUPPORTED)
-			{
-				return;
-			}
-			else
-			{
-				checkStatus(res);
-			}
-		}
-
 		void SetVertexColors(const std::vector<int>& vertexIndices, const std::vector<MColor>& vertexColors, rpr_int indexCount)
 		{
 			const int numComponents = 4;
@@ -1655,36 +1627,6 @@ namespace frw
 
 			res = rprCameraSetMotionTransformCount(Handle(), 1);
 			checkStatus(res);
-		}
-
-		// REMOVE THIS AFTER REMOVING TAHOE
-		void SetLinearMotion(float x, float y, float z)
-		{
-			auto res = rprCameraSetLinearMotion(Handle(), x, y, z);
-
-			if (res == RPR_ERROR_UNSUPPORTED)
-			{
-				return;
-			}
-			else
-			{
-				checkStatus(res);
-			}
-		}
-
-		// REMOVE THIS AFTER REMOVING TAHOE
-		void SetAngularMotion(float x, float y, float z, float w)
-		{
-			auto res = rprCameraSetAngularMotion(Handle(), x, y, z, w);
-
-			if (res == RPR_ERROR_UNSUPPORTED)
-			{
-				return;
-			}
-			else
-			{
-				checkStatus(res);
-			}
 		}
 
 	};

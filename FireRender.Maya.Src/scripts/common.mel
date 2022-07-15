@@ -80,6 +80,8 @@ global proc checkRPRGlobalsNode()
     { 
         createNode -n RadeonProRenderGlobals -ss RadeonProRenderGlobals; 
     } 
+	
+	checkMattePassAOV();
 }
 
 proc float getWorkingUnitCoeff(string $workingUnit)
@@ -192,3 +194,16 @@ global proc string hasGivenMeshDeformerOrRigAttached(string $mesh)
 
 	return "0";
 }
+
+// can be used to provide compatibility with old sc scenes
+global proc checkMattePassAOV()
+{
+	int $isShadowCatcher = `getAttr RadeonProRenderGlobals.aovShadowCatcher`;
+	int $isMattePass = `getAttr RadeonProRenderGlobals.aovMattePass`;
+	
+	if($isShadowCatcher == 1 && $isMattePass == 0)
+	{
+		setAttr RadeonProRenderGlobals.aovMattePass -lock 1 1;
+	}
+}
+

@@ -83,7 +83,6 @@ rpr_int NorthStarContext::CreateContextInternal(rpr_creation_flags createFlags, 
 #else
 	int res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), pContext);
 #endif
-
 	return res;
 }
 
@@ -351,6 +350,14 @@ void NorthStarContext::setupContextPostSceneCreation(const FireRenderGlobalsData
 	updateTonemapping(fireRenderGlobalsData, disableWhiteBalance);
 
 	frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_TEXTURE_CACHE_PATH, fireRenderGlobalsData.textureCachePath.asChar());
+	checkStatus(frstatus);
+
+	// SC and RC
+	// we should disable built-in shadow catcher composite
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_SHADOW_CATCHER_BAKING, fireRenderGlobalsData.shadowCatcherEnabled ? 0 : 1);
+	checkStatus(frstatus);
+	// we should disable IBL visibility to correctly composite reflection catcher
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_IBL_DISPLAY, fireRenderGlobalsData.reflectionCatcherEnabled ? 0 : 1);
 	checkStatus(frstatus);
 
 	// OCIO
