@@ -121,6 +121,9 @@ FireRenderAOVs::FireRenderAOVs() :
 	AddAOV(RPR_AOV_REFLECTION_CATCHER, "aovReflectionCatcher", "ReflectionCatcher", "refcatcher",
 		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
 
+	AddAOV(RPR_AOV_MATTE_PASS, "aovMattePass", "Matte Pass", "mattePass",
+		{ { "R", "G", "B" },{ TypeDesc::FLOAT, TypeDesc::VEC3, TypeDesc::COLOR } });
+
 	AddAOV(RPR_AOV_CRYPTOMATTE_MAT0, "aovCryptoMaterialMat0", "Crypto Material Mat0", "CryptoMaterial00",
 		{ { "R", "G", "B", "A" },{ TypeDesc::FLOAT, TypeDesc::VEC4, TypeDesc::COLOR } });
 

@@ -258,11 +258,8 @@ public:
 		unsigned int width;
 		unsigned int height;
 		std::array<float, 3> shadowColor;
-		std::array<float, 3> bgColor;
 		float shadowTransp;
 		float shadowWeight;
-		float bgTransparency;
-		float bgWeight;
 		const RenderRegion& region;
 		bool mergeOpacity;
 		bool mergeShadowCatcher;
@@ -273,11 +270,8 @@ public:
 			, width(0)
 			, height(0)
 			, shadowColor{ 0.0f, 0.0f, 0.0f }
-			, bgColor{ 0.0f, 0.0f, 0.0f }
 			, shadowTransp(0.0f)
 			, shadowWeight(1.0f)
-			, bgTransparency(0.0f)
-			, bgWeight(1.0f)
 			, region(_region)
 			, mergeOpacity(false)
 			, mergeShadowCatcher(false)
@@ -313,10 +307,6 @@ public:
 	void CombineOpacity(int aov, RV_PIXEL* pixels, unsigned int area);
 
 	// Composite image for Shadow Catcher, Reflection Catcher and Shadow+Reflection Catcher
-	virtual void compositeShadowCatcherOutput(const ReadFrameBufferRequestParams& params);
-	virtual void compositeReflectionCatcherOutput(const ReadFrameBufferRequestParams& params);
-	virtual void compositeReflectionShadowCatcherOutput(const ReadFrameBufferRequestParams& params);
-
 	virtual void rifShadowCatcherOutput(const ReadFrameBufferRequestParams& params);
 	virtual void rifReflectionCatcherOutput(const ReadFrameBufferRequestParams& params);
 	virtual void rifReflectionShadowCatcherOutput(const ReadFrameBufferRequestParams& params);
@@ -961,11 +951,8 @@ public:
 
 	// shadow color and transparency (for shadow/reflection catcher)
 	std::array<float, 3> m_shadowColor;
-	std::array<float, 3> m_bgColor;
 	float m_shadowTransparency;
-	float m_backgroundTransparency;
 	float m_shadowWeight;
-	float m_bgWeight;
 
 	/* data for athena dumping */
 	double m_secondsSpentOnLastRender;
