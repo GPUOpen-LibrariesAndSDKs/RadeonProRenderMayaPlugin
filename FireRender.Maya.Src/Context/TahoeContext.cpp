@@ -303,45 +303,13 @@ void NorthStarContext::setupContextPostSceneCreation(const FireRenderGlobalsData
 		checkStatus(frstatus);
 	}
 
-	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_RAY_CAST_EPISLON, fireRenderGlobalsData.raycastEpsilon);
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_RAY_CAST_EPSILON, fireRenderGlobalsData.raycastEpsilon);
 	checkStatus(frstatus);
 
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_IMAGE_FILTER_TYPE, fireRenderGlobalsData.filterType);
 	checkStatus(frstatus);
 
-	rpr_material_node_input filterAttrName = RPR_CONTEXT_IMAGE_FILTER_BOX_RADIUS;
-	switch (fireRenderGlobalsData.filterType)
-	{
-	case 2:
-	{
-		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_TRIANGLE_RADIUS;
-		break;
-	}
-	case 3:
-	{
-		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_GAUSSIAN_RADIUS;
-		break;
-	}
-	case 4:
-	{
-		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_MITCHELL_RADIUS;
-		break;
-	}
-	case 5:
-	{
-		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_LANCZOS_RADIUS;
-		break;
-	}
-	case 6:
-	{
-		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_BLACKMANHARRIS_RADIUS;
-		break;
-	}
-	default:
-		break;
-	}
-
-	frstatus = rprContextSetParameterByKey1f(frcontext, filterAttrName, fireRenderGlobalsData.filterSize);
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_IMAGE_FILTER_RADIUS, fireRenderGlobalsData.filterSize);
 	checkStatus(frstatus);
 
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_METAL_PERFORMANCE_SHADER, fireRenderGlobalsData.useMPS ? 1 : 0);
