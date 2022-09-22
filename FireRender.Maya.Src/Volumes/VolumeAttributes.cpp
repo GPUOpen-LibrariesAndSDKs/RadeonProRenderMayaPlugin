@@ -54,6 +54,8 @@ MObject RPRVolumeAttributes::emissionGradType;
 MObject RPRVolumeAttributes::emissionValue;
 MObject RPRVolumeAttributes::emissionIntensity;
 MObject RPRVolumeAttributes::emissionRamp;
+MObject RPRVolumeAttributes::emissionKelvin;
+MObject RPRVolumeAttributes::emissionInputType;
 // - density
 MObject RPRVolumeAttributes::densityEnabled;
 MObject RPRVolumeAttributes::volumeDimensionsDensity;
@@ -305,6 +307,16 @@ void RPRVolumeAttributes::Initialize()
 	nAttr.setMin(0.0f);
 	nAttr.setSoftMax(1000.0f);
 
+	emissionKelvin = nAttr.create("emissionKelvin", "eklv", MFnNumericData::kFloat, 5000.0f);
+	setAttribProps(nAttr, emissionKelvin);
+	nAttr.setMin(0.0f);
+	nAttr.setSoftMax(30000.0f);
+
+	emissionInputType = eAttr.create("emissionInputType", "emst", 0);
+	eAttr.addField("By Value", kByValue);
+	eAttr.addField("By Kelvin", kByKelvin);
+	setAttribProps(eAttr, emissionInputType);
+
 	// Density
 	densityEnabled = nAttr.create("densityEnabled", "edns", MFnNumericData::kBoolean, 1);
 	setAttribProps(nAttr, densityEnabled);
@@ -538,6 +550,35 @@ float RPRVolumeAttributes::GetEmissionIntensity(const MFnDependencyNode& node)
 	}
 
 	return 1.0f;
+}
+
+float RPRVolumeAttributes::GetEmissionKelvin(const MFnDependencyNode& node)
+{
+	MPlug plug = node.findPlug(RPRVolumeAttributes::emissionKelvin);
+
+	assert(!plug.isNull());
+	if (!plug.isNull())
+	{
+		return plug.asFloat();
+	}
+
+	return 1.0f;
+}
+
+RPRVolumeAttributes::EmissionInputType RPRVolumeAttributes::GetEmissionInputType(const MFnDependencyNode& node)
+{
+	MPlug plug = node.findPlug(RPRVolumeAttributes::emissionInputType);
+
+	EmissionInputType inputType = kByValue;
+
+	if (!plug.isNull())
+	{
+		int n = 0;
+		if (MStatus::kSuccess == plug.getValue(n))
+			inputType = static_cast<EmissionInputType>(n);
+	}
+
+	return inputType;
 }
 
 MPlug RPRVolumeAttributes::GetEmissionIntensityRamp(const MFnDependencyNode& node)
@@ -1103,6 +1144,8 @@ void RPRVolumeAttributes::FillVolumeData(VolumeData& data, const MObject& node, 
 
 	float density_multiplier = 1.0f;
 	float emission_intensity = 1.0f;
+	float emission_kelvin = 1.0f;
+	EmissionInputType emission_type = kByValue;
 
 	data.voxels.clear();
 	data.voxels.resize(volumeDims[0] * volumeDims[1] * volumeDims[2]);
@@ -1125,6 +1168,8 @@ void RPRVolumeAttributes::FillVolumeData(VolumeData& data, const MObject& node, 
 		MPlug emissionRampPlug = RPRVolumeAttributes::GetEmissionValueRamp(node);
 		GetRampValues<MColorArray, MColor>(emissionRampPlug, emisionCtrlPoints);
 		emission_intensity = RPRVolumeAttributes::GetEmissionIntensity(node);
+		emission_kelvin = RPRVolumeAttributes::GetEmissionKelvin(node);
+		emission_type = RPRVolumeAttributes::GetEmissionInputType(node);
 		MPlug emissionIntensityRampPlug = RPRVolumeAttributes::GetEmissionIntensityRamp(node);
 		GetRampValues<MFloatArray, float>(emissionIntensityRampPlug, emisionIntensityCtrlPoints);
 	}
@@ -1166,14 +1211,17 @@ void RPRVolumeAttributes::FillVolumeData(VolumeData& data, const MObject& node, 
 
 				if (isEmissionEnabled)
 				{
-					float emission_ramp_intensity = GetVoxelValue<float>(voxelParams, emisionIntensityCtrlPoints, emissionGradientType);
-					float emission_multiplier = emission_intensity * emission_ramp_intensity;
+					if (emission_type == kByValue)
+					{
+						float emission_ramp_intensity = GetVoxelValue<float>(voxelParams, emisionIntensityCtrlPoints, emissionGradientType);
+						float emission_multiplier = emission_intensity * emission_ramp_intensity;
 
-					MColor voxelEmissionColor = GetVoxelValue<MColor>(voxelParams, emisionCtrlPoints, emissionGradientType);
+						MColor voxelEmissionColor = GetVoxelValue<MColor>(voxelParams, emisionCtrlPoints, emissionGradientType);
 
-					data.voxels[voxel_idx].eR = voxelEmissionColor.r * emission_multiplier;
-					data.voxels[voxel_idx].eG = voxelEmissionColor.g * emission_multiplier;
-					data.voxels[voxel_idx].eB = voxelEmissionColor.b * emission_multiplier;
+						data.voxels[voxel_idx].eR = voxelEmissionColor.r * emission_multiplier;
+						data.voxels[voxel_idx].eG = voxelEmissionColor.g * emission_multiplier;
+						data.voxels[voxel_idx].eB = voxelEmissionColor.b * emission_multiplier;
+					}
 				}
 
 				if (isDensityEnabled)
