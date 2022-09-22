@@ -514,6 +514,7 @@ bool NorthstarRPRVolume::TranslateVolume()
 {
 	// setup
 	const MObject& node = Object();
+	MFnDependencyNode depNode(node);
 
 	// get volume data
 	VDBVolumeData vdata;
@@ -578,7 +579,6 @@ bool NorthstarRPRVolume::TranslateVolume()
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
 		);
 
-		MFnDependencyNode depNode(node);
 		float const maxDensityValue = RPRVolumeAttributes::GetDensityMultiplier(depNode);
 		auto densityGridNode = frw::GridNode(context()->GetMaterialSystem());
 		densityGridNode.SetGrid(m_densityGrid);
@@ -691,11 +691,29 @@ bool NorthstarRPRVolume::TranslateVolume()
 			RPR_GRID_INDICES_TOPOLOGY_XYZ_U32
 		);
 
-		auto emissionGridNode = frw::GridNode(context()->GetMaterialSystem());
-		emissionGridNode.SetGrid(m_emissionGrid);
+		if (RPRVolumeAttributes::GetEmissionInputType(depNode) == RPRVolumeAttributes::kByValue)
+		{
+			auto emissionGridNode = frw::GridNode(context()->GetMaterialSystem());
+			emissionGridNode.SetGrid(m_emissionGrid);
 
-		auto emissionLookupNode = CreateLookupTextureNode(this, vdata.emissionGrid.valuesLookUpTable, emissionGridNode);
-		volumeShader.xSetValue(RPR_MATERIAL_INPUT_EMISSION, emissionLookupNode);
+			auto emissionLookupNode = CreateLookupTextureNode(this, vdata.emissionGrid.valuesLookUpTable, emissionGridNode);
+			volumeShader.xSetValue(RPR_MATERIAL_INPUT_EMISSION, emissionLookupNode);
+		}
+		else if (RPRVolumeAttributes::GetEmissionInputType(depNode) == RPRVolumeAttributes::kByKelvin)
+		{
+			auto emissionGridNode = frw::GridNode(context()->GetMaterialSystem());
+			emissionGridNode.SetGrid(m_emissionGrid);
+
+			auto blackBodyNode = frw::BlackBodyNode(context()->GetMaterialSystem());
+			blackBodyNode.SetGridSampler(emissionGridNode);
+			blackBodyNode.SetTemperatureValueKelvin(RPRVolumeAttributes::GetEmissionKelvin(depNode));
+
+			volumeShader.xSetValue(RPR_MATERIAL_INPUT_EMISSION, blackBodyNode);
+		}
+		else
+		{
+			assert(false); // should not be here!
+		}
 
 		if (!vdata.albedoGrid.IsValid()) // albedo doesn't set
 		{

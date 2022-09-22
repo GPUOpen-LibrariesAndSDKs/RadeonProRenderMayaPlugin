@@ -174,7 +174,8 @@ namespace frw
 		ValueTypeToonRamp = RPR_MATERIAL_NODE_TOON_RAMP,
 		ValueTypeGridSampler = RPR_MATERIAL_NODE_GRID_SAMPLER,
 		ValueTypePrimvarLookup = RPR_MATERIAL_NODE_PRIMVAR_LOOKUP,
-		ValueTypeRamp = RPR_MATERIAL_NODE_RAMP
+		ValueTypeRamp = RPR_MATERIAL_NODE_RAMP,
+		ValueTypeBlackBody = RPR_MATERIAL_NODE_BLACKBODY
 	};
 
 	enum ShaderType
@@ -2572,6 +2573,21 @@ namespace frw
 		{
 			AddReference(v);
 			return rprMaterialNodeSetInputGridDataByKey(Handle(), RPR_MATERIAL_INPUT_DATA, v.Handle());
+		}
+	};
+
+	class BlackBodyNode : public ValueNode
+	{
+	public:
+		explicit BlackBodyNode(const MaterialSystem& h) : ValueNode(h, ValueTypeBlackBody) {}
+		rpr_int SetGridSampler(GridNode v)
+		{
+			AddReference(v);
+			return rprMaterialNodeSetInputNByKey(Handle(), RPR_MATERIAL_INPUT_TEMPERATURE, v.Handle());
+		}
+		rpr_int SetTemperatureValueKelvin(float f)
+		{
+			return rprMaterialNodeSetInputFByKey(Handle(), RPR_MATERIAL_INPUT_KELVIN, f, 0.0f, 0.0f, 0.0);
 		}
 	};
 

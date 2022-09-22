@@ -27,6 +27,10 @@ global proc AEVolumeCheckEnableEmission(string $nodeName)
 	editorTemplate -dimControl $nodeName "emissionSelectedGrid" ($enabled == 0);
 	editorTemplate -dimControl $nodeName "volumeDimensionsEmission" true;
 	editorTemplate -dimControl $nodeName "emissionIntensity" ($enabled == 0);
+	editorTemplate -dimControl $nodeName "emissionKelvin" ($enabled == 0);
+	editorTemplate -dimControl $nodeName "emissionInputType" ($enabled == 0);
+
+	AERPRVolumeInputType($nodeName);
 }
 
 global proc AEVolumeCheckEnableDensity(string $nodeName)
@@ -298,6 +302,27 @@ global proc uiVDBFileSchemaReplace( string $attr )
     setParent ..;
 }
 
+global proc AERPRVolumeInputType(string $nodeName)
+{
+	string $nodeAttr = $nodeName + ".emissionEnabled";
+	int $enabled = `getAttr $nodeAttr`;
+
+	if ($enabled == 1) {
+		int $disable[];
+		int $type = `getAttr ($nodeName + ".emissionInputType")`;
+
+		if ($type == 0) {			// intensity+ramp
+			$disable = {0, 1};
+		} else if ($type == 1) {	// kelvin
+			$disable = {1, 0};
+		}
+
+		editorTemplate -dimControl $nodeName "emissionIntensity"	$disable[0];
+		editorTemplate -dimControl $nodeName "emissionRamp"			$disable[0];
+		editorTemplate -dimControl $nodeName "emissionKelvin"		$disable[1];
+	}
+}
+
 global proc AERPRVolumeTemplate(string $nodeName)
 {
 	editorTemplate -beginScrollLayout;
@@ -323,10 +348,12 @@ global proc AERPRVolumeTemplate(string $nodeName)
 
 		editorTemplate -beginLayout "Emission" -collapse 0 EmissionLayout;
 			editorTemplate -label "Enable" -addControl "emissionEnabled" "AEVolumeCheckEnableEmission";
+			editorTemplate -addControl "emissionInputType" AERPRVolumeInputType;
 			editorTemplate -label "Grid Dimensions" -addControl "volumeDimensionsEmission";
 			editorTemplate -callCustom "emissionGridSelectNew" "emissionGridSelectReplace" "emissionSelectedGrid" "loadedGrids";
 			AEaddRampControl ($nodeName + ".emissionRamp");
 			editorTemplate -label "Intensity Multiplier" -addControl "emissionIntensity";
+			editorTemplate -label "Kelvins" -addControl "emissionKelvin";
 		editorTemplate -endLayout;
 
 		editorTemplate -beginLayout "Density" -collapse 0 DensityLayout;
