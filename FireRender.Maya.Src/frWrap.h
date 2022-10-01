@@ -2411,6 +2411,36 @@ namespace frw
 			assert(status == RPR_SUCCESS);
 		}
 
+		void SetSceneSyncFinCallback(void* callback, void* userData)
+		{
+			rpr_int status = RPR_SUCCESS;
+			status = rprContextSetParameterByKeyPtr(Handle(), RPR_CONTEXT_UPDATE_TIME_CALLBACK_FUNC, callback);
+			assert(status == RPR_SUCCESS);
+
+			status = rprContextSetParameterByKeyPtr(Handle(), RPR_CONTEXT_UPDATE_TIME_CALLBACK_DATA, userData);
+			assert(status == RPR_SUCCESS);
+		}
+
+		void SetFirstIterationCallback(void* callback, void* userData)
+		{
+			rpr_int status = RPR_SUCCESS;
+			status = rprContextSetParameterByKeyPtr(Handle(), RPR_CONTEXT_FIRST_ITERATION_TIME_CALLBACK_FUNC, callback);
+			assert(status == RPR_SUCCESS);
+
+			status = rprContextSetParameterByKeyPtr(Handle(), RPR_CONTEXT_FIRST_ITERATION_TIME_CALLBACK_DATA, userData);
+			assert(status == RPR_SUCCESS);
+		}
+
+		void SetRenderTimeCallback(void* callback, void* userData)
+		{
+			rpr_int status = RPR_SUCCESS;
+			status = rprContextSetParameterByKeyPtr(Handle(), RPR_CONTEXT_RENDER_TIME_CALLBACK_FUNC, callback);
+			assert(status == RPR_SUCCESS);
+
+			status = rprContextSetParameterByKeyPtr(Handle(), RPR_CONTEXT_RENDER_TIME_CALLBACK_DATA, userData);
+			assert(status == RPR_SUCCESS);
+		}
+
 		void AbortRender()
 		{
 			rpr_int status = RPR_SUCCESS;

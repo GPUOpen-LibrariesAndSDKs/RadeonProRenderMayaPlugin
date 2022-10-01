@@ -29,8 +29,14 @@ private:
 
 	void UpdateThreadFunc();
 	friend void ContextRenderUpdateCallback(float progress, void* pData);
+	friend void ContextSceneSyncFinCallback(float time, void* pData); // the time it took to update / compile the scene inside the core rendering engine.
+	friend void ContextFirstIterationCallback(float time, void* pData); // the time it took to run the first rendering iteration. This time could he higher than next iteration as first iteration is creating some cache.
+	friend void ContextRenderTimeCallback(float time, void* pData); // the time it took to run the actual rendering operation.
 
 	void OnContextRenderUpdateCallback(float progress);
+	void OnContextSceneSyncFinCallback(float time); // time in milliseconds
+	void OnContextFirstIterationCallback(float time); // time in milliseconds
+	void OnContextRenderTimeCallback(float time); // time in milliseconds
 
 	FireRenderContext* m_pContext;
 

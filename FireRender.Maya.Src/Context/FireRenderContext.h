@@ -37,7 +37,6 @@ limitations under the License.
 
 #include "FireRenderUtils.h"
 #include "FireRenderContextIFace.h"
-#include <InstancerMASH.h>
 
 // Forward declarations.
 class FireRenderViewport;
@@ -249,6 +248,9 @@ public:
 	typedef void(*RenderUpdateCallback)(float, void*);
 
 	virtual void SetRenderUpdateCallback(RenderUpdateCallback callback, void* data) {}
+	virtual void SetSceneSyncFinCallback(RenderUpdateCallback callback, void* data) {}
+	virtual void SetFirstIterationCallback(RenderUpdateCallback callback, void* data) {}
+	virtual void SetRenderTimeCallback(RenderUpdateCallback callback, void* data) {}
 	virtual void AbortRender() {}
 
 	struct ReadFrameBufferRequestParams
@@ -953,6 +955,11 @@ public:
 	std::array<float, 3> m_shadowColor;
 	float m_shadowTransparency;
 	float m_shadowWeight;
+
+	// data for render time reporting
+	float m_syncTime;
+	float m_firstFrameRenderTime;
+	float m_lastRenderedFrameRenderTime;
 
 	/* data for athena dumping */
 	double m_secondsSpentOnLastRender;

@@ -38,7 +38,7 @@ public:
 	// -----------------------------------------------------------------------------
 
 	/** Update the progress. */
-	void update(int progress);
+	void update(int progress, bool isSyncing = false);
 
 	/** Close the progress bar window. */
 	void close();
