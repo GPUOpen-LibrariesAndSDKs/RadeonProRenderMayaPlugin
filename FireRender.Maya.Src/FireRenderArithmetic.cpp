@@ -67,6 +67,7 @@ MStatus FireMaya::Arithmetic::initialize()
 	eAttr.addField("Select X", frw::OperatorSelectX);
 	eAttr.addField("Select Y", frw::OperatorSelectY);
 	eAttr.addField("Select Z", frw::OperatorSelectZ);
+	eAttr.addField("Select W", frw::OperatorSelectW);
 
 	eAttr.addField("Combine", frw::OperatorCombine);
 	eAttr.addField("Brightness", frw::OperatorComponentAverage);
