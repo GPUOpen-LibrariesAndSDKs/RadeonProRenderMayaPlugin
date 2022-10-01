@@ -43,6 +43,7 @@ limitations under the License.
 #include "FireRenderThread.h"
 #include "FireRenderMaterialSwatchRender.h"
 #include "CompositeWrapper.h"
+#include <InstancerMASH.h>
 
 #include <deque>
 
@@ -2817,7 +2818,10 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		if (pMesh == nullptr)
 			continue;
 
+		UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectPreSync);
 		pMesh->Freshen(shouldCalculateHash);
+		syncProgressData.currentIndex++;
+		UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectSyncComplete);
 	}
 
 	syncProgressData.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), syncStartTime);

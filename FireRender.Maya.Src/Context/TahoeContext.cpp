@@ -547,6 +547,22 @@ void NorthStarContext::SetRenderUpdateCallback(RenderUpdateCallback callback, vo
 	GetScope().Context().SetUpdateCallback((void*)callback, data);
 }
 
+void NorthStarContext::SetSceneSyncFinCallback(RenderUpdateCallback callback, void* data)
+{
+	GetScope().Context().SetSceneSyncFinCallback((void*)callback, data);
+}
+
+void NorthStarContext::SetFirstIterationCallback(RenderUpdateCallback callback, void* data)
+{
+	GetScope().Context().SetFirstIterationCallback((void*)callback, data);
+}
+
+void NorthStarContext::SetRenderTimeCallback(RenderUpdateCallback callback, void* data)
+{
+	GetScope().Context().SetRenderTimeCallback((void*)callback, data);
+}
+
+
 bool NorthStarContext::IsGivenContextNorthStar(const FireRenderContext* pContext)
 {
 	const NorthStarContext* pNorthStarContext = dynamic_cast<const NorthStarContext*> (pContext);

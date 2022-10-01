@@ -195,7 +195,8 @@ void FireRenderProduction::SetupWorkProgressCallback()
 		{
 			if (!m_globals.useDetailedContextWorkLog &&
 				progressData.progressType != ProgressType::RenderComplete &&
-				progressData.progressType != ProgressType::SyncComplete)
+				progressData.progressType != ProgressType::SyncComplete &&
+				progressData.progressType != ProgressType::ObjectSyncComplete)
 			{
 				return;
 			}
@@ -212,7 +213,7 @@ void FireRenderProduction::SetupWorkProgressCallback()
 				break;
 			}
 			case ProgressType::ObjectSyncComplete:
-				m_progressBars->update(progressData.GetPercentProgress());
+				m_progressBars->update(progressData.GetPercentProgress(), true);
 				break;
 			case ProgressType::SyncComplete:
 				strOutput = string_format("RPR scene synchronization time: %s", getTimeSpentString(progressData.elapsed).c_str());
@@ -835,6 +836,28 @@ void FireRenderProduction::UploadAthenaData()
 	AthenaWrapper::GetAthenaWrapper()->AthenaSendFile(pythonCallWrap);
 }
 
+void DisplayTimeMessage(float timeVal, std::string strMsg)
+{
+	unsigned int ms = lround(timeVal);
+	unsigned int min = ms / 60000;
+	ms = ms - 60000 * min;
+	unsigned int sec = ms / 1000;
+	ms = ms - 1000 * sec;
+
+	std::string strOutput;
+	strOutput = strMsg + string_format("%dmin, %dsec, %dms", min, sec, ms);
+	MGlobal::displayInfo(MString(strOutput.c_str()));
+}
+
+void FireRenderProduction::DisplayRenderTimeData()
+{
+	DisplayTimeMessage(m_contextPtr->m_syncTime, "RPR Core sync time: ");
+
+	DisplayTimeMessage(m_contextPtr->m_firstFrameRenderTime, "First frame render time: ");
+
+	DisplayTimeMessage(m_contextPtr->m_lastRenderedFrameRenderTime, "Last frame render time: ");
+}
+
 std::tuple<size_t, long long> FireRenderProduction::GeSceneTexturesCountAndSize() const
 {
 	size_t data_size = 0;
@@ -896,6 +919,8 @@ bool FireRenderProduction::RunOnViewportThread()
 				m_contextPtr->m_lastRenderResultState = (m_cancelled) ? FireRenderContext::CANCELED : FireRenderContext::COMPLETED;
 
 				UploadAthenaData();
+
+				DisplayRenderTimeData();
 				
 				m_contextPtr->m_polycountLastRender = 0;
 
