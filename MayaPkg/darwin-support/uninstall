@@ -16,9 +16,9 @@ echo "Uninstalling Radeon ProRender Maya"
 
 # Remove the module files
 
-rm /Users/Shared/Autodesk/modules/maya/2019/RadeonProRender.module
 rm /Users/Shared/Autodesk/modules/maya/2020/RadeonProRender.module
 rm /Users/Shared/Autodesk/modules/maya/2022/RadeonProRender.module
+rm /Users/Shared/Autodesk/modules/maya/2023/RadeonProRender.module
 
 # Remove the shelves
 
@@ -26,14 +26,14 @@ localUsers=$( dscl . list /Users UniqueID | awk '$2 >= 501 {print $1}' | grep -v
 
 for userName in $localUsers; do
     echo "Removing shelves for $userName..."
-    if [ -d "/Users/$userName/Library/Preferences/Autodesk/maya/2019/prefs/shelves/" ]; then
-        rm "/Users/$userName/Library/Preferences/Autodesk/maya/2019/prefs/shelves/shelf_Radeon_ProRender.mel"
-    fi
     if [ -d "/Users/$userName/Library/Preferences/Autodesk/maya/2020/prefs/shelves/" ]; then
         rm "/Users/$userName/Library/Preferences/Autodesk/maya/2020/prefs/shelves/shelf_Radeon_ProRender.mel"
     fi
     if [ -d "/Users/$userName/Library/Preferences/Autodesk/maya/2022/prefs/shelves/" ]; then
         rm "/Users/$userName/Library/Preferences/Autodesk/maya/2022/prefs/shelves/shelf_Radeon_ProRender.mel"
+    fi
+    if [ -d "/Users/$userName/Library/Preferences/Autodesk/maya/2023/prefs/shelves/" ]; then
+        rm "/Users/$userName/Library/Preferences/Autodesk/maya/2023/prefs/shelves/shelf_Radeon_ProRender.mel"
     fi
 done
 

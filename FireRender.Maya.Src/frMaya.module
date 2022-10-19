@@ -1,12 +1,3 @@
-+ MAYAVERSION:2019 RadeonProRender 1.0 %FR_MAYA_PLUGIN_DEV_PATH%/dist
-PATH+:=bin
-MAYA_RENDER_DESC_PATH+:=renderDesc
-MAYA_CUSTOM_TEMPLATE_PATH+:=scripts/Templates
-XBMLANGPATH+:=icons
-MAYA_SHADER_LIBRARY_PATH+:=materials
-RPR_SCRIPTS_PATH:=scripts
-plug-ins: plug-ins/2019/
-
 + MAYAVERSION:2020 RadeonProRender 1.0 %FR_MAYA_PLUGIN_DEV_PATH%/dist
 PATH+:=bin
 MAYA_RENDER_DESC_PATH+:=renderDesc
@@ -24,3 +15,12 @@ XBMLANGPATH+:=icons
 MAYA_SHADER_LIBRARY_PATH+:=materials
 RPR_SCRIPTS_PATH:=scripts
 plug-ins: plug-ins/2022/
+
++ MAYAVERSION:2023 RadeonProRender 1.0 %FR_MAYA_PLUGIN_DEV_PATH%/dist
+PATH+:=bin
+MAYA_RENDER_DESC_PATH+:=renderDesc
+MAYA_CUSTOM_TEMPLATE_PATH+:=scripts/Templates
+XBMLANGPATH+:=icons
+MAYA_SHADER_LIBRARY_PATH+:=materials
+RPR_SCRIPTS_PATH:=scripts
+plug-ins: plug-ins/2023/
