@@ -3758,10 +3758,27 @@ namespace frw
 			return false;
 		}
 
-		void xSetParameterLight(rpr_material_node_input parameter, Light light)
+		void LinkLight(const Light& light)
 		{
-			const Data& d = data();
-			rpr_int res = rprMaterialNodeSetInputLightDataByKey(Handle(), parameter, light.Handle());
+			AddReference(light);
+
+			rpr_int res = rprMaterialNodeSetInputLightDataByKey(Handle(), RPR_MATERIAL_INPUT_LIGHT, light.Handle());
+			if (res == RPR_ERROR_UNSUPPORTED ||
+				res == RPR_ERROR_INVALID_PARAMETER)
+			{
+				// print error/warning if needed
+			}
+			else
+			{
+				checkStatus(res);
+			}
+		}
+
+		void ClearLinkedLight(const Light& light)
+		{
+			RemoveReference(light);
+
+			rpr_int res = rprMaterialNodeSetInputLightDataByKey(Handle(), RPR_MATERIAL_INPUT_LIGHT, nullptr);
 			if (res == RPR_ERROR_UNSUPPORTED ||
 				res == RPR_ERROR_INVALID_PARAMETER)
 			{

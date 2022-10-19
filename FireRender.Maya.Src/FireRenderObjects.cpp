@@ -2028,6 +2028,23 @@ void FireRenderLight::detachFromScene()
 	if (!m_isVisible)
 		return;
 
+	FireMaya::Scope& scope = context()->GetScope();
+
+	MFnDependencyNode fnNode(Object());
+	std::string fnName = fnNode.name().asChar();
+
+	std::string lightId = getNodeUUid(Object());
+	auto shaderIds = scope.GetCachedShaderIds(lightId);
+	for (auto it = shaderIds.first; it != shaderIds.second; ++it)
+	{
+		frw::Shader linkedShader = scope.GetCachedShader(it->second);
+		linkedShader.ClearLinkedLight(GetFrLight().light);
+	}
+	if (std::distance(shaderIds.first, shaderIds.second) != 0)
+	{
+		scope.ClearCachedShaderIds(lightId);
+	}
+
 	if (auto scene = Scene())
 	{
 		if (m_light.isAreaLight && m_light.areaLight)
@@ -2243,6 +2260,19 @@ void FireRenderEnvLight::detachFromScene()
 {
 	if (!m_isVisible)
 		return;
+
+	FireMaya::Scope& scope = context()->GetScope();
+	std::string lightId = getNodeUUid(Object());
+	auto shaderIds = scope.GetCachedShaderIds(lightId);
+	for (auto it = shaderIds.first; it != shaderIds.second; ++it)
+	{
+		frw::Shader linkedShader = scope.GetCachedShader(it->second);
+		linkedShader.ClearLinkedLight(getLight());
+	}
+	if (std::distance(shaderIds.first, shaderIds.second) != 0)
+	{
+		scope.ClearCachedShaderIds(lightId);
+	}
 
 	if (auto scene = Scene())
 	{

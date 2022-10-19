@@ -997,6 +997,29 @@ void FireRenderContext::cleanScene()
 			}
 		}
 
+		// detach lights before the rest of the objects to unlink lights correctly
+		it = m_sceneObjects.begin();
+		while (it != m_sceneObjects.end())
+		{
+			FireRenderLight* fireRenderLight = dynamic_cast<FireRenderLight*> (it->second.get());
+			FireRenderEnvLight* envLight = dynamic_cast<FireRenderEnvLight*>(it->second.get());
+
+			if (fireRenderLight != nullptr)
+			{
+				fireRenderLight->detachFromScene();
+				it = m_sceneObjects.erase(it);
+			}
+			else if (envLight != nullptr)
+			{
+				envLight->detachFromScene();
+				it = m_sceneObjects.erase(it);
+			}
+			else
+			{
+				it++;
+			}
+		}
+
 		m_sceneObjects.clear();
 
 		m_camera.clear();
@@ -3652,7 +3675,7 @@ void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestPa
 	});
 }
 
-frw::Light FireRenderContext::GetRprLightFromNode(const MObject& node)
+frw::Light FireRenderContext::LinkLightSceneObjectWithCurrentlyParsedMesh(const MObject& node)
 {
 	MUuid uuidPointer = MFnDependencyNode(node).uuid();
 	MString uuidString = uuidPointer.asString();
@@ -3686,7 +3709,7 @@ frw::Light FireRenderContext::GetRprLightFromNode(const MObject& node)
 		return envLight->getLight();
 	}
 
-	MGlobal::displayWarning("light with uuid " + MString(lightObjectPointer->uuid().c_str()) + " is not support linking");
+	MGlobal::displayWarning("light with uuid " + MString(lightObjectPointer->uuid().c_str()) + " does not support linking");
 	return frw::Light();
 	
 }
