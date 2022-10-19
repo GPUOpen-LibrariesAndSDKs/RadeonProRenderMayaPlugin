@@ -1884,6 +1884,21 @@ void FireMaya::Scope::SetCachedShader(const NodeId& id, frw::Shader shader)
 		m->shaderMap[id] = shader;
 }
 
+std::pair<FireMaya::Scope::MMapNodeIdIterator, FireMaya::Scope::MMapNodeIdIterator> FireMaya::Scope::GetCachedShaderIds(const NodeId& lightId)
+{
+	return m->lightShaderMap.equal_range(lightId);
+}
+
+void FireMaya::Scope::SetCachedShaderId(const NodeId& lightId, NodeId& shaderId)
+{
+	m->lightShaderMap.insert(std::pair<NodeId, NodeId>(lightId, shaderId));
+}
+
+void FireMaya::Scope::ClearCachedShaderIds(const NodeId& lightId)
+{
+	m->lightShaderMap.erase(lightId);
+}
+
 void FireMaya::Scope::SetCachedVolumeShader(const NodeId& id, frw::Shader shader)
 {
 	if (!shader)
@@ -1965,6 +1980,7 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMeshCommon*
 
 	DebugPrint("Parsing shader: %s (forceUpdate=%d, shader.IsDirty()=%d)", shaderId.c_str(), forceUpdate, shader.IsDirty());
 	m->m_pCurrentlyParsedMesh = pMesh;
+	m->m_pLastLinkedLight = MObject::kNullObj;
 
 	// create now
 	shader = ParseShader(node);
@@ -1972,6 +1988,18 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMeshCommon*
 	{
 		SetCachedShader(shaderId, shader);
 		shader.SetDirty(false);
+
+		if (m->m_pLastLinkedLight != MObject::kNullObj)
+		{
+			std::string lightId = getNodeUUid(m->m_pLastLinkedLight);
+
+			MFnDependencyNode fnNode(m->m_pLastLinkedLight);
+			std::string fnName = fnNode.name().asChar();
+
+			SetCachedShaderId(lightId, shaderId);
+
+			m->m_pLastLinkedLight = MObject::kNullObj;
+		}
 	}
 
 	m->m_pCurrentlyParsedMesh = nullptr;

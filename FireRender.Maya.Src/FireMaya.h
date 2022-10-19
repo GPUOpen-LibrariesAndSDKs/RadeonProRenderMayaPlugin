@@ -206,12 +206,14 @@ namespace FireMaya
 
 			std::map<NodeId, frw::Shader> volumeShaderMap;
 			std::map<NodeId, frw::Shader> shaderMap;
+			std::multimap<NodeId, NodeId> lightShaderMap; // shaderId = lightShaderMap[lightNodeId]
 			std::map<NodeId, frw::Value> valueMap;
 			std::map<NodeId, MCallbackId> m_nodeDirtyCallbacks;
 			std::map<NodeId, MCallbackId> m_AttributeChangedCallbacks;
 			std::map<std::string, frw::Image> imageCache;
 
 			FireRenderMeshCommon const* m_pCurrentlyParsedMesh; // is not supposed to keep any data outside of during mesh parsing 
+			MObject m_pLastLinkedLight; // is not supposed to keep any data outside of during mesh parsing 
 
 			Data();
 			~Data();
@@ -232,6 +234,7 @@ namespace FireMaya
 		void NodeDirtyCallback(MObject& node);
 
 		FireRenderMeshCommon const* GetCurrentlyParsedMesh() const { return m->m_pCurrentlyParsedMesh; }
+		void SetLastLinkedLight(const MObject& lightObj) const { m->m_pLastLinkedLight = lightObj; }
 		void SetIsLastPassTextureMissing(bool value) const { m_IsLastPassTextureMissing = value; }
 
 		frw::Value createImageFromShaderNode(MObject node, MString plugName = "outColor", int width = 256, int height = 256) const;
@@ -328,6 +331,11 @@ namespace FireMaya
 
 		frw::Shader GetCachedShader(const NodeId& str) const;
 		void SetCachedShader(const NodeId& str, frw::Shader shader);
+
+		typedef std::multimap<NodeId, NodeId>::iterator MMapNodeIdIterator;
+		std::pair<MMapNodeIdIterator, MMapNodeIdIterator> GetCachedShaderIds(const NodeId& lightId);
+		void SetCachedShaderId(const NodeId& lightId, NodeId& shaderId);// shaderId = lightShaderMap[lightNodeId]
+		void ClearCachedShaderIds(const NodeId& lightId);
 
 		void Reset();
 		void Init(rpr_context handle, bool destroyMaterialSystemOnDelete = true, bool createScene = true);
