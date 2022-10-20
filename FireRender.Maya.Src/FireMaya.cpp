@@ -1979,7 +1979,10 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMeshCommon*
 	}
 
 	DebugPrint("Parsing shader: %s (forceUpdate=%d, shader.IsDirty()=%d)", shaderId.c_str(), forceUpdate, shader.IsDirty());
-	m->m_pCurrentlyParsedMesh = pMesh;
+	if (pMesh != nullptr)
+	{
+		m->m_pCurrentlyParsedMesh = pMesh;
+	}
 	m->m_pLastLinkedLight = MObject::kNullObj;
 
 	// create now
@@ -2002,7 +2005,11 @@ frw::Shader FireMaya::Scope::GetShader(MObject node, const FireRenderMeshCommon*
 		}
 	}
 
-	m->m_pCurrentlyParsedMesh = nullptr;
+	if (pMesh != nullptr)
+	{
+		m->m_pCurrentlyParsedMesh = nullptr;
+	}
+
 	return shader;
 }
 
