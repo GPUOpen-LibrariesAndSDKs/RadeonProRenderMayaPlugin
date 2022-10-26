@@ -696,7 +696,7 @@ public:
 	bool setupDenoiserForViewport();
 
 	// used for toon shader light linking
-	frw::Light LinkLightSceneObjectWithCurrentlyParsedMesh(const MObject& node);
+	frw::Light GetLightSceneObjectFromMObject(const MObject& node);
 
 protected:
 	static int INCORRECT_PLUGIN_ID;

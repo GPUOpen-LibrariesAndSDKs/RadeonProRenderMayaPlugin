@@ -2221,6 +2221,7 @@ FireMaya::Scope::Data::~Data()
 
 	// delete shaders
 	shaderMap.clear();
+	lightShaderMap.clear();
 
 	// everything else destroyed automatically
 }
