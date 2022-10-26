@@ -432,8 +432,6 @@ private:
 	
 	bool IsSelected(const MDagPath& dagPath) const;
 
-	void ProccessSmoothCallbackWorkaroundIfNeeds(const MObject& object);
-
 	// A mesh in Maya can have multiple shaders
 	// in fr it must be split in multiple shapes
 	// so this return the list of all the fr_shapes created for this Maya mesh
@@ -441,7 +439,6 @@ private:
 	virtual HashValue CalculateHash() override;
 
 private:
-	unsigned int m_SkipCallbackCounter;
 };
 
 // Fire render light

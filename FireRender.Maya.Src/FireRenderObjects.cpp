@@ -668,12 +668,12 @@ FireRenderMeshCommon::~FireRenderMeshCommon()
 }
 
 FireRenderMesh::FireRenderMesh(FireRenderContext* context, const MDagPath& dagPath) :
-	FireRenderMeshCommon(context, dagPath), m_SkipCallbackCounter(0)
+	FireRenderMeshCommon(context, dagPath)
 {
 }
 
 FireRenderMesh::FireRenderMesh(const FireRenderMesh& rhs, const std::string& uuid)
-	: FireRenderMeshCommon(rhs, uuid), m_SkipCallbackCounter(0)
+	: FireRenderMeshCommon(rhs, uuid)
 {
 }
 
@@ -1679,50 +1679,6 @@ void FireRenderMesh::GetShapes(frw::Shape& outShape)
 	SaveUsedUV(Object());
 }
 
-void FireRenderMesh::ProccessSmoothCallbackWorkaroundIfNeeds(const MObject& object)
-{
-	if (!object.hasFn(MFn::kMesh))
-	{
-		return;
-	}
-
-	DependencyNode attributes(object);
-	if (!attributes.getBool("displaySmoothMesh"))
-	{
-		return;
-	}
-
-	// check hierarchy up thorugh parents to analyze do they have animation tracks or not
-	MFnDagNode node(object);
-	
-	bool foundAnimatedGrandParent = false;
-	for (unsigned int indexParent = 0; indexParent < node.parentCount(); ++indexParent)
-	{
-		MObject parent = MFnDagNode(node.parent(indexParent)).parent(0); // get grand parent
-
-		while (!parent.isNull())
-		{
-			// check if parent is animated
-			MSelectionList selList;
-			selList.add(parent);
-
-			if (MAnimUtil::isAnimated(selList))
-			{
-				foundAnimatedGrandParent = true;
-				break;
-			}
-
-			parent = MFnDagNode(parent).parent(0);
-		}
-	}
-
-	if (foundAnimatedGrandParent)
-	{
-		// duplicate polysmooth and deleteNode trigger callback on mesh node - nodeDirty and attributeChanged(world_matrix[0])
-		m_SkipCallbackCounter += 2;
-	}
-}
-
 bool FireRenderMesh::TranslateMeshWrapped(const MDagPath& dagPath, frw::Shape& outShape)
 {
 	assert(IsMainInstance()); // should already be main instance at this point
@@ -1741,7 +1697,6 @@ bool FireRenderMesh::TranslateMeshWrapped(const MDagPath& dagPath, frw::Shape& o
 		MString name = dagNode.fullPathName();
 		assert(m_meshData.IsInitialized());
 
-		ProccessSmoothCallbackWorkaroundIfNeeds(Object());
 		outShape = FireMaya::MeshTranslator::TranslateMesh(m_meshData, context->GetContext(), Object(), m.faceMaterialIndices, motionSamplesCount, dagPath.fullPathName());
 	}
 
@@ -1872,22 +1827,18 @@ const std::vector<int>& FireRenderMeshCommon::GetFaceMaterialIndices(void) const
 
 void FireRenderMesh::OnNodeDirty()
 {
-	if (m_SkipCallbackCounter > 0)
-	{
-		m_SkipCallbackCounter--;
-		return;
-	}
-
-	m.changed.mesh = true;
 	setDirty();
 }
 
 void FireRenderMesh::OnPlugDirty(MObject& node, MPlug& plug)
 {
-	if (m_SkipCallbackCounter > 0)
+	MString plugName = plug.partialName();
+
+	// recreate mesh only if user changes point positions or smooth preview flag.
+	// We need to add more attribute to track here
+	if ((plugName == "pt") || (plugName == "dsm"))
 	{
-		m_SkipCallbackCounter--;
-		return;
+		m.changed.mesh = true;
 	}
 
 	FireRenderNode::OnPlugDirty(node, plug);
@@ -1979,7 +1930,6 @@ bool FireRenderMesh::ReloadMesh(unsigned int sampleIdx /*= 0*/)
 	{
 		ContextSetDirtyObjectAutoLocker locker(*context);
 
-		ProccessSmoothCallbackWorkaroundIfNeeds(Object());
 		success = FireMaya::MeshTranslator::PreProcessMesh(m_meshData, context->GetContext(), Object(), motionSamplesCount, sampleIdx, dagPath.fullPathName());
 	}
 
