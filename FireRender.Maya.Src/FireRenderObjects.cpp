@@ -103,6 +103,12 @@ std::string FireRenderObject::uuidWithoutInstanceNumberForString(const std::stri
 
 void FireRenderObject::setDirty()
 {
+#ifdef _DEBUG
+	auto node = Object();
+	MFnDagNode dagNode(node);
+	MString thisName = dagNode.name();
+#endif
+
 	context()->setDirtyObject(this);
 }
 
@@ -967,6 +973,9 @@ void FireRenderMeshCommon::setContourVisibility(bool contourVisibility)
 
 void FireRenderNode::RegisterCallbacks()
 {
+	MFnDependencyNode fnDep(Object());
+	std::string nodeName = fnDep.name().asChar();
+
 	FireRenderObject::RegisterCallbacks();
 	if (context()->getCallbackCreationDisabled())
 		return;
@@ -1854,8 +1863,10 @@ void FireRenderMesh::ShaderDirtyCallback(MObject& node, void* clientData)
 {
 	DebugPrint("CALLBACK > ShaderDirtyCallback(%s)", node.apiTypeStr());
 
+#ifdef _DEBUG
 	MFnDependencyNode fnShdr(node);
 	std::string shdrName = fnShdr.name().asChar();
+#endif
 
 	if (auto self = static_cast<FireRenderMesh*>(clientData))
 	{
@@ -1988,11 +1999,10 @@ void FireRenderLight::detachFromScene()
 	for (auto it = shaderIds.first; it != shaderIds.second; ++it)
 	{
 		frw::Shader linkedShader = scope.GetCachedShader(it->second);
+		if (!linkedShader.IsValid())
+			continue;
+
 		linkedShader.ClearLinkedLight(GetFrLight().light);
-	}
-	if (std::distance(shaderIds.first, shaderIds.second) != 0)
-	{
-		scope.ClearCachedShaderIds(lightId);
 	}
 
 	if (auto scene = Scene())
@@ -2109,19 +2119,20 @@ void FireRenderLight::Freshen(bool shouldCalculateHash)
 		if (dagPath.isVisible())
 		{
 			attachToScene();
+
+			FireMaya::Scope& scope = context()->GetScope();
+			std::string lightId = getNodeUUid(Object());
+			auto shaderIds = scope.GetCachedShaderIds(lightId);
+			for (auto it = shaderIds.first; it != shaderIds.second; ++it)
+			{
+				frw::Shader linkedShader = scope.GetCachedShader(it->second);
+				if (!linkedShader.IsValid())
+					continue;
+
+				linkedShader.LinkLight(GetFrLight().light);
+			}
 		}
 	}
-
-	for (auto* meshPtr : m_linkedMeshes)
-	{
-		FireRenderMesh* mesh = dynamic_cast<FireRenderMesh*>(const_cast<FireRenderMeshCommon*>(meshPtr));
-
-		if (mesh != nullptr)
-		{
-			mesh->OnShaderDirty();
-		}
-	}
-	m_linkedMeshes.clear();
 
 	FireRenderNode::Freshen(shouldCalculateHash);
 }
@@ -2162,11 +2173,6 @@ void FireRenderLight::setPortal(bool value)
 bool FireRenderLight::portal()
 {
 	return m_portal;
-}
-
-void FireRenderLight::addLinkedMesh(FireRenderMeshCommon const* mesh)
-{
-	m_linkedMeshes.emplace_back(mesh);
 }
 
 FireRenderPhysLight::FireRenderPhysLight(FireRenderContext* context, const MDagPath& dagPath) :
@@ -2217,11 +2223,10 @@ void FireRenderEnvLight::detachFromScene()
 	for (auto it = shaderIds.first; it != shaderIds.second; ++it)
 	{
 		frw::Shader linkedShader = scope.GetCachedShader(it->second);
+		if (!linkedShader.IsValid())
+			continue;
+
 		linkedShader.ClearLinkedLight(getLight());
-	}
-	if (std::distance(shaderIds.first, shaderIds.second) != 0)
-	{
-		scope.ClearCachedShaderIds(lightId);
 	}
 
 	if (auto scene = Scene())
@@ -2368,26 +2373,22 @@ void FireRenderEnvLight::Freshen(bool shouldCalculateHash)
 
 			attachToScene();	// normal!
 		}
-	}
 
-	for (auto* meshPtr : m_linkedMeshes)
-	{
-		FireRenderMesh* mesh = dynamic_cast<FireRenderMesh*>(const_cast<FireRenderMeshCommon*>(meshPtr));
-
-		if (mesh != nullptr)
+		std::string lightId = getNodeUUid(Object());
+		auto shaderIds = scope.GetCachedShaderIds(lightId);
+		for (auto it = shaderIds.first; it != shaderIds.second; ++it)
 		{
-			mesh->OnShaderDirty();
+			frw::Shader linkedShader = scope.GetCachedShader(it->second);
+			if (!linkedShader.IsValid())
+				continue;
+
+			linkedShader.LinkLight(getLight());
 		}
 	}
-	m_linkedMeshes.clear();
 
 	FireRenderNode::Freshen(shouldCalculateHash);
 }
 
-void FireRenderEnvLight::addLinkedMesh(FireRenderMeshCommon const* mesh)
-{
-	m_linkedMeshes.emplace_back(mesh);
-}
 
 //===================
 // Camera

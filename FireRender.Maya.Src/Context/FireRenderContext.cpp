@@ -1039,8 +1039,6 @@ void FireRenderContext::cleanScene()
 		}
 		if (m_tonemap)
 		{
-			//rprContextDetachPostEffect(context(), m_tonemap.Handle());
-			//m_tonemap.Reset();
 			m_tonemap.reset();
 		}
 		if (m_normalization)
@@ -3675,7 +3673,7 @@ void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestPa
 	});
 }
 
-frw::Light FireRenderContext::LinkLightSceneObjectWithCurrentlyParsedMesh(const MObject& node)
+frw::Light FireRenderContext::GetLightSceneObjectFromMObject(const MObject& node)
 {
 	MUuid uuidPointer = MFnDependencyNode(node).uuid();
 	MString uuidString = uuidPointer.asString();
@@ -3700,16 +3698,14 @@ frw::Light FireRenderContext::LinkLightSceneObjectWithCurrentlyParsedMesh(const 
 
 	if (fireRenderLight && !fireRenderLight->GetFrLight().isAreaLight)
 	{
-		fireRenderLight->addLinkedMesh(GetScope().GetCurrentlyParsedMesh());
 		return fireRenderLight->GetFrLight().light;
 	}
 	else if (envLight)
 	{
-		envLight->addLinkedMesh(GetScope().GetCurrentlyParsedMesh());
 		return envLight->getLight();
 	}
 
 	MGlobal::displayWarning("light with uuid " + MString(lightObjectPointer->uuid().c_str()) + " does not support linking");
 	return frw::Light();
-	
 }
+

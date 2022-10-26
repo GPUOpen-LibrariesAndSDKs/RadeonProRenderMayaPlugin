@@ -346,7 +346,7 @@ void FireMaya::ToonMaterial::linkLight(Scope& scope, frw::Shader& shader)
 		return;
 	}
 
-	frw::Light rprLight = pContext->LinkLightSceneObjectWithCurrentlyParsedMesh(light);
+	frw::Light rprLight = pContext->GetLightSceneObjectFromMObject(light);
 
 	if (!rprLight.IsValid())
 	{
