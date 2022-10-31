@@ -179,6 +179,7 @@
     <ClCompile Include="FireRenderConvertVRayCmd.cpp" />
     <ClCompile Include="FireRenderDisplacement.cpp" />
     <ClCompile Include="FireRenderDot.cpp" />
+    <ClCompile Include="FireRenderDoublesided.cpp" />
     <ClCompile Include="FireRenderEnvironmentLight.cpp" />
     <ClCompile Include="FireRenderError.cpp" />
     <ClCompile Include="FireRenderExportCmd.cpp" />
@@ -343,6 +344,7 @@
     <ClInclude Include="FireRenderConvertVRayCmd.h" />
     <ClInclude Include="FireRenderDisplacement.h" />
     <ClInclude Include="FireRenderDot.h" />
+    <ClInclude Include="FireRenderDoublesided.h" />
     <ClInclude Include="FireRenderEnvironmentLight.h" />
     <ClInclude Include="FireRenderError.h" />
     <ClInclude Include="FireRenderFresnelSchlick.h" />

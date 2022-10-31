@@ -66,6 +66,7 @@ limitations under the License.
 #include "FireRenderGradient.h"
 #include "FireRenderLookup.h"
 #include "FireRenderTexture.h"
+#include "FireRenderDoublesided.h"
 #include "FireRenderFresnelSchlick.h"
 #include "FireRenderNoise.h"
 #include "SubsurfaceMaterial.h"
@@ -853,6 +854,11 @@ MStatus initializePlugin(MObject obj)
 		FireMaya::ShadowCatcherMaterial::initialize,
 		MPxNode::kDependNode, &UserClassify));
 
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "DoubleSided", FireMaya::RPRDoubleSided::FRTypeID(),
+		FireMaya::RPRDoubleSided::creator,
+		FireMaya::RPRDoubleSided::initialize,
+		MPxNode::kDependNode, &UserClassify));
+
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "ToonMaterial", FireMaya::ToonMaterial::FRTypeID(),
 		FireMaya::ToonMaterial::creator,
 		FireMaya::ToonMaterial::initialize,
@@ -1058,6 +1064,7 @@ MStatus uninitializePlugin(MObject obj)
     CHECK_MSTATUS(plugin.deregisterNode(FireMaya::RPRRamp::FRTypeID()));
 
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::FireRenderPBRMaterial::FRTypeID()));
+	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::RPRDoubleSided::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::ShadowCatcherMaterial::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::SubsurfaceMaterial::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::VolumeMaterial::FRTypeID()));
