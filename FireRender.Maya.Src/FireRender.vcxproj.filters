@@ -698,6 +698,9 @@
     <ClCompile Include="FireRenderRamp.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FireRenderDoublesided.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -1202,6 +1205,9 @@
       <Filter>Context</Filter>
     </ClInclude>
     <ClInclude Include="FireRenderRamp.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderDoublesided.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

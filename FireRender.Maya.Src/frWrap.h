@@ -198,6 +198,7 @@ namespace frw
 		ShaderTypeVolume = RPR_MATERIAL_NODE_VOLUME,
 		ShaderTypeFlatColor = RPR_MATERIAL_NODE_PASSTHROUGH,
 		ShaderTypeToon = RPR_MATERIAL_NODE_TOON_CLOSURE,
+		ShaderTypeDoubleSided = RPR_MATERIAL_NODE_TWOSIDED,
 		ShaderTypeMicrofacetAnisotropicReflection = RPR_MATERIAL_NODE_MICROFACET_ANISOTROPIC_REFLECTION
 	};
 
@@ -3360,6 +3361,7 @@ namespace frw
 		}
 
 		Shader ShaderBlend(const Shader& a, const Shader& b, const Value& t) const;
+		Shader ShaderDoubleSided(const Shader& a, const Shader& b) const;
 		Shader ShaderAdd(const Shader& a, const Shader& b) const;
 	};
 
@@ -3986,6 +3988,27 @@ namespace frw
 		node._SetInputNode(RPR_MATERIAL_INPUT_COLOR0, a);
 		node._SetInputNode(RPR_MATERIAL_INPUT_COLOR1, b);
 		node.SetValue(RPR_MATERIAL_INPUT_WEIGHT, t);
+
+		node.SetDirty(false);
+
+		return node;
+	}
+
+	inline Shader MaterialSystem::ShaderDoubleSided(const Shader& a, const Shader& b) const
+	{
+		if (!a.IsValid())
+		{
+			return b;
+		}
+
+		if (!b.IsValid())
+		{
+			return a;
+		}
+
+		Shader node(*this, ShaderTypeDoubleSided);
+		node._SetInputNode(RPR_MATERIAL_INPUT_FRONTFACE, a);
+		node._SetInputNode(RPR_MATERIAL_INPUT_BACKFACE, b);
 
 		node.SetDirty(false);
 
