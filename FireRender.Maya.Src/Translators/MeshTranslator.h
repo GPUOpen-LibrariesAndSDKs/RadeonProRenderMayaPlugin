@@ -51,6 +51,9 @@ namespace FireMaya
 			// temporary store MObject here as well before we store indexes here
 			MObject object;
 
+			MObject tesselatedObject;
+			MObject smoothedObject;
+
 			MeshPolygonData();
 
 			// Initializes mesh and returns error status
