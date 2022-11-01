@@ -674,12 +674,12 @@ FireRenderMeshCommon::~FireRenderMeshCommon()
 }
 
 FireRenderMesh::FireRenderMesh(FireRenderContext* context, const MDagPath& dagPath) :
-	FireRenderMeshCommon(context, dagPath)
+	FireRenderMeshCommon(context, dagPath), m_SkipCallbackCounter(0)
 {
 }
 
 FireRenderMesh::FireRenderMesh(const FireRenderMesh& rhs, const std::string& uuid)
-	: FireRenderMeshCommon(rhs, uuid)
+	: FireRenderMeshCommon(rhs, uuid), m_SkipCallbackCounter(0)
 {
 }
 
@@ -1517,13 +1517,8 @@ void FireRenderMesh::Rebuild()
 	MString name = meshFn.name();
 #endif
 
-	// If there is just one shader and the number of shader is not changed then just update the shader
-	bool shadersChanged = false;
-	shadersChanged = (m.elements.size() > 0) && (shadingEngines.length() != m.elements.back().shaders.size());
-
-	if (m.changed.mesh || shadersChanged || (m.elements.size() == 0))
+	if (IsRebuildNeeded())
 	{
-		// the number of shader has changed so reload the mesh
 		ReinitializeMesh(meshPath);
 	}
 
@@ -1688,6 +1683,47 @@ void FireRenderMesh::GetShapes(frw::Shape& outShape)
 	SaveUsedUV(Object());
 }
 
+void FireRenderMesh::ProccessSmoothCallbackWorkaroundIfNeeds()
+{
+	MObject object = Object();
+
+	DependencyNode attributes(object);
+	if (!attributes.getBool("displaySmoothMesh"))
+	{
+		return;
+	}
+
+	// check hierarchy up thorugh parents to analyze do they have animation tracks or not
+	MFnDagNode node(object);
+	
+	bool foundAnimatedGrandParent = false;
+	for (unsigned int indexParent = 0; indexParent < node.parentCount(); ++indexParent)
+	{
+		MObject parent = MFnDagNode(node.parent(indexParent)).parent(0); // get grand parent
+
+		while (!parent.isNull())
+		{
+			// check if parent is animated
+			MSelectionList selList;
+			selList.add(parent);
+
+			if (MAnimUtil::isAnimated(selList))
+			{
+				foundAnimatedGrandParent = true;
+				break;
+			}
+
+			parent = MFnDagNode(parent).parent(0);
+		}
+	}
+
+	if (foundAnimatedGrandParent)
+	{
+		// duplicate polysmooth and deleteNode trigger callback on mesh node - on inMesh plug
+		m_SkipCallbackCounter = 2;
+	}
+}
+
 bool FireRenderMesh::TranslateMeshWrapped(const MDagPath& dagPath, frw::Shape& outShape)
 {
 	assert(IsMainInstance()); // should already be main instance at this point
@@ -1845,9 +1881,16 @@ void FireRenderMesh::OnPlugDirty(MObject& node, MPlug& plug)
 
 	// recreate mesh only if user changes point positions or smooth preview flag.
 	// We need to add more attribute to track here
-	if ((plugName == "pt") || (plugName == "dsm"))
+	if ((plugName == "pt") || (plugName == "dsm") || (plugName == "i"))
 	{
-		m.changed.mesh = true;
+		if ((plugName == "i") && (m_SkipCallbackCounter > 0))
+		{
+			m_SkipCallbackCounter--;
+		}
+		else
+		{
+			m.changed.mesh = true;
+		}
 	}
 
 	FireRenderNode::OnPlugDirty(node, plug);
@@ -1917,8 +1960,32 @@ bool FireRenderMesh::InitializeMaterials()
 	return !onlyShaderChanged;
 }
 
+bool FireRenderMesh::IsRebuildNeeded()
+{
+	MFnDagNode meshFn(Object());
+
+	MObjectArray shadingEngines = GetShadingEngines(meshFn, Instance());
+
+	// If there is just one shader and the number of shader is not changed then just update the shader
+	bool shadersChanged = false;
+	shadersChanged = (m.elements.size() > 0) && (shadingEngines.length() != m.elements.back().shaders.size());
+
+	if (m.changed.mesh || shadersChanged || (m.elements.size() == 0))
+	{
+		// the number of shader has changed so reload the mesh
+		return true;
+	}
+
+	return false;
+}
+
 bool FireRenderMesh::ReloadMesh(unsigned int sampleIdx /*= 0*/)
 {
+	if (!IsRebuildNeeded())
+	{
+		return true;
+	}
+
 	FireRenderContext* context = this->context();
 
 	const FireRenderMeshCommon* mainMesh = context->GetMainMesh(uuid());
@@ -1942,6 +2009,7 @@ bool FireRenderMesh::ReloadMesh(unsigned int sampleIdx /*= 0*/)
 		ContextSetDirtyObjectAutoLocker locker(*context);
 
 		success = FireMaya::MeshTranslator::PreProcessMesh(m_meshData, context->GetContext(), Object(), motionSamplesCount, sampleIdx, dagPath.fullPathName());
+		ProccessSmoothCallbackWorkaroundIfNeeds();
 	}
 
 	if (!success)

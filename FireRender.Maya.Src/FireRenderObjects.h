@@ -419,10 +419,11 @@ public:
 protected:
 	void SaveUsedUV(const MObject& meshNode);
 
-
 	void SetupObjectId(MObject parentTransform);
 
 	void SetupShadowColor();
+
+	bool IsRebuildNeeded();
 
 protected:
 	FireMaya::MeshTranslator::MeshPolygonData m_meshData;
@@ -437,8 +438,10 @@ private:
 	// so this return the list of all the fr_shapes created for this Maya mesh
 
 	virtual HashValue CalculateHash() override;
+	void ProccessSmoothCallbackWorkaroundIfNeeds();
 
 private:
+	unsigned int m_SkipCallbackCounter;
 };
 
 // Fire render light
