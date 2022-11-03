@@ -175,7 +175,8 @@ namespace frw
 		ValueTypeGridSampler = RPR_MATERIAL_NODE_GRID_SAMPLER,
 		ValueTypePrimvarLookup = RPR_MATERIAL_NODE_PRIMVAR_LOOKUP,
 		ValueTypeRamp = RPR_MATERIAL_NODE_RAMP,
-		ValueTypeBlackBody = RPR_MATERIAL_NODE_BLACKBODY
+		ValueTypeBlackBody = RPR_MATERIAL_NODE_BLACKBODY,
+		ValueTypeBevel = RPR_MATERIAL_NODE_ROUNDED_CORNER,
 	};
 
 	enum ShaderType

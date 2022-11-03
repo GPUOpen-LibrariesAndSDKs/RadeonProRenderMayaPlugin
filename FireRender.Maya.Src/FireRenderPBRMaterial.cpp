@@ -223,7 +223,7 @@ namespace FireMaya
 		// Normal
 		value = scope.GetValue(shaderNode.findPlug(Attribute::normalMap, false));
 		int type = value.GetNodeType();
-		if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
+		if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap || type == frw::ValueTypeBevel)
 		{
 			shader.xSetValue(RPR_MATERIAL_INPUT_UBER_DIFFUSE_NORMAL, value);
 			shader.xSetValue(RPR_MATERIAL_INPUT_UBER_REFLECTION_NORMAL, value);

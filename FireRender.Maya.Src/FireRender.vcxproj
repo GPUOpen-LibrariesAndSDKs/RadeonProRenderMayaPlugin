@@ -167,6 +167,7 @@
     <ClCompile Include="FireRenderAOV.cpp" />
     <ClCompile Include="FireRenderAOVs.cpp" />
     <ClCompile Include="FireRenderArithmetic.cpp" />
+    <ClCompile Include="FireRenderBevel.cpp" />
     <ClCompile Include="FireRenderBlendOverride.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2020|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2022|x64'">false</ExcludedFromBuild>
@@ -332,6 +333,7 @@
     <ClInclude Include="FireRenderAOV.h" />
     <ClInclude Include="FireRenderAOVs.h" />
     <ClInclude Include="FireRenderArithmetic.h" />
+    <ClInclude Include="FireRenderBevel.h" />
     <ClInclude Include="FireRenderBlendOverride.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2020|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug2022|x64'">false</ExcludedFromBuild>

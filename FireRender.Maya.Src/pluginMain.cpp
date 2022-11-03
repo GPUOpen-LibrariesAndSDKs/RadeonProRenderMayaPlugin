@@ -62,6 +62,7 @@ limitations under the License.
 #include "FireRenderArithmetic.h"
 #include "FireRenderDot.h"
 #include "FireRenderVoronoi.h"
+#include "FireRenderBevel.h"
 #include "FireRenderBlendValue.h"
 #include "FireRenderGradient.h"
 #include "FireRenderLookup.h"
@@ -903,6 +904,11 @@ MStatus initializePlugin(MObject obj)
 		FireMaya::Voronoi::creator,
 		FireMaya::Voronoi::initialize,
 		MPxNode::kDependNode, &UserTextureClassify));
+
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "Bevel", FireMaya::Bevel::FRTypeID(),
+		FireMaya::Bevel::creator,
+		FireMaya::Bevel::initialize,
+		MPxNode::kDependNode, &UserUtilityClassify));
 
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "BlendValue", FireMaya::BlendValue::FRTypeID(),
 		FireMaya::BlendValue::creator,

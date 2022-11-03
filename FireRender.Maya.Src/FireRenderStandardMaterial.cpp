@@ -765,6 +765,9 @@ bool FireMaya::StandardMaterial::IsNormalOrBumpMap(const MObject& attrNormal, No
 	if (type == frw::ValueTypeBumpMap)
 		return true;
 
+	if (type == frw::ValueTypeBevel)
+		return true;
+
 	return false;
 }
 
@@ -1076,7 +1079,7 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	{
 		frw::Value value = GET_VALUE(normalMap);
 		int type = value.GetNodeType();
-		if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
+		if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap || type == frw::ValueTypeBevel)
 		{
 
 		}
