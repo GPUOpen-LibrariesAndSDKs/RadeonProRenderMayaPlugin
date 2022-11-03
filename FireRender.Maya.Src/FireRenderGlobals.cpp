@@ -495,6 +495,7 @@ MStatus FireRenderGlobals::initialize()
 
 	Attribute::renderQuality = eAttr.create("renderQualityFinalRender", "rqfr", (short) RenderQuality::RenderQualityFull, &status);
 	addRenderQualityModes(eAttr);
+	eAttr.addField("HybridPro", (short)RenderQuality::RenderQualityHybridPro);
 	MAKE_INPUT_CONST(eAttr);
 
 	ViewportRenderAttributes::renderQuality = eAttr.create("renderQualityViewport", "rqv", (short) RenderQuality::RenderQualityNorthStar, &status);

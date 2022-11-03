@@ -168,7 +168,8 @@ enum class RenderQuality
 	RenderQualityHigh,
 	RenderQualityMedium,
 	RenderQualityLow,
-	RenderQualityNorthStar
+	RenderQualityNorthStar,
+	RenderQualityHybridPro
 };
 
 
