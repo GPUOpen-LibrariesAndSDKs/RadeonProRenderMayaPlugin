@@ -636,6 +636,12 @@
 		F11EFC81290F3B5E00AB5DC9 /* FireRenderDoublesided.h in Headers */ = {isa = PBXBuildFile; fileRef = F11EFC7D290F3B5E00AB5DC9 /* FireRenderDoublesided.h */; };
 		F11EFC82290F3B5E00AB5DC9 /* FireRenderDoublesided.h in Headers */ = {isa = PBXBuildFile; fileRef = F11EFC7D290F3B5E00AB5DC9 /* FireRenderDoublesided.h */; };
 		F11EFC83290F3B5E00AB5DC9 /* FireRenderDoublesided.h in Headers */ = {isa = PBXBuildFile; fileRef = F11EFC7D290F3B5E00AB5DC9 /* FireRenderDoublesided.h */; };
+		F140A89C2912F54900AA082F /* FireRenderBevel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F140A8992912F54900AA082F /* FireRenderBevel.cpp */; };
+		F140A89D2912F54900AA082F /* FireRenderBevel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F140A8992912F54900AA082F /* FireRenderBevel.cpp */; };
+		F140A89E2912F54900AA082F /* FireRenderBevel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F140A8992912F54900AA082F /* FireRenderBevel.cpp */; };
+		F140A89F2912F54900AA082F /* FireRenderBevel.h in Headers */ = {isa = PBXBuildFile; fileRef = F140A89B2912F54900AA082F /* FireRenderBevel.h */; };
+		F140A8A02912F54900AA082F /* FireRenderBevel.h in Headers */ = {isa = PBXBuildFile; fileRef = F140A89B2912F54900AA082F /* FireRenderBevel.h */; };
+		F140A8A12912F54900AA082F /* FireRenderBevel.h in Headers */ = {isa = PBXBuildFile; fileRef = F140A89B2912F54900AA082F /* FireRenderBevel.h */; };
 		F14A5B2F287C422200075AB9 /* FireRenderRamp.h in Headers */ = {isa = PBXBuildFile; fileRef = F14A5B2B287C422200075AB9 /* FireRenderRamp.h */; };
 		F14A5B30287C422200075AB9 /* FireRenderRamp.h in Headers */ = {isa = PBXBuildFile; fileRef = F14A5B2B287C422200075AB9 /* FireRenderRamp.h */; };
 		F14A5B32287C422200075AB9 /* FireRenderRamp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F14A5B2D287C422200075AB9 /* FireRenderRamp.cpp */; };
@@ -1391,6 +1397,8 @@
 		CEED8EC6227346E900136DEF /* FireRenderVolume.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderVolume.cpp; path = ../../../FireRender.Maya.Src/FireRenderVolume.cpp; sourceTree = "<group>"; };
 		F11EFC7B290F3B5E00AB5DC9 /* FireRenderDoublesided.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderDoublesided.cpp; path = ../../../FireRender.Maya.Src/FireRenderDoublesided.cpp; sourceTree = "<group>"; };
 		F11EFC7D290F3B5E00AB5DC9 /* FireRenderDoublesided.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderDoublesided.h; path = ../../../FireRender.Maya.Src/FireRenderDoublesided.h; sourceTree = "<group>"; };
+		F140A8992912F54900AA082F /* FireRenderBevel.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderBevel.cpp; path = ../../../FireRender.Maya.Src/FireRenderBevel.cpp; sourceTree = "<group>"; };
+		F140A89B2912F54900AA082F /* FireRenderBevel.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderBevel.h; path = ../../../FireRender.Maya.Src/FireRenderBevel.h; sourceTree = "<group>"; };
 		F14A5B2B287C422200075AB9 /* FireRenderRamp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderRamp.h; path = ../../../FireRender.Maya.Src/FireRenderRamp.h; sourceTree = "<group>"; };
 		F14A5B2D287C422200075AB9 /* FireRenderRamp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderRamp.cpp; path = ../../../FireRender.Maya.Src/FireRenderRamp.cpp; sourceTree = "<group>"; };
 		F154A9BF28EE21CA00929AE5 /* RadeonProRender.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = RadeonProRender.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1486,6 +1494,8 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				F140A8992912F54900AA082F /* FireRenderBevel.cpp */,
+				F140A89B2912F54900AA082F /* FireRenderBevel.h */,
 				F11EFC7B290F3B5E00AB5DC9 /* FireRenderDoublesided.cpp */,
 				F11EFC7D290F3B5E00AB5DC9 /* FireRenderDoublesided.h */,
 				F14A5B2D287C422200075AB9 /* FireRenderRamp.cpp */,
@@ -2000,6 +2010,7 @@
 				505C0C0F2660C2BA000E11A9 /* NorthStarRenderingHelper.h in Headers */,
 				505C0C102660C2BA000E11A9 /* RprComposite.h in Headers */,
 				505C0C112660C2BA000E11A9 /* FireRenderLightCommon.h in Headers */,
+				F140A8A02912F54900AA082F /* FireRenderBevel.h in Headers */,
 				505C0C122660C2BA000E11A9 /* FireMaya.h in Headers */,
 				505C0C132660C2BA000E11A9 /* Utils.h in Headers */,
 				505C0C142660C2BA000E11A9 /* ReverseMapConverter.h in Headers */,
@@ -2161,6 +2172,7 @@
 				50ED249E251B8889006A318A /* NorthStarRenderingHelper.h in Headers */,
 				B753200D23D9ED5600246738 /* RprComposite.h in Headers */,
 				F19A160D248A737000A959C7 /* FireRenderLightCommon.h in Headers */,
+				F140A89F2912F54900AA082F /* FireRenderBevel.h in Headers */,
 				B753200E23D9ED5600246738 /* FireMaya.h in Headers */,
 				B7190C542449C8130071D47F /* Utils.h in Headers */,
 				B753200F23D9ED5600246738 /* ReverseMapConverter.h in Headers */,
@@ -2322,6 +2334,7 @@
 				F154A8C028EE21CA00929AE5 /* NorthStarRenderingHelper.h in Headers */,
 				F154A8C128EE21CA00929AE5 /* BlendColorsConverter.h in Headers */,
 				F154A8C228EE21CA00929AE5 /* FireRenderLightCommon.h in Headers */,
+				F140A8A12912F54900AA082F /* FireRenderBevel.h in Headers */,
 				F154A8C328EE21CA00929AE5 /* RprComposite.h in Headers */,
 				F154A8C428EE21CA00929AE5 /* Utils.h in Headers */,
 				F154A8C528EE21CA00929AE5 /* FireMaya.h in Headers */,
@@ -2562,6 +2575,7 @@
 				505C0C8D2660C2BA000E11A9 /* FireRenderNoise.cpp in Sources */,
 				505C0C8E2660C2BA000E11A9 /* FireRenderMaterialSwatchRender.cpp in Sources */,
 				505C0C8F2660C2BA000E11A9 /* FireRenderAddMaterial.cpp in Sources */,
+				F140A89D2912F54900AA082F /* FireRenderBevel.cpp in Sources */,
 				505C0C902660C2BA000E11A9 /* FireRenderImageUtil.cpp in Sources */,
 				505C0C912660C2BA000E11A9 /* InstancerMASH.cpp in Sources */,
 				505C0C922660C2BA000E11A9 /* AnimationExporter.cpp in Sources */,
@@ -2722,6 +2736,7 @@
 				B753208123D9ED5600246738 /* FireRenderNoise.cpp in Sources */,
 				B753208223D9ED5600246738 /* FireRenderMaterialSwatchRender.cpp in Sources */,
 				B753208323D9ED5600246738 /* FireRenderAddMaterial.cpp in Sources */,
+				F140A89C2912F54900AA082F /* FireRenderBevel.cpp in Sources */,
 				B753208423D9ED5600246738 /* FireRenderImageUtil.cpp in Sources */,
 				B753208523D9ED5600246738 /* InstancerMASH.cpp in Sources */,
 				50FCE4F62530985900BF404F /* AnimationExporter.cpp in Sources */,
@@ -2882,6 +2897,7 @@
 				F154A94228EE21CA00929AE5 /* FireRenderMaterialSwatchRender.cpp in Sources */,
 				F154A94328EE21CA00929AE5 /* FireRenderAddMaterial.cpp in Sources */,
 				F154A94428EE21CA00929AE5 /* FireRenderImageUtil.cpp in Sources */,
+				F140A89E2912F54900AA082F /* FireRenderBevel.cpp in Sources */,
 				F154A94528EE21CA00929AE5 /* InstancerMASH.cpp in Sources */,
 				F154A94628EE21CA00929AE5 /* FireRenderBlendMaterial.cpp in Sources */,
 				F154A94728EE21CA00929AE5 /* AnimationExporter.cpp in Sources */,
