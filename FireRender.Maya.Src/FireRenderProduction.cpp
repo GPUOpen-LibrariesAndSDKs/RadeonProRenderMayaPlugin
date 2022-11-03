@@ -830,6 +830,8 @@ void FireRenderProduction::UploadAthenaData()
 		{RenderQuality::RenderQualityHigh, "High"},
 		{RenderQuality::RenderQualityMedium, "Medium"},
 		{RenderQuality::RenderQualityLow, "Low"},
+		{RenderQuality::RenderQualityNorthStar, "forced NorthStar"},
+		{RenderQuality::RenderQualityHybridPro, "forced HybridPro"},
 	};
 	WriteAthenaField("Quality", renderQualityName[quality]);
 

@@ -184,7 +184,7 @@ FireRenderSky* HybridContext::CreateSky(const MDagPath& dagPath)
 
 bool HybridContext::IsRenderQualitySupported(RenderQuality quality) const
 {
-	return quality != RenderQuality::RenderQualityFull;
+	return ((quality != RenderQuality::RenderQualityFull) && (quality != RenderQuality::RenderQualityNorthStar));
 }
 
 bool HybridContext::IsPhysicalLightTypeSupported(PLType lightType) const
