@@ -1,5 +1,36 @@
 # Version 3.4
 
+## New Features:
+- Support for Maya 2023 has been added.
+- The RPR Interactive mode has been improved with the following developments:
+  - Better support for more shader node types;
+  - Even faster rendering with optimized settings out of the box;
+  - Hair rendering support;
+  - More AOVs supported;
+  - Support for OpenColorIO texture spaces;
+  - Shadow Catcher support.
+- A new Bevel Shader node has been added. This can be used to create small rounded edges on objects. In the physical world, objects rarely have completely sharp edges like polygons. Using this node will enhance the details of artists’ renders.
+- Support for the Double Sided node has been added, which allows attaching a different shader to each side of an object mesh.
+- A new RPR Ramp node type has been added.
+- The “Pixel Filter” (anti-aliasing) setting for RPR Final has been re-enabled.
+
+## Bugs Fixed:
+- The issue has been fixed where a “halo” could appear around objects with a shadow catcher or reflection catcher attached.
+- Emissive objects with transparent shadows could cast the wrong shadow — fixed.
+- Reflection catcher was not “catching” emission lights — fixed.
+- The issue has been fixed where the IPR or viewport render could restart in an infinite loop.
+- Ray Epsilon now automatically corrects to the scene scale.
+- Swatch Rendering could leak memory — fixed.
+- RPR Uber shaders with transparency now show correctly in Maya’s Viewport 2.
+- RPR Volume can now use the “Temperature” setting for emission.
+- During scene export for rendering, the progress bar is now updated and better statistics are reported at the end of the render.
+- Added the “W” parameter to arithmetic nodes (4th channel for vectors).
+- Light linking would not work for blend nodes with toon materials connected — fixed.
+- Issues with IPR not reacting with smooth meshes in the scene have been fixed.
+
+
+# Version 3.3.55
+
 ## Features:
 - A new option for overriding an object’s shadow color has been added.
 Furthermore, a new option for overriding whether an object receives shadows has been added.
