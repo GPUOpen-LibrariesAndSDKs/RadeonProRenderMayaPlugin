@@ -203,6 +203,14 @@ public:
 	static VolumeGradient GetEmissionGradientType(const MFnDependencyNode& node);
 	static MPlug GetEmissionValueRamp(const MFnDependencyNode& node);
 	static float GetEmissionIntensity(const MFnDependencyNode& node);
+	static float GetEmissionKelvin(const MFnDependencyNode& node);
+
+	enum EmissionInputType {
+		kByValue = 0,
+		kByKelvin,
+	};
+
+	static EmissionInputType GetEmissionInputType(const MFnDependencyNode& node);
 	static MPlug GetEmissionIntensityRamp(const MFnDependencyNode& node);
 	static MString GetSelectedEmissionGridName(const MFnDependencyNode& node);
 
@@ -248,6 +256,8 @@ public:
 	static MObject emissionValue;    // values ramp
 	static MObject emissionIntensity; // intensity of emission light source
 	static MObject emissionRamp; // ramp used to set different intensity across volume
+	static MObject emissionKelvin; // kelvin value (used if by temperature)
+	static MObject emissionInputType; // kelvin or ramp+intensity
 
 	// Density
 	static MObject densityEnabled;

@@ -138,6 +138,10 @@ frw::Value MayaStandardNodeConverters::FileNodeConverter::Convert() const
 	{
 		return imageNode;
 	}
+	else if (m_params.outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_TRANSPARENCY)
+	{
+		return 1.0 - frw::Value(imageNode).SelectW();
+	}
 	else if (m_params.outPlugName == FireMaya::MAYA_FILE_NODE_OUTPUT_ALPHA)
 	{
 		if (!m_params.scope.GetIContextInfo()->IsGLTFExport())

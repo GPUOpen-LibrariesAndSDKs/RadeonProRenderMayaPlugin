@@ -254,10 +254,7 @@ void FireRenderAOV::readFrameBuffer(FireRenderContext& context)
 	params.mergeOpacity = opacityMerge;
 	params.mergeShadowCatcher = true;
 	params.shadowColor = context.m_shadowColor;
-	params.bgColor = context.m_bgColor;
-	params.bgWeight = context.m_bgWeight;
 	params.shadowTransp = context.m_shadowTransparency;
-	params.bgTransparency = context.m_backgroundTransparency;
 	params.shadowWeight = context.m_shadowWeight;
 
 	// process frame buffer

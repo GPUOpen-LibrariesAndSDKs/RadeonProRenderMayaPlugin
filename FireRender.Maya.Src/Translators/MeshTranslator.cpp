@@ -278,6 +278,8 @@ bool FireMaya::MeshTranslator::PreProcessMesh(
 		return false;
 	}
 
+	bool removeSmoothedORTesselated = true;
+
 	// Create tesselated object
 	MObject tessellated = GetTesselatedObjectIfNecessary(originalObject, mayaStatus);
 	if (MStatus::kSuccess != mayaStatus)
@@ -299,11 +301,22 @@ bool FireMaya::MeshTranslator::PreProcessMesh(
 	if (!tessellated.isNull())
 	{
 		object = tessellated;
+		if (outMeshPolygonData.tesselatedObject.isNull())
+		{
+			outMeshPolygonData.tesselatedObject = object;
+			removeSmoothedORTesselated = false;
+		}
 	}
 
 	if (!smoothed.isNull())
 	{
 		object = smoothed;
+
+		if (outMeshPolygonData.smoothedObject.isNull())
+		{
+			outMeshPolygonData.smoothedObject = object;
+			removeSmoothedORTesselated = false;
+		}
 	}
 
 	// get fnMesh
@@ -346,14 +359,17 @@ bool FireMaya::MeshTranslator::PreProcessMesh(
 		return false;
 	}
 
-	// Now remove any temporary mesh we created.
-	if (!tessellated.isNull())
+	if (removeSmoothedORTesselated)
 	{
-		RemoveTesselatedTemporaryMesh(node, tessellated);
-	}
-	if (!smoothed.isNull())
-	{
-		RemoveSmoothedTemporaryMesh(node, smoothed);
+		// Now remove any temporary mesh we created.
+		if (!tessellated.isNull())
+		{
+			RemoveTesselatedTemporaryMesh(node, tessellated);
+		}
+		if (!smoothed.isNull())
+		{
+			RemoveSmoothedTemporaryMesh(node, smoothed);
+		}
 	}
 
 	return successfullyProcessed;
@@ -374,25 +390,14 @@ frw::Shape FireMaya::MeshTranslator::TranslateMesh(
 	// - NOTE: this will be removed in future PR
 	MObject object = originalObject;
 	MStatus mayaStatus;
-	MObject tessellated = GetTesselatedObjectIfNecessary(originalObject, mayaStatus);
-	if (MStatus::kSuccess != mayaStatus)
+	
+	if (!meshPolygonData.tesselatedObject.isNull())
 	{
-		mayaStatus.perror("Tesselation error");
+		object = meshPolygonData.tesselatedObject;
 	}
-
-	MObject smoothed = GetSmoothedObjectIfNecessary(originalObject, mayaStatus);
-	if (MStatus::kSuccess != mayaStatus)
+	if (!meshPolygonData.smoothedObject.isNull())
 	{
-		mayaStatus.perror("Smoothing error");
-	}
-
-	if (!tessellated.isNull())
-	{
-		object = tessellated;
-	}
-	if (!smoothed.isNull())
-	{
-		object = smoothed;
+		object = meshPolygonData.smoothedObject;
 	}
 
 	MFnMesh fnMesh(object, &mayaStatus);
@@ -409,13 +414,16 @@ frw::Shape FireMaya::MeshTranslator::TranslateMesh(
 
 	// Now remove any temporary mesh we created.
 	MFnDagNode node(originalObject);
-	if (!tessellated.isNull())
+	if (!meshPolygonData.tesselatedObject.isNull())
 	{
-		RemoveTesselatedTemporaryMesh(node, tessellated);
+		RemoveTesselatedTemporaryMesh(node, meshPolygonData.tesselatedObject);
+		meshPolygonData.tesselatedObject = MObject();
 	}
-	if (!smoothed.isNull())
+
+	if (!meshPolygonData.smoothedObject.isNull())
 	{
-		RemoveSmoothedTemporaryMesh(node, smoothed);
+		RemoveSmoothedTemporaryMesh(node, meshPolygonData.smoothedObject);
+		meshPolygonData.smoothedObject = MObject();
 	}
 
 	return outShape;

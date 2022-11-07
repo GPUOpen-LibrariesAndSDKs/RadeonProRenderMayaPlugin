@@ -40,6 +40,10 @@ FireRenderContextPtr ContextCreator::CreateAppropriateContextForRenderQuality(Re
 	{
 		return CreateNorthStarContext();
 	}
+	if (quality == RenderQuality::RenderQualityHybridPro)
+	{
+		return CreateHybridProContext();
+	}
 
 #ifdef WIN32
 	if ((quality == RenderQuality::RenderQualityFull) && (renderType == RenderType::ProductionRender))

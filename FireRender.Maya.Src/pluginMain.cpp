@@ -62,10 +62,12 @@ limitations under the License.
 #include "FireRenderArithmetic.h"
 #include "FireRenderDot.h"
 #include "FireRenderVoronoi.h"
+#include "FireRenderBevel.h"
 #include "FireRenderBlendValue.h"
 #include "FireRenderGradient.h"
 #include "FireRenderLookup.h"
 #include "FireRenderTexture.h"
+#include "FireRenderDoublesided.h"
 #include "FireRenderFresnelSchlick.h"
 #include "FireRenderNoise.h"
 #include "SubsurfaceMaterial.h"
@@ -82,6 +84,7 @@ limitations under the License.
 #include "FireRenderPassthrough.h"
 #include "FireRenderBump.h"
 #include "FireRenderNormal.h"
+#include "FireRenderRamp.h"
 
 #include "FireRenderMaterialSwatchRender.h"
 
@@ -179,9 +182,9 @@ void RPRRelease();
 
 bool gExitingMaya = false;
 
-void checkFireRenderGlobals(void* data)
+void NewSceneBasicSetup(void* data)
 {
-	MGlobal::executeCommand("source \"common.mel\"; checkRPRGlobalsNode();");
+	MGlobal::executeCommand("source \"common.mel\"; checkRPRGlobalsNode(); workingUnitsScriptJobSetup();");
 }
 
 void onToonShaderCreate(MObject& node, void* clientData)
@@ -761,7 +764,7 @@ MStatus initializePlugin(MObject obj)
 		FireRenderRenderPass::creator, FireRenderRenderPass::initialize,
 		MPxNode::kDependNode, &renderPassClassification));
 
-	checkFireRenderGlobals(NULL);
+	NewSceneBasicSetup(NULL);
 
 	beforeNewSceneCallback = MSceneMessage::addCallback(MSceneMessage::kBeforeNew, swapToDefaultRenderOverride, NULL, &status);
 	CHECK_MSTATUS(status);
@@ -771,9 +774,9 @@ MStatus initializePlugin(MObject obj)
 	mayaExitingCallback = MSceneMessage::addCallback(MSceneMessage::kMayaExiting, mayaExiting, NULL, &status);
 	CHECK_MSTATUS(status);
 
-	newSceneCallback = MSceneMessage::addCallback(MSceneMessage::kAfterNew, checkFireRenderGlobals, NULL, &status);
+	newSceneCallback = MSceneMessage::addCallback(MSceneMessage::kAfterNew, NewSceneBasicSetup, NULL, &status);
 	CHECK_MSTATUS(status);
-	openSceneCallback = MSceneMessage::addCallback(MSceneMessage::kAfterOpen, checkFireRenderGlobals, NULL, &status);
+	openSceneCallback = MSceneMessage::addCallback(MSceneMessage::kAfterOpen, NewSceneBasicSetup, NULL, &status);
 	CHECK_MSTATUS(status);
 
 	auto mlDenoiserSupportedCPU = static_cast<int>(StartupContextChecker::IsMLDenoiserSupportedCPU());
@@ -852,6 +855,11 @@ MStatus initializePlugin(MObject obj)
 		FireMaya::ShadowCatcherMaterial::initialize,
 		MPxNode::kDependNode, &UserClassify));
 
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "DoubleSided", FireMaya::RPRDoubleSided::FRTypeID(),
+		FireMaya::RPRDoubleSided::creator,
+		FireMaya::RPRDoubleSided::initialize,
+		MPxNode::kDependNode, &UserClassify));
+
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "ToonMaterial", FireMaya::ToonMaterial::FRTypeID(),
 		FireMaya::ToonMaterial::creator,
 		FireMaya::ToonMaterial::initialize,
@@ -897,6 +905,11 @@ MStatus initializePlugin(MObject obj)
 		FireMaya::Voronoi::initialize,
 		MPxNode::kDependNode, &UserTextureClassify));
 
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "Bevel", FireMaya::Bevel::FRTypeID(),
+		FireMaya::Bevel::creator,
+		FireMaya::Bevel::initialize,
+		MPxNode::kDependNode, &UserUtilityClassify));
+
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "BlendValue", FireMaya::BlendValue::FRTypeID(),
 		FireMaya::BlendValue::creator,
 		FireMaya::BlendValue::initialize,
@@ -941,6 +954,11 @@ MStatus initializePlugin(MObject obj)
         FireMaya::FireRenderAO::creator,
         FireMaya::FireRenderAO::initialize,
         MPxNode::kDependNode, &UserUtilityClassify));
+
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "Ramp", FireMaya::RPRRamp::FRTypeID(),
+		FireMaya::RPRRamp::creator,
+		FireMaya::RPRRamp::initialize,
+		MPxNode::kDependNode, &UserUtilityClassify));
 
 	// Initialize the viewport render override.
 	FireRenderOverride::instance()->initialize();
@@ -1049,8 +1067,10 @@ MStatus uninitializePlugin(MObject obj)
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::Bump::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::Normal::FRTypeID()));
     CHECK_MSTATUS(plugin.deregisterNode(FireMaya::FireRenderAO::FRTypeID()));
+    CHECK_MSTATUS(plugin.deregisterNode(FireMaya::RPRRamp::FRTypeID()));
 
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::FireRenderPBRMaterial::FRTypeID()));
+	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::RPRDoubleSided::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::ShadowCatcherMaterial::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::SubsurfaceMaterial::FRTypeID()));
 	CHECK_MSTATUS(plugin.deregisterNode(FireMaya::VolumeMaterial::FRTypeID()));

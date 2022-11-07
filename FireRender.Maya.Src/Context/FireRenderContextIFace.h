@@ -60,7 +60,4 @@ public:
 	virtual bool IsUberScaleSupported() const = 0;
 
 	virtual bool IsGLTFExport() const = 0;
-
-	// used for toon shader light linking
-	virtual frw::Light GetRprLightFromNode(const MObject& node) = 0;
 };

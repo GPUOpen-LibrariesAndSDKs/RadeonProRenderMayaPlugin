@@ -180,7 +180,6 @@ void FireRenderMaterialSwatchRender::processFromBackgroundThread()
 bool FireRenderMaterialSwatchRender::finalizeRendering()
 {
 	FireRenderContext & context = getSwatchInstance().getContext();
-	//FireRenderSwatchInstance& swatchInstance = getSwatchInstance();
 
 	unsigned int width = context.m_width;
 	unsigned int height = context.m_height;

@@ -142,6 +142,9 @@ private:
 	/* Gather and send render data by Athena */
 	void UploadAthenaData();
 
+	/*display render time data to log*/
+	void DisplayRenderTimeData();
+
 	size_t GetScenePolyCount() const;
 
 	std::tuple<size_t, long long> GeSceneTexturesCountAndSize() const;
