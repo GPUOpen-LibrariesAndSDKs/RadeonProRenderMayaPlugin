@@ -26,22 +26,6 @@ RampNodeConverter::RampNodeConverter(const ConverterParams& params) : BaseConver
 
 namespace
 {
-	enum RampUVType
-	{
-		// supported by RPR
-		VRamp = 1 << 0,
-		URamp = 1 << 1,
-		DiagonalRamp = 1 << 2,
-		CircularRamp = 1 << 4,
-
-		// not supported by RPR
-		RadialRamp = 1 << 3,
-		BoxRamp = 1 << 5,
-		UVRamp = 1 << 6,
-		FourCornersRamp = 1 << 7,
-		TartanRamp = 1 << 8,
-	};
-
 	unsigned int RampsTypesSupportedByRPR = VRamp | URamp | DiagonalRamp | CircularRamp;
 }
 
@@ -75,7 +59,7 @@ void ProcessRampValueAttribute(MPlug& fakeRampPlug, RampCtrlPoint<MColor>& ctrlP
 	// - this is compound attribute of 3 floats RGB
 	std::vector<float> color;
 	color.reserve(3);
-	bool res = ProcessCompoundPlug<std::vector<float>>(fakeRampPlug, color, ProcessColorPlug);
+	bool res = ForEachPlugInCompoundPlug<std::vector<float>>(fakeRampPlug, color, ProcessColorPlug);
 	assert(res);
 	ctrlPoint.ctrlPointData.set(MColor::kRGB, color[0], color[1], color[2]);
 }
@@ -99,7 +83,7 @@ void ProcessRampValueAttribute(MPlug& fakeRampPlug, RampCtrlPoint<std::pair<MCol
 	// - this is compound attribute of 3 floats RGB
 	std::vector<float> color;
 	color.reserve(3);
-	bool res = ProcessCompoundPlug<std::vector<float>>(fakeRampPlug, color, ProcessColorPlug);
+	bool res = ForEachPlugInCompoundPlug<std::vector<float>>(fakeRampPlug, color, ProcessColorPlug);
 	assert(res);
 	ctrlPoint.ctrlPointData.first.set(MColor::kRGB, color[0], color[1], color[2]);
 }
@@ -165,11 +149,11 @@ bool CreateCtrlPointsFromPlug(MObject rampObject, std::vector<RampCtrlPoint<T>>&
 		ctrlPoint.method = InterpolationMethod::kLinear;
 		ctrlPoint.index = (unsigned int)out.size() - 1;
 
-		return ProcessCompoundPlug<std::vector<RampCtrlPoint<T>>>(fakeRampPlug, out, ProcessFakeRampAttribute<T>);
+		return ForEachPlugInCompoundPlug<std::vector<RampCtrlPoint<T>>>(fakeRampPlug, out, ProcessFakeRampAttribute<T>);
 	};
 
 	// creates ramp control point from attributes data in pseudo ramp attribute rampPlug
-	bool res = ProcessArrayPlug<std::vector<RampCtrlPoint<T>>>(rampPlug, out, func);
+	bool res = ForEachPlugInArrayPlug<std::vector<RampCtrlPoint<T>>>(rampPlug, out, func);
 	if (!res)
 		return false;
 
@@ -488,4 +472,13 @@ frw::Value RampNodeConverter::Convert() const
 	// use RPR Nodes
 	return GetBufferSamplerConvertor(shaderNodeObject, m_params.scope, rampType);
 }
+}
+
+frw::ArithmeticNode GetRampNodeLookup(const FireMaya::Scope& scope, RampUVType rampType)
+{
+	const auto& nodeTreeGeneratorImpl = MayaStandardNodeConverters::m_rampGenerators.find(rampType);
+	assert(nodeTreeGeneratorImpl != MayaStandardNodeConverters::m_rampGenerators.end());
+	frw::ArithmeticNode rampNodeTree = nodeTreeGeneratorImpl->second(scope);
+
+	return rampNodeTree;
 }

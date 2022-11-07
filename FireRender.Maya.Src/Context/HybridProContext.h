@@ -28,8 +28,8 @@ public:
     bool IsDenoiserSupported() const override { return false; }
     bool IsDisplacementSupported() const override { return false; }
 
-    bool IsHairSupported() const override { return false; }
-    bool IsVolumeSupported() const override { return false; }
+    bool IsHairSupported() const override { return true; }
+    bool IsVolumeSupported() const override { return true; }
 
     virtual bool IsMaterialNodeIDSupported() const { return false; }
     virtual bool IsMeshObjectIDSupported() const { return false; }

@@ -101,6 +101,6 @@ bool HybridProContext::IsAOVSupported(int aov) const
 
 bool HybridProContext::IsRenderQualitySupported(RenderQuality quality) const
 {
-	return quality == RenderQuality::RenderQualityFull;
+	return ((quality == RenderQuality::RenderQualityFull) || (quality == RenderQuality::RenderQualityHybridPro));
 }
 

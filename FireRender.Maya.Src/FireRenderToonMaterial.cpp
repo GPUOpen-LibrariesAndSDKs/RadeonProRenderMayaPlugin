@@ -1,6 +1,7 @@
 #include "FireRenderToonMaterial.h"
 #include "FireMaya.h"
 #include "FireRenderUtils.h"
+#include "Context/FireRenderContext.h"
 #include <maya/MSelectionList.h>
 #include <maya/MUuid.h>
 #include <maya/MDGMessage.h>
@@ -283,7 +284,7 @@ frw::Shader FireMaya::ToonMaterial::GetShader(Scope& scope)
 
 	const int type = normalValue.GetNodeType();
 
-	if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
+	if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap || type == frw::ValueTypeBevel)
 	{
 		shader.SetValue(RPR_MATERIAL_INPUT_NORMAL, normalValue);
 	}
@@ -339,14 +340,21 @@ void FireMaya::ToonMaterial::linkLight(Scope& scope, frw::Shader& shader)
 		return;
 	}
 
-	frw::Light rprLight = scope.GetIContextInfo()->GetRprLightFromNode(light);
+	FireRenderContext* pContext = dynamic_cast<FireRenderContext*>(scope.GetIContextInfo());
+	if (!pContext)
+	{
+		return;
+	}
+
+	frw::Light rprLight = pContext->GetLightSceneObjectFromMObject(light);
 
 	if (!rprLight.IsValid())
 	{
 		return;
 	}
 
-	shader.xSetParameterLight(RPR_MATERIAL_INPUT_LIGHT, rprLight);
+	pContext->GetScope().SetLastLinkedLight(light);
+	shader.LinkLight(rprLight);
 }
 
 bool checkIsLight(MObject& node)

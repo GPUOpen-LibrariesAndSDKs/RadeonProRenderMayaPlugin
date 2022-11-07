@@ -22,6 +22,8 @@ namespace
 		MObject color;
 		MObject source;		// will be replaced with "color" when upgrading scene
 		MObject strength;
+		MObject bevel;
+
 		MObject	output;
 	}
 }
@@ -51,6 +53,9 @@ MStatus FireMaya::Normal::initialize()
 	Attribute::color = nAttr.createColor("color", "c");
 	MAKE_INPUT(nAttr);
 
+	Attribute::bevel = nAttr.createColor("bevel", "b");
+	MAKE_INPUT(nAttr);
+
 	Attribute::source = tAttr.create("filename", "src", MFnData::kString);
 	tAttr.setUsedAsFilename(true);
 	MAKE_INPUT_CONST(tAttr);
@@ -65,11 +70,13 @@ MStatus FireMaya::Normal::initialize()
 	MAKE_OUTPUT(nAttr);
 
 	CHECK_MSTATUS(addAttribute(Attribute::color));
+	CHECK_MSTATUS(addAttribute(Attribute::bevel));
 	CHECK_MSTATUS(addAttribute(Attribute::source));
 	CHECK_MSTATUS(addAttribute(Attribute::strength));
 	CHECK_MSTATUS(addAttribute(Attribute::output));
 
 	CHECK_MSTATUS(attributeAffects(Attribute::color, Attribute::output));
+	CHECK_MSTATUS(attributeAffects(Attribute::bevel, Attribute::output));
 	CHECK_MSTATUS(attributeAffects(Attribute::source, Attribute::output)); //
 	CHECK_MSTATUS(attributeAffects(Attribute::strength, Attribute::output));
 
@@ -93,6 +100,12 @@ frw::Value FireMaya::Normal::GetValue(const Scope& scope) const
 			frw::Value strength = scope.GetValue(shaderNode.findPlug(Attribute::strength, false));
 			if (strength != 1.)
 				imageNode.SetValue(RPR_MATERIAL_INPUT_SCALE, strength);
+		}
+
+		frw::Value bevel = scope.GetConnectedValue(shaderNode.findPlug(Attribute::bevel, false));
+		if (bevel && (bevel.GetNodeType() == frw::ValueTypeBevel))
+		{
+			imageNode.SetValue(RPR_MATERIAL_INPUT_BASE_NORMAL, bevel);
 		}
 
 		return imageNode;
