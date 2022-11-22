@@ -20,13 +20,6 @@ namespace FireMaya
 
 	private:
 		void linkLight(Scope& scope, frw::Shader& shader);
-		static void onLightAdded(MObject& node, void* clientData);
-		static void onLightRemoved(MObject& node, void* clientData);
-		static void onLightRenamed(MObject& node, const MString& prevName, void* clientData);
-
-		MCallbackId nodeAddedCallback;
-		MCallbackId nodeRemovedCallback;
-		MCallbackId nodeRenamedCallback;
 	};
 }
 

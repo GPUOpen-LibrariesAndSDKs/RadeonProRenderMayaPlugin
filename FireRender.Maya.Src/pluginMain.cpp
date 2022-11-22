@@ -115,10 +115,6 @@ MCallbackId beforeOpenSceneCallback;
 
 MCallbackId mayaExitingCallback;
 
-// used for light linking
-MCallbackId toonShaderCallback;
-
-
 #ifdef _WIN32
 static LPTOP_LEVEL_EXCEPTION_FILTER pTopLevelExceptionFilter = nullptr;
 
@@ -185,12 +181,7 @@ bool gExitingMaya = false;
 void NewSceneBasicSetup(void* data)
 {
 	MGlobal::executeCommand("source \"common.mel\"; checkRPRGlobalsNode(); workingUnitsScriptJobSetup();");
-}
-
-void onToonShaderCreate(MObject& node, void* clientData)
-{
-	MString name = MFnDependencyNode(node).name();
-	MGlobal::executeCommand("InitLightLinking " + name);
+	MGlobal::executeCommand("source \"AERPRToonMaterialTemplate.mel\"; ConvertLegacyLightLinkedAttribute();");
 }
 
 void swapToDefaultRenderOverride(void* data) {
@@ -866,7 +857,7 @@ MStatus initializePlugin(MObject obj)
 		MPxNode::kDependNode, &UserClassify));
 	// force load shader UI template to use callback functions
 	MGlobal::executeCommand("source AERPRToonMaterialTemplate");
-	toonShaderCallback = MDGMessage::addNodeAddedCallback(onToonShaderCreate, namePrefix + "ToonMaterial", NULL, &status);
+	
 	CHECK_MSTATUS(status);
 
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "Displacement", FireMaya::Displacement::FRTypeID(),
@@ -1102,8 +1093,6 @@ MStatus uninitializePlugin(MObject obj)
 
 	MMessage::removeCallback(beforeNewSceneCallback);
 	MMessage::removeCallback(beforeOpenSceneCallback);
-
-	MMessage::removeCallback(toonShaderCallback);
 
 	// Delete the viewport render override.
 	FireRenderOverride::deleteInstance();

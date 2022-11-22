@@ -1142,8 +1142,21 @@ std::string getNodeUUid(const MObject& node)
 {
 	MFnDependencyNode nodeFn(node);
 
-	return nodeFn.uuid().asString().asChar();
+	std::string id = nodeFn.uuid().asString().asChar();
 
+	if (node.hasFn(MFn::kDagNode))
+	{
+		MFnDagNode dagNode(node);
+		if (dagNode.isFromReferencedFile())
+		{
+			// Referenced node name guaranteed to be unique by Maya. User can't change it's name because node is locked.
+			std::stringstream sstrm;
+			sstrm << id.c_str() << ":" << dagNode.fullPathName();
+			id = sstrm.str();
+		}
+	}
+
+	return id;
 }
 
 std::string getNodeUUid(const MDagPath& node)
@@ -1155,18 +1168,6 @@ std::string getNodeUUid(const MDagPath& node)
 		std::stringstream sstrm;
 		sstrm << id.c_str() << ":" << node.instanceNumber();
 		id = sstrm.str();
-	}
-
-	if (node.hasFn(MFn::kDagNode))
-	{
-		MFnDagNode dagNode(node.node());
-		if (dagNode.isFromReferencedFile())
-		{
-			// Referenced node name guaranteed to be unique by Maya. User can't change it's name because node is locked.
-			std::stringstream sstrm;
-			sstrm << id.c_str() << ":" << dagNode.fullPathName();
-			id = sstrm.str();
-		}
 	}
 
 	return id;
