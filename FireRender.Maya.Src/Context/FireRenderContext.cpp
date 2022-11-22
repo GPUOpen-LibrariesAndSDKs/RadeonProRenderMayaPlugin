@@ -3675,11 +3675,11 @@ void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestPa
 
 frw::Light FireRenderContext::GetLightSceneObjectFromMObject(const MObject& node)
 {
-	MUuid uuidPointer = MFnDependencyNode(node).uuid();
-	MString uuidString = uuidPointer.asString();
-	const char* uuid = uuidString.asChar();
+	const std::string& uuid = getNodeUUid(node);
 
-	if (m_sceneObjects.find(uuid) == m_sceneObjects.end())
+	const auto it = m_sceneObjects.find(uuid);
+
+	if (it == m_sceneObjects.end())
 	{
 		MGlobal::displayError("Unable to find linked light!");
 		return frw::Light();
@@ -3691,7 +3691,7 @@ frw::Light FireRenderContext::GetLightSceneObjectFromMObject(const MObject& node
 		return frw::Light();
 	}
 
-	FireRenderObject* lightObjectPointer = m_sceneObjects[uuid].get();
+	FireRenderObject* lightObjectPointer = it->second.get();
 
 	FireRenderLight* fireRenderLight = dynamic_cast<FireRenderLight*>(lightObjectPointer);
 	FireRenderEnvLight* envLight = dynamic_cast<FireRenderEnvLight*>(lightObjectPointer);
