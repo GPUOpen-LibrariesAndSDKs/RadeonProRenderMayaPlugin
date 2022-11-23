@@ -494,16 +494,15 @@ MStatus FireRenderGlobals::initialize()
 	MAKE_INPUT(nAttr);
 
 	Attribute::renderQuality = eAttr.create("renderQualityFinalRender", "rqfr", (short) RenderQuality::RenderQualityFull, &status);
-	addRenderQualityModes(eAttr);
+	eAttr.addField("Full", (short)RenderQuality::RenderQualityFull);
+#ifdef WIN32
 	eAttr.addField("HybridPro", (short)RenderQuality::RenderQualityHybridPro);
+#endif
 	MAKE_INPUT_CONST(eAttr);
 
 	ViewportRenderAttributes::renderQuality = eAttr.create("renderQualityViewport", "rqv", (short) RenderQuality::RenderQualityNorthStar, &status);
 #ifdef WIN32
 	eAttr.addField("HybridPro", (short)RenderQuality::RenderQualityFull); 
-	eAttr.addField("High", (short)RenderQuality::RenderQualityHigh);
-	eAttr.addField("Medium", (short)RenderQuality::RenderQualityMedium);
-	eAttr.addField("Low", (short)RenderQuality::RenderQualityLow);
 #endif
 	eAttr.addField("NorthStar", (short)RenderQuality::RenderQualityNorthStar);
 	MAKE_INPUT_CONST(eAttr);
