@@ -121,7 +121,8 @@ bool SaveExportConfig(const std::wstring& filePath, NorthStarContext& ctx, const
 
 	json << "\"plugin\" : \"" << pluginDll.c_str() << "\",\n";
 
-	json << "\"output\" : " << "\"" << fileName.c_str() << ".png\",\n";
+	std::wstring outputName = std::regex_replace(filePath, std::wregex(L"rpr$"), L"png");
+	json << "\"output\" : " << "\"" << outputName.c_str() << "\",\n";
 
 	json << "\"output.json\" : \"output.json\",\n";
 
@@ -546,6 +547,9 @@ MStatus FireRenderExportCmd::doIt(const MArgList& args)
 			// process each frame
 			for (int frame = firstFrame; frame <= lastFrame; ++frame)
 			{
+				MString commandPy = "maya.utils.processIdleEvents()";
+				MGlobal::executePythonCommand(commandPy);
+
 				// Move the animation to the next frame.
 				if (isSequenceExportEnabled && !isAnimationAsSingleFileEnabled)
 				{

@@ -25,6 +25,7 @@ limitations under the License.
 
 #include <maya/MFnLight.h>
 #include <maya/MFnDependencyNode.h>
+#include <maya/MItDependencyGraph.h>
 #include <maya/MPlug.h>
 #include <maya/MGlobal.h>
 #include <maya/MFnMatrixData.h>
@@ -728,6 +729,32 @@ void FireRenderMeshCommon::attachToScene()
 	}
 }
 
+void AddCallbacksRecursively(MObject& shaderObj, FireRenderObject* pClientObject, MMessage::MNodeFunction func)
+{
+	if (shaderObj.isNull())
+		return;
+
+	assert(pClientObject != nullptr);
+
+	MStatus status;
+	MItDependencyGraph itdep(
+		shaderObj,
+		MFn::kDependencyNode,
+		MItDependencyGraph::kUpstream,
+		MItDependencyGraph::kBreadthFirst,
+		MItDependencyGraph::kNodeLevel,
+		&status);
+
+	assert(status == MStatus::kSuccess);
+
+	for (; !itdep.isDone(); itdep.next())
+	{
+		MObject currentItem = itdep.currentItem();
+		pClientObject->AddCallback(MNodeMessage::addNodeDirtyCallback(currentItem, func, pClientObject, &status));
+		assert(status == MStatus::kSuccess);
+	}
+}
+
 void FireRenderMesh::RegisterCallbacks()
 {
 	FireRenderNode::RegisterCallbacks();
@@ -753,6 +780,8 @@ void FireRenderMesh::RegisterCallbacks()
 				MStatus returnStatus;
 				AddCallback(MNodeMessage::addNodeDirtyCallback(shaderOb, ShaderDirtyCallback, this, &returnStatus));
 				assert(returnStatus == MStatus::kSuccess);
+
+				AddCallbacksRecursively(shaderOb, this, ShaderDirtyCallback);
 			}
 
 			MObject shaderDi = getDisplacementShader(shadingEngine);
@@ -765,6 +794,8 @@ void FireRenderMesh::RegisterCallbacks()
 			if (!shaderVolume.isNull())
 			{
 				AddCallback(MNodeMessage::addNodeDirtyCallback(shaderVolume, ShaderDirtyCallback, this));
+
+				//AddCallbacksRecursively(shaderVolume, this, ShaderDirtyCallback);
 			}
 		}
 	}
