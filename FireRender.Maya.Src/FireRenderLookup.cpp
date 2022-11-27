@@ -20,9 +20,9 @@ namespace
 		MObject type;
 
 		MObject	output;
+		MObject outputW;
 	}
 }
-
 
 
 MStatus FireMaya::Lookup::initialize()
@@ -46,11 +46,15 @@ MStatus FireMaya::Lookup::initialize()
 
 	Attribute::output = nAttr.createPoint("out", "o");
 	MAKE_OUTPUT(nAttr);
+	Attribute::outputW = nAttr.create("outW", "w", MFnNumericData::kFloat);
+	MAKE_OUTPUT(nAttr);
 
 	CHECK_MSTATUS(addAttribute(Attribute::type));
 	CHECK_MSTATUS(addAttribute(Attribute::output));
+	CHECK_MSTATUS(addAttribute(Attribute::outputW));
 
 	CHECK_MSTATUS(attributeAffects(Attribute::type, Attribute::output));
+	CHECK_MSTATUS(attributeAffects(Attribute::type, Attribute::outputW));
 
 	return MStatus::kSuccess;
 }

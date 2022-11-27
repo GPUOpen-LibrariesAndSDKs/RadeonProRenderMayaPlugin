@@ -208,7 +208,10 @@ global proc AEUberCheckUseTransparency(string $nodeName)
 {
 	string $nodeAttr = $nodeName + ".transparencyEnable";
 	int $value = `getAttr $nodeAttr`;
+
 	editorTemplate -dimControl $nodeName "transparencyLevel" ($value == 0);
+	editorTemplate -dimControl $nodeName "useTransparency3Components" ($value == 0);
+	editorTemplate -dimControl $nodeName "transparency3Components" ($value == 0);
 }
 
 global proc AEUberCheckUseNormalMap(string $nodeName)
@@ -392,7 +395,10 @@ global proc AERPRUberMaterialTemplateNew(string $nodeName)
 
 	editorTemplate -beginLayout "Material Settings" -collapse 0;
 		editorTemplate -label "Use Transparency" -addControl "transparencyEnable" "AEUberCheckUseTransparency";
-		editorTemplate -label "Transparency" -addControl "transparencyLevel";
+		editorTemplate -label "Transparency Legacy" -addControl "transparencyLevel";
+		editorTemplate -label "Use 3-Channels Transparency" -addControl "useTransparency3Components";
+		editorTemplate -label "3-Channels Transparency" -addControl "transparency3Components";
+
 		editorTemplate -label "Use Normal Map" -addControl "normalMapEnable" "AEUberCheckUseNormalMap";
 		editorTemplate -label "Normal Map" -addControl "normalMap";
 		editorTemplate -label "Use Displacement" -addControl "displacementEnable" "AEUberCheckUseDisplacement";

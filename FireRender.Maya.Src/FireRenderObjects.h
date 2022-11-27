@@ -377,6 +377,9 @@ public:
 	// transform attribute changed callback
 	virtual void OnNodeDirty() override;
 
+	// Plug dirty
+	virtual void OnPlugDirty(MObject& node, MPlug& plug);
+
 	// node dirty
 	virtual void OnShaderDirty();
 
@@ -416,10 +419,11 @@ public:
 protected:
 	void SaveUsedUV(const MObject& meshNode);
 
-
 	void SetupObjectId(MObject parentTransform);
 
 	void SetupShadowColor();
+
+	bool IsRebuildNeeded();
 
 protected:
 	FireMaya::MeshTranslator::MeshPolygonData m_meshData;
@@ -434,6 +438,10 @@ private:
 	// so this return the list of all the fr_shapes created for this Maya mesh
 
 	virtual HashValue CalculateHash() override;
+	void ProccessSmoothCallbackWorkaroundIfNeeds();
+
+private:
+	unsigned int m_SkipCallbackCounter;
 };
 
 // Fire render light
@@ -474,9 +482,6 @@ public:
 	// return portal
 	bool portal();
 
-	// add new linked mesh
-	void addLinkedMesh(FireRenderMeshCommon const* mesh);
-
 protected:
 	void UpdateTransform(const MMatrix& matrix) override;
 
@@ -492,9 +497,6 @@ protected:
 
 	// portal flag
 	bool m_portal;
-
-	// meshes linked via toon shader
-	std::vector<FireRenderMeshCommon const*> m_linkedMeshes;
 };
 
 class FireRenderPhysLight : public FireRenderLight
@@ -539,9 +541,6 @@ public:
 
 	inline frw::EnvironmentLight getLight() { return m.light; }
 
-	// add new linked mesh
-	void addLinkedMesh(FireRenderMeshCommon const* mesh);
-
 protected:
 	virtual void attachToSceneInternal();
 	virtual void detachFromSceneInternal();
@@ -550,9 +549,6 @@ private:
 
 	// Transform matrix
 	MMatrix m_matrix;
-
-	// meshes linked via toon shader
-	std::vector<FireRenderMeshCommon const*> m_linkedMeshes;
 
 public:
 	struct

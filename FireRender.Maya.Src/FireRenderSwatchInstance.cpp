@@ -23,6 +23,12 @@ using namespace FireMaya;
 FireRenderSwatchInstance::FireRenderSwatchInstance()
 {
 	sceneIsCleaned = true;
+	m_shouldClearContext = false;
+	pContext = std::make_unique<NorthStarContext>(); 
+
+	MStatus status;
+	callbackId_FireRenderSwatchInstance = MTimerMessage::addTimerCallback(16.0f, FireRenderSwatchInstance::CheckProcessQueue, nullptr, &status);
+
 }
 
 void FireRenderSwatchInstance::initScene()
@@ -37,10 +43,10 @@ void FireRenderSwatchInstance::initScene()
 		m_warningDialogOpen = true;
 	}
 
-	context.setCallbackCreationDisabled(true);
-	context.SetRenderType(RenderType::Thumbnail);
-	context.initSwatchScene();
-	context.Freshen();
+	pContext->setCallbackCreationDisabled(true);
+	pContext->SetRenderType(RenderType::Thumbnail);
+	pContext->initSwatchScene();
+	pContext->Freshen();
 	sceneIsCleaned = false;
 }
 
@@ -49,6 +55,11 @@ FireRenderSwatchInstance::~FireRenderSwatchInstance()
 	if (!sceneIsCleaned)
 	{
 		cleanScene();
+	}
+
+	if (callbackId_FireRenderSwatchInstance)
+	{
+		MMessage::removeCallback(callbackId_FireRenderSwatchInstance);
 	}
 }
 
@@ -71,7 +82,7 @@ void FireRenderSwatchInstance::cleanScene()
 {
 	if (!sceneIsCleaned)
 	{
-		context.cleanScene();
+		pContext->cleanScene();
 		sceneIsCleaned = true;
 	}
 }
@@ -105,12 +116,16 @@ void FireRenderSwatchInstance::ProcessInRenderThread()
 			});
 		}
 
+		m_shouldClearContext = true;
+
 		return false;
 	});
 }
 
 void FireRenderSwatchInstance::enqueSwatch(FireRenderMaterialSwatchRender* swatch)
 {
+	m_shouldClearContext = false; // should not clear context if renderer is running
+
 	{
 		RPR::AutoLock<MSpinLock> lock(mutex);
 		queueToProcess.push_back(swatch);
@@ -143,3 +158,24 @@ void FireRenderSwatchInstance::removeFromQueue(FireRenderMaterialSwatchRender* s
 	RPR::AutoLock<MSpinLock> lock(mutex);
 	queueToProcess.remove(swatch);
 }
+
+void FireRenderSwatchInstance::CheckProcessQueue(float elapsedTime, float lastTime, void* clientData)
+{
+	RPR::AutoLock<MSpinLock> lock(instance().mutex);
+
+	if (!instance().m_shouldClearContext || (instance().queueToProcess.size() != 0))
+	{
+		return;
+	}
+
+	instance().m_shouldClearContext = false;
+
+	// reset context
+	instance().cleanScene();
+	instance().pContext.reset();
+
+	instance().pContext = std::make_unique<NorthStarContext>();
+	instance().initScene();
+}
+
+

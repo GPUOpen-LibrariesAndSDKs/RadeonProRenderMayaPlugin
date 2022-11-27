@@ -47,6 +47,9 @@ public:
 	virtual bool IsDeformationMotionBlurEnabled() const override;
 
 	virtual void SetRenderUpdateCallback(RenderUpdateCallback callback, void* data) override;
+	virtual void SetSceneSyncFinCallback(RenderUpdateCallback callback, void* data) override;
+	virtual void SetFirstIterationCallback(RenderUpdateCallback callback, void* data) override;
+	virtual void SetRenderTimeCallback(RenderUpdateCallback callback, void* data) override;
 	virtual void AbortRender() override;
 
 protected:

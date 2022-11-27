@@ -71,7 +71,7 @@ Running:
 	- Windows -> Settings/Preferences -> Plugin Manager
 
 Alternately, you can run Maya from a terminal using:
-    /Applications/Autodesk/maya2019/Maya.app/Contents/MacOS/maya
+    /Applications/Autodesk/maya2020/Maya.app/Contents/MacOS/maya
 
 Debugging:
 ----------

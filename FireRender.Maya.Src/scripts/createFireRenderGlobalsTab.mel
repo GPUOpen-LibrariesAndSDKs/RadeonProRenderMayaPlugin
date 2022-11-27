@@ -255,41 +255,35 @@ global proc aovDisplayedInRenderViewChanged()
 {
 }
 
-// Set BG and Opacity AOVs to ON if SC turned ON. Also lock controls to guarantee that while we have SC set Bg and Opacity can't be turned off
+// Set MattePass AOV to ON if SC turned ON. Also lock controls to guarantee that while we have SC set MattePass can't be turned off
 global proc shadowCatcherStateChanged()
 {
 	int $isShadowCatcher = `getAttr RadeonProRenderGlobals.aovShadowCatcher`;
-	int $isReflectionCatcher = `getAttr RadeonProRenderGlobals.aovReflectionCatcher`;
 
-	if (($isShadowCatcher == 1) && ($isReflectionCatcher == 0))
+	if ($isShadowCatcher == 1)
 	{
 		// Lock controls and set it to ON state
-		setAttr RadeonProRenderGlobals.aovBackground -lock 1 1;
-		setAttr RadeonProRenderGlobals.aovOpacity -lock 1 1;
+		setAttr RadeonProRenderGlobals.aovMattePass -lock 1 1;
 	}
-
-	if (($isShadowCatcher + $isReflectionCatcher) == 0)
+	else
 	{
 		// Unlock controls
-		setAttr RadeonProRenderGlobals.aovBackground -lock 0;
-		setAttr RadeonProRenderGlobals.aovOpacity -lock 0;
+		setAttr RadeonProRenderGlobals.aovMattePass -lock 0;
 	}
 }
 
-// Set BG and Opacity AOVs to ON if SC turned ON. Also lock controls to guarantee that while we have SC set Bg and Opacity can't be turned off
+// Set BG and Opacity AOVs to ON if RC turned ON. Also lock controls to guarantee that while we have RC set Bg and Opacity can't be turned off
 global proc reflectionCatcherStateChanged()
 {
-	int $isShadowCatcher = `getAttr RadeonProRenderGlobals.aovShadowCatcher`;
 	int $isReflectionCatcher = `getAttr RadeonProRenderGlobals.aovReflectionCatcher`;
-
-	if (($isShadowCatcher == 0) && ($isReflectionCatcher == 1))
+	
+	if ($isReflectionCatcher == 1)
 	{
 		// Lock controls and set it to ON state
 		setAttr RadeonProRenderGlobals.aovBackground -lock 1 1;
 		setAttr RadeonProRenderGlobals.aovOpacity -lock 1 1;
 	}
-
-	if (($isShadowCatcher + $isReflectionCatcher) == 0)
+	else
 	{
 		// Unlock controls
 		setAttr RadeonProRenderGlobals.aovBackground -lock 0;
@@ -338,6 +332,7 @@ global proc createFireRenderRenderPassesFrame(string $parent)
 		attrControlGrp -label "Subsurface / Volume" -attribute "RadeonProRenderGlobals.aovVolume";
 		attrControlGrp -label "Albedo" -attribute "RadeonProRenderGlobals.aovAlbedo";
 		attrControlGrp -label "Deep Color" -attribute "RadeonProRenderGlobals.aovDeepColor";
+		attrControlGrp -label "Matte Pass" -attribute "RadeonProRenderGlobals.aovMattePass";
 		attrControlGrp -label "Crypto Material Mat0" -attribute "RadeonProRenderGlobals.aovCryptoMaterialMat0";
 		attrControlGrp -label "Crypto Material Mat1" -attribute "RadeonProRenderGlobals.aovCryptoMaterialMat1";
 		attrControlGrp -label "Crypto Material Mat2" -attribute "RadeonProRenderGlobals.aovCryptoMaterialMat2";

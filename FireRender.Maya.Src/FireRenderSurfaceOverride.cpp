@@ -221,7 +221,18 @@ void FireRenderStandardMaterialNodeOverride::getCustomMappings(MHWRender::MAttri
 
 	// We're mapping "float" value from material to "color" value in HW shader, so we
 	// can't use automatic mapping.
-	mappings.append(MHWRender::MAttributeParameterMapping("transparency", "", true, true));
+
+	bool transparancyEnabled = GET_BOOL("transparencyEnable");
+	bool useTransparancy3Comp = GET_BOOL("useTransparency3Components");
+
+	if (transparancyEnabled && useTransparancy3Comp)
+	{
+		mappings.append(MHWRender::MAttributeParameterMapping("transparency", "transparency3Components", true, true));
+	}
+	else
+	{
+		mappings.append(MHWRender::MAttributeParameterMapping("transparency", "", true, true));
+	}
 
 	mappings.append(MHWRender::MAttributeParameterMapping("color", GET_BOOL("diffuse") ? "diffuseColor" : "", true, true));
 	mappings.append(MHWRender::MAttributeParameterMapping("incandescence", GET_BOOL("emissive") ? "emissiveColor" : "", true, true));
@@ -242,8 +253,11 @@ bool FireRenderStandardMaterialNodeOverride::valueChangeRequiresFragmentRebuild(
 	{
 		// Check if any attribute which affects results of getCustomMappings() is changed.
 		MString pname = plug->partialName(false, false, false, false, true, true);
-		if (pname == "diffuse" || pname == "emissive" || pname == "reflections")
+		if (pname == "diffuse" || pname == "emissive" || pname == "reflections" ||
+			pname == "transparencyEnable" || pname == "useTransparency3Components")
+		{
 			return true;
+		}
 	}
 	return false;
 }
@@ -277,26 +291,6 @@ void FireRenderStandardMaterialNodeOverride::updateShader(MHWRender::MShaderInst
 		return;
 
 	MFnDependencyNode shaderNode(m_shader);
-
-	if (GET_BOOL("transparencyEnable") && (mappings.length() > 0))
-	{
-		// For reference, see phongShaderOverride::updateShader() in Maya Dev-kit.
-		// Note: this code doesn't work as it should. If we'll set "transparencyLevel" attribute to be a color value,
-		// everything works with just automatic mapping (code in getCustomMappings()). But as soon as we'll use float
-		// value for translucency, automatic mapping stops working. And the code below makes material black instead
-		// of fully translucent, i.e. it seems blending is not set correctly.
-		float transp = 0.5f;
-		shaderNode.findPlug("transparencyLevel", false).getValue(transp);
-		float tr[3];
-		tr[0] = tr[1] = tr[2] = transp;
-
-		MString fResolvedParamName = GetResolvedParam(mappings, "transparency");
-		if (fResolvedParamName.length() > 0)
-		{
-			shader.setParameter(fResolvedParamName, tr);
-		}
-		shader.setIsTransparent(true);
-	}
 
 	static const float white[3] = { 1.0f, 1.0f, 1.0f };
 	static const float black[3] = { 0.0f, 0.0f, 0.0f };

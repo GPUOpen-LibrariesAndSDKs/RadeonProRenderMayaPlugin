@@ -48,15 +48,15 @@ limitations under the License.
 		<CustomAction Id='PostInstall' BinaryKey='InstallerDll' DllEntry='postInstall' Return="ignore" />
 		<CustomAction Id='BotoInstall' BinaryKey='InstallerDll' DllEntry='botoInstall' Execute="deferred" Impersonate="no" Return="ignore" />
 
-		<CustomAction Id='patchMayaEnv2019' BinaryKey='InstallerDll' DllEntry='patchMayaEnv2019' Execute="deferred" Impersonate="yes" Return="ignore" />
 		<CustomAction Id='patchMayaEnv2020' BinaryKey='InstallerDll' DllEntry='patchMayaEnv2020' Execute="deferred" Impersonate="yes" Return="ignore" />
 		<CustomAction Id='patchMayaEnv2022' BinaryKey='InstallerDll' DllEntry='patchMayaEnv2022' Execute="deferred" Impersonate="yes" Return="ignore" />
+		<CustomAction Id='patchMayaEnv2023' BinaryKey='InstallerDll' DllEntry='patchMayaEnv2023' Execute="deferred" Impersonate="yes" Return="ignore" />
 
 		<CustomAction Id='CheckRPRSDKInTheSystem' BinaryKey='InstallerDll' DllEntry='checkRPRSDKInTheSystem' Execute="deferred" Impersonate="no" Return="ignore" />
 
-		<CustomAction Id='maya2019WasInstalled' Property='MAYA2019_INSTALLED'  Value='true'/>
 		<CustomAction Id='maya2020WasInstalled' Property='MAYA2020_INSTALLED'  Value='true'/>
 		<CustomAction Id='maya2022WasInstalled' Property='MAYA2022_INSTALLED'  Value='true'/>
+		<CustomAction Id='maya2023WasInstalled' Property='MAYA2023_INSTALLED'  Value='true'/>
 
                 <CustomAction Id='SetInstallCustomMode' Property="WixUI_InstallMode" Value="InstallCustom"/>
 
@@ -77,9 +77,9 @@ limitations under the License.
 		<InstallExecuteSequence>
 			<Custom Action="BotoInstall" After="InstallInitialize">(NOT Installed) AND (NOT REMOVE)</Custom>
 			<Custom Action="CheckRPRSDKInTheSystem" After="BotoInstall">(NOT REMOVE) AND (UILevel>2)</Custom>
-			<Custom Action="patchMayaEnv2019" After="InstallInitialize"><![CDATA[(&Product2019=3)]]></Custom>
 			<Custom Action="patchMayaEnv2020" After="InstallInitialize"><![CDATA[(&Product2020=3)]]></Custom>
 			<Custom Action="patchMayaEnv2022" After="InstallInitialize"><![CDATA[(&Product2022=3)]]></Custom>
+			<Custom Action="patchMayaEnv2023" After="InstallInitialize"><![CDATA[(&Product2023=3)]]></Custom>
 			<CreateFolders/>
 			<InstallFiles/>
 			<WriteEnvironmentStrings/>
@@ -125,12 +125,6 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 -->
 				<Directory Id="DOCUMENTS_MAYA" Name="maya">
-					<Directory Id="DOCUMENTS_MAYA_2019" Name="2019">
-						<Directory Id="DOCUMENTS_MAYA_2019_PREFS" Name="prefs">
-							<Directory Id="DOCUMENTS_MAYA_2019_PREFS_SHELVES" Name="shelves">
-							</Directory>
-						</Directory>
-					</Directory>
 					<Directory Id="DOCUMENTS_MAYA_2020" Name="2020">
 						<Directory Id="DOCUMENTS_MAYA_2020_PREFS" Name="prefs">
 							<Directory Id="DOCUMENTS_MAYA_2020_PREFS_SHELVES" Name="shelves">
@@ -140,6 +134,12 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 					<Directory Id="DOCUMENTS_MAYA_2022" Name="2022">
 						<Directory Id="DOCUMENTS_MAYA_2022_PREFS" Name="prefs">
 							<Directory Id="DOCUMENTS_MAYA_2022_PREFS_SHELVES" Name="shelves">
+							</Directory>
+						</Directory>
+					</Directory>
+					<Directory Id="DOCUMENTS_MAYA_2023" Name="2023">
+						<Directory Id="DOCUMENTS_MAYA_2023_PREFS" Name="prefs">
+							<Directory Id="DOCUMENTS_MAYA_2023_PREFS_SHELVES" Name="shelves">
 							</Directory>
 						</Directory>
 					</Directory>
@@ -179,15 +179,6 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 			</Component>
 		</DirectoryRef>
 
-		<DirectoryRef Id="DOCUMENTS_MAYA_2019_PREFS_SHELVES">
-			<Component Id="shelf_Radeon_ProRender_2019.mel" Guid="D66B15A9-A9AA-47D7-9DED-96E7F152AE11" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes">
-				<RegistryKey Root="HKCU" Key="Software\AMD\RadeonProRender\Maya">
-					<RegistryValue Name="shelf_Radeon_ProRender_2019" Value="1" Type="integer" KeyPath="yes" />
-				</RegistryKey>
-				<File Id="file_shelf_Radeon_ProRender_2019.mel" DiskId="1" Hidden="no" ReadOnly="no" TrueType="no" System="no" Vital="yes" Name="shelf_Radeon_ProRender.mel" Source="..\..\..\RadeonProRenderMayaPlugin\FireRender.Maya.Src\Shelfs\shelf_Radeon_ProRender.mel" />
-			</Component>
-		</DirectoryRef>
-
 		<DirectoryRef Id="DOCUMENTS_MAYA_2020_PREFS_SHELVES">
 			<Component Id="shelf_Radeon_ProRender_2020.mel" Guid="27700FAD-0E12-460D-93B7-E5D65723ED29" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes">
 				<RegistryKey Root="HKCU" Key="Software\AMD\RadeonProRender\Maya">
@@ -203,6 +194,15 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 					<RegistryValue Name="shelf_Radeon_ProRender_2022" Value="1" Type="integer" KeyPath="yes" />
 				</RegistryKey>
 				<File Id="file_shelf_Radeon_ProRender_2022.mel" DiskId="1" Hidden="no" ReadOnly="no" TrueType="no" System="no" Vital="yes" Name="shelf_Radeon_ProRender.mel" Source="..\..\..\RadeonProRenderMayaPlugin\FireRender.Maya.Src\Shelfs\shelf_Radeon_ProRender.mel" />
+			</Component>
+		</DirectoryRef>
+
+		<DirectoryRef Id="DOCUMENTS_MAYA_2023_PREFS_SHELVES">
+			<Component Id="shelf_Radeon_ProRender_2023.mel" Guid="D66B15A9-A9AA-47D7-9DED-96E7F152AE11" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes">
+				<RegistryKey Root="HKCU" Key="Software\AMD\RadeonProRender\Maya">
+					<RegistryValue Name="shelf_Radeon_ProRender_2023" Value="1" Type="integer" KeyPath="yes" />
+				</RegistryKey>
+				<File Id="file_shelf_Radeon_ProRender_2023.mel" DiskId="1" Hidden="no" ReadOnly="no" TrueType="no" System="no" Vital="yes" Name="shelf_Radeon_ProRender.mel" Source="..\..\..\RadeonProRenderMayaPlugin\FireRender.Maya.Src\Shelfs\shelf_Radeon_ProRender.mel" />
 			</Component>
 		</DirectoryRef>
 
@@ -227,18 +227,6 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 				<ComponentRef Id="notices.txt"/>				
 			</Feature>
 
-			<Feature Id="Product2019" Title="Support Maya 2019" Description="$(var.ProductLongName) 2019" Level="1">
-				<ComponentGroupRef Id="CG_ARTEFACTS"/>
-				<ComponentGroupRef Id="CG_2019"/>
-				<ComponentGroupRef Id="CG_MODULES"/>
-<!--
-				<MergeRef Id="Microsoft_VC140_CRT_x64"/>
-				<MergeRef Id="Microsoft_VC140_OpenMP_x64"/>
--->
-				<!--DOCUMENTS_MAYA_2016_PREFS_SHELVES-->
-				<ComponentRef Id="shelf_Radeon_ProRender_2019.mel" />
-			</Feature>
-
 			<Feature Id="Product2020" Title="Support Maya 2020" Description="$(var.ProductLongName) 2020" Level="1">
 				<ComponentGroupRef Id="CG_ARTEFACTS"/>
 				<ComponentGroupRef Id="CG_2020"/>
@@ -256,6 +244,13 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 				<ComponentGroupRef Id="CG_2022"/>
 				<ComponentGroupRef Id="CG_MODULES"/>
 				<ComponentRef Id="shelf_Radeon_ProRender_2022.mel" />
+			</Feature>	
+
+			<Feature Id="Product2023" Title="Support Maya 2023" Description="$(var.ProductLongName) 2023" Level="1">
+				<ComponentGroupRef Id="CG_ARTEFACTS"/>
+				<ComponentGroupRef Id="CG_2023"/>
+				<ComponentGroupRef Id="CG_MODULES"/>
+				<ComponentRef Id="shelf_Radeon_ProRender_2023.mel" />
 			</Feature>	
 
 

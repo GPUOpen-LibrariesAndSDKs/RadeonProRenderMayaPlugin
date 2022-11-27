@@ -544,6 +544,7 @@ global proc createEnvironmentFrame2(string $parent)
 		symbolButton -image "inArrow.png"
 			-command "showIBLEditorRPR"
 				frOpenIblButton;
+
 		checkBox -label "Flip" -changeCommand flipIBLValueChanged chkboxCtl;
 	setParent ..;
 

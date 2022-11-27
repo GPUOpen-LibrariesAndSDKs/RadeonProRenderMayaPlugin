@@ -83,7 +83,6 @@ rpr_int NorthStarContext::CreateContextInternal(rpr_creation_flags createFlags, 
 #else
 	int res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), pContext);
 #endif
-
 	return res;
 }
 
@@ -304,45 +303,13 @@ void NorthStarContext::setupContextPostSceneCreation(const FireRenderGlobalsData
 		checkStatus(frstatus);
 	}
 
-	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_RAY_CAST_EPISLON, fireRenderGlobalsData.raycastEpsilon);
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_RAY_CAST_EPSILON, fireRenderGlobalsData.raycastEpsilon);
 	checkStatus(frstatus);
 
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_IMAGE_FILTER_TYPE, fireRenderGlobalsData.filterType);
 	checkStatus(frstatus);
 
-	rpr_material_node_input filterAttrName = RPR_CONTEXT_IMAGE_FILTER_BOX_RADIUS;
-	switch (fireRenderGlobalsData.filterType)
-	{
-	case 2:
-	{
-		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_TRIANGLE_RADIUS;
-		break;
-	}
-	case 3:
-	{
-		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_GAUSSIAN_RADIUS;
-		break;
-	}
-	case 4:
-	{
-		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_MITCHELL_RADIUS;
-		break;
-	}
-	case 5:
-	{
-		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_LANCZOS_RADIUS;
-		break;
-	}
-	case 6:
-	{
-		filterAttrName = RPR_CONTEXT_IMAGE_FILTER_BLACKMANHARRIS_RADIUS;
-		break;
-	}
-	default:
-		break;
-	}
-
-	frstatus = rprContextSetParameterByKey1f(frcontext, filterAttrName, fireRenderGlobalsData.filterSize);
+	frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_IMAGE_FILTER_RADIUS, fireRenderGlobalsData.filterSize);
 	checkStatus(frstatus);
 
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_METAL_PERFORMANCE_SHADER, fireRenderGlobalsData.useMPS ? 1 : 0);
@@ -351,6 +318,14 @@ void NorthStarContext::setupContextPostSceneCreation(const FireRenderGlobalsData
 	updateTonemapping(fireRenderGlobalsData, disableWhiteBalance);
 
 	frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_TEXTURE_CACHE_PATH, fireRenderGlobalsData.textureCachePath.asChar());
+	checkStatus(frstatus);
+
+	// SC and RC
+	// we should disable built-in shadow catcher composite
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_SHADOW_CATCHER_BAKING, fireRenderGlobalsData.shadowCatcherEnabled ? 0 : 1);
+	checkStatus(frstatus);
+	// we should disable IBL visibility to correctly composite reflection catcher
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_IBL_DISPLAY, fireRenderGlobalsData.reflectionCatcherEnabled ? 0 : 1);
 	checkStatus(frstatus);
 
 	// OCIO
@@ -571,6 +546,22 @@ void NorthStarContext::SetRenderUpdateCallback(RenderUpdateCallback callback, vo
 {
 	GetScope().Context().SetUpdateCallback((void*)callback, data);
 }
+
+void NorthStarContext::SetSceneSyncFinCallback(RenderUpdateCallback callback, void* data)
+{
+	GetScope().Context().SetSceneSyncFinCallback((void*)callback, data);
+}
+
+void NorthStarContext::SetFirstIterationCallback(RenderUpdateCallback callback, void* data)
+{
+	GetScope().Context().SetFirstIterationCallback((void*)callback, data);
+}
+
+void NorthStarContext::SetRenderTimeCallback(RenderUpdateCallback callback, void* data)
+{
+	GetScope().Context().SetRenderTimeCallback((void*)callback, data);
+}
+
 
 bool NorthStarContext::IsGivenContextNorthStar(const FireRenderContext* pContext)
 {
