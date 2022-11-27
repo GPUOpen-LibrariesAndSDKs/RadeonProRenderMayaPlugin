@@ -507,6 +507,14 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			cryptomatteSplitIndirect = plug.asBool();
 
+		plug = frGlobalsNode.findPlug("aovShadowCatcher");
+		if (!plug.isNull())
+			shadowCatcherEnabled = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("aovReflectionCatcher");
+		if (!plug.isNull())
+			reflectionCatcherEnabled = plug.asBool();
+
 		aovs.readFromGlobals(frGlobalsNode);
 
 		readDenoiserParameters(frGlobalsNode);
@@ -578,13 +586,17 @@ void FireRenderGlobalsData::readAirVolumeParameters(const MFnDependencyNode& frG
 		airVolumeSettings.fogColor = MColor(color0);
 	}
 
+
+	const MDistance::Unit sceneUnits = MDistance::uiUnit();
+	double coeff = (MDistance(1.0, sceneUnits)).asMeters();
+
 	plug = frGlobalsNode.findPlug("fogDistance");
 	if (!plug.isNull())
-		airVolumeSettings.fogDistance = plug.asFloat();
+		airVolumeSettings.fogDistance = (float) (plug.asFloat() * coeff);
 
 	plug = frGlobalsNode.findPlug("fogHeight");
 	if (!plug.isNull())
-		airVolumeSettings.fogHeight = plug.asFloat();
+		airVolumeSettings.fogHeight = (float) (plug.asFloat() * coeff);
 
 	plug = frGlobalsNode.findPlug("airVolumeDensity");
 	if (!plug.isNull())
@@ -1130,8 +1142,21 @@ std::string getNodeUUid(const MObject& node)
 {
 	MFnDependencyNode nodeFn(node);
 
-	return nodeFn.uuid().asString().asChar();
+	std::string id = nodeFn.uuid().asString().asChar();
 
+	if (node.hasFn(MFn::kDagNode))
+	{
+		MFnDagNode dagNode(node);
+		if (dagNode.isFromReferencedFile())
+		{
+			// Referenced node name guaranteed to be unique by Maya. User can't change it's name because node is locked.
+			std::stringstream sstrm;
+			sstrm << id.c_str() << ":" << dagNode.fullPathName();
+			id = sstrm.str();
+		}
+	}
+
+	return id;
 }
 
 std::string getNodeUUid(const MDagPath& node)
@@ -1143,18 +1168,6 @@ std::string getNodeUUid(const MDagPath& node)
 		std::stringstream sstrm;
 		sstrm << id.c_str() << ":" << node.instanceNumber();
 		id = sstrm.str();
-	}
-
-	if (node.hasFn(MFn::kDagNode))
-	{
-		MFnDagNode dagNode(node.node());
-		if (dagNode.isFromReferencedFile())
-		{
-			// Referenced node name guaranteed to be unique by Maya. User can't change it's name because node is locked.
-			std::stringstream sstrm;
-			sstrm << id.c_str() << ":" << dagNode.fullPathName();
-			id = sstrm.str();
-		}
 	}
 
 	return id;

@@ -34,9 +34,9 @@ limitations under the License.
           <DialogRef Id="ResumeDlg" />
           <DialogRef Id="UserExit" />
 
-          <Publish Dialog="PluginExitDialog" Control="Finish" Event="DoAction" Value="maya2019WasInstalled"><![CDATA[(&Product2019=3)]]></Publish>
           <Publish Dialog="PluginExitDialog" Control="Finish" Event="DoAction" Value="maya2020WasInstalled"><![CDATA[(&Product2020=3)]]></Publish>
           <Publish Dialog="PluginExitDialog" Control="Finish" Event="DoAction" Value="maya2022WasInstalled"><![CDATA[(&Product2022=3)]]></Publish>
+          <Publish Dialog="PluginExitDialog" Control="Finish" Event="DoAction" Value="maya2023WasInstalled"><![CDATA[(&Product2023=3)]]></Publish>
 
           <Publish Dialog="PluginExitDialog" Control="Finish" Event="DoAction" Value="PostInstall">1</Publish>
 

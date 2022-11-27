@@ -94,6 +94,9 @@ namespace FireMaya
 			FireRenderVolumeLocator,
 			FireRenderToonMaterial,
 			FireRenderVoronoi,
+			FireRenderRamp,
+			FireRenderDoubleSided,
+			FireRenderBevel,
 
 			// ^ always add new ids to end of list (max 128 entries here)
 			FireRenderNodeIdEndCurrent, // <- this value is allowed to change, it marks the end of current list
@@ -205,12 +208,14 @@ namespace FireMaya
 
 			std::map<NodeId, frw::Shader> volumeShaderMap;
 			std::map<NodeId, frw::Shader> shaderMap;
+			std::multimap<NodeId, NodeId> lightShaderMap; // shaderId = lightShaderMap[lightNodeId]
 			std::map<NodeId, frw::Value> valueMap;
 			std::map<NodeId, MCallbackId> m_nodeDirtyCallbacks;
 			std::map<NodeId, MCallbackId> m_AttributeChangedCallbacks;
 			std::map<std::string, frw::Image> imageCache;
 
 			FireRenderMeshCommon const* m_pCurrentlyParsedMesh; // is not supposed to keep any data outside of during mesh parsing 
+			MObject m_pLastLinkedLight; // is not supposed to keep any data outside of during mesh parsing 
 
 			Data();
 			~Data();
@@ -231,6 +236,7 @@ namespace FireMaya
 		void NodeDirtyCallback(MObject& node);
 
 		FireRenderMeshCommon const* GetCurrentlyParsedMesh() const { return m->m_pCurrentlyParsedMesh; }
+		void SetLastLinkedLight(const MObject& lightObj) const { m->m_pLastLinkedLight = lightObj; }
 		void SetIsLastPassTextureMissing(bool value) const { m_IsLastPassTextureMissing = value; }
 
 		frw::Value createImageFromShaderNode(MObject node, MString plugName = "outColor", int width = 256, int height = 256) const;
@@ -328,6 +334,11 @@ namespace FireMaya
 		frw::Shader GetCachedShader(const NodeId& str) const;
 		void SetCachedShader(const NodeId& str, frw::Shader shader);
 
+		typedef std::multimap<NodeId, NodeId>::iterator MMapNodeIdIterator;
+		std::pair<MMapNodeIdIterator, MMapNodeIdIterator> GetCachedShaderIds(const NodeId& lightId);
+		void SetCachedShaderId(const NodeId& lightId, NodeId& shaderId);// shaderId = lightShaderMap[lightNodeId]
+		void ClearCachedShaderIds(const NodeId& lightId);
+
 		void Reset();
 		void Init(rpr_context handle, bool destroyMaterialSystemOnDelete = true, bool createScene = true);
 		void CreateScene(void);
@@ -352,6 +363,10 @@ namespace FireMaya
 	const MString MAYA_FILE_NODE_OUTPUT_COLOR_COMPONENT_GREEN = "ocg";
 	const MString MAYA_FILE_NODE_OUTPUT_COLOR_COMPONENT_BLUE = "ocb";
 	const MString MAYA_FILE_NODE_OUTPUT_ALPHA = "oa";
+	const MString MAYA_FILE_NODE_OUTPUT_TRANSPARENCY = "ot";
+	const MString MAYA_FILE_NODE_OUTPUT_TRANSPARENCY_R = "otr";
+	const MString MAYA_FILE_NODE_OUTPUT_TRANSPARENCY_G = "otg";
+	const MString MAYA_FILE_NODE_OUTPUT_TRANSPARENCY_B = "otb";
 }
 // End of namespace FireMaya
 

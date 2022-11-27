@@ -47,9 +47,9 @@ limitations under the License.
       Artefacts=$(SolutionDir)system\$(Name)\InputData\feature_Core;
       ConvScripts=$(SolutionDir)system\$(Name)\InputData\feature_ConvScripts;
       Modules=.\Modules;
-      Plugin2019=$(SolutionDir)system\$(Name)\InputData\feature_2019;
       Plugin2020=$(SolutionDir)system\$(Name)\InputData\feature_2020;
       Plugin2022=$(SolutionDir)system\$(Name)\InputData\feature_2022;
+      Plugin2023=$(SolutionDir)system\$(Name)\InputData\feature_2023;
 
       InstallerDll=../output/PluginInstallerDll/PluginInstallerDll.dll
 <!--
@@ -73,9 +73,9 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
   <ItemGroup>
     <Compile Include="Generated\Artefacts.wxs" />
     <Compile Include="Generated\Modules.wxs" />
-    <Compile Include="Generated\Plugin2019.wxs" />
     <Compile Include="Generated\Plugin2020.wxs" />
     <Compile Include="Generated\Plugin2022.wxs" />
+    <Compile Include="Generated\Plugin2023.wxs" />
     <Compile Include="Generated\ConvScripts.wxs" />
     <Compile Include="Wix files\PluginFinishDlg.wxs" />
     <Compile Include="Wix files\PluginWelcomeDlg.wxs" />
@@ -103,9 +103,9 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
   </ItemGroup>
   <ItemGroup>
     <Content Include="agreement.rtf" />
-    <Content Include="Modules\2019\RadeonProRender.module" />
     <Content Include="Modules\2020\RadeonProRender.module" />
     <Content Include="Modules\2022\RadeonProRender.module" />
+    <Content Include="Modules\2023\RadeonProRender.module" />
     <Content Include="Readme.txt" />
     <Content Include="rpr_banner.png" />
     <Content Include="rpr_dialog.png" />
@@ -114,9 +114,9 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
   <ItemGroup>
     <Folder Include="Generated\" />
     <Folder Include="Modules" />
-    <Folder Include="Modules\2019" />
     <Folder Include="Modules\2020" />
     <Folder Include="Modules\2022" />
+    <Folder Include="Modules\2023" />
     <Folder Include="Wix files" />
   </ItemGroup>
   <ItemGroup>
@@ -130,9 +130,9 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
     <PreBuildEvent>
       "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_Core" -cg CG_ARTEFACTS -ag -scom -sreg -sfrag -srd -dr DR_ARTEFACTS -var var.Artefacts -out "$(ProjectDir)Generated\Artefacts.wxs"
       "$(WIX)bin\heat.exe" dir "$(ProjectDir)modules" -cg CG_MODULES -ag -scom -sreg -sfrag -srd -dr DR_MODULES -var var.Modules -out "$(ProjectDir)Generated\Modules.wxs"
-      "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_2019" -cg CG_2019 -ag -scom -sreg -sfrag -srd -dr DR_PLUGINS -var var.Plugin2019 -out "$(ProjectDir)Generated\Plugin2019.wxs"
       "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_2020" -cg CG_2020 -ag -scom -sreg -sfrag -srd -dr DR_PLUGINS -var var.Plugin2020 -out "$(ProjectDir)Generated\Plugin2020.wxs"
       "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_2022" -cg CG_2022 -ag -scom -sreg -sfrag -srd -dr DR_PLUGINS -var var.Plugin2022 -out "$(ProjectDir)Generated\Plugin2022.wxs"
+      "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_2023" -cg CG_2023 -ag -scom -sreg -sfrag -srd -dr DR_PLUGINS -var var.Plugin2023 -out "$(ProjectDir)Generated\Plugin2023.wxs"
 
       "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_ConvScripts" -cg CG_SCENE_CONV -ag -scom -sreg -sfrag -srd -dr DR_SCRIPTS_FIRE_RENDER -var var.ConvScripts -out "$(ProjectDir)Generated\ConvScripts.wxs"
 

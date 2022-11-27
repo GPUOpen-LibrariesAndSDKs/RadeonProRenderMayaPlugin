@@ -48,7 +48,8 @@ global proc AERPRToonMaterialTemplate( string $nodeName )
 			editorTemplate -l "Highlight Level Mix 2" -addControl "rampRangeHighlight";
 			
 			editorTemplate -l "Light Linking Enable" -addControl "enableLightLinking" "LightLinkingEnableChanged";
-			editorTemplate -l "Linked Light" -addControl "linkedLight";
+
+			editorTemplate -callCustom "LinkedLightNew" "LinkedLightReplace" "linkedLightObject";
 			
 			editorTemplate -l "Use Mid Color As Albedo" -addControl "enableMidColorAsAlbedo";
 			
@@ -62,15 +63,127 @@ global proc AERPRToonMaterialTemplate( string $nodeName )
 	editorTemplate -endScrollLayout;
 }
 
-global proc InitLightLinking (string $nodeName)
+global proc string GetLinkedLightDropdownCommand(string $attrName, string $ctrlName)
 {
-	if (!`attributeExists "linkedLight" $nodeName`)
+	return "OnLinkedLightChanged(\"" + $attrName + "\",\"" + $ctrlName + "\")";
+}
+
+global proc UpdateLinkedLightsDropdown(string $attrName)
+{
+        $items = `optionMenu -q -itemListLong linkedLightDropdownCtrl`;
+	if (size($items) > 0)
 	{
-		addAttr -at enum -en "none" -ln linkedLight -r 0 -w 1 -k 0 -s 1 $nodeName;
-		RefreshLinkedLightAttribute $nodeName "";
+		deleteUI($items);
+	}
+
+	$lightNames = GetAllLights();
+
+	menuItem -parent linkedLightDropdownCtrl -label "";
+	for ($lightName in $lightNames)
+	{
+		menuItem -parent linkedLightDropdownCtrl -label $lightName;
+	}
+
+	string $connections[] = `listConnections -shapes true $attrName`;
+	string $value = "";
+
+	if (size($connections) > 0)
+	{
+		 $value = $connections[0];
+	}
+
+	optionMenu -e -v $value linkedLightDropdownCtrl;
+}
+
+global string $g_dropdownList[];
+
+global proc LinkedLightNew(string $attrName)
+{
+	global string $g_dropdownList[];
+
+	rowLayout;
+		$g_dropdownList[size($g_dropdownList)] = `optionMenu -label "Linked Light" linkedLightDropdownCtrl`;
+		setParent ..;
+	setParent ..;
+
+	LinkedLightReplace($attrName);
+}
+
+global proc LinkedLightReplace(string $attrName)
+{
+	string $ctrlName = `control -q -fullPathName linkedLightDropdownCtrl`;
+
+	$command = GetLinkedLightDropdownCommand($attrName, $ctrlName);
+	optionMenu -edit -changeCommand $command linkedLightDropdownCtrl;
+
+        UpdateLinkedLightsDropdown($attrName);
+}
+
+// Linked light dropdown array refresh - remove non existing controls (non existing drop downs which appear if you show and hide Hypershade for example)
+global proc RefreshExistingControlList()
+{
+	global string $g_dropdownList[];
+
+	string $dropdownList[];
+
+	for ($ctrl in $g_dropdownList)
+	{
+		if (`control -ex $ctrl`)
+		{
+			$dropdownList[size($dropdownList)] = $ctrl;
+		}
+	}
+
+	$g_dropdownList = $dropdownList;
+}
+
+global proc OnLinkedLightChanged(string $attrName, string $ctrlName)
+{
+	global string $g_dropdownList[];
+
+	string $newLightName = `optionMenu -q -v $ctrlName`;
+
+	string $connections[] = `listConnections -shapes true -plugs true $attrName`;
+
+	if (size($connections) > 0)
+	{
+		disconnectAttr $connections[0] $attrName;
+	}
+
+	if ($newLightName != "")
+	{
+		$firstAttr = $newLightName + ".message";
+		connectAttr $firstAttr $attrName;
+	}
+
+	RefreshExistingControlList();
+	// update all linked light dropdowns
+	for ($ctrl in $g_dropdownList)
+	{
+	 	if ($ctrl == $ctrlName)
+			continue;
+
+		optionMenu -e -v $newLightName $ctrl;
 	}
 }
 
+global proc string[] GetAllLights()
+{
+	string $lightTypes[] = {"ambientLight", "directionalLight", "spotLight", "pointLight", "RPRPhysicalLight", "RPRIES", "RPRIBL"};
+	string $lightNames[];
+	
+	for($lightType in $lightTypes)
+	{
+		string $lights[] = `ls -type $lightType`;
+
+		for ($lightName in $lights)
+		{
+			$lightNames[size($lightNames)] = $lightName;
+		}
+	}
+
+	return $lightNames;
+}
 
 global proc ShowAdvancedChanges(string $nodeName)
 {
@@ -129,110 +242,41 @@ global proc TransparencyEnableChanged(string $nodeName)
 
 global proc LightLinkingEnableChanged(string $nodeName)
 {
+	global string $g_dropdownList[];
 	string $checkboxName = $nodeName + ".enableLightLinking";
 	
-	$dim = !`getAttr $checkboxName`;
-	
-	editorTemplate -dimControl $nodeName linkedLight $dim;
+	$enable = `getAttr $checkboxName`;
+
+	RefreshExistingControlList();
+	for ($ctrl in $g_dropdownList)
+	{
+		optionMenu -edit -enable $enable $ctrl;
+	}
 }
 
-global proc RefreshLinkedLightAttribute(string $nodeName, string $ignoreLightName)
-{	
-	string $lightTypes[] = {"ambientLight", "directionalLight", "spotLight", "pointLight", "RPRPhysicalLight", "RPRIES", "RPRIBL"};
-	string $lightNames = "";
-	
-	for($lightType in $lightTypes)
-	{
-		string $lights[] = `ls -type $lightType`;
-		for($light in $lights)
-		{	
-			if($ignoreLightName == "" || $light != $ignoreLightName)
-			{
-				$lightNames = $lightNames + $light + ":";
-			}
-		}
-	}
-	
-	if (`size $lightNames` > 0)
-	{
-		// remove last ':' character
-		$lightNames = `substring $lightNames 1 (size($lightNames) - 1)`;
-	}
-	else
-	{
-		$lightNames = "none";
-		
-		// disable light linking if no available lights
-		string $checkboxName = $nodeName + ".enableLightLinking";
-		setAttr $checkboxName 0;
-	}
-	
-	string $enumName = $nodeName + ".linkedLight";
-	addAttr -edit -enumName $lightNames $enumName;
-	
-	refreshEditorTemplates $nodeName;
-}
-
-global proc int GetLinkedLightNumberByName(string $nodeName, string $name)
+global proc ConvertLegacyLightLinkedAttribute()
 {
-	int $num = 0;
-	string $enumList[];
-	string $enumListRaw[] = `attributeQuery -le -n $nodeName "linkedLight"`;
-	tokenize $enumListRaw[0] ":" $enumList;
-	
-	
-	for($enumName in $enumList)
-	{
-		if($enumName == $name)
-		{
-			return $num;
-		}
-		$num++;		
-	}
-	return 0;
-}
+	string $toonMaterials[] = `ls -type RPRToonMaterial`;
 
-global proc ToonShaderLightAdded(string $lightName, string $nodeName)
-{
-	string $enumName = $nodeName + ".linkedLight";
-	string $currentValue = `getAttr -as $enumName`;
-	
-	RefreshLinkedLightAttribute $nodeName "";
-	
-	int $value = GetLinkedLightNumberByName($nodeName, $currentValue);
-	setAttr $enumName $value;
-}
+	for ($toonMaterial in $toonMaterials)
+	{      
+		if (!`attributeExists "linkedLight" $toonMaterial`)
+			continue;
 
-global proc ToonShaderLightRemoved(string $lightName, string $nodeName)
-{
-	string $enumName = $nodeName + ".linkedLight";
-	string $currentValue = `getAttr -as $enumName`;
-	
-	RefreshLinkedLightAttribute $nodeName $lightName;
-	
-	if($currentValue == $lightName) // current light has been deleted
-	{
-		setAttr $enumName 0;
-	}
-	else
-	{
-		int $value = GetLinkedLightNumberByName($nodeName, $currentValue);
-		setAttr $enumName $value;
+		string $enabledAttrName = $toonMaterial + ".enableLightLinking";
+		string $legacyAttrName = $toonMaterial + ".linkedLight";
+
+		if (`getAttr $enabledAttrName` == 0)
+			continue;
+
+		string $lightName = `getAttr -asString $legacyAttrName`;
+
+		string $linkedLightObjectAttr = $toonMaterial + ".linkedLightObject";
+
+		$firstAttr = $lightName + ".message";
+		connectAttr $firstAttr $linkedLightObjectAttr;
+
+		deleteAttr $legacyAttrName;
+		print("RadeonProRender: Legacy attribute " + $legacyAttrName + " converted!\n");
 	}
 }
-
-global proc ToonShaderLightRenamed(string $lightName, string $lightPrevName, string $nodeName)
-{
-	string $enumName = $nodeName + ".linkedLight";
-	string $currentValue = `getAttr -as $enumName`;
-	
-	RefreshLinkedLightAttribute $nodeName "";
-	
-	if($currentValue == $lightPrevName)
-	{
-		int $value = GetLinkedLightNumberByName($nodeName, $lightName);
-		setAttr $enumName $value;
-	}
-}
-
-

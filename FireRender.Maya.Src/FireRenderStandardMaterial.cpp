@@ -101,12 +101,13 @@ namespace
 		MObject emissiveDoubleSided;
 
 		// Material parameters
-		MObject transparencyLevel;		
+		MObject transparencyEnable;
+		MObject transparencyLevel;
+		MObject transparency3Components;
+		MObject useTransparency3Components;
 
 		MObject normalMap;
 		MObject normalMapEnable;
-
-		MObject transparencyEnable;
 
 		MObject displacementEnable;
 		MObject displacementMin;
@@ -482,7 +483,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	Attribute::refractionAbsorptionDistance = nAttr.create("refractAbsorptionDistance", "refd", MFnNumericData::kFloat, 0);
 	MAKE_INPUT(nAttr);
 	nAttr.setSoftMax(10.0);
-	SET_MINMAX(nAttr, 0.0, 500.0);
+	SET_MINMAX(nAttr, 0.0, 50000.0);
 
 	Attribute::refractionAbsorptionColor = nAttr.createColor("refractAbsorbColor", "refa");
 	MAKE_INPUT(nAttr);
@@ -516,6 +517,12 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	SET_MINMAX(nAttr, 0.0, 1.0);
 
+	Attribute::transparency3Components = nAttr.createColor("transparency3Components", "tr3c");
+	MAKE_INPUT(nAttr);
+
+	Attribute::useTransparency3Components = nAttr.create("useTransparency3Components", "ut3", MFnNumericData::kBoolean, 0 );
+	MAKE_INPUT_CONST(nAttr);
+
 	Attribute::displacementMap = nAttr.createColor("displacementMap", "disp");
 	MAKE_INPUT(nAttr);
 
@@ -531,11 +538,11 @@ MStatus FireMaya::StandardMaterial::initialize()
 
 	Attribute::displacementMin = nAttr.create("displacementMin", "dspmn", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, 0.0, 100.0);
+	SET_MINMAX(nAttr, 0.0, 10000.0);
 
 	Attribute::displacementMax = nAttr.create("displacementMax", "dspmx", MFnNumericData::kFloat, 0.01);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, 0.0, 100.0);
+	SET_MINMAX(nAttr, 0.0, 10000.0);
 
 	Attribute::displacementSubdiv = nAttr.create("displacementSubdiv", "dsps", MFnNumericData::kByte, 4);
 	MAKE_INPUT(nAttr);
@@ -582,7 +589,7 @@ MStatus FireMaya::StandardMaterial::initialize()
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(nAttr.setDefault(3.67f, 1.37f, 0.68f));
 	nAttr.setMin(0.0f, 0.0f, 0.0f);
-	nAttr.setMax(1000.0f, 1000.0f, 1000.0f);
+	nAttr.setMax(100000.0f, 100000.0f, 100000.0f); // maximum value for milimeters
 
 	Attribute::volumeScatteringDirection = nAttr.create("scatteringDirection", "vsd", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
@@ -677,6 +684,8 @@ MStatus FireMaya::StandardMaterial::initialize()
 	ADD_ATTRIBUTE(Attribute::emissiveDoubleSided);
 
 	ADD_ATTRIBUTE(Attribute::transparencyLevel);
+	ADD_ATTRIBUTE(Attribute::transparency3Components);
+	ADD_ATTRIBUTE(Attribute::useTransparency3Components);
 
 	ADD_ATTRIBUTE(Attribute::displacementMap);
 
@@ -754,6 +763,9 @@ bool FireMaya::StandardMaterial::IsNormalOrBumpMap(const MObject& attrNormal, No
 		return true;
 
 	if (type == frw::ValueTypeBumpMap)
+		return true;
+
+	if (type == frw::ValueTypeBevel)
 		return true;
 
 	return false;
@@ -1051,13 +1063,23 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	// Material attributes
 	if (GET_BOOL(transparencyEnable))
 	{
-		SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_TRANSPARENCY, transparencyLevel);
+		if (GET_BOOL(useTransparency3Components))
+		{
+			frw::Value value = GET_VALUE(transparency3Components);
+
+			material.xSetValue(RPR_MATERIAL_INPUT_UBER_TRANSPARENCY, value.SelectX());
+		}
+		else
+		{
+			SET_RPRX_VALUE(RPR_MATERIAL_INPUT_UBER_TRANSPARENCY, transparencyLevel);
+		}
 	}
+
 	if (GET_BOOL(normalMapEnable))
 	{
 		frw::Value value = GET_VALUE(normalMap);
 		int type = value.GetNodeType();
-		if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap)
+		if (type == frw::ValueTypeNormalMap || type == frw::ValueTypeBumpMap || type == frw::ValueTypeBevel)
 		{
 
 		}

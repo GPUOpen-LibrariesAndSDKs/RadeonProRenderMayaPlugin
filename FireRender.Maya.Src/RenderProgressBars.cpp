@@ -53,7 +53,7 @@ RenderProgressBars::RenderProgressBars(bool unlimited) :
 		else
 			MGlobal::executeCommand("progressBar -edit -vis true rprPlaceHolderProgressBar;");
 
-		MGlobal::executeCommand("progressBar -edit -pr 1 -ann \"Rendering...\" -maxValue 100 rprPlaceHolderProgressBar;");
+		MGlobal::executeCommand("progressBar -edit -pr 0 -ann \"Rendering...\" -maxValue 100 rprPlaceHolderProgressBar;");
 	}
 
 	// Show the progress bar window.
@@ -63,7 +63,7 @@ RenderProgressBars::RenderProgressBars(bool unlimited) :
 
 	// This needs to be done due to a bug (if esc hit
 	// multiple times before cancel is registered in plugin).
-	MGlobal::executeCommand("progressBar -edit -beginProgress -isInterruptable true -status \"Rendering...\" -maxValue 100 $gMainProgressBar;");
+	MGlobal::executeCommand("progressBar -edit -beginProgress -isInterruptable true -status \"Preparing scene...\" -maxValue 100 $gMainProgressBar;");
 	int i = 0;
 	while (i < 100)
 	{
@@ -77,18 +77,15 @@ RenderProgressBars::RenderProgressBars(bool unlimited) :
 		else
 		{
 			i++;
-			update(i);
 		}
 	}
 
 	// Initialize the main progress bar.
 	MGlobal::executeCommand("progressBar -edit -endProgress $gMainProgressBar;");
-	MGlobal::executeCommand("progressBar -edit -beginProgress -isInterruptable true -status \"Rendering...\" -maxValue 100 $gMainProgressBar;");
-	MGlobal::executeCommand("progressBar -edit -pr 1 $gMainProgressBar;");
+	MGlobal::executeCommand("progressBar -edit -beginProgress -isInterruptable true -status \"Preparing scene...\" -maxValue 100 $gMainProgressBar;");
+	MGlobal::executeCommand("progressBar -edit -pr 0 $gMainProgressBar;");
 
 	// Perform an initial update.
-	update(0);
-
 	ForceUIUpdate();
 
 	m_lastCanceledCheck = clock();
@@ -150,7 +147,7 @@ RenderProgressBars::~RenderProgressBars()
 
 // Public Methods
 // -----------------------------------------------------------------------------
-void RenderProgressBars::update(int progress)
+void RenderProgressBars::update(int progress, bool isSyncing /*= false*/)
 {
 	MAIN_THREAD_ONLY;
 
@@ -173,7 +170,7 @@ void RenderProgressBars::update(int progress)
 		MString command = "progressBar -edit -pr ";
 		command += progress;
 
-		MString commandMain = command + " $gMainProgressBar;";
+		MString commandMain = command + (isSyncing ? " -status \"Syncing objects...\" " : " -status \"Rendering...\" " )+ " $gMainProgressBar;";
 		MGlobal::executeCommand(commandMain);
 
 		if (!m_unlimited && m_visible)

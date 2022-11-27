@@ -58,9 +58,31 @@ void NorthStarRenderingHelper::StopAndJoin()
 
 void ContextRenderUpdateCallback(float progress, void* pData)
 {
-	(static_cast<NorthStarRenderingHelper*>(pData))->OnContextRenderUpdateCallback(progress);
+	assert(pData);
+	if (pData != nullptr)
+		(static_cast<NorthStarRenderingHelper*>(pData))->OnContextRenderUpdateCallback(progress);
 }
 
+void ContextSceneSyncFinCallback(float time, void* pData)
+{
+	assert(pData);
+	if (pData != nullptr)
+		(static_cast<NorthStarRenderingHelper*>(pData))->OnContextSceneSyncFinCallback(time);
+}
+
+void ContextFirstIterationCallback(float time, void* pData)
+{
+	assert(pData);
+	if (pData != nullptr)
+		(static_cast<NorthStarRenderingHelper*>(pData))->OnContextFirstIterationCallback(time);
+}
+
+void ContextRenderTimeCallback(float time, void* pData)
+{
+	assert(pData);
+	if (pData != nullptr)
+		(static_cast<NorthStarRenderingHelper*>(pData))->OnContextRenderTimeCallback(time);
+}
 
 void NorthStarRenderingHelper::SetData(FireRenderContext* pContext, RenderingHelperCallback readBufferAndUpdateCallback)
 {
@@ -68,6 +90,10 @@ void NorthStarRenderingHelper::SetData(FireRenderContext* pContext, RenderingHel
 	m_readBufferAndUpdateCallback = readBufferAndUpdateCallback;
 
 	m_pContext->SetRenderUpdateCallback(ContextRenderUpdateCallback, this);
+
+	m_pContext->SetSceneSyncFinCallback(ContextSceneSyncFinCallback, this);
+	m_pContext->SetFirstIterationCallback(ContextFirstIterationCallback, this);
+	m_pContext->SetRenderTimeCallback(ContextRenderTimeCallback, this);
 }
 
 void NorthStarRenderingHelper::OnContextRenderUpdateCallback(float progress)
@@ -84,6 +110,21 @@ void NorthStarRenderingHelper::OnContextRenderUpdateCallback(float progress)
 	std::unique_lock<std::mutex> lck(m_DataReadyMutex);
 	m_DataReady = true;
 	m_DataReadyConditionalVariable.notify_one();
+}
+
+void NorthStarRenderingHelper::OnContextSceneSyncFinCallback(float time)
+{
+	m_pContext->m_syncTime = time;
+}
+
+void NorthStarRenderingHelper::OnContextFirstIterationCallback(float time)
+{
+	m_pContext->m_firstFrameRenderTime = time;
+}
+
+void NorthStarRenderingHelper::OnContextRenderTimeCallback(float time)
+{
+	m_pContext->m_lastRenderedFrameRenderTime = time;
 }
 
 void NorthStarRenderingHelper::UpdateThreadFunc()

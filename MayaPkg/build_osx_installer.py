@@ -153,7 +153,7 @@ for name in ['modules']:
     shutil.copytree(str(build_output_dir / name), str(modules_dist_dir))
 
 # Remap the directory for the installed plugin
-for name in ['rpr2019.mod','rpr2020.mod','rpr2022.mod']:
+for name in ['rpr2020.mod','rpr2022.mod','rpr2023.mod']:
     module_file = modules_dist_dir/name;
     module_file_content = module_file.read_text()
     os.remove(str(module_file))

@@ -2,17 +2,17 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros">
-    <FR_MAYA_VERSION>2019</FR_MAYA_VERSION>
+    <FR_MAYA_VERSION>2023</FR_MAYA_VERSION>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup>
     <ClCompile>
-      <PreprocessorDefinitions>MAYA2019;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(MAYA_SDK_2019)\include;$(MAYA_X64_2019)\plug-ins\xgen\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>MAYA2023;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(MAYA_SDK_2023)\include;$(MAYA_X64_2023)\plug-ins\xgen\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
 	  <AdditionalDependencies>AdskXGen.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(MAYA_X64_2019)\lib;$(MAYA_X64_2019)\plug-ins\xgen\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(MAYA_X64_2023)\lib;$(MAYA_X64_2023)\plug-ins\xgen\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
