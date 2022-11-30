@@ -50,6 +50,8 @@ public:
     virtual bool IsUberReflectionNormalSupported() const { return false; }
     virtual bool IsUberScaleSupported() const { return false; }
 
+    void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) override;
+
     bool IsAOVSupported(int aov) const override;
 
 protected:
