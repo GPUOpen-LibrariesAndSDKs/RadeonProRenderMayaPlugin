@@ -68,7 +68,9 @@ rpr_int HybridProContext::CreateContextInternal(rpr_creation_flags createFlags, 
 
 	// setup CPU thread count
 	std::vector<rpr_context_properties> ctxProperties;
-
+	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_HYBRID_ENABLE_PER_FACE_MATERIALS);
+	const bool perFaceEnabled = true;
+	ctxProperties.push_back((rpr_context_properties)&perFaceEnabled);
 	ctxProperties.push_back((rpr_context_properties)0);
 
 #ifdef RPR_VERSION_MAJOR_MINOR_REVISION
@@ -78,6 +80,11 @@ rpr_int HybridProContext::CreateContextInternal(rpr_creation_flags createFlags, 
 #endif
 
 	return res;
+}
+
+void HybridProContext::setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance /*= false*/)
+{
+	HybridContext::setupContextPostSceneCreation(fireRenderGlobalsData, disableWhiteBalance);
 }
 
 bool HybridProContext::IsAOVSupported(int aov) const
