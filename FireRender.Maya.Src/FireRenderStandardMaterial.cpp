@@ -538,11 +538,11 @@ MStatus FireMaya::StandardMaterial::initialize()
 
 	Attribute::displacementMin = nAttr.create("displacementMin", "dspmn", MFnNumericData::kFloat, 0.0);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, 0.0, 10000.0);
+	SET_SOFTMINMAX(nAttr, -1.0f, 1.0f);
 
 	Attribute::displacementMax = nAttr.create("displacementMax", "dspmx", MFnNumericData::kFloat, 0.01);
 	MAKE_INPUT(nAttr);
-	SET_MINMAX(nAttr, 0.0, 10000.0);
+	SET_SOFTMINMAX(nAttr, -1.0f, 1.0f);
 
 	Attribute::displacementSubdiv = nAttr.create("displacementSubdiv", "dsps", MFnNumericData::kByte, 4);
 	MAKE_INPUT(nAttr);
