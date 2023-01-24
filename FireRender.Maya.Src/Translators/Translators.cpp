@@ -848,13 +848,18 @@ namespace FireMaya
 		frlight.SetAmbientLight(true);
 
 		rpr_image_desc imgDesc;
-		imgDesc.image_width = 1;
-		imgDesc.image_height = 1;
+		imgDesc.image_width = 2;
+		imgDesc.image_height = 2;
 		imgDesc.image_depth = 0;
 		imgDesc.image_row_pitch = imgDesc.image_width * sizeof(rpr_float) * 4;
 		imgDesc.image_slice_pitch = 0;
 
-		float imgData[4] = { colorTemp.r, colorTemp.g, colorTemp.b, 1.f };
+		float imgData[16] = { 
+			colorTemp.r, colorTemp.g, colorTemp.b, 1.0f, 
+			colorTemp.r, colorTemp.g, colorTemp.b, 1.0f, 
+			colorTemp.r, colorTemp.g, colorTemp.b, 1.0f, 
+			colorTemp.r, colorTemp.g, colorTemp.b, 1.0f, 
+		};
 
 		frw::Image frImage(frcontext, { 4, RPR_COMPONENT_TYPE_FLOAT32 }, imgDesc, imgData);
 
