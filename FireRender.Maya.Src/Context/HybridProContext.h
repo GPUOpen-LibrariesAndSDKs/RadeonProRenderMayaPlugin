@@ -30,6 +30,7 @@ public:
 
     bool IsHairSupported() const override { return true; }
     bool IsVolumeSupported() const override { return true; }
+    bool IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) const override;
 
     virtual bool IsMaterialNodeIDSupported() const { return false; }
     virtual bool IsMeshObjectIDSupported() const { return false; }

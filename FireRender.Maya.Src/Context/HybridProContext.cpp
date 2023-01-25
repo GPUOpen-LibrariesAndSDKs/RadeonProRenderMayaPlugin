@@ -16,7 +16,7 @@ limitations under the License.
 
 #include "../FireRenderMaterial.h"
 #include "../FireRenderStandardMaterial.h"
-
+#include "../FireRenderDoublesided.h"
 #include "../FireRenderPBRMaterial.h"
 
 rpr_int HybridProContext::m_gHybridProPluginID = INCORRECT_PLUGIN_ID;
@@ -85,6 +85,11 @@ rpr_int HybridProContext::CreateContextInternal(rpr_creation_flags createFlags, 
 void HybridProContext::setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance /*= false*/)
 {
 	HybridContext::setupContextPostSceneCreation(fireRenderGlobalsData, disableWhiteBalance);
+
+#ifdef FORCE_ENABLE_VOLUMES
+	frw::Context context = GetContext();
+	rprContextSetParameterByKey1u(context.Handle(), (rpr_context_info)RPR_CONTEXT_ENABLE_VOLUMES, RPR_TRUE);
+#endif
 }
 
 bool HybridProContext::IsAOVSupported(int aov) const
@@ -109,5 +114,20 @@ bool HybridProContext::IsAOVSupported(int aov) const
 bool HybridProContext::IsRenderQualitySupported(RenderQuality quality) const
 {
 	return ((quality == RenderQuality::RenderQualityFull) || (quality == RenderQuality::RenderQualityHybridPro));
+}
+
+bool HybridProContext::IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) const
+{
+	bool isSupported = HybridContext::IsShaderNodeSupported(shaderNode);
+	if (isSupported)
+		return true;
+
+	FireMaya::RPRDoubleSided* pPRBMaterial = dynamic_cast<FireMaya::RPRDoubleSided*> (shaderNode);
+	if (pPRBMaterial != nullptr)
+	{
+		return true;
+	}
+
+	return false;
 }
 
