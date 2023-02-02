@@ -76,7 +76,9 @@ void PixelBuffer::overwrite(const RV_PIXEL* input, const RenderRegion& region, u
 
 #ifdef _DEBUG
 #ifdef DUMP_PIXELS_PIXELBUFF
-	debugDump(totalHeight, totalWidth, std::string(FireRenderAOV::GetAOVName(aov_id) + "_tile_"), "C://temp//buffers//");
+	const std::string pathToFile = "C://debug//fb//";
+
+	debugDump(totalHeight, totalWidth, std::string(FireRenderAOV::GetAOVName(aov_id) + "_tile_"), pathToFile);
 #endif
 #endif
 }
