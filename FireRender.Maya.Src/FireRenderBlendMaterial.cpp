@@ -23,9 +23,10 @@ limitations under the License.
 #include <maya/MDataBlock.h>
 #include <maya/MDataHandle.h>
 #include <maya/MFnFloatArrayData.h>
+#include <maya/MFnArrayAttrsData.h>
 
 #include "FireMaya.h"
-
+#include "FireRenderUtils.h"
 
 namespace
 {
@@ -96,7 +97,7 @@ MStatus FireMaya::BlendMaterial::compute(const MPlug& plug, MDataBlock& block)
 		MFloatVector& topColor = block.inputValue(Attribute::inputA).asFloatVector();
 		MFloatVector& baseColor = block.inputValue(Attribute::inputB).asFloatVector();
 		float weight = block.inputValue(Attribute::weight).asFloat();
-
+		
 		// set ouput color attribute
 		MDataHandle outColorHandle = block.outputValue(Attribute::output);
 		MFloatVector& outColor = outColorHandle.asFloatVector();
@@ -195,7 +196,7 @@ bool FireMaya::BlendMaterial::Override::allowConnections() const
 
 MString FireMaya::BlendMaterial::Override::fragmentName() const
 {
-	return "mayaBlendColors";
+	return "mayaLambertSurface";
 }
 
 void FireMaya::BlendMaterial::Override::getCustomMappings(MHWRender::MAttributeParameterMappingList& mappings)
@@ -212,6 +213,8 @@ void FireMaya::BlendMaterial::Override::updateDG()
 {
 }
 
+const float3 defaultBlendShaderTexturePlaceholderColor = { 0.2f, 0.2f, 0.2f };
+
 void FireMaya::BlendMaterial::Override::updateShader(MHWRender::MShaderInstance& shader, const MHWRender::MAttributeParameterMappingList& mappings)
 {
 	if (m_shader.isNull())
@@ -220,27 +223,47 @@ void FireMaya::BlendMaterial::Override::updateShader(MHWRender::MShaderInstance&
 	}
 
 	MFnDependencyNode shaderNode(m_shader);
+	MStatus success;
+
+	MPlug colorPlug0 = shaderNode.findPlug("color0", false);
+	assert(!colorPlug0.isNull());
+	MFloatVector color0;
+	if (colorPlug0.isConnected())
+	{
+		color0 = defaultBlendShaderTexturePlaceholderColor;
+	}
+	else
+	{
+		MDataHandle colorDataHandle0;
+		success = colorPlug0.getValue(colorDataHandle0);
+		assert(success == MStatus::kSuccess);
+		color0 = colorDataHandle0.asFloat3();
+	}
+
+	MPlug colorPlug1 = shaderNode.findPlug("color1", false);
+	assert(!colorPlug1.isNull());
+	MFloatVector color1;
+	if (colorPlug1.isConnected())
+	{
+		color1 = defaultBlendShaderTexturePlaceholderColor;
+	}
+	else
+	{
+		MDataHandle colorDataHandle1;
+		success = colorPlug1.getValue(colorDataHandle1);
+		assert(success == MStatus::kSuccess);
+		color1 = colorDataHandle1.asFloat3();
+	}
 
 	MPlug weightPlug = shaderNode.findPlug("weight", false);
-	float weight = 0;
+	float weight = 0.0f;
 	MStatus weightStatus = weightPlug.getValue(weight);
 	assert(weightStatus == MStatus::kSuccess);
 
-	MPlug colorPlug0 = shaderNode.findPlug("color0", false);
-	MDataHandle colorDataHandle0;
-	MStatus status0 = colorPlug0.getValue(colorDataHandle0);
-	assert(status0 == MStatus::kSuccess);
-	float3& color0 = colorDataHandle0.asFloat3();
-
-	MPlug colorPlug1 = shaderNode.findPlug("color1", false);
-	MDataHandle colorDataHandle1;
-	MStatus status1 = colorPlug1.getValue(colorDataHandle1);
-	assert(status1 == MStatus::kSuccess);
-	float3& color1 = colorDataHandle1.asFloat3();
-
-	shader.setParameter("color2", color0);
-	shader.setParameter("color1", color1);
-	shader.setParameter("blender", weight);
+	MFloatVector outColor;
+	outColor = color0 * weight + color1 * (1.0f - weight);
+	success = shader.setParameter("color", outColor);
+	assert(success == MStatus::kSuccess);
 }
 
 const char* FireMaya::BlendMaterial::Override::className()
