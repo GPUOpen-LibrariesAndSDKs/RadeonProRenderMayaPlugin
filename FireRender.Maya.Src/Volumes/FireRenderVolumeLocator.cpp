@@ -85,7 +85,7 @@ void FireRenderVolumeLocator::postConstructor()
 	// - this happens despite api documentation saying that default control point is created automatically - it's not.
 	// - Since we need to set these values anyway, we set them to what user most likely wants
 	MPlug albedoRampPlug(thisMObject(), RPRVolumeAttributes::albedoRamp);
-	const float albedoSrc[][4] = { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
+	const float albedoSrc[][4] = { 0.5f, 0.5f, 0.5f, 1.0f, 0.5f, 0.5f, 0.5f, 1.0f };
 	MColorArray albedoValues(albedoSrc, 2);
 	SetRampValues(albedoRampPlug, albedoValues);
 
