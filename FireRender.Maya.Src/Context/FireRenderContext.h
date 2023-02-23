@@ -292,8 +292,14 @@ public:
 	// will process frame as shadow and/or reflection catcher
 	bool ConsiderShadowReflectionCatcherOverride(const ReadFrameBufferRequestParams& params);
 
+#ifdef _DEBUG
 	// writes input aov frame bufer on disk (both resolved and not resolved)
-	void DebugDumpAOV(int aov, char* pathToFile = nullptr) const;
+	void DebugDumpFramebufferAOV(int aov, const char* pathToFile = nullptr) const;
+
+	// writes framebuffers and aovs stored inRAM that are used for denoiser on disk
+	// (both resolved and not resolved)
+	void DebugDumpDenoiseSourceAOV(const std::string& pathToFile);
+#endif
 
 	// runs denoiser, returns pixel array as float vector if denoiser runs successfully
 	std::vector<float> GetDenoisedData(bool& result);

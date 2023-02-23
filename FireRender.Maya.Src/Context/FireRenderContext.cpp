@@ -1545,9 +1545,9 @@ bool FireRenderContext::ConsiderShadowReflectionCatcherOverride(const ReadFrameB
 	return false;
 }
 
-void FireRenderContext::DebugDumpAOV(int aov, char* pathToFile /*= nullptr*/) const
-{
 #ifdef _DEBUG
+void FireRenderContext::DebugDumpFramebufferAOV(int aov, const char* pathToFile /*= nullptr*/) const
+{
 	std::map<unsigned int, std::string> aovNames =
 	{
 		 {RPR_AOV_COLOR, "RPR_AOV_COLOR"}
@@ -1597,27 +1597,29 @@ void FireRenderContext::DebugDumpAOV(int aov, char* pathToFile /*= nullptr*/) co
 		,{RPR_AOV_MAX, "RPR_AOV_MAX" }
 	};
 
+	static int count = 0;
+	count++;
 	std::stringstream ssFileNameResolved;
 
 	if (pathToFile != nullptr)
 	{
-		ssFileNameResolved << pathToFile;
+		ssFileNameResolved << pathToFile << count;
 	}
 
-	ssFileNameResolved << aovNames[aov] << "_resolved.png";
+	ssFileNameResolved << aovNames[aov] << "_resolved.png"; 
 	rprFrameBufferSaveToFile(m.framebufferAOV_resolved[aov].Handle(), ssFileNameResolved.str().c_str());
 
 	std::stringstream ssFileNameNOTResolved;
 
 	if (pathToFile != nullptr)
 	{
-		ssFileNameNOTResolved << pathToFile;
+		ssFileNameNOTResolved << pathToFile << count;
 	}
 
-	ssFileNameNOTResolved << aovNames[aov] << "_NOTresolved.png";
+	ssFileNameNOTResolved << aovNames[aov] << "_NOT_resolved.png";
 	rprFrameBufferSaveToFile(m.framebufferAOV[aov].Handle(), ssFileNameNOTResolved.str().c_str());
-#endif
 }
+#endif
 
 std::vector<float> FireRenderContext::GetTonemappedData(bool& result)
 {
@@ -1639,10 +1641,9 @@ std::vector<float> FireRenderContext::GetTonemappedData(bool& result)
 	}
 }
 
-std::vector<float> FireRenderContext::GetDenoisedData(bool& result)
-{	
 #ifdef _DEBUG
-#ifdef DUMP_FRAMEBUFF
+void FireRenderContext::DebugDumpDenoiseSourceAOV(const std::string& pathToFile)
+{
 	if (m_globals.denoiserSettings.type == FireRenderGlobals::kBilateral)
 	{
 		m.framebufferAOV_resolved[RPR_AOV_COLOR].DebugDumpFrameBufferToFile(std::string("RPR_AOV_COLOR"));
@@ -1652,23 +1653,32 @@ std::vector<float> FireRenderContext::GetDenoisedData(bool& result)
 		m_pixelBuffers[RPR_AOV_COLOR].debugDump(m_pixelBuffers[
 			RPR_AOV_COLOR].height(),
 				m_pixelBuffers[RPR_AOV_COLOR].width(),
-				std::string("RPR_AOV_COLOR"));
+				std::string("RPR_AOV_COLOR"), pathToFile);
 
 		m_pixelBuffers[RPR_AOV_SHADING_NORMAL].debugDump(m_pixelBuffers[
 			RPR_AOV_SHADING_NORMAL].height(),
 				m_pixelBuffers[RPR_AOV_SHADING_NORMAL].width(),
-				std::string("RPR_AOV_SHADING_NORMAL"));
+				std::string("RPR_AOV_SHADING_NORMAL"), pathToFile);
 
 		m_pixelBuffers[RPR_AOV_WORLD_COORDINATE].debugDump(m_pixelBuffers[
 			RPR_AOV_WORLD_COORDINATE].height(),
 				m_pixelBuffers[RPR_AOV_WORLD_COORDINATE].width(),
-				std::string("RPR_AOV_WORLD_COORDINATE"));
+				std::string("RPR_AOV_WORLD_COORDINATE"), pathToFile);
 
 		m_pixelBuffers[RPR_AOV_DEPTH].debugDump(m_pixelBuffers[
 			RPR_AOV_DEPTH].height(),
 				m_pixelBuffers[RPR_AOV_DEPTH].width(),
-				std::string("RPR_AOV_DEPTH"));
+				std::string("RPR_AOV_DEPTH"), pathToFile);
 	}
+}
+#endif
+
+std::vector<float> FireRenderContext::GetDenoisedData(bool& result)
+{	
+#ifdef _DEBUG
+#ifdef DUMP_FRAMEBUFF
+	const std::string pathToFile = "C://debug//fb//";
+	DebugDumpDenoiseSourceAOV(pathToFile);
 #endif // DUMP_FRAMEBUFF
 #endif // DEBUG
 
@@ -1770,7 +1780,8 @@ RV_PIXEL* FireRenderContext::readFrameBufferSimple(ReadFrameBufferRequestParams&
 
 	// debug output (if enabled)
 #ifdef DUMP_AOV_SOURCE
-	DebugDumpAOV(params.aov);
+	const std::string pathToFile = "C://debug//fb//";
+	DebugDumpFramebufferAOV(params.aov, pathToFile.c_str());
 #endif
 
 	// process shadow and/or reflection catcher logic
@@ -3400,6 +3411,15 @@ std::vector<float> FireRenderContext::DenoiseAndUpscaleForViewport()
 
 	// save denoiser result in RAM buffer
 	RV_PIXEL* data = (RV_PIXEL*)vecData.data();
+
+#ifdef DUMP_DENOISE_VP_SOURCE
+	PixelBuffer tempPixelBuffer1;
+	tempPixelBuffer1.resize(m_width, m_height);
+	tempPixelBuffer1.overwrite(data, region, params.height, params.width);
+	const std::string pathToFile = "C://debug//fb//";
+	tempPixelBuffer1.debugDump(params.height, params.width, "just_denoised", pathToFile);
+#endif
+
 	if (useRAMBuffer)
 	{
 		setupUpscalerForViewport(data);
@@ -3407,6 +3427,13 @@ std::vector<float> FireRenderContext::DenoiseAndUpscaleForViewport()
 		m_upscalerFilter->Run();
 		vecData = m_upscalerFilter->GetData();
 	}
+
+#ifdef DUMP_DENOISE_VP_SOURCE
+	PixelBuffer tempPixelBuffer;
+	tempPixelBuffer.resize(m_width, m_height);
+	tempPixelBuffer.overwrite((RV_PIXEL*)vecData.data(), region, params.height, params.width);
+	tempPixelBuffer.debugDump(params.height, params.width, "denoised_and_upscaled", pathToFile);
+#endif
 
 	return vecData;
 }
@@ -3640,11 +3667,11 @@ void FireRenderContext::ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestPa
 	ForEachFramebuffer([&](int aovId)
 	{
 		auto it = m_pixelBuffers.find(aovId);
-		if (it != m_pixelBuffers.end())
-			return;
-
-		auto ret = m_pixelBuffers.insert(std::pair<unsigned int, PixelBuffer>(aovId, PixelBuffer()));
-		ret.first->second.resize(m_width, m_height);
+		if (it == m_pixelBuffers.end())
+		{
+			auto ret = m_pixelBuffers.insert(std::pair<unsigned int, PixelBuffer>(aovId, PixelBuffer()));
+			ret.first->second.resize(m_width, m_height);
+		}
 
 		// setup params
 		params.pixels = m_pixelBuffers[aovId].get();
