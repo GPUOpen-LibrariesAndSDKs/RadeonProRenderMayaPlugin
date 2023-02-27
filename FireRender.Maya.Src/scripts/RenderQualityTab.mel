@@ -21,10 +21,14 @@ proc createFinalRenderQualityPart()
 	//
 	if (isWindowsRunning())
 	{
+	string $visScrpt = "int $isFinal = 1; onRenderQualityChanged($isFinal);";
+
 		frameLayout -label "Final Render Quality" -cll true -cl 0 fireRenderQualityFrame;
 		attrControlGrp
 			-label "Render Quality"
-			-attribute "RadeonProRenderGlobals.renderQualityFinalRender";
+			-attribute "RadeonProRenderGlobals.renderQualityFinalRender"
+			-changeCommand $visScrpt;
+			
 		setParent ..;
 	}
 
@@ -96,10 +100,13 @@ proc createViewportRenderQualityPart()
 {
 	if (isWindowsRunning())
 	{
+	string $visScrpt = "int $isFinal = 0; onRenderQualityChanged($isFinal);";
+
 		frameLayout -label "Viewport Render Quality" -cll true -cl 0 fireRenderViewportQualityFrame;
 		attrControlGrp
 			 -label "Render Quality"
-			 -attribute "RadeonProRenderGlobals.renderQualityViewport";
+			 -attribute "RadeonProRenderGlobals.renderQualityViewport"
+			 -changeCommand $visScrpt;
 		setParent ..;
 	}
 
@@ -157,4 +164,52 @@ global proc updateOOCUIProduction()
 global proc updateQualityTab()
 {
 
+}
+
+source "createFireRenderGlobalsTab.mel";
+
+global proc onRenderQualityChanged(int $isFinal)
+{
+	  // $isFinal - $isFinalRender 0 - cpu 0 - isGpu
+	  string $cpuCtrlName = getDeviceCheckBoxCtrlName($isFinal, 0, 0);
+
+	  int $renderQual;
+	  int $disableCpu;
+	  if($isFinal)
+	  {
+		$renderQual = `getAttr RadeonProRenderGlobals.renderQualityFinalRender`;
+		$disableCpu = $renderQual == 5 ? 1 : 0; // 5 - RenderQualityHybridPro;
+	  } else { // not final --> viewport
+		$renderQual = `getAttr RadeonProRenderGlobals.renderQualityViewport`;
+		$disableCpu = $renderQual == 0 ? 1 : 0; // 0 - Viewport HybridPro; 4 - NorthStar
+	  }  
+	  
+	  if($disableCpu)
+	  {
+	  	string $gpuCtrlName = getDeviceCheckBoxCtrlName($isFinal, 0, 1);
+
+		// we need catchQuiet in case System tab is not loaded yet - user did not open it
+		catchQuiet(`
+	  	checkBoxGrp
+	  		-e
+	  		-v1 0 // checked
+	  		-en 0 // enabled 
+	  		$cpuCtrlName
+	  		`);
+
+		catchQuiet(`
+	  	checkBoxGrp
+	  		-e
+	  		-v1 1
+	  		$gpuCtrlName
+	  		`);
+
+	  } else {
+	    catchQuiet(`
+	  	checkBoxGrp
+	  		-e
+	  		-en 1
+	  		$cpuCtrlName
+			`);	
+	  }
 }
