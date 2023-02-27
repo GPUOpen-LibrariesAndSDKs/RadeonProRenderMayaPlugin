@@ -57,16 +57,24 @@ rpr_int HybridProContext::CreateContextInternal(rpr_creation_flags createFlags, 
 
 	auto cachePath = getShaderCachePath();
 
-	bool useThread = (createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) == RPR_CREATION_FLAGS_ENABLE_CPU;
+	bool useCpu = (createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) == RPR_CREATION_FLAGS_ENABLE_CPU;
 
-	DebugPrint("* Creating Context: %d (0x%x) - useThread: %d", createFlags, createFlags, useThread);
+	DebugPrint("* Creating Context: %d (0x%x) - useThread: %d", createFlags, createFlags, useCpu);
 
 	if (isMetalOn() && !(createFlags & RPR_CREATION_FLAGS_ENABLE_CPU))
 	{
 		createFlags = createFlags | RPR_CREATION_FLAGS_ENABLE_METAL;
 	}
 
-	// setup CPU thread count
+	// fallback to GPU - CPU not supported
+	if (useCpu)
+	{
+		createFlags = createFlags & ~RPR_CREATION_FLAGS_ENABLE_CPU;
+		createFlags = createFlags | RPR_CREATION_FLAGS_ENABLE_GPU0;
+		MGlobal::displayWarning("CPU mode not supported for HybridPro. Falling back to GPU.");
+		MGlobal::displayWarning("If render stamp is enabled, please change render device to GPU");
+	}
+
 	std::vector<rpr_context_properties> ctxProperties;
 	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_HYBRID_ENABLE_PER_FACE_MATERIALS);
 	const bool perFaceEnabled = true;
