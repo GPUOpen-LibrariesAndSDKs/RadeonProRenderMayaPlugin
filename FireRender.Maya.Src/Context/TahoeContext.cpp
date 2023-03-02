@@ -83,6 +83,7 @@ rpr_int NorthStarContext::CreateContextInternal(rpr_creation_flags createFlags, 
 
 #ifdef RPR_VERSION_MAJOR_MINOR_REVISION
 	int res = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, createFlags, ctxProperties.data(), nullptr, pContext);
+
 	//int res = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), pContext);
 #else
 	int res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), pContext);
