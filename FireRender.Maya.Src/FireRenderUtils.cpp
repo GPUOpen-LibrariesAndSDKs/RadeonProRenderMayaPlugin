@@ -1799,8 +1799,14 @@ HardwareResources::HardwareResources()
 			rpr_int plugins[] = { tahoeID };
 			size_t pluginCount = sizeof(plugins) / sizeof(plugins[0]);
 			rpr_context temporaryContext = 0;
+
+			std::vector<rpr_context_properties> ctxProperties;
+			ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_PRECOMPILED_BINARY_PATH);
+			ctxProperties.push_back((rpr_context_properties)"hipbin");
+			ctxProperties.push_back((rpr_context_properties)0);
+
 #ifdef RPR_VERSION_MAJOR_MINOR_REVISION
-			rpr_int status = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, device.creationFlag , NULL, NULL, &temporaryContext);
+			rpr_int status = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, device.creationFlag , ctxProperties.data(), NULL, &temporaryContext);
 #else
 			rpr_int status = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, device.creationFlag, NULL, NULL, &temporaryContext);
 #endif

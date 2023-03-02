@@ -76,10 +76,14 @@ rpr_int NorthStarContext::CreateContextInternal(rpr_creation_flags createFlags, 
 		ctxProperties.push_back((void*)(size_t)threadCountToOverride);
 	}
 
+	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_PRECOMPILED_BINARY_PATH);
+	ctxProperties.push_back((rpr_context_properties)"hipbin");
+
 	ctxProperties.push_back((rpr_context_properties)0);
 
 #ifdef RPR_VERSION_MAJOR_MINOR_REVISION
-	int res = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), pContext);
+	int res = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, createFlags, ctxProperties.data(), nullptr, pContext);
+	//int res = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), pContext);
 #else
 	int res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), pContext);
 #endif

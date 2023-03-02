@@ -53,6 +53,7 @@ xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\images" "system\PluginInstalle
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\renderDesc" "system\PluginInstaller\InputData\feature_Core\renderDesc\*"
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\scripts" "system\PluginInstaller\InputData\feature_Core\scripts\*"
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\shaders" "system\PluginInstaller\InputData\feature_Core\shaders\*"
+xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\hipbin" "system\PluginInstaller\InputData\feature_Core\hipbin\*"
 
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2020" "system\PluginInstaller\InputData\feature_2020\2020\*"
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2022" "system\PluginInstaller\InputData\feature_2022\2022\*"
