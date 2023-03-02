@@ -1150,6 +1150,9 @@ frw::BufferNode CreateRPRRampNode(std::vector<RampCtrlPoint<valType>>& rampCtrlP
 	return bufferNode;
 }
 
+// get path to hipbin folder from Maya enviromental variable
+std::string GetPathToHipbinFolder(void);
+
 // wrapper for maya call to Python
 static std::function<int(std::string)> pythonCallWrap = [](std::string arg)->int
 {

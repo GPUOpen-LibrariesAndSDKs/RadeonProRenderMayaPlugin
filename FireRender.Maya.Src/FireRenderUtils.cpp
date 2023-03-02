@@ -1802,7 +1802,8 @@ HardwareResources::HardwareResources()
 
 			std::vector<rpr_context_properties> ctxProperties;
 			ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_PRECOMPILED_BINARY_PATH);
-			ctxProperties.push_back((rpr_context_properties)"hipbin");
+			std::string hipbinPath = GetPathToHipbinFolder();
+			ctxProperties.push_back((rpr_context_properties)hipbinPath.c_str());
 			ctxProperties.push_back((rpr_context_properties)0);
 
 #ifdef RPR_VERSION_MAJOR_MINOR_REVISION
@@ -2446,4 +2447,14 @@ TimePoint GetCurrentChronoTime()
 	return std::chrono::high_resolution_clock::now();
 }
 
+std::string GetPathToHipbinFolder()
+{
+	MString envScriptPath;
+	MStatus status = MGlobal::executeCommand(MString("getenv RPR_SCRIPTS_PATH;"), envScriptPath);
+	assert(status == MStatus::kSuccess);
+	std::string hipPath = envScriptPath.asChar();
+	hipPath += "/../hipbin";
+
+	return hipPath;
+}
 
