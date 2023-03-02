@@ -77,7 +77,8 @@ rpr_int NorthStarContext::CreateContextInternal(rpr_creation_flags createFlags, 
 	}
 
 	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_PRECOMPILED_BINARY_PATH);
-	ctxProperties.push_back((rpr_context_properties)"hipbin");
+	std::string hipbinPath = GetPathToHipbinFolder();
+	ctxProperties.push_back((rpr_context_properties)hipbinPath.c_str());
 
 	ctxProperties.push_back((rpr_context_properties)0);
 
