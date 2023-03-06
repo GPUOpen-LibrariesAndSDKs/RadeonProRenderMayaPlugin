@@ -31,6 +31,8 @@ public:
 	FireRenderMaterialSwatchRender* dequeSwatch();
 	void removeFromQueue(FireRenderMaterialSwatchRender* swatch);
 
+	static void resetInstance();
+
 	FireRenderContext& getContext() { return *pContext.get(); }
 
 private:

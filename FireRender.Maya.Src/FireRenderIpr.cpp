@@ -219,7 +219,7 @@ bool FireRenderIpr::start()
 		m_contextPtr->setStartedRendering();
 		m_contextPtr->setUseRegion(m_isRegion);
 
-		if (m_contextPtr->isFirstIterationAndShadersNOTCached())
+		if (m_contextPtr->ShouldShowShaderCacheWarningWindow())
 			showWarningDialog = true;	//first iteration and shaders are _NOT_ cached
 
 		if (m_isRegion)
