@@ -984,10 +984,14 @@ public:
 	bool isUnlimited();
 	void setStartedRendering();
 	bool keepRenderRunning();
-	bool isFirstIterationAndShadersNOTCached();
+	bool ShouldShowShaderCacheWarningWindow();
 	void updateProgress();
 	int	getProgress();
 	void setProgress(int percents);
+
+	// returns true if context have path to rpr context set
+	// - false if path is not set (this would be the case if precompiled kernels are used)
+	bool HasRPRCachePathSet() const;
 
 	void setSamplesPerUpdate(int samplesPerUpdate);
 

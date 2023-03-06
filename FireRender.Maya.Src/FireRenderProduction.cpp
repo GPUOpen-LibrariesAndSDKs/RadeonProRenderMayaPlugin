@@ -306,7 +306,7 @@ bool FireRenderProduction::Init(int contextWidth, int contextHeight, RenderRegio
 	m_contextPtr->setUseRegion(m_isRegion);
 
 	bool showWarningDialog = false;
-	if (m_contextPtr->isFirstIterationAndShadersNOTCached())
+	if (m_contextPtr->ShouldShowShaderCacheWarningWindow())
 		showWarningDialog = true;	//first iteration and shaders are _NOT_ cached
 
 	if (m_isRegion)

@@ -630,7 +630,7 @@ MStatus FireRenderViewport::resize(unsigned int width, unsigned int height)
 		// need to be re-rendered at the new size.
 		m_renderedFramesCache.Clear();
 
-		if (m_contextPtr->isFirstIterationAndShadersNOTCached()) {
+		if (m_contextPtr->ShouldShowShaderCacheWarningWindow()) {
 			//first iteration and shaders are _NOT_ cached
 			m_closeDialogNeeded = false;
 			m_showDialogNeeded = true;
