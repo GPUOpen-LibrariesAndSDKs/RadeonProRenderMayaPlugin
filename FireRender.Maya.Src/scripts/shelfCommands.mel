@@ -230,10 +230,9 @@ global proc exportSceneRPR()
 			
 			intSliderGrp 
 				-label "First Frame" 
-				-field true 
-				-minValue 1 
-				-fieldMinValue 1 
-				-maxValue 100 
+				-field true
+			    -minValue -100 
+				-fieldMinValue (1 - $maxIntVal) 
 				-fieldMaxValue $maxIntVal 
 				-value 1 
 				-enable false 
@@ -245,8 +244,8 @@ global proc exportSceneRPR()
 			intSliderGrp 
 				-label "Last Frame" 
 				-field true 
-				-minValue 1 
-				-fieldMinValue 1 
+			    -minValue -100 
+				-fieldMinValue (1 - $maxIntVal)
 				-maxValue 100 
 				-fieldMaxValue $maxIntVal 
 				-value 60 
