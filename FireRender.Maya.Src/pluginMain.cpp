@@ -29,6 +29,7 @@ limitations under the License.
 #include "FireRenderTransparentMaterial.h"
 #include "FireRenderMaterialSwatchRender.h"
 #include "FireRenderToonMaterial.h"
+#include "FireRenderMaterialXMaterial.h"
 #include "FireRenderSwatchInstance.h"
 
 #include "FireRenderFresnel.h"
@@ -857,6 +858,11 @@ MStatus initializePlugin(MObject obj)
 		MPxNode::kDependNode, &UserClassify));
 	// force load shader UI template to use callback functions
 	MGlobal::executeCommand("source AERPRToonMaterialTemplate");
+
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "MaterialXMaterial", FireMaya::MaterialXMaterial::FRTypeID(),
+		FireMaya::MaterialXMaterial::creator,
+		FireMaya::MaterialXMaterial::initialize,
+		MPxNode::kDependNode, &UserClassify));
 	
 	CHECK_MSTATUS(status);
 

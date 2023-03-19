@@ -200,7 +200,8 @@ namespace frw
 		ShaderTypeFlatColor = RPR_MATERIAL_NODE_PASSTHROUGH,
 		ShaderTypeToon = RPR_MATERIAL_NODE_TOON_CLOSURE,
 		ShaderTypeDoubleSided = RPR_MATERIAL_NODE_TWOSIDED,
-		ShaderTypeMicrofacetAnisotropicReflection = RPR_MATERIAL_NODE_MICROFACET_ANISOTROPIC_REFLECTION
+		ShaderTypeMicrofacetAnisotropicReflection = RPR_MATERIAL_NODE_MICROFACET_ANISOTROPIC_REFLECTION,
+		ShaderTypeMaterialX = RPR_MATERIAL_NODE_MATX
 	};
 
 	enum ContextParameterType
