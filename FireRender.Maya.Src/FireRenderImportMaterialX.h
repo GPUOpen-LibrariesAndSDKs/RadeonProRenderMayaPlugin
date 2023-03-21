@@ -3,7 +3,7 @@ Copyright 2020 Advanced Micro Devices, Inc
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-	http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -12,25 +12,29 @@ limitations under the License.
 ********************************************************************/
 #pragma once
 
-#include "FireMaya.h"
+#include <maya/MPxCommand.h>
+#include <maya/MSyntax.h>
+#include <maya/MArgDatabase.h>
+#include <maya/MObject.h>
+#include <maya/MStatus.h>
+#include <maya/MString.h>
 
-namespace FireMaya
+#define kMaterialFilePathFlag "-f"
+#define kMaterialFilePathFlagLong "-file"
+#define kMaterialNameFlag "-n"
+#define kMaterialNameFlagLong "-name"
+
+class FireRenderMaterialXImportCmd : public MPxCommand
 {
-	class MaterialXMaterial : public ShaderNode
-	{
-	public:
-		static void* creator();
-		static MStatus initialize();
-		static MTypeId FRTypeID() { return FireMaya::TypeId::FireRenderMaterialXMaterial; }
+public:
 
-		virtual MStatus compute(const MPlug&, MDataBlock&) override;
-		virtual frw::Shader GetShader(Scope& scope) override;
+	FireRenderMaterialXImportCmd();
 
-		void postConstructor() override;
+	virtual ~FireRenderMaterialXImportCmd();
 
-		~MaterialXMaterial();
+	static void* creator();
 
-	private:
-	};
-}
+	static MSyntax  newSyntax();
 
+	MStatus doIt(const MArgList& args);
+};

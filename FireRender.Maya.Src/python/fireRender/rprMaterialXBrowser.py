@@ -421,7 +421,8 @@ class RPRMaterialBrowser(object) :
             #load downloaded material into Maya
             for mtlxfile in os.listdir(fullPathToExtract):
                 if mtlxfile.endswith(".mtlx"):
-                    self.importSelectedMaterial(os.path.join(fullPathToExtract, mtlxfile))
+                    pathToMaterialJoined = os.path.join(fullPathToExtract, mtlxfile)
+                    self.importSelectedMaterial(pathToMaterialJoined)
                                                                                                                
         cmds.progressWindow(endProgress=1)
 
@@ -697,7 +698,8 @@ class RPRMaterialBrowser(object) :
     def importMaterial(self, material, filepath) :
 	
         print("ML Log: importMaterial "+filepath)
-        #cmds.RPRXMLImport(file=filePath, importImages=self.importImagesEnabled())
+        print("ML Log: material name = "+material["title"])
+        cmds.RPRMaterialXImport(file=filepath, name=material["title"])
 
 
     # Return the width of a text UI element given it's label string.
