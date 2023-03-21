@@ -113,7 +113,11 @@ FireRenderContext::FireRenderContext() :
 	m_RenderType(RenderType::Undefined),
 	m_bIsGLTFExport(false),
 	m_IterationsPowerOf2Mode(false),
-	m_DisableSetDirtyObjects(false)
+	m_DisableSetDirtyObjects(false),
+	m_lastRenderedFrameRenderTime(0.0f),
+	m_firstFrameRenderTime(0.0f),
+	m_syncTime(0.0f),
+	m_totalRenderTime(0.0f)
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
 

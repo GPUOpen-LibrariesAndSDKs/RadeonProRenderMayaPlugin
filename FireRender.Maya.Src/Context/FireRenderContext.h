@@ -966,6 +966,7 @@ public:
 	float m_syncTime;
 	float m_firstFrameRenderTime;
 	float m_lastRenderedFrameRenderTime;
+	float m_totalRenderTime;
 
 	/* data for athena dumping */
 	double m_secondsSpentOnLastRender;
