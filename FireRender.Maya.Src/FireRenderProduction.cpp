@@ -849,6 +849,9 @@ void DisplayTimeMessage(float timeVal, std::string strMsg)
 	std::string strOutput;
 	strOutput = strMsg + string_format("%dmin, %dsec, %dms", min, sec, ms);
 	MGlobal::displayInfo(MString(strOutput.c_str()));
+
+	std::string command ("print(\"\\n" + strOutput + "\\n\");");
+	MGlobal::executeCommand(MString(command.c_str()));
 }
 
 void FireRenderProduction::DisplayRenderTimeData()
@@ -858,6 +861,8 @@ void FireRenderProduction::DisplayRenderTimeData()
 	DisplayTimeMessage(m_contextPtr->m_firstFrameRenderTime, "First frame render time: ");
 
 	DisplayTimeMessage(m_contextPtr->m_lastRenderedFrameRenderTime, "Last frame render time: ");
+
+	DisplayTimeMessage(m_contextPtr->m_totalRenderTime, "Total render time: ");
 }
 
 std::tuple<size_t, long long> FireRenderProduction::GeSceneTexturesCountAndSize() const
