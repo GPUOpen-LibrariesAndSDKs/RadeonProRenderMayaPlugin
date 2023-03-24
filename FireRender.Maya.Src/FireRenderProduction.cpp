@@ -222,7 +222,12 @@ void FireRenderProduction::SetupWorkProgressCallback()
 				strOutput = string_format("Render Pass: %d/%d", progressData.currentIndex, progressData.totalCount);
 				break;
 			case ProgressType::RenderComplete:
-				strOutput = string_format("RPR render time: %s", getTimeSpentString(progressData.elapsed).c_str());
+				DisplayRenderTimeData(strTime);
+				strOutput = string_format("RPR denoising and tonemapping time: %s", getTimeSpentString(progressData.elapsed2).c_str());
+				strOutput = strTime + ": " + strOutput;
+				MGlobal::displayInfo(MString(strOutput.c_str()));
+
+				strOutput = string_format("RPR total production render command time: %s", getTimeSpentString(progressData.elapsed).c_str());
 				break;
 			}
 
@@ -849,20 +854,17 @@ void DisplayTimeMessage(float timeVal, std::string strMsg)
 	std::string strOutput;
 	strOutput = strMsg + string_format("%dmin, %dsec, %dms", min, sec, ms);
 	MGlobal::displayInfo(MString(strOutput.c_str()));
-
-	std::string command ("print(\"\\n" + strOutput + "\\n\");");
-	MGlobal::executeCommand(MString(command.c_str()));
 }
 
-void FireRenderProduction::DisplayRenderTimeData()
+void FireRenderProduction::DisplayRenderTimeData(const std::string& strTime) const
 {
-	DisplayTimeMessage(m_contextPtr->m_syncTime, "RPR Core sync time: ");
+	DisplayTimeMessage(m_contextPtr->m_syncTime, strTime + ": RPR Core sync time: ");
 
-	DisplayTimeMessage(m_contextPtr->m_firstFrameRenderTime, "First frame render time: ");
+	DisplayTimeMessage(m_contextPtr->m_firstFrameRenderTime, strTime + ": First frame render time: ");
 
-	DisplayTimeMessage(m_contextPtr->m_lastRenderedFrameRenderTime, "Last frame render time: ");
+	DisplayTimeMessage(m_contextPtr->m_lastRenderedFrameRenderTime, strTime + ": Last frame render time: ");
 
-	DisplayTimeMessage(m_contextPtr->m_totalRenderTime, "Total render time: ");
+	DisplayTimeMessage(m_contextPtr->m_totalRenderTime, strTime + ": Total render time: ");
 }
 
 std::tuple<size_t, long long> FireRenderProduction::GeSceneTexturesCountAndSize() const
@@ -926,12 +928,12 @@ bool FireRenderProduction::RunOnViewportThread()
 				m_contextPtr->m_lastRenderResultState = (m_cancelled) ? FireRenderContext::CANCELED : FireRenderContext::COMPLETED;
 
 				UploadAthenaData();
-
-				DisplayRenderTimeData();
 				
 				m_contextPtr->m_polycountLastRender = 0;
 
 				m_contextPtr->ResetRAMBuffers();
+
+				m_contextPtr->m_tonemapStartTime = GetCurrentChronoTime();
 				TonemapFromAOVs();
 				DenoiseFromAOVs();
 
