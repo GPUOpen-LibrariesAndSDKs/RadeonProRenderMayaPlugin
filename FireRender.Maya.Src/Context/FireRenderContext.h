@@ -112,6 +112,7 @@ struct ContextWorkProgressData
 	std::string objectName;
 	long long currentTimeInMiliseconds = 0;
 	long long elapsed = 0;
+	long long elapsed2 = 0; // for extra data
 
 	unsigned int GetPercentProgress() const { return (unsigned int)(100 * currentIndex / totalCount); }
 };
@@ -949,6 +950,8 @@ public:
 	TimePoint m_renderStartTime;
 
 	TimePoint m_workStartTime;
+
+	TimePoint m_tonemapStartTime;
 
 	CompletionCriteriaParams m_completionCriteriaParams;
 

@@ -143,7 +143,7 @@ private:
 	void UploadAthenaData();
 
 	/*display render time data to log*/
-	void DisplayRenderTimeData();
+	void DisplayRenderTimeData(const std::string& strTime) const;
 
 	size_t GetScenePolyCount() const;
 

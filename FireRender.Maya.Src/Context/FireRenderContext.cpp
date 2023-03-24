@@ -117,7 +117,8 @@ FireRenderContext::FireRenderContext() :
 	m_lastRenderedFrameRenderTime(0.0f),
 	m_firstFrameRenderTime(0.0f),
 	m_syncTime(0.0f),
-	m_totalRenderTime(0.0f)
+	m_totalRenderTime(0.0f),
+	m_tonemapStartTime{}
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
 
@@ -2899,6 +2900,7 @@ void FireRenderContext::SetState(StateEnum newState)
 	{
 		ContextWorkProgressData data;
 		data.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_renderStartTime);
+		data.elapsed2 = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_tonemapStartTime);
 
 		UpdateTimeAndTriggerProgressCallback(data, ProgressType::RenderComplete);
 	}
