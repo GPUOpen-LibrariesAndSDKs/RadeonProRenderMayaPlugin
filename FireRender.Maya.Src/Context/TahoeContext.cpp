@@ -82,12 +82,18 @@ rpr_int NorthStarContext::CreateContextInternal(rpr_creation_flags createFlags, 
 
 	ctxProperties.push_back((rpr_context_properties)0);
 
+	int res;
 #ifdef RPR_VERSION_MAJOR_MINOR_REVISION
-	int res = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, createFlags, ctxProperties.data(), nullptr, pContext);
-
-	//int res = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), pContext);
+	if (!Globals().useOpenCLContext)
+	{
+		res = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, createFlags, ctxProperties.data(), nullptr, pContext);
+	}
+	else
+	{
+		res = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), pContext);
+	}
 #else
-	int res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), pContext);
+	res = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, createFlags, ctxProperties.data(), cachePath.asUTF8(), pContext);
 #endif
 	return res;
 }

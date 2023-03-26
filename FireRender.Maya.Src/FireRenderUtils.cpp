@@ -127,7 +127,8 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	contourAntialiasing(1.0f),
 	contourIsDebugEnabled(false),
 	cryptomatteExtendedMode(false),
-	cryptomatteSplitIndirect(false)
+	cryptomatteSplitIndirect(false),
+	useOpenCLContext(false)
 {
 
 }
@@ -514,6 +515,10 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("aovReflectionCatcher");
 		if (!plug.isNull())
 			reflectionCatcherEnabled = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("useOpenCLContext");
+		if (!plug.isNull())
+			useOpenCLContext = plug.asBool();
 
 		aovs.readFromGlobals(frGlobalsNode);
 
