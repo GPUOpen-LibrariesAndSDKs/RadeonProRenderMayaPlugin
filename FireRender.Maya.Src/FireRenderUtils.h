@@ -366,6 +366,9 @@ public:
 	bool shadowCatcherEnabled;
 	bool reflectionCatcherEnabled;
 
+	// use legacy OpenCL context
+	bool useOpenCLContext;
+
 private:
 	short getMaxRayDepth(const FireRenderContext& context) const;
 	short getSamples(const FireRenderContext& context) const;
