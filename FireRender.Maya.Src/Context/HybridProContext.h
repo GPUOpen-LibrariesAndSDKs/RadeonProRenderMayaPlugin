@@ -26,7 +26,7 @@ public:
     bool IsRenderRegionSupported() const override { return false; }
 
     bool IsDenoiserSupported() const override { return false; }
-    bool IsDisplacementSupported() const override { return false; }
+    bool IsDisplacementSupported() const override { return true; }
 
     bool IsHairSupported() const override { return true; }
     bool IsVolumeSupported() const override { return true; }
