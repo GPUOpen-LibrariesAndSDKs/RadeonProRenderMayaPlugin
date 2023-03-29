@@ -38,6 +38,8 @@ public:
     virtual bool IsCameraSetExposureSupported() const { return false; }
     virtual bool IsShadowColorSupported() const { return false; }
 
+    virtual bool ShouldUseNoSubdivDisplacement() const override { return true; }
+
     virtual bool IsUberReflectionDielectricSupported() const { return false; }
     virtual bool IsUberRefractionAbsorbtionColorSupported() const { return false; }
     virtual bool IsUberRefractionAbsorbtionDistanceSupported() const { return false; }
