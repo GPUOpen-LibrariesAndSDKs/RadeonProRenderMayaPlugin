@@ -4160,6 +4160,12 @@ namespace frw
 		Node n = image.GetNode();
 		const MaterialSystem& ms = n.GetMaterialSystem();
 
+		MDistance::Unit sceneUnits = MDistance::uiUnit();
+		MDistance distance(1.0, sceneUnits);
+		float scale_multiplier = (float)distance.asMeters() * 100;
+		minscale *= scale_multiplier;
+		maxscale *= scale_multiplier;
+
 		ArithmeticNode displaced_material(ms, OperatorMultiply, Value(maxscale, 0.0f, 0.0f), image);
 
 		auto res = rprShapeSetDisplacementMaterial(Handle(), displaced_material.Handle());
