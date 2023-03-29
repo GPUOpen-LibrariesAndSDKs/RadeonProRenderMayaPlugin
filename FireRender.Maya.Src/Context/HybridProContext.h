@@ -40,18 +40,18 @@ public:
 
     virtual bool ShouldUseNoSubdivDisplacement() const override { return true; }
 
-    virtual bool IsUberReflectionDielectricSupported() const { return false; }
-    virtual bool IsUberRefractionAbsorbtionColorSupported() const { return false; }
-    virtual bool IsUberRefractionAbsorbtionDistanceSupported() const { return false; }
-    virtual bool IsUberRefractionCausticsSupported() const { return false; }
-    virtual bool IsUberSSSWeightSupported() const { return false; }
-    virtual bool IsUberSheenWeightSupported() const { return false; }
-    virtual bool IsUberBackscatterWeightSupported() const { return false; }
-    virtual bool IsUberShlickApproximationSupported() const { return false; }
-    virtual bool IsUberCoatingThicknessSupported() const { return false; }
-    virtual bool IsUberCoatingTransmissionColorSupported() const { return false; }
-    virtual bool IsUberReflectionNormalSupported() const { return false; }
-    virtual bool IsUberScaleSupported() const { return false; }
+    virtual bool IsUberReflectionDielectricSupported() const { return true; }
+    virtual bool IsUberRefractionAbsorbtionColorSupported() const { return true; }
+    virtual bool IsUberRefractionAbsorbtionDistanceSupported() const { return true; }
+    virtual bool IsUberRefractionCausticsSupported() const { return true; }
+    virtual bool IsUberSSSWeightSupported() const { return true; }
+    virtual bool IsUberSheenWeightSupported() const { return true; }
+    virtual bool IsUberBackscatterWeightSupported() const { return true; }
+    virtual bool IsUberShlickApproximationSupported() const { return true; }
+    virtual bool IsUberCoatingThicknessSupported() const { return true; }
+    virtual bool IsUberCoatingTransmissionColorSupported() const { return true; }
+    virtual bool IsUberReflectionNormalSupported() const { return true; }
+    virtual bool IsUberScaleSupported() const { return true; }
 
     void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) override;
 
