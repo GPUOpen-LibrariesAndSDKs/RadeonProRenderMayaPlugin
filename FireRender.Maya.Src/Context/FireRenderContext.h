@@ -657,6 +657,7 @@ public:
 	virtual bool IsVolumeSupported() const override { return true; }
 	virtual bool IsNorthstarVolumeSupported() const { return false; }
 	virtual bool ShouldForceRAMDenoiser() const override { return false; }
+	virtual bool ShouldUseNoSubdivDisplacement() const override { return false; }
 
 	virtual bool IsPhysicalLightTypeSupported(PLType lightType) const { return true; }
 
