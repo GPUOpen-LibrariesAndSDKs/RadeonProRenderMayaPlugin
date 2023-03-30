@@ -161,7 +161,7 @@ void FireRenderContext::resize(unsigned int w, unsigned int h, bool renderView, 
 	setResolution(w, h, renderView, glTexture);
 }
 
-int FireRenderContext::GetAOVMaxValue()
+int FireRenderContext::GetAOVMaxValue() const
 {
 	return 0x20;
 }

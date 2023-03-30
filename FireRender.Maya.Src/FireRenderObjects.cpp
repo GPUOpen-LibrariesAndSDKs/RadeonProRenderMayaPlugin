@@ -840,6 +840,9 @@ void FireRenderMesh::SetReloadedSafe()
 void FireRenderMeshCommon::setRenderStats(MDagPath dagPath)
 {
 	MFnDependencyNode depNode(dagPath.node());
+#ifdef _DEBUG
+	MString name = depNode.name();
+#endif
 
 	MPlug visibleInReflectionsPlug = depNode.findPlug("visibleInReflections");
 	bool visibleInReflections;

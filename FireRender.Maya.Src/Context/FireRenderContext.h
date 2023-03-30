@@ -726,7 +726,7 @@ protected:
 
 	virtual void OnPreRender() {}
 
-	virtual int GetAOVMaxValue();
+	virtual int GetAOVMaxValue() const;
 
 	void ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestParams& params);
 
