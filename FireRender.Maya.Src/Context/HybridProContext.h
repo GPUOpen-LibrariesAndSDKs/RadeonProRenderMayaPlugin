@@ -53,6 +53,8 @@ public:
     virtual bool IsUberReflectionNormalSupported() const { return true; }
     virtual bool IsUberScaleSupported() const { return true; }
 
+    virtual int GetAOVMaxValue() const override;
+
     void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) override;
 
     bool IsAOVSupported(int aov) const override;

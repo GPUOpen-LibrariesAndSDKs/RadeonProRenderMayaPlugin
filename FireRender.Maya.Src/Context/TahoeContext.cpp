@@ -621,7 +621,7 @@ void NorthStarContext::OnPreRender()
 	}
 }
 
-int NorthStarContext::GetAOVMaxValue()
+int NorthStarContext::GetAOVMaxValue() const
 {
 	assert(NorthStarContext::IsGivenContextNorthStar(this));
 
