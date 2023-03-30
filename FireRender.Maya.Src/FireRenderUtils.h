@@ -925,12 +925,24 @@ void RemapRampControlPoints(
 	std::vector<valType>& output,
 	const std::vector<RampCtrlPoint<valType>>& inputControlPoints)
 {
+	// 0 elements
+	if (inputControlPoints.size() == 0)
+	{
+		return;
+	}
 	output.clear();
 	output.reserve(countOutputPoints);
 
 	auto itCurr = inputControlPoints.begin();
 	auto itNext = inputControlPoints.begin(); ++itNext;
+	// 1 element
+	if (itNext == inputControlPoints.end())
+	{
+		output.push_back(itCurr->ctrlPointData);
+		return;
+	}
 
+	// many elements
 	for (size_t idx = 0; idx < countOutputPoints; ++idx)
 	{
 		float positionOnRamp = (1.0f / (countOutputPoints - 1)) * idx;

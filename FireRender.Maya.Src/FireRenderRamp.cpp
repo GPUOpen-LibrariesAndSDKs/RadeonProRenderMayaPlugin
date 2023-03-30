@@ -277,18 +277,8 @@ frw::Value FireMaya::RPRRamp::GetValue(const Scope& scope) const
 
 void FireMaya::RPRRamp::postConstructor()
 {
-	// set default values for ramps
-	// - if we don't then there will be no default control point and Maya will display a ui error
-	// - this happens despite api documentation saying that default control point is created automatically - it's not.
-	MPlug colorRampPlug(thisMObject(), Attribute::inputRamp);
-	const float colorSrc[][4] = 
-	{ 
-		1.0f, 0.0f, 0.0f, 1.0f, 
-		0.0f, 1.0f, 0.0f, 1.0f, 
-		0.0f, 0.0f, 1.0f, 1.0f 
-	};
-	MColorArray colorValues(colorSrc, 3);
-	SetRampValues(colorRampPlug, colorValues);
+	// we now set default values at AERPRCreateDefaultRampColors, called from AERPRRampTemplate
+	// setting them here causes some bugs related to overwriting black points and other strange problems
 
 	ValueNode::postConstructor();
 }
