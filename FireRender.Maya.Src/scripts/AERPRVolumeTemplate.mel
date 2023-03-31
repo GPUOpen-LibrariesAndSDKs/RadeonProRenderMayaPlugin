@@ -149,6 +149,12 @@ global proc albedoGridSelectNew( string $attrName, string $listAttrName )
 global proc albedoGridSelectReplace( string $attrName, string $listAttrName )
 {	
 	vdbGridSelectReplace($attrName, $listAttrName, "albedoGridList");
+	$isselectd = `textScrollList -q -selectItem albedoGridList`;
+	if (size($isselectd) == 0)
+	{
+		textScrollList -e -selectIndexedItem 1 albedoGridList;
+		onAlbedoGridSelectClicked();
+	}
 }
 
 global proc vdbGridSelectReplace(string $attrName, string $listAttrName, string $widgetName)
@@ -252,6 +258,12 @@ global proc emissionGridSelectNew( string $attrName, string $listAttrName )
 global proc emissionGridSelectReplace( string $attrName, string $listAttrName )
 {	
 	vdbGridSelectReplace($attrName, $listAttrName, "emissionGridList");
+	$isselectd = `textScrollList -q -selectItem emissionGridList`;
+	if (size($isselectd) == 0)
+	{
+		textScrollList -e -selectIndexedItem 1 emissionGridList;
+		onEmissionGridSelectClicked();
+	}
 }
 
 global proc onEmissionGridSelectClicked()
@@ -323,6 +335,7 @@ global proc AERPRVolumeInputType(string $nodeName)
 	}
 }
 
+source "common.mel";
 global proc AERPRVolumeTemplate(string $nodeName)
 {
 	editorTemplate -beginScrollLayout;
@@ -339,10 +352,24 @@ global proc AERPRVolumeTemplate(string $nodeName)
 
 		editorTemplate -endLayout;
 
+	// we have to add "|" to the beginning so we can remove node name from this string later. Yes, it is dumb.
+	string $colorAlbedoString   = "|0.5, 0.5, 0.5, 0.5, 0.5, 0.5";
+	string $posAlbedoString	    = "|0.0, 1.0";
+	string $albedoRampName	    = "|albedoRamp";
+
+	string $colorEmissionString = "|0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.2, 0.0, 0.0, 0.6, 0.2, 0.0, 0.6, 1.0, 0.0, 1.0, 1.0, 1.0";
+	string $posEmissionString	= "|0.0, 0.2, 0.4, 0.6, 0.8, 1.0";
+	string $emissionRampName	= "|emissionRamp";
+
+	string $colorDensityString  = "|0.5, 0.7, 0.8, 1.0";
+	string $posDensityString    = "|0.0, 0.333, 0.667, 1.0";
+	string $densityRampName		= "|densityRamp";
+
 		editorTemplate -beginLayout "Albedo" -collapse 0 AlbedoLayout;
 			editorTemplate -label "Enable" -addControl "albedoEnabled" "AEVolumeCheckEnableAlbedo";
 			editorTemplate -label "Grid Dimensions" -addControl "volumeDimensionsAlbedo";
 			editorTemplate -callCustom "albedoGridSelectNew" "albedoGridSelectReplace" "albedoSelectedGrid" "loadedGrids";
+			editorTemplate -callCustom "AERPRCreateDefaultRampColors" "AERPRCreateDefaultRampColors" $nodeName $colorAlbedoString $posAlbedoString $albedoRampName;
 			AEaddRampControl ($nodeName + ".albedoRamp");
 		editorTemplate -endLayout;
 
@@ -351,6 +378,7 @@ global proc AERPRVolumeTemplate(string $nodeName)
 			editorTemplate -addControl "emissionInputType" AERPRVolumeInputType;
 			editorTemplate -label "Grid Dimensions" -addControl "volumeDimensionsEmission";
 			editorTemplate -callCustom "emissionGridSelectNew" "emissionGridSelectReplace" "emissionSelectedGrid" "loadedGrids";
+			editorTemplate -callCustom "AERPRCreateDefaultRampColors" "AERPRCreateDefaultRampColors" $nodeName $colorEmissionString $posEmissionString $emissionRampName;
 			AEaddRampControl ($nodeName + ".emissionRamp");
 			editorTemplate -label "Intensity Multiplier" -addControl "emissionIntensity";
 			editorTemplate -label "Kelvins" -addControl "emissionKelvin";
@@ -361,6 +389,7 @@ global proc AERPRVolumeTemplate(string $nodeName)
 			editorTemplate -label "Grid Dimensions" -addControl "volumeDimensionsDensity";
 			editorTemplate -label "Voxel size" -addControl "volumeVoxelSizeDensity";
 			editorTemplate -callCustom "densityGridSelectNew" "densityGridSelectReplace" "densitySelectedGrid" "loadedGrids";
+			editorTemplate -callCustom "AERPRCreateDefaultRampFloats" "AERPRCreateDefaultRampFloats" $nodeName $colorDensityString $posDensityString $densityRampName;
 			editorTemplate -label "Density Grid" -addControl "densityGradType";
 			AEaddRampControl ($nodeName + ".densityRamp");
 			editorTemplate -label "Multiplier" -addControl "densityMultiplier";
@@ -369,4 +398,3 @@ global proc AERPRVolumeTemplate(string $nodeName)
 	editorTemplate -addExtraControls;
 	editorTemplate -endScrollLayout;
 }
-

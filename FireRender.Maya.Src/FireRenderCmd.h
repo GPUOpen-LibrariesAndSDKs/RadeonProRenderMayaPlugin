@@ -108,7 +108,7 @@ private:
 
 	/** Get the output file path, with an optional frame for multi-frame renders. */
 	MString getOutputFilePath(const MCommonRenderSettingsData& settings,
-		unsigned int frame, const MString& camera, bool preview) const;
+		 int frame, const MString& camera, bool preview) const;
 
 	/** Return true if the specified file already exists. */
 	bool outputFileExists(const MString& filePath) const;

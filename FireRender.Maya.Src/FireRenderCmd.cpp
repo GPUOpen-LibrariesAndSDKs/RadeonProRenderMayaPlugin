@@ -595,7 +595,7 @@ MStatus FireRenderCmd::exportsGLTF(const MArgDatabase& argData)
 
 // -----------------------------------------------------------------------------
 MString FireRenderCmd::getOutputFilePath(const MCommonRenderSettingsData& settings,
-	unsigned int frame, const MString& camera, bool preview) const
+	 int frame, const MString& camera, bool preview) const
 {
 	// The base file name will be populated in the settings if the
 	// user has specified a custom file name, otherwise, it will be empty.
