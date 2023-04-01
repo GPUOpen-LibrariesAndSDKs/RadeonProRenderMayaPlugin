@@ -10,12 +10,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+source "common.mel";
 global proc AERPRRampTemplate( string $nodeName )
 {
+	// we have to add "|" to the beginning so we can remove node name from this string later. Yes, it is dumb.
+	string $colorSrcString = "|1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0";
+	string $posString	   = "|0.0, 0.5, 1.0"; 
+	string $rampName	   = "|inputRamp";
+
 	editorTemplate -beginLayout "Ramp Attributes" -collapse 0;
 		editorTemplate -addControl "rampInterpolationMode";
 		editorTemplate -addControl "rampUVType";
 		AEaddRampControl ($nodeName + ".inputRamp");
+		editorTemplate -callCustom "AERPRCreateDefaultRampColors" "AERPRCreateDefaultRampColors" $nodeName $colorSrcString $posString $rampName;
 	editorTemplate -endLayout;
 
 	AEdependNodeTemplate $nodeName;

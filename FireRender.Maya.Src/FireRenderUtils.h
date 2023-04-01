@@ -925,12 +925,24 @@ void RemapRampControlPoints(
 	std::vector<valType>& output,
 	const std::vector<RampCtrlPoint<valType>>& inputControlPoints)
 {
+	// 0 elements
+	if (inputControlPoints.size() == 0)
+	{
+		return;
+	}
 	output.clear();
 	output.reserve(countOutputPoints);
 
 	auto itCurr = inputControlPoints.begin();
 	auto itNext = inputControlPoints.begin(); ++itNext;
+	// 1 element
+	if (itNext == inputControlPoints.end())
+	{
+		output.push_back(itCurr->ctrlPointData);
+		return;
+	}
 
+	// many elements
 	for (size_t idx = 0; idx < countOutputPoints; ++idx)
 	{
 		float positionOnRamp = (1.0f / (countOutputPoints - 1)) * idx;
@@ -1009,6 +1021,10 @@ bool SaveCtrlPoints(
 
 	// ensure correct input
 	unsigned int length = dataVals.length();
+	if (length == 0)
+	{
+		return false;
+	}
 	if ((length != positions.length()) || 
 		(length != interps.length()) || 
 		(length != indexes.length())
@@ -1084,15 +1100,23 @@ bool SetRampValues(MPlug& plug, const MayaDataContainer& values)
 	// get ramp from plug
 	MRampAttribute valueRamp(plug);
 
-	MIntArray interps(values.length(), MRampAttribute::kLinear);
-
 	unsigned int len = values.length();
-	MFloatArray positions(len, 0.0f);
-	for (unsigned int idx = 0; idx < len; ++idx)
-	{
-		positions[idx] = idx * 1.0f / (values.length() - 1);
-	}
 
+	MIntArray interps(len, MRampAttribute::kLinear);
+
+	MFloatArray positions(len, 0.0f);
+	if (len > 1)
+	{
+		for (unsigned int idx = 0; idx < len; ++idx)
+		{
+			positions[idx] = idx * 1.0f / (len - 1);
+		}
+	} else {
+		for (unsigned int idx = 0; idx < len; ++idx)
+		{
+			positions[idx] = 0;
+		}
+	}
 	MStatus status;
 	valueRamp.setRamp(values, positions, interps);
 	if (status != MS::kSuccess)
