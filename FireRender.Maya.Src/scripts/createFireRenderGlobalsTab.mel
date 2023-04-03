@@ -29,7 +29,7 @@ proc string getDevicesUsingVarName(int $isFinalRender)
 }
 
 // control names handling
-proc string getDeviceCheckBoxCtrlName(int $isFinalRender, int $index, int $isGPU)
+global proc string getDeviceCheckBoxCtrlName(int $isFinalRender, int $index, int $isGPU)
 {
     if ($isGPU > 0)
     {
@@ -76,14 +76,26 @@ global proc deviceTypeChangedUI(int $isFinalRender)
 
 	int $forceUseCPU = ($devicesInUse == 0);
 
+	// ensure at least one device is selected
     string $cpuCtrlName = getDeviceCheckBoxCtrlName($isFinalRender, 0, 0);
+	int $isCpuEnabled = `checkBoxGrp -q -en $cpuCtrlName`;
 	if($forceUseCPU)
 	{
-		checkBoxGrp
-			-e
-			-v1 1
-			$cpuCtrlName
-			;
+		if($isCpuEnabled)
+		{
+			checkBoxGrp
+				-e
+				-v1 1
+				$cpuCtrlName
+				;
+		} else { // at least one gpu expected
+			string $gpuCtrlName = getDeviceCheckBoxCtrlName($isFinalRender, 0, 1);
+			checkBoxGrp
+				-e
+				-v1 1
+				$gpuCtrlName
+				;
+		}
 	}
 
 	int $useCPU = `checkBoxGrp -q -v1 $cpuCtrlName`;
@@ -184,6 +196,9 @@ global proc createRenderResourcesFrame(string $parent, int $isFinalRender)
 	setUITemplate -popTemplate;
 
 	deviceTypeChangedUI($isFinalRender);
+
+	// ensure correct device is selected on startup
+	onRenderQualityChanged($isFinalRender);
 }
 
 global proc createFireRenderGlobalsFrame(string $parent)

@@ -22,6 +22,7 @@ limitations under the License.
 #include <maya/MArrayDataBuilder.h>
 #include <maya/MAnimControl.h>
 #include <maya/MTime.h>
+#include <maya/MSelectionList.h>
 
 #pragma warning(push)
 #pragma warning(disable : 4244)
@@ -639,8 +640,9 @@ float RPRVolumeAttributes::GetDensityMultiplier(const MFnDependencyNode& node)
 	return 1.0f;
 }
 
-MString RPRVolumeAttributes::GetSelectedAlbedoGridName(const MFnDependencyNode& node)
+MString RPRVolumeAttributes::GetSelectedAlbedoGridName(const MFnDependencyNode& node, std::string filePath, bool& failed)
 {
+	failed = false;
 	MPlug plug = node.findPlug(RPRVolumeAttributes::albedoSelectedGrid);
 	MStatus status;
 
@@ -651,11 +653,33 @@ MString RPRVolumeAttributes::GetSelectedAlbedoGridName(const MFnDependencyNode& 
 	MDataHandle data = plug.asMDataHandle(&status);
 	MString& value = data.asString();
 
+	// ensure valid grid is selected
+	VDBGridParams gridParams;
+	auto res = ReadVolumeDataFromFile(filePath, gridParams);
+	if (!std::get<bool>(res))
+		failed = true;
+
+	std::string stdStrValue = value.asChar();
+	bool found = false;
+	for (auto it = gridParams.begin(); it != gridParams.end(); ++it)
+	{
+		const std::string& gridName = it->first;
+		if (stdStrValue == gridName)
+		{
+			found = true;
+		}
+	}
+
+	if (!found)
+	{
+		failed = true;
+	}
 	return MString(value);
 }
 
-MString RPRVolumeAttributes::GetSelectedDensityGridName(const MFnDependencyNode& node)
+MString RPRVolumeAttributes::GetSelectedDensityGridName(const MFnDependencyNode& node, std::string filePath, bool& failed)
 {
+	failed = false;
 	MPlug plug = node.findPlug(RPRVolumeAttributes::densitySelectedGrid);
 	MStatus status;
 
@@ -666,12 +690,34 @@ MString RPRVolumeAttributes::GetSelectedDensityGridName(const MFnDependencyNode&
 	MDataHandle data = plug.asMDataHandle(&status);
 	MString& value = data.asString();
 
+	// ensure valid grid is selected
+	VDBGridParams gridParams;
+	auto res = ReadVolumeDataFromFile(filePath, gridParams);
+	if (!std::get<bool>(res))
+		failed = true;
+
+	std::string stdStrValue = value.asChar();
+	bool found = false;
+	for (auto it = gridParams.begin(); it != gridParams.end(); ++it)
+	{
+		const std::string& gridName = it->first;
+		if (stdStrValue == gridName)
+		{
+			found = true;
+		}
+	}
+
+	if (!found)
+	{
+		failed = true;
+	}
 	return MString(value);
 }
 
-MString RPRVolumeAttributes::GetSelectedEmissionGridName(const MFnDependencyNode& node)
+MString RPRVolumeAttributes::GetSelectedEmissionGridName(const MFnDependencyNode& node, std::string filePath, bool& failed)
 {
-	MPlug plug = node.findPlug(RPRVolumeAttributes::emissionSelectedGrid);
+	failed = false;
+	MPlug plug = node.findPlug(RPRVolumeAttributes::emissionSelectedGrid); 
 	MStatus status;
 
 	if (plug.isNull(&status))
@@ -681,6 +727,27 @@ MString RPRVolumeAttributes::GetSelectedEmissionGridName(const MFnDependencyNode
 	MDataHandle data = plug.asMDataHandle(&status);
 	MString& value = data.asString();
 
+	// ensure valid grid is selected
+	VDBGridParams gridParams;
+	auto res = ReadVolumeDataFromFile(filePath, gridParams);
+		if (!std::get<bool>(res))
+			failed = true;
+	
+	std::string stdStrValue = value.asChar();
+	bool found = false;
+	for (auto it = gridParams.begin(); it != gridParams.end(); ++it)
+	{
+		const std::string& gridName = it->first;
+		if (stdStrValue == gridName)
+		{
+			found = true;
+		}
+	}
+
+	if (!found)
+	{
+		failed = true;
+	}
 	return MString(value);
 }
 
@@ -811,7 +878,7 @@ void GetMaxGridSize(const std::string& filename, const MFnDependencyNode& node, 
 		// read file and set grids list with grids from file
 		auto res = ReadVolumeDataFromFile(tmpFilePath, gridParams);
 		if (!std::get<bool>(res))
-			continue;
+			continue; 
 
 		for (auto it = gridParams.begin(); it != gridParams.end(); ++it)
 		{
@@ -892,10 +959,15 @@ void RPRVolumeAttributes::SetupVolumeFromFile(MObject& node, VDBGridParams& grid
 	wPlug.setValue(wHandle);
 	wPlug.destructHandle(wHandle);
 
+	// remember current selection
+	MSelectionList currentSelection;
+	MGlobal::getActiveSelectionList(currentSelection);
 	// update UI
 	MFnDagNode dagNode(node);
 	MString partialPathName = dagNode.partialPathName();
-	MString command = "FillGridList(\"" + partialPathName + "\");\n";
+	MString selectNode = "select -r " + partialPathName + ";\n"; // we have to select to ensure that ui gets created
+	MString source = "source \"AERPRVolumeTemplate.mel\";\n";
+	MString command = selectNode + source + "catchQuiet(`FillGridList(\"" + partialPathName + "\")`);\n";
 	MStatus res = MGlobal::executeCommandOnIdle(command);
 	CHECK_MSTATUS(res);
 
@@ -903,34 +975,54 @@ void RPRVolumeAttributes::SetupVolumeFromFile(MObject& node, VDBGridParams& grid
 	MFnDependencyNode depNode(node);
 	MPlug densityPlug = depNode.findPlug(RPRVolumeAttributes::densitySelectedGrid);
 	SetupGridSizeFromFile(node, densityPlug, tmpGridParams);
+	// set selection to previous selection
+	MGlobal::setActiveSelectionList(currentSelection);
 }
 
 void RPRVolumeAttributes::SetupGridSizeFromFile(MObject& node, MPlug& plug, VDBGridParams& gridParams)
 {
+	std::string filename = GetVDBFilePath(node);
 	MFnDependencyNode depNode(node);
-
 	if (plug == RPRVolumeAttributes::densitySelectedGrid)
 	{
 		// set selected grid dementions in ui
-		std::string selectedGridName = GetSelectedDensityGridName(depNode).asChar();
-		MPlug dimensionsPlug = depNode.findPlug(RPRVolumeAttributes::volumeDimensionsDensity);
-		MPlug voxelSizePlug = depNode.findPlug(RPRVolumeAttributes::volumeVoxelSizeDensity);
-		SetVolumeUIGridSize(gridParams[selectedGridName], dimensionsPlug);
-		SetVolumeUIVoxelSize(gridParams[selectedGridName], voxelSizePlug);
+		bool failed = false;
+		std::string selectedGridName = GetSelectedDensityGridName(depNode, filename, failed).asChar();
+		if (!failed)
+		{
+			MPlug dimensionsPlug = depNode.findPlug(RPRVolumeAttributes::volumeDimensionsDensity);
+			MPlug voxelSizePlug = depNode.findPlug(RPRVolumeAttributes::volumeVoxelSizeDensity);
+			SetVolumeUIGridSize(gridParams[selectedGridName], dimensionsPlug);
+			SetVolumeUIVoxelSize(gridParams[selectedGridName], voxelSizePlug);
+		} else {
+			MGlobal::displayWarning("invalid density grid value");
+		}
 	}
 	else if (plug == RPRVolumeAttributes::albedoSelectedGrid)
 	{
 		// set selected grid dementions in ui
-		std::string selectedGridName = GetSelectedAlbedoGridName(depNode).asChar();
-		MPlug plug = depNode.findPlug(RPRVolumeAttributes::volumeDimensionsAlbedo);
-		SetVolumeUIGridSize(gridParams[selectedGridName], plug);
+		bool failed = false;
+		std::string selectedGridName = GetSelectedAlbedoGridName(depNode, filename, failed).asChar();
+		if (!failed)
+		{
+			MPlug plug = depNode.findPlug(RPRVolumeAttributes::volumeDimensionsAlbedo);
+			SetVolumeUIGridSize(gridParams[selectedGridName], plug);
+		} else {
+			MGlobal::displayWarning("invalid albedo grid value");
+		}
 	}
 	else if (plug == RPRVolumeAttributes::emissionSelectedGrid)
 	{
 		// set selected grid dementions in ui
-		std::string selectedGridName = GetSelectedEmissionGridName(depNode).asChar();
-		MPlug plug = depNode.findPlug(RPRVolumeAttributes::volumeDimensionsEmission);
-		SetVolumeUIGridSize(gridParams[selectedGridName], plug);
+		bool failed = false;
+		std::string selectedGridName = GetSelectedEmissionGridName(depNode, filename, failed).asChar();
+		if (!failed)
+		{
+			MPlug plug = depNode.findPlug(RPRVolumeAttributes::volumeDimensionsEmission);
+			SetVolumeUIGridSize(gridParams[selectedGridName], plug);
+		} else {
+			MGlobal::displayWarning("invalid emission grid value");
+		}
 	}
 }
 
@@ -1022,52 +1114,70 @@ void RPRVolumeAttributes::FillVolumeData(VDBVolumeData& data, const MObject& nod
 		// read density
 		if (GetDensityEnabled(depNode))
 		{
-			std::string densityGridName = GetSelectedDensityGridName(depNode).asChar();
-			ReadFileGridToVDBGrid(data.densityGrid, file, densityGridName);
-
-			if (treatAsAnimation)
+			bool failed = false;
+			std::string densityGridName = GetSelectedDensityGridName(depNode, filename, failed).asChar();
+			if (!failed)
 			{
-				CopyGridSizeValues(data.densityGrid, maxGridParams[densityGridName]);
-			}
+				ReadFileGridToVDBGrid(data.densityGrid, file, densityGridName);
 
-			// - setup look up table values
-			ProcessDensityGrid(data.densityGrid.gridOnValueIndices, data.densityGrid.valuesLookUpTable, data.densityGrid.minValue, data.densityGrid.maxValue, GetDensityMultiplier(depNode));
-			MPlug densityRampPlug = RPRVolumeAttributes::GetDensityRamp(node);
-			SetupLookupTableFromRamp<MFloatArray, float>(data.densityGrid, densityRampPlug);
+				if (treatAsAnimation)
+				{
+					CopyGridSizeValues(data.densityGrid, maxGridParams[densityGridName]);
+				}
+
+				// - setup look up table values
+				ProcessDensityGrid(data.densityGrid.gridOnValueIndices, data.densityGrid.valuesLookUpTable, data.densityGrid.minValue, data.densityGrid.maxValue, GetDensityMultiplier(depNode));
+				MPlug densityRampPlug = RPRVolumeAttributes::GetDensityRamp(node);
+				SetupLookupTableFromRamp<MFloatArray, float>(data.densityGrid, densityRampPlug);
+			} else {
+				MGlobal::displayWarning("invalid density grid value");
+			}
 		}
 
 		// read albedo
 		if (GetAlbedoEnabled(depNode))
 		{
-			std::string albedoGridName = GetSelectedAlbedoGridName(depNode).asChar();
-			ReadFileGridToVDBGrid(data.albedoGrid, file, albedoGridName);
-
-			if (treatAsAnimation)
+			bool failed = false;
+			std::string albedoGridName = GetSelectedAlbedoGridName(depNode, filename, failed).asChar();
+			if (!failed)
 			{
-				CopyGridSizeValues(data.albedoGrid, maxGridParams[albedoGridName]);
-			}
+				ReadFileGridToVDBGrid(data.albedoGrid, file, albedoGridName);
 
-			// - setup look up table values
-			ProcessTemperatureGrid(data.albedoGrid.gridOnValueIndices, data.albedoGrid.minValue, data.albedoGrid.maxValue);
-			MPlug albedoRampPlug = RPRVolumeAttributes::GetAlbedoRamp(node);
-			SetupLookupTableFromRamp<MColorArray, MColor>(data.albedoGrid, albedoRampPlug);
+				if (treatAsAnimation)
+				{
+					CopyGridSizeValues(data.albedoGrid, maxGridParams[albedoGridName]);
+				}
+
+				// - setup look up table values
+				ProcessTemperatureGrid(data.albedoGrid.gridOnValueIndices, data.albedoGrid.minValue, data.albedoGrid.maxValue);
+				MPlug albedoRampPlug = RPRVolumeAttributes::GetAlbedoRamp(node);
+				SetupLookupTableFromRamp<MColorArray, MColor>(data.albedoGrid, albedoRampPlug);
+			} else {
+				MGlobal::displayWarning("invalid albedo grid value");
+			}
 		}
 
 		// read emission
 		if (GetEmissionEnabled(depNode))
 		{
-			std::string emissionGridName = GetSelectedEmissionGridName(depNode).asChar();
-			ReadFileGridToVDBGrid(data.emissionGrid, file, emissionGridName);
-
-			if (treatAsAnimation)
+			bool failed = false;
+			std::string emissionGridName = GetSelectedEmissionGridName(depNode, filename, failed).asChar();
+			if (!failed)
 			{
-				CopyGridSizeValues(data.emissionGrid, maxGridParams[emissionGridName]);
+				ReadFileGridToVDBGrid(data.emissionGrid, file, emissionGridName);
+	
+				if (treatAsAnimation)
+				{
+					CopyGridSizeValues(data.emissionGrid, maxGridParams[emissionGridName]);
+				}
+	
+				// - setup look up table values
+				ProcessTemperatureGrid(data.emissionGrid.gridOnValueIndices, data.emissionGrid.minValue, data.emissionGrid.maxValue);
+				MPlug emissionRampPlug = RPRVolumeAttributes::GetEmissionValueRamp(node);
+				SetupLookupTableFromRamp<MColorArray, MColor>(data.emissionGrid, emissionRampPlug);
+			} else {
+				MGlobal::displayWarning("invalid emission grid value");
 			}
-
-			// - setup look up table values
-			ProcessTemperatureGrid(data.emissionGrid.gridOnValueIndices, data.emissionGrid.minValue, data.emissionGrid.maxValue);
-			MPlug emissionRampPlug = RPRVolumeAttributes::GetEmissionValueRamp(node);
-			SetupLookupTableFromRamp<MColorArray, MColor>(data.emissionGrid, emissionRampPlug);
 		}
 
 		// close the file.
@@ -1338,4 +1448,3 @@ float GetDistParamNormalized(
 
 	return dist2vx_normalized;
 }
-

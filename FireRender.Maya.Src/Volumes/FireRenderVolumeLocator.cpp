@@ -80,31 +80,8 @@ void FireRenderVolumeLocator::postConstructor()
 	MDataBlock block = this->forceCache();
 	SetDefaultStringArrayAttrValue(lgPlug, block);
 
-	// set default values for ramps
-	// - if we don't then there will be no default control point and Maya will display a ui error
-	// - this happens despite api documentation saying that default control point is created automatically - it's not.
-	// - Since we need to set these values anyway, we set them to what user most likely wants
-	MPlug albedoRampPlug(thisMObject(), RPRVolumeAttributes::albedoRamp);
-	const float albedoSrc[][4] = { 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };
-	MColorArray albedoValues(albedoSrc, 2);
-	SetRampValues(albedoRampPlug, albedoValues);
-
-	MPlug emissionRampPlug(thisMObject(), RPRVolumeAttributes::emissionRamp);
-	const float emissionSrc[][4] = {
-		 0.0f, 0.0f, 0.0f, 1.0f,
-		 0.0f, 0.0f, 0.0f, 1.0f,
-		 0.2f, 0.0f, 0.0f, 1.0f,
-		 0.6f, 0.2f, 0.0f, 1.0f,
-		 0.6f, 1.0f, 0.0f, 1.0f,
-		 1.0f, 1.0f, 1.0f, 1.0f
-	};
-	MColorArray emissionValues(emissionSrc, 6);
-	SetRampValues(emissionRampPlug, emissionValues);
-
-	MPlug densityRampPlug(thisMObject(), RPRVolumeAttributes::densityRamp);
-	const float densitySrc[] = { 0.5f, 0.7f, 0.8f, 1.0f };
-	MFloatArray densityValues(densitySrc, 4);
-	SetRampValues(densityRampPlug, densityValues);
+	// we now set default values at AERPRCreateDefaultRampColors and AERPRCreateDefaultRampFloats, called from AERPRVolumeTemplate
+	// setting them here causes some bugs related to overwriting black points and other strange problems
 }
 
 MStatus FireRenderVolumeLocator::setDependentsDirty(const MPlug& plugBeingDirtied,	MPlugArray&	affectedPlugs)

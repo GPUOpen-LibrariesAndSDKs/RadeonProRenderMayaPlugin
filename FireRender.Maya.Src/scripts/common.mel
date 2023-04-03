@@ -207,3 +207,154 @@ global proc checkMattePassAOV()
 	}
 }
 
+// Set dafault values for ramp when there is only one point, sits at the beggining and is black
+// Maya creates exactly that as default value for ramp so this will break if they change it
+// also works if nothing is created
+global proc AERPRCreateDefaultRampColors( string $nodeName, string $colorSrcString, string $posSrcString, string $rampName)
+{
+	// trim $nodeName and $rampName. we have to do it since for some reason when we pass strings to this function
+	// "nodeName#." is added to the beginning of each string
+	// other strings will be trimmed later
+	string $tmpStringArray[];
+
+	$tmpStringArray = stringToStringArray($nodeName, ".");
+	$nodeName =	$tmpStringArray[0];
+	$tmpStringArray = stringToStringArray($rampName, "|");
+	$rampName = $tmpStringArray[1];
+
+	if(!RPRShouldProceed($nodeName, $rampName))
+	{
+		return;
+	}
+
+	// get values of the first point
+	float $pos     = `getAttr ($nodeName + "." + $rampName + "[0]." + $rampName + "_Position")`;
+	float $color[] = `getAttr ($nodeName + "." + $rampName + "[0]." + $rampName + "_Color")`;
+
+	// change this to match what Maya creates as default value for ramp
+	// proceed if the point sits at the beggining and is black
+	if($pos      != 0.0 ||
+	   $color[0] != 0.0 ||
+	   $color[1] != 0.0 || 
+	   $color[2] != 0.0)
+	{
+		return;
+	}
+
+	// for some reason we are unable to pass an array with callCustom
+	// so we have to pass it as a string and then assemble the array
+	float $colorSrc[] = RPRPrepareArray($colorSrcString);
+	float $posSrc[]   = RPRPrepareArray($posSrcString);
+
+	// set default values
+	int $pointIdx;
+	for ($pointIdx = 0; $pointIdx < size($posSrc); $pointIdx++)
+	{
+		int $row = $pointIdx * 3;
+		setAttr ($nodeName + "."+ $rampName + "[" + $pointIdx + "]." + $rampName + "_Color") -type double3 $colorSrc[$row] $colorSrc[$row + 1] $colorSrc[$row + 2];
+		setAttr ($nodeName + "."+ $rampName + "[" + $pointIdx + "]." + $rampName + "_Position") $posSrc[$pointIdx];
+		setAttr ($nodeName + "."+ $rampName + "[" + $pointIdx + "]." + $rampName + "_Interp") 1;
+	}		
+}
+
+global proc AERPRCreateDefaultRampFloats( string $nodeName, string $floatSrcString, string $posSrcString, string $rampName)
+{
+	// trim $nodeName and $rampName. we have to do it since for some reason when we pass strings to this function
+	// "nodeName#." is added to the beginning of each string
+	// other strings will be trimmed later
+	string $tmpStringArray[];
+
+	$tmpStringArray = stringToStringArray($nodeName, ".");
+	$nodeName =	$tmpStringArray[0];
+	$tmpStringArray = stringToStringArray($rampName, "|");
+	$rampName = $tmpStringArray[1];
+
+	if(!RPRShouldProceed($nodeName, $rampName))
+	{
+		return;
+	}
+
+	// get values of the first point
+	float $pos = `getAttr ($nodeName + "." + $rampName + "[0]." + $rampName + "_Position")`;
+	float $val = `getAttr ($nodeName + "." + $rampName + "[0]." + $rampName + "_FloatValue")`;
+
+	// change this to match what Maya creates as default value for ramp
+	// proceed if the point sits at the beggining and is black
+	if($pos != 0.0 ||
+	   $val != 0.0)
+	{
+		return;
+	}
+
+	// for some reason we are unable to pass an array with callCustom
+	// so we have to pass it as a string and then assemble the array
+	float $floatSrc[] = RPRPrepareArray($floatSrcString);
+	float $posSrc[]   = RPRPrepareArray($posSrcString);
+
+	// set default values
+	int $pointIdx;
+	for ($pointIdx = 0; $pointIdx < size($posSrc); $pointIdx++)
+	{
+		setAttr ($nodeName + "."+ $rampName + "[" + $pointIdx + "]." + $rampName + "_FloatValue") $floatSrc[$pointIdx];
+		setAttr ($nodeName + "."+ $rampName + "[" + $pointIdx + "]." + $rampName + "_Position") $posSrc[$pointIdx];
+		setAttr ($nodeName + "."+ $rampName + "[" + $pointIdx + "]." + $rampName + "_Interp") 1;
+	}		
+}
+
+global proc float[] RPRPrepareArray(string $sourceString)
+{
+	// remove node name
+	string $tmpStringArray[] = stringToStringArray($sourceString, "|");
+	$sourceString = $tmpStringArray[1];
+
+	// get values as strings
+	$tmpStringArray = stringToStringArray($sourceString, ", ");
+	
+	// cast strings to floats
+	float $res[];
+	for ($i = 0; $i < size($tmpStringArray); $i++)
+	{
+		$res[$i] = $tmpStringArray[$i];
+	}
+	return $res;
+}
+
+global proc int RPRShouldProceed(string $nodeName, string $rampName)
+{
+	// get the number of points
+	int $countCtrlPoints = `getAttr -s ($nodeName + "." + $rampName)`;
+
+	// proceed only if there is one or 0 points
+	if($countCtrlPoints > 1) 
+	{
+		return 0;
+	}
+
+	int $id[] = `getAttr -mi ($nodeName + "." + $rampName)`;
+
+	if($countCtrlPoints == 0) 
+	{
+		// force default if maya did not create anything
+		return 1;
+	}
+	
+	if(size($id) == 0)
+	{
+		print("Error. At least one point in ramp " + $nodeName + " but size is 0");
+		return 0;
+	}
+
+	// if you had points 0, 1, 2, then delete 0 you would expect to have 0, 1
+	// but for whatever reason in maya there will be 1, 2
+	// so we get a list of all elements and check the first one.
+	// Proceed only if it is zero
+
+	// yes, if the user has only one point with index 0, sets it to beginning and color to black we will set the default values. Too bad!
+
+	if($id[0] != 0)
+	{
+		return 0;
+	}
+
+	return 1;
+}
