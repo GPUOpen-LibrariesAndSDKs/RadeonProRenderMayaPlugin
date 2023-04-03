@@ -7,6 +7,9 @@
 #include <maya/MDGMessage.h>
 #include <maya/MNodeMessage.h>
 #include <maya/MFnMessageAttribute.h>
+#include <maya/MRampAttribute.h>
+#include "MayaStandardNodesSupport/RampNodeConverter.h"
+#include "MayaStandardNodesSupport/NodeProcessingUtils.h"
 
 namespace
 {
@@ -26,6 +29,7 @@ namespace
 		MObject transparencyLevel;
 
 		// ramp
+		MObject input5Ramp;
 		MObject enable5Colors;
 
 		MObject highlightColor;
@@ -63,6 +67,7 @@ MStatus FireMaya::ToonMaterial::initialize()
 {
 	MFnNumericAttribute nAttr;
 	MFnMessageAttribute msgAttr;
+	MRampAttribute rAttr;
 
 	Attribute::output = nAttr.createColor("outColor", "oc");
 	MAKE_OUTPUT(nAttr);
@@ -98,6 +103,12 @@ MStatus FireMaya::ToonMaterial::initialize()
 	MAKE_INPUT_CONST(nAttr);
 	
 	// RAMP	
+	MStatus status;
+	Attribute::input5Ramp = rAttr.createColorRamp("input5Ramp", "ir", &status);
+	CHECK_MSTATUS(status);
+	status = MPxNode::addAttribute(Attribute::input5Ramp);
+	CHECK_MSTATUS(status);
+
 	Attribute::enable5Colors = nAttr.create("enable5Colors", "e5c", MFnNumericData::kBoolean, 0);
 	MAKE_INPUT_CONST(nAttr);
 
@@ -241,6 +252,88 @@ MStatus FireMaya::ToonMaterial::compute(const MPlug& plug, MDataBlock& block)
 	}
 }
 
+using CtrlPointDataT = std::tuple<MString, MPlug>;
+
+template <typename T>
+bool ProcessRampElementAttribute(MPlug& rampPlug, std::vector<RampCtrlPoint<T>>& out)
+{
+	MStatus status;
+	MObject node = rampPlug.attribute();
+	auto& ctrlPoint = out.back();
+
+	MFn::Type dataType = node.apiType();
+	switch (dataType)
+	{
+	case MFn::kAttribute3Float:
+	{
+		// color value
+		// - this is compouind attribute of 3 floats RGB
+		std::get<MPlug>(ctrlPoint.ctrlPointData) = rampPlug;
+		std::get<MString>(ctrlPoint.ctrlPointData) = rampPlug.name(&status);
+		assert(status == MStatus::kSuccess);
+		break;
+	}
+	case MFn::kNumericAttribute:
+	{
+		// control point position
+		float positionValue = rampPlug.asFloat(&status);
+		assert(status == MStatus::kSuccess);
+		ctrlPoint.position = positionValue;
+		break;
+	}
+	case MFn::kEnumAttribute:
+	{
+		// this is interpolation; ignored
+		break;
+	}
+	default:
+		return false;
+	}
+
+	return true;
+}
+
+template <typename T>
+bool ReadRampCtrlPoints(MPlug rampPlug, std::vector<RampCtrlPoint<T>>& out)
+{
+	out.clear();
+
+	assert(!rampPlug.isNull());
+
+	MStatus status;
+	bool isArray = rampPlug.isArray(&status);
+	if (!isArray)
+		return false;
+
+	unsigned int count = rampPlug.numElements();
+	if (count == 0)
+		return false;
+
+	out.reserve(count);
+
+	// this is executed for each element of array plug rampPlug
+	auto func = [](MPlug& rampElementPlug, std::vector<RampCtrlPoint<T>>& out)->bool
+	{
+		out.emplace_back();
+		RampCtrlPoint<T>& ctrlPoint = out.back();
+		ctrlPoint.method = InterpolationMethod::kLinear;
+		ctrlPoint.index = (unsigned int)out.size() - 1;
+		return MayaStandardNodeConverters::ForEachPlugInCompoundPlug<std::vector<RampCtrlPoint<T>>>(rampElementPlug, out, ProcessRampElementAttribute<T>);
+	};
+
+	// creates ramp control point from attributes data in ramp attribute rampPlug
+	using outT = decltype(out);
+	bool res = MayaStandardNodeConverters::ForEachPlugInArrayPlug<outT>(rampPlug, out, func);
+	if (!res)
+		return false;
+
+	// sort values by position (maya can returns control point in random order)
+	std::sort(out.begin(), out.end(), [](auto first, auto second)->bool {
+		return (first.position < second.position); });
+
+	return true;
+}
+
 frw::Shader FireMaya::ToonMaterial::GetShader(Scope& scope)
 {
 	MFnDependencyNode shaderNode(thisMObject());
@@ -259,16 +352,38 @@ frw::Shader FireMaya::ToonMaterial::GetShader(Scope& scope)
 		int use5ColorsParam = shaderNode.findPlug(Attribute::enable5Colors, false).asBool() ? 1 : 0;
 		toonRamp.SetValueInt(RPR_MATERIAL_INPUT_TOON_5_COLORS, use5ColorsParam);
 
-		toonRamp.SetValue(RPR_MATERIAL_INPUT_HIGHLIGHT2, scope.GetValue(shaderNode.findPlug(Attribute::highlightColor2, false)));
-		toonRamp.SetValue(RPR_MATERIAL_INPUT_HIGHLIGHT, scope.GetValue(shaderNode.findPlug(Attribute::highlightColor, false)));
-		toonRamp.SetValue(RPR_MATERIAL_INPUT_MID, scope.GetValue(shaderNode.findPlug(Attribute::midColor, false)));
-		toonRamp.SetValue(RPR_MATERIAL_INPUT_SHADOW, scope.GetValue(shaderNode.findPlug(Attribute::shadowColor, false)));
-		toonRamp.SetValue(RPR_MATERIAL_INPUT_SHADOW2, scope.GetValue(shaderNode.findPlug(Attribute::shadowColor2, false)));
+		// read input ramp
+		MPlug ctrlPointsPlug = shaderNode.findPlug(Attribute::input5Ramp, false);
+		std::vector<RampCtrlPoint<CtrlPointDataT>> rampCtrlPoints;
+		const bool success = ReadRampCtrlPoints<CtrlPointDataT>(ctrlPointsPlug, rampCtrlPoints);
+		assert(success);
+		if (!success)
+			return frw::Shader();
 
-		toonRamp.SetValue(RPR_MATERIAL_INPUT_POSITION_SHADOW, scope.GetValue(shaderNode.findPlug(Attribute::rampPositionShadow, false)));
-		toonRamp.SetValue(RPR_MATERIAL_INPUT_POSITION1, scope.GetValue(shaderNode.findPlug(Attribute::rampPosition1, false)));
-		toonRamp.SetValue(RPR_MATERIAL_INPUT_POSITION2, scope.GetValue(shaderNode.findPlug(Attribute::rampPosition2, false)));
-		toonRamp.SetValue(RPR_MATERIAL_INPUT_POSITION_HIGHLIGHT, scope.GetValue(shaderNode.findPlug(Attribute::rampPositionHighlight, false)));
+		// set shader parameters from ramp
+		if ((use5ColorsParam != 0) && (rampCtrlPoints.size() == 5))
+		{
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_HIGHLIGHT2, scope.GetValue(std::get<MPlug>(rampCtrlPoints[4].ctrlPointData)));
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_HIGHLIGHT, scope.GetValue(std::get<MPlug>(rampCtrlPoints[3].ctrlPointData)));
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_MID, scope.GetValue(std::get<MPlug>(rampCtrlPoints[2].ctrlPointData)));
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_SHADOW, scope.GetValue(std::get<MPlug>(rampCtrlPoints[1].ctrlPointData)));
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_SHADOW2, scope.GetValue(std::get<MPlug>(rampCtrlPoints[0].ctrlPointData)));
+
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_POSITION_SHADOW, frw::Value(rampCtrlPoints[1].position));
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_POSITION1, frw::Value(rampCtrlPoints[2].position));
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_POSITION2, frw::Value(rampCtrlPoints[3].position));
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_POSITION_HIGHLIGHT, frw::Value(rampCtrlPoints[4].position));
+		}
+		else
+		{
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_HIGHLIGHT, scope.GetValue(std::get<MPlug>(rampCtrlPoints[2].ctrlPointData)));
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_MID, scope.GetValue(std::get<MPlug>(rampCtrlPoints[1].ctrlPointData)));
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_SHADOW, scope.GetValue(std::get<MPlug>(rampCtrlPoints[0].ctrlPointData)));
+
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_POSITION_SHADOW, frw::Value(rampCtrlPoints[0].position));
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_POSITION1, frw::Value(rampCtrlPoints[1].position));
+			toonRamp.SetValue(RPR_MATERIAL_INPUT_POSITION2, frw::Value(rampCtrlPoints[2].position));
+		}
 
 		if (mixLevels)
 		{
