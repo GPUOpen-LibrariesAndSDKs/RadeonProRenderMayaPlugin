@@ -113,7 +113,12 @@ FireRenderContext::FireRenderContext() :
 	m_RenderType(RenderType::Undefined),
 	m_bIsGLTFExport(false),
 	m_IterationsPowerOf2Mode(false),
-	m_DisableSetDirtyObjects(false)
+	m_DisableSetDirtyObjects(false),
+	m_lastRenderedFrameRenderTime(0.0f),
+	m_firstFrameRenderTime(0.0f),
+	m_syncTime(0.0f),
+	m_totalRenderTime(0.0f),
+	m_tonemapStartTime{}
 {
 	DebugPrint("FireRenderContext::FireRenderContext()");
 
@@ -2856,7 +2861,7 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 		UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::ObjectSyncComplete);
 	}
 
-	syncProgressData.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), syncStartTime);
+	syncProgressData.elapsedTotal = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), syncStartTime);
 	UpdateTimeAndTriggerProgressCallback(syncProgressData, ProgressType::SyncComplete);
 
 	if (changed)
@@ -2894,7 +2899,8 @@ void FireRenderContext::SetState(StateEnum newState)
 	if (m_state == StateEnum::StateExiting)
 	{
 		ContextWorkProgressData data;
-		data.elapsed = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_renderStartTime);
+		data.elapsedTotal = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_renderStartTime);
+		data.elapsedPostRenderTonemap = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), m_tonemapStartTime);
 
 		UpdateTimeAndTriggerProgressCallback(data, ProgressType::RenderComplete);
 	}

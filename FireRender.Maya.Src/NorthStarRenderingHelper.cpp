@@ -119,12 +119,14 @@ void NorthStarRenderingHelper::OnContextSceneSyncFinCallback(float time)
 
 void NorthStarRenderingHelper::OnContextFirstIterationCallback(float time)
 {
+	m_pContext->m_totalRenderTime = 0.0f;
 	m_pContext->m_firstFrameRenderTime = time;
 }
 
 void NorthStarRenderingHelper::OnContextRenderTimeCallback(float time)
 {
 	m_pContext->m_lastRenderedFrameRenderTime = time;
+	m_pContext->m_totalRenderTime += time;
 }
 
 void NorthStarRenderingHelper::UpdateThreadFunc()
