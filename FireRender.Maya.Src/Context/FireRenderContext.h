@@ -111,7 +111,8 @@ struct ContextWorkProgressData
 	size_t totalCount = 0;
 	std::string objectName;
 	long long currentTimeInMiliseconds = 0;
-	long long elapsed = 0;
+	long long elapsedTotal = 0;
+	long long elapsedPostRenderTonemap = 0; // for extra data
 
 	unsigned int GetPercentProgress() const { return (unsigned int)(100 * currentIndex / totalCount); }
 };
@@ -950,6 +951,8 @@ public:
 
 	TimePoint m_workStartTime;
 
+	TimePoint m_tonemapStartTime;
+
 	CompletionCriteriaParams m_completionCriteriaParams;
 
 	int	m_currentIteration;
@@ -966,6 +969,7 @@ public:
 	float m_syncTime;
 	float m_firstFrameRenderTime;
 	float m_lastRenderedFrameRenderTime;
+	float m_totalRenderTime;
 
 	/* data for athena dumping */
 	double m_secondsSpentOnLastRender;
