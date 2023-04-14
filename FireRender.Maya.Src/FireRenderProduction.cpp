@@ -216,18 +216,18 @@ void FireRenderProduction::SetupWorkProgressCallback()
 				m_progressBars->update(progressData.GetPercentProgress(), true);
 				break;
 			case ProgressType::SyncComplete:
-				strOutput = string_format("RPR scene synchronization time: %s", getTimeSpentString(progressData.elapsed).c_str());
+				strOutput = string_format("RPR scene synchronization time: %s", getTimeSpentString(progressData.elapsedTotal).c_str());
 				break;
 			case ProgressType::RenderPassStarted:
 				strOutput = string_format("Render Pass: %d/%d", progressData.currentIndex, progressData.totalCount);
 				break;
 			case ProgressType::RenderComplete:
 				DisplayRenderTimeData(strTime);
-				strOutput = string_format("RPR denoising and tonemapping time: %s", getTimeSpentString(progressData.elapsed2).c_str());
+				strOutput = string_format("RPR denoising and tonemapping time: %s", getTimeSpentString(progressData.elapsedPostRenderTonemap).c_str());
 				strOutput = strTime + ": " + strOutput;
 				MGlobal::displayInfo(MString(strOutput.c_str()));
 
-				strOutput = string_format("RPR total production render command time: %s", getTimeSpentString(progressData.elapsed).c_str());
+				strOutput = string_format("RPR total production render command time: %s", getTimeSpentString(progressData.elapsedTotal).c_str());
 				break;
 			}
 
