@@ -197,7 +197,7 @@ public:
 	static bool GetAlbedoEnabled(const MFnDependencyNode& node);
 	static VolumeGradient GetAlbedoGradientType(const MFnDependencyNode& node);
 	static MPlug GetAlbedoRamp(const MFnDependencyNode& node);
-	static MString GetSelectedAlbedoGridName(const MFnDependencyNode& node);
+	static MString GetSelectedAlbedoGridName(const MFnDependencyNode& node, std::string filePath, bool& failed);
 
 	static bool GetEmissionEnabled(const MFnDependencyNode& node);
 	static VolumeGradient GetEmissionGradientType(const MFnDependencyNode& node);
@@ -212,13 +212,13 @@ public:
 
 	static EmissionInputType GetEmissionInputType(const MFnDependencyNode& node);
 	static MPlug GetEmissionIntensityRamp(const MFnDependencyNode& node);
-	static MString GetSelectedEmissionGridName(const MFnDependencyNode& node);
+	static MString GetSelectedEmissionGridName(const MFnDependencyNode& node, std::string filePath, bool& failed);
 
 	static bool GetDensityEnabled(const MFnDependencyNode& node);
 	static VolumeGradient GetDensityGradientType(const MFnDependencyNode& node);
 	static MPlug GetDensityRamp(const MFnDependencyNode& node);
 	static float GetDensityMultiplier(const MFnDependencyNode& node);
-	static MString GetSelectedDensityGridName(const MFnDependencyNode& node);
+	static MString GetSelectedDensityGridName(const MFnDependencyNode& node, std::string filePath, bool& failed);
 
 	static void FillVolumeData(VolumeData& data, const MObject& node, FireMaya::Scope* scope);
 

@@ -10,6 +10,256 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+proc string localizedAttrName( string $name ) 
+{
+	if( $name == "Selected Color" ) 
+	{
+		return (uiRes("m_AEaddRampControl.kSelClr"));
+	} 
+	else if ( $name == "Selected Position" ) 
+	{
+		return (uiRes("m_AEaddRampControl.kSelPos"));
+	} 
+	else if ( $name == "Selected Value" ) 
+	{
+		return (uiRes("m_AEaddRampControl.kSelVal"));
+	} 
+	else if ( $name == "Interpolation method" ) 
+	{
+		return (uiRes("m_AEaddRampControl.kInterpMethod"));
+	}
+}
+
+
+global proc RPRmakeLargeRamp( string $nodeAttr,
+							int $bound,
+							int $indent,
+							int $staticEntries,
+							int $staticPositions,
+							int $adaptiveScaling )
+//
+//	Description:
+//
+//	$staticEntries - If set to 1, the gradientControl widget will be set to
+//					a fixed number of ramp entries (control points).
+//
+{
+	string $buffer[];
+	tokenize($nodeAttr, ".", $buffer);
+	string $attr = $buffer[ size($buffer) - 1];
+
+	string $rampName = $attr + "Ramp";
+	string $scName = $attr +"Scc";
+	string $spName = $attr +"Sp";
+
+	string $colEntryName =  ($nodeAttr + "[0]." + $attr + "_ColorR");
+	int $isColor = `objExists ($colEntryName)`;
+
+	setUITemplate -pst attributeEditorTemplate;
+	columnLayout -rowSpacing 2;
+
+	// ramp block
+	string $rampForm = `formLayout ($rampName + "Form")`;
+	string $spc	= `attrFieldSliderGrp -label (localizedAttrName("Selected Position"))
+		-cw 1 123 -annotation (localizedAttrName("Selected Position")) $spName`;
+	string $scc;
+	if( $isColor )
+	{
+		$scc = `attrColorSliderGrp -label (localizedAttrName("Selected Color"))
+			-cw 1 123 -cw 2 45 -cw 3 0 -annotation (localizedAttrName("Selected Color")) -sb 1 $scName`;
+	} 
+	else 
+	{
+		$scc = `attrFieldSliderGrp -label (localizedAttrName("Selected Value"))
+		-cw 1 123 -annotation (localizedAttrName("Selected Value")) $scName`;
+	}
+	
+	string $lmax;
+	if ( $adaptiveScaling ) 
+	{
+		$lmax = `text -label "1.0" ($rampName+"LX")`;
+	}
+	string $rframe = `frameLayout -lv 0 -cll 0 ($rampForm + "fr")`;
+	string $widgetName = `gradientControl
+							-at $nodeAttr
+							-snc $staticEntries
+							-sp $staticPositions
+							-w 135 -h 74
+							$rampName`;
+	if ( $adaptiveScaling ) 
+	{
+		gradientControl -e -as $adaptiveScaling -ror $adaptiveScaling -ulc $lmax $widgetName;
+	}
+
+	setParent ..;
+	formLayout
+		-edit
+			-attachForm $spc "left"  0
+			-attachNone $spc "right"
+			-attachForm $spc "top" 0
+			-attachNone $spc "bottom"
+
+			-attachForm $scc "left" 0 
+			-attachNone $scc "right"
+			-attachControl $scc "top" 0 $spc
+			-attachNone $scc "bottom"
+
+			-attachControl $rframe "left" 2 $scc
+			-attachNone $rframe "right"
+			-attachForm $rframe "top" 0
+			-attachNone $rframe "bottom"
+			$rampForm;
+
+	if ( $adaptiveScaling ) 
+	{
+		formLayout
+			-edit
+				-attachControl $lmax "left" 2 $rframe
+				-attachNone $lmax "right"
+				-attachForm $lmax "top" 0
+				-attachNone $lmax "bottom"
+				$rampForm;
+	}
+
+	setParent ..;
+
+	// input
+	if(objExists ($nodeAttr +"Input"))
+	{
+		string $inLabel;
+		string $labelAttr = `attributeName -nice $nodeAttr`;
+		string $inputVarAnnot = (uiRes("m_AEaddRampControl.kInputVarAnnot"));
+		
+		if( $indent || size( $labelAttr ) < 9 )
+		{
+			string $fmt = (uiRes("m_AEaddRampControl.kInputFmt"));
+			$inLabel = `format -s $labelAttr $fmt`;
+		} 
+		else 
+		{
+			$inLabel = (uiRes("m_AEaddRampControl.kInputShort"));
+		}
+
+		if( $indent )
+		{
+			attrEnumOptionMenuGrp -l $inLabel
+				-ann $inputVarAnnot
+				-cw 1 204
+				-at ($nodeAttr + "Input") ($rampName + "Input");
+		} 
+		else 
+		{
+			attrEnumOptionMenuGrp -l $inLabel
+				-ann $inputVarAnnot
+				-cw 1 123
+				-at ($nodeAttr + "Input") ($rampName + "Input");
+		}
+		
+	}
+
+	// inputBias
+	if(  objExists ($nodeAttr +"InputBias") )
+	{
+		attrFieldSliderGrp -label (uiRes("m_AEaddRampControl.kInputBias")) -cw4 123 81 130	25 
+				-at ($nodeAttr +"InputBias") ($rampName + "InputBias");
+	}
+
+	// inputScale
+	if(  objExists ($nodeAttr +"InputScale") )
+	{
+		attrFieldSliderGrp -label (uiRes("m_AEaddRampControl.kInputScale")) -cw4 123 81 130 25	
+				-at ($nodeAttr +"InputScale") ($rampName + "InputScale");
+	}
+	// inputMax
+	if(  objExists ($nodeAttr +"InputMax") )
+	{
+		attrFieldSliderGrp -label (uiRes("m_AEaddRampControl.kInputMax")) -cw4 123 81 130 25	
+				-at ($nodeAttr +"InputMax") ($rampName + "InputMax");
+	}
+	// inputOffset
+	if(  objExists ($nodeAttr +"InputOffset") )
+	{
+		attrFieldSliderGrp -label (uiRes("m_AEaddRampControl.kInputOffset")) -cw4 123 81 130 25	
+				-at ($nodeAttr +"InputOffset") ($rampName + "InputOffset");
+	}
+
+	// tell the port about the controls
+	gradientControl -e -scc $scc $widgetName;
+	gradientControl -e -spc $spc $widgetName;
+	setUITemplate -ppt;
+}
+
+
+global proc RPRmakeRampControlInteractiveNew(string $nodeAttr)
+{
+	RPRmakeLargeRamp( $nodeAttr,1,1,1,0,0 );
+}
+
+
+global proc RPRaddRampControl( string $rampName )
+//  
+//  Description: 
+// In order to use catalog lookups for the attribute name,
+// $rampName should be of form "pCube.translateX".  For backward
+// compatability, $rampName can also be just
+// "translateX" but in this case no catalog lookup can be
+// performed and interToUI() will be called to obtain the UI
+// display label for the attribute.
+// 
+{
+	int $rampDrawMethod = 0;
+	if( `optionVar -exists "gradientControlDrawMethod"` ) 
+	{
+		$rampDrawMethod = `optionVar -q "gradientControlDrawMethod"`;
+	}
+	
+	int $subBlock = (($rampDrawMethod < 1) || ($rampDrawMethod > 2));
+	if( $subBlock )
+	{
+		string $rampTitle;
+		string $nodeAttr[];
+		
+		// tokenize $rampName on "." to see if we get the nodeName and attrName
+		// pieces required for a catalog lookup.
+		//
+		tokenize ($rampName,".",$nodeAttr);
+		if( size($nodeAttr) == 2 ) 
+		{            
+			$rampTitle = "Input Ramp";
+			
+			// Change rampName back to attrName format
+			//
+			$rampName = $nodeAttr[1];     
+		}
+		// Old-style attr name used.  No choice but to use interToUI().
+		//
+		else 
+		{
+			// I18N_OK: All calls to AEaddRampControl and AEaddRampControlAS
+			// must be modified to include nodeName.attrName as the 1st 
+			// attribute instead of just attrName. If this was not done, 
+			// we have to revert to interToUI as a last resort.
+			$rampTitle = interToUI($rampName);
+		}
+	
+		editorTemplate -beginLayout $rampTitle -collapse false;
+	}
+
+	editorTemplate -callCustom "RPRmakeRampControlInteractiveNew"
+						"AEmakeRampControlInteractiveReplace" $rampName;
+	
+	if( $subBlock ) 
+	{
+		editorTemplate -endLayout;
+	}
+	
+	editorTemplate -suppress ($rampName + "Input");
+	editorTemplate -suppress ($rampName + "InputBias");
+	editorTemplate -suppress ($rampName + "InputScale");
+	editorTemplate -suppress ($rampName + "InputMax");
+}
+
+
 global proc AERPRToonMaterialTemplate( string $nodeName )
 {
 	AEswatchDisplay $nodeName;
@@ -28,19 +278,9 @@ global proc AERPRToonMaterialTemplate( string $nodeName )
 
 		editorTemplate -beginLayout "Advanced" -collapse 0;
 			editorTemplate -l "Enable 5 Colors" -addControl "enable5Colors" "UpdateRampFieldsEnable";
-
 			editorTemplate -l "Show Mix Levels" -addControl "showMixLevels" "UpdateRampFieldsEnable";
 
-			editorTemplate -l "Highlight Color 2" -addControl "highlightColor2";
-			editorTemplate -l "Highlight Color" -addControl "highlightColor";
-			editorTemplate -l "Mid Color" -addControl "midColor";
-			editorTemplate -l "Shadow Color" -addControl "shadowColor";
-			editorTemplate -l "Shadow Color 2" -addControl "shadowColor2";
-
-			editorTemplate -l "Shadow Level" -addControl "rampPositionShadow";
-			editorTemplate -l "Mid Level" -addControl "rampPosition1";
-			editorTemplate -l "Highlight Level" -addControl "rampPosition2";
-			editorTemplate -l "Highlight Level 2" -addControl "rampPositionHighlight";
+			RPRaddRampControl ($nodeName + ".input5Ramp");
 
 			editorTemplate -l "Shadow Level Mix" -addControl "rampRangeShadow";
 			editorTemplate -l "Mid Level Mix" -addControl "rampRange1";
@@ -70,7 +310,7 @@ global proc string GetLinkedLightDropdownCommand(string $attrName, string $ctrlN
 
 global proc UpdateLinkedLightsDropdown(string $attrName)
 {
-        $items = `optionMenu -q -itemListLong linkedLightDropdownCtrl`;
+    $items = `optionMenu -q -itemListLong linkedLightDropdownCtrl`;
 	if (size($items) > 0)
 	{
 		deleteUI($items);
@@ -193,13 +433,7 @@ global proc ShowAdvancedChanges(string $nodeName)
 	editorTemplate -dimControl $nodeName showMixLevels $dim;
 
 	editorTemplate -dimControl $nodeName enable5Colors $dim;
-
-	editorTemplate -dimControl $nodeName highlightColor $dim;
-	editorTemplate -dimControl $nodeName midColor $dim;
-	editorTemplate -dimControl $nodeName shadowColor $dim;
-
-	editorTemplate -dimControl $nodeName rampPosition1 $dim;
-	editorTemplate -dimControl $nodeName rampPosition2 $dim;
+	editorTemplate -dimControl $nodeName input5Ramp $dim;
 	
 	editorTemplate -dimControl $nodeName enableLightLinking $dim;
 	
@@ -229,6 +463,53 @@ global proc UpdateRampFieldsEnable(string $nodeName)
 
 	editorTemplate -dimControl $nodeName rampRangeShadow $dim5ColorsMixLevel;
 	editorTemplate -dimControl $nodeName rampRangeHighlight $dim5ColorsMixLevel;
+
+	string $rampAttribute = $nodeName + ".input5Ramp";
+	int $countCtrlPoints = `getAttr -s $rampAttribute`;
+	if ($countCtrlPoints == 1) // this is new toon material
+	{
+		setAttr ($rampAttribute+"[0].input5Ramp_Position") 0.2;
+		setAttr ($rampAttribute+"[0].input5Ramp_Interp") 0;
+		setAttr ($rampAttribute+"[1].input5Ramp_Color") -type double3 0.4 0.4 0.4;
+		setAttr ($rampAttribute+"[1].input5Ramp_Position") 0.5;
+		setAttr ($rampAttribute+"[1].input5Ramp_Interp") 0;
+		setAttr ($rampAttribute+"[2].input5Ramp_Position") 0.8;
+		setAttr ($rampAttribute+"[2].input5Ramp_Color") -type double3 0.8 0.8 0.8;
+		setAttr ($rampAttribute+"[2].input5Ramp_Interp") 0;
+	}
+
+	if ($dim5Colors) 
+	{
+		if ($countCtrlPoints == 5) 
+		{
+			// ramp should have 3 control point
+			// - save control point data to attribute
+			float $color[] = `getAttr ($rampAttribute+"[3].input5Ramp_Color")`;
+			setAttr ($nodeName + ".shadowColor2") -type double3 $color[0] $color[1] $color[2];
+			// shadow2 position should always be 0.0!
+
+			$color = `getAttr ($rampAttribute+"[4].input5Ramp_Color")`;
+			setAttr ($nodeName + ".highlightColor2") -type double3 $color[0] $color[1] $color[2];
+			float $position = `getAttr ($rampAttribute+"[4].input5Ramp_Position")`;
+			setAttr ($nodeName + ".rampPositionHighlight") $position;
+
+			// remove control points
+			removeMultiInstance -break true ($rampAttribute+"[3]");
+			removeMultiInstance -break true ($rampAttribute+"[4]");
+		}
+	} 
+	else if ($countCtrlPoints == 3) 
+	{
+		// ramp should have 5 control points
+		float $color[] = `getAttr ($nodeName + ".shadowColor2")`;
+		setAttr ($rampAttribute+"[3].input5Ramp_Color") -type double3 $color[0] $color[1] $color[2];
+		setAttr ($rampAttribute+"[3].input5Ramp_Interp") 0;
+		setAttr ($rampAttribute+"[3].input5Ramp_Position") 0.0; // should always be zero
+		$color = `getAttr ($nodeName + ".highlightColor2")`;
+		setAttr ($rampAttribute+"[4].input5Ramp_Color") -type double3 $color[0] $color[1] $color[2];
+		setAttr ($rampAttribute+"[4].input5Ramp_Interp") 0;
+		setAttr ($rampAttribute+"[4].input5Ramp_Position") `getAttr ($nodeName + ".rampPositionHighlight")`;
+	}
 }
 
 global proc TransparencyEnableChanged(string $nodeName)
@@ -278,5 +559,43 @@ global proc ConvertLegacyLightLinkedAttribute()
 
 		deleteAttr $legacyAttrName;
 		print("RadeonProRender: Legacy attribute " + $legacyAttrName + " converted!\n");
+	}
+
+	for ($toonMaterial in $toonMaterials)
+	{ 
+		string $colorPoints[];
+		string $posPoints[];
+		string $rampAttribute = $toonMaterial + ".input5Ramp";
+
+		int $id[] = `getAttr -mi $rampAttribute`;
+		if (`size($id)` > 0)
+			continue; // ramp is already created; no need to convert!
+
+		if (`getAttr ($toonMaterial + ".enable5Colors")` == 0)
+		{
+			// ramp should have 3 control point
+			$colorPoints = {".shadowColor", ".midColor", ".highlightColor"};
+			$posPoints = {"", ".rampPosition1", ".rampPosition2"};
+		}
+		else
+		{
+			// ramp should have 5 control point
+			$colorPoints = {".shadowColor2", ".shadowColor", ".midColor", ".highlightColor", ".highlightColor2"};
+			$posPoints = {"", ".rampPositionShadow", ".rampPosition1", ".rampPosition2", ".rampPositionHighlight"};
+		}
+
+		for ($index = 0; $index < size($colorPoints); $index++)
+		{
+			float $color[] = `getAttr ($toonMaterial + $colorPoints[$index])`;
+			setAttr ($rampAttribute+"["+$index+"].input5Ramp_Color") -type double3 $color[0] $color[1] $color[2];
+			setAttr ($rampAttribute+"["+$index+"].input5Ramp_Interp") 0;
+
+			if ($posPoints[$index] == "")
+			{
+				continue;
+			}
+
+			setAttr ($rampAttribute+"["+$index+"].input5Ramp_Position") `getAttr ($toonMaterial + $posPoints[$index])`; 
+		}
 	}
 }
