@@ -110,9 +110,9 @@ struct ContextWorkProgressData
 	size_t currentIndex = 0;
 	size_t totalCount = 0;
 	std::string objectName;
-	long long currentTimeInMiliseconds = 0;
-	long long elapsedTotal = 0;
-	long long elapsedPostRenderTonemap = 0; // for extra data
+	unsigned long long currentTimeInMiliseconds = 0;
+	unsigned long long elapsedTotal = 0;
+	unsigned long long elapsedPostRenderTonemap = 0; // for extra data
 
 	unsigned int GetPercentProgress() const { return (unsigned int)(100 * currentIndex / totalCount); }
 };
