@@ -869,14 +869,14 @@ void FireRenderProduction::DisplayRenderTimeData(const std::string& strTime) con
 
 std::tuple<size_t, long long> FireRenderProduction::GeSceneTexturesCountAndSize() const
 {
-	size_t data_size = 0;
+	/*size_t data_size = 0;
 	rprContextGetInfo(m_contextPtr->context(), RPR_CONTEXT_LIST_CREATED_IMAGES, 0, nullptr, &data_size);
 	std::vector<rpr_image> images(data_size / sizeof(rpr_image));
-	rprContextGetInfo(m_contextPtr->context(), RPR_CONTEXT_LIST_CREATED_IMAGES, data_size, images.data(), &data_size);
+	rprContextGetInfo(m_contextPtr->context(), RPR_CONTEXT_LIST_CREATED_IMAGES, data_size, images.data(), &data_size);*/
 
 	long long texturesSize = 0;
 
-	for (auto image : images) 
+	/*for (auto image : images)
 	{
 		size_t data_size = 0;
 		rprImageGetInfo(image, RPR_IMAGE_DATA_SIZEBYTE, 0, nullptr, &data_size);
@@ -885,9 +885,10 @@ std::tuple<size_t, long long> FireRenderProduction::GeSceneTexturesCountAndSize(
 		rprImageGetInfo(image, RPR_IMAGE_DATA_SIZEBYTE, data_size, &temp, nullptr);
 
 		texturesSize += temp;
-	}
+	}*/
 
-	return std::make_tuple(images.size(), texturesSize);
+	//return std::make_tuple(images.size(), texturesSize);
+	return std::make_tuple(0, texturesSize);
 }
 
 size_t FireRenderProduction::GetScenePolyCount() const

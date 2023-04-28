@@ -25,6 +25,8 @@ If you are not building the installer you do not need all versions.
 	MAYA_x64_2022
 	MAYA_SDK_2023
 	MAYA_x64_2023
+	MAYA_SDK_2024
+	MAYA_x64_2024
 
 eg. (assume Maya 2020 SDK is installed to C:\Program Files\Autodesk\Maya2020\devkitBase folder and so on):
 	set MAYA_SDK_2020=C:\Program Files\Autodesk\Maya2020
@@ -33,6 +35,8 @@ eg. (assume Maya 2020 SDK is installed to C:\Program Files\Autodesk\Maya2020\dev
 	set MAYA_x64_2022=C:\Program Files\Autodesk\Maya2022
 	set MAYA_SDK_2023=C:\Program Files\Autodesk\Maya2023
 	set MAYA_x64_2023=C:\Program Files\Autodesk\Maya2023
+	set MAYA_SDK_2024=C:\Program Files\Autodesk\Maya2024
+	set MAYA_x64_2024=C:\Program Files\Autodesk\Maya2024
 ```
 
 You need to restart Developer Studio to .
@@ -99,6 +103,7 @@ Copy the frMaya.module file to:
 	%COMMONPROGRAMFILES%\Autodesk Shared\Modules\maya\2020
 	%COMMONPROGRAMFILES%\Autodesk Shared\Modules\maya\2022
 	%COMMONPROGRAMFILES%\Autodesk Shared\Modules\maya\2023
+	%COMMONPROGRAMFILES%\Autodesk Shared\Modules\maya\2024
 ```
 	etc
 
