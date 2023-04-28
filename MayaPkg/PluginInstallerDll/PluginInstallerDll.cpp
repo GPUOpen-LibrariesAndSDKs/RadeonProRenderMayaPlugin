@@ -38,7 +38,8 @@ std::vector<std::wstring> getMayaVersionWithInstalledPlugin(MSIHANDLE hInstall)
 	std::vector<std::wstring> versions = {
 		L"2020",
 		L"2022",
-		L"2023"
+		L"2023",
+		L"2024"
 	};
 
 	std::vector<std::wstring> res;
@@ -116,7 +117,8 @@ void installBoto3()
 	// We install boto3 only on Maya versions with Python 3 inside
 	const static std::vector<std::string> versions = {
 		{"2022"},
-		{"2023"}
+		{"2023"},
+		{"2024"}
 	};
 
 	for (const std::string& version : versions)
@@ -307,5 +309,12 @@ extern "C" __declspec(dllexport) UINT patchMayaEnv2023(MSIHANDLE hInstall)
 {
 	LogSystem("patchMayaEnv2023\n");
 	patchMayaEnvFile(L"2023");
+	return ERROR_SUCCESS;
+}
+
+extern "C" __declspec(dllexport) UINT patchMayaEnv2024(MSIHANDLE hInstall)
+{
+	LogSystem("patchMayaEnv2024\n");
+	patchMayaEnvFile(L"2024");
 	return ERROR_SUCCESS;
 }

@@ -42,6 +42,7 @@ echo Building Radeon ProRender for Maya installer %MAYA_PLUGIN_VERSION%
 call create_module.cmd 2020
 call create_module.cmd 2022
 call create_module.cmd 2023
+call create_module.cmd 2024
 
 :: update SharedComponents
 set SharedComponentsDir="..\RadeonProRenderSharedComponents"
@@ -58,6 +59,7 @@ xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\hipbin" "system\PluginInstalle
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2020" "system\PluginInstaller\InputData\feature_2020\2020\*"
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2022" "system\PluginInstaller\InputData\feature_2022\2022\*"
 xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2023" "system\PluginInstaller\InputData\feature_2023\2023\*"
+xcopy /S /Q "..\..\RadeonProRenderMayaPlugin\dist\plug-ins\2024" "system\PluginInstaller\InputData\feature_2024\2024\*"
 
 :: scene conversion scripts
 mkdir "system\PluginInstaller\InputData\feature_ConvScripts"

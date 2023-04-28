@@ -50,6 +50,7 @@ limitations under the License.
       Plugin2020=$(SolutionDir)system\$(Name)\InputData\feature_2020;
       Plugin2022=$(SolutionDir)system\$(Name)\InputData\feature_2022;
       Plugin2023=$(SolutionDir)system\$(Name)\InputData\feature_2023;
+      Plugin2024=$(SolutionDir)system\$(Name)\InputData\feature_2024;
 
       InstallerDll=../output/PluginInstallerDll/PluginInstallerDll.dll
 <!--
@@ -76,6 +77,7 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
     <Compile Include="Generated\Plugin2020.wxs" />
     <Compile Include="Generated\Plugin2022.wxs" />
     <Compile Include="Generated\Plugin2023.wxs" />
+    <Compile Include="Generated\Plugin2024.wxs" />
     <Compile Include="Generated\ConvScripts.wxs" />
     <Compile Include="Wix files\PluginFinishDlg.wxs" />
     <Compile Include="Wix files\PluginWelcomeDlg.wxs" />
@@ -106,6 +108,7 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
     <Content Include="Modules\2020\RadeonProRender.module" />
     <Content Include="Modules\2022\RadeonProRender.module" />
     <Content Include="Modules\2023\RadeonProRender.module" />
+    <Content Include="Modules\2024\RadeonProRender.module" />
     <Content Include="Readme.txt" />
     <Content Include="rpr_banner.png" />
     <Content Include="rpr_dialog.png" />
@@ -117,6 +120,7 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
     <Folder Include="Modules\2020" />
     <Folder Include="Modules\2022" />
     <Folder Include="Modules\2023" />
+    <Folder Include="Modules\2024" />
     <Folder Include="Wix files" />
   </ItemGroup>
   <ItemGroup>
@@ -133,6 +137,7 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
       "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_2020" -cg CG_2020 -ag -scom -sreg -sfrag -srd -dr DR_PLUGINS -var var.Plugin2020 -out "$(ProjectDir)Generated\Plugin2020.wxs"
       "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_2022" -cg CG_2022 -ag -scom -sreg -sfrag -srd -dr DR_PLUGINS -var var.Plugin2022 -out "$(ProjectDir)Generated\Plugin2022.wxs"
       "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_2023" -cg CG_2023 -ag -scom -sreg -sfrag -srd -dr DR_PLUGINS -var var.Plugin2023 -out "$(ProjectDir)Generated\Plugin2023.wxs"
+      "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_2024" -cg CG_2024 -ag -scom -sreg -sfrag -srd -dr DR_PLUGINS -var var.Plugin2024 -out "$(ProjectDir)Generated\Plugin2024.wxs"
 
       "$(WIX)bin\heat.exe" dir "$(SolutionDir)system\$(Name)\InputData\feature_ConvScripts" -cg CG_SCENE_CONV -ag -scom -sreg -sfrag -srd -dr DR_SCRIPTS_FIRE_RENDER -var var.ConvScripts -out "$(ProjectDir)Generated\ConvScripts.wxs"
 

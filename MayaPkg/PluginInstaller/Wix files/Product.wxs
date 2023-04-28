@@ -51,12 +51,14 @@ limitations under the License.
 		<CustomAction Id='patchMayaEnv2020' BinaryKey='InstallerDll' DllEntry='patchMayaEnv2020' Execute="deferred" Impersonate="yes" Return="ignore" />
 		<CustomAction Id='patchMayaEnv2022' BinaryKey='InstallerDll' DllEntry='patchMayaEnv2022' Execute="deferred" Impersonate="yes" Return="ignore" />
 		<CustomAction Id='patchMayaEnv2023' BinaryKey='InstallerDll' DllEntry='patchMayaEnv2023' Execute="deferred" Impersonate="yes" Return="ignore" />
+		<CustomAction Id='patchMayaEnv2024' BinaryKey='InstallerDll' DllEntry='patchMayaEnv2024' Execute="deferred" Impersonate="yes" Return="ignore" />
 
 		<CustomAction Id='CheckRPRSDKInTheSystem' BinaryKey='InstallerDll' DllEntry='checkRPRSDKInTheSystem' Execute="deferred" Impersonate="no" Return="ignore" />
 
 		<CustomAction Id='maya2020WasInstalled' Property='MAYA2020_INSTALLED'  Value='true'/>
 		<CustomAction Id='maya2022WasInstalled' Property='MAYA2022_INSTALLED'  Value='true'/>
 		<CustomAction Id='maya2023WasInstalled' Property='MAYA2023_INSTALLED'  Value='true'/>
+		<CustomAction Id='maya2024WasInstalled' Property='MAYA2024_INSTALLED'  Value='true'/>
 
                 <CustomAction Id='SetInstallCustomMode' Property="WixUI_InstallMode" Value="InstallCustom"/>
 
@@ -80,6 +82,7 @@ limitations under the License.
 			<Custom Action="patchMayaEnv2020" After="InstallInitialize"><![CDATA[(&Product2020=3)]]></Custom>
 			<Custom Action="patchMayaEnv2022" After="InstallInitialize"><![CDATA[(&Product2022=3)]]></Custom>
 			<Custom Action="patchMayaEnv2023" After="InstallInitialize"><![CDATA[(&Product2023=3)]]></Custom>
+			<Custom Action="patchMayaEnv2024" After="InstallInitialize"><![CDATA[(&Product2024=3)]]></Custom>
 			<CreateFolders/>
 			<InstallFiles/>
 			<WriteEnvironmentStrings/>
@@ -140,6 +143,12 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 					<Directory Id="DOCUMENTS_MAYA_2023" Name="2023">
 						<Directory Id="DOCUMENTS_MAYA_2023_PREFS" Name="prefs">
 							<Directory Id="DOCUMENTS_MAYA_2023_PREFS_SHELVES" Name="shelves">
+							</Directory>
+						</Directory>
+					</Directory>
+					<Directory Id="DOCUMENTS_MAYA_2024" Name="2024">
+						<Directory Id="DOCUMENTS_MAYA_2024_PREFS" Name="prefs">
+							<Directory Id="DOCUMENTS_MAYA_2024_PREFS_SHELVES" Name="shelves">
 							</Directory>
 						</Directory>
 					</Directory>
@@ -206,6 +215,15 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 			</Component>
 		</DirectoryRef>
 
+		<DirectoryRef Id="DOCUMENTS_MAYA_2024_PREFS_SHELVES">
+			<Component Id="shelf_Radeon_ProRender_2024.mel" Guid="D66B15A9-A9AA-47D7-9DED-96E7F152AE11" Permanent="no" SharedDllRefCount="no" Transitive="no" Win64="yes">
+				<RegistryKey Root="HKCU" Key="Software\AMD\RadeonProRender\Maya">
+					<RegistryValue Name="shelf_Radeon_ProRender_2024" Value="1" Type="integer" KeyPath="yes" />
+				</RegistryKey>
+				<File Id="file_shelf_Radeon_ProRender_2024.mel" DiskId="1" Hidden="no" ReadOnly="no" TrueType="no" System="no" Vital="yes" Name="shelf_Radeon_ProRender.mel" Source="..\..\..\RadeonProRenderMayaPlugin\FireRender.Maya.Src\Shelfs\shelf_Radeon_ProRender.mel" />
+			</Component>
+		</DirectoryRef>
+
 
 <!--		
 EXCLUDE MATERIAL LIBRARY FROM INSTALLER
@@ -251,6 +269,13 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
 				<ComponentGroupRef Id="CG_2023"/>
 				<ComponentGroupRef Id="CG_MODULES"/>
 				<ComponentRef Id="shelf_Radeon_ProRender_2023.mel" />
+			</Feature>	
+
+			<Feature Id="Product2024" Title="Support Maya 2024" Description="$(var.ProductLongName) 2024" Level="1">
+				<ComponentGroupRef Id="CG_ARTEFACTS"/>
+				<ComponentGroupRef Id="CG_2024"/>
+				<ComponentGroupRef Id="CG_MODULES"/>
+				<ComponentRef Id="shelf_Radeon_ProRender_2024.mel" />
 			</Feature>	
 
 

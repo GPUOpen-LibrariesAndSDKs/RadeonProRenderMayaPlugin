@@ -30,7 +30,9 @@ source "rprCmdRenderUtils.mel";
 proc overrideUnifiedRenderGlobalsWindow()
 {
 	int $mayaVersion=`about -apiVersion`;
-
+	
+	if ($mayaVersion >= 202400)
+		eval("source \"rprUnifiedRenderGlobalsWindow202400.mel\"");
 	if ($mayaVersion >= 202300)
 		eval("source \"rprUnifiedRenderGlobalsWindow202300.mel\"");
 	if ($mayaVersion >= 202200)
