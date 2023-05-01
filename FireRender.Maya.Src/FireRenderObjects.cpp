@@ -840,6 +840,9 @@ void FireRenderMesh::SetReloadedSafe()
 void FireRenderMeshCommon::setRenderStats(MDagPath dagPath)
 {
 	MFnDependencyNode depNode(dagPath.node());
+#ifdef _DEBUG
+	MString name = depNode.name();
+#endif
 
 	MPlug visibleInReflectionsPlug = depNode.findPlug("visibleInReflections");
 	bool visibleInReflections;
@@ -1032,108 +1035,115 @@ bool FireRenderMesh::setupDisplacement(std::vector<MObject>& shadingEngines, frw
 	
 	for (auto& shadingEngine : shadingEngines)
 	{
+		if (!shape.IsUVCoordinatesSet())
+			continue;
 
-		if (shape.IsUVCoordinatesSet())
+		FireMaya::Displacement *displacement = nullptr;
+
+		// Check displacement shader connection
+		MObject displacementShader = getDisplacementShader(shadingEngine);
+		if (!displacementShader.isNull())
 		{
-			FireMaya::Displacement *displacement = nullptr;
+			MFnDependencyNode shaderNode(displacementShader);
+			displacement = dynamic_cast<FireMaya::Displacement*>(shaderNode.userNode());
+		}
 
-			// Check displacement shader connection
-			MObject displacementShader = getDisplacementShader(shadingEngine);
-			if (!displacementShader.isNull())
+		if (!displacement)
+		{
+			// Check surface shader connection, look for shader with displacement map input
+			MObject surfaceShader = getSurfaceShader(shadingEngine);
+			if (!surfaceShader.isNull())
 			{
-				MFnDependencyNode shaderNode(displacementShader);
-				displacement = dynamic_cast<FireMaya::Displacement*>(shaderNode.userNode());
-			}
-
-			if (!displacement)
-			{
-				// Check surface shader connection, look for shader with displacement map input
-				MObject surfaceShader = getSurfaceShader(shadingEngine);
-				if (!surfaceShader.isNull())
+				MFnDependencyNode shaderNode(surfaceShader);
+				FireMaya::ShaderNode* shader = dynamic_cast<FireMaya::ShaderNode*>(shaderNode.userNode());
+				if (shader)
 				{
-					MFnDependencyNode shaderNode(surfaceShader);
-					FireMaya::ShaderNode* shader = dynamic_cast<FireMaya::ShaderNode*>(shaderNode.userNode());
-					if (shader)
+					displacementShader = shader->GetDisplacementNode();
+					if (!displacementShader.isNull())
 					{
-						displacementShader = shader->GetDisplacementNode();
-						if (!displacementShader.isNull())
-						{
-							MFnDependencyNode shaderNodeDS(displacementShader);
-							displacement = dynamic_cast<FireMaya::Displacement*>(shaderNodeDS.userNode());
-						}
+						MFnDependencyNode shaderNodeDS(displacementShader);
+						displacement = dynamic_cast<FireMaya::Displacement*>(shaderNodeDS.userNode());
 					}
 				}
 			}
+		}
 
-			if (!displacement)
+		if (!displacement)
+		{
+			// try using uber material params (displacement)
+			MObject surfaceShader = getSurfaceShader(shadingEngine);
+			MFnDependencyNode shaderNode(surfaceShader);
+			MPlug plug = shaderNode.findPlug("displacementEnable");
+			if (!plug.isNull())
 			{
-				// try using uber material params (displacement)
-				MObject surfaceShader = getSurfaceShader(shadingEngine);
-				MFnDependencyNode shaderNode(surfaceShader);
-				MPlug plug = shaderNode.findPlug("displacementEnable");
-				if (!plug.isNull())
+				bool isDisplacementEnabled = false;
+				plug.getValue(isDisplacementEnabled);
+
+				if (isDisplacementEnabled)
 				{
-					bool isDisplacementEnabled = false;
-					plug.getValue(isDisplacementEnabled);
+					float minHeight = 0;
+					float maxHeight = 0;
+					int subdivision = 0;
+					float creaseWeight = 0;
+					int boundary = RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_AND_CORNER;
+					frw::Value mapValue;
+					bool isAdaptive = false;
+					float adaptiveFactor = 0.0f;
 
-					if (isDisplacementEnabled)
+					plug = shaderNode.findPlug("displacementMin");
+					if (!plug.isNull())
+						plug.getValue(minHeight);
+
+					plug = shaderNode.findPlug("displacementMax");
+					if (!plug.isNull())
+						plug.getValue(maxHeight);
+
+					plug = shaderNode.findPlug("displacementSubdiv");
+					if (!plug.isNull())
+						plug.getValue(subdivision);
+
+					plug = shaderNode.findPlug("displacementCreaseWeight");
+					if (!plug.isNull())
+						plug.getValue(creaseWeight);
+
+					auto scope = Scope();
+					mapValue = scope.GetConnectedValue(shaderNode.findPlug("displacementMap"));
+					bool haveMap = mapValue.IsNode();
+
+					plug = shaderNode.findPlug("displacementBoundary");
+					if (!plug.isNull())
 					{
-						float minHeight = 0;
-						float maxHeight = 0;
-						int subdivision = 0;
-						float creaseWeight = 0;
-						int boundary = RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_AND_CORNER;
-						frw::Value mapValue;
-						bool isAdaptive = false;
-						float adaptiveFactor = 0.0f;
-
-						plug = shaderNode.findPlug("displacementMin");
-						if (!plug.isNull())
-							plug.getValue(minHeight);
-
-						plug = shaderNode.findPlug("displacementMax");
-						if (!plug.isNull())
-							plug.getValue(maxHeight);
-
-						plug = shaderNode.findPlug("displacementSubdiv");
-						if (!plug.isNull())
-							plug.getValue(subdivision);
-
-						plug = shaderNode.findPlug("displacementCreaseWeight");
-						if (!plug.isNull())
-							plug.getValue(creaseWeight);
-
-						auto scope = Scope();
-						mapValue = scope.GetConnectedValue(shaderNode.findPlug("displacementMap"));
-						bool haveMap = mapValue.IsNode();
-
-						plug = shaderNode.findPlug("displacementBoundary");
-						if (!plug.isNull())
+						int n = 0;
+						if (MStatus::kSuccess == plug.getValue(n))
 						{
-							int n = 0;
-							if (MStatus::kSuccess == plug.getValue(n))
+							FireMaya::Displacement::Type b = static_cast<FireMaya::Displacement::Type>(n);
+							if (b == FireMaya::Displacement::kDisplacement_EdgeAndCorner)
 							{
-								FireMaya::Displacement::Type b = static_cast<FireMaya::Displacement::Type>(n);
-								if (b == FireMaya::Displacement::kDisplacement_EdgeAndCorner)
-								{
-									boundary = RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_AND_CORNER;
-								}
-								else
-								{
-									boundary = RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_ONLY;
-								}
+								boundary = RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_AND_CORNER;
+							}
+							else
+							{
+								boundary = RPR_SUBDIV_BOUNDARY_INTERFOP_TYPE_EDGE_ONLY;
 							}
 						}
+					}
 
-						plug = shaderNode.findPlug("displacementEnableAdaptiveSubdiv");
-						if (!plug.isNull())
-							plug.getValue(isAdaptive);
+					plug = shaderNode.findPlug("displacementEnableAdaptiveSubdiv");
+					if (!plug.isNull())
+						plug.getValue(isAdaptive);
 
-						plug = shaderNode.findPlug("displacementASubdivFactor");
-						if (!plug.isNull())
-							plug.getValue(adaptiveFactor);
+					plug = shaderNode.findPlug("displacementASubdivFactor");
+					if (!plug.isNull())
+						plug.getValue(adaptiveFactor);
 
-						if (haveMap)
+					if (haveMap)
+					{
+						FireRenderContext* pContext = this->context(); assert(pContext);
+						if (pContext->ShouldUseNoSubdivDisplacement())
+						{
+							shape.SetDisplacementNoSubdiv(mapValue, minHeight, maxHeight);
+						}
+						else
 						{
 							shape.SetDisplacement(mapValue, minHeight, maxHeight);
 							if (!isAdaptive)
@@ -1142,40 +1152,46 @@ bool FireRenderMesh::setupDisplacement(std::vector<MObject>& shadingEngines, frw
 							}
 							else
 							{
-								FireRenderContext *ctx = this->context();
 
-								frw::Scene scn = ctx->GetScene();
+								frw::Scene scn = pContext->GetScene();
 								frw::Camera cam = scn.GetCamera();
 								frw::Context ctx2 = scn.GetContext();
-								rpr_framebuffer fb = ctx->frameBufferAOV(RPR_AOV_COLOR);
+								rpr_framebuffer fb = pContext->frameBufferAOV(RPR_AOV_COLOR);
 
-								shape.SetAdaptiveSubdivisionFactor(adaptiveFactor, ctx->height(), cam.Handle(), fb, true /*isRPR20*/);
+								shape.SetAdaptiveSubdivisionFactor(adaptiveFactor, pContext->height(), cam.Handle(), fb, true /*isRPR20*/);
 							}
 							shape.SetSubdivisionCreaseWeight(creaseWeight);
 							shape.SetSubdivisionBoundaryInterop(boundary);
-
-							haveDisplacement = true;
 						}
+						haveDisplacement = true;
 					}
 				}
 			}
+		}
 
-			if (displacement)
+		if (displacement)
+		{
+			FireMaya::Displacement::DisplacementParams params;
+
+			auto scope = Scope();
+			haveDisplacement = displacement->getValues(scope, params);
+
+			if (haveDisplacement)
 			{
-				FireMaya::Displacement::DisplacementParams params;
-
-				auto scope = Scope();
-				haveDisplacement = displacement->getValues(scope, params);
-
-				if (haveDisplacement)
+				FireRenderContext* pContext = context(); assert(pContext);
+				if (pContext->ShouldUseNoSubdivDisplacement())
+				{
+					shape.SetDisplacementNoSubdiv(params.map, params.minHeight, params.maxHeight);
+				}
+				else
 				{
 					shape.SetDisplacement(params.map, params.minHeight, params.maxHeight);
 					shape.SetSubdivisionFactor(params.subdivision);
 					shape.SetSubdivisionCreaseWeight(params.creaseWeight);
 					shape.SetSubdivisionBoundaryInterop(params.boundary);
-
-					return haveDisplacement;
 				}
+
+				return haveDisplacement;
 			}
 		}
 	}

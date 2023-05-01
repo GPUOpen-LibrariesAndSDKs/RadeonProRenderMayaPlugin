@@ -366,6 +366,9 @@ public:
 	bool shadowCatcherEnabled;
 	bool reflectionCatcherEnabled;
 
+	// use legacy OpenCL context
+	bool useOpenCLContext;
+
 private:
 	short getMaxRayDepth(const FireRenderContext& context) const;
 	short getSamples(const FireRenderContext& context) const;
@@ -1173,6 +1176,9 @@ frw::BufferNode CreateRPRRampNode(std::vector<RampCtrlPoint<valType>>& rampCtrlP
 
 	return bufferNode;
 }
+
+// get path to hipbin folder from Maya enviromental variable
+std::string GetPathToHipbinFolder(void);
 
 // wrapper for maya call to Python
 static std::function<int(std::string)> pythonCallWrap = [](std::string arg)->int

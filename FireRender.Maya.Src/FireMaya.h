@@ -342,6 +342,7 @@ namespace FireMaya
 		void Reset();
 		void Init(rpr_context handle, bool destroyMaterialSystemOnDelete = true, bool createScene = true);
 		void CreateScene(void);
+		bool IsValid(void) const { return m != nullptr; }
 
 		void SetContextInfo (IFireRenderContextInfo* pCtxInfo);
 		const IFireRenderContextInfo* GetIContextInfo() const;
