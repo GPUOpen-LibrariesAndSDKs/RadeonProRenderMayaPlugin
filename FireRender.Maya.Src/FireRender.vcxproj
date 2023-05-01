@@ -676,6 +676,7 @@
       <AdditionalDependencies>OpenMayaFX.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent />
+    <PostBuildEvent />
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug2023|x64'">
     <ClCompile>

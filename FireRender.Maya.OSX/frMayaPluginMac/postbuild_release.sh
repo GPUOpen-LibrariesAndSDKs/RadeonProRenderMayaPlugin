@@ -25,6 +25,7 @@ cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/renderDesc" "/Users/Shared/Rade
 cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/scripts" "/Users/Shared/RadeonProRender/"
 cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/python/" "/Users/Shared/RadeonProRender/scripts/"
 cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/shelfs/" "/Users/Shared/RadeonProRender/shelves/"
+cp -r "$PROJECT_DIR/../../../RadeonProRenderSDK/hipbin/" "/Users/Shared/RadeonProRender/hipbin/"
 
 cp -r "$PROJECT_DIR/../../../RadeonProRenderSDK/RadeonProRender/binMacOS/" "/Users/Shared/RadeonProRender/lib/"
 

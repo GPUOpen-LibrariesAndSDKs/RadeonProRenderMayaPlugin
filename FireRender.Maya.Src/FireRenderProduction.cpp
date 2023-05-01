@@ -157,9 +157,9 @@ void FireRenderProduction::setCamera(MDagPath& camera)
 	MRenderView::setCurrentCamera(camera);
 }
 
-void getTimeDigits(size_t timeInMs, unsigned int& minutes, unsigned int& seconds, unsigned int& mmseconds)
+void getTimeDigits(size_t timeInMs, unsigned long long& minutes, unsigned long long& seconds, unsigned long long& mmseconds)
 {
-	unsigned int secondsTotal = (unsigned int)(timeInMs / 1000);
+	unsigned long long secondsTotal = (unsigned int)(timeInMs / 1000);
 	minutes = secondsTotal / 60;
 	seconds = secondsTotal % 60;
 	mmseconds = timeInMs % 1000;
@@ -167,26 +167,26 @@ void getTimeDigits(size_t timeInMs, unsigned int& minutes, unsigned int& seconds
 
 std::string getTimeSpentString(size_t timeInMs)
 {
-	unsigned int minutes = 0;
-	unsigned int seconds = 0;
-	unsigned int mmseconds = 0;
+	unsigned long long minutes = 0;
+	unsigned long long seconds = 0;
+	unsigned long long mmseconds = 0;
 
 	getTimeDigits(timeInMs, minutes, seconds, mmseconds);
 
-	std::string str = string_format("%dm %ds %dms", minutes, seconds, mmseconds);
+	std::string str = string_format("%llum %llus %llums", minutes, seconds, mmseconds);
 	
 	return str;
 }
 
 std::string getFormattedTime(size_t timeInMs)
 {
-	unsigned int minutes = 0;
-	unsigned int seconds = 0;
-	unsigned int mmseconds = 0;
+	unsigned long long minutes = 0;
+	unsigned long long seconds = 0;
+	unsigned long long mmseconds = 0;
 
 	getTimeDigits(timeInMs, minutes, seconds, mmseconds);
 
-	return string_format("%02d:%02d.%03d", minutes, seconds, mmseconds);
+	return string_format("%02llu:%02llu.%03llu", minutes, seconds, mmseconds);
 }
 
 void FireRenderProduction::SetupWorkProgressCallback()
@@ -311,7 +311,7 @@ bool FireRenderProduction::Init(int contextWidth, int contextHeight, RenderRegio
 	m_contextPtr->setUseRegion(m_isRegion);
 
 	bool showWarningDialog = false;
-	if (m_contextPtr->isFirstIterationAndShadersNOTCached())
+	if (m_contextPtr->ShouldShowShaderCacheWarningWindow())
 		showWarningDialog = true;	//first iteration and shaders are _NOT_ cached
 
 	if (m_isRegion)

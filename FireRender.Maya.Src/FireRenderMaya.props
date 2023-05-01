@@ -24,6 +24,7 @@ md $(SolutionDir)dist\images
 md $(SolutionDir)dist\icons
 md $(SolutionDir)dist\shaders
 md $(SolutionDir)dist\renderDesc
+md $(SolutionDir)dist\hipbin
 
 XCOPY /E /Y $(ProjectDir)\scripts\* $(SolutionDir)dist\scripts\
 XCOPY /E /Y $(ProjectDir)\python $(SolutionDir)dist\scripts\
@@ -36,6 +37,7 @@ XCOPY /E /Y $(ProjectDir)\icons\* $(SolutionDir)dist\icons\
 COPY $(ProjectDir)\shaders\* $(SolutionDir)dist\shaders\ /Y
 
 COPY $(ProjectDir)\renderDesc\* $(SolutionDir)dist\renderDesc\ /Y
+COPY $(SolutionDir)RadeonProRenderSDK\hipbin\* $(SolutionDir)dist\hipbin\ /Y
 
 COPY "$(SolutionDir)RadeonProRenderSDK\RadeonProRender\binWin64\*.dll" $(SolutionDir)dist\bin\ /Y
 COPY "$(SolutionDir)RadeonProImageProcessingSDK\Windows\Dynamic\*.dll" $(SolutionDir)dist\bin\ /Y

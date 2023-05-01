@@ -127,7 +127,8 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	contourAntialiasing(1.0f),
 	contourIsDebugEnabled(false),
 	cryptomatteExtendedMode(false),
-	cryptomatteSplitIndirect(false)
+	cryptomatteSplitIndirect(false),
+	useOpenCLContext(false)
 {
 
 }
@@ -514,6 +515,10 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("aovReflectionCatcher");
 		if (!plug.isNull())
 			reflectionCatcherEnabled = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("useOpenCLContext");
+		if (!plug.isNull())
+			useOpenCLContext = plug.asBool();
 
 		aovs.readFromGlobals(frGlobalsNode);
 
@@ -1799,8 +1804,15 @@ HardwareResources::HardwareResources()
 			rpr_int plugins[] = { tahoeID };
 			size_t pluginCount = sizeof(plugins) / sizeof(plugins[0]);
 			rpr_context temporaryContext = 0;
+
+			std::vector<rpr_context_properties> ctxProperties;
+			ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_PRECOMPILED_BINARY_PATH);
+			std::string hipbinPath = GetPathToHipbinFolder();
+			ctxProperties.push_back((rpr_context_properties)hipbinPath.c_str());
+			ctxProperties.push_back((rpr_context_properties)0);
+
 #ifdef RPR_VERSION_MAJOR_MINOR_REVISION
-			rpr_int status = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, device.creationFlag , NULL, NULL, &temporaryContext);
+			rpr_int status = rprCreateContext(RPR_VERSION_MAJOR_MINOR_REVISION, plugins, pluginCount, device.creationFlag , ctxProperties.data(), NULL, &temporaryContext);
 #else
 			rpr_int status = rprCreateContext(RPR_API_VERSION, plugins, pluginCount, device.creationFlag, NULL, NULL, &temporaryContext);
 #endif
@@ -2440,4 +2452,14 @@ TimePoint GetCurrentChronoTime()
 	return std::chrono::high_resolution_clock::now();
 }
 
+std::string GetPathToHipbinFolder()
+{
+	MString envScriptPath;
+	MStatus status = MGlobal::executeCommand(MString("getenv RPR_SCRIPTS_PATH;"), envScriptPath);
+	assert(status == MStatus::kSuccess);
+	std::string hipPath = envScriptPath.asChar();
+	hipPath += "/../hipbin";
+
+	return hipPath;
+}
 
