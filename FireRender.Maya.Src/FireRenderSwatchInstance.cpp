@@ -36,18 +36,24 @@ void FireRenderSwatchInstance::initScene()
 	backgroundRendererBusy = false;
 	m_warningDialogOpen = false;
 
-	if (getContext().isFirstIterationAndShadersNOTCached())
+	pContext->setCallbackCreationDisabled(true);
+	pContext->SetRenderType(RenderType::Thumbnail);
+	pContext->initSwatchScene();
+
+	if (getContext().ShouldShowShaderCacheWarningWindow())
 	{
 		//first iteration and shaders are _NOT_ cached
 		rcWarningDialog.show();
 		m_warningDialogOpen = true;
 	}
 
-	pContext->setCallbackCreationDisabled(true);
-	pContext->SetRenderType(RenderType::Thumbnail);
-	pContext->initSwatchScene();
 	pContext->Freshen();
 	sceneIsCleaned = false;
+}
+
+void FireRenderSwatchInstance::resetInstance()
+{
+	//m_instance = ;
 }
 
 FireRenderSwatchInstance::~FireRenderSwatchInstance()

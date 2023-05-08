@@ -110,9 +110,9 @@ struct ContextWorkProgressData
 	size_t currentIndex = 0;
 	size_t totalCount = 0;
 	std::string objectName;
-	long long currentTimeInMiliseconds = 0;
-	long long elapsedTotal = 0;
-	long long elapsedPostRenderTonemap = 0; // for extra data
+	unsigned long long currentTimeInMiliseconds = 0;
+	unsigned long long elapsedTotal = 0;
+	unsigned long long elapsedPostRenderTonemap = 0; // for extra data
 
 	unsigned int GetPercentProgress() const { return (unsigned int)(100 * currentIndex / totalCount); }
 };
@@ -657,6 +657,7 @@ public:
 	virtual bool IsVolumeSupported() const override { return true; }
 	virtual bool IsNorthstarVolumeSupported() const { return false; }
 	virtual bool ShouldForceRAMDenoiser() const override { return false; }
+	virtual bool ShouldUseNoSubdivDisplacement() const override { return false; }
 
 	virtual bool IsPhysicalLightTypeSupported(PLType lightType) const { return true; }
 
@@ -725,7 +726,7 @@ protected:
 
 	virtual void OnPreRender() {}
 
-	virtual int GetAOVMaxValue();
+	virtual int GetAOVMaxValue() const;
 
 	void ReadDenoiserFrameBuffersIntoRAM(ReadFrameBufferRequestParams& params);
 
@@ -988,10 +989,14 @@ public:
 	bool isUnlimited();
 	void setStartedRendering();
 	bool keepRenderRunning();
-	bool isFirstIterationAndShadersNOTCached();
+	bool ShouldShowShaderCacheWarningWindow();
 	void updateProgress();
 	int	getProgress();
 	void setProgress(int percents);
+
+	// returns true if context have path to rpr context set
+	// - false if path is not set (this would be the case if precompiled kernels are used)
+	bool HasRPRCachePathSet() const;
 
 	void setSamplesPerUpdate(int samplesPerUpdate);
 
