@@ -18,6 +18,7 @@ limitations under the License.
 #include "../FireRenderStandardMaterial.h"
 #include "../FireRenderDoublesided.h"
 #include "../FireRenderPBRMaterial.h"
+#include "../FireRenderShadowCatcherMaterial.h"
 
 rpr_int HybridProContext::m_gHybridProPluginID = INCORRECT_PLUGIN_ID;
 
@@ -114,7 +115,11 @@ bool HybridProContext::IsAOVSupported(int aov) const
 		RPR_AOV_BACKGROUND,
 		RPR_AOV_EMISSION,
 		RPR_AOV_DIFFUSE_ALBEDO,
-		RPR_AOV_VIEW_SHADING_NORMAL };
+		RPR_AOV_VIEW_SHADING_NORMAL,
+		RPR_AOV_SHADOW_CATCHER,
+		RPR_AOV_MATTE_PASS,
+		RPR_AOV_OPACITY,
+	};
 
 	return supportedAOVs.find(aov) != supportedAOVs.end();
 }
@@ -136,6 +141,18 @@ bool HybridProContext::IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) c
 		return true;
 	}
 
+	FireMaya::ShadowCatcherMaterial* pShadowMaterial = dynamic_cast<FireMaya::ShadowCatcherMaterial*> (shaderNode);
+	if (pShadowMaterial != nullptr)
+	{
+		return true;
+	}
+
 	return false;
 }
+
+int HybridProContext::GetAOVMaxValue() const
+{
+	return RPR_AOV_MAX;
+}
+
 

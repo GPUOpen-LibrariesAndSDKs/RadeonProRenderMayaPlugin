@@ -39,6 +39,7 @@ public:
 	virtual bool IsHairSupported() const = 0;
 	virtual bool IsVolumeSupported() const = 0;
 	virtual bool ShouldForceRAMDenoiser() const = 0;
+	virtual bool ShouldUseNoSubdivDisplacement() const = 0;
 
 	virtual bool IsShaderSupported(frw::ShaderType) const = 0;
 	virtual bool IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) const = 0;

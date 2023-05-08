@@ -172,6 +172,9 @@ namespace
 		// Cryptomatte
 		MObject cryptomatteExtendedMode;
 		MObject cryptomatteSplitIndirect;
+
+		// Use legacy OpenCL context
+		MObject useOpenCLContext;
 	}
 
     struct RenderingDeviceAttributes
@@ -512,6 +515,9 @@ MStatus FireRenderGlobals::initialize()
 	MAKE_INPUT_CONST(eAttr);
 	CHECK_MSTATUS(addAttribute(Attribute::tahoeVersion));
 
+	Attribute::useOpenCLContext = nAttr.create("useOpenCLContext", "uoclc", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+
 	int isCachePathExists = 0;
 	MGlobal::executeCommand(MString("optionVar -ex \"RPR_textureCachePath\""), isCachePathExists);
 	if (!isCachePathExists) {
@@ -595,6 +601,8 @@ MStatus FireRenderGlobals::initialize()
 
 	CHECK_MSTATUS(addAttribute(Attribute::renderQuality));
 	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::renderQuality));
+
+	CHECK_MSTATUS(addAttribute(Attribute::useOpenCLContext));
 
 	createDenoiserAttributes();
 
