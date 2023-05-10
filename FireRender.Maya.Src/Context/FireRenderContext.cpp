@@ -161,7 +161,7 @@ void FireRenderContext::resize(unsigned int w, unsigned int h, bool renderView, 
 	setResolution(w, h, renderView, glTexture);
 }
 
-int FireRenderContext::GetAOVMaxValue()
+int FireRenderContext::GetAOVMaxValue() const
 {
 	return 0x20;
 }
@@ -3021,13 +3021,19 @@ bool FireRenderContext::keepRenderRunning()
 	return secondsSpentRendering < m_completionCriteriaParams.getTotalSecondsCount();
 }
 
-bool FireRenderContext::isFirstIterationAndShadersNOTCached() 
+bool FireRenderContext::ShouldShowShaderCacheWarningWindow() 
 {
     if (isMetalOn())
     {
         // Metal does not cache shaders the way OCL does
         return false;
     }
+
+	if (!HasRPRCachePathSet())
+	{
+		// Path to cache not set => Core will not be caching shaders
+		return false;
+	}
 
 	if (m_currentIteration == 0)
     {
@@ -3740,5 +3746,37 @@ frw::Light FireRenderContext::GetLightSceneObjectFromMObject(const MObject& node
 
 	MGlobal::displayWarning("light with uuid " + MString(lightObjectPointer->uuid().c_str()) + " does not support linking");
 	return frw::Light();
+}
+
+bool FireRenderContext::HasRPRCachePathSet() const
+{
+	if (!scope.IsValid() || !scope.Context())
+		return false; // context not created yet
+
+	rpr_context pContext = scope.Context().Handle();
+	assert(pContext != nullptr);
+	if (!pContext)
+		return false;
+
+	size_t length;
+	rpr_status rprStatus = rprContextGetInfo(pContext, RPR_CONTEXT_CACHE_PATH, sizeof(size_t), nullptr, &length);
+	assert(RPR_SUCCESS == rprStatus);
+	if (RPR_SUCCESS != rprStatus)
+		return false;
+
+	std::string path;
+	path.resize(length);
+	rprStatus = rprContextGetInfo(pContext, RPR_CONTEXT_CACHE_PATH, path.size(), path.data(), nullptr);
+	assert(RPR_SUCCESS == rprStatus);
+	if (RPR_SUCCESS != rprStatus)
+		return false;
+
+	if (path.empty())
+		return false;
+
+	if ((path.length()) == 1 && (path[0] == '\0'))
+		return false;
+
+	return true;
 }
 

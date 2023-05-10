@@ -25,6 +25,7 @@ cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/renderDesc" "/Users/Shared/Rade
 cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/scripts" "/Users/Shared/RadeonProRender/"
 cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/python/" "/Users/Shared/RadeonProRender/scripts/"
 cp -r "$PROJECT_DIR/../../../FireRender.Maya.Src/shelfs/" "/Users/Shared/RadeonProRender/shelves/"
+cp -r "$PROJECT_DIR/../../../RadeonProRenderSDK/hipbin/" "/Users/Shared/RadeonProRender/hipbin/"
 
 cp -r "$PROJECT_DIR/../../../RadeonProRenderSDK/RadeonProRender/binMacOS/" "/Users/Shared/RadeonProRender/lib/"
 
@@ -55,7 +56,7 @@ fi
 if [ -d "/Users/Shared/Autodesk/modules/maya/2022/" ]; then
 cp "$PROJECT_DIR/../rpr2022.mod" "/Users/Shared/Autodesk/modules/maya/2022/rpr.mod"
 fi
-if [ -d "/Users/Shared/Autodesk/modules/maya/2022/" ]; then
+if [ -d "/Users/Shared/Autodesk/modules/maya/2023/" ]; then
 cp "$PROJECT_DIR/../rpr2023.mod" "/Users/Shared/Autodesk/modules/maya/2023/rpr.mod"
 fi
 

@@ -1172,6 +1172,7 @@ namespace frw
 			}
 		}
 
+		void SetDisplacementNoSubdiv(Value image, float minscale = 0, float maxscale = 1);
 		void SetDisplacement(Value image, float minscale = 0, float maxscale = 1);
 		Node GetDisplacementMap();
 		void RemoveDisplacement();
@@ -4149,22 +4150,45 @@ namespace frw
 		return shape;
 	}
 
+	inline void Shape::SetDisplacementNoSubdiv(Value image, float minscale, float maxscale)
+	{
+		RemoveDisplacement();
+
+		if (!image.IsNode())
+			return;
+
+		Node n = image.GetNode();
+		const MaterialSystem& ms = n.GetMaterialSystem();
+
+		MDistance::Unit sceneUnits = MDistance::uiUnit();
+		MDistance distance(1.0, sceneUnits);
+		float scale_multiplier = (float)distance.asMeters() * 100;
+		minscale *= scale_multiplier;
+		maxscale *= scale_multiplier;
+
+		ArithmeticNode displaced_material(ms, OperatorMultiply, Value(maxscale, 0.0f, 0.0f), image);
+
+		auto res = rprShapeSetDisplacementMaterial(Handle(), displaced_material.Handle());
+		checkStatus(res);
+	}
+
 	inline void Shape::SetDisplacement(Value v, float minscale, float maxscale)
 	{
 		RemoveDisplacement();
+
 		if (v.IsNode())
 		{
 			Node n = v.GetNode();
 			data().displacementShader = n;
 			auto res = rprShapeSetDisplacementMaterial(Handle(), n.Handle());
 			checkStatus(res);
-
+		
 			MDistance::Unit sceneUnits = MDistance::uiUnit();
 			MDistance distance(1.0, sceneUnits);
 			float scale_multiplier = (float) distance.asMeters() * 100;
 			minscale *= scale_multiplier;
 			maxscale *= scale_multiplier;
-
+		
 			if (minscale > maxscale)
 			{
 				// render with no displacement

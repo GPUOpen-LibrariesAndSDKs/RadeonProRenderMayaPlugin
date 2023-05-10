@@ -61,7 +61,7 @@ protected:
 
 	virtual void OnPreRender() override;
 
-	virtual int GetAOVMaxValue() override;
+	virtual int GetAOVMaxValue() const override;
 
 private:
 	static rpr_int m_gTahoePluginID;

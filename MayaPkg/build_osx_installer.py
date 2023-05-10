@@ -139,7 +139,7 @@ remappath.remapLibraryPaths(library_list, Path(libs_files_dist_dir), ".dylib", P
 
 # Add the plugin files
 
-for name in ['icons','images','plug-ins','renderDesc','scripts','shaders','shelves', 'data']:
+for name in ['icons','images','plug-ins','renderDesc','scripts','shaders','shelves', 'data', 'hipbin']:
     shutil.copytree(str(build_output_dir / name), str(addon_files_dist_dir / name))
 
 for name in ['convertAI2RPR.py', 'convertRS2RPR.py', 'convertVR2RPR.py']:

@@ -134,12 +134,14 @@ global proc createQualityTab()
 	frameLayout -label "Engine:" -cll true -cl 0 fireRenderTahoeEngineFrame;
 		attrControlGrp
 		    -label "Render Engine:"
-		     -attribute "RadeonProRenderGlobals.renderVersion";
+		    -attribute "RadeonProRenderGlobals.renderVersion";
+
+		attrControlGrp
+			-label "Use Legacy OpenCL context"
+			-attribute "RadeonProRenderGlobals.useOpenCLContext";
 	setParent ..;
 
-
-
-        createFinalRenderQualityPart();
+	createFinalRenderQualityPart();
 	createViewportRenderQualityPart();
 
 	formLayout
