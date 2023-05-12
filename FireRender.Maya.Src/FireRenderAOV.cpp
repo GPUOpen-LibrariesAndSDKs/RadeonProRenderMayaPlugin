@@ -326,6 +326,13 @@ bool FireRenderAOV::writeToFile(FireRenderContext& context, const MString& fileP
 	if (!active || !pixels || m_region.isZeroArea())
 		return false;
 
+	// do not write Shading normal, Object ID, Material Index, and UV for contour as they are overwritten per iteration
+	bool isContour = context.Globals().contourIsEnabled;
+	if (isContour && (id == RPR_AOV_MATERIAL_ID || id == RPR_AOV_SHADING_NORMAL || id == RPR_AOV_OBJECT_ID || id == RPR_AOV_UV))
+	{
+		return true;
+	}
+
 	// Use the incoming path if only outputting the color AOV,
 	// otherwise, get a new path that includes a folder for the AOV.
 	MString path = colorOnly ? filePath : getOutputFilePath(filePath);
