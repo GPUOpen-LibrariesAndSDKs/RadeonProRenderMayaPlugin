@@ -643,6 +643,7 @@ public:
 
 	virtual rpr_int SetRenderQuality(RenderQuality quality) { return RPR_SUCCESS; }
 
+	virtual void setupContextHybridParams(const FireRenderGlobalsData& fireRenderGlobalsData) {}
 	virtual void setupContextContourMode(const FireRenderGlobalsData& fireRenderGlobalsData, int createFlags, bool disableWhiteBalance = false) {}
 	virtual void setupContextPostSceneCreation(const FireRenderGlobalsData& fireRenderGlobalsData, bool disableWhiteBalance = false) {}
 	virtual void setupContextAirVolume(const FireRenderGlobalsData& fireRenderGlobalsData) {}

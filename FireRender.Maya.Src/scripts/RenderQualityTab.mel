@@ -15,6 +15,24 @@ proc int isWindowsRunning()
 	return `about -windows`;
 }
 
+global proc UpdateProductionRenderSettingsUI()
+{
+	int $type = `getAttr RadeonProRenderGlobals.renderQualityFinalRender`;
+	int $isHybrid = $type != 0;
+
+	frameLayout -edit -enable ($isHybrid) fireRenderProductionRenderHybridParams;
+
+	attrControlGrp -edit -enable (false) finalRenderPtDenoiser;
+}
+
+global proc UpdateFinalRenderFSRUI()
+{
+	int $type = `getAttr RadeonProRenderGlobals.finalRender_ptDenoiser`;
+	int $isDenoiserEnabled = $type != 0;
+
+	//attrControlGrp -edit -enable ($isDenoiserEnabled) finalRenderFSRControl;
+}
+
 proc createFinalRenderQualityPart()
 {
 	// Render Resources section
@@ -27,7 +45,7 @@ proc createFinalRenderQualityPart()
 		attrControlGrp
 			-label "Render Quality"
 			-attribute "RadeonProRenderGlobals.renderQualityFinalRender"
-			-changeCommand $visScrpt;
+			-cc UpdateProductionRenderSettingsUI;
 			
 		setParent ..;
 	}
@@ -94,6 +112,71 @@ proc createFinalRenderQualityPart()
 		 -attribute "RadeonProRenderGlobals.textureCompression";
 
 	setParent ..;
+
+	frameLayout -label "Final Render Advanced Hybrid Params" -cll true -cl 0 fireRenderProductionRenderHybridParams;
+
+	    attrControlGrp
+	        -label "Pt Denoiser"
+	        -attribute "RadeonProRenderGlobals.finalRender_ptDenoiser"
+			-cc UpdateFinalRenderFSRUI
+			finalRenderPtDenoiser;
+
+	   attrControlGrp
+	        -label "FSR"
+	        -attribute "RadeonProRenderGlobals.finalRender_FSR"
+			finalRenderFSRControl;
+
+	    attrControlGrp
+	        -label "Material Cache"
+	        -attribute "RadeonProRenderGlobals.finalRender_materialCache";
+
+	    //attrControlGrp
+	    //    -label "RestirGI"
+	    //    -attribute "RadeonProRenderGlobals.finalRender_restirGI";
+		
+	    attrControlGrp
+	        //-label "Reservoir Sampling"
+	        -label "Restir"
+	        -attribute "RadeonProRenderGlobals.finalRender_reservoirSampling";
+		
+			attrControlGrp
+			    -label "Spatial Resample Iterations"
+			    -attribute "RadeonProRenderGlobals.finalRender_restirSpatialResampleIterations";
+		
+			attrControlGrp
+			    -label "Max Reservoirs Per Cell"
+			    -attribute "RadeonProRenderGlobals.finalRender_restirMaxReservoirsPerCell";
+		
+		frameLayout -label "GMON" -cll false -cl 0;
+			attrControlGrp
+			    -label "Enable"
+			    -attribute "RadeonProRenderGlobals.finalRender_useGmon";
+   
+			attrControlGrp
+			    -label "GINI Coefficient"
+			    -attribute "RadeonProRenderGlobals.finalRender_giniCoeffGmon";
+		setParent ..;
+		setParent ..;
+	
+	UpdateProductionRenderSettingsUI();
+}
+
+global proc UpdateViewportSettingsUI()
+{
+	int $type = `getAttr RadeonProRenderGlobals.renderQualityViewport`;
+	int $isHybrid = $type != 4;
+
+	frameLayout -edit -enable ($isHybrid) fireRenderViewportHybridParams;
+
+	attrControlGrp -edit -enable (false) viewportPtDenoiser;	
+}
+
+global proc UpdateViewportFSRUI()
+{
+	int $type = `getAttr RadeonProRenderGlobals.ptDenoiser`;
+	int $isDenoiserEnabled = $type != 0;
+
+	//attrControlGrp -edit -enable ($isDenoiserEnabled) viewportFSRControl;
 }
 
 proc createViewportRenderQualityPart()
@@ -106,7 +189,7 @@ proc createViewportRenderQualityPart()
 		attrControlGrp
 			 -label "Render Quality"
 			 -attribute "RadeonProRenderGlobals.renderQualityViewport"
-			 -changeCommand $visScrpt;
+			 -cc UpdateViewportSettingsUI;
 		setParent ..;
 	}
 
@@ -123,6 +206,56 @@ proc createViewportRenderQualityPart()
 	        -label "Max Reflection Ray Depth"
 	        -attribute "RadeonProRenderGlobals.maxDepthGlossyViewport";
 	setParent ..;
+
+	frameLayout -label "Viewport Advanced Hybrid Params" -cll true -cl 0 fireRenderViewportHybridParams;
+	    attrControlGrp
+	        -label "Pt Denoiser"
+	        -attribute "RadeonProRenderGlobals.ptDenoiser"
+			-cc UpdateViewportFSRUI
+			viewportPtDenoiser;
+
+	   attrControlGrp
+	        -label "FSR"
+	        -attribute "RadeonProRenderGlobals.FSR"
+			viewportFSRControl;
+
+	    attrControlGrp
+	        -label "Material Cache"
+	        -attribute "RadeonProRenderGlobals.materialCache";
+
+		frameLayout -label "Restir" -cll false -cl 0;
+			//attrControlGrp
+			//    -label "RestirGI"
+			//    -attribute "RadeonProRenderGlobals.restirGI";
+			
+			//attrControlGrp
+			//    -label "RestirGI Bias Correction"
+			//    -attribute "RadeonProRenderGlobals.restirGIBiasCorrection";
+			
+			attrControlGrp
+			    //-label "Reservoir Sampling"
+			    -label "Restir"
+			    -attribute "RadeonProRenderGlobals.reservoirSampling";
+		
+			attrControlGrp
+			    -label "Spatial Resample Iterations"
+			    -attribute "RadeonProRenderGlobals.restirSpatialResampleIterations";
+		
+			attrControlGrp
+			    -label "Max Reservoirs Per Cell"
+			    -attribute "RadeonProRenderGlobals.restirMaxReservoirsPerCell";
+
+		frameLayout -label "GMON" -cll false -cl 0;
+			attrControlGrp
+			    -label "Enable"
+			    -attribute "RadeonProRenderGlobals.finalRender_useGmon";
+   
+			attrControlGrp
+			    -label "GINI Coefficient"
+			    -attribute "RadeonProRenderGlobals.finalRender_giniCoeffGmon";
+	setParent ..;
+
+	UpdateViewportSettingsUI();
 }
 
 global proc createQualityTab()
@@ -132,10 +265,6 @@ global proc createQualityTab()
 	columnLayout -w 375 -adjustableColumn true fireRenderTabColumn;
 
 	frameLayout -label "Engine:" -cll true -cl 0 fireRenderTahoeEngineFrame;
-		attrControlGrp
-		    -label "Render Engine:"
-		    -attribute "RadeonProRenderGlobals.renderVersion";
-
 		attrControlGrp
 			-label "Use Legacy OpenCL context"
 			-attribute "RadeonProRenderGlobals.useOpenCLContext";
