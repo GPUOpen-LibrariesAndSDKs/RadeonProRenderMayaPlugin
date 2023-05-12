@@ -15,7 +15,6 @@ global proc AEShadowCatcherCheckEnableSC(string $nodeName)
 	string $nodeAttr = $nodeName + ".scenabled";
 	int $value = `getAttr $nodeAttr`;
 
-	editorTemplate -dimControl $nodeName "bgIsEnv" ($value == 0);
 	editorTemplate -dimControl $nodeName "bgWeight" ($value == 0);
 	editorTemplate -dimControl $nodeName "bgColor" ($value == 0);
 	editorTemplate -dimControl $nodeName "bgTransparency" ($value == 0);
@@ -50,7 +49,6 @@ global proc AERPRShadowCatcherMaterialTemplate( string $nodeName )
 	editorTemplate -beginLayout "Shadow Catcher Attributes" -collapse 0;
 		editorTemplate -label "Enable" -addControl "scenabled" "AEShadowCatcherCheckEnableSC";
 
-		editorTemplate -l "Background is Environment" -addControl "bgIsEnv";
 		editorTemplate -l "Background weight" -addControl "bgWeight";
 		editorTemplate -l "Background color" -addControl "bgColor";
 		editorTemplate -l "Background transparency" -addControl "bgTransparency";

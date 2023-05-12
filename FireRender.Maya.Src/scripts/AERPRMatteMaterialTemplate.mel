@@ -15,7 +15,6 @@ global proc AEMatteCheckEnableSC(string $nodeName)
 	string $nodeAttr = $nodeName + ".scenabled";
 	int $value = `getAttr $nodeAttr`;
 
-	editorTemplate -dimControl $nodeName "bgIsEnv" ($value == 0);
 	editorTemplate -dimControl $nodeName "shadowColor" ($value == 0);
 	editorTemplate -dimControl $nodeName "shadowWeight" ($value == 0);
 	editorTemplate -dimControl $nodeName "shadowTransp" ($value == 0);
@@ -89,8 +88,6 @@ global proc AERPRMatteMaterialTemplate( string $nodeName )
 
 	editorTemplate -beginLayout "Shadow Catcher Attributes" -collapse 0;
 		editorTemplate -label "Enable" -addControl "scenabled" "AEMatteCheckEnableSC";
-
-		editorTemplate -l "Background is Environment" -addControl "bgIsEnv";
 
 		editorTemplate -l "Shadow color" -addControl "shadowColor";
 		editorTemplate -l "Shadow weight" -addControl "shadowWeight";
