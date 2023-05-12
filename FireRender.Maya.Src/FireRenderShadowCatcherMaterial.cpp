@@ -87,7 +87,6 @@ MStatus FireMaya::ShadowCatcherMaterial::initialize()
 	{
 		{ &Attribute::scenabled, "scenabled", "scen", 0, 0, 1, MFnNumericData::kBoolean },
 		{ &Attribute::rcenabled, "rcenabled", "rcen", 0, 0, 1, MFnNumericData::kBoolean },
-		{ &Attribute::bgIsEnv, "bgIsEnv", "bgie", 0, 0, 1, MFnNumericData::kBoolean },
 		{ &Attribute::disableSwatch, "disableSwatch", "ds", 0, 0, 0, MFnNumericData::kBoolean }
 	};
 
@@ -190,9 +189,6 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 		{
 			shader.SetShadowWeight(shadowWeight.GetX());
 		}
-
-		bool bgIsEnv = shaderNode.findPlug(Attribute::bgIsEnv, false).asBool();
-		shader.SetBackgroundIsEnvironment(bgIsEnv);
 
 		shader.SetShadowCatcher(true);
 	}

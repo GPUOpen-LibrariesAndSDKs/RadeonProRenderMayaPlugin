@@ -3217,6 +3217,8 @@ void FireRenderContext::rifReflectionCatcherOutput(const ReadFrameBufferRequestP
 		catcherFilter->AddInput(RifReflectionCatcher, reflectionCatcherFrameBuffer, 0.1f);
 		catcherFilter->AddInput(RifBackground, backgroundFrameBuffer, 0.1f);
 
+		RifParam p = { RifParamType::RifOther, (rif_int)iblDisplay };
+		catcherFilter->AddParam("iblDisplay", p);
 		catcherFilter->AttachFilter();
 
 		catcherFilter->Run();
@@ -3271,6 +3273,9 @@ void FireRenderContext::rifReflectionShadowCatcherOutput(const ReadFrameBufferRe
 
 		p = { RifParamType::RifOther, (rif_float)params.shadowTransp };
 		catcherFilter->AddParam("shadowTransp", p);
+
+		p = { RifParamType::RifOther, (rif_int)iblDisplay };
+		catcherFilter->AddParam("iblDisplay", p);
 
 		catcherFilter->AttachFilter();
 
