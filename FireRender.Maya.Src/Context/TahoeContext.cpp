@@ -619,6 +619,7 @@ void NorthStarContext::OnPreRender()
 	{
 		SetPreviewMode(previewModeLevel);
 	}
+
 }
 
 int NorthStarContext::GetAOVMaxValue() const

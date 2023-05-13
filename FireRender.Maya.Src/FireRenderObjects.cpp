@@ -2200,6 +2200,7 @@ PLType FireRenderPhysLight::GetPhysLightType(MObject node)
 
 void FireRenderLight::Freshen(bool shouldCalculateHash)
 {
+
 	if (ShouldUpdateTransformOnly())
 	{
 		MMatrix matrix = DagPath().inclusiveMatrix();
@@ -2480,10 +2481,33 @@ void FireRenderEnvLight::Freshen(bool shouldCalculateHash)
 			context()->iblTransformObject = dagPath.transform();
 			//
 
-			if (!GetPlugValue("display", true) || m.light.IsAmbientLight())
+			if (m.light.IsAmbientLight())
 			{
 				m.bgOverride = Context().CreateEnvironmentLight();
 				m.bgOverride.SetImage(frw::Image(Context(), 0, 0, 0));
+			}
+
+			rpr_context rpr_con = context()->context();
+			assert(rpr_con != nullptr);
+			if (rpr_con != nullptr)
+			{
+				MPlug displayPlug = dagNode.findPlug("display");
+				
+				if (!displayPlug.isNull())
+				{
+					context()->iblDisplay = displayPlug.asBool();
+				}
+				
+			} else {
+				DebugPrint("Error. rpr_context is nullptr while setting iblDisplay");
+			}
+
+			// set ibl_display to the checkbox value. Don't do it if reflection catcher is enabled
+			FireRenderGlobalsData fireRenderGlobalsData = context()->Globals();
+
+			if (!fireRenderGlobalsData.reflectionCatcherEnabled)
+			{
+				context()->GetContext().SetParameter(RPR_CONTEXT_IBL_DISPLAY, context()->iblDisplay);
 			}
 
 			attachToScene();	// normal!
