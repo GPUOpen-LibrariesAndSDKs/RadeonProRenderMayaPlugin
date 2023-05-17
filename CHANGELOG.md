@@ -1,3 +1,33 @@
+# Version 3.5
+
+## New Features:
+- The RPR Final mode now uses AMD’s HIP for running on the GPU. This increases download package size for now, but allows faster first renders as the kernels are pre-compiled.
+- The RPR Interactive mode has been improved with the following developments:
+ - Displacement support;
+ - Better MaterialX support;
+ - Lookup UV nodes support;
+ - Support for GPUs with less than 8 GB VRAM.
+ - Support for GPUs without hardware-accelerated ray tracing.
+- Settings for Interactive mode to use RESTIR-based direct lighting and FSR2 upscaling have been added. These by default should give excellent interactivity when rendering in the viewport.
+
+
+## Bugs Fixed:
+- Ambient Lights now works for the Interactive mode.
+- A bug on Nvidia caused by a driver update has been fixed. (We now use the HIP feature to compile kernels to CUDA, avoiding buggy OpenCL implementations).
+- Double Sided node now works with the Interactive mode.
+- RPR Uber and Displacement UI now match.
+- Viewport was not updating with the denoiser enabled — fixed.
+- Blend materials could not be rendered correctly in the viewport in certain cases — fixed.
+- Support has been added for exporting and batch rendering frames with negative numbers.
+- The albedo color for volumes now defaults to gray.
+- The UI for toon shaders has received some useful updates.
+- Shadow Catcher and Reflection Catcher AOVs were not created correctly when exporting a scene with an IBL — fixed.
+
+## Known Issues:
+- Certain GPUs may give an error about "Out of Memory" on RPR Interactive mode.
+- Some materials may appear black on lower VRAM GPUs on RPR Interactive mode.
+
+
 # Version 3.4
 
 ## New Features:
