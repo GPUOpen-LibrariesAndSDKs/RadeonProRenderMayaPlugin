@@ -1090,6 +1090,7 @@ void FireRenderProduction::RenderTiles()
 #endif
 #endif
 
+	m_contextPtr->m_tonemapStartTime = GetCurrentChronoTime();
 	// setup denoiser if necessary
 	m_contextPtr->TryCreateDenoiserImageFilters(true);
 
