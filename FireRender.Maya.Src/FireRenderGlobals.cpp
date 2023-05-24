@@ -191,6 +191,17 @@ namespace
         MObject tileRenderEnabled;
         MObject tileRenderX;
         MObject tileRenderY;
+
+		// hybrid specific
+		MObject useGmon;
+		MObject giniCoeffGmon;
+		MObject ptDenoiser; 
+		MObject FSR;
+		MObject materialCache;
+		MObject restirGI;
+		MObject reservoirSampling;
+		MObject restirSpatialResampleIterations;
+		MObject restirMaxReservoirsPerCell;
     }
 
 	namespace ViewportRenderAttributes
@@ -215,6 +226,18 @@ namespace
 		MObject renderQuality;
 
 		MObject adaptiveThresholdViewport;
+
+		// hybrid specific
+		MObject useGmon;
+		MObject giniCoeffGmon;
+		MObject ptDenoiser;
+		MObject FSR;
+		MObject materialCache;
+		MObject restirGI;
+		MObject restirGIBiasCorrection;
+		MObject reservoirSampling;
+		MObject restirSpatialResampleIterations;
+		MObject restirMaxReservoirsPerCell;
 	}
 
 	bool operator==(const MStringArray& a, const MStringArray& b)
@@ -1287,8 +1310,124 @@ void FireRenderGlobals::createViewportAttributes()
 	MAKE_INPUT(nAttr);
 	nAttr.setMin(0.0);
 	nAttr.setMax(1.0);
-
 	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::adaptiveThresholdViewport));
+
+	ViewportRenderAttributes::useGmon = nAttr.create("useGmon", "vpugm", MFnNumericData::kBoolean, false);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::useGmon));
+
+	ViewportRenderAttributes::giniCoeffGmon = nAttr.create("giniCoeffGmon", "vpgcg", MFnNumericData::kFloat, 0.5);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setMax(1);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::giniCoeffGmon));
+
+	ViewportRenderAttributes::ptDenoiser = eAttr.create("ptDenoiser", "vpptd", PtDenoiserType::kNoPtDenoiser, &status);
+	eAttr.addField("None", PtDenoiserType::kNoPtDenoiser);
+	eAttr.addField("SVGF", PtDenoiserType::kSVGF);
+	eAttr.addField("ASVGF", PtDenoiserType::kASVGF);
+	MAKE_INPUT(eAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::ptDenoiser));
+
+	ViewportRenderAttributes::FSR = eAttr.create("FSR", "vpfsr", FSRType::kNoFSR, &status);
+	eAttr.addField("None", FSRType::kNoFSR);
+	eAttr.addField("Ultra", FSRType::kUltraFSR);
+	eAttr.addField("Quality", FSRType::kQualityFSR);
+	eAttr.addField("Balance", FSRType::kBalanceFSR);
+	eAttr.addField("Performance", FSRType::kPerformanceFSR);
+	eAttr.addField("Ultra Performance", FSRType::kUltraPerformanceFSR);
+	MAKE_INPUT(eAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::FSR));
+
+	ViewportRenderAttributes::materialCache = nAttr.create("materialCache", "vpmc", MFnNumericData::kBoolean, true);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::materialCache));
+
+	ViewportRenderAttributes::restirGI = nAttr.create("restirGI", "vprgi", MFnNumericData::kBoolean, false);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::restirGI));
+	ViewportRenderAttributes::restirGIBiasCorrection = eAttr.create("restirGIBiasCorrection", "vprbc", RestirGIBiasCorrection::kDeterministicMIS, &status);
+	eAttr.addField("No Bias Correction", RestirGIBiasCorrection::kNoBiasCorrection);
+	eAttr.addField("Uniform Weights", RestirGIBiasCorrection::kUniformWeights);
+	eAttr.addField("Stochastic MIS", RestirGIBiasCorrection::kStochasticMIS);
+	eAttr.addField("Deterministic MIS", RestirGIBiasCorrection::kDeterministicMIS);
+	MAKE_INPUT(eAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::restirGIBiasCorrection));
+	
+	ViewportRenderAttributes::reservoirSampling = eAttr.create("reservoirSampling", "vprsp", ReservoirSampling::kWorldSpace, &status);
+	eAttr.addField("Disabled", ReservoirSampling::kDisabled);
+	eAttr.addField("Screen Space", ReservoirSampling::kScreenSpace);
+	eAttr.addField("World Space", ReservoirSampling::kWorldSpace);
+	MAKE_INPUT(eAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::reservoirSampling));
+	
+	ViewportRenderAttributes::restirSpatialResampleIterations = eAttr.create("restirSpatialResampleIterations", "vprsri", 3, &status);
+	eAttr.addField("1", 1);
+	eAttr.addField("3", 3);
+	eAttr.addField("5", 5);
+	MAKE_INPUT(eAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::restirSpatialResampleIterations));
+	
+	ViewportRenderAttributes::restirMaxReservoirsPerCell = nAttr.create("restirMaxReservoirsPerCell", "vprmr", MFnNumericData::kInt, 128, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(1);
+	nAttr.setMax(512);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::restirMaxReservoirsPerCell));
+
+	ViewportRenderAttributes::useGmon = nAttr.create("finalRender_useGmon", "frugm", MFnNumericData::kBoolean, false);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::useGmon));
+
+	ViewportRenderAttributes::giniCoeffGmon = nAttr.create("finalRender_giniCoeffGmon", "frgcg", MFnNumericData::kFloat, 0.5);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(0);
+	nAttr.setMax(1);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::giniCoeffGmon));
+
+	FinalRenderAttributes::ptDenoiser = eAttr.create("finalRender_ptDenoiser", "frptd", PtDenoiserType::kNoPtDenoiser, &status);
+	eAttr.addField("None", PtDenoiserType::kNoPtDenoiser);
+	eAttr.addField("SVGF", PtDenoiserType::kSVGF);
+	eAttr.addField("ASVGF", PtDenoiserType::kASVGF);
+	MAKE_INPUT(eAttr);
+	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::ptDenoiser)); 
+
+	FinalRenderAttributes::FSR = eAttr.create("finalRender_FSR", "frfsr", FSRType::kNoFSR, &status);
+	eAttr.addField("None", FSRType::kNoFSR);
+	eAttr.addField("Ultra", FSRType::kUltraFSR);
+	eAttr.addField("Quality", FSRType::kQualityFSR);
+	eAttr.addField("Balance", FSRType::kBalanceFSR);
+	eAttr.addField("Performance", FSRType::kPerformanceFSR);
+	eAttr.addField("Ultra Performance", FSRType::kUltraPerformanceFSR);
+	MAKE_INPUT(eAttr);
+	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::FSR));
+
+	FinalRenderAttributes::materialCache = nAttr.create("finalRender_materialCache", "frmc", MFnNumericData::kBoolean, true);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::materialCache));
+
+	FinalRenderAttributes::restirGI = nAttr.create("finalRender_restirGI", "frrgi", MFnNumericData::kBoolean, false);
+	MAKE_INPUT(nAttr);
+	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::restirGI));
+	
+	FinalRenderAttributes::reservoirSampling = eAttr.create("finalRender_reservoirSampling", "frrsp", ReservoirSampling::kWorldSpace, &status);
+	eAttr.addField("Disabled", ReservoirSampling::kDisabled);
+	eAttr.addField("Screen Space", ReservoirSampling::kScreenSpace);
+	eAttr.addField("World Space", ReservoirSampling::kWorldSpace);
+	MAKE_INPUT(eAttr);
+	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::reservoirSampling)); 
+	
+	FinalRenderAttributes::restirSpatialResampleIterations = eAttr.create("finalRender_restirSpatialResampleIterations", "frrsri", 3, &status);
+	eAttr.addField("1", 1);
+	eAttr.addField("3", 3);
+	eAttr.addField("5", 5);
+	MAKE_INPUT(eAttr);
+	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::restirSpatialResampleIterations));
+
+	FinalRenderAttributes::restirMaxReservoirsPerCell = nAttr.create("finalRender_restirMaxReservoirsPerCell", "frrmr", MFnNumericData::kInt, 128, &status);
+	MAKE_INPUT(nAttr);
+	nAttr.setMin(1);
+	nAttr.setMax(512);
+	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::restirMaxReservoirsPerCell));
 }
 
 /** Return the FR camera mode that matches the given camera type. */

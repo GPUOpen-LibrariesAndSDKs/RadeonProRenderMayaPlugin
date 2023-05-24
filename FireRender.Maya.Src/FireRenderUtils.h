@@ -249,6 +249,29 @@ public:
 	int viewportMaxDiffuseRayDepth;
 	int viewportMaxReflectionRayDepth;
 
+	// hybrid viewport settings
+	bool viewportUseGmon;
+	float viewportGiniCoeffGmon;
+	int viewportPtDenoiser;
+	int viewportFSR;
+	bool viewportMaterialCache;
+	bool viewportRestirGI;
+	int viewportRestirGIBiasCorrection;
+	int viewportReservoirSampling;
+	int viewportRestirSpatialResampleIterations;
+	int viewportRestirMaxReservoirsPerCell;
+
+	// hybrid production render setting
+	bool productionUseGmon;
+	float productionGiniCoeffGmon;
+	int productionPtDenoiser;
+	int productionFSR;
+	bool productionMaterialCache;
+	bool productionRestirGI;
+	int productionReservoirSampling;
+	int productionRestirSpatialResampleIterations;
+	int productionRestirMaxReservoirsPerCell;
+
 	// Command port
 	int commandPort;
 
