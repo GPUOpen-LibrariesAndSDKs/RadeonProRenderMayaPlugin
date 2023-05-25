@@ -36,7 +36,6 @@ limitations under the License.
 std::vector<std::wstring> getMayaVersionWithInstalledPlugin(MSIHANDLE hInstall)
 {
 	std::vector<std::wstring> versions = {
-		L"2020",
 		L"2022",
 		L"2023",
 		L"2024"
@@ -288,13 +287,6 @@ extern "C" __declspec(dllexport) UINT botoInstall(MSIHANDLE hInstall)
 
 	installBoto3();
 
-	return ERROR_SUCCESS;
-}
-
-extern "C" __declspec(dllexport) UINT patchMayaEnv2020(MSIHANDLE hInstall)
-{
-	LogSystem("patchMayaEnv2020\n");
-	patchMayaEnvFile(L"2020");
 	return ERROR_SUCCESS;
 }
 

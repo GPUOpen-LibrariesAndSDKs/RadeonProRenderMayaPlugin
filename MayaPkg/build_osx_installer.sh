@@ -13,20 +13,9 @@
 
 pushd ../FireRender.Maya.OSX/frMayaPluginMac/frMayaMac
 
-xcodebuild -scheme "Release 2020" -project ./RadeonProRender.xcodeproj clean
 xcodebuild -scheme "Release 2022" -project ./RadeonProRender.xcodeproj clean
 xcodebuild -scheme "Release 2023" -project ./RadeonProRender.xcodeproj clean
 xcodebuild -scheme "Release 2024" -project ./RadeonProRender.xcodeproj clean
-
-xcodebuild -quiet -scheme "Release 2020" -project ./RadeonProRender.xcodeproj -UseModernBuildSystem=NO
-if test $? -eq 0
-then
-	echo "Release 2020 built successfully"
-else
-	echo "Release 2020 failed to build"
-	popd
-	exit 1
-fi
 
 xcodebuild -quiet -scheme "Release 2022" -project ./RadeonProRender.xcodeproj -UseModernBuildSystem=NO
 if test $? -eq 0
@@ -66,7 +55,6 @@ python3 build_osx_installer.py  --nomatlib  $1
 
 # Clean the dev modules to enable testing locally
 
-rm -f /Users/Shared/Autodesk/modules/maya/2020/rpr.mod
 rm -f /Users/Shared/Autodesk/modules/maya/2022/rpr.mod
 rm -f /Users/Shared/Autodesk/modules/maya/2023/rpr.mod
 rm -f /Users/Shared/Autodesk/modules/maya/2024/rpr.mod
