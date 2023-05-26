@@ -1,6 +1,6 @@
 # Radeon ProRender Maya Plugin
 
-Development requires Maya 2020 or later.
+Development requires Maya 2022 or later.
 
 Dependencies
 ============

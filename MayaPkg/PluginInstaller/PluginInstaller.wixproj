@@ -73,7 +73,6 @@ EXCLUDE MATERIAL LIBRARY FROM INSTALLER
   <ItemGroup>
     <Compile Include="Generated\Artefacts.wxs" />
     <Compile Include="Generated\Modules.wxs" />
-    <Compile Include="Generated\Plugin2020.wxs" />
     <Compile Include="Generated\Plugin2022.wxs" />
     <Compile Include="Generated\Plugin2023.wxs" />
     <Compile Include="Generated\Plugin2024.wxs" />
