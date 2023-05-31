@@ -208,7 +208,8 @@ bool FireRenderContext::TryCreateTonemapImageFilters()
 			context(),
 			width,
 			height,
-			mlModelsFolder.asChar()
+			mlModelsFolder.asChar(),
+			true
 		));
 
 		void* pBuffer = PixelBuffers()[RPR_AOV_COLOR].data();
