@@ -1380,4 +1380,7 @@ long TimeDiffChrono(TimePoint currTime, TimePoint startTime)
 	return (long)std::chrono::duration_cast<T>(currTime - startTime).count();
 }
 
+std::string getTimeSpentString(size_t timeInMs);
+
+std::string getFormattedTime(size_t timeInMs);
 

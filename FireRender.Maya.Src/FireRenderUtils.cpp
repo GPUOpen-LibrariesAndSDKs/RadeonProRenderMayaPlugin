@@ -2539,3 +2539,35 @@ std::string GetPathToHipbinFolder()
 	return hipPath;
 }
 
+void getTimeDigits(size_t timeInMs, unsigned long long& minutes, unsigned long long& seconds, unsigned long long& mmseconds)
+{
+	unsigned long long secondsTotal = (unsigned int)(timeInMs / 1000);
+	minutes = secondsTotal / 60;
+	seconds = secondsTotal % 60;
+	mmseconds = timeInMs % 1000;
+}
+
+std::string getTimeSpentString(size_t timeInMs)
+{
+	unsigned long long minutes = 0;
+	unsigned long long seconds = 0;
+	unsigned long long mmseconds = 0;
+
+	getTimeDigits(timeInMs, minutes, seconds, mmseconds);
+
+	std::string str = string_format("%llum %llus %llums", minutes, seconds, mmseconds);
+
+	return str;
+}
+
+std::string getFormattedTime(size_t timeInMs)
+{
+	unsigned long long minutes = 0;
+	unsigned long long seconds = 0;
+	unsigned long long mmseconds = 0;
+
+	getTimeDigits(timeInMs, minutes, seconds, mmseconds);
+
+	return string_format("%02llu:%02llu.%03llu", minutes, seconds, mmseconds);
+}
+
