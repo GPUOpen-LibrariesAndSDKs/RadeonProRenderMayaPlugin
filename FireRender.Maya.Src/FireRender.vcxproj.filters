@@ -1216,6 +1216,9 @@
     <ClInclude Include="FireRenderBevel.h">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="VulcanUtils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="scripts\registerFireRender.mel">

@@ -516,9 +516,85 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		if (!plug.isNull())
 			reflectionCatcherEnabled = plug.asBool();
 
+		plug = frGlobalsNode.findPlug("useGmon");
+		if (!plug.isNull())
+			viewportUseGmon = plug.asBool();
+		
 		plug = frGlobalsNode.findPlug("useOpenCLContext");
 		if (!plug.isNull())
 			useOpenCLContext = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("giniCoeffGmon");
+		if (!plug.isNull())  
+			viewportGiniCoeffGmon = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("ptDenoiser");
+		if (!plug.isNull())
+			viewportPtDenoiser = plug.asInt();
+
+		plug = frGlobalsNode.findPlug("FSR");
+		if (!plug.isNull())
+			viewportFSR = plug.asInt();
+
+		plug = frGlobalsNode.findPlug("materialCache");
+		if (!plug.isNull())
+			viewportMaterialCache = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("restirGI");
+		if (!plug.isNull())
+			viewportRestirGI = plug.asBool();
+		
+		plug = frGlobalsNode.findPlug("restirGIBiasCorrection");
+		if (!plug.isNull())
+			viewportRestirGIBiasCorrection = plug.asInt();
+		
+		plug = frGlobalsNode.findPlug("reservoirSampling");
+		if (!plug.isNull())
+			viewportReservoirSampling = plug.asInt();
+		
+		plug = frGlobalsNode.findPlug("restirSpatialResampleIterations");
+		if (!plug.isNull())
+			viewportRestirSpatialResampleIterations = plug.asInt();
+		
+		plug = frGlobalsNode.findPlug("restirMaxReservoirsPerCell");
+		if (!plug.isNull())
+			viewportRestirMaxReservoirsPerCell = plug.asInt(); 
+		
+		plug = frGlobalsNode.findPlug("finalRender_useGmon");
+		if (!plug.isNull())
+			productionUseGmon = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("finalRender_giniCoeffGmon");
+		if (!plug.isNull())
+			productionGiniCoeffGmon = plug.asFloat();
+
+		plug = frGlobalsNode.findPlug("finalRender_ptDenoiser");
+		if (!plug.isNull())
+			productionPtDenoiser = plug.asInt();
+
+		plug = frGlobalsNode.findPlug("finalRender_FSR");
+		if (!plug.isNull())
+			productionFSR = plug.asInt();
+
+		plug = frGlobalsNode.findPlug("finalRender_materialCache");
+		if (!plug.isNull())
+			productionMaterialCache = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("finalRender_restirGI");
+		if (!plug.isNull())
+			productionRestirGI = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("finalRender_reservoirSampling");
+		if (!plug.isNull())
+			productionReservoirSampling = plug.asInt();
+
+		plug = frGlobalsNode.findPlug("finalRender_restirSpatialResampleIterations");
+		if (!plug.isNull())
+			productionRestirSpatialResampleIterations = plug.asInt();
+
+		plug = frGlobalsNode.findPlug("finalRender_restirMaxReservoirsPerCell");
+		if (!plug.isNull())
+			productionRestirMaxReservoirsPerCell = plug.asInt();
 
 		aovs.readFromGlobals(frGlobalsNode);
 
@@ -2461,5 +2537,37 @@ std::string GetPathToHipbinFolder()
 	hipPath += "/../hipbin";
 
 	return hipPath;
+}
+
+void getTimeDigits(size_t timeInMs, unsigned long long& minutes, unsigned long long& seconds, unsigned long long& mmseconds)
+{
+	unsigned long long secondsTotal = (unsigned int)(timeInMs / 1000);
+	minutes = secondsTotal / 60;
+	seconds = secondsTotal % 60;
+	mmseconds = timeInMs % 1000;
+}
+
+std::string getTimeSpentString(size_t timeInMs)
+{
+	unsigned long long minutes = 0;
+	unsigned long long seconds = 0;
+	unsigned long long mmseconds = 0;
+
+	getTimeDigits(timeInMs, minutes, seconds, mmseconds);
+
+	std::string str = string_format("%llum %llus %llums", minutes, seconds, mmseconds);
+
+	return str;
+}
+
+std::string getFormattedTime(size_t timeInMs)
+{
+	unsigned long long minutes = 0;
+	unsigned long long seconds = 0;
+	unsigned long long mmseconds = 0;
+
+	getTimeDigits(timeInMs, minutes, seconds, mmseconds);
+
+	return string_format("%02llu:%02llu.%03llu", minutes, seconds, mmseconds);
 }
 

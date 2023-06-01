@@ -3464,7 +3464,6 @@ namespace frw
 				float mShadowB = 0.0f;
 				float mShadowA = 0.0f;
 				float mShadowWeight = 1.0f;
-				bool mBgIsEnv = false;
 			};
 
 		public:
@@ -3520,16 +3519,6 @@ namespace frw
 		float GetShadowWeight() const
 		{
 			return data().mShadowCatcherParams.mShadowWeight;
-		}
-
-		void SetBackgroundIsEnvironment(bool bgIsEnv)
-		{
-			data().mShadowCatcherParams.mBgIsEnv = bgIsEnv;
-		}
-
-		bool BgIsEnv() const
-		{
-			return data().mShadowCatcherParams.mBgIsEnv;
 		}
 
 		void SetReflectionCatcher(bool isReflectionCatcher)

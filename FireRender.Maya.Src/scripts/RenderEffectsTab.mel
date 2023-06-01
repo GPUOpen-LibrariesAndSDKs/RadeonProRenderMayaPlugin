@@ -278,6 +278,9 @@ global proc onUpdateContour()
 	attrControlGrp -edit -enable $enabled contourUVThreshold;
 	attrControlGrp -edit -enable $enabled contourAntialiasing;
 	attrControlGrp -edit -enable $enabled contourIsDebugEnabled;
+
+	// enable or disable tile rendering
+	FinalRender_TileRenderingReactToContourChanged($enabled);
 }
 
 global proc createFireRenderMotionBlurFrame(string $parent)

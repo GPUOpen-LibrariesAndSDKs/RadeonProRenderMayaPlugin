@@ -208,7 +208,8 @@ bool FireRenderContext::TryCreateTonemapImageFilters()
 			context(),
 			width,
 			height,
-			mlModelsFolder.asChar()
+			mlModelsFolder.asChar(),
+			true
 		));
 
 		void* pBuffer = PixelBuffers()[RPR_AOV_COLOR].data();
@@ -479,6 +480,7 @@ bool FireRenderContext::buildScene(bool isViewport, bool glViewport, bool freshe
 		GetScope().CreateScene();
 		updateLimitsFromGlobalData(m_globals);
 		setupContextContourMode(m_globals, createFlags);
+		setupContextHybridParams(m_globals); 
 		setupContextPostSceneCreation(m_globals);
 
 		setMotionBlurParameters(m_globals);
@@ -2172,6 +2174,7 @@ void FireRenderContext::updateFromGlobals(bool applyLock)
 
 	m_globals.readFromCurrentScene();
 	setupContextContourMode(m_globals, createFlags);
+	setupContextHybridParams(m_globals);
 	setupContextAirVolume(m_globals);
 	setupContextPostSceneCreation(m_globals);
 	setupContextCryptomatteSettings(m_globals);
@@ -3215,6 +3218,8 @@ void FireRenderContext::rifReflectionCatcherOutput(const ReadFrameBufferRequestP
 		catcherFilter->AddInput(RifReflectionCatcher, reflectionCatcherFrameBuffer, 0.1f);
 		catcherFilter->AddInput(RifBackground, backgroundFrameBuffer, 0.1f);
 
+		RifParam p = { RifParamType::RifOther, (rif_int)iblDisplay };
+		catcherFilter->AddParam("iblDisplay", p);
 		catcherFilter->AttachFilter();
 
 		catcherFilter->Run();
@@ -3269,6 +3274,9 @@ void FireRenderContext::rifReflectionShadowCatcherOutput(const ReadFrameBufferRe
 
 		p = { RifParamType::RifOther, (rif_float)params.shadowTransp };
 		catcherFilter->AddParam("shadowTransp", p);
+
+		p = { RifParamType::RifOther, (rif_int)iblDisplay };
+		catcherFilter->AddParam("iblDisplay", p);
 
 		catcherFilter->AttachFilter();
 

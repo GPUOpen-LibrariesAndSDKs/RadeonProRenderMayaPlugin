@@ -13,6 +13,7 @@ limitations under the License.
 #include "HybridProContext.h"
 #include "RadeonProRender_Baikal.h"
 #include "ContextCreator.h"
+#include "VulcanUtils.h"
 
 #include "../FireRenderMaterial.h"
 #include "../FireRenderStandardMaterial.h"
@@ -76,10 +77,45 @@ rpr_int HybridProContext::CreateContextInternal(rpr_creation_flags createFlags, 
 		MGlobal::displayWarning("If render stamp is enabled, please change render device to GPU");
 	}
 
+	// context properties
 	std::vector<rpr_context_properties> ctxProperties;
 	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_HYBRID_ENABLE_PER_FACE_MATERIALS);
 	const bool perFaceEnabled = true;
 	ctxProperties.push_back((rpr_context_properties)&perFaceEnabled);
+
+	// - support old GPUs with small memory
+	TimePoint beforeGetMemorySizeCall = GetCurrentChronoTime();
+	size_t gpuMemorySize = RprVulkanUtils::GetGpuMemory();
+
+	{
+		unsigned long timeSpentOnVUlcanCallsInMiliseconds = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), beforeGetMemorySizeCall);
+		std::string str = getFormattedTime(timeSpentOnVUlcanCallsInMiliseconds);
+		str = string_format("Time spent on calls to Vulcan AOI: %s\n", str.c_str());
+		MGlobal::displayInfo(MString(str.c_str()));
+	}
+
+	if (gpuMemorySize < 10_GB)
+	{
+		unsigned long long meshMemorySizeB = 2056_MB;
+		unsigned long long stagingMemorySizeB = 32_MB;
+		unsigned long long scratchMemorySizeB = 16_MB;
+
+		std::string message = "Detected GPU memory size less than 10 GB. Render time may be increased!\n";
+		MGlobal::displayWarning(message.c_str());
+
+		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_HYBRID_STAGING_MEMORY_SIZE);
+		ctxProperties.push_back((rpr_context_properties)&stagingMemorySizeB);
+		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_HYBRID_SCRATCH_MEMORY_SIZE);
+		ctxProperties.push_back((rpr_context_properties)&scratchMemorySizeB);
+		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_HYBRID_MESH_MEMORY_SIZE);
+		ctxProperties.push_back((rpr_context_properties)&meshMemorySizeB);
+	}
+	else
+	{
+		std::string message = "Detected GPU memory more than 10 GB. Render time should be optimal\n";
+		MGlobal::displayInfo(message.c_str());
+	}
+
 	ctxProperties.push_back((rpr_context_properties)0);
 
 #ifdef RPR_VERSION_MAJOR_MINOR_REVISION
@@ -155,4 +191,96 @@ int HybridProContext::GetAOVMaxValue() const
 	return RPR_AOV_MAX;
 }
 
+
+void HybridProContext::setupContextHybridParams(const FireRenderGlobalsData& fireRenderGlobalsData)
+{
+	frw::Context context = GetContext();
+	rpr_context frcontext = context.Handle();
+
+	rpr_int frstatus = RPR_SUCCESS;
+
+	bool isViewportRender = (GetRenderType() == RenderType::ViewportRender) || (GetRenderType() == RenderType::IPR);
+	if (isViewportRender)
+	{
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_USE_GMON, fireRenderGlobalsData.viewportUseGmon);
+		checkStatus(frstatus);
+
+		frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_GINI_COEFFICIENT_FOR_GMON, fireRenderGlobalsData.viewportGiniCoeffGmon);
+		checkStatus(frstatus);
+
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_PT_DENOISER, fireRenderGlobalsData.viewportPtDenoiser);
+		checkStatus(frstatus);
+
+		if (fireRenderGlobalsData.viewportFSR > 0)
+		{
+			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_UPSCALER, RPR_UPSCALER_FSR2);
+			checkStatus(frstatus);
+			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_FSR2_QUALITY, fireRenderGlobalsData.viewportFSR);
+			checkStatus(frstatus);
+		}
+		else
+		{
+			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_UPSCALER, RPR_UPSCALER_NONE);
+			checkStatus(frstatus);
+		}
+
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MATERIAL_CACHE, fireRenderGlobalsData.viewportMaterialCache);
+		checkStatus(frstatus);
+		
+		//frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_RESTIR_GI, fireRenderGlobalsData.viewportRestirGI);
+		//checkStatus(frstatus);
+		//
+		//frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_RESTIR_GI_BIAS_CORRECTION, fireRenderGlobalsData.viewportRestirGIBiasCorrection);
+		//checkStatus(frstatus);
+		
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_RESERVOIR_SAMPLING, fireRenderGlobalsData.viewportReservoirSampling);
+		checkStatus(frstatus);
+		
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_RESTIR_SPATIAL_RESAMPLE_ITERATIONS, fireRenderGlobalsData.viewportRestirSpatialResampleIterations);
+		checkStatus(frstatus);
+		
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_RESTIR_MAX_RESERVOIRS_PER_CELL, fireRenderGlobalsData.viewportRestirMaxReservoirsPerCell);
+		checkStatus(frstatus);
+
+	}
+	else
+	{
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_USE_GMON, fireRenderGlobalsData.productionUseGmon);
+		checkStatus(frstatus);
+		
+		frstatus = rprContextSetParameterByKey1f(frcontext, RPR_CONTEXT_GINI_COEFFICIENT_FOR_GMON, fireRenderGlobalsData.productionGiniCoeffGmon);
+		checkStatus(frstatus);
+		
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_PT_DENOISER, fireRenderGlobalsData.productionPtDenoiser);
+		checkStatus(frstatus);
+
+		if (fireRenderGlobalsData.productionFSR > 0)
+		{
+			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_UPSCALER, RPR_UPSCALER_FSR2);
+			checkStatus(frstatus);
+			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_FSR2_QUALITY, fireRenderGlobalsData.productionFSR);
+			checkStatus(frstatus);
+		}
+		else
+		{
+			frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_UPSCALER, RPR_UPSCALER_NONE);
+			checkStatus(frstatus);
+		}
+		
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MATERIAL_CACHE, fireRenderGlobalsData.productionMaterialCache);
+		checkStatus(frstatus);
+		
+		//frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_RESTIR_GI, fireRenderGlobalsData.productionRestirGI);
+		//checkStatus(frstatus);
+		
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_RESERVOIR_SAMPLING, fireRenderGlobalsData.productionReservoirSampling);
+		checkStatus(frstatus);
+
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_RESTIR_SPATIAL_RESAMPLE_ITERATIONS, fireRenderGlobalsData.productionRestirSpatialResampleIterations);
+		checkStatus(frstatus);
+
+		frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_RESTIR_MAX_RESERVOIRS_PER_CELL, fireRenderGlobalsData.productionRestirMaxReservoirsPerCell);
+		checkStatus(frstatus);
+	}
+}
 

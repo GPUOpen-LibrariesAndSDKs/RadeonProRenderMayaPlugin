@@ -949,7 +949,7 @@ MStatus initializePlugin(MObject obj)
 	CHECK_MSTATUS(plugin.registerNode(namePrefix + "Ramp", FireMaya::RPRRamp::FRTypeID(),
 		FireMaya::RPRRamp::creator,
 		FireMaya::RPRRamp::initialize,
-		MPxNode::kDependNode, &UserUtilityClassify));
+		MPxNode::kDependNode, &UserTextureClassify));
 
 	// Initialize the viewport render override.
 	FireRenderOverride::instance()->initialize();

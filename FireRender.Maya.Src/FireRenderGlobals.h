@@ -81,6 +81,34 @@ public:
 		kML
 	};
 
+	enum PtDenoiserType {
+		kNoPtDenoiser = 0,
+		kSVGF,
+		kASVGF
+	};
+
+	enum FSRType {
+		kNoFSR = 0,
+		kUltraFSR = 1u,
+		kQualityFSR = 2u,
+		kBalanceFSR = 3u,
+		kPerformanceFSR = 4u,
+		kUltraPerformanceFSR = 5u
+	};
+
+	enum RestirGIBiasCorrection {
+		kNoBiasCorrection = 0,
+		kUniformWeights,
+		kStochasticMIS,
+		kDeterministicMIS
+	};
+
+	enum ReservoirSampling {
+		kDisabled = 0,
+		kScreenSpace,
+		kWorldSpace
+	};
+
 	FireRenderGlobals();
 
 	virtual ~FireRenderGlobals();
