@@ -22,6 +22,8 @@ namespace
 {
 	namespace Attribute
 	{
+		MObject	uv;
+		MObject	uvSize;
 		MObject rampInterpolationMode;
 		MObject rampUVType;
 		MObject inputRamp;
@@ -33,8 +35,17 @@ namespace
 MStatus FireMaya::RPRRamp::initialize()
 {
 	MStatus status;
-
+	MFnNumericAttribute nAttr;
 	MFnEnumAttribute eAttr;
+
+	Attribute::uv = nAttr.create("uvCoord", "uv", MFnNumericData::k2Float);
+	MAKE_INPUT(nAttr);
+	status = MPxNode::addAttribute(Attribute::uv);
+	// Note: we are not using this, but we have to have it to support classification of this node as a texture2D in Maya:
+	Attribute::uvSize = nAttr.create("uvFilterSize", "fs", MFnNumericData::k2Float);
+	MAKE_INPUT(nAttr);
+	status = MPxNode::addAttribute(Attribute::uvSize);
+
 	Attribute::rampInterpolationMode = eAttr.create("rampInterpolationMode", "rinm", frw::InterpolationModeLinear);
 	eAttr.addField("None", frw::InterpolationModeNone);
 	eAttr.addField("Linear", frw::InterpolationModeLinear);
@@ -57,7 +68,6 @@ MStatus FireMaya::RPRRamp::initialize()
 	status = MPxNode::addAttribute(Attribute::inputRamp);
 	CHECK_MSTATUS(status);
 
-	MFnNumericAttribute nAttr;
 	Attribute::output = nAttr.createPoint("out", "rout");
 	MAKE_OUTPUT(nAttr);
 	status = addAttribute(Attribute::output);
@@ -68,6 +78,10 @@ MStatus FireMaya::RPRRamp::initialize()
 	status = attributeAffects(Attribute::rampInterpolationMode, Attribute::output);
 	CHECK_MSTATUS(status);
 	status = attributeAffects(Attribute::rampUVType, Attribute::output);
+	CHECK_MSTATUS(status);
+	status = attributeAffects(Attribute::uv, Attribute::output);
+	CHECK_MSTATUS(status);
+	status = attributeAffects(Attribute::uvSize, Attribute::output);
 	CHECK_MSTATUS(status);
 
 	return MS::kSuccess;
@@ -179,6 +193,36 @@ bool GetConnectedCtrlPointsObjects(MPlug& rampPlug, std::vector<RampCtrlPointDat
 	assert(success);
 	assert(currCtrlPointIt == rampCtrlPoints.end());
 
+	// sort values by position (maya returns control points in random order)
+	// we have to do it here since plugs cannot be sorted and if we sort out points before reading plugs, they might become misaligned
+	// instead of alligning them, we sort points only after reading all the plugs
+	std::sort(rampCtrlPoints.begin(), rampCtrlPoints.end(), [](auto first, auto second)->bool {
+		return (first.position < second.position); });
+
+	// add control points to the beginning and the end as copies of neighboring points to remove black edges
+	// needed for rpr ramp internal logic
+	if (rampCtrlPoints.front().position > FLT_EPSILON)
+	{
+		rampCtrlPoints.emplace_back();
+		const auto& first = rampCtrlPoints.begin();
+		auto& ctrlPointRef = rampCtrlPoints.back();
+		ctrlPointRef.ctrlPointData = first->ctrlPointData;
+		ctrlPointRef.method = first->method;
+		ctrlPointRef.position = 0.0f;
+		ctrlPointRef.index = 99; // this value is irrelevant
+		std::rotate(rampCtrlPoints.begin(), rampCtrlPoints.end() - 1, rampCtrlPoints.end());
+	}
+
+	if ((1.0f - rampCtrlPoints.back().position) > FLT_EPSILON)
+	{
+		rampCtrlPoints.emplace_back();
+		const auto& last = rampCtrlPoints.end() - 2;
+		auto& ctrlPointRef = rampCtrlPoints.back();
+		ctrlPointRef.ctrlPointData = last->ctrlPointData;
+		ctrlPointRef.method = last->method;
+		ctrlPointRef.position = 1.0f;
+		ctrlPointRef.index = 100; // this value is irrelevant
+	}
 	return success;
 }
 
@@ -229,16 +273,15 @@ frw::Value FireMaya::RPRRamp::GetValue(const Scope& scope) const
 	// create node
 	frw::RampNode rampNode(scope.MaterialSystem());
 
-	// process ramp parameters
-	frw::RampInterpolationMode mode = frw::InterpolationModeNone;
-
-	MPlug plug = shaderNode.findPlug(Attribute::rampInterpolationMode, false);
-	if (plug.isNull())
+	MPlug interpPlug = shaderNode.findPlug(Attribute::rampInterpolationMode, false);
+	if (interpPlug.isNull())
 		return frw::Value();
 
-	int temp = 0;
-	if (MStatus::kSuccess == plug.getValue(temp))
-		mode = static_cast<frw::RampInterpolationMode>(temp);
+	int type = interpPlug.asInt();
+
+	// process ramp parameters
+	frw::RampInterpolationMode mode = frw::InterpolationModeNone;
+	mode = static_cast<frw::RampInterpolationMode>(type);
 
 	rampNode.SetInterpolationMode(mode);
 
@@ -247,11 +290,12 @@ frw::Value FireMaya::RPRRamp::GetValue(const Scope& scope) const
 	MPlug ctrlPointsPlug = shaderNode.findPlug(Attribute::inputRamp, false);
 
 	// - read simple ramp control point values
-	bool isRampParced = GetRampValues<MColorArray>(ctrlPointsPlug, outRampCtrlPoints);
+	bool isRampParced = GetRampValues<MColorArray>(ctrlPointsPlug, outRampCtrlPoints, false);
 	if (!isRampParced)
 		return frw::Value();
 
 	// - read and process node ramp control point values
+	// we also add up to 2 points at the begining and the end to remove black edges
 	bool success = GetConnectedCtrlPointsObjects(ctrlPointsPlug, outRampCtrlPoints);
 	if (!success)
 		return frw::Value();
@@ -263,16 +307,47 @@ frw::Value FireMaya::RPRRamp::GetValue(const Scope& scope) const
 	MPlug rampPlug = shaderNode.findPlug(Attribute::rampUVType, false);
 	if (rampPlug.isNull())
 		return frw::Value();
+	int uvIntType = rampPlug.asInt();
 
-	temp = 1;
-	RampUVType rampType = VRamp;
-	if (MStatus::kSuccess == rampPlug.getValue(temp))
-		rampType = static_cast<RampUVType>(temp);
-
-	frw::ArithmeticNode lookupTree = GetRampNodeLookup(scope, rampType);
-	rampNode.SetLookup(lookupTree);
-
+	frw::Value uv = scope.GetConnectedValue(shaderNode.findPlug(Attribute::uv, false));
+	frw::ArithmeticNode uvMod(scope.MaterialSystem(), frw::OperatorMod, uv, frw::Value(1.0f, 1.0f, 1.0f, 1.0f));
+	frw::ArithmeticNode uvTransformed = ApplyUVType(scope, uvMod, uvIntType);
+	
+	frw::ArithmeticNode abs(scope.MaterialSystem(), frw::OperatorAbs, uvTransformed);
+	frw::ArithmeticNode mod(scope.MaterialSystem(), frw::OperatorMod, abs, frw::Value(1.0f, 1.0f, 1.0f, 1.0f));
+	rampNode.SetValue(RPR_MATERIAL_INPUT_UV, mod);
 	return rampNode;
+}
+
+frw::ArithmeticNode FireMaya::RPRRamp::ApplyUVType(const Scope& scope, frw::ArithmeticNode& source, int uvIntType) const {
+	RampUVType uvType = static_cast<RampUVType>(uvIntType);
+
+	switch (uvType)
+	{
+	case URamp:
+		return frw::ArithmeticNode(scope.MaterialSystem(), frw::OperatorSelectY, source);
+	case DiagonalRamp:
+	{
+		frw::ArithmeticNode arith_X(scope.MaterialSystem(), frw::OperatorSelectX, source);
+		frw::ArithmeticNode arith_Y(scope.MaterialSystem(), frw::OperatorSelectY, source);
+		frw::ArithmeticNode arith_1minusX(scope.MaterialSystem(), frw::OperatorSubtract, frw::Value(1.0f, 1.0f, 1.0f, 1.0f), arith_X);
+		frw::ArithmeticNode arith_add(scope.MaterialSystem(), frw::OperatorAdd, arith_1minusX, arith_Y);
+		frw::ArithmeticNode arith_div(scope.MaterialSystem(), frw::OperatorDivide, arith_add, frw::Value(2.0f, 2.0f, 2.0f, 2.0f));
+		return arith_div;
+	}
+	case CircularRamp:
+	{
+		frw::ArithmeticNode arith_XYminus05(scope.MaterialSystem(), frw::OperatorSubtract, source, frw::Value(0.5f, 0.5f, 0.0f, 0.0f));
+		frw::ArithmeticNode arith_dot(scope.MaterialSystem(), frw::OperatorDot, arith_XYminus05, arith_XYminus05);
+		frw::ArithmeticNode arith_sqrt(scope.MaterialSystem(), frw::OperatorPow, arith_dot, frw::Value(0.5f, 0.0f, 0.0f, 0.0f));
+		frw::ArithmeticNode arith_mul(scope.MaterialSystem(), frw::OperatorMultiply, arith_sqrt, frw::Value(2.0f, 0.0f, 0.0f, 0.0f));
+		frw::ArithmeticNode arith_min(scope.MaterialSystem(), frw::OperatorMin, arith_mul, frw::Value(0.99f, 0.99f, 0.99f, 0.0f));
+		return arith_min;
+	}
+	default:
+		// VRamp
+		return frw::ArithmeticNode(scope.MaterialSystem(), frw::OperatorAdd, source);
+	}
 }
 
 void FireMaya::RPRRamp::postConstructor()

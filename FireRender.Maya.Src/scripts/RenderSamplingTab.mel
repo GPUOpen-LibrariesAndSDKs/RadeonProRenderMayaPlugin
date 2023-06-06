@@ -18,6 +18,30 @@ global proc FinalRender_onTileRenderChanged()
     attrControlGrp -e -en $enabled tileRenderY;
 }
 
+// disable tile rendering for contour
+global proc FinalRender_TileRenderingReactToContourChanged(int $enabled)
+{
+	if($enabled)
+	{
+		setAttr RadeonProRenderGlobals.tileRenderEnabled 0;
+		catchQuiet(`
+		checkBoxGrp
+				-e
+				-v1 0
+				-en 0
+				tileRenderEnabled
+				`);
+	} else 
+	{
+		catchQuiet(`
+		checkBoxGrp
+				-e
+				-v1 0
+				-en 1
+				tileRenderEnabled
+				`);
+	}
+}
 
 global proc createRenderSamplingTab()
 {
@@ -34,11 +58,15 @@ global proc createRenderSamplingTab()
     columnLayout -cat left 20;
 
     attrControlGrp
-    	-label "Tile Render Enabled"
+    	-label "Tile Render"
 		-attribute "RadeonProRenderGlobals.tileRenderEnabled"
         -cc FinalRender_onTileRenderChanged
         tileRenderEnabled
-	;  
+	;
+
+	// react to initial value
+	$enabled = `getAttr RadeonProRenderGlobals.contourIsEnabled`;
+	FinalRender_TileRenderingReactToContourChanged($enabled);
 
     attrControlGrp
     	-label "Tile X"

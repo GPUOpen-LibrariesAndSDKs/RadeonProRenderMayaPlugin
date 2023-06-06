@@ -2061,47 +2061,53 @@ frw::Value FireMaya::Scope::GetValue(MObject ob, const MString &outPlugName) con
 frw::Value FireMaya::Scope::GetConnectedValue(const MPlug& plug) const
 {
 	auto p = GetConnectedPlug(plug);
-	if (!p.isNull())
+	if (p.isNull())
 	{
-		auto node = p.node();
-		if (!node.isNull())
-		{
-			if (auto ret = GetValue(node, p.partialName()))
-			{
-				if (p.isChild())	// we are selecting a channel!
-				{
-					auto parent = p.parent();
-					int idx = -1;
-					for (unsigned int i = 0; i < parent.numChildren(); i++)
-					{
-						if (parent.child(i) == p)
-						{
-							idx = (int)i;
-							break;
-						}
-					}
-					switch (idx)
-					{
-					case 0:
-						ret = ret.SelectX();
-						break;
-					case 1:
-						ret = ret.SelectY();
-						break;
-					case 2:
-						ret = ret.SelectZ();
-						break;
-					default:
-						DebugPrint("Error: invalid source index %d for connected node");
-						break;
-					}
-				}
-				return ret;
-			}
-		}
+		return nullptr;
 	}
 
-	return nullptr;
+	auto node = p.node();
+	if (node.isNull())
+	{
+		return nullptr;
+	}
+
+	auto ret = GetValue(node, p.partialName());
+	if (!ret)
+	{
+		return nullptr;
+	}
+
+	if (p.isChild())	// we are selecting a channel!
+	{
+		auto parent = p.parent();
+		int idx = -1;
+		for (unsigned int i = 0; i < parent.numChildren(); i++)
+		{
+			if (parent.child(i) == p)
+			{
+				idx = static_cast<int>(i);
+				break;
+			}
+		}
+
+		switch (idx)
+		{
+		case 0:
+			ret = ret.SelectX();
+			break;
+		case 1:
+			ret = ret.SelectY();
+			break;
+		case 2:
+			ret = ret.SelectZ();
+			break;
+		default:
+			DebugPrint("Error: invalid source index %d for connected node");
+			break;
+		}
+	}
+	return ret;
 }
 
 frw::Value FireMaya::Scope::GetValue(const MPlug& plug) const

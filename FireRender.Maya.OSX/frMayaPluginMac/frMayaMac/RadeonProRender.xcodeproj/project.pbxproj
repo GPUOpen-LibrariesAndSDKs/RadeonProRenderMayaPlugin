@@ -964,6 +964,9 @@
 		F154A9B828EE21CA00929AE5 /* libboost_iostreams.a in Frameworks */ = {isa = PBXBuildFile; fileRef = B7190BC02448AD3C0071D47F /* libboost_iostreams.a */; };
 		F19A160A248A737000A959C7 /* FireRenderLightCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */; };
 		F19A160D248A737000A959C7 /* FireRenderLightCommon.h in Headers */ = {isa = PBXBuildFile; fileRef = F19A1607248A737000A959C7 /* FireRenderLightCommon.h */; };
+		F1ADFC0229F2B012006A605E /* VulcanUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = F1ADFC0029F2B012006A605E /* VulcanUtils.h */; };
+		F1ADFC0329F2B012006A605E /* VulcanUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = F1ADFC0029F2B012006A605E /* VulcanUtils.h */; };
+		F1ADFC0429F2B012006A605E /* VulcanUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = F1ADFC0029F2B012006A605E /* VulcanUtils.h */; };
 		F1E53D0927BD202700BB29E1 /* HybridProContext.h in Headers */ = {isa = PBXBuildFile; fileRef = F1E53D0627BD202700BB29E1 /* HybridProContext.h */; };
 		F1E53D0A27BD202700BB29E1 /* HybridProContext.h in Headers */ = {isa = PBXBuildFile; fileRef = F1E53D0627BD202700BB29E1 /* HybridProContext.h */; };
 		F1E53D0D27BD203500BB29E1 /* HybridProContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F1E53D0B27BD203500BB29E1 /* HybridProContext.cpp */; };
@@ -1404,6 +1407,7 @@
 		F154A9BF28EE21CA00929AE5 /* RadeonProRender.bundle */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = RadeonProRender.bundle; sourceTree = BUILT_PRODUCTS_DIR; };
 		F19A1605248A737000A959C7 /* FireRenderLightCommon.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = FireRenderLightCommon.cpp; path = ../../../FireRender.Maya.Src/Lights/FireRenderLightCommon.cpp; sourceTree = "<group>"; };
 		F19A1607248A737000A959C7 /* FireRenderLightCommon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FireRenderLightCommon.h; path = ../../../FireRender.Maya.Src/Lights/FireRenderLightCommon.h; sourceTree = "<group>"; };
+		F1ADFC0029F2B012006A605E /* VulcanUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = VulcanUtils.h; path = ../../../FireRender.Maya.Src/VulcanUtils.h; sourceTree = "<group>"; };
 		F1E53D0627BD202700BB29E1 /* HybridProContext.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HybridProContext.h; path = ../../../FireRender.Maya.Src/Context/HybridProContext.h; sourceTree = "<group>"; };
 		F1E53D0B27BD203500BB29E1 /* HybridProContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HybridProContext.cpp; path = ../../../FireRender.Maya.Src/Context/HybridProContext.cpp; sourceTree = "<group>"; };
 		F1EEA1EE24ADE93A008AFB18 /* CompositeWrapper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CompositeWrapper.cpp; path = ../../../FireRender.Maya.Src/CompositeWrapper.cpp; sourceTree = "<group>"; };
@@ -1494,6 +1498,7 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				F1ADFC0029F2B012006A605E /* VulcanUtils.h */,
 				F140A8992912F54900AA082F /* FireRenderBevel.cpp */,
 				F140A89B2912F54900AA082F /* FireRenderBevel.h */,
 				F11EFC7B290F3B5E00AB5DC9 /* FireRenderDoublesided.cpp */,
@@ -2054,6 +2059,7 @@
 				505C0C382660C2BA000E11A9 /* AddDoubleLinearConverter.h in Headers */,
 				505C0C392660C2BA000E11A9 /* GLTFTranslator.h in Headers */,
 				505C0C3A2660C2BA000E11A9 /* ColorMathConverter.h in Headers */,
+				F1ADFC0329F2B012006A605E /* VulcanUtils.h in Headers */,
 				505C0C3B2660C2BA000E11A9 /* FireRenderBlendValue.h in Headers */,
 				505C0C3C2660C2BA000E11A9 /* ArHosekSkyModelData_Spectral.h in Headers */,
 				505C0C3D2660C2BA000E11A9 /* ShadersManager.h in Headers */,
@@ -2216,6 +2222,7 @@
 				B753203023D9ED5600246738 /* AddDoubleLinearConverter.h in Headers */,
 				B753203123D9ED5600246738 /* GLTFTranslator.h in Headers */,
 				B753203223D9ED5600246738 /* ColorMathConverter.h in Headers */,
+				F1ADFC0229F2B012006A605E /* VulcanUtils.h in Headers */,
 				B753203323D9ED5600246738 /* FireRenderBlendValue.h in Headers */,
 				B753203423D9ED5600246738 /* ArHosekSkyModelData_Spectral.h in Headers */,
 				B753203523D9ED5600246738 /* ShadersManager.h in Headers */,
@@ -2378,6 +2385,7 @@
 				F154A8EB28EE21CA00929AE5 /* AddDoubleLinearConverter.h in Headers */,
 				F154A8EC28EE21CA00929AE5 /* GLTFTranslator.h in Headers */,
 				F154A8ED28EE21CA00929AE5 /* ColorMathConverter.h in Headers */,
+				F1ADFC0429F2B012006A605E /* VulcanUtils.h in Headers */,
 				F154A8EE28EE21CA00929AE5 /* FireRenderBlendValue.h in Headers */,
 				F154A8EF28EE21CA00929AE5 /* ArHosekSkyModelData_Spectral.h in Headers */,
 				F154A8F028EE21CA00929AE5 /* ShadersManager.h in Headers */,
@@ -3167,6 +3175,7 @@
 					../../../RadeonProRenderSharedComponents/Ornatrix,
 					../../../RadeonProRenderSharedComponents/,
 					../../../RadeonProRenderSharedComponents/OpenVDB/include,
+					../../../Vulkan-Headers/include,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					../../../RadeonProRenderSDK/RadeonProRender/binMacOS,
@@ -3222,6 +3231,7 @@
 					../../../RadeonProRenderSharedComponents/Ornatrix,
 					../../../RadeonProRenderSharedComponents/,
 					../../../RadeonProRenderSharedComponents/OpenVDB/include,
+					../../../Vulkan-Headers/include,
 				);
 				LIBRARY_SEARCH_PATHS = (
 					../../../RadeonProRenderSDK/RadeonProRender/binMacOS,
