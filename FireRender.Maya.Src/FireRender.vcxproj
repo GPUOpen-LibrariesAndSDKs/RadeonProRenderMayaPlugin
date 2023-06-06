@@ -470,6 +470,7 @@
     <ClInclude Include="Volumes\FireRenderVolumeOverride.h" />
     <ClInclude Include="Volumes\VolumeAttributes.h" />
     <ClInclude Include="VRay.h" />
+    <ClInclude Include="VulcanUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="icons\amd.png" />

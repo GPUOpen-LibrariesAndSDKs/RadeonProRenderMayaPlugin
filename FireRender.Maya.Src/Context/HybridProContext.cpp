@@ -13,6 +13,7 @@ limitations under the License.
 #include "HybridProContext.h"
 #include "RadeonProRender_Baikal.h"
 #include "ContextCreator.h"
+#include "VulcanUtils.h"
 
 #include "../FireRenderMaterial.h"
 #include "../FireRenderStandardMaterial.h"
@@ -76,10 +77,45 @@ rpr_int HybridProContext::CreateContextInternal(rpr_creation_flags createFlags, 
 		MGlobal::displayWarning("If render stamp is enabled, please change render device to GPU");
 	}
 
+	// context properties
 	std::vector<rpr_context_properties> ctxProperties;
 	ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_HYBRID_ENABLE_PER_FACE_MATERIALS);
 	const bool perFaceEnabled = true;
 	ctxProperties.push_back((rpr_context_properties)&perFaceEnabled);
+
+	// - support old GPUs with small memory
+	TimePoint beforeGetMemorySizeCall = GetCurrentChronoTime();
+	size_t gpuMemorySize = RprVulkanUtils::GetGpuMemory();
+
+	{
+		unsigned long timeSpentOnVUlcanCallsInMiliseconds = TimeDiffChrono<std::chrono::milliseconds>(GetCurrentChronoTime(), beforeGetMemorySizeCall);
+		std::string str = getFormattedTime(timeSpentOnVUlcanCallsInMiliseconds);
+		str = string_format("Time spent on calls to Vulcan AOI: %s\n", str.c_str());
+		MGlobal::displayInfo(MString(str.c_str()));
+	}
+
+	if (gpuMemorySize < 10_GB)
+	{
+		unsigned long long meshMemorySizeB = 2056_MB;
+		unsigned long long stagingMemorySizeB = 32_MB;
+		unsigned long long scratchMemorySizeB = 16_MB;
+
+		std::string message = "Detected GPU memory size less than 10 GB. Render time may be increased!\n";
+		MGlobal::displayWarning(message.c_str());
+
+		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_HYBRID_STAGING_MEMORY_SIZE);
+		ctxProperties.push_back((rpr_context_properties)&stagingMemorySizeB);
+		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_HYBRID_SCRATCH_MEMORY_SIZE);
+		ctxProperties.push_back((rpr_context_properties)&scratchMemorySizeB);
+		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_HYBRID_MESH_MEMORY_SIZE);
+		ctxProperties.push_back((rpr_context_properties)&meshMemorySizeB);
+	}
+	else
+	{
+		std::string message = "Detected GPU memory more than 10 GB. Render time should be optimal\n";
+		MGlobal::displayInfo(message.c_str());
+	}
+
 	ctxProperties.push_back((rpr_context_properties)0);
 
 #ifdef RPR_VERSION_MAJOR_MINOR_REVISION
