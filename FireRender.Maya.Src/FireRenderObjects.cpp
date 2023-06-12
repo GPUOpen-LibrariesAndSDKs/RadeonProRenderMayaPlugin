@@ -1928,7 +1928,7 @@ void FireRenderMesh::OnPlugDirty(MObject& node, MPlug& plug)
 
 	// recreate mesh only if user changes point positions or smooth preview flag.
 	// We need to add more attribute to track here
-	if ((plugName == "pt") || (plugName == "dsm") || (plugName == "i"))
+	if ((plugName == "pt") || (plugName == "dsm") || (plugName == "i") || (plugName == "peh") || (plugName == "sdt"))
 	{
 		if ((plugName == "i") && (m_SkipCallbackCounter > 0))
 		{
