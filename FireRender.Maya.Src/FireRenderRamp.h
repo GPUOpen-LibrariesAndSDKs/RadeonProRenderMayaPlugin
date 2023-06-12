@@ -25,8 +25,7 @@ namespace FireMaya
 		static void* creator();
 		static MStatus initialize();
 
-		frw::Value GetValue(const Scope& scope) const override; 
-		frw::ArithmeticNode ApplyUVType(const Scope& scope, frw::ArithmeticNode& source, int uvIntType) const;
+		frw::Value GetValue(const Scope& scope) const override;
 		virtual void postConstructor() override;
 	};
 }

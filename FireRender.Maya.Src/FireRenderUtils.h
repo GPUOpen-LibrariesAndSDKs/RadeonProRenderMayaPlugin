@@ -1384,3 +1384,4 @@ std::string getTimeSpentString(size_t timeInMs);
 
 std::string getFormattedTime(size_t timeInMs);
 
+bool ProcessRampArrayPlugElement(MPlug& elementPlug, std::vector<RampCtrlPoint<std::tuple<MColor, MString, MObject>>>::iterator& out);
