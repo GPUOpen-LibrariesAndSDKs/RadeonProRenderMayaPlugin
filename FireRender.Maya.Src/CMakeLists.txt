@@ -93,7 +93,7 @@ set(Header_Files
     "CompositeWrapper.h"
     "FireMaterialViewRenderer.h"
     "FireMaya.h"
-    "FireRenderContextIFace.h"
+    "Context/FireRenderContextIFace.h"
     "FireRenderGlobals.h"
     "FireRenderGPUCache.h"
     "FireRenderMaterialSwatchRender.h"
@@ -117,6 +117,7 @@ set(Header_Files
     "TileRenderer.h"
     "ViewportTexture.h"
     "VRay.h"
+	"VulcanUtils.h"
 )
 source_group("Header Files" FILES ${Header_Files})
 
@@ -505,26 +506,31 @@ use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
 ################################################################################
 # Includes for CMake from *.props
 ################################################################################
-#use_props(${PROJECT_NAME} Debug       "FireRenderMaya.cmake")
-#use_props(${PROJECT_NAME} Debug       "frMaya2022.cmake")
-use_props(${PROJECT_NAME} Debug2022   "FireRenderMaya.cmake")
-use_props(${PROJECT_NAME} Debug2022   "frMaya2022.cmake")
-use_props(${PROJECT_NAME} Debug2023   "FireRenderMaya.cmake")
-use_props(${PROJECT_NAME} Debug2023   "FrMaya2023.cmake")
-use_props(${PROJECT_NAME} Debug2024   "FireRenderMaya.cmake")
-use_props(${PROJECT_NAME} Debug2024   "FrMaya2024.cmake")
-#use_props(${PROJECT_NAME} Release     "FireRenderMaya.cmake")
-#use_props(${PROJECT_NAME} Release     "frMaya2022.cmake")
-use_props(${PROJECT_NAME} Release2022 "FireRenderMaya.cmake")
-use_props(${PROJECT_NAME} Release2022 "frMaya2022.cmake")
-use_props(${PROJECT_NAME} Release2023 "FireRenderMaya.cmake")
-use_props(${PROJECT_NAME} Release2023 "FrMaya2023.cmake")
-use_props(${PROJECT_NAME} Release2024 "FireRenderMaya.cmake")
-use_props(${PROJECT_NAME} Release2024 "FrMaya2024.cmake")
+##use_props(${PROJECT_NAME} Debug       "FireRenderMaya.cmake")
+##use_props(${PROJECT_NAME} Debug       "frMaya2022.cmake")
+#use_props(${PROJECT_NAME} Debug2022   "FireRenderMaya.cmake")
+#use_props(${PROJECT_NAME} Debug2022   "frMaya2022.cmake")
+#use_props(${PROJECT_NAME} Debug2023   "FireRenderMaya.cmake")
+#use_props(${PROJECT_NAME} Debug2023   "FrMaya2023.cmake")
+#use_props(${PROJECT_NAME} Debug2024   "FireRenderMaya.cmake")
+#use_props(${PROJECT_NAME} Debug2024   "FrMaya2024.cmake")
+##use_props(${PROJECT_NAME} Release     "FireRenderMaya.cmake")
+##use_props(${PROJECT_NAME} Release     "frMaya2022.cmake")
+#use_props(${PROJECT_NAME} Release2022 "FireRenderMaya.cmake")
+#use_props(${PROJECT_NAME} Release2022 "frMaya2022.cmake")
+#use_props(${PROJECT_NAME} Release2023 "FireRenderMaya.cmake")
+#use_props(${PROJECT_NAME} Release2023 "FrMaya2023.cmake")
+#use_props(${PROJECT_NAME} Release2024 "FireRenderMaya.cmake")
+#use_props(${PROJECT_NAME} Release2024 "FrMaya2024.cmake")
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     VS_GLOBAL_KEYWORD "Win32Proj"
 )
+
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/DELAYLOAD:RadeonProRender64.dll")
+
+set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".mll")
+
 ################################################################################
 # Target name
 ################################################################################
@@ -602,12 +608,15 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 #    ">"
     "$<$<CONFIG:Debug2022>:"
         "_DEBUG"
+		"MAYA2022"
     ">"
     "$<$<CONFIG:Debug2023>:"
         "_DEBUG"
+		"MAYA2023"
     ">"
     "$<$<CONFIG:Debug2024>:"
         "_DEBUG"
+		"MAYA2024"
     ">"
 #    "$<$<CONFIG:Release>:"
 #        "NDEBUG;"
@@ -616,16 +625,41 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     "$<$<CONFIG:Release2022>:"
         "NDEBUG;"
         "TBB_USE_DEBUG=0"
+		"MAYA2022"
     ">"
     "$<$<CONFIG:Release2023>:"
         "NDEBUG;"
         "TBB_USE_DEBUG=0"
+		"MAYA2023"
     ">"
     "$<$<CONFIG:Release2024>:"
         "NDEBUG;"
         "TBB_USE_DEBUG=0"
+		"MAYA2024"
     ">"
+	
+	"MAYA_PLUGIN"
+	"GL_INTEROP"
+	"WIN32"
+	"_WINDOWS"
+	"_USRDLL"
+	"NT_PLUGIN"
+	"_HAS_ITERATOR_DEBUGGING=0"
+	"_SECURE_SCL=0"
+	"_SECURE_SCL_THROWS=0"
+	"_SECURE_SCL_DEPRECATE=0"
+	"_CRT_SECURE_NO_DEPRECATE"
+	"__TBB_LIB_NAME=tbb.lib"
+	"REQUIRE_IOSTREAM"
+	"AW_NEW_IOSTREAMS"
+	"Bits64_"
 )
+
+if(WIN32)
+	target_compile_definitions(${PROJECT_NAME} PRIVATE
+		"_WINDLL"
+	)
+endif()
 
 ################################################################################
 # Compile and link options
@@ -638,19 +672,52 @@ if(MSVC)
 #            /ZI
 #        >
         $<$<CONFIG:Debug2022>:
-            /Gm;
-            /RTC1;
-            /ZI
+			/JMC
+			/Zc:wchar_t 
+			/ZI
+			/Gm
+			/Od
+			/Zc:inline
+			/fp:precise
+			/errorReport:prompt 
+			/WX- 
+			/Zc:forScope
+			/RTC1 
+			/Gd 
+			/MDd 
+			/FC
         >
         $<$<CONFIG:Debug2023>:
-            /Gm;
-            /RTC1;
-            /ZI
+			/JMC
+			/Zc:wchar_t 
+			/ZI
+			/Gm
+			/Od
+			/Zc:inline
+			/fp:precise
+			/errorReport:prompt 
+			/WX- 
+			/Zc:forScope
+			/RTC1 
+			/Gd 
+			/MDd 
+			/FC
         >
         $<$<CONFIG:Debug2024>:
-            /Gm;
-            /RTC1;
-            /ZI
+			/JMC
+			/Zc:wchar_t 
+			/ZI
+			/Gm
+			/Od
+			/Zc:inline
+			/fp:precise
+			/errorReport:prompt 
+			/WX- 
+			/Zc:forScope
+			/RTC1 
+			/Gd 
+			/MDd 
+			/FC
         >
 #        $<$<CONFIG:Release>:
 #            /GF;
@@ -658,19 +725,58 @@ if(MSVC)
 #            /Zi
 #        >
         $<$<CONFIG:Release2022>:
-            /GF;
-            /Gy;
-            /Zi
+			/Gy 
+			/Zc:wchar_t 
+			/Zi 
+			/Gm- 
+			/O2
+			/Zc:inline 
+			/fp:precise
+			/errorReport:prompt 
+			/GF 
+			/WX- 
+			/Zc:forScope 
+			/Gd 
+			/MT 
+			/FC 			
+			/EHsc 
+			/nologo
         >
         $<$<CONFIG:Release2023>:
-            /GF;
-            /Gy;
-            /Zi
+			/Gy 
+			/Zc:wchar_t 
+			/Zi 
+			/Gm- 
+			/O2
+			/Zc:inline 
+			/fp:precise
+			/errorReport:prompt 
+			/GF 
+			/WX- 
+			/Zc:forScope 
+			/Gd 
+			/MT 
+			/FC 			
+			/EHsc 
+			/nologo
         >
         $<$<CONFIG:Release2024>:
-            /GF;
-            /Gy;
-            /Zi
+			/Gy 
+			/Zc:wchar_t 
+			/Zi 
+			/Gm- 
+			/O2
+			/Zc:inline 
+			/fp:precise
+			/errorReport:prompt 
+			/GF 
+			/WX- 
+			/Zc:forScope 
+			/Gd 
+			/MT 
+			/FC 			
+			/EHsc 
+			/nologo
         >
         /std:c++17;
         /W3;
@@ -724,33 +830,137 @@ endif()
 ################################################################################
 set(ADDITIONAL_LIBRARY_DEPENDENCIES
     "OpenMayaFX"
+	"AdskXGen.lib"
+	"RadeonProRender64"
+	"RprLoadStore64"
+	"ProRenderGLTF"
+	"RadeonImageFilters"
+	"OpenImageIO_RPR"
+	"Foundation"
+	"OpenMaya"
+	"OpenMayaUI"
+	"OpenMayaAnim"
+	"OpenMayaRender"
+	"Image"
+	"glew"
+	"glu32"
+	"OpenGL32"
+	"openvdb"
+	"Alembic"
+	"Half-2_3"
+	"hdf5"
+	"Iex-2_3"
+	"Imath-2_3"
 )
 target_link_libraries(${PROJECT_NAME} PUBLIC "${ADDITIONAL_LIBRARY_DEPENDENCIES}")
 
 target_link_directories(${PROJECT_NAME} PUBLIC
-    "$<$<CONFIG:Debug>:"
-        "$ENV{MAYA_X64_2022}/lib"
-    ">"
+#    "$<$<CONFIG:Debug>:"
+#        "$ENV{MAYA_X64_2022}/lib"
+#    ">"
     "$<$<CONFIG:Debug2022>:"
         "$ENV{MAYA_X64_2022}/lib"
+        "$ENV{MAYA_X64_2022}/plug-ins/xgen/lib"
     ">"
     "$<$<CONFIG:Debug2023>:"
         "$ENV{MAYA_X64_2023}/lib"
+        "$ENV{MAYA_X64_2023}/plug-ins/xgen/lib"
     ">"
     "$<$<CONFIG:Debug2024>:"
         "$ENV{MAYA_X64_2024}/lib"
+        "$ENV{MAYA_X64_2024}/plug-ins/xgen/lib"
     ">"
-    "$<$<CONFIG:Release>:"
-        "$ENV{MAYA_X64_2022}/lib"
-    ">"
+#    "$<$<CONFIG:Release>:"
+#        "$ENV{MAYA_X64_2022}/lib"
+#    ">"
     "$<$<CONFIG:Release2022>:"
         "$ENV{MAYA_X64_2022}/lib"
+        "$ENV{MAYA_X64_2022}/plug-ins/xgen/lib"
     ">"
     "$<$<CONFIG:Release2023>:"
         "$ENV{MAYA_X64_2023}/lib"
+        "$ENV{MAYA_X64_2023}/plug-ins/xgen/lib"
     ">"
     "$<$<CONFIG:Release2024>:"
         "$ENV{MAYA_X64_2024}/lib"
+        "$ENV{MAYA_X64_2024}/plug-ins/xgen/lib"
     ">"
 )
 
+target_include_directories(${PROJECT_NAME} PUBLIC
+#    "$<$<CONFIG:Debug>:"
+#        "$ENV{MAYA_X64_2022}/lib"
+#    ">"
+    "$<$<CONFIG:Debug2022>:"
+        "$ENV{MAYA_SDK_2022}/include"
+        "$ENV{MAYA_X64_2022}/plug-ins/xgen/include"
+    ">"
+    "$<$<CONFIG:Debug2023>:"
+        "$ENV{MAYA_SDK_2023}/include"
+        "$ENV{MAYA_X64_2023}/plug-ins/xgen/include"
+    ">"
+    "$<$<CONFIG:Debug2024>:"
+        "$ENV{MAYA_SDK_2024}/include"
+        "$ENV{MAYA_X64_2024}/plug-ins/xgen/include"
+    ">"
+#    "$<$<CONFIG:Release>:"
+#        "$ENV{MAYA_X64_2022}/lib"
+#    ">"
+    "$<$<CONFIG:Release2022>:"
+        "$ENV{MAYA_SDK_2022}/include"
+        "$ENV{MAYA_X64_2022}/plug-ins/xgen/include"
+    ">"
+    "$<$<CONFIG:Release2023>:"
+        "$ENV{MAYA_SDK_2023}/include"
+        "$ENV{MAYA_X64_2023}/plug-ins/xgen/include"
+    ">"
+    "$<$<CONFIG:Release2024>:"
+        "$ENV{MAYA_SDK_2024}/include"
+        "$ENV{MAYA_X64_2024}/plug-ins/xgen/include"
+    ">"
+)
+
+target_link_directories(${PROJECT_NAME} PUBLIC
+	"../RadeonProRenderSharedComponents/glew/lib/x64"
+	"../RadeonProRenderSharedComponents/OpenImageIO/Windows/lib"
+	"../RadeonProRenderSDK/RadeonProRender/libWin64"
+	"../RadeonProImageProcessingSDK/Windows/Dynamic"
+	"../RadeonProRenderSharedComponents/OpenVDB/Windows/lib"
+	"../RadeonProRenderSharedComponents/Alembic/lib"
+)
+
+target_include_directories(${PROJECT_NAME} PUBLIC
+	"../Vulkan-Headers/include"
+	"../RadeonProRenderSDK/RadeonProRender/inc"
+	"../RadeonProRenderSDK/RadeonProRender/rprTools"
+	"../RadeonProRenderSharedComponents/glew/include"
+	"../RadeonProRenderSharedComponents/OpenImageIO/Windows/include"
+	"../RadeonProRenderSharedComponents/json/include"
+	"../RadeonProRenderSharedComponents/src"
+	"Lights/"
+	"Lights/PhysicalLight"
+	"../RadeonProRenderSharedComponents/src/ImageFilter"
+	"../RadeonProImageProcessingSDK/include"
+	"../RadeonProRenderSharedComponents/Ornatrix"
+	"../RadeonProRenderSharedComponents/Ornatrix/Ephere"
+	"../RadeonProRenderSharedComponents/OpenVDB/include"
+	"../RadeonProRenderSharedComponents/Alembic/include"
+	"../RadeonProRenderSharedComponents/Alembic/includeOpenEXR"
+	"../RadeonProRenderSharedComponents"
+)
+
+
+target_compile_definitions(${PROJECT_NAME} PUBLIC "-D_USE_MATH_DEFINES") # needed for M_PI
+
+if(WIN32)
+	add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD 
+	COMMAND call ${CMAKE_SOURCE_DIR}/copy_bild.cmd "$(SolutionDir)" "$(TargetPath)" 
+		$<$<CONFIG:Debug2022>:"2022">
+        $<$<CONFIG:Release2022>:"2022">
+        $<$<CONFIG:Debug2023>:"2023">
+        $<$<CONFIG:Release2023>:"2023">
+        $<$<CONFIG:Debug2024>:"2024">
+        $<$<CONFIG:Release2024>:"2024">
+    COMMENT "This command will copy files to dist" 
+	)
+endif()
