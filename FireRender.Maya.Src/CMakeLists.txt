@@ -1,4 +1,3 @@
-set(PROJECT_NAME RadeonProRender)
 
 ################################################################################
 # Source groups
@@ -523,13 +522,15 @@ use_props(${PROJECT_NAME} "${CMAKE_CONFIGURATION_TYPES}" "${DEFAULT_CXX_PROPS}")
 #use_props(${PROJECT_NAME} Release2024 "FireRenderMaya.cmake")
 #use_props(${PROJECT_NAME} Release2024 "FrMaya2024.cmake")
 
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    VS_GLOBAL_KEYWORD "Win32Proj"
-)
+if(WIN32)
+	set_target_properties(${PROJECT_NAME} PROPERTIES
+		VS_GLOBAL_KEYWORD "Win32Proj"
+	)
 
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/DELAYLOAD:RadeonProRender64.dll")
+	set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "/DELAYLOAD:RadeonProRender64.dll")
 
-set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".mll")
+	set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".mll")
+endif()
 
 ################################################################################
 # Target name
@@ -602,6 +603,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY ${MSVC_RUN
 ################################################################################
 # Compile definitions
 ################################################################################
+if(WIN32)
 target_compile_definitions(${PROJECT_NAME} PRIVATE
 #    "$<$<CONFIG:Debug>:"
 #        "_DEBUG"
@@ -654,6 +656,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 	"AW_NEW_IOSTREAMS"
 	"Bits64_"
 )
+endif()
 
 if(WIN32)
 	target_compile_definitions(${PROJECT_NAME} PRIVATE
@@ -828,6 +831,7 @@ endif()
 ################################################################################
 # Dependencies
 ################################################################################
+if(WIN32)
 set(ADDITIONAL_LIBRARY_DEPENDENCIES
     "OpenMayaFX"
 	"AdskXGen.lib"
@@ -886,7 +890,9 @@ target_link_directories(${PROJECT_NAME} PUBLIC
         "$ENV{MAYA_X64_2024}/plug-ins/xgen/lib"
     ">"
 )
+endif()
 
+if(WIN32)
 target_include_directories(${PROJECT_NAME} PUBLIC
 #    "$<$<CONFIG:Debug>:"
 #        "$ENV{MAYA_X64_2022}/lib"
@@ -919,7 +925,9 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         "$ENV{MAYA_X64_2024}/plug-ins/xgen/include"
     ">"
 )
+endif()
 
+if(WIN32)
 target_link_directories(${PROJECT_NAME} PUBLIC
 	"../RadeonProRenderSharedComponents/glew/lib/x64"
 	"../RadeonProRenderSharedComponents/OpenImageIO/Windows/lib"
@@ -928,6 +936,7 @@ target_link_directories(${PROJECT_NAME} PUBLIC
 	"../RadeonProRenderSharedComponents/OpenVDB/Windows/lib"
 	"../RadeonProRenderSharedComponents/Alembic/lib"
 )
+endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC
 	"../Vulkan-Headers/include"

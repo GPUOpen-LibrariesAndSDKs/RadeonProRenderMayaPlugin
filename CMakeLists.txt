@@ -116,10 +116,13 @@ include(CMake/GlobalSettingsInclude.cmake OPTIONAL)
 ################################################################################
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+set(PROJECT_NAME RadeonProRender)
+
 ################################################################################
 # Sub-projects
 ################################################################################
 add_subdirectory(FireRender.Maya.Src)
+add_subdirectory(FireRender.Maya.OSX)
 #add_subdirectory(FireRender.Maya.UnitTests)
 
 
