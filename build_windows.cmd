@@ -57,6 +57,7 @@ for %%a in (%mayaVersions%) do (
 		echo !mayaSDK! is not set. Skip.
 	) else (
 		echo !mayaSDK! is set. Build.
-		msbuild RadeonProRenderMayaPlugin.sln /property:Configuration=Release%%a /property:Platform=x64
+		cmake -B bin -G "Visual Studio 16 2019" -A x64
+		msbuild bin/RadeonProRenderMayaPlugin.sln /property:Configuration=Release%%a /property:Platform=x64
 	)
 )
