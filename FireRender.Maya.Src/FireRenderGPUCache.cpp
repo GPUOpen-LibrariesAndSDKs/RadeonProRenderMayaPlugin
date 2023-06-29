@@ -3,6 +3,7 @@
 #include "Context/FireRenderContext.h"
 #include "FireRenderUtils.h"
 #include "Context/TahoeContext.h"
+#include "FireRenderContext.h"
 
 #include <array>
 #include <algorithm>
@@ -540,7 +541,9 @@ void FireRenderGPUCache::GetShapes(std::vector<frw::Shape>& outShapes, std::vect
 		}
 
 		m.isMainInstance = true;
-		context()->AddMainMesh(this, std::to_string(m_curr_frameNumber));
+        
+        std::string tempName = std::to_string(m_curr_frameNumber);
+        context()->AddMainMesh(this, tempName);
 	}
 
 	MDagPath dagPath = DagPath();
