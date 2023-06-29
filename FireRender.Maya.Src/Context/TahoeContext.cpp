@@ -15,6 +15,9 @@ limitations under the License.
 #include "maya/MColorManagementUtilities.h"
 #include "maya/MFileObject.h"
 
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 rpr_int NorthStarContext::m_gTahoePluginID = INCORRECT_PLUGIN_ID;
 

@@ -339,7 +339,7 @@ source_group("MayaStandardNodesSupport" FILES ${MayaStandardNodesSupport})
 #source_group("Resources\\Shelfs" FILES ${Resources__Shelfs})
 
 set(Source_Files
-    "../RadeonProRenderSDK/RadeonProRender/inc/Math/half.cpp"
+ #   "../RadeonProRenderSDK/RadeonProRender/inc/Math/half.cpp"
     "../RadeonProRenderSDK/RadeonProRender/rprTools/RPRStringIDMapper.cpp"
     "../RadeonProRenderSDK/RadeonProRender/rprTools/RprTools.cpp"
     "../RadeonProRenderSharedComponents/src/Alembic/AlembicWrapper.cpp"
@@ -383,7 +383,6 @@ set(Source_Files
     "NorthStarRenderingHelper.cpp"
     "OptionVarHelpers.cpp"
     "pluginMain.cpp"
-    "RadeonProRender.cpp"
     "RenderStamp.cpp"
     "RenderStampUtils.cpp"
     "RenderViewUpdater.cpp"
@@ -394,6 +393,11 @@ set(Source_Files
     "VRay.cpp"
 )
 source_group("Source Files" FILES ${Source_Files})
+
+set(Source_Win
+    "RadeonProRender.cpp"
+)
+source_group("Source Win" FILES ${Source_Win})
 
 set(Translators
     "Translators/MeshTranslator.cpp"
@@ -468,6 +472,7 @@ source_group("Volumes" FILES ${Volumes})
 #)
 #source_group("docs" FILES ${docs})
 
+if(WIN32)
 set(ALL_FILES
 #    ${no_group_source_files}
     ${AOVs}
@@ -493,8 +498,30 @@ set(ALL_FILES
     ${Utils}
     ${Viewport}
     ${Volumes}
+    ${Source_Win}
     #${docs}
 )
+else()
+set(ALL_FILES
+    ${AOVs}
+    ${Commands}
+    ${Context}
+    ${Environment}
+    ${Header_Files}
+    ${Hosek}
+    ${IPR}
+    ${Lights}
+    ${Lights__IES}
+    ${Lights__PhysicalLight}
+    ${Materials}
+    ${MayaStandardNodesSupport}
+    ${Source_Files}
+    ${Translators}
+    ${Utils}
+    ${Viewport}
+    ${Volumes}
+)
+endif()
 
 ################################################################################
 # Target

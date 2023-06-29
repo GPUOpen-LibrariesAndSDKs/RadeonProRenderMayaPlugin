@@ -48,7 +48,7 @@ limitations under the License.
 #endif
 
 #if defined(__APPLE__)
-#include "athenaSystemInfo_Mac.h"
+#include "frMayaPluginMac/athenaSystemInfo_Mac.h"
 #include <sys/sysctl.h>
 #endif  // defined(__APPLE__)
 

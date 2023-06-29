@@ -2,91 +2,70 @@
 # Mac-specific stuff
 ################################################################################
 if(APPLE)
+
+#cmake_policy(SET CMP0142 NEW)
+
 target_compile_options(${PROJECT_NAME} PRIVATE
     $<$<CONFIG:Debug2022>:
-		/-O0
+		-O0
     >
     $<$<CONFIG:Debug2023>:
-		/-O0
+		-O0
     >
     $<$<CONFIG:Debug2024>:
-		/-O0
+		-O0
     >
     $<$<CONFIG:Release2022>:
-		/-Os
+		-Os
     >
     $<$<CONFIG:Release2023>:
-		/-Os
+		-Os
     >
     $<$<CONFIG:Release2024>:
-		/-Os
+		-Os
     >
-    /-std=c++17;
+    -std=c++17;
 )
 
 
 target_link_options(${PROJECT_NAME} PRIVATE
     $<$<CONFIG:Debug2022>:
-        -Wl,
-		-executable_path,
-		/Applications/Autodesk/maya2022/Maya.app/Contents/MacOS -Wl,
-		-exported_symbol,
-		__Z16initializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE -Wl,
-		-exported_symbol,
-		__Z18uninitializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE -Wl,
-		-exported_symbol,
+        -Wl,-executable_path,/Applications/Autodesk/maya2022/Maya.app/Contents/MacOS 
+        -Wl,-exported_symbol,__Z16initializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE,
+        -Wl,-exported_symbol,__Z18uninitializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE
+        -Wl,-exported_symbol,_MApiVersion
     >
     $<$<CONFIG:Debug2023>:
-        -Wl,
-		-executable_path,
-		/Applications/Autodesk/maya2023/Maya.app/Contents/MacOS -Wl,
-		-exported_symbol,
-		__Z16initializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE -Wl,
-		-exported_symbol,
-		__Z18uninitializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE -Wl,
-		-exported_symbol,
+        -Wl,-executable_path,/Applications/Autodesk/maya2023/Maya.app/Contents/MacOS 
+        -Wl,-exported_symbol,__Z16initializePluginN8Autodesk4Maya16OpenMaya202300007MObjectE,
+        -Wl,-exported_symbol,__Z18uninitializePluginN8Autodesk4Maya16OpenMaya202300007MObjectE
+        -Wl,-exported_symbol,_MApiVersion 
     >
     $<$<CONFIG:Debug2024>:
-        -Wl,
-		-executable_path,
-		/Applications/Autodesk/maya2024/Maya.app/Contents/MacOS -Wl,
-		-exported_symbol,
-		__Z16initializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE -Wl,
-		-exported_symbol,
-		__Z18uninitializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE -Wl,
-		-exported_symbol,
+        -Wl,-executable_path,/Applications/Autodesk/maya2024/Maya.app/Contents/MacOS 
+        -Wl,-exported_symbol,__Z16initializePluginN8Autodesk4Maya16OpenMaya202400007MObjectE,
+        -Wl,-exported_symbol,__Z18uninitializePluginN8Autodesk4Maya16OpenMaya202400007MObjectE
+        -Wl,-exported_symbol,_MApiVersion
     >
     $<$<CONFIG:Release2022>:
-        -Wl,
-		-executable_path,
-		/Applications/Autodesk/maya2022/Maya.app/Contents/MacOS -Wl,
-		-exported_symbol,
-		__Z16initializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE -Wl,
-		-exported_symbol,
-		__Z18uninitializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE -Wl,
-		-exported_symbol,
+        -Wl,-executable_path,/Applications/Autodesk/maya2022/Maya.app/Contents/MacOS 
+        -Wl,-exported_symbol,__Z16initializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE,
+        -Wl,-exported_symbol,__Z18uninitializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE
+        -Wl,-exported_symbol,_MApiVersion
     >
     $<$<CONFIG:Release2023>:
-        -Wl,
-		-executable_path,
-		/Applications/Autodesk/maya2023/Maya.app/Contents/MacOS -Wl,
-		-exported_symbol,
-		__Z16initializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE -Wl,
-		-exported_symbol,
-		__Z18uninitializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE -Wl,
-		-exported_symbol,
+        -Wl,-executable_path,/Applications/Autodesk/maya2023/Maya.app/Contents/MacOS 
+        -Wl,-exported_symbol,__Z16initializePluginN8Autodesk4Maya16OpenMaya202300007MObjectE,
+        -Wl,-exported_symbol,__Z18uninitializePluginN8Autodesk4Maya16OpenMaya202300007MObjectE
+        -Wl,-exported_symbol,_MApiVersion
     >
     $<$<CONFIG:Release2024>:
-        -Wl,
-		-executable_path,
-		/Applications/Autodesk/maya2024/Maya.app/Contents/MacOS -Wl,
-		-exported_symbol,
-		__Z16initializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE -Wl,
-		-exported_symbol,
-		__Z18uninitializePluginN8Autodesk4Maya16OpenMaya202200007MObjectE -Wl,
-		-exported_symbol,
+        -Wl,-executable_path,/Applications/Autodesk/maya2024/Maya.app/Contents/MacOS 
+        -Wl,-exported_symbol,__Z16initializePluginN8Autodesk4Maya16OpenMaya202400007MObjectE,
+        -Wl,-exported_symbol,__Z18uninitializePluginN8Autodesk4Maya16OpenMaya202400007MObjectE
+        -Wl,-exported_symbol,_MApiVersion
     >
-	_MApiVersion -lOpenMaya -lOpenMayaAnim -lOpenMayaUI -lOpenMayaRender -lFoundation -framework OpenGL -ltbb -lglew -lOpenMayaFX -headerpad_max_install_names
+	-lOpenMaya -lOpenMayaAnim -lOpenMayaUI -lOpenMayaRender -lFoundation -framework OpenGL -ltbb -lglew -lOpenMayaFX -headerpad_max_install_names
 )
 	
 	
@@ -181,6 +160,47 @@ target_include_directories(${PROJECT_NAME} PUBLIC
         "/Applications/Autodesk/maya2024/include"
         "/Applications/Autodesk/maya2024/plug-ins/xgen/include"
     ">"
+    "../FireRender.Maya.Src"
+    "../FireRender.Maya.Src/Context"
 )
+
+target_sources(${PROJECT_NAME} PUBLIC
+    "frMayaPluginMac/athenaSystemInfo_Mac.h"
+)
+
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
+
+find_library(LIB_RADEON_IMAGE_FILTERS NAMES libRadeonImageFilters.1.7.1.dylib PATHS "../RadeonProImageProcessingSDK/OSX/Dynamic")
+if (NOT LIB_RADEON_IMAGE_FILTERS)
+    message(FATAL_ERROR "libRadeonImageFilters not found")
+endif()
+
+target_link_libraries(${PROJECT_NAME} -framework ${LIB_RADEON_IMAGE_FILTERS})
+
+find_library(LIB_OPEN_IMAGE NAMES libOpenImageIO.1.6.dylib PATHS "../RadeonProRenderSharedComponents/OpenImageIO/OSX/bin")
+if (NOT LIB_RADEON_IMAGE_FILTERS)
+    message(FATAL_ERROR "libOpenImageIO not found")
+endif()
+
+target_link_libraries(${PROJECT_NAME} -framework ${LIB_OPEN_IMAGE})
+
+#find_library(LIB_ADSK_XGEN NAMES libAdskXGen.dylib PATHS "../RadeonProRenderSharedComponents/OpenImageIO/OSX/bin")
+#if (NOT LIB_ADSK_XGEN)
+#    message(FATAL_ERROR "libAdskXGen not found")
+#endif()
+
+#target_link_libraries(${PROJECT_NAME} ${LIB_ADSK_XGEN})
+
+#target_link_libraries(${PROJECT_NAME} PRIVATE "-framework libRadeonImageFilters.1.7.1.dylib")
+#target_link_libraries(${PROJECT_NAME} PRIVATE "-framework libOpenImageIO.1.6.dylib")
+#target_link_libraries(${PROJECT_NAME} PRIVATE "-framework libblosc.a")
+#target_link_libraries(${PROJECT_NAME} PRIVATE "-framework libboost_iostreams.a")
+#target_link_libraries(${PROJECT_NAME} PRIVATE "-framework libopenvdb.a")
+#target_link_libraries(${PROJECT_NAME} PRIVATE "-framework libsnappy.a")
+#target_link_libraries(${PROJECT_NAME} PRIVATE "-framework libz.a")
+#target_link_libraries(${PROJECT_NAME} PRIVATE "-framework libProRenderGLTF.dylib")
+#target_link_libraries(${PROJECT_NAME} PRIVATE "-framework libAdskXGen.dylib")
+#target_link_libraries(${PROJECT_NAME} PRIVATE "-framework libRprLoadStore64.dylib")
+#target_link_libraries(${PROJECT_NAME} PRIVATE "-framework libRadeonProRender64.dylib")
 
 endif()
