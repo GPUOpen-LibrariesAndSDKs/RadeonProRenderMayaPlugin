@@ -619,7 +619,11 @@ MString GenerateSmoothOptions(const MFnDagNode& dagMesh)
 	{
 		MPlug smoothDrawTypePlug = dagMesh.findPlug("smoothDrawType");
 		smoothingType = smoothDrawTypePlug.asInt();
-
+		// for some reason smoothingType is always one bigger than needed when it is not 0
+		if (smoothingType != 0)
+		{
+			smoothingType -= 1;
+		}
 		assert(!smoothDrawTypePlug.isNull());
 		optionMap["sdt"] = std::to_string(smoothingType);
 	}	
@@ -634,6 +638,11 @@ MString GenerateSmoothOptions(const MFnDagNode& dagMesh)
 		MPlug shouldSmoothUVs = dagMesh.findPlug("smoothUVs");
 		assert(!shouldSmoothUVs.isNull());
 		optionMap["suv"] = std::to_string(shouldSmoothUVs.asInt());
+
+		MPlug propogateHardnessPlug = dagMesh.findPlug("propagateEdgeHardness");
+		assert(!propogateHardnessPlug.isNull());
+		
+		optionMap["peh"] = std::to_string(propogateHardnessPlug.asInt());
 	}
 	else // OpenSubdiv catmull-clark
 	{

@@ -31,6 +31,7 @@ enum RampUVType
 	TartanRamp = 1 << 8,
 };
 
+frw::ArithmeticNode ApplyUVType(const FireMaya::Scope& scope, frw::ArithmeticNode& source, int uvIntType);
 frw::ArithmeticNode GetRampNodeLookup(const FireMaya::Scope& scope, RampUVType rampType);
 
 namespace MayaStandardNodeConverters

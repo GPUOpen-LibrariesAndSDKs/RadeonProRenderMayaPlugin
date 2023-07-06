@@ -1372,6 +1372,14 @@ bool FireRenderContext::createContext(rpr_creation_flags createFlags, rpr_contex
 		*pOutRes = res;
 	}
 
+	// display a warning when contour and cpu are selected since contour is not rendered on cpu and on cpu + gpu.
+	bool useCpu = (createFlags & RPR_CREATION_FLAGS_ENABLE_CPU) == RPR_CREATION_FLAGS_ENABLE_CPU;
+	bool isContour = Globals().contourIsEnabled;
+	if (isContour && useCpu)
+	{
+		MGlobal::displayWarning("Contour is not rendered on CPU. Please choose only GPU on 'Render Devices' to render contour");
+	}
+
 	switch (res)
 	{
 	case RPR_SUCCESS:
