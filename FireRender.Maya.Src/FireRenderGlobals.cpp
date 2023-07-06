@@ -520,21 +520,21 @@ MStatus FireRenderGlobals::initialize()
 	MAKE_INPUT(nAttr);
 
 	Attribute::renderQuality = eAttr.create("renderQualityFinalRender", "rqfr", (short) RenderQuality::RenderQualityFull, &status);
-	eAttr.addField("Full", (short)RenderQuality::RenderQualityFull);
+	eAttr.addField("RPR Final", (short)RenderQuality::RenderQualityFull);
 #ifdef WIN32
-	eAttr.addField("HybridPro", (short)RenderQuality::RenderQualityHybridPro);
+	eAttr.addField("RPR Interactive", (short)RenderQuality::RenderQualityHybridPro);
 #endif
 	MAKE_INPUT_CONST(eAttr);
 
 	ViewportRenderAttributes::renderQuality = eAttr.create("renderQualityViewport", "rqv", (short) RenderQuality::RenderQualityNorthStar, &status);
 #ifdef WIN32
-	eAttr.addField("HybridPro", (short)RenderQuality::RenderQualityFull); 
+	eAttr.addField("RPR Interactive", (short)RenderQuality::RenderQualityFull); 
 #endif
-	eAttr.addField("NorthStar", (short)RenderQuality::RenderQualityNorthStar);
+	eAttr.addField("RPR Final", (short)RenderQuality::RenderQualityNorthStar);
 	MAKE_INPUT_CONST(eAttr);
 
 	Attribute::tahoeVersion = eAttr.create("renderVersion", "tahv", 0, &status);
-	eAttr.addField("North Star", 0);
+	eAttr.addField("Northstar", 0);
 	MAKE_INPUT_CONST(eAttr);
 	CHECK_MSTATUS(addAttribute(Attribute::tahoeVersion));
 
