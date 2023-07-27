@@ -23,6 +23,11 @@ limitations under the License.
 #include <vector>
 #include <iterator>
 
+#include <maya/MFnSkinCluster.h>
+#include <maya/MFnWeightGeometryFilter.h>
+#include <maya/MItDependencyNodes.h>
+#include <maya/MFnMeshData.h>
+#include <maya/MFnTypedAttribute.h>
 #include <maya/MFnLight.h>
 #include <maya/MFnDependencyNode.h>
 #include <maya/MItDependencyGraph.h>
@@ -1843,17 +1848,247 @@ void FireRenderMesh::SaveUsedUV(const MObject& meshNode)
 	}
 }
 
+//// delete
+//bool FireRenderMesh::FindIndirectlyConnectedNode(MFnDependencyNode& start, MObject& found)
+//{
+//	MPlugArray inputPlugs;
+//	start.getConnections(inputPlugs);
+//
+//	for (unsigned int i = 0; i < inputPlugs.length(); ++i)
+//	{
+//		MPlug plug = inputPlugs[i];
+//		MString plugName = plug.name(); // debug
+//		MString startName = start.name(); // debug
+//		// check if the plug is an input plug
+//		if (!plug.isDestination())
+//		{
+//			continue;
+//		}
+//
+//		MPlugArray connections;
+//		plug.connectedTo(connections, true, false);
+//		unsigned int len = connections.length();
+//
+//		// no connection -> dead end
+//		if (len == 0)
+//		{
+//			continue;
+//		}
+//
+//		// scan all connections for a node of the right type
+//		for (unsigned int i = 0; i < len; ++i)
+//		{
+//			MObject connectedNode = connections[i].node();
+//			// check if the connected node is the right type
+//			MString type = connectedNode.apiTypeStr();					// debug
+//			if (connectedNode.hasFn(MFn::kSkinClusterFilter)) // TODO change to a given type
+//			{
+//				// found the right type
+//				found = connectedNode;
+//				return true;
+//			}
+//		}
+//
+//		// search all children
+//		for (unsigned int i = 0; i < len; ++i)
+//		{
+//			MObject connectedNode = connections[i].node();
+//			MFnDependencyNode next(connectedNode);
+//			MString nextName = next.name(); // debug
+//			if (FindIndirectlyConnectedNode(next, found))
+//			{
+//				return true;
+//			}
+//		}
+//	}
+//
+//	// nothing here and in children
+//	return false;
+//
+//}
+
+// assign transorms of the root joint to the mesh node
+// this is needed to prevent instance of a reference ignoring its own transforms
+// and taking the transforms of what it is an instance of.
+// we re-apply the transforms here to the mesh
+
+// for non-meshes and meshes without joints everything is as normal
+MMatrix FireRenderMesh::GetSelfTransform()
+{
+	MMatrix default = DagPath().inclusiveMatrix();
+	MObject obj = DagPath().node();
+
+	MFnDependencyNode dep(obj);
+	MString name1 = dep.name(); // debug
+
+	// not a mesh -> out
+	MFn::Type type = obj.apiType();
+	if (type != MFn::kMesh)
+	{
+		return default;
+	}
+	
+	// find skin cluster connected to the mesh node
+	MObject skinClusterObj;
+	MItDependencyGraph dgIt(obj, MFn::kSkinClusterFilter, MItDependencyGraph::kUpstream);
+	if (!dgIt.isDone()) {
+		skinClusterObj = dgIt.currentItem();
+		MFnDependencyNode dep(skinClusterObj); // debug
+		MString name = dep.name(); // debug
+	}
+
+	// no skin cluster -> out
+	if (skinClusterObj.isNull())
+	{
+		return default;
+	}
+
+	MFnSkinCluster skinClusterFn(skinClusterObj);
+
+	// get a list of all influenced objects
+	MDagPathArray dagArray;
+	skinClusterFn.influenceObjects(dagArray);
+	unsigned int influenceCount = dagArray.length();
+
+	int maxJointDepthStart = 10e6;
+	int maxJointDepth = maxJointDepthStart; // minimal joint depth - root joint has the lowest depth since all other are its chiildren
+	MObject mainJointObj; // current main joint
+	for (unsigned int i = 0; i < influenceCount; ++i) {
+		MDagPath curPath = dagArray[i];
+
+		MObject influenceNode = curPath.node();
+		MFnDependencyNode influenceDep(influenceNode); // debug
+		MString foundName = influenceDep.name(); // debug
+		// found a joint
+		if (influenceNode.hasFn(MFn::kJoint)) {
+			int jointDepth = curPath.length();
+
+			// ensure only the root joint is stored, not the children
+			if (jointDepth < maxJointDepth) {
+				maxJointDepth = jointDepth;
+				mainJointObj = influenceNode;
+			}
+		}
+	}
+
+	// no joints -> out
+	if (maxJointDepth >= maxJointDepthStart)
+	{
+		return default;
+	}
+
+	// get dag path from the joint
+
+	MFnDagNode jointDagNode(mainJointObj);
+
+	// Get the DAG path of the MObject
+	MDagPath jointDagPath;
+	jointDagNode.getPath(jointDagPath);
+
+	MMatrix matrix = jointDagPath.inclusiveMatrix();
+
+	float mfloats[4][4]; // debug
+	FireMaya::ScaleMatrixFromCmToMFloats(matrix, mfloats); // debug
+
+	return  matrix * default;
+	//
+	//
+	//
+	//// have skin cluster -> scan for joints
+	//MItDag itDag(MItDag::kDepthFirst);
+	//for (; !itDag.isDone(); itDag.next())
+	//{
+	//	MDagPath dagPath;
+	//	itDag.getPath(dagPath);
+	//
+	//	MObject obj = dagPath.node();
+	//	MFnDependencyNode dep(obj); // debug
+	//	MString name = dep.name(); // debug
+	//
+	//	if (name == "ref:joint1")
+	//	{
+	//		MMatrix theMatrix = dagPath.inclusiveMatrix();
+	//		return theMatrix;
+	//	}
+	//}
+}
+
 void FireRenderMesh::RebuildTransforms()
 {
+//
+//	std::vector<std::pair<MObject, MObject>> jointSkinClusterPairs;
+//	// for each skin cluster node
+//	MItDependencyNodes nodeIter(MFn::kSkinClusterFilter);
+//	for (; !nodeIter.isDone(); nodeIter.next()) {
+//		MObject currentNode = nodeIter.item();
+//		MFnSkinCluster skinClusterFn(currentNode);
+//
+//		MFnDependencyNode skinDep(currentNode); // debug
+//		MString skinName = skinDep.name(); // debug
+//
+//		// get a list of all influenced objects
+//		MDagPathArray dagArray;
+//		skinClusterFn.influenceObjects(dagArray);
+//		unsigned int influenceCount = dagArray.length();
+//
+//
+//		int maxJointDepth = 10e6; // Variable to store the minimal joint depth
+//		MObject currentMainJointObj; // Temporary variable to store the current main joint MObject
+//		for (unsigned int j = 0; j < influenceCount; ++j) {
+//			MDagPath curPath = dagArray[j];
+//
+//			MObject influenceNode = curPath.node();
+//			MFnDependencyNode influenceDep(influenceNode); // debug
+//			MString foundName = influenceDep.name(); // debug
+//			// find connected joint
+//			if (influenceNode.hasFn(MFn::kJoint)) {
+//				int jointDepth = curPath.length();
+//
+//				// ensure only the root joint is stored, not the childs
+//				if (jointDepth < maxJointDepth) {
+//					maxJointDepth = jointDepth;
+//					currentMainJointObj = influenceNode;
+//				}
+//			} else if (influenceNode.hasFn(MFn::kTransform)) {
+//				MFnDependencyNode transformDep(influenceNode); // debug
+//				MString transformName = transformDep.name(); // debug
+//			}
+//
+//		}
+//		// store the main joint with the skin cluster
+//		// TODO: change skin cluster to normal object
+//		jointSkinClusterPairs.push_back(std::make_pair(currentMainJointObj, currentNode));
+//	}
+//
+//	for each (auto& curPair in jointSkinClusterPairs)
+//	{
+//		MFnDependencyNode firstDep(curPair.first); // debug
+//		MString first = firstDep.name(); // debug
+//
+//		MFnDependencyNode secondDep(curPair.second); // debug
+//		MString second = secondDep.name(); // debug
+//	}
+//
+//	
+//	
+//
+//	MObject obj1 = meshPath.node();
+//	MFnDependencyNode dep1(obj1); // debug
+//	MString name1 = dep1.name(); // debug
+//	if (name1 == "ref:pCubeShape1")
+//	{
+//		int x = 1;
+//	}
+//
 	MObject node = Object();
 	MFnDagNode meshFn(node);
 	MDagPath meshPath = DagPath();
 
 	MMatrix matrix = GetSelfTransform();
-	
+
 	// convert Maya mesh in cm to m
 	float mfloats[4][4];
-	FireMaya::ScaleMatrixFromCmToMFloats(matrix, mfloats);	
+	FireMaya::ScaleMatrixFromCmToMFloats(matrix, mfloats);
 
 	if ((!m.elements.empty()) && (m.elements.back().shape))
 	{

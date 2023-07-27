@@ -416,6 +416,8 @@ public:
 
 	virtual bool IsMeshVisible(const MDagPath& meshPath, const FireRenderContext* context) const;
 
+	bool FindIndirectlyConnectedNode(MFnDependencyNode& start, MObject& found);
+	MMatrix GetSelfTransform();
 protected:
 	void SaveUsedUV(const MObject& meshNode);
 
