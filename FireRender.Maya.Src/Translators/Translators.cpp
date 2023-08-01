@@ -126,6 +126,11 @@ namespace FireMaya
 		auto cameraMode = FireRenderGlobals::getCameraModeForType(FireRenderGlobals::CameraType(cameraType), fnCamera.isOrtho());
 		frw_camera.SetMode(cameraMode);
 
+		if (cameraMode != frw::CameraModePerspective && cameraMode != frw::CameraModeOrthographic)
+		{
+			MGlobal::displayWarning("Only Perspective and Orthographic camera types are supported by RPR.");
+		}
+
 		switch (cameraMode)
 		{
 		case frw::CameraModeOrthographic:
