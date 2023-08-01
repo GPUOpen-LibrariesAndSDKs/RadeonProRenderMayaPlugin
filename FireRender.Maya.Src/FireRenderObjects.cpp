@@ -1991,26 +1991,6 @@ MMatrix FireRenderMesh::GetSelfTransform()
 	FireMaya::ScaleMatrixFromCmToMFloats(matrix, mfloats); // debug
 
 	return  matrix * default;
-	//
-	//
-	//
-	//// have skin cluster -> scan for joints
-	//MItDag itDag(MItDag::kDepthFirst);
-	//for (; !itDag.isDone(); itDag.next())
-	//{
-	//	MDagPath dagPath;
-	//	itDag.getPath(dagPath);
-	//
-	//	MObject obj = dagPath.node();
-	//	MFnDependencyNode dep(obj); // debug
-	//	MString name = dep.name(); // debug
-	//
-	//	if (name == "ref:joint1")
-	//	{
-	//		MMatrix theMatrix = dagPath.inclusiveMatrix();
-	//		return theMatrix;
-	//	}
-	//}
 }
 
 void FireRenderMesh::RebuildTransforms()
@@ -2085,6 +2065,56 @@ void FireRenderMesh::RebuildTransforms()
 	MDagPath meshPath = DagPath();
 
 	MMatrix matrix = GetSelfTransform();
+
+
+
+	// Write the matrix string to a file
+	const char* filePath = "D:/downloads/my_matrix_data.txt";
+	std::ofstream outputFile(filePath);
+
+	MItDag dagIterator(MItDag::kDepthFirst, MFn::kInvalid);
+
+	// Traverse through the DAG hierarchy
+	for (; !dagIterator.isDone(); dagIterator.next())
+	{
+		// Get the current DAG path
+		MDagPath dagPath;
+		dagIterator.getPath(dagPath);
+		MMatrix matrix = dagPath.inclusiveMatrix();
+
+		MFnDependencyNode nodeFn(dagPath.node());
+
+		MString nodeName = nodeFn.name();
+
+		std::ostringstream oss;
+		oss << nodeName << "\n";
+		for (int row = 0; row < 4; ++row)
+		{
+			for (int col = 0; col < 4; ++col)
+			{
+				oss << matrix(row, col);
+
+				// Add a space after each element, except for the last one in the row
+				if (col < 3)
+					oss << " ";
+			}
+				oss << "\n";
+		}
+		oss << "\n";
+
+		std::string matrixStr = oss.str();
+
+		if (outputFile.is_open())
+		{
+			outputFile << matrixStr;
+			
+		}
+		else
+		{
+			MGlobal::displayError("Unable to open file: " + MString(filePath));
+		}
+	}
+	outputFile.close();
 
 	// convert Maya mesh in cm to m
 	float mfloats[4][4];
