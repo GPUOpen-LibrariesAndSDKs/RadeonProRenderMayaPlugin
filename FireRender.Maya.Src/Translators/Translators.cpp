@@ -109,12 +109,12 @@ namespace
 
 namespace FireMaya
 {
-	bool translateCamera(frw::Camera& frw_camera, const MObject& camera, const MMatrix& matrix, bool isRenderView, float aspectRatio, bool useAspectRatio, int cameraType)
+	bool translateCamera(frw::Camera& frw_camera, const MObject& camera, const MMatrix& matrix, bool isRenderView, float aspectRatio, bool useAspectRatio, int cameraType, bool* isHybidSupportedMode)
 	{
 		rpr_int frstatus;
 		MStatus mstatus;
 		MFnCamera fnCamera(camera);
-
+		
 		auto frcamera = frw_camera.Handle();
 
 		bool showFilmGate = fnCamera.isDisplayFilmGate();
@@ -126,9 +126,9 @@ namespace FireMaya
 		auto cameraMode = FireRenderGlobals::getCameraModeForType(FireRenderGlobals::CameraType(cameraType), fnCamera.isOrtho());
 		frw_camera.SetMode(cameraMode);
 
-		if (cameraMode != frw::CameraModePerspective && cameraMode != frw::CameraModeOrthographic)
+		if (cameraMode != frw::CameraModePerspective && cameraMode != frw::CameraModeOrthographic && isHybidSupportedMode != nullptr)
 		{
-			MGlobal::displayWarning("Only Perspective and Orthographic camera types are supported by RPR.");
+			*isHybidSupportedMode = false;
 		}
 
 		switch (cameraMode)

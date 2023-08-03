@@ -2563,8 +2563,16 @@ void FireRenderCamera::TranslateCameraExplicit(int viewWidth, int viewHeight)
 
 	MMatrix camMtx = dagPath.inclusiveMatrix();
 
+	bool isHybidSupportedMode = true;
 	FireMaya::translateCamera(m_camera, node, camMtx, context()->isRenderView(),
-		float(viewWidth) / float(viewHeight), true, m_type);
+		float(viewWidth) / float(viewHeight), true, m_type, &isHybidSupportedMode);
+
+	RenderType type = context()->GetRenderType();
+	RenderQuality qual = GetRenderQualityForRenderType(type);
+	if (!isHybidSupportedMode && qual == RenderQuality::RenderQualityHybridPro)
+	{
+		MGlobal::displayWarning("Only Perspective and Orthographic camera types are supported by Hybrid.");
+	}
 }
 
 void FireRenderCamera::Freshen(bool shouldCalculateHash)
