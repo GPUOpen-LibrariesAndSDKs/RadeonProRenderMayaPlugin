@@ -109,7 +109,7 @@ namespace
 
 namespace FireMaya
 {
-	bool translateCamera(frw::Camera& frw_camera, const MObject& camera, const MMatrix& matrix, bool isRenderView, float aspectRatio, bool useAspectRatio, int cameraType, bool* isHybidSupportedMode)
+	bool translateCamera(frw::Camera& frw_camera, const MObject& camera, const MMatrix& matrix, bool isRenderView, float aspectRatio, bool useAspectRatio, int cameraType)
 	{
 		rpr_int frstatus;
 		MStatus mstatus;
@@ -125,11 +125,6 @@ namespace FireMaya
 
 		auto cameraMode = FireRenderGlobals::getCameraModeForType(FireRenderGlobals::CameraType(cameraType), fnCamera.isOrtho());
 		frw_camera.SetMode(cameraMode);
-
-		if (cameraMode != frw::CameraModePerspective && cameraMode != frw::CameraModeOrthographic && isHybidSupportedMode != nullptr)
-		{
-			*isHybidSupportedMode = false;
-		}
 
 		switch (cameraMode)
 		{
