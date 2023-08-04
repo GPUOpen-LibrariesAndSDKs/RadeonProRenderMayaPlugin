@@ -3,7 +3,7 @@
 #include "Context/FireRenderContext.h"
 #include "FireRenderUtils.h"
 #include "Context/TahoeContext.h"
-#include "FireRenderContext.h"
+#include "Context/FireRenderContext.h"
 
 #include <array>
 #include <algorithm>
