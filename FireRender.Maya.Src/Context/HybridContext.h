@@ -48,13 +48,6 @@ public:
 	virtual bool IsMaterialNodeIDSupported() const { return false; }
 	virtual bool IsMeshObjectIDSupported() const { return false; }
 	virtual bool IsContourModeSupported() const { return false; }
-	virtual bool IsCameraModeSupported(frw::CameraMode& cameraMode) const {
-		if (cameraMode == frw::CameraModePerspective || cameraMode == frw::CameraModeOrthographic)
-		{
-			return true;
-		}
-		return false;
-	}
 	virtual bool IsCameraSetExposureSupported() const { return false; }
 	virtual bool IsShadowColorSupported() const { return false; }
 
