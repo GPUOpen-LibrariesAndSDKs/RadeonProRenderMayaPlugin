@@ -419,10 +419,16 @@ const std::string& FireRenderAOV::GetAOVName(int aov_id)
 // -----------------------------------------------------------------------------
 MString FireRenderAOV::getOutputFilePath(const MString& filePath) const
 {
+	// replace '\' with '/'
+	std::string tmp = filePath.asChar();
+	std::replace(tmp.begin(), tmp.end(), '\\', '/');
+	// MString only accepts char*, not std::string
+	MString newFilePath = tmp.c_str();
+
 	// Split the path at the file name.
-	int i = filePath.rindex('/');
-	MString path = filePath.substring(0, i);
-	MString file = filePath.substring(i + 1, filePath.length() - 1);
+	int i = newFilePath.rindex('/');
+	MString path = newFilePath.substring(0, i);
+	MString file = newFilePath.substring(i + 1, newFilePath.length() - 1);
 
 	// Add the AOV folder to the path.
 	path = path + folder + "/";

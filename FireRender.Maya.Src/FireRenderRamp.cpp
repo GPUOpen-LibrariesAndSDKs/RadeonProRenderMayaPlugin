@@ -214,7 +214,7 @@ frw::ArithmeticNode ApplyUVType(const FireMaya::Scope& scope, frw::ArithmeticNod
 
 	switch (uvType)
 	{
-	case URamp:
+	case VRamp:
 		return frw::ArithmeticNode(scope.MaterialSystem(), frw::OperatorSelectY, source);
 	case DiagonalRamp:
 	{
@@ -235,7 +235,7 @@ frw::ArithmeticNode ApplyUVType(const FireMaya::Scope& scope, frw::ArithmeticNod
 		return arith_min;
 	}
 	default:
-		// VRamp
+		// URamp
 		return frw::ArithmeticNode(scope.MaterialSystem(), frw::OperatorAdd, source);
 	}
 }
