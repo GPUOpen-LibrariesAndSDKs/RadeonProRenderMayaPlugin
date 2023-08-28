@@ -557,6 +557,13 @@ void AddExtensionAttributesForMaterials()
 	assert(status == MStatus::kSuccess);
 }
 
+void AddPreferences()
+{
+	// Allow locking and unlocking edits on referenced attributes
+	MString melCommand = "optionVar -iv \"refLockEditable\" 1; ";
+
+	MStatus status = MGlobal::executeCommand(melCommand);
+}
 
 MStatus initializePlugin(MObject obj)
 //
@@ -1005,6 +1012,8 @@ MStatus initializePlugin(MObject obj)
 #endif
 
 	AddExtensionAttributesForMaterials();
+
+	AddPreferences();
 
 	return status;
 }
