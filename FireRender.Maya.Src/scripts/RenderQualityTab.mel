@@ -21,8 +21,6 @@ global proc UpdateProductionRenderSettingsUI()
 	int $isHybrid = $type != 0;
 
 	frameLayout -edit -enable ($isHybrid) fireRenderProductionRenderHybridParams;
-
-	attrControlGrp -edit -enable (false) finalRenderPtDenoiser;
 }
 
 global proc UpdateFinalRenderFSRUI()
@@ -167,8 +165,6 @@ global proc UpdateViewportSettingsUI()
 	int $isHybrid = $type != 4;
 
 	frameLayout -edit -enable ($isHybrid) fireRenderViewportHybridParams;
-
-	attrControlGrp -edit -enable (false) viewportPtDenoiser;	
 }
 
 global proc UpdateViewportFSRUI()
