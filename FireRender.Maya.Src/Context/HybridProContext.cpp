@@ -96,7 +96,7 @@ rpr_int HybridProContext::CreateContextInternal(rpr_creation_flags createFlags, 
 
 	if (gpuMemorySize < 10_GB)
 	{
-		unsigned long long meshMemorySizeB = 2056_MB;
+		unsigned long long meshMemorySizeB = 4096_MB;
 		unsigned long long stagingMemorySizeB = 32_MB;
 		unsigned long long scratchMemorySizeB = 16_MB;
 
@@ -112,6 +112,16 @@ rpr_int HybridProContext::CreateContextInternal(rpr_creation_flags createFlags, 
 	}
 	else
 	{
+		unsigned long long meshMemorySizeB = 4096_MB;
+		unsigned long long stagingMemorySizeB = 32_MB;
+		unsigned long long scratchMemorySizeB = 16_MB;
+		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_HYBRID_STAGING_MEMORY_SIZE);
+		ctxProperties.push_back((rpr_context_properties)&stagingMemorySizeB);
+		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_HYBRID_SCRATCH_MEMORY_SIZE);
+		ctxProperties.push_back((rpr_context_properties)&scratchMemorySizeB);
+		ctxProperties.push_back((rpr_context_properties)RPR_CONTEXT_CREATEPROP_HYBRID_MESH_MEMORY_SIZE);
+		ctxProperties.push_back((rpr_context_properties)&meshMemorySizeB);
+
 		std::string message = "Detected GPU memory more than 10 GB. Render time should be optimal\n";
 		MGlobal::displayInfo(message.c_str());
 	}
