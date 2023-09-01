@@ -111,9 +111,9 @@ void HybridContext::setupContextPostSceneCreation(const FireRenderGlobalsData& f
 
 	// Restir with large number RPR_CONTEXT_MAX_RECURSION ~ 15 will require a huge buffers for the Restir needs (around 23Gb) to reduce consumption
 	// please limit max recursion (usually for the realtime rendering we are using about 5) RPRHYB-941
-	if (isRestir && maxRecursion > 5)
+	if (isRestir && maxRecursion > 10)
 	{
-		MGlobal::displayWarning("If you encounter any problems with video memory, please limit maxRayDepth value to about 5");
+		MGlobal::displayWarning("High maxRayDepth and RESTIR can cause large VRAM usage. Please lower maxRayDeth to 10.");
 	}
 
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_RECURSION, maxRecursion);
