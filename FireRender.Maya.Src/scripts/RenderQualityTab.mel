@@ -25,10 +25,35 @@ global proc UpdateProductionRenderSettingsUI()
 
 global proc UpdateFinalRenderFSRUI()
 {
+	print ("called denoiser");
 	int $type = `getAttr RadeonProRenderGlobals.finalRender_ptDenoiser`;
 	int $isDenoiserEnabled = $type != 0;
 
 	//attrControlGrp -edit -enable ($isDenoiserEnabled) finalRenderFSRControl;
+	
+	// fsr and denoiser should be both off or both on
+	if ($isDenoiserEnabled) 
+	{
+		setAttr "RadeonProRenderGlobals.finalRender_FSR" 3;
+	} else {
+		setAttr "RadeonProRenderGlobals.finalRender_FSR" 0;
+	}
+}
+
+global proc UpdateFinalRenderDenoiserUI()
+{
+	print ("called fsr");
+
+	int $type = `getAttr RadeonProRenderGlobals.finalRender_FSR`;
+	int $isFSREnabled = $type != 0;
+	
+	// fsr and denoiser should be both off or both on
+	if ($isFSREnabled) 
+	{
+		setAttr "RadeonProRenderGlobals.finalRender_ptDenoiser" 1;
+	} else {
+		setAttr "RadeonProRenderGlobals.finalRender_ptDenoiser" 0;
+	}
 }
 
 proc createFinalRenderQualityPart()
@@ -122,6 +147,7 @@ proc createFinalRenderQualityPart()
 	   attrControlGrp
 	        -label "FSR"
 	        -attribute "RadeonProRenderGlobals.finalRender_FSR"
+			-cc UpdateFinalRenderDenoiserUI
 			finalRenderFSRControl;
 
 	    attrControlGrp
