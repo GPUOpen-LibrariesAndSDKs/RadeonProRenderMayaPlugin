@@ -23,36 +23,83 @@ global proc UpdateProductionRenderSettingsUI()
 	frameLayout -edit -enable ($isHybrid) fireRenderProductionRenderHybridParams;
 }
 
+// fsr and denoiser should be both off or both on
+global proc OnFinalRenderFSRChanged()
+{
+	UpdateFinalRenderDenoiserFSRUI(1);
+}
+
+global proc OnFinalRenderDenoiserChanged()
+{
+	UpdateFinalRenderDenoiserFSRUI(0);
+}
+
 global proc UpdateFinalRenderFSRUI()
 {
-	print ("called denoiser");
-	int $type = `getAttr RadeonProRenderGlobals.finalRender_ptDenoiser`;
-	int $isDenoiserEnabled = $type != 0;
+    int $denoiserType = `getAttr RadeonProRenderGlobals.finalRender_ptDenoiser`;
+    int $isDenoiserEnabled = $denoiserType != 0;
 
-	//attrControlGrp -edit -enable ($isDenoiserEnabled) finalRenderFSRControl;
-	
-	// fsr and denoiser should be both off or both on
+	int $fsrType = `getAttr RadeonProRenderGlobals.finalRender_FSR`;
+    int $isFSREnabled = $fsrType != 0;
+
+	// change fsr
 	if ($isDenoiserEnabled) 
 	{
-		setAttr "RadeonProRenderGlobals.finalRender_FSR" 3;
+		// fsr enabled -> no need to change
+		if($isFSREnabled)
+		{
+			return;
+		}
+	    setAttr "RadeonProRenderGlobals.finalRender_FSR" 3;
 	} else {
-		setAttr "RadeonProRenderGlobals.finalRender_FSR" 0;
+	    setAttr "RadeonProRenderGlobals.finalRender_FSR" 0;
 	}
+	
+	// Set the flag to indicate that we are changing attributes
+    setAttr "RadeonProRenderGlobals.finalRenderDenoiserFsrFlag" 1;
 }
 
 global proc UpdateFinalRenderDenoiserUI()
 {
-	print ("called fsr");
+    int $denoiserType = `getAttr RadeonProRenderGlobals.finalRender_ptDenoiser`;
+    int $isDenoiserEnabled = $denoiserType != 0;
 
-	int $type = `getAttr RadeonProRenderGlobals.finalRender_FSR`;
-	int $isFSREnabled = $type != 0;
-	
-	// fsr and denoiser should be both off or both on
+	int $fsrType = `getAttr RadeonProRenderGlobals.finalRender_FSR`;
+    int $isFSREnabled = $fsrType != 0;
+
+	// change denoiser
 	if ($isFSREnabled) 
 	{
-		setAttr "RadeonProRenderGlobals.finalRender_ptDenoiser" 1;
+		// denoiser enabled -> no need to change
+		if ($isDenoiserEnabled)
+		{
+			return;
+		}
+
+	    setAttr "RadeonProRenderGlobals.finalRender_ptDenoiser" 1;
 	} else {
-		setAttr "RadeonProRenderGlobals.finalRender_ptDenoiser" 0;
+	    setAttr "RadeonProRenderGlobals.finalRender_ptDenoiser" 0;
+	}
+	
+	// Set the flag to indicate that we are changing attributes
+    setAttr "RadeonProRenderGlobals.finalRenderDenoiserFsrFlag" 1;
+}
+
+global proc UpdateFinalRenderDenoiserFSRUI(int $isCalledFromFsr)
+{
+    // Check if a flag is set to prevent infinite loop
+    int $flag = `getAttr "RadeonProRenderGlobals.finalRenderDenoiserFsrFlag"`;
+    if ($flag == 1) {
+		// Reset the flag after attribute change
+		setAttr "RadeonProRenderGlobals.finalRenderDenoiserFsrFlag" 0;
+        return;
+    }
+	
+	if ($isCalledFromFsr)
+	{
+		UpdateFinalRenderDenoiserUI();
+	} else {
+		UpdateFinalRenderFSRUI();
 	}
 }
 
@@ -141,13 +188,13 @@ proc createFinalRenderQualityPart()
 	    attrControlGrp
 	        -label "Pt Denoiser"
 	        -attribute "RadeonProRenderGlobals.finalRender_ptDenoiser"
-			-cc UpdateFinalRenderFSRUI
+			-cc OnFinalRenderDenoiserChanged
 			finalRenderPtDenoiser;
 
 	   attrControlGrp
 	        -label "FSR"
 	        -attribute "RadeonProRenderGlobals.finalRender_FSR"
-			-cc UpdateFinalRenderDenoiserUI
+			-cc OnFinalRenderFSRChanged
 			finalRenderFSRControl;
 
 	    attrControlGrp
@@ -193,12 +240,84 @@ global proc UpdateViewportSettingsUI()
 	frameLayout -edit -enable ($isHybrid) fireRenderViewportHybridParams;
 }
 
+// fsr and denoiser should be both off or both on
+global proc OnViewportFSRChanged()
+{
+	UpdateViewportDenoiserFSRUI(1);
+}
+
+global proc OnViewportDenoiserChanged()
+{
+	UpdateViewportDenoiserFSRUI(0);
+}
+
 global proc UpdateViewportFSRUI()
 {
-	int $type = `getAttr RadeonProRenderGlobals.ptDenoiser`;
-	int $isDenoiserEnabled = $type != 0;
+    int $denoiserType = `getAttr RadeonProRenderGlobals.ptDenoiser`;
+    int $isDenoiserEnabled = $denoiserType != 0;
 
-	//attrControlGrp -edit -enable ($isDenoiserEnabled) viewportFSRControl;
+	int $fsrType = `getAttr RadeonProRenderGlobals.FSR`;
+    int $isFSREnabled = $fsrType != 0;
+
+	// change fsr
+	if ($isDenoiserEnabled) 
+	{
+		// fsr enabled -> no need to change
+		if($isFSREnabled)
+		{
+			return;
+		}
+	    setAttr "RadeonProRenderGlobals.FSR" 3;
+	} else {
+	    setAttr "RadeonProRenderGlobals.FSR" 0;
+	}
+	
+	// Set the flag to indicate that we are changing attributes
+    setAttr "RadeonProRenderGlobals.viewportRenderDenoiserFsrFlag" 1;
+}
+
+global proc UpdateViewportDenoiserUI()
+{
+    int $denoiserType = `getAttr RadeonProRenderGlobals.ptDenoiser`;
+    int $isDenoiserEnabled = $denoiserType != 0;
+
+	int $fsrType = `getAttr RadeonProRenderGlobals.FSR`;
+    int $isFSREnabled = $fsrType != 0;
+
+	// change denoiser
+	if ($isFSREnabled) 
+	{
+		// denoiser enabled -> no need to change
+		if ($isDenoiserEnabled)
+		{
+			return;
+		}
+
+	    setAttr "RadeonProRenderGlobals.ptDenoiser" 1;
+	} else {
+	    setAttr "RadeonProRenderGlobals.ptDenoiser" 0;
+	}
+	
+	// Set the flag to indicate that we are changing attributes
+    setAttr "RadeonProRenderGlobals.viewportRenderDenoiserFsrFlag" 1;
+}
+
+global proc UpdateViewportDenoiserFSRUI(int $isCalledFromFsr)
+{
+    // Check if a flag is set to prevent infinite loop
+    int $flag = `getAttr "RadeonProRenderGlobals.viewportRenderDenoiserFsrFlag"`;
+    if ($flag == 1) {
+		// Reset the flag after attribute change
+		setAttr "RadeonProRenderGlobals.viewportRenderDenoiserFsrFlag" 0;
+        return;
+    }
+	
+	if ($isCalledFromFsr)
+	{
+		UpdateViewportDenoiserUI();
+	} else {
+		UpdateViewportFSRUI();
+	}
 }
 
 proc createViewportRenderQualityPart()
@@ -233,12 +352,13 @@ proc createViewportRenderQualityPart()
 	    attrControlGrp
 	        -label "Pt Denoiser"
 	        -attribute "RadeonProRenderGlobals.ptDenoiser"
-			-cc UpdateViewportFSRUI
+			-cc OnViewportDenoiserChanged
 			viewportPtDenoiser;
 
 	   attrControlGrp
 	        -label "FSR"
 	        -attribute "RadeonProRenderGlobals.FSR"
+			-cc OnViewportFSRChanged
 			viewportFSRControl;
 
 	    attrControlGrp
