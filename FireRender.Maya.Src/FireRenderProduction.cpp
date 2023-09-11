@@ -1095,7 +1095,7 @@ void FireRenderProduction::RenderTiles()
 		RenderViewUpdater::UpdateAndRefreshRegion(data, m_width, m_height, RenderRegion(0, m_width - 1, m_height - 1, 0));
 	});
 
-	outBuffers.clear();
+	//outBuffers.clear();
 
 	UploadAthenaData();
 }
