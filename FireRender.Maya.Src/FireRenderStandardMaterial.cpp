@@ -997,9 +997,6 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 	// Emissive
 	if (GET_BOOL(emissiveEnable))
 	{
-		frw::Value valueEmissiveWeight = scope.GetValue(shaderNode.findPlug(Attribute::emissiveWeight, false));
-		material.xSetValue(RPR_MATERIAL_INPUT_UBER_EMISSION_WEIGHT, valueEmissiveWeight);
-
 		frw::Value valueEmissiveColor = scope.GetValue(shaderNode.findPlug(Attribute::emissiveColor, false));
 
 		frw::Value valueEmissiveIntensity = scope.GetValue(shaderNode.findPlug(Attribute::emissiveIntensity, false));
@@ -1011,10 +1008,11 @@ frw::Shader FireMaya::StandardMaterial::GetShader(Scope& scope)
 		bool bDoubleSided = GET_BOOL(emissiveDoubleSided);
 		material.xSetParameterU(RPR_MATERIAL_INPUT_UBER_EMISSION_MODE, bDoubleSided ? RPR_UBER_MATERIAL_EMISSION_MODE_DOUBLESIDED : RPR_UBER_MATERIAL_EMISSION_MODE_SINGLESIDED);
 	}
-	else
-	{
-		material.xSetParameterF(RPR_MATERIAL_INPUT_UBER_EMISSION_WEIGHT, 0, 0, 0, 0);
-	}
+	
+	// was previously set to scope.GetValue(shaderNode.findPlug(Attribute::emissiveWeight, false))
+	// does not seem to change anything other than make hybrid too intense when used with color map. So we are setting it to 0
+	// try reverting this change if some problems occur with emission
+	material.xSetParameterF(RPR_MATERIAL_INPUT_UBER_EMISSION_WEIGHT, 0, 0, 0, 0);
 
 	// Subsurface
 	if (ctxInfo->IsUberSSSWeightSupported())
