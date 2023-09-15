@@ -244,12 +244,6 @@ MStatus FireRenderCmd::renderFrame(const MArgDatabase& argData)
 				// get correct path
 				MString folder = aovs->getAOV(aov_id)->folder;
 
-				//// - replace '\' with '/'
-				//std::string tmp = filePath.asChar();
-				//std::replace(tmp.begin(), tmp.end(), '\\', '/');
-				//// - MString only accepts char*, not std::string
-				//MString newFilePath = tmp.c_str();
-
 				// - Split the path at the file name.
 				int i = filePath.rindex('/');
 				MString path = filePath.substring(0, i);
