@@ -138,7 +138,6 @@ proc createFinalRenderQualityPart()
 	    //    -attribute "RadeonProRenderGlobals.finalRender_restirGI";
 		
 	    attrControlGrp
-	        //-label "Reservoir Sampling"
 	        -label "Restir"
 			-en 0
 	        -attribute "RadeonProRenderGlobals.finalRender_reservoirSampling"
@@ -241,7 +240,6 @@ proc createViewportRenderQualityPart()
 			//    -attribute "RadeonProRenderGlobals.restirGIBiasCorrection";
 			
 			attrControlGrp
-			    //-label "Reservoir Sampling"
 			    -label "Restir"
 				-en 0
 			    -attribute "RadeonProRenderGlobals.reservoirSampling"
