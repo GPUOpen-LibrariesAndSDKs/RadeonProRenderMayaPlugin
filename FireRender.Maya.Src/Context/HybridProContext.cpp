@@ -96,9 +96,9 @@ rpr_int HybridProContext::CreateContextInternal(rpr_creation_flags createFlags, 
 
 	if (gpuMemorySize < 10_GB)
 	{
-		unsigned long long meshMemorySizeB = 2056_MB;
-		unsigned long long stagingMemorySizeB = 32_MB;
-		unsigned long long scratchMemorySizeB = 16_MB;
+		uint32_t meshMemorySizeB = 2056_MB;
+		uint32_t stagingMemorySizeB = 32_MB;
+		uint32_t scratchMemorySizeB = 16_MB;
 
 		std::string message = "Detected GPU memory size less than 10 GB. Render time may be increased!\n";
 		MGlobal::displayWarning(message.c_str());
