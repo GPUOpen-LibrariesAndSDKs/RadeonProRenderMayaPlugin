@@ -25,7 +25,7 @@ limitations under the License.
 #include "FireRenderUtils.h"
 #include "IESLight/IESprocessor.h"
 #include "IESLight/IESLightRepresentationCalc.h"
-#include "Translators/Translators.h"
+#include "../../Translators/Translators.h"
 
 namespace
 {

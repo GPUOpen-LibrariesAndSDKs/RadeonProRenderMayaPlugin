@@ -24,7 +24,7 @@ limitations under the License.
 #include <maya/MEulerRotation.h>
 #include "FireMaya.h"
 #include "FireRenderUtils.h"
-#include "Translators/Translators.h"
+#include "../../Translators/Translators.h"
 
 MObject FireRenderIESLightLocator::aFilePath;
 MObject	FireRenderIESLightLocator::aIntensity;

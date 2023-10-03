@@ -162,6 +162,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ">"
     "../FireRender.Maya.Src"
     "../FireRender.Maya.Src/Context"
+    "../RadeonProRenderSharedComponents/OpenImageIO/OSX/include"
 )
 
 target_sources(${PROJECT_NAME} PUBLIC
@@ -170,19 +171,43 @@ target_sources(${PROJECT_NAME} PUBLIC
 
 set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
 
-find_library(LIB_RADEON_IMAGE_FILTERS NAMES libRadeonImageFilters.1.7.1.dylib PATHS "../RadeonProImageProcessingSDK/OSX/Dynamic")
-if (NOT LIB_RADEON_IMAGE_FILTERS)
-    message(FATAL_ERROR "libRadeonImageFilters not found")
-endif()
+#set(LIB_RIF_PATH ../RadeonProImageProcessingSDK/OSX/Dynamic)
+#find_library(LIB_RADEON_IMAGE_FILTERS NAMES libRadeonImageFilters.1.7.1.dylib PATHS LIB_RIF_PATH)
+#if (NOT LIB_RADEON_IMAGE_FILTERS)
+#    message(FATAL_ERROR "libRadeonImageFilters not found")
+#endif()
+#message(${LIB_RADEON_IMAGE_FILTERS})
+#add_library(librif SHARED IMPORTED)
+#set_target_properties(librif PROPERTIES IMPORTED_LOCATION ${LIB_RADEON_IMAGE_FILTERS})
+#target_link_libraries(${PROJECT_NAME} librif)
 
-target_link_libraries(${PROJECT_NAME} -framework ${LIB_RADEON_IMAGE_FILTERS})
+#set(LIB_OIIO_PATH ../RadeonProRenderSharedComponents/OpenImageIO/OSX/bin)
+#find_library(LIB_OPEN_IMAGE NAMES libOpenImageIO.1.6.dylib PATHS LIB_OIIO_PATH)
+#if (NOT LIB_OPEN_IMAGE)
+#    message(FATAL_ERROR "libOpenImageIO not found")
+#endif()
+#message(${LIB_OPEN_IMAGE})
+#add_library(liboiio SHARED IMPORTED)
+#set_target_properties(liboiio PROPERTIES IMPORTED_LOCATION ${LIB_OPEN_IMAGE})
+#target_link_libraries(${PROJECT_NAME} liboiio)
 
-find_library(LIB_OPEN_IMAGE NAMES libOpenImageIO.1.6.dylib PATHS "../RadeonProRenderSharedComponents/OpenImageIO/OSX/bin")
-if (NOT LIB_RADEON_IMAGE_FILTERS)
-    message(FATAL_ERROR "libOpenImageIO not found")
-endif()
+#set(LIB_OIIO_PATH ../RadeonProRenderSharedComponents/OpenImageIO/OSX/bin)
+#message(${LIB_OIIO_PATH})
+#find_library(LIB_OIIO NAMES libOpenImageIO.1.6.dylib PATHS LIB_OIIO_PATH)
+#if (NOT LIB_OIIO)
+#    message(FATAL_ERROR "libOpenImageIO not found")
+#endif()
+#message(${LIB_OIIO})
+#add_library(liboiio SHARED IMPORTED)
+#set_target_properties(librif PROPERTIES IMPORTED_LOCATION ${LIB_OIIO})
+#target_link_libraries(${PROJECT_NAME} liboiio)
 
-target_link_libraries(${PROJECT_NAME} -framework ${LIB_OPEN_IMAGE})
+#find_library(LIB_OPEN_IMAGE NAMES libOpenImageIO.1.6.dylib PATHS "../RadeonProRenderSharedComponents/OpenImageIO/OSX/bin")
+#if (NOT LIB_RADEON_IMAGE_FILTERS)
+#    message(FATAL_ERROR "libOpenImageIO not found")
+#endif()
+
+#target_link_libraries(${PROJECT_NAME} -framework ${LIB_OPEN_IMAGE})
 
 #find_library(LIB_ADSK_XGEN NAMES libAdskXGen.dylib PATHS "../RadeonProRenderSharedComponents/OpenImageIO/OSX/bin")
 #if (NOT LIB_ADSK_XGEN)
