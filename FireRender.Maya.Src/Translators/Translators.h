@@ -114,7 +114,6 @@ namespace FireMaya
 	bool getInputColorConnection(const MPlug& colorPlug, MPlug& connectedPlug);
 
 	bool translateCamera(frw::Camera& frcamera, const MObject& camera, const MMatrix& matrix, bool isRenderView, float aspectRatio = 0.0, bool useAspectRatio = false, int cameraType = 0);
-
 	bool translateLight(FrLight& frlight, Scope& scope, frw::Context frcontext, const MObject& object, const MMatrix& matrix, bool update = false);
 
 	bool translateAreaLightInternal(FrLight& frlight, Scope& scope, frw::Context frcontext, const MObject& object,

@@ -114,7 +114,7 @@ namespace FireMaya
 		rpr_int frstatus;
 		MStatus mstatus;
 		MFnCamera fnCamera(camera);
-
+		
 		auto frcamera = frw_camera.Handle();
 
 		bool showFilmGate = fnCamera.isDisplayFilmGate();
