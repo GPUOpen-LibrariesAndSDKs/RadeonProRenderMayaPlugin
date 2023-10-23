@@ -131,9 +131,16 @@ void HybridProContext::setupContextPostSceneCreation(const FireRenderGlobalsData
 {
 	HybridContext::setupContextPostSceneCreation(fireRenderGlobalsData, disableWhiteBalance);
 
-#ifdef FORCE_ENABLE_VOLUMES
+	rpr_int frstatus = RPR_SUCCESS; 
 	frw::Context context = GetContext();
-	rprContextSetParameterByKey1u(context.Handle(), (rpr_context_info)RPR_CONTEXT_ENABLE_VOLUMES, RPR_TRUE);
+	rpr_context frcontext = context.Handle();
+
+	// we should disable IBL visibility to correctly composite reflection catcher
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_IBL_DISPLAY, fireRenderGlobalsData.reflectionCatcherEnabled ? 0 : 1);
+	checkStatus(frstatus);
+
+#ifdef FORCE_ENABLE_VOLUMES
+	rprContextSetParameterByKey1u(frcontext, (rpr_context_info)RPR_CONTEXT_ENABLE_VOLUMES, RPR_TRUE);
 #endif
 }
 
@@ -153,6 +160,7 @@ bool HybridProContext::IsAOVSupported(int aov) const
 		RPR_AOV_DIFFUSE_ALBEDO,
 		RPR_AOV_VIEW_SHADING_NORMAL,
 		RPR_AOV_SHADOW_CATCHER,
+		RPR_AOV_REFLECTION_CATCHER,
 		RPR_AOV_MATTE_PASS,
 		RPR_AOV_OPACITY,
 	};
