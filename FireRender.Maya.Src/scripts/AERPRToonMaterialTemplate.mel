@@ -184,8 +184,8 @@ global proc RPRmakeLargeRamp( string $nodeAttr,
 	}
 
 	// tell the port about the controls
-	gradientControl -e -scc $scc $widgetName;
-	gradientControl -e -spc $spc $widgetName;
+	catchQuiet ( `gradientControl -e -scc $scc $widgetName` );
+	catchQuiet ( `gradientControl -e -spc $spc $widgetName` );
 	setUITemplate -ppt;
 }
 
@@ -466,6 +466,13 @@ global proc UpdateRampFieldsEnable(string $nodeName)
 
 	string $rampAttribute = $nodeName + ".input5Ramp";
 	int $countCtrlPoints = `getAttr -s $rampAttribute`;
+
+	// broken case, ramp failed to load in a reference
+	if ($countCtrlPoints == 0)
+	{
+		print("Please save the scene and reopen it to restore control points on the Toon Shader ramp.\n");
+	}
+
 	if ($countCtrlPoints == 1) // this is new toon material
 	{
 		setAttr ($rampAttribute+"[0].input5Ramp_Position") 0.2;
