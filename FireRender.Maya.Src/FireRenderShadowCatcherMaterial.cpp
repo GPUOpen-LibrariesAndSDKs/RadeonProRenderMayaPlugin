@@ -160,6 +160,12 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 	
 	const IFireRenderContextInfo* ctxInfo = scope.GetIContextInfo();
 	assert(ctxInfo);
+
+	MObject fireRenderGlobals;
+	MStatus status = GetRadeonProRenderGlobals(fireRenderGlobals);
+	assert(status == MS::kSuccess);
+	MFnDependencyNode frGlobalsNode(fireRenderGlobals);
+	MPlug plug;
 	
 	if (shaderNode.findPlug(Attribute::scenabled, false).asBool())
 	{
@@ -191,6 +197,16 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 		}
 
 		shader.SetShadowCatcher(true);
+
+		plug = frGlobalsNode.findPlug("aovShadowCatcher");
+		if (!plug.isNull())
+			plug.setBool(true);
+		plug = frGlobalsNode.findPlug("aovBackground");
+		if (!plug.isNull())
+			plug.setBool(true);
+		plug = frGlobalsNode.findPlug("aovMattePass");
+		if (!plug.isNull())
+			plug.setBool(true);		
 	}
 
 	if (shaderNode.findPlug(Attribute::rcenabled, false).asBool())
@@ -207,6 +223,16 @@ frw::Shader FireMaya::ShadowCatcherMaterial::GetShader(Scope& scope)
 
 		// reflection catcher specific params
 		shader.SetReflectionCatcher(true);
+
+		plug = frGlobalsNode.findPlug("aovReflectionCatcher");
+		if (!plug.isNull())
+			plug.setBool(true);
+		plug = frGlobalsNode.findPlug("aovBackground");
+		if (!plug.isNull())
+			plug.setBool(true);
+		plug = frGlobalsNode.findPlug("aovMattePass");
+		if (!plug.isNull())
+			plug.setBool(true);
 	}
 
 	return shader;
