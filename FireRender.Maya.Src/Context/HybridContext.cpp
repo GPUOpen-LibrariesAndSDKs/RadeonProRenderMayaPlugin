@@ -97,13 +97,23 @@ void HybridContext::setupContextPostSceneCreation(const FireRenderGlobalsData& f
 	setSamplesPerUpdate(1);
 
 	int maxRecursion = 0;
+	bool isRestir = false;
 	if (GetRenderType() == RenderType::ProductionRender) // production (final) rendering
 	{
 		maxRecursion = fireRenderGlobalsData.maxRayDepth;
+		isRestir = fireRenderGlobalsData.productionReservoirSampling != 0;
 	}
 	else if (isInteractive())
 	{
 		maxRecursion = fireRenderGlobalsData.viewportMaxRayDepth;
+		isRestir = fireRenderGlobalsData.viewportReservoirSampling != 0;
+	}
+
+	// Restir with large number RPR_CONTEXT_MAX_RECURSION ~ 15 will require a huge buffers for the Restir needs (around 23Gb) to reduce consumption
+	// please limit max recursion (usually for the realtime rendering we are using about 5) RPRHYB-941
+	if (isRestir && maxRecursion > 5)
+	{
+		MGlobal::displayWarning("High maxRayDepth and RESTIR can cause large VRAM usage. Please lower maxRayDeth to 5.");
 	}
 
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_MAX_RECURSION, maxRecursion);

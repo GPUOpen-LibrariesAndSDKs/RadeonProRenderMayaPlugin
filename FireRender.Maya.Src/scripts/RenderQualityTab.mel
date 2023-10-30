@@ -21,6 +21,9 @@ global proc UpdateProductionRenderSettingsUI()
 	int $isHybrid = $type != 0;
 
 	frameLayout -edit -enable ($isHybrid) fireRenderProductionRenderHybridParams;
+
+	int $isTileRenderEnabled = `getAttr RadeonProRenderGlobals.tileRenderEnabled`;
+	attrControlGrp -edit -enable ($isTileRenderEnabled == false) finalRenderRestirControl;
 }
 
 // fsr and denoiser should be both off or both on
@@ -206,9 +209,10 @@ proc createFinalRenderQualityPart()
 	    //    -attribute "RadeonProRenderGlobals.finalRender_restirGI";
 		
 	    attrControlGrp
-	        //-label "Reservoir Sampling"
 	        -label "Restir"
-	        -attribute "RadeonProRenderGlobals.finalRender_reservoirSampling";
+			-en 0
+	        -attribute "RadeonProRenderGlobals.finalRender_reservoirSampling"
+			finalRenderRestirControl;
 		
 			attrControlGrp
 			    -label "Spatial Resample Iterations"
@@ -238,6 +242,9 @@ global proc UpdateViewportSettingsUI()
 	int $isHybrid = $type != 4;
 
 	frameLayout -edit -enable ($isHybrid) fireRenderViewportHybridParams;
+
+	int $isTileRenderEnabled = `getAttr RadeonProRenderGlobals.tileRenderEnabled`;
+	attrControlGrp -edit -enable ($isTileRenderEnabled == false) viewportRestirControl;
 }
 
 // fsr and denoiser should be both off or both on
@@ -375,9 +382,10 @@ proc createViewportRenderQualityPart()
 			//    -attribute "RadeonProRenderGlobals.restirGIBiasCorrection";
 			
 			attrControlGrp
-			    //-label "Reservoir Sampling"
 			    -label "Restir"
-			    -attribute "RadeonProRenderGlobals.reservoirSampling";
+				-en 0
+			    -attribute "RadeonProRenderGlobals.reservoirSampling"
+				viewportRestirControl;
 		
 			attrControlGrp
 			    -label "Spatial Resample Iterations"

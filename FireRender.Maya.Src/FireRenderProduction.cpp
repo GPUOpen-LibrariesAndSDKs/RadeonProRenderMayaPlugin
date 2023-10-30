@@ -272,6 +272,17 @@ bool FireRenderProduction::Init(int contextWidth, int contextHeight, RenderRegio
 	}
 	m_aovs->setFromContext(*m_contextPtr);
 
+	if ((m_aovs->getAOV(RPR_AOV_SHADOW_CATCHER) != nullptr) && m_aovs->getAOV(RPR_AOV_SHADOW_CATCHER)->active)
+	{
+		m_contextPtr->enableAOV(RPR_AOV_BACKGROUND);
+		m_contextPtr->enableAOV(RPR_AOV_MATTE_PASS);
+	}
+	if ((m_aovs->getAOV(RPR_AOV_REFLECTION_CATCHER) != nullptr) && m_aovs->getAOV(RPR_AOV_REFLECTION_CATCHER)->active)
+	{
+		m_contextPtr->enableAOV(RPR_AOV_BACKGROUND);
+		m_contextPtr->enableAOV(RPR_AOV_MATTE_PASS);
+	}
+
 	m_needsContextRefresh = true;
 	m_contextPtr->setResolution(contextWidth, contextHeight, true);
 	m_contextPtr->setCamera(m_camera, true);
@@ -1094,8 +1105,6 @@ void FireRenderProduction::RenderTiles()
 		// Update the Maya render view.
 		RenderViewUpdater::UpdateAndRefreshRegion(data, m_width, m_height, RenderRegion(0, m_width - 1, m_height - 1, 0));
 	});
-
-	outBuffers.clear();
 
 	UploadAthenaData();
 }
