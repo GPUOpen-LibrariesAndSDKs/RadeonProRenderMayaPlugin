@@ -202,6 +202,7 @@ namespace
 		MObject reservoirSampling;
 		MObject restirSpatialResampleIterations;
 		MObject restirMaxReservoirsPerCell;
+		MObject finalRenderDenoiserFsrFlag;
     }
 
 	namespace ViewportRenderAttributes
@@ -238,6 +239,7 @@ namespace
 		MObject reservoirSampling;
 		MObject restirSpatialResampleIterations;
 		MObject restirMaxReservoirsPerCell;
+		MObject viewportRenderDenoiserFsrFlag;
 	}
 
 	bool operator==(const MStringArray& a, const MStringArray& b)
@@ -1339,6 +1341,9 @@ void FireRenderGlobals::createViewportAttributes()
 	MAKE_INPUT(eAttr);
 	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::FSR));
 
+	ViewportRenderAttributes::viewportRenderDenoiserFsrFlag = nAttr.create("viewportRenderDenoiserFsrFlag", "vprdfsrf", MFnNumericData::kBoolean, 0);
+	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::viewportRenderDenoiserFsrFlag));
+
 	ViewportRenderAttributes::materialCache = nAttr.create("materialCache", "vpmc", MFnNumericData::kBoolean, true);
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::materialCache));
@@ -1400,6 +1405,9 @@ void FireRenderGlobals::createViewportAttributes()
 	eAttr.addField("Ultra Performance", FSRType::kUltraPerformanceFSR);
 	MAKE_INPUT(eAttr);
 	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::FSR));
+
+	FinalRenderAttributes::finalRenderDenoiserFsrFlag = nAttr.create("finalRenderDenoiserFsrFlag", "frdfsrf", MFnNumericData::kBoolean, 0);
+	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::finalRenderDenoiserFsrFlag));
 
 	FinalRenderAttributes::materialCache = nAttr.create("finalRender_materialCache", "frmc", MFnNumericData::kBoolean, true);
 	MAKE_INPUT(nAttr);
