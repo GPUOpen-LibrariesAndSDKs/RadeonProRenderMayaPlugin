@@ -190,6 +190,7 @@ bool SaveExportConfig(const std::wstring& filePath, NorthStarContext& ctx, const
 		,{RPR_AOV_VIEW_SHADING_NORMAL, L"normal.view" }
 		,{RPR_AOV_REFLECTION_CATCHER, L"reflection.catcher" }
 		,{RPR_AOV_CAMERA_NORMAL, L"camera.normal" }
+		,{RPR_AOV_MATTE_PASS, L"mattepass" }
 		,{RPR_AOV_MAX, L"RPR_AOV_MAX" }
 	};
 
