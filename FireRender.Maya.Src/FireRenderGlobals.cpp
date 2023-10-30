@@ -1354,7 +1354,7 @@ void FireRenderGlobals::createViewportAttributes()
 	MAKE_INPUT(eAttr);
 	CHECK_MSTATUS(addAttribute(ViewportRenderAttributes::restirGIBiasCorrection));
 	
-	ViewportRenderAttributes::reservoirSampling = eAttr.create("reservoirSampling", "vprsp", ReservoirSampling::kWorldSpace, &status);
+	ViewportRenderAttributes::reservoirSampling = eAttr.create("reservoirSampling", "vprsp", ReservoirSampling::kDisabled, &status);
 	eAttr.addField("Disabled", ReservoirSampling::kDisabled);
 	eAttr.addField("Screen Space", ReservoirSampling::kScreenSpace);
 	eAttr.addField("World Space", ReservoirSampling::kWorldSpace);
@@ -1409,7 +1409,7 @@ void FireRenderGlobals::createViewportAttributes()
 	MAKE_INPUT(nAttr);
 	CHECK_MSTATUS(addAttribute(FinalRenderAttributes::restirGI));
 	
-	FinalRenderAttributes::reservoirSampling = eAttr.create("finalRender_reservoirSampling", "frrsp", ReservoirSampling::kWorldSpace, &status);
+	FinalRenderAttributes::reservoirSampling = eAttr.create("finalRender_reservoirSampling", "frrsp", ReservoirSampling::kDisabled, &status);
 	eAttr.addField("Disabled", ReservoirSampling::kDisabled);
 	eAttr.addField("Screen Space", ReservoirSampling::kScreenSpace);
 	eAttr.addField("World Space", ReservoirSampling::kWorldSpace);
