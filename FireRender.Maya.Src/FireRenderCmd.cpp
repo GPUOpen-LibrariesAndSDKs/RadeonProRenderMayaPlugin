@@ -495,10 +495,6 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		// Process each render-able camera.
 		for (MDagPath camera : renderableCameras)
 		{
-			// Update the context to use the current camera.
-			MString cameraName = getCameraName(camera);
-			context.setCamera(camera, true);
-
 			// Get frame ranges.
 			int frameStart = static_cast<int>(settings.frameStart.value());
 			int frameEnd = static_cast<int>(settings.frameEnd.value());
@@ -511,6 +507,10 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 			// Process each frame.
 			for (int frame = frameStart; frame <= frameEnd; frame += frameBy)
 			{
+				// Update the context to use the current camera.
+				MString cameraName = getCameraName(camera);
+				context.setCamera(camera, true);
+
 				// Execute the pre-frame command if there is one.
 				MGlobal::executeCommand(settings.preRenderMel);
 
