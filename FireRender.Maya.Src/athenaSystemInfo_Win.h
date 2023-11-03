@@ -12,9 +12,10 @@ limitations under the License.
 ********************************************************************/
 #pragma once
 #include <string>
-#include <wtypes.h>
 
 #if defined(_WIN32)
+#include <wtypes.h>
+
 bool ReadRegValue(HKEY& hKey, const std::string& valueName, std::string& out);
 
 void getOSName(std::string& osName, std::string& osVersion);
