@@ -218,6 +218,8 @@ public:
 
 	bool textureCompression;
 
+	bool useLegacyRPRToon;
+
 	int viewportRenderMode;
 	int renderMode;
 

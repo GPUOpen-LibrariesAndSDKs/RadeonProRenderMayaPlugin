@@ -72,6 +72,7 @@ FireRenderGlobalsData::FireRenderGlobalsData() :
 	adaptiveThreshold(0.0f),
 	adaptiveThresholdViewport(0.0f),
 	textureCompression(false),
+	useLegacyRPRToon(false),
 	giClampIrradiance(true),
 	giClampIrradianceValue(1.0),
 	samplesPerUpdate(5),
@@ -228,6 +229,10 @@ void FireRenderGlobalsData::readFromCurrentScene()
 		plug = frGlobalsNode.findPlug("textureCompression");
 		if (!plug.isNull())
 			textureCompression = plug.asBool();
+
+		plug = frGlobalsNode.findPlug("useLegacyRPRToon");
+		if (!plug.isNull())
+			useLegacyRPRToon = plug.asBool();
 
 		plug = frGlobalsNode.findPlug("renderModeViewport");
 		if (!plug.isNull())

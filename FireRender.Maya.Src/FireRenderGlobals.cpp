@@ -49,6 +49,7 @@ namespace
 		MObject adaptiveTileSize; //hidden attribute
 
 		MObject textureCompression;
+		MObject useLegacyRPRToon;
 
 		MObject giClampIrradiance;
 		MObject giClampIrradianceValue;
@@ -350,6 +351,9 @@ MStatus FireRenderGlobals::initialize()
 	Attribute::textureCompression = nAttr.create("textureCompression", "texC", MFnNumericData::kBoolean, false, &status);
 	MAKE_INPUT(nAttr);
 
+	Attribute::useLegacyRPRToon = nAttr.create("useLegacyRPRToon", "toonL", MFnNumericData::kBoolean, false, &status);
+	MAKE_INPUT(nAttr);
+
 	Attribute::giClampIrradiance = nAttr.create("giClampIrradiance", "gici", MFnNumericData::kBoolean, true, &status);
 	MAKE_INPUT(nAttr);
 
@@ -578,6 +582,7 @@ MStatus FireRenderGlobals::initialize()
 	// Needed for QA and CIS in order to switch on detailed sync and render logs
 
 	CHECK_MSTATUS(addAttribute(Attribute::textureCompression));
+	CHECK_MSTATUS(addAttribute(Attribute::useLegacyRPRToon));
 
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradiance));
 	CHECK_MSTATUS(addAttribute(Attribute::giClampIrradianceValue));
