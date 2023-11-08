@@ -230,6 +230,9 @@ void NorthStarContext::setupContextPostSceneCreation(const FireRenderGlobalsData
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_TEXTURE_COMPRESSION, fireRenderGlobalsData.textureCompression);
 	checkStatus(frstatus);
 
+	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_NORMALIZE_LIGHT_INTENSITY_ENABLED, fireRenderGlobalsData.useLegacyRPRToon ? 0 : 1);
+	checkStatus(frstatus);
+
 	frstatus = rprContextSetParameterByKey1u(frcontext, RPR_CONTEXT_ADAPTIVE_SAMPLING_TILE_SIZE, fireRenderGlobalsData.adaptiveTileSize);
 	checkStatus(frstatus);
 
