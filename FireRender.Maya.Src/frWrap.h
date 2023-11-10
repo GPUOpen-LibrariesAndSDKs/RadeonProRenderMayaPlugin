@@ -3787,7 +3787,15 @@ namespace frw
 		{
 			rpr_int res = rprMaterialNodeSetID(Handle(), id);
 
-			assert(res == MStatus::kSuccess);
+			if (res == RPR_ERROR_UNSUPPORTED ||
+				res == RPR_ERROR_INVALID_PARAMETER)
+			{
+				// should not cancel execution if such error happens
+			}
+			else
+			{
+				checkStatus(res);
+			}
 		}
 
 	};
