@@ -10,7 +10,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Script"
-               scriptText = "&quot;$PROJECT_DIR/../prebuild.sh&quot;">
+               scriptText = "&quot;$PROJECT_DIR/../prebuild.sh&quot;&#10;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
@@ -28,7 +28,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Copy to plugin locations"
-               scriptText = "&quot;$PROJECT_DIR/../postbuild_release.sh&quot;">
+               scriptText = "&quot;$PROJECT_DIR/../postbuild_release.sh&quot;&#10;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"
@@ -42,20 +42,6 @@
          </ExecutionAction>
       </PostActions>
       <BuildActionEntries>
-         <BuildActionEntry
-            buildForTesting = "NO"
-            buildForRunning = "YES"
-            buildForProfiling = "NO"
-            buildForArchiving = "NO"
-            buildForAnalyzing = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "8DBCC29B22304666003EE361"
-               BuildableName = "RadeonProRender.bundle"
-               BlueprintName = "Maya2019"
-               ReferencedContainer = "container:RadeonProRender.xcodeproj">
-            </BuildableReference>
-         </BuildActionEntry>
          <BuildActionEntry
             buildForTesting = "NO"
             buildForRunning = "YES"
@@ -127,6 +113,15 @@
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
       debugDocumentVersioning = "YES">
+      <MacroExpansion>
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "B7531FC923D9ED5600246738"
+            BuildableName = "RadeonProRender.bundle"
+            BlueprintName = "Maya2020"
+            ReferencedContainer = "container:RadeonProRender.xcodeproj">
+         </BuildableReference>
+      </MacroExpansion>
    </ProfileAction>
    <AnalyzeAction
       buildConfiguration = "Debug">

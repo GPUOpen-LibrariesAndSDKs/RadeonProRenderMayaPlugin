@@ -21,6 +21,7 @@ limitations under the License.
 #include <Maya/MAnimControl.h>
 
 #if defined(OSMac_)
+#include <unistd.h>
 #include <sys/sysctl.h>
 #endif
 
