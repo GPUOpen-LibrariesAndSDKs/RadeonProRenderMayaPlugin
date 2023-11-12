@@ -13,7 +13,7 @@ limitations under the License.
 #include "HybridProContext.h"
 #include "RadeonProRender_Baikal.h"
 #include "ContextCreator.h"
-#include "VulcanUtils.h"
+#include "../VulcanUtils.h"
 
 #include "../FireRenderMaterial.h"
 #include "../FireRenderStandardMaterial.h"

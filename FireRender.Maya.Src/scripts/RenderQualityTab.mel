@@ -184,6 +184,11 @@ proc createFinalRenderQualityPart()
 		 -label "Texture Compression"
 		 -attribute "RadeonProRenderGlobals.textureCompression";
 
+	attrControlGrp
+		 -label "Use Legacy RPR Toon"
+		 -annotation "Enable backward compatibility of RPR Toon shader appearance"
+		 -attribute "RadeonProRenderGlobals.useLegacyRPRToon";
+
 	setParent ..;
 
 	frameLayout -label "Final Render Advanced Hybrid Params" -cll true -cl 0 fireRenderProductionRenderHybridParams;
