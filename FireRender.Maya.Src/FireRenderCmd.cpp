@@ -45,6 +45,7 @@ limitations under the License.
 #include "RenderRegion.h"
 #include "FireRenderThread.h"
 #include "RenderStampUtils.h"
+#include "FireRenderImageUtil.h"
 
 #include "Context/ContextCreator.h"
 
@@ -233,15 +234,50 @@ MStatus FireRenderCmd::renderFrame(const MArgDatabase& argData)
 		unsigned int frame = static_cast<unsigned int>(MAnimControl::currentTime().value());
 		MString filePath = getOutputFilePath(settings, frame, cameraName, true);
 
-		// Write output files.
-		aovs->writeToFile(*s_production->GetContext(), filePath, settings.imageFormat, [](const MString& path)
+		if (s_production->isTileRender())
 		{
-			MString cmd;
+			AOVPixelBuffers& outBuffers = s_production->GetContext()->PixelBuffers();
+			for (const auto& colorPixelBuffer : outBuffers)
+			{
+				unsigned aov_id = colorPixelBuffer.first;
 
-			// this command will output the following string: "\t[path]\n" to be executed via MEL
-			cmd.format("print(\"\\t^1s\\n\")", path);
-			MGlobal::executeCommand(cmd);
-		});
+				// get correct path
+				MString folder = aovs->getAOV(aov_id)->folder;
+
+				// - Split the path at the file name.
+				int i = filePath.rindex('/');
+				MString path = filePath.substring(0, i);
+				MString file = filePath.substring(i + 1, filePath.length() - 1);
+
+				// - Add the AOV folder to the path.
+				path = path + folder + "/";
+
+				// - Ensure the folder exists.
+				MCommonSystemUtils::makeDirectory(path);
+
+				// save image
+				path = path + file;
+				FireRenderImageUtil::save(path,
+					colorPixelBuffer.second.width(), 
+					colorPixelBuffer.second.height(), 
+					colorPixelBuffer.second.get(), 
+					settings.imageFormat);
+			}
+
+			outBuffers.clear();
+		}
+		else
+		{
+			// Write output files.
+			aovs->writeToFile(*s_production->GetContext(), filePath, settings.imageFormat, [](const MString& path)
+			{
+				MString cmd;
+
+				// this command will output the following string: "\t[path]\n" to be executed via MEL
+				cmd.format("print(\"\\t^1s\\n\")", path);
+				MGlobal::executeCommand(cmd);
+			});
+		}
 
 		// Perform clean up operations.
 		MRenderView::endRender();
@@ -459,10 +495,6 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 		// Process each render-able camera.
 		for (MDagPath camera : renderableCameras)
 		{
-			// Update the context to use the current camera.
-			MString cameraName = getCameraName(camera);
-			context.setCamera(camera, true);
-
 			// Get frame ranges.
 			int frameStart = static_cast<int>(settings.frameStart.value());
 			int frameEnd = static_cast<int>(settings.frameEnd.value());
@@ -475,6 +507,10 @@ MStatus FireRenderCmd::renderBatch(const MArgDatabase& args)
 			// Process each frame.
 			for (int frame = frameStart; frame <= frameEnd; frame += frameBy)
 			{
+				// Update the context to use the current camera.
+				MString cameraName = getCameraName(camera);
+				context.setCamera(camera, true);
+
 				// Execute the pre-frame command if there is one.
 				MGlobal::executeCommand(settings.preRenderMel);
 

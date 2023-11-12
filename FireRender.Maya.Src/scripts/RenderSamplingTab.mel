@@ -10,12 +10,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+global proc updateRestir()
+{
+	int $isTileRenderEnabled = `getAttr RadeonProRenderGlobals.tileRenderEnabled`;
+	attrControlGrp -edit -enable ($isTileRenderEnabled == false) finalRenderRestirControl;
+
+	int $isTileRenderEnabled = `getAttr RadeonProRenderGlobals.tileRenderEnabled`;
+	attrControlGrp -edit -enable ($isTileRenderEnabled == false) viewportRestirControl;
+}
+
 global proc FinalRender_onTileRenderChanged()
 {
     $enabled = `getAttr RadeonProRenderGlobals.tileRenderEnabled`;
 
     attrControlGrp -e -en $enabled tileRenderX;
     attrControlGrp -e -en $enabled tileRenderY;
+
+	if($enabled)
+	{
+		setAttr "RadeonProRenderGlobals.reservoirSampling" 0;
+		setAttr "RadeonProRenderGlobals.finalRender_reservoirSampling" 0;
+	} else
+	{
+		setAttr "RadeonProRenderGlobals.reservoirSampling" 2;
+		setAttr "RadeonProRenderGlobals.finalRender_reservoirSampling" 2;
+	}
+
+	catchQuiet(`updateRestir`);
 }
 
 // disable tile rendering for contour

@@ -675,6 +675,7 @@ public:
 	virtual bool IsMeshObjectIDSupported() const { return true; }
 	virtual bool IsContourModeSupported() const { return true; }
 	virtual bool IsCameraSetExposureSupported() const { return true; }
+	virtual bool IsCameraModeSupported(frw::CameraMode& cameraMode) const { return true; }
 	virtual bool IsShadowColorSupported() const { return true; }
 	virtual bool IsUberReflectionDielectricSupported() const { return true; }
 	virtual bool IsUberRefractionAbsorbtionColorSupported() const { return true; }
