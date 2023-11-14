@@ -2755,14 +2755,6 @@ bool FireRenderContext::Freshen(bool lock, std::function<bool()> cancelled)
 	std::deque<std::shared_ptr<FireRenderObject> > meshesToReload; // meshes which would be pre-processed
 	std::deque<std::shared_ptr<FireRenderObject> > meshesToFreshen; // meshes which would be freshened
 
-	#ifdef LOG_MESHES_DAG_PATHS
-	{
-		std::ofstream loggingFile;
-		loggingFile.open("C:\\temp\\dbg\\objects_paths.txt", std::ofstream::out | std::ofstream::app);
-		loggingFile << "============================ " << "\n";
-	}
-	#endif
-
 	while (!m_dirtyObjects.empty())
 	{
 		for (auto it = m_dirtyObjects.begin(); it != m_dirtyObjects.end(); )

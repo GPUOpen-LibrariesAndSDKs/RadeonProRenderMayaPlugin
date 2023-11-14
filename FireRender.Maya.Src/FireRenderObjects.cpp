@@ -267,28 +267,6 @@ void FireRenderNode::OnWorldMatrixChanged()
 
 MMatrix FireRenderNode::GetSelfTransform()
 {
-#ifdef LOG_MESHES_DAG_PATHS
-	MDagPath outPath = DagPath();
-	MStatus mstatus;
-	MString full = outPath.fullPathName(&mstatus);
-	assert(mstatus == MStatus::kSuccess);
-	MString partial = outPath.partialPathName(&mstatus);
-	assert(mstatus == MStatus::kSuccess);
-
-	MMatrix matr = outPath.inclusiveMatrix(&mstatus);
-	assert(mstatus == MStatus::kSuccess);
-
-	{
-		std::ofstream loggingFile;
-		loggingFile.open("C:\\temp\\dbg\\objects_paths.txt", std::ofstream::out | std::ofstream::app);
-		loggingFile << "************************ " << "\n";
-		loggingFile << "fullPathName = " << full << "\n";
-		loggingFile << "partialPathName = " << partial << "\n";
-		loggingFile << "matr = " << matr << "\n\n";
-		loggingFile.close();
-	}
-#endif
-
 	return DagPath().inclusiveMatrix();
 }
 
