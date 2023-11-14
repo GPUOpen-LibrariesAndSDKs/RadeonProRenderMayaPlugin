@@ -1259,6 +1259,12 @@ std::vector<T> splitString(const T& s, typename T::traits_type::char_type delim)
 	return elems;
 }
 
+template <class T>
+bool isNumber(const std::string& s) 
+{
+	return !s.empty() && std::all_of(s.begin(), s.end(), ::isdigit);
+}
+
 // Backdoor to enable different AOVs from Render Settings in IPR and Viewport
 void EnableAOVsFromRSIfEnvVarSet(FireRenderContext& context, FireRenderAOVs& aovs);
 

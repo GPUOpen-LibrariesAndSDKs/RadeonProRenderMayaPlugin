@@ -563,6 +563,10 @@ public:
 	{
 		assert(!uuid.empty());
 
+#ifdef _DEBUG
+		std::string uuidNameWithoutInstanceIndex = FireRenderObject::uuidWithoutInstanceNumberForString(uuid);
+#endif
+
 		auto it = m_mainMeshesDictionary.find(FireRenderObject::uuidWithoutInstanceNumberForString(uuid));
 
 		if (it != m_mainMeshesDictionary.end())

@@ -99,7 +99,16 @@ std::string FireRenderObject::uuidWithoutInstanceNumber() const
 
 std::string FireRenderObject::uuidWithoutInstanceNumberForString(const std::string& uuid)
 {
-	return splitString<std::string>(uuid, ':')[0];
+	size_t pos = uuid.find_last_of(":");
+	if (pos == std::string::npos)
+		return uuid;
+
+	if (!isNumber<std::string>(uuid.substr(pos + 1, std::string::npos)))
+		return uuid;
+
+	std::string ret = uuid.substr(0, pos);
+
+	return ret;
 }
 
 void FireRenderObject::setDirty()
