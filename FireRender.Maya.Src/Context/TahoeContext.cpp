@@ -11,6 +11,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ********************************************************************/
 #include "TahoeContext.h"
+#include "RadeonProRender_MaterialX.h"
 
 #include "maya/MColorManagementUtilities.h"
 #include "maya/MFileObject.h"
@@ -336,6 +337,10 @@ void NorthStarContext::setupContextPostSceneCreation(const FireRenderGlobalsData
 	updateTonemapping(fireRenderGlobalsData, disableWhiteBalance);
 
 	frstatus = rprContextSetParameterByKeyString(frcontext, RPR_CONTEXT_TEXTURE_CACHE_PATH, fireRenderGlobalsData.textureCachePath.asChar());
+	checkStatus(frstatus);
+
+	// set dependency for materialX standard surface (could be missing from *.mtlx files)
+	frstatus = rprMaterialXAddDependencyMtlx(frcontext, "scripts/standard_surface.mtlx");
 	checkStatus(frstatus);
 
 	// SC and RC

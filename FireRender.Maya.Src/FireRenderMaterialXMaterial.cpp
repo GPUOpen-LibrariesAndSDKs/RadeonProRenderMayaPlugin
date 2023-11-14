@@ -113,7 +113,7 @@ frw::Shader FireMaya::MaterialXMaterial::GetShader(Scope& scope)
 		return shader;
 	}
 
-	// using direct RPR call here because this is a very special case
+	// using direct RPR call here because this is a very special case 
 	rpr_int res = rprMaterialXSetFile(shader.Handle(), strFilePath.c_str());
 	checkStatus(res);
 
