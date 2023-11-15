@@ -704,6 +704,12 @@
     <ClCompile Include="FireRenderDoublesided.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FireRenderMaterialXMaterial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="FireRenderImportMaterialX.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FireRenderMaterialSwatchRender.h">
@@ -1214,6 +1220,18 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="FireRenderBevel.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderMaterialXMaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderImportMaterialX.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderMaterialXMaterial.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FireRenderImportMaterialX.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="VulcanUtils.h">

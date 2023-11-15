@@ -195,6 +195,7 @@
     <ClCompile Include="FireRenderImageUtil.cpp" />
     <ClCompile Include="FireRenderImportCmd.cpp" />
     <ClCompile Include="FireRenderImportExportXML.cpp" />
+    <ClCompile Include="FireRenderImportMaterialX.cpp" />
     <ClCompile Include="FireRenderImportXML.cpp" />
     <ClCompile Include="FireRenderIpr.cpp" />
     <ClCompile Include="FireRenderLayeredTextureUtils.cpp" />
@@ -203,6 +204,7 @@
     <ClCompile Include="FireRenderMaterialSwatchRender.cpp" />
     <ClCompile Include="FireMaterialViewRenderer.cpp" />
     <ClCompile Include="FireRenderBlendMaterial.cpp" />
+    <ClCompile Include="FireRenderMaterialXMaterial.cpp" />
     <ClCompile Include="FireRenderMeshMASH.cpp" />
     <ClCompile Include="FireRenderNoise.cpp" />
     <ClCompile Include="FireRenderNormal.cpp" />
@@ -358,6 +360,7 @@
     <ClInclude Include="FireRenderImageUtil.h" />
     <ClInclude Include="FireRenderImportCmd.h" />
     <ClInclude Include="FireRenderImportExportXML.h" />
+    <ClInclude Include="FireRenderImportMaterialX.h" />
     <ClInclude Include="FireRenderIpr.h" />
     <ClInclude Include="FireRenderLayeredTextureUtils.h" />
     <ClInclude Include="FireRenderLocationCmd.h" />
@@ -367,6 +370,7 @@
     <ClInclude Include="FireMaterialViewRenderer.h" />
     <ClInclude Include="FireRenderBlendMaterial.h" />
     <ClInclude Include="FireRenderCmd.h" />
+    <ClInclude Include="FireRenderMaterialXMaterial.h" />
     <ClInclude Include="FireRenderMath.h" />
     <ClInclude Include="FireRenderMeshMASH.h" />
     <ClInclude Include="FireRenderNoise.h" />

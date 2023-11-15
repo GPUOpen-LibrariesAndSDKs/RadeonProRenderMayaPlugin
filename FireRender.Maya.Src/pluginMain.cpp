@@ -29,6 +29,7 @@ limitations under the License.
 #include "FireRenderTransparentMaterial.h"
 #include "FireRenderMaterialSwatchRender.h"
 #include "FireRenderToonMaterial.h"
+#include "FireRenderMaterialXMaterial.h"
 #include "FireRenderSwatchInstance.h"
 
 #include "FireRenderFresnel.h"
@@ -54,6 +55,7 @@ limitations under the License.
 #include "FireRenderViewportCmd.h"
 #include "FireRenderExportCmd.h"
 #include "FireRenderImportCmd.h"
+#include "FireRenderImportMaterialX.h"
 #include "FireRenderConvertVRayCmd.h"
 #include "Athena/AthenaWrap.h"
 #include "athenaCmd.h"
@@ -705,6 +707,8 @@ MStatus initializePlugin(MObject obj)
 	CHECK_MSTATUS(plugin.registerCommand(namePrefix + "XMLExport", FireRenderXmlExportCmd::creator, FireRenderXmlExportCmd::newSyntax));
 
 	CHECK_MSTATUS(plugin.registerCommand(namePrefix + "XMLImport", FireRenderXmlImportCmd::creator, FireRenderXmlImportCmd::newSyntax));
+
+	CHECK_MSTATUS(plugin.registerCommand(namePrefix + "MaterialXImport", FireRenderMaterialXImportCmd::creator, FireRenderMaterialXImportCmd::newSyntax));
 	////
 
 	CHECK_MSTATUS(plugin.registerCommand(namePrefix + "ImageComparing", FireRenderImageComparing::creator, FireRenderImageComparing::newSyntax));
@@ -865,6 +869,11 @@ MStatus initializePlugin(MObject obj)
 		MPxNode::kDependNode, &UserClassify));
 	// force load shader UI template to use callback functions
 	MGlobal::executeCommand("source AERPRToonMaterialTemplate");
+
+	CHECK_MSTATUS(plugin.registerNode(namePrefix + "MaterialXMaterial", FireMaya::MaterialXMaterial::FRTypeID(),
+		FireMaya::MaterialXMaterial::creator,
+		FireMaya::MaterialXMaterial::initialize,
+		MPxNode::kDependNode, &UserClassify));
 	
 	CHECK_MSTATUS(status);
 
@@ -1091,6 +1100,8 @@ MStatus uninitializePlugin(MObject obj)
 	MString namePrefix(FIRE_RENDER_NODE_PREFIX);
 	CHECK_MSTATUS(plugin.deregisterCommand(namePrefix + "ImageComparing"));
 	//
+
+	CHECK_MSTATUS(plugin.deregisterCommand(namePrefix + "MaterialXImport"));
 
 	if (MGlobal::mayaState() != MGlobal::kBatch)
 	{

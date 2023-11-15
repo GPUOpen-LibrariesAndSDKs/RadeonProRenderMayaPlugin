@@ -378,6 +378,16 @@ global proc openMaterialLibraryRPR()
 	python("import fireRender.rpr_material_browser\nfireRender.rpr_material_browser.show()");
 }
 
+global proc openMaterialLibrary2RPR()
+{
+	print("openMaterialLibrary2RPR called from shelf!\n");
+
+	if (!checkPluginLoadedRPR())
+		return;
+
+	python("import fireRender.rprMaterialXBrowser\nfireRender.rprMaterialXBrowser.show()");
+}
+
 global proc createSkyRPR()
 {
 	if (!checkPluginLoadedRPR())

@@ -64,6 +64,9 @@ def importRPRMaterialsXml(data):
 def showRPRMaterialLibrary(value):
     mel.eval('source shelfCommands.mel; openMaterialLibraryRPR();')
 
+def showRPRMaterialXLibrary(value):
+    mel.eval('source shelfCommands.mel; openMaterialLibrary2RPR();')
+
 def enableDebugTracing(value):
     maya.cmds.fireRender(d=value)
 
@@ -120,6 +123,7 @@ def createFireRenderMenu():
         maya.cmds.menuItem("FrImportMaterialXML", label="Import XML Material", p=frImportMenu, c=importRPRMaterialsXml)
 
         maya.cmds.menuItem("FrRPRMaterialLibrary", label="Radeon ProRender Material Library", p=showFireRenderMenuCtrl, c=showRPRMaterialLibrary)
+        maya.cmds.menuItem("FrMaterialXMaterialLibrary", label="AMD MaterialX Library", p=showFireRenderMenuCtrl, c=showRPRMaterialXLibrary)
 
         maya.cmds.menuItem( divider=True, p=showFireRenderMenuCtrl )
 

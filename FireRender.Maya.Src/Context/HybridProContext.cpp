@@ -12,6 +12,7 @@ limitations under the License.
 ********************************************************************/
 #include "HybridProContext.h"
 #include "RadeonProRender_Baikal.h"
+#include "RadeonProRender_MaterialX.h"
 #include "ContextCreator.h"
 #include "../VulcanUtils.h"
 
@@ -20,6 +21,7 @@ limitations under the License.
 #include "../FireRenderDoublesided.h"
 #include "../FireRenderPBRMaterial.h"
 #include "../FireRenderShadowCatcherMaterial.h"
+#include "../FireRenderMaterialXMaterial.h"
 
 rpr_int HybridProContext::m_gHybridProPluginID = INCORRECT_PLUGIN_ID;
 
@@ -142,6 +144,10 @@ void HybridProContext::setupContextPostSceneCreation(const FireRenderGlobalsData
 #ifdef FORCE_ENABLE_VOLUMES
 	rprContextSetParameterByKey1u(frcontext, (rpr_context_info)RPR_CONTEXT_ENABLE_VOLUMES, RPR_TRUE);
 #endif
+
+	// set dependency for materialX standard surface (could be missing from *.mtlx files)
+	frstatus = rprMaterialXAddDependencyMtlx(frcontext, "scripts/standard_surface.mtlx");
+	checkStatus(frstatus);
 }
 
 bool HybridProContext::IsAOVSupported(int aov) const
@@ -187,6 +193,12 @@ bool HybridProContext::IsShaderNodeSupported(FireMaya::ShaderNode* shaderNode) c
 
 	FireMaya::ShadowCatcherMaterial* pShadowMaterial = dynamic_cast<FireMaya::ShadowCatcherMaterial*> (shaderNode);
 	if (pShadowMaterial != nullptr)
+	{
+		return true;
+	}
+
+	FireMaya::MaterialXMaterial* pMaterialX = dynamic_cast<FireMaya::MaterialXMaterial*> (shaderNode);
+	if (pMaterialX != nullptr)
 	{
 		return true;
 	}
