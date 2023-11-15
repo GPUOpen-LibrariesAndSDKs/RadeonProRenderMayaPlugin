@@ -38,6 +38,8 @@ set(Commands
     "RenderCacheWarningDialog.h"
     "RenderProgressBars.cpp"
     "RenderProgressBars.h"
+    "FireRenderImportMaterialX.h"
+    "FireRenderImportMaterialX.cpp"
 )
 source_group("Commands" FILES ${Commands})
 
@@ -214,6 +216,8 @@ set(Materials
     "FireRenderVoronoi.h"
     "SubsurfaceMaterial.cpp"
     "SubsurfaceMaterial.h"
+    "FireRenderMaterialXMaterial.cpp"
+    "FireRenderMaterialXMaterial.h"
 )
 source_group("Materials" FILES ${Materials})
 
